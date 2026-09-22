@@ -1,0 +1,20 @@
+interface:
+  display_name: Entregar Issue
+  short_description: 'Executar diretamente, sem despachar para a Delivery V2/orquestrador,
+    a entrega ponta a ponta de issues em repositorios de software com um unico controlador,
+    plano e estado: revisar readiness quando necessario, implementar codigo/testes/schemas/configuracao/documentacao,
+    validar durante a edicao, aplicar higiene limitada ao diff, acionar especialidades
+    condicionais, executar gates finais, congelar o candidato, acompanhar CI ate estado
+    terminal por delegacao automatica a corrigir-ci, remediar falhas sem novo prompt
+    e preparar auditoria independente. Usar quando o usuario informar uma issue, PR,
+    branch ou pendencias e esperar continuidade autonoma. Nunca fazer merge nem declarar
+    auditoria independente no mesmo contexto.'
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

@@ -1,0 +1,112 @@
+# Skills de Engenharia de Software para IAs
+
+Coleção de skills reutilizáveis para assistentes de IA que trabalham com issues, implementação, auditoria, CI, documentação, interfaces e fluxos conversacionais.
+
+As instruções centrais estão em Markdown e seguem um formato independente de provedor. Os arquivos `agents/openai.yaml` são adaptadores opcionais para produtos compatíveis; uma IA que não reconheça esse formato pode usar diretamente cada `SKILL.md` e carregar as referências necessárias sob demanda.
+
+## Catálogo
+
+| Skill | Finalidade | Entrada principal |
+| --- | --- | --- |
+| [`entregar-issue`](./entregar-issue/) | Conduzir uma entrega ponta a ponta de uma issue, com estado, implementação, validação, CI e handoff para auditoria. | Issue, PR, branch ou pendência de software |
+| [`auditar-issue`](./auditar-issue/) | Auditar uma entrega em leitura, reconstruir evidências e emitir parecer independente. | Entrega congelada, identidade remota e SHA |
+| [`revisar-issue`](./revisar-issue/) | Tornar issues claras, testáveis e reconciliadas com a documentação canônica. | Issue específica ou lote de issues |
+| [`corrigir-ci`](./corrigir-ci/) | Acompanhar e remediar CI até estado terminal, devolvendo controle ao controlador de entrega. | Falha ou estado pendente de CI |
+| [`documentacao-repositorio`](./documentacao-repositorio/) | Governar fontes canônicas e manter documentação verificável. | Repositório, mudança de comportamento ou documentação |
+| [`design-interface`](./design-interface/) | Estruturar, implementar e validar interfaces com verificação visual e documentação. | Interface, fluxo visual ou mudança de UX |
+| [`fluxos-conversacionais`](./fluxos-conversacionais/) | Especificar e verificar fluxos persistentes, assíncronos ou conversacionais. | Fluxo com continuidade, callback, evento, retry ou estado |
+
+## Como uma IA utiliza uma skill
+
+1. Escolha a pasta cuja descrição corresponde à tarefa.
+2. Leia o `SKILL.md` da pasta escolhida.
+3. Siga as referências indicadas pelo próprio `SKILL.md` apenas quando o modo de execução exigir.
+4. Use `schemas/`, `contracts/`, `scripts/` e `tests/` como artefatos operacionais da skill, não como contexto obrigatório em toda invocação.
+5. Preserve a distinção entre verificação interna e auditoria independente descrita nas instruções.
+
+Exemplo de carregamento genérico:
+
+```text
+Leia https://github.com/crgasparoto-br/skill/blob/main/entregar-issue/SKILL.md
+Use essa skill para executar a issue #123 no repositório owner/repo.
+Carregue as referências vinculadas pelo SKILL.md somente quando forem necessárias.
+```
+
+Para uma integração local:
+
+```bash
+git clone https://github.com/crgasparoto-br/skill.git
+cat skill/entregar-issue/SKILL.md
+```
+
+## Compatibilidade entre IAs
+
+O formato comum é deliberadamente simples:
+
+- `SKILL.md`: metadados e instruções normativas em Markdown;
+- `references/`: conhecimento complementar, carregado progressivamente;
+- `schemas/` e `contracts/`: contratos verificáveis e dados estruturados;
+- `scripts/`: validações determinísticas e utilitários executáveis;
+- `tests/`: regressões e invariantes da skill;
+- `agents/openai.yaml`: metadados opcionais para interfaces OpenAI compatíveis.
+
+### ChatGPT, Codex e APIs compatíveis
+
+Use a pasta da skill como arquivo de instruções ou como skill personalizada quando a plataforma oferecer esse recurso. Os arquivos em `agents/openai.yaml` podem ser usados como metadados de interface, mas não são necessários para interpretar o conteúdo principal.
+
+### Claude, Gemini e outros assistentes
+
+Forneça o `SKILL.md` como contexto de sistema/projeto ou copie seu conteúdo para o mecanismo de instruções da plataforma. Quando o `SKILL.md` apontar para uma referência, forneça também aquele arquivo. Não é necessário interpretar `agents/openai.yaml`.
+
+### IDEs e agentes locais
+
+Mapeie o `SKILL.md` para o mecanismo de regras do agente — por exemplo, uma regra de projeto — e mantenha `references/`, `scripts/` e `tests/` no mesmo diretório para que os caminhos relativos continuem válidos.
+
+## Governança dos contratos
+
+`entregar-issue` é o proprietário canônico dos contratos compartilhados de entrega. As demais skills registram essa relação em `contracts/version.json` e podem conter cópias geradas de schemas ou referências. Não altere uma cópia gerada isoladamente: atualize a fonte canônica e depois regenere ou sincronize as cópias correspondentes.
+
+A separação operacional principal é:
+
+- `entregar-issue`: controla a entrega e o handoff;
+- `corrigir-ci`: assume temporariamente a propriedade da remediação de CI e devolve um envelope estruturado;
+- `auditar-issue`: permanece somente leitura e fornece a avaliação independente;
+- as skills especializadas contribuem apenas dentro do recorte atribuído.
+
+## Validação local
+
+Valide a estrutura e os metadados do catálogo:
+
+```bash
+python scripts/validate_repository.py
+```
+
+Execute a suíte de testes das skills que possuem testes Python:
+
+```bash
+python -m pip install -r entregar-issue/requirements-dev.txt
+python -m pip install -r auditar-issue/requirements-dev.txt
+pytest -q auditar-issue/tests corrigir-ci/tests design-interface/tests documentacao-repositorio/tests entregar-issue/tests fluxos-conversacionais/tests revisar-issue/tests
+```
+
+A mesma validação é executada pelo workflow em [`.github/workflows/validate.yml`](./.github/workflows/validate.yml).
+
+## Estrutura de uma skill
+
+```text
+nome-da-skill/
+├── SKILL.md
+├── agents/          # adaptadores opcionais
+├── assets/          # ícones ou outros recursos de interface
+├── contracts/       # contratos operacionais
+├── references/      # detalhes carregados sob demanda
+├── schemas/         # schemas JSON
+├── scripts/         # quando a skill possui automações determinísticas
+└── tests/           # regressões e invariantes
+```
+
+## Contribuição
+
+Mantenha o `SKILL.md` focado no fluxo central, preserve a divulgação progressiva das referências e adicione testes para cada nova invariante. Evite colocar credenciais, dados pessoais, tokens ou artefatos de auditoria reais no repositório.
+
+Este repositório ainda não declara uma licença de redistribuição. Para autorizar formalmente cópia, adaptação e redistribuição por terceiros, adicione uma licença explícita em uma alteração futura.

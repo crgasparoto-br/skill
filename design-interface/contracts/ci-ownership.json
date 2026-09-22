@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "contract_version": "2026-08-20.3",
+  "controller_model": "entregar-issue-remains-level-0-controller",
+  "modes": {
+    "delivery-snapshot": {
+      "owner": "entregar-issue",
+      "observation": "single-snapshot-per-material-sha",
+      "waits_until_terminal": false,
+      "pending_ends_remote_wait": true,
+      "handoff_required_before_return": true,
+      "may_rerun_or_dispatch": false
+    },
+    "ci-remediation-loop": {
+      "owner": "corrigir-ci",
+      "observation": "monitor-until-material-terminal",
+      "waits_until_terminal": true,
+      "pending_ends_remote_wait": false,
+      "may_rerun_or_dispatch": false,
+      "may_write_delivery_audit_artifacts": false,
+      "post_material_green_transition": "return-to-caller:finalize-after-ci",
+      "terminal_delivery_owner": "entregar-issue"
+    }
+  },
+  "mutual_exclusion": "Only one CI owner mode may be active for a material SHA at a time.",
+  "governed_delivery_rule": "After material CI is terminal green, corrigir-ci closes CI ownership and returns a structured envelope to the existing entregar-issue controller. Only entregar-issue performs finalize-after-ci, post-write refreeze, result-only publication, and terminal handoff validation. corrigir-ci never recursively invokes entregar-issue from delegated mode.",
+  "ci_contract_revision": "2026-09-13.1"
+}

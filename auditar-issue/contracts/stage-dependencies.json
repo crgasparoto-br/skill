@@ -1,0 +1,194 @@
+{
+  "schema_version": 2,
+  "contract_version": "2026-08-20.3",
+  "stages": {
+    "preflight": {
+      "depends_on": []
+    },
+    "contract": {
+      "depends_on": [
+        "preflight"
+      ]
+    },
+    "domain-guidance": {
+      "depends_on": [
+        "contract"
+      ]
+    },
+    "implementation": {
+      "depends_on": [
+        "contract",
+        "domain-guidance"
+      ]
+    },
+    "documentation": {
+      "depends_on": [
+        "contract",
+        "implementation"
+      ]
+    },
+    "domain-validation": {
+      "depends_on": [
+        "contract",
+        "implementation"
+      ]
+    },
+    "hygiene": {
+      "depends_on": [
+        "implementation"
+      ]
+    },
+    "final-gate": {
+      "depends_on": [
+        "implementation",
+        "documentation",
+        "domain-validation",
+        "hygiene"
+      ]
+    },
+    "internal-adversarial-gate": {
+      "depends_on": [
+        "final-gate"
+      ]
+    },
+    "freeze": {
+      "depends_on": [
+        "internal-adversarial-gate"
+      ]
+    },
+    "remote-gate": {
+      "depends_on": [
+        "freeze"
+      ]
+    },
+    "decision": {
+      "depends_on": [
+        "remote-gate"
+      ]
+    }
+  },
+  "invalidation_rules": {
+    "specification_changed": [
+      "contract",
+      "domain-guidance",
+      "implementation",
+      "documentation",
+      "domain-validation",
+      "hygiene",
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "head_changed": [
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "base_or_merge_preview_changed": [
+      "internal-adversarial-gate",
+      "remote-gate",
+      "decision"
+    ],
+    "risk_changed": [
+      "domain-guidance",
+      "domain-validation",
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "contract_version_changed": [
+      "preflight",
+      "contract",
+      "domain-guidance",
+      "implementation",
+      "documentation",
+      "domain-validation",
+      "hygiene",
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "identity_observed": [],
+    "workflow_inventory_changed": [
+      "internal-adversarial-gate",
+      "remote-gate",
+      "decision"
+    ],
+    "source_manifest_changed": [
+      "contract",
+      "domain-guidance",
+      "implementation",
+      "documentation",
+      "domain-validation",
+      "hygiene",
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "baseline_changed": [
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "work_items_changed": [
+      "domain-guidance",
+      "implementation",
+      "documentation",
+      "domain-validation",
+      "hygiene",
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "implementation_scope_changed": [
+      "domain-guidance",
+      "implementation",
+      "documentation",
+      "domain-validation",
+      "hygiene",
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "observed_diff_changed": [
+      "documentation",
+      "domain-validation",
+      "hygiene",
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "quantitative_evidence_changed": [
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ],
+    "material_head_changed_after_measurement": [
+      "final-gate",
+      "internal-adversarial-gate",
+      "freeze",
+      "remote-gate",
+      "decision"
+    ]
+  }
+}

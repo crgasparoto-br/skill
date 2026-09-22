@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://solverit.invalid/issue-engineering/delivery-recovery-envelope-v2.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "contract_version",
+    "return_control_to",
+    "next_phase",
+    "ci_owner_closed",
+    "reason",
+    "previous_frozen_sha",
+    "material_head_sha",
+    "ci_state",
+    "recovery_hint"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "contract_version": {
+      "const": "2026-08-20.3"
+    },
+    "return_control_to": {
+      "const": "entregar-issue"
+    },
+    "next_phase": {
+      "const": "finalize-after-ci"
+    },
+    "ci_owner_closed": {
+      "const": true
+    },
+    "reason": {
+      "enum": [
+        "post-ci-refreeze",
+        "handoff-only"
+      ]
+    },
+    "previous_frozen_sha": {
+      "type": "string",
+      "minLength": 7
+    },
+    "material_head_sha": {
+      "type": "string",
+      "minLength": 7
+    },
+    "ci_state": {
+      "const": "green"
+    },
+    "recovery_hint": {
+      "type": "object",
+      "required": [
+        "checkpoint_ledger_path",
+        "material_change",
+        "changed_files",
+        "code_growth_recheck",
+        "resume_from"
+      ],
+      "properties": {
+        "checkpoint_ledger_path": {
+          "const": ".audit/entregar-issue/stage-checkpoints.json"
+        },
+        "material_change": {
+          "type": "boolean"
+        },
+        "changed_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "code_growth_recheck": {
+          "type": "boolean"
+        },
+        "resume_from": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "audit-remediation.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "contract_version",
+    "resolution_policy",
+    "source",
+    "candidate_head_sha",
+    "remediation_mode",
+    "items",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "contract_version": {
+      "const": "2026-08-20.3"
+    },
+    "resolution_policy": {
+      "const": "all-actionable-items"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "rejection_id",
+        "audit_report_sha256",
+        "audited_head_sha"
+      ],
+      "properties": {
+        "rejection_id": {
+          "type": "string",
+          "pattern": "^audit-rejection:[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$"
+        },
+        "audit_report_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "audited_head_sha": {
+          "type": "string",
+          "minLength": 7
+        }
+      },
+      "additionalProperties": true
+    },
+    "candidate_head_sha": {
+      "type": "string",
+      "minLength": 7
+    },
+    "remediation_mode": {
+      "enum": [
+        "targeted-remediation",
+        "systemic-remediation",
+        "mixed-remediation"
+      ]
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source_kind",
+          "source_id",
+          "remediation_mode",
+          "status",
+          "changed_files",
+          "evidence",
+          "validations"
+        ],
+        "properties": {
+          "source_kind": {
+            "enum": [
+              "finding",
+              "recommendation"
+            ]
+          },
+          "source_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "remediation_mode": {
+            "enum": [
+              "targeted-remediation",
+              "systemic-remediation"
+            ]
+          },
+          "status": {
+            "enum": [
+              "fixed",
+              "not-applicable"
+            ]
+          },
+          "closure_kind": {
+            "enum": [
+              "behavioral-fix",
+              "deterministic-gate-replay",
+              "not-applicable"
+            ]
+          },
+          "changed_files": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "validations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "original_failed_gate": {
+            "type": "object",
+            "required": [
+              "name",
+              "command",
+              "subject_sha",
+              "exit_code",
+              "evidence_sha256"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "command": {
+                "type": "string",
+                "minLength": 1
+              },
+              "subject_sha": {
+                "type": "string",
+                "minLength": 7
+              },
+              "exit_code": {
+                "type": "integer",
+                "not": {
+                  "const": 0
+                }
+              },
+              "evidence_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "additionalProperties": true
+          },
+          "revalidation": {
+            "type": "object",
+            "required": [
+              "command",
+              "subject_sha",
+              "exit_code",
+              "evidence_sha256",
+              "equivalence"
+            ],
+            "properties": {
+              "command": {
+                "type": "string",
+                "minLength": 1
+              },
+              "subject_sha": {
+                "type": "string",
+                "minLength": 7
+              },
+              "exit_code": {
+                "const": 0
+              },
+              "evidence_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "equivalence": {
+                "const": "exact-command-replay"
+              }
+            },
+            "additionalProperties": true
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "closure_kind": {
+                  "const": "deterministic-gate-replay"
+                }
+              },
+              "required": [
+                "closure_kind"
+              ]
+            },
+            "then": {
+              "required": [
+                "original_failed_gate",
+                "revalidation"
+              ]
+            }
+          }
+        ],
+        "additionalProperties": true
+      }
+    },
+    "status": {
+      "const": "closed"
+    }
+  },
+  "additionalProperties": true
+}

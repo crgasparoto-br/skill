@@ -1,0 +1,15 @@
+interface:
+  display_name: Revisar Issue
+  short_description: Revisa issues e reconcilia especificacao e documentacao canonica.
+  default_prompt: Use @revisar-issue para revisar esta issue, eliminar ambiguidades,
+    definir criterios verificaveis e reconciliar fontes canonicas do repositorio quando
+    necessario.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

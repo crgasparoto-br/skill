@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "contract_version": "2026-08-20.3",
+  "gates": [
+    {
+      "id": "contract",
+      "activate_when": {
+        "kind": "always"
+      },
+      "controls": [
+        "CONTRACT-CLOSURE"
+      ],
+      "invalidates": [
+        "contract",
+        "implementation",
+        "documentation",
+        "domain-validation",
+        "hygiene",
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "documentation",
+      "activate_when": {
+        "kind": "always"
+      },
+      "controls": [
+        "DOC-CONSISTENCY"
+      ],
+      "invalidates": [
+        "documentation",
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "working-tree",
+      "activate_when": {
+        "kind": "always"
+      },
+      "controls": [
+        "WORKTREE-CLEAN"
+      ],
+      "invalidates": [
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "identity",
+      "activate_when": {
+        "kind": "always"
+      },
+      "controls": [
+        "IDENTITY-EXACT-HEAD"
+      ],
+      "invalidates": [
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "focused-tests",
+      "activate_when": {
+        "kind": "classification",
+        "field": "behavioral_change",
+        "equals": true
+      },
+      "controls": [
+        "FOCUSED-TESTS"
+      ],
+      "invalidates": [
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "final-suite",
+      "activate_when": {
+        "kind": "classification",
+        "field": "behavioral_change",
+        "equals": true
+      },
+      "controls": [
+        "FINAL-SUITE"
+      ],
+      "invalidates": [
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "regression",
+      "activate_when": {
+        "kind": "classification",
+        "field": "behavioral_change",
+        "equals": true
+      },
+      "controls": [
+        "REGRESSION"
+      ],
+      "invalidates": [
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "negative-controls",
+      "activate_when": {
+        "kind": "all",
+        "rules": [
+          {
+            "kind": "profile-in",
+            "values": [
+              "standard",
+              "critical"
+            ]
+          },
+          {
+            "kind": "classification",
+            "field": "behavioral_change",
+            "equals": true
+          }
+        ]
+      },
+      "controls": [
+        "NEGATIVE-CONTROL-PRIMARY"
+      ],
+      "invalidates": [
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "critical-risk-family",
+      "activate_when": {
+        "kind": "profile-in",
+        "values": [
+          "critical"
+        ]
+      },
+      "controls": [
+        "RISK-SATURATION"
+      ],
+      "invalidates": [
+        "domain-validation",
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "input-parser-controls",
+      "activate_when": {
+        "kind": "signal-any",
+        "values": [
+          "parser",
+          "decoder"
+        ]
+      },
+      "controls": [
+        "IP-RAW-001",
+        "IP-MODE-001",
+        "IP-SCOPE-001",
+        "IP-INACTIVE-001",
+        "IP-EFFECT-001"
+      ],
+      "invalidates": [
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "performance-critical-path",
+      "activate_when": {
+        "kind": "signal-any",
+        "values": [
+          "performance"
+        ]
+      },
+      "controls": [
+        "PERF-STAGE-ATTR-001",
+        "PERF-CRITICAL-WORK-001",
+        "PERF-BENCH-PATH-001"
+      ],
+      "invalidates": [
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
+      "id": "visual",
+      "activate_when": {
+        "kind": "signal-any",
+        "values": [
+          "interface"
+        ]
+      },
+      "controls": [
+        "VISUAL-GATE"
+      ],
+      "invalidates": [
+        "domain-validation",
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    }
+  ],
+  "governance": {
+    "new_global_invariant_rule": "Do not add a new SKILL.md invariant when an existing gate/risk family can represent the control; extend registry controls/fixtures instead.",
+    "runtime_source_of_truth": "contracts/gate-registry.json"
+  }
+}
