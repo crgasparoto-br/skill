@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "system": "skill-catalog",
+  "canonical_spec": "docs/SKILL_SYSTEM_SPEC.md",
+  "security_model": "docs/SECURITY.md",
+  "capabilities_manifest": ".github/skill-system-capabilities.json",
+  "status_model": [
+    "planned",
+    "implemented",
+    "validated"
+  ],
+  "requirements": [
+    {
+      "id": "SKSYS-001",
+      "title": "Canonical source hierarchy",
+      "status": "implemented",
+      "summary": "Global architecture, shared contracts, per-skill instructions and executable evidence have explicit precedence.",
+      "implementationRefs": [
+        "file:docs/SKILL_SYSTEM_SPEC.md",
+        "file:README.md"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_repository.py"
+      ]
+    },
+    {
+      "id": "SKSYS-002",
+      "title": "Explicit exact-head identity",
+      "status": "validated",
+      "summary": "Candidate-bound evidence remains tied to the material identity it examined and later material writes invalidate dependent evidence.",
+      "implementationRefs": [
+        "file:entregar-issue/SKILL.md",
+        "file:auditar-issue/SKILL.md"
+      ],
+      "validationRefs": [
+        "file:entregar-issue/tests/test_terminal_handoff_contract.py",
+        "file:entregar-issue/tests/test_universal_post_write_handoff_guard.py"
+      ]
+    },
+    {
+      "id": "SKSYS-003",
+      "title": "Fail-closed unknown semantics",
+      "status": "implemented",
+      "summary": "Missing or ambiguous material evidence never becomes implicit approval or fabricated zero.",
+      "implementationRefs": [
+        "file:docs/SKILL_SYSTEM_SPEC.md",
+        "file:docs/SECURITY.md"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_repository.py"
+      ]
+    },
+    {
+      "id": "SKSYS-004",
+      "title": "Bounded remediation and retries",
+      "status": "validated",
+      "summary": "Implementation, CI and audit remediation are bounded and cannot form open-ended AI-on-AI loops.",
+      "implementationRefs": [
+        "file:entregar-issue/SKILL.md",
+        "file:corrigir-ci/SKILL.md"
+      ],
+      "validationRefs": [
+        "file:entregar-issue/tests/test_single_invocation_controller.py"
+      ]
+    },
+    {
+      "id": "SKSYS-005",
+      "title": "Independent read-only audit",
+      "status": "validated",
+      "summary": "Independent audit is isolated from implementation authority and does not mutate the candidate.",
+      "implementationRefs": [
+        "file:auditar-issue/SKILL.md",
+        "file:docs/SECURITY.md"
+      ],
+      "validationRefs": [
+        "file:auditar-issue/tests/test_controller_mode_contract.py"
+      ]
+    },
+    {
+      "id": "SKSYS-006",
+      "title": "Exclusive CI ownership transfer",
+      "status": "validated",
+      "summary": "Delivery snapshot and CI remediation ownership are mutually exclusive for the same material SHA and return control structurally.",
+      "implementationRefs": [
+        "file:entregar-issue/contracts/ci-ownership.json",
+        "file:corrigir-ci/references/ci-ownership.md"
+      ],
+      "validationRefs": [
+        "file:corrigir-ci/tests/test_ci_ownership_contract.py"
+      ]
+    },
+    {
+      "id": "SKSYS-007",
+      "title": "Progressive context with insufficient-context blocking",
+      "status": "implemented",
+      "summary": "Skills load context progressively but must block semantic approval when required material context is unavailable.",
+      "implementationRefs": [
+        "file:docs/using-with-ai.md",
+        "file:docs/SKILL_SYSTEM_SPEC.md"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_repository.py"
+      ]
+    },
+    {
+      "id": "SKSYS-008",
+      "title": "No implicit merge authority",
+      "status": "implemented",
+      "summary": "Skill approval and release readiness never imply native merge enforcement or merge authority.",
+      "implementationRefs": [
+        "file:docs/SECURITY.md",
+        "file:entregar-issue/contracts/controller-context.schema.json"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_repository.py"
+      ]
+    },
+    {
+      "id": "SKSYS-009",
+      "title": "Canonical shared-contract ownership",
+      "status": "validated",
+      "summary": "entregar-issue owns shared contracts and generated copies in other skills remain synchronized.",
+      "implementationRefs": [
+        "file:README.md",
+        "file:entregar-issue/contracts/version.json"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_repository.py"
+      ]
+    },
+    {
+      "id": "SKSYS-010",
+      "title": "Observable state without fabricated values",
+      "status": "implemented",
+      "summary": "Known zero, known value, partial and unknown remain distinguishable in metrics and operational evidence.",
+      "implementationRefs": [
+        "file:docs/SKILL_SYSTEM_SPEC.md"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_repository.py"
+      ]
+    }
+  ]
+}
