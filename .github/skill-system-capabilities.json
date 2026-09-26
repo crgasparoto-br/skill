@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "system_version": "2026-09-26.1",
+  "canonical_controller": "entregar-issue",
+  "canonical_contract_owner": "entregar-issue",
+  "independent_auditor": "auditar-issue",
+  "ci_remediator": "corrigir-ci",
+  "exact_head_evidence": "required",
+  "fail_closed_on_unknown": "enabled",
+  "bounded_remediation": "enabled",
+  "progressive_context_loading": "enabled",
+  "context_insufficient_blocking": "enabled",
+  "shared_contract_sync": "enabled",
+  "independent_read_only_audit": "enabled",
+  "automatic_merge": "disabled",
+  "destructive_actions_by_default": "disabled",
+  "audit_transports": [
+    "native-github-audit",
+    "certified-handoff"
+  ]
+}

@@ -62,6 +62,19 @@ Forneça o `SKILL.md` como contexto de sistema/projeto ou copie seu conteúdo pa
 
 Mapeie o `SKILL.md` para o mecanismo de regras do agente — por exemplo, uma regra de projeto — e mantenha `references/`, `scripts/` e `tests/` no mesmo diretório para que os caminhos relativos continuem válidos.
 
+## Arquitetura e governança global
+
+O catálogo possui uma camada global de governança acima das regras específicas de cada skill:
+
+- [`docs/SKILL_SYSTEM_SPEC.md`](./docs/SKILL_SYSTEM_SPEC.md) é a especificação mestre e define hierarquia de fontes, identidade exact-head, fail-closed, ownership, contexto suficiente e observabilidade;
+- [`config/skill-system-requirements.json`](./config/skill-system-requirements.json) registra requisitos globais com IDs estáveis e referências de implementação/validação;
+- [`.github/skill-system-capabilities.json`](./.github/skill-system-capabilities.json) declara as capacidades globais efetivamente habilitadas;
+- [`docs/SECURITY.md`](./docs/SECURITY.md) define limites de escrita, independência, merge, credenciais e efeitos destrutivos.
+
+As regras globais usam `UNKNOWN` como estado material de evidência insuficiente. Ausência de informação não deve ser convertida em sucesso, `false`, zero ou `not-applicable`. Aprovação interna, auditoria independente, readiness de release e enforcement de merge são fatos distintos.
+
+A memória da conversa pode ajudar na continuidade, mas o estado necessário à correção deve ser reconstruível a partir do repositório, GitHub e artefatos explicitamente versionados.
+
 ## Governança dos contratos
 
 `entregar-issue` é o proprietário canônico dos contratos compartilhados de entrega. As demais skills registram essa relação em `contracts/version.json` e podem conter cópias geradas de schemas ou referências. Não altere uma cópia gerada isoladamente: atualize a fonte canônica e depois regenere ou sincronize as cópias correspondentes.
