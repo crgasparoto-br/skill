@@ -43,5 +43,8 @@ jobs:
       - name: Check generated catalog documentation
         run: python scripts/build_catalog_docs.py --check --root .
 
+      - name: Validate release versioning
+        run: python scripts/validate_versioning.py --root .
+
       - name: Run skill tests
         run: python -m pytest -q

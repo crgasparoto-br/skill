@@ -13,13 +13,15 @@ try:
     from catalog import catalog_skill_ids, load_catalog, validate_catalog
     from validate_contract_sync import validate_contract_sync
     from validate_docs import validate_docs
+    from validate_versioning import validate_versioning
 except ImportError:  # pragma: no cover - package import fallback
     from .catalog import catalog_skill_ids, load_catalog, validate_catalog
     from .validate_contract_sync import validate_contract_sync
     from .validate_docs import validate_docs
+    from .validate_versioning import validate_versioning
 
 ROOT = Path(__file__).resolve().parents[1]
-SYSTEM_VERSION = "2026-09-29.1"
+SYSTEM_VERSION = "2026-09-29.2"
 GLOBAL_FILES = {
     "docs/SKILL_SYSTEM_SPEC.md",
     "docs/SECURITY.md",
@@ -28,6 +30,11 @@ GLOBAL_FILES = {
     "config/capabilities.json",
     "schemas/skill-catalog.schema.json",
     "schemas/capabilities.schema.json",
+    "config/compatibility.json",
+    "schemas/compatibility.schema.json",
+    "VERSION",
+    "CHANGELOG.md",
+    "docs/RELEASE.md",
     ".github/skill-system-capabilities.json",
 }
 REQUIRED_CAPABILITIES = {
@@ -46,6 +53,7 @@ REQUIRED_CAPABILITIES = {
     "destructive_actions_by_default": "disabled",
     "catalog_manifest": "enabled",
     "capability_contract": "enabled",
+    "versioned_releases": "enabled",
     "contract_sync_validation": "enabled",
     "documentation_link_validation": "enabled",
 }
@@ -97,6 +105,8 @@ def validate_global_governance(errors: list[str]) -> None:
             "Observabilidade sem fabricação",
             "Catálogo machine-readable",
             "capacidades exigidas",
+            "SemVer",
+            "compatibilidade",
             "cópias geradas",
         )
         for term in required_terms:
@@ -151,6 +161,8 @@ def validate_global_governance(errors: list[str]) -> None:
             "skills_catalog_schema": "schemas/skill-catalog.schema.json",
             "capability_registry": "config/capabilities.json",
             "capability_registry_schema": "schemas/capabilities.schema.json",
+            "compatibility_manifest": "config/compatibility.json",
+            "compatibility_manifest_schema": "schemas/compatibility.schema.json",
         }
         for key, expected in expected_paths.items():
             if requirements.get(key) != expected:
@@ -276,6 +288,7 @@ def main() -> int:
 
     errors.extend(f"contratos: {error}" for error in validate_contract_sync(ROOT))
     errors.extend(f"documentação: {error}" for error in validate_docs(ROOT))
+    errors.extend(f"versionamento: {error}" for error in validate_versioning(ROOT))
 
     if errors:
         print("Validação falhou:")

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/crgasparoto-br/skill/blob/main/schemas/compatibility.schema.json",
+  "title": "Skill catalog compatibility manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "system", "release_version", "release_date", "catalog_version", "system_version", "contract_policy", "skills"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "system": {"const": "skill-compatibility"},
+    "release_version": {"$ref": "#/$defs/semver"},
+    "release_date": {"type": "string", "format": "date"},
+    "catalog_version": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}\\.[0-9]+$"},
+    "system_version": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}\\.[0-9]+$"},
+    "contract_policy": {"$ref": "#/$defs/contractPolicy"},
+    "skills": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/skillCompatibility"}}
+  },
+  "$defs": {
+    "semver": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"},
+    "contractPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scheme", "public_contract_version", "internal_lineage_scheme", "internal_lineage_version", "compatibility_mode", "mappings"],
+      "properties": {
+        "scheme": {"const": "semver"},
+        "public_contract_version": {"$ref": "#/$defs/semver"},
+        "internal_lineage_scheme": {"const": "date.release"},
+        "internal_lineage_version": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}\\.[0-9]+$"},
+        "compatibility_mode": {"enum": ["transitional", "semver-native"]},
+        "mappings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/mapping"}}
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["public_contract_version", "internal_lineage_version", "status", "migration"],
+      "properties": {
+        "public_contract_version": {"$ref": "#/$defs/semver"},
+        "internal_lineage_version": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}\\.[0-9]+$"},
+        "status": {"enum": ["supported", "deprecated", "removed"]},
+        "migration": {"type": "string", "minLength": 3}
+      }
+    },
+    "skillCompatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "public_contract_version", "internal_lineage_version", "min_release", "status", "migration"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "public_contract_version": {"$ref": "#/$defs/semver"},
+        "internal_lineage_version": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}\\.[0-9]+$"},
+        "min_release": {"$ref": "#/$defs/semver"},
+        "status": {"enum": ["supported", "deprecated", "removed"]},
+        "migration": {"type": "string", "minLength": 3}
+      }
+    }
+  }
+}

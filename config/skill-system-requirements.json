@@ -8,6 +8,8 @@
   "skills_catalog_schema": "schemas/skill-catalog.schema.json",
   "capability_registry": "config/capabilities.json",
   "capability_registry_schema": "schemas/capabilities.schema.json",
+  "compatibility_manifest": "config/compatibility.json",
+  "compatibility_manifest_schema": "schemas/compatibility.schema.json",
   "status_model": [
     "planned",
     "implemented",
@@ -202,7 +204,23 @@
         "file:scripts/validate_catalog.py",
         "file:tests/test_catalog_governance.py"
       ]
+    },
+    {
+      "id": "SKSYS-015",
+      "title": "Reproducible release versioning",
+      "status": "validated",
+      "summary": "Public SemVer releases, temporal catalog versions and contract lineage are declared in a compatibility manifest with migration notes.",
+      "implementationRefs": [
+        "file:VERSION",
+        "file:CHANGELOG.md",
+        "file:docs/RELEASE.md",
+        "file:config/compatibility.json"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_versioning.py",
+        "file:tests/test_versioning.py"
+      ]
     }
   ],
-  "system_version": "2026-09-29.1"
+  "system_version": "2026-09-29.2"
 }

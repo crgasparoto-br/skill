@@ -103,19 +103,25 @@ O `SKILL.md` deve permanecer como control plane compacto da skill. Referências,
 
 `config/capabilities.json` define, para cada capacidade exigida, o estado quando ela estiver ausente e o fallback permitido. Ausência de escrita, execução, identidade imutável ou leitura remota nunca pode ser promovida a sucesso.
 
-## 10. Modelo de requisitos
+## 10. Versionamento e compatibilidade
+
+`VERSION` é a versão pública SemVer do conjunto de skills e adaptadores. `config/skills-catalog.json.catalog_version` e `config/skill-system-requirements.json.system_version` identificam snapshots temporais internos. `config/compatibility.json` é a fonte canônica para mapear a release pública, a versão pública do contrato, a linhagem interna e a migração de cada skill.
+
+Uma combinação de versões não declarada no manifesto deve permanecer `UNKNOWN` ou incompatível. Tags de release devem apontar para commits imutáveis e só devem ser criadas depois do merge e da execução dos gates de release.
+
+## 11. Modelo de requisitos
 
 `config/skill-system-requirements.json` registra requisitos globais com IDs estáveis, estado, referências de implementação e referências de validação. Alterações que introduzam uma nova invariante global devem preferir estender esse registro e os contratos existentes antes de duplicar regras em múltiplos `SKILL.md`.
 
-## 11. Manifesto de capacidades
+## 12. Manifesto de capacidades
 
 `.github/skill-system-capabilities.json` descreve capacidades globais ativas do catálogo. O manifesto é declarativo e deve refletir comportamento realmente implementado. Uma capacidade não pode ser marcada como habilitada apenas porque está planejada.
 
-## 12. Segurança e autoridade
+## 13. Segurança e autoridade
 
 `docs/SECURITY.md` é a fonte transversal para limites de escrita, independência, credenciais, efeitos destrutivos e merge. Contratos específicos podem ser mais restritivos, nunca mais permissivos sem alteração explícita desta especificação.
 
-## 13. Validação
+## 14. Validação
 
 `python scripts/validate_repository.py` deve falhar quando:
 
@@ -127,6 +133,8 @@ O `SKILL.md` deve permanecer como control plane compacto da skill. Referências,
 - uma skill obrigatória perder `SKILL.md`, contratos, referências, schemas ou testes;
 - o catálogo divergir dos metadados das skills;
 - uma cópia de contrato divergir do hash canônico;
-- links Markdown locais ou referências de skills deixarem de resolver.
+- links Markdown locais ou referências de skills deixarem de resolver;
+- a versão pública, catalog version, system version e compatibilidade divergirem;
+- uma release declarar uma migração ou skill fora do manifesto de compatibilidade.
 
 Novas invariantes globais devem incluir validação automatizada proporcional ao risco.
