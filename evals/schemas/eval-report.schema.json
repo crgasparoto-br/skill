@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/crgasparoto-br/skill/blob/main/evals/schemas/eval-report.schema.json",
+  "title": "Behavioral evaluation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "harness_version", "mode", "release_versions", "run_id", "generated_at", "content_sha256", "cases", "summary"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "harness_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "mode": {"type": "string", "enum": ["validate-only", "replay", "provider"]},
+    "release_versions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "run_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "status", "expected_outcome", "observed_outcome", "reasons"],
+        "properties": {
+          "case_id": {"type": "string"},
+          "status": {"type": "string", "enum": ["PASS", "FAIL", "NOT_RUN", "INVALID"]},
+          "expected_outcome": {"type": "string", "enum": ["PASS", "BLOCK", "UNKNOWN", "NOT_APPLICABLE"]},
+          "observed_outcome": {"type": ["string", "null"], "enum": ["PASS", "BLOCK", "UNKNOWN", "NOT_APPLICABLE", null]},
+          "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "passed", "failed", "not_run", "invalid"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 1},
+        "passed": {"type": "integer", "minimum": 0},
+        "failed": {"type": "integer", "minimum": 0},
+        "not_run": {"type": "integer", "minimum": 0},
+        "invalid": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
