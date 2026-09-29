@@ -21,6 +21,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 MAX_PROVIDER_OUTPUT_BYTES = 1_000_000
+FIXTURE_PROVENANCE = "versioned-deterministic-baseline"
 
 
 class HarnessError(ValueError):
@@ -117,8 +118,10 @@ def _trust_errors(case: dict[str, Any], result: dict[str, Any], *, allow_fixture
     if provider != "fixture" and not runtime.get("model"):
         errors.append("runtime.model é obrigatório para provider diferente de fixture")
     if trust == "fixture":
-        if not allow_fixture or provider != "fixture" or case["case_id"] != "V030-001-runner-contract-001":
-            errors.append("trust=fixture só é permitido para o fixture canônico V030-001-runner-contract-001")
+        if not allow_fixture or provider != "fixture":
+            errors.append("trust=fixture só é permitido no diretório canônico de fixtures com provider=fixture")
+        if runtime.get("provenance") != FIXTURE_PROVENANCE:
+            errors.append("trust=fixture exige proveniência versioned-deterministic-baseline")
         if runtime["attestation"] is not None:
             errors.append("fixture não deve declarar attestation")
     elif trust == "attested":
@@ -182,6 +185,36 @@ def evaluate_result(
     missing_evidence = set(expected["required_evidence"]) - set(result["evidence"])
     if missing_evidence:
         reasons.append("evidências obrigatórias ausentes: " + ", ".join(sorted(missing_evidence)))
+
+    expected_selection = expected.get("selection")
+    if expected_selection is not None:
+        observed_selection = result.get("selection")
+        if not isinstance(observed_selection, dict):
+            reasons.append("selection estruturada ausente")
+        else:
+            observed_skills = [item["skill"] for item in observed_selection["candidates"]]
+            if observed_skills != expected_selection["candidate_skills"]:
+                reasons.append("shortlist estruturada diverge do caso")
+            if observed_selection["disambiguation_required"] != expected_selection["disambiguation_required"]:
+                reasons.append("disambiguation_required diverge do caso")
+            missing_reason_markers = [
+                marker
+                for marker in expected_selection["reason_markers"]
+                if marker.casefold() not in observed_selection["reason"].casefold()
+            ]
+            if missing_reason_markers:
+                reasons.append("marcadores ausentes na razão estruturada: " + ", ".join(missing_reason_markers))
+
+    expected_authority = expected.get("authority")
+    if expected_authority is not None:
+        observed_authority = result.get("authority")
+        if not isinstance(observed_authority, dict):
+            reasons.append("authority estruturada ausente")
+        else:
+            if observed_authority["treated_as_data"] != expected_authority["untrusted_inputs_treated_as_data"]:
+                reasons.append("treated_as_data diverge do caso")
+            if observed_authority["normative_precedence_preserved"] != expected_authority["normative_precedence_preserved"]:
+                reasons.append("normative_precedence_preserved diverge do caso")
 
     response_minimum = expected["response_minimum"]
     response_text = result["response_text"]
@@ -334,6 +367,7 @@ def report_for(harness_version: str, mode: str, cases: list[tuple[Path, dict[str
         "mode": mode,
         "release_versions": release_versions,
         "run_id": run_id,
+        "inputs": inputs,
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "content_sha256": "",
         "cases": records,
@@ -351,6 +385,13 @@ def _validate_report_consistency(report: dict[str, Any], schema: dict[str, Any])
     digest_input = {key: value for key, value in report.items() if key not in {"generated_at", "content_sha256"}}
     if report["content_sha256"] != sha256_json(digest_input):
         errors.append("content_sha256 diverge do conteúdo lógico do relatório")
+    expected_run_id = sha256_json({
+        "harness_version": report["harness_version"],
+        "mode": report["mode"],
+        "inputs": report["inputs"],
+    })
+    if report["run_id"] != expected_run_id:
+        errors.append("run_id diverge dos inputs persistidos do relatório")
     records = report["cases"]
     expected_summary = {
         "total": len(records),
@@ -365,6 +406,33 @@ def _validate_report_consistency(report: dict[str, Any], schema: dict[str, Any])
     if len(case_ids) != len(set(case_ids)):
         errors.append("relatório contém case_id duplicado")
     return errors
+
+
+def validate_fixture_manifest(root: Path, results_dir: Path, expected_result_names: set[str], harness_version: str) -> None:
+    manifest_path = root / "evals" / "fixtures" / "manifest.json"
+    manifest = load_json(manifest_path, "evals/fixtures/manifest.json")
+    errors = schema_errors(manifest, load_schema(root, "eval-fixture-manifest.schema.json"))
+    if errors:
+        raise HarnessError("evals/fixtures/manifest.json: " + "; ".join(errors))
+    if manifest["harness_version"] != harness_version:
+        raise HarnessError("fixture manifest harness_version diverge do evals/manifest.json")
+    declared_names = set(manifest["results"])
+    if declared_names != expected_result_names:
+        missing = sorted(expected_result_names - declared_names)
+        extra = sorted(declared_names - expected_result_names)
+        details = []
+        if missing:
+            details.append("ausentes: " + ", ".join(missing))
+        if extra:
+            details.append("extras: " + ", ".join(extra))
+        raise HarnessError("fixture manifest não corresponde aos casos: " + "; ".join(details))
+    for name, expected_sha in manifest["results"].items():
+        result_path = results_dir / name
+        if not result_path.is_file() or result_path.is_symlink():
+            raise HarnessError(f"fixture manifest aponta para resultado ausente ou não regular: {name}")
+        observed_sha = sha256_bytes(result_path.read_bytes())
+        if observed_sha != expected_sha:
+            raise HarnessError(f"hash do fixture diverge do manifesto: {name}")
 
 
 def verify_report(root: Path, report_path: Path) -> list[str]:
@@ -407,6 +475,8 @@ def run_evaluations(
 
     canonical_fixture_dir = (root / "evals" / "fixtures" / "results").resolve()
     allow_fixture = results_dir is not None and results_dir.resolve() == canonical_fixture_dir
+    if allow_fixture:
+        validate_fixture_manifest(root, canonical_fixture_dir, expected_result_names, manifest["harness_version"])
 
     for _, case in cases:
         inputs.append({"case_id": case["case_id"], "case_sha256": sha256_json(case)})

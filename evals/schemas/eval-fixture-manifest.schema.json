@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/crgasparoto-br/skill/blob/main/evals/schemas/eval-fixture-manifest.schema.json",
+  "title": "Behavioral evaluation fixture manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "system", "harness_version", "provenance", "results"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "system": {"const": "behavioral-evaluation-fixtures"},
+    "harness_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "provenance": {"const": "versioned-deterministic-baseline"},
+    "results": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    }
+  }
+}

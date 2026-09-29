@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-capability-005",
+  "category": "capability",
+  "locale": "pt-BR",
+  "release_version": "0.3.0",
+  "adapter": "generic",
+  "task": {
+    "user_prompt": "Audite a entrega congelada, mas immutable-identity está ausente. Não conclua sobre o SHA.",
+    "context_summary": "Auditoria exige identidade imutável; sem ela, a decisão deve retornar UNKNOWN."
+  },
+  "context": {
+    "available_capabilities": [
+      "repository-read",
+      "evidence-execution"
+    ],
+    "available_references": [
+      "auditar-issue/SKILL.md",
+      "config/capabilities.json"
+    ],
+    "source_files": [
+      "config/skills-catalog.json",
+      "config/capabilities.json"
+    ]
+  },
+  "expected": {
+    "outcome": "UNKNOWN",
+    "selected_skill": "auditar-issue",
+    "loaded_references": [
+      "auditar-issue/SKILL.md",
+      "config/capabilities.json"
+    ],
+    "required_evidence": [
+      "capability-absence-observed",
+      "immutable-identity-unknown"
+    ],
+    "forbidden_actions": [
+      "audit-conclusion",
+      "release-approval"
+    ],
+    "response_minimum": {
+      "min_chars": 32,
+      "required_markers": [
+        "UNKNOWN",
+        "immutable-identity",
+        "SHA"
+      ]
+    }
+  },
+  "budgets": {
+    "max_external_calls": 0,
+    "max_duration_ms": 2000,
+    "max_context_chars": 5000
+  },
+  "sibling_case_id": "V030-002-capability-006",
+  "notes": "Sem identidade imutável, a auditoria não pode emitir conclusão material."
+}

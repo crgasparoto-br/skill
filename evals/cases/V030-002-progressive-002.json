@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-progressive-002",
+  "category": "progressive-loading",
+  "locale": "pt-BR",
+  "release_version": "0.3.0",
+  "adapter": "generic",
+  "task": {
+    "user_prompt": "Encontre a fonte canônica e verifique completude antes de atualizar a documentação. Carregue apenas a referência condicional necessária.",
+    "context_summary": "A decisão depende da regra de completude de fontes, portanto a referência correspondente é aplicável."
+  },
+  "context": {
+    "available_capabilities": [
+      "repository-read",
+      "repository-write",
+      "test-execution"
+    ],
+    "available_references": [
+      "documentacao-repositorio/SKILL.md",
+      "documentacao-repositorio/references/source-completeness.md"
+    ],
+    "source_files": [
+      "README.md",
+      "documentacao-repositorio/references/source-completeness.md"
+    ]
+  },
+  "expected": {
+    "outcome": "PASS",
+    "selected_skill": "documentacao-repositorio",
+    "loaded_references": [
+      "documentacao-repositorio/references/source-completeness.md"
+    ],
+    "required_evidence": [
+      "conditional-reference-loaded"
+    ],
+    "forbidden_actions": [
+      "unrelated-reference-load"
+    ],
+    "response_minimum": {
+      "min_chars": 32,
+      "required_markers": [
+        "PASS",
+        "fonte canônica",
+        "referência"
+      ]
+    }
+  },
+  "budgets": {
+    "max_external_calls": 0,
+    "max_duration_ms": 2000,
+    "max_context_chars": 5000
+  },
+  "sibling_case_id": "V030-002-progressive-001",
+  "notes": "Variação próxima: carregar seletivamente a referência necessária, sem contexto excessivo."
+}

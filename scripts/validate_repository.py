@@ -25,7 +25,7 @@ except ImportError:  # pragma: no cover - package import fallback
     from .validate_evals import validate_evals
 
 ROOT = Path(__file__).resolve().parents[1]
-SYSTEM_VERSION = "2026-09-29.4"
+SYSTEM_VERSION = "2026-09-29.5"
 GLOBAL_FILES = {
     "docs/SKILL_SYSTEM_SPEC.md",
     "docs/SECURITY.md",
@@ -50,6 +50,8 @@ GLOBAL_FILES = {
     "evals/schemas/eval-case.schema.json",
     "evals/schemas/eval-result.schema.json",
     "evals/schemas/eval-report.schema.json",
+    "evals/schemas/eval-fixture-manifest.schema.json",
+    "evals/fixtures/manifest.json",
     "scripts/validate_evals.py",
     ".github/skill-system-capabilities.json",
 }
@@ -192,6 +194,8 @@ def validate_global_governance(errors: list[str]) -> None:
             "evaluation_result_schema": "evals/schemas/eval-result.schema.json",
             "evaluation_report_schema": "evals/schemas/eval-report.schema.json",
             "evaluation_validator": "scripts/validate_evals.py",
+            "evaluation_fixture_manifest": "evals/fixtures/manifest.json",
+            "evaluation_fixture_manifest_schema": "evals/schemas/eval-fixture-manifest.schema.json",
         }
         for key, expected in expected_paths.items():
             if requirements.get(key) != expected:

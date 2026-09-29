@@ -1,6 +1,6 @@
 # Harness de avaliações comportamentais
 
-Este diretório implementa o item `V030-001` do [roadmap da `v0.3.0`](../docs/ROADMAP.md). O harness é **provider-agnostic**: a CI valida os casos e pode reproduzir resultados versionados sem chamar um modelo externo. Um runtime de IA pode ser conectado posteriormente por replay de resultados ou por um comando explícito.
+Este diretório implementa os itens `V030-001` e `V030-002` do [roadmap da `v0.3.0`](../docs/ROADMAP.md). O harness é **provider-agnostic**: a CI valida os casos e pode reproduzir resultados versionados sem chamar um modelo externo. Um runtime de IA pode ser conectado posteriormente por replay de resultados ou por um comando explícito.
 
 ## Estrutura
 
@@ -40,11 +40,15 @@ Conectar um provider explícito. O comando recebe um caso JSON em `stdin` e deve
 ```bash
 python evals/run_evals.py \
   --root . \
-  --provider-command 'python path/to/provider_adapter.py' \
+  --provider-command 'python /absolute/path/to/provider_adapter.py' \
   --report /tmp/eval-report.json
 ```
 
-O runner não usa `shell=True`, executa o provider em diretório temporário, limita stdout, não escolhe um modelo por conta própria e não transforma runtime ausente em `PASS`. Saídas de `provider-command` são sempre `provider-untrusted` e nunca podem aprovar um caso. O trust `attested` possui contrato estrutural, mas permanece `NOT_RUN` até existir um verificador criptográfico confiável; hoje somente o fixture do próprio harness pode aprovar o smoke case. Para avaliações em lote com LLM, o adapter deve descobrir o catálogo de modelos e declarar provider, modelo, métricas e limites no resultado.
+O provider é executado em um diretório temporário; use um caminho absoluto ou um executável disponível no `PATH`.
+
+O runner não usa `shell=True`, executa o provider em diretório temporário, limita stdout, não escolhe um modelo por conta própria e não transforma runtime ausente em `PASS`. Saídas de `provider-command` são sempre `provider-untrusted` e nunca podem aprovar um caso.
+
+O trust `attested` possui contrato estrutural, mas permanece `NOT_RUN` até existir um verificador criptográfico confiável. O replay pode aprovar somente fixtures determinísticos no diretório canônico; esses fixtures validam o contrato e o baseline versionado, não afirmam que um modelo real foi executado. Para avaliações em lote com LLM, o adapter deve descobrir o catálogo de modelos e declarar provider, modelo, métricas e limites no resultado.
 
 ## Resultado e estados
 
@@ -69,4 +73,4 @@ Cada relatório contém:
 - status e razões por caso;
 - resumo com `passed`, `failed`, `not_run` e `invalid`.
 
-O timestamp serve para observabilidade, mas não participa do hash lógico. O fixture em `evals/fixtures/results/` existe para testar o próprio harness; ele não representa uma aprovação de comportamento de um modelo real.
+O timestamp serve para observabilidade, mas não participa do hash lógico. Os fixtures em `evals/fixtures/results/` incluem o smoke case do runner e o baseline determinístico dos casos V030-002; `evals/fixtures/manifest.json` fixa os hashes dos resultados e a proveniência do baseline. Eles não representam uma aprovação de comportamento de um modelo real.

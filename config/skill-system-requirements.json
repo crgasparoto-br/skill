@@ -19,6 +19,8 @@
   "evaluation_result_schema": "evals/schemas/eval-result.schema.json",
   "evaluation_report_schema": "evals/schemas/eval-report.schema.json",
   "evaluation_validator": "scripts/validate_evals.py",
+  "evaluation_fixture_manifest": "evals/fixtures/manifest.json",
+  "evaluation_fixture_manifest_schema": "evals/schemas/eval-fixture-manifest.schema.json",
   "status_model": [
     "planned",
     "implemented",
@@ -260,7 +262,26 @@
         "file:scripts/validate_evals.py",
         "file:tests/test_eval_harness.py"
       ]
+    },
+    {
+      "id": "SKSYS-018",
+      "title": "Adversarial behavioral regression matrix",
+      "status": "validated",
+      "summary": "The evaluation harness keeps sibling cases and deterministic baselines for selection, authority, capabilities, evidence, context and related fail-closed boundaries.",
+      "implementationRefs": [
+        "file:evals/cases/V030-002-selection-001.json",
+        "file:evals/cases/V030-002-authority-001.json",
+        "file:evals/cases/V030-002-capability-001.json",
+        "file:evals/cases/V030-002-evidence-001.json",
+        "file:evals/cases/V030-002-context-001.json",
+        "file:evals/fixtures/manifest.json",
+        "file:scripts/validate_evals.py"
+      ],
+      "validationRefs": [
+        "file:tests/test_v030_002_cases.py",
+        "file:scripts/validate_evals.py"
+      ]
     }
   ],
-  "system_version": "2026-09-29.4"
+  "system_version": "2026-09-29.5"
 }

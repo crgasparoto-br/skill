@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "system": "behavioral-evaluation-harness",
-  "harness_version": "0.2.0",
+  "harness_version": "0.3.0",
   "status": "implemented",
   "runner": "evals/run_evals.py",
   "validator": "scripts/validate_evals.py",
