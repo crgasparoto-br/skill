@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "system": "behavioral-evaluation-fixtures",
+  "harness_version": "0.3.0",
+  "provenance": "versioned-deterministic-baseline",
+  "results": {
+    "V030-001-runner-contract-001.json": "18c4d2d460e10a196ad019dcf30000ae9e4c5ff81326372ccdd18dd0c8778b5d",
+    "V030-002-authority-001.json": "004809bdb987f0b5cce568aa6152a7f2dba15bf0986ae5b82454860d2f7d0d04",
+    "V030-002-authority-002.json": "2644f28c0fdd007b06a06e353b7834a22ebad55e4106781accbaab284a76fcea",
+    "V030-002-authority-003.json": "0ffbdee47be586cfe1c31d3dd0a1e8ce7860059d681216a22debadfc2210a86c",
+    "V030-002-authority-004.json": "acea5ac2ee4c845cb1316e5f51bc3636e8454bbf4beb5f3533f4c372ad1a6307",
+    "V030-002-capability-001.json": "06ec7fd604745f156b484c651cbc1accb12e361b4f3cf115213ee88fda6b19e0",
+    "V030-002-capability-002.json": "fa380513a143815c57baea2e8d834746676f6546deb0e43f9dec17251b6bd922",
+    "V030-002-capability-003.json": "354703d026d650b939e99704c4525d2297ca89be891d6b9a8b294aa3d0aadb14",
+    "V030-002-capability-004.json": "89cd9abf7be81fe406a085dcc5ac3088d9f28e0c39d94411ffc9c8a155d1edd4",
+    "V030-002-capability-005.json": "dda44444ad254c27a607123db50671a3ec93baf7543479da140688dee8a326fc",
+    "V030-002-capability-006.json": "ed759e465efa3dd546059dc67198393f6f799ab5080715f38e84ab9b45b85869",
+    "V030-002-context-001.json": "60f7aac3335c9575b43767df26466b1ff17c98ec741e5471703ccaca4448a664",
+    "V030-002-context-002.json": "6e7f4537e3a6013ad65506afd7d006a7e77663ad4a33c1c4f1d961cb855e0bb0",
+    "V030-002-evidence-001.json": "82e9720df3b8f3e71f1c74009da97080ed78fe89c68cc91fa689cf1e0169cc20",
+    "V030-002-evidence-002.json": "fbb65734a83c3f1e47bcd582e55f28fc6cd8120b0f7b1d6c97e1cc875761dfe4",
+    "V030-002-output-contract-001.json": "950a7a5681712878c624f975f083140b6a9b81d54134431e0724885276e17731",
+    "V030-002-output-contract-002.json": "0870ea03fd2b21830f0754aa026608c631ffddbcf5c3996819a63f9311de7ce7",
+    "V030-002-progressive-001.json": "133f6873319c86238bffad43bbef9ce845829bb5872ae59c6a45e16f4c00bb53",
+    "V030-002-progressive-002.json": "bfda3dcdef3a7679d8f0a1e53062dfe46320b80087e8cccc2add0ecc62ef164a",
+    "V030-002-read-only-001.json": "febce9711ef66fc28b6c8aa8c19c4779f64d877ae4eec94c15ff76363ff5d441",
+    "V030-002-read-only-002.json": "482aee64d9691a032915151bdeeb26747d1312c338c5ae6a5e9d4dedf112bae6",
+    "V030-002-selection-001.json": "2e29a3b3f726c6d09ca21b3d057dae0d3700094b72e5bad5711e6500a7ab2692",
+    "V030-002-selection-002.json": "761a7a0b17d9c60c4766a7f0652736860a5876194b81542db1e3d38932c2a601"
+  }
+}

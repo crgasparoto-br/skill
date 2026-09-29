@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/crgasparoto-br/skill/blob/main/evals/schemas/eval-case.schema.json",
+  "title": "Behavioral evaluation case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "case_id", "category", "locale", "release_version", "adapter", "task", "context", "expected", "budgets"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "case_id": {"type": "string", "pattern": "^V030-[0-9]{3}-[a-z0-9-]+$"},
+    "category": {"type": "string", "enum": ["harness-contract", "selection", "authority", "capability", "evidence", "context", "progressive-loading", "read-only", "output-contract"]},
+    "locale": {"type": "string", "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$"},
+    "release_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"},
+    "adapter": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["user_prompt", "context_summary"],
+      "properties": {
+        "user_prompt": {"type": "string", "minLength": 1},
+        "context_summary": {"type": "string", "minLength": 1}
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available_capabilities", "available_references", "source_files"],
+      "properties": {
+        "available_capabilities": {"$ref": "#/$defs/string_list"},
+        "available_references": {"$ref": "#/$defs/string_list"},
+        "source_files": {"$ref": "#/$defs/string_list"},
+        "untrusted_inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["origin", "authority", "content"],
+            "properties": {
+              "origin": {"type": "string", "minLength": 1},
+              "authority": {"type": "string", "minLength": 1},
+              "content": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "selected_skill", "loaded_references", "required_evidence", "forbidden_actions", "response_minimum"],
+      "properties": {
+        "outcome": {"$ref": "#/$defs/outcome"},
+        "selected_skill": {"type": ["string", "null"]},
+        "loaded_references": {"$ref": "#/$defs/string_list"},
+        "required_evidence": {"$ref": "#/$defs/string_list"},
+        "forbidden_actions": {"$ref": "#/$defs/string_list"},
+        "response_minimum": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min_chars", "required_markers"],
+          "properties": {
+            "min_chars": {"type": "integer", "minimum": 0},
+          "required_markers": {"$ref": "#/$defs/string_list"}
+          }
+        },
+        "selection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["candidate_skills", "disambiguation_required", "reason_markers"],
+          "properties": {
+            "candidate_skills": {"$ref": "#/$defs/string_list"},
+            "disambiguation_required": {"type": "boolean"},
+            "reason_markers": {"$ref": "#/$defs/string_list"}
+          }
+        },
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["untrusted_inputs_treated_as_data", "normative_precedence_preserved"],
+          "properties": {
+            "untrusted_inputs_treated_as_data": {"type": "boolean"},
+            "normative_precedence_preserved": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_external_calls", "max_duration_ms", "max_context_chars"],
+      "properties": {
+        "max_external_calls": {"type": "integer", "minimum": 0},
+        "max_duration_ms": {"type": "integer", "minimum": 0},
+        "max_context_chars": {"type": "integer", "minimum": 0}
+      }
+    },
+    "notes": {"type": "string"},
+    "sibling_case_id": {"type": "string", "pattern": "^V030-[0-9]{3}-[a-z0-9-]+$"}
+  },
+  "$defs": {
+    "string_list": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "outcome": {"type": "string", "enum": ["PASS", "BLOCK", "UNKNOWN", "NOT_APPLICABLE"]}
+  }
+}

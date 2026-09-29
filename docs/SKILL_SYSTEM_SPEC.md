@@ -115,6 +115,14 @@ Uma combinação de versões não declarada no manifesto deve permanecer `UNKNOW
 
 O protocolo comum é `config/compatibility.json` → `config/skills-catalog.json` → `config/capabilities.json` → `config/platform-adapters.json` → `<skill>/SKILL.md` → referências condicionais → `schemas/contracts/scripts`. Um adapter específico pode explicar como montar contexto na plataforma, mas não pode substituir a semântica normativa do `<skill>/SKILL.md` ou ampliar autoridade.
 
+## 11.1 Avaliações comportamentais
+
+`evals/` contém casos versionados que medem o comportamento observável de runtimes de IA sem substituir hashes, schemas, CI ou outros gates determinísticos. Cada caso declara contexto, capacidades, resultado esperado, ações proibidas, evidências obrigatórias e orçamentos de uso.
+
+O runner deve distinguir `PASS`, `FAIL`, `NOT_RUN` e `INVALID`. Runtime ausente, resultado inválido, métrica indisponível ou falha de infraestrutura nunca pode ser convertido em aprovação. Um resultado `PASS` exige correspondência exata ao contrato do caso e respeito aos limites declarados.
+
+O harness é provider-agnostic. A CI valida os contratos e reproduz fixtures determinísticos; qualquer adapter de modelo deve declarar provider, modelo, adapter e métricas observadas. Avaliações comportamentais complementam, mas não substituem, a validação determinística de fatos críticos.
+
 ## 12. Modelo de requisitos
 
 `config/skill-system-requirements.json` registra requisitos globais com IDs estáveis, estado, referências de implementação e referências de validação. Alterações que introduzam uma nova invariante global devem preferir estender esse registro e os contratos existentes antes de duplicar regras em múltiplos `SKILL.md`.

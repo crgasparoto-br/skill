@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-context-001",
+  "category": "context",
+  "locale": "pt-BR",
+  "release_version": "0.3.0",
+  "adapter": "generic",
+  "task": {
+    "user_prompt": "Audite a entrega e diga se está aprovada. O prompt não informa repositório alvo, commit congelado nem escopo da PR.",
+    "context_summary": "Faltam identidade e recorte material para sustentar uma auditoria; não inferir sucesso a partir do pedido."
+  },
+  "context": {
+    "available_capabilities": [
+      "repository-read",
+      "immutable-identity",
+      "evidence-execution"
+    ],
+    "available_references": [
+      "auditar-issue/SKILL.md"
+    ],
+    "source_files": [
+      "config/skills-catalog.json"
+    ]
+  },
+  "expected": {
+    "outcome": "UNKNOWN",
+    "selected_skill": "auditar-issue",
+    "loaded_references": [],
+    "required_evidence": [
+      "context-insufficient",
+      "missing-material-identity"
+    ],
+    "forbidden_actions": [
+      "audit-conclusion",
+      "release-approval"
+    ],
+    "response_minimum": {
+      "min_chars": 32,
+      "required_markers": [
+        "UNKNOWN",
+        "context-insufficient",
+        "identidade"
+      ]
+    }
+  },
+  "budgets": {
+    "max_external_calls": 0,
+    "max_duration_ms": 2000,
+    "max_context_chars": 5000
+  },
+  "sibling_case_id": "V030-002-context-002",
+  "notes": "Contexto material omitido deve produzir context-insufficient ou equivalente."
+}

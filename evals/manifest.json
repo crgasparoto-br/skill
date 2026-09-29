@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "system": "behavioral-evaluation-harness",
+  "harness_version": "0.3.0",
+  "status": "implemented",
+  "runner": "evals/run_evals.py",
+  "validator": "scripts/validate_evals.py",
+  "case_schema": "evals/schemas/eval-case.schema.json",
+  "result_schema": "evals/schemas/eval-result.schema.json",
+  "report_schema": "evals/schemas/eval-report.schema.json"
+}

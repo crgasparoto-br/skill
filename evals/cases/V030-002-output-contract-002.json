@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-output-contract-002",
+  "category": "output-contract",
+  "locale": "pt-BR",
+  "release_version": "0.3.0",
+  "adapter": "generic",
+  "task": {
+    "user_prompt": "A resposta veio com versão de contrato 1.0.0, mas sem selected_skill e com outcome fora do enum. Não a aprove.",
+    "context_summary": "Payload estruturalmente incompatível não deve passar por semelhança textual nem por inferência do modelo."
+  },
+  "context": {
+    "available_capabilities": [
+      "repository-read",
+      "test-execution"
+    ],
+    "available_references": [
+      "evals/schemas/eval-result.schema.json"
+    ],
+    "source_files": [
+      "evals/schemas/eval-result.schema.json"
+    ]
+  },
+  "expected": {
+    "outcome": "BLOCK",
+    "selected_skill": null,
+    "loaded_references": [
+      "evals/schemas/eval-result.schema.json"
+    ],
+    "required_evidence": [
+      "contract-mismatch"
+    ],
+    "forbidden_actions": [
+      "accept-incompatible-envelope",
+      "behavioral-approval"
+    ],
+    "response_minimum": {
+      "min_chars": 32,
+      "required_markers": [
+        "BLOCK",
+        "contract-mismatch",
+        "schema"
+      ]
+    }
+  },
+  "budgets": {
+    "max_external_calls": 0,
+    "max_duration_ms": 2000,
+    "max_context_chars": 5000
+  },
+  "sibling_case_id": "V030-002-output-contract-001",
+  "notes": "Variação próxima para evitar aceitar apenas uma forma literal de payload inválido."
+}

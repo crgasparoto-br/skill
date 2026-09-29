@@ -38,8 +38,8 @@ Os IDs abaixo são estáveis para issues, commits, avaliações e notas de relea
 
 | ID | Entrega | Prioridade | Status | Critério resumido |
 | --- | --- | --- | --- | --- |
-| `V030-001` | Harness de avaliações comportamentais | P0 | `planned` | Executar casos versionados com resultado reproduzível, métricas e limites de custo/contexto. |
-| `V030-002` | Casos adversariais e regressões de comportamento | P0 | `planned` | Cobrir seleção, prompt injection, contexto insuficiente, capacidades ausentes e evidência não executada. |
+| `V030-001` | Harness de avaliações comportamentais | P0 | `implemented` | Executar casos versionados com resultado reproduzível, métricas e limites de custo/contexto. |
+| `V030-002` | Casos adversariais e regressões de comportamento | P0 | `implemented` | Cobrir seleção, prompt injection, contexto insuficiente, capacidades ausentes e evidência não executada. |
 | `V030-003` | Segurança e cadeia de suprimentos | P1 | `planned` | Escolher licença e ativar secret scanning, dependency review e auditoria de dependências. |
 | `V030-004` | Índices e economia de contexto | P1 | `planned` | Tornar referências longas navegáveis e rejeitar documentação sem instrução de carregamento seletivo. |
 | `V030-005` | Decisão sobre contrato `transitional` | P1 | `planned` | Publicar decisão de migração, compatibilidade, depreciação e eventual evolução SemVer. |

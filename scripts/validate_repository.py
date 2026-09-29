@@ -15,15 +15,17 @@ try:
     from validate_docs import validate_docs
     from validate_versioning import validate_versioning
     from validate_adapters import validate_adapters
+    from validate_evals import validate_evals
 except ImportError:  # pragma: no cover - package import fallback
     from .catalog import catalog_skill_ids, load_catalog, validate_catalog
     from .validate_contract_sync import validate_contract_sync
     from .validate_docs import validate_docs
     from .validate_versioning import validate_versioning
     from .validate_adapters import validate_adapters
+    from .validate_evals import validate_evals
 
 ROOT = Path(__file__).resolve().parents[1]
-SYSTEM_VERSION = "2026-09-29.3"
+SYSTEM_VERSION = "2026-09-29.5"
 GLOBAL_FILES = {
     "docs/SKILL_SYSTEM_SPEC.md",
     "docs/SECURITY.md",
@@ -37,9 +39,20 @@ GLOBAL_FILES = {
     "VERSION",
     "CHANGELOG.md",
     "docs/RELEASE.md",
+    "docs/ROADMAP.md",
     "config/platform-adapters.json",
     "schemas/platform-adapters.schema.json",
     "docs/PLATFORM_ADAPTERS.md",
+    "evals/README.md",
+    "evals/manifest.json",
+    "evals/run_evals.py",
+    "evals/schemas/eval-manifest.schema.json",
+    "evals/schemas/eval-case.schema.json",
+    "evals/schemas/eval-result.schema.json",
+    "evals/schemas/eval-report.schema.json",
+    "evals/schemas/eval-fixture-manifest.schema.json",
+    "evals/fixtures/manifest.json",
+    "scripts/validate_evals.py",
     ".github/skill-system-capabilities.json",
 }
 REQUIRED_CAPABILITIES = {
@@ -62,6 +75,7 @@ REQUIRED_CAPABILITIES = {
     "platform_adapters": "enabled",
     "contract_sync_validation": "enabled",
     "documentation_link_validation": "enabled",
+    "behavioral_evaluation_harness": "enabled",
 }
 
 
@@ -114,6 +128,7 @@ def validate_global_governance(errors: list[str]) -> None:
             "SemVer",
             "compatibilidade",
             "Adaptadores de plataforma",
+            "Avaliações comportamentais",
             "cópias geradas",
         )
         for term in required_terms:
@@ -172,6 +187,15 @@ def validate_global_governance(errors: list[str]) -> None:
             "compatibility_manifest_schema": "schemas/compatibility.schema.json",
             "platform_adapters_manifest": "config/platform-adapters.json",
             "platform_adapters_schema": "schemas/platform-adapters.schema.json",
+            "evaluation_harness": "evals/run_evals.py",
+            "evaluation_manifest": "evals/manifest.json",
+            "evaluation_manifest_schema": "evals/schemas/eval-manifest.schema.json",
+            "evaluation_case_schema": "evals/schemas/eval-case.schema.json",
+            "evaluation_result_schema": "evals/schemas/eval-result.schema.json",
+            "evaluation_report_schema": "evals/schemas/eval-report.schema.json",
+            "evaluation_validator": "scripts/validate_evals.py",
+            "evaluation_fixture_manifest": "evals/fixtures/manifest.json",
+            "evaluation_fixture_manifest_schema": "evals/schemas/eval-fixture-manifest.schema.json",
         }
         for key, expected in expected_paths.items():
             if requirements.get(key) != expected:
@@ -280,7 +304,7 @@ def main() -> int:
         for path in ROOT.iterdir()
         if path.is_dir()
         and not path.name.startswith(".")
-        and path.name not in {"adapters", "config", "docs", "scripts", "schemas", "tests"}
+        and path.name not in {"adapters", "config", "docs", "evals", "scripts", "schemas", "tests"}
     }
     missing = expected_skills - actual
     unexpected = actual - expected_skills
@@ -299,6 +323,7 @@ def main() -> int:
     errors.extend(f"documentação: {error}" for error in validate_docs(ROOT))
     errors.extend(f"versionamento: {error}" for error in validate_versioning(ROOT))
     errors.extend(f"adapters: {error}" for error in validate_adapters(ROOT))
+    errors.extend(f"avaliações: {error}" for error in validate_evals(ROOT))
 
     if errors:
         print("Validação falhou:")
