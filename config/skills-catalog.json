@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "system": "skill-catalog",
-  "catalog_version": "2026-09-29.1",
+  "catalog_version": "2026-09-29.2",
   "skills": [
     {
       "id": "auditar-issue",

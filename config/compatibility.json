@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "system": "skill-compatibility",
+  "release_version": "0.1.0",
+  "release_date": "2026-09-29",
+  "catalog_version": "2026-09-29.2",
+  "system_version": "2026-09-29.2",
+  "contract_policy": {
+    "scheme": "semver",
+    "public_contract_version": "1.0.0",
+    "internal_lineage_scheme": "date.release",
+    "internal_lineage_version": "2026-08-20.3",
+    "compatibility_mode": "transitional",
+    "mappings": [
+      {
+        "public_contract_version": "1.0.0",
+        "internal_lineage_version": "2026-08-20.3",
+        "status": "supported",
+        "migration": "No migration is required from the pre-release contract lineage."
+      }
+    ]
+  },
+  "skills": [
+    {"id": "auditar-issue", "public_contract_version": "1.0.0", "internal_lineage_version": "2026-08-20.3", "min_release": "0.1.0", "status": "supported", "migration": "No migration required."},
+    {"id": "corrigir-ci", "public_contract_version": "1.0.0", "internal_lineage_version": "2026-08-20.3", "min_release": "0.1.0", "status": "supported", "migration": "No migration required."},
+    {"id": "design-interface", "public_contract_version": "1.0.0", "internal_lineage_version": "2026-08-20.3", "min_release": "0.1.0", "status": "supported", "migration": "No migration required."},
+    {"id": "documentacao-repositorio", "public_contract_version": "1.0.0", "internal_lineage_version": "2026-08-20.3", "min_release": "0.1.0", "status": "supported", "migration": "No migration required."},
+    {"id": "entregar-issue", "public_contract_version": "1.0.0", "internal_lineage_version": "2026-08-20.3", "min_release": "0.1.0", "status": "supported", "migration": "No migration required."},
+    {"id": "fluxos-conversacionais", "public_contract_version": "1.0.0", "internal_lineage_version": "2026-08-20.3", "min_release": "0.1.0", "status": "supported", "migration": "No migration required."},
+    {"id": "revisar-issue", "public_contract_version": "1.0.0", "internal_lineage_version": "2026-08-20.3", "min_release": "0.1.0", "status": "supported", "migration": "No migration required."}
+  ]
+}
