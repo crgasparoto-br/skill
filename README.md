@@ -85,6 +85,7 @@ O catálogo possui uma camada global de governança acima das regras específica
 - [`config/compatibility.json`](./config/compatibility.json) evita combinar versões de skills apenas por semelhança textual;
 - [`config/platform-adapters.json`](./config/platform-adapters.json) registra adapters, arquivos de instrução e a política de capacidades do host;
 - [`docs/PLATFORM_ADAPTERS.md`](./docs/PLATFORM_ADAPTERS.md) documenta generic, OpenAI, Claude, Gemini, IDE e application;
+- [`docs/ROADMAP.md`](./docs/ROADMAP.md) formaliza o escopo, as prioridades e os critérios de aceite da v0.3.0;
 - [`.github/skill-system-capabilities.json`](./.github/skill-system-capabilities.json) declara as capacidades globais efetivamente habilitadas;
 - [`docs/SECURITY.md`](./docs/SECURITY.md) define limites de escrita, independência, merge, credenciais e efeitos destrutivos.
 
