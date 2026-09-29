@@ -46,5 +46,8 @@ jobs:
       - name: Validate release versioning
         run: python scripts/validate_versioning.py --root .
 
+      - name: Validate platform adapters
+        run: python scripts/validate_adapters.py --root .
+
       - name: Run skill tests
         run: python -m pytest -q

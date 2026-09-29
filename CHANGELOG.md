@@ -2,6 +2,18 @@
 
 Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A versão pública do conjunto é mantida em [`VERSION`](./VERSION). O formato segue SemVer para releases do catálogo; a versão interna de contratos permanece identificada no manifesto de compatibilidade durante a migração.
 
+## [0.2.0] — 2026-09-29
+
+### Added
+
+- manifesto machine-readable de adaptadores para ambientes genérico, OpenAI, Claude, Gemini, IDE e aplicação própria;
+- protocolo comum de carregamento progressivo e declaração de capacidades pelo host;
+- validação dos adapters, seus arquivos de instrução e ordem de carregamento.
+
+### Compatibility
+
+Esta é uma mudança minor compatível: os adapters são aditivos e não alteram a linhagem interna `2026-08-20.3` nem a versão pública do contrato `1.0.0`.
+
 ## [0.1.0] — 2026-09-29
 
 ### Added

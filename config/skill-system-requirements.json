@@ -10,6 +10,8 @@
   "capability_registry_schema": "schemas/capabilities.schema.json",
   "compatibility_manifest": "config/compatibility.json",
   "compatibility_manifest_schema": "schemas/compatibility.schema.json",
+  "platform_adapters_manifest": "config/platform-adapters.json",
+  "platform_adapters_schema": "schemas/platform-adapters.schema.json",
   "status_model": [
     "planned",
     "implemented",
@@ -220,7 +222,22 @@
         "file:scripts/validate_versioning.py",
         "file:tests/test_versioning.py"
       ]
+    },
+    {
+      "id": "SKSYS-016",
+      "title": "Portable platform adapters",
+      "status": "validated",
+      "summary": "Supported AI hosts use one adapter manifest, progressive loading order and host-declared capabilities without assuming provider access.",
+      "implementationRefs": [
+        "file:config/platform-adapters.json",
+        "file:schemas/platform-adapters.schema.json",
+        "file:docs/PLATFORM_ADAPTERS.md"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_adapters.py",
+        "file:tests/test_platform_adapters.py"
+      ]
     }
   ],
-  "system_version": "2026-09-29.2"
+  "system_version": "2026-09-29.3"
 }

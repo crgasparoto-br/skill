@@ -4,9 +4,9 @@
 
 | Superfície | Exemplo | Finalidade |
 | --- | --- | --- |
-| `VERSION` | `0.1.0` | Versão pública SemVer do conjunto de skills e adaptadores. |
-| `config/skills-catalog.json.catalog_version` | `2026-09-29.2` | Snapshot temporal do catálogo e da governança interna. |
-| `config/skill-system-requirements.json.system_version` | `2026-09-29.2` | Versão das invariantes globais do sistema. |
+| `VERSION` | `0.2.0` | Versão pública SemVer do conjunto de skills e adaptadores. |
+| `config/skills-catalog.json.catalog_version` | `2026-09-29.3` | Snapshot temporal do catálogo e da governança interna. |
+| `config/skill-system-requirements.json.system_version` | `2026-09-29.3` | Versão das invariantes globais do sistema. |
 | `contracts/version.json.contract_version` | `2026-08-20.3` | Linhagem interna legada dos contratos já consumidos pelas skills. |
 | `config/compatibility.json.contract_policy.public_contract_version` | `1.0.0` | Versão pública SemVer do contrato de composição. |
 
@@ -36,5 +36,16 @@ A criação da tag e da release é deliberadamente posterior ao merge; uma pull 
 ## Compatibilidade e migração
 
 Cada skill validada deve aparecer no manifesto de compatibilidade com sua versão pública de contrato, linhagem interna, release mínima suportada e instrução de migração. Uma combinação não declarada deve ser tratada como `UNKNOWN` ou incompatível, nunca como compatível por aproximação textual.
+
+Cada adapter validado deve aparecer em `config/platform-adapters.json` e `config/compatibility.json` com `introduced_in`/`min_release` iguais. A release `0.2.0` introduz `generic`, `openai`, `claude`, `gemini`, `ide` e `application` sem presumir capacidades do host.
+
+| Adapter | Introduced in | Compatibility status |
+| --- | --- | --- |
+| `generic` | `0.2.0` | `supported` |
+| `openai` | `0.2.0` | `supported` |
+| `claude` | `0.2.0` | `supported` |
+| `gemini` | `0.2.0` | `supported` |
+| `ide` | `0.2.0` | `supported` |
+| `application` | `0.2.0` | `supported` |
 
 Ao remover uma versão, mantenha uma nota de migração e a última release que a suporta. Não apague o histórico do changelog para esconder uma quebra.
