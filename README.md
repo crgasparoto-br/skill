@@ -4,7 +4,7 @@ Coleção de skills reutilizáveis para assistentes de IA que trabalham com issu
 
 As instruções centrais estão em Markdown e seguem um formato independente de provedor. Os arquivos `agents/openai.yaml` são adaptadores opcionais para produtos compatíveis; uma IA que não reconheça esse formato pode usar diretamente cada `SKILL.md` e carregar as referências necessárias sob demanda.
 
-**Release atual:** [`0.2.0`](./VERSION) · **catálogo:** `2026-09-29.3` · **compatibilidade:** [`config/compatibility.json`](./config/compatibility.json). Para integração reproduzível, prefira uma tag `v<version>` ou um SHA imutável; `main` representa desenvolvimento contínuo.
+**Release atual:** [`0.2.0`](./VERSION) · **catálogo:** `2026-09-29.4` · **compatibilidade:** [`config/compatibility.json`](./config/compatibility.json). Para integração reproduzível, prefira uma tag `v<version>` ou um SHA imutável; `main` representa desenvolvimento contínuo.
 
 ## Catálogo
 
@@ -85,6 +85,7 @@ O catálogo possui uma camada global de governança acima das regras específica
 - [`config/compatibility.json`](./config/compatibility.json) evita combinar versões de skills apenas por semelhança textual;
 - [`config/platform-adapters.json`](./config/platform-adapters.json) registra adapters, arquivos de instrução e a política de capacidades do host;
 - [`docs/PLATFORM_ADAPTERS.md`](./docs/PLATFORM_ADAPTERS.md) documenta generic, OpenAI, Claude, Gemini, IDE e application;
+- [`evals/README.md`](./evals/README.md) define o harness provider-agnostic de avaliações comportamentais;
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) formaliza o escopo, as prioridades e os critérios de aceite da v0.3.0;
 - [`.github/skill-system-capabilities.json`](./.github/skill-system-capabilities.json) declara as capacidades globais efetivamente habilitadas;
 - [`docs/SECURITY.md`](./docs/SECURITY.md) define limites de escrita, independência, merge, credenciais e efeitos destrutivos.

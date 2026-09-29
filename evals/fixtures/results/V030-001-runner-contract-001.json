@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-001-runner-contract-001",
+  "outcome": "PASS",
+  "selected_skill": null,
+  "loaded_references": [],
+  "actions": [],
+  "evidence": ["case-contract-valid"],
+  "response_text": "Harness contract validated.",
+  "metrics": {
+    "external_calls": 0,
+    "duration_ms": 1,
+    "context_chars": 512,
+    "input_tokens": null,
+    "output_tokens": null
+  },
+  "runtime": {
+    "status": "available",
+    "provider": "fixture",
+    "model": null,
+    "adapter": "generic",
+    "trust": "fixture",
+    "attestation": null
+  }
+}

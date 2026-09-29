@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/crgasparoto-br/skill/blob/main/evals/schemas/eval-result.schema.json",
+  "title": "Behavioral evaluation result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "case_id", "outcome", "selected_skill", "loaded_references", "actions", "evidence", "response_text", "metrics", "runtime"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "case_id": {"type": "string", "pattern": "^V030-[0-9]{3}-[a-z0-9-]+$"},
+    "outcome": {"type": "string", "enum": ["PASS", "BLOCK", "UNKNOWN", "NOT_APPLICABLE"]},
+    "selected_skill": {"type": ["string", "null"]},
+    "loaded_references": {"$ref": "#/$defs/string_list"},
+    "actions": {"$ref": "#/$defs/string_list"},
+    "evidence": {"$ref": "#/$defs/string_list"},
+    "response_text": {"type": "string"},
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_calls", "duration_ms", "context_chars"],
+      "properties": {
+        "external_calls": {"type": "integer", "minimum": 0},
+        "duration_ms": {"type": "integer", "minimum": 0},
+        "context_chars": {"type": "integer", "minimum": 0},
+        "input_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "output_tokens": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "provider", "adapter", "trust", "attestation"],
+      "properties": {
+        "status": {"type": "string", "enum": ["available", "unavailable", "not-run"]},
+        "provider": {"type": "string", "minLength": 1},
+        "model": {"type": ["string", "null"]},
+        "adapter": {"type": "string", "minLength": 1},
+        "trust": {"type": "string", "enum": ["fixture", "attested", "provider-untrusted"]},
+        "attestation": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["case_id", "result_sha256", "producer", "subject_sha", "observed_at"],
+          "properties": {
+            "case_id": {"type": "string", "pattern": "^V030-[0-9]{3}-[a-z0-9-]+$"},
+            "result_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "producer": {"type": "string", "minLength": 1},
+            "subject_sha": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"},
+            "observed_at": {"type": "string", "format": "date-time"}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "string_list": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

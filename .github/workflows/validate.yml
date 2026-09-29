@@ -49,5 +49,8 @@ jobs:
       - name: Validate platform adapters
         run: python scripts/validate_adapters.py --root .
 
+      - name: Validate behavioral evaluation harness
+        run: python scripts/validate_evals.py --root .
+
       - name: Run skill tests
         run: python -m pytest -q
