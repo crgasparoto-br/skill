@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "system_version": "2026-09-26.1",
+  "system_version": "2026-09-29.1",
   "canonical_controller": "entregar-issue",
   "canonical_contract_owner": "entregar-issue",
   "independent_auditor": "auditar-issue",
@@ -14,6 +14,10 @@
   "independent_read_only_audit": "enabled",
   "automatic_merge": "disabled",
   "destructive_actions_by_default": "disabled",
+  "catalog_manifest": "enabled",
+  "capability_contract": "enabled",
+  "contract_sync_validation": "enabled",
+  "documentation_link_validation": "enabled",
   "audit_transports": [
     "native-github-audit",
     "certified-handoff"

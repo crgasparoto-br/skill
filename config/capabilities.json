@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "system": "skill-capabilities",
+  "capabilities": {
+    "repository-read": {
+      "description": "Ler arquivos, histórico e identidade do repositório alvo.",
+      "missing_state": "BLOCK",
+      "fallback": "return-unknown"
+    },
+    "repository-write": {
+      "description": "Editar e publicar arquivos no escopo autorizado do repositório.",
+      "missing_state": "BLOCK",
+      "fallback": "return-plan-only"
+    },
+    "immutable-identity": {
+      "description": "Observar ou materializar SHA, base, head e identidade imutáveis.",
+      "missing_state": "BLOCK",
+      "fallback": "return-unknown"
+    },
+    "evidence-execution": {
+      "description": "Executar controles e materializar evidências verificáveis.",
+      "missing_state": "BLOCK",
+      "fallback": "return-unknown"
+    },
+    "ci-read": {
+      "description": "Observar workflows, checks e estado terminal da CI.",
+      "missing_state": "UNKNOWN",
+      "fallback": "return-unknown"
+    },
+    "test-execution": {
+      "description": "Executar testes e comandos determinísticos locais.",
+      "missing_state": "BLOCK",
+      "fallback": "return-unknown"
+    },
+    "visual-validation": {
+      "description": "Observar ou executar validação visual e responsiva.",
+      "missing_state": "UNKNOWN",
+      "fallback": "return-unknown"
+    },
+    "issue-read": {
+      "description": "Ler issues e comentários materialmente relevantes.",
+      "missing_state": "BLOCK",
+      "fallback": "return-unknown"
+    }
+  }
+}

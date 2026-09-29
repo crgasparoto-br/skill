@@ -12,11 +12,12 @@ Quando houver conflito, aplicar esta precedência:
 
 1. `docs/SKILL_SYSTEM_SPEC.md` — arquitetura e invariantes globais do catálogo.
 2. `config/skill-system-requirements.json` — projeção machine-readable dos requisitos globais, estado e evidências.
-3. `entregar-issue/contracts/*` — contratos compartilhados cujo proprietário canônico é `entregar-issue`.
-4. `<skill>/SKILL.md` — comportamento normativo específico da skill.
-5. `<skill>/references/*` — detalhamento carregado progressivamente.
-6. `scripts/`, `tests/` e workflows — implementação executável e evidência de conformidade.
-7. Issues, PRs e conversas — acompanhamento operacional; nunca substituem uma fonte canônica versionada.
+3. `config/skills-catalog.json`, `config/capabilities.json` e seus schemas — catálogo machine-readable, seleção, capacidades, fallbacks e metadados públicos.
+4. `entregar-issue/contracts/*` — contratos compartilhados cujo proprietário canônico é `entregar-issue`.
+5. `<skill>/SKILL.md` — comportamento normativo específico da skill.
+6. `<skill>/references/*` — detalhamento carregado progressivamente.
+7. `scripts/`, `tests/` e workflows — implementação executável e evidência de conformidade.
+8. Issues, PRs e conversas — acompanhamento operacional; nunca substituem uma fonte canônica versionada.
 
 Memória de conversa pode ajudar na continuidade, mas não é dependência de correção. Estado material deve ser reconstruível a partir do repositório, GitHub e artefatos explicitamente versionados.
 
@@ -94,19 +95,27 @@ Não preencher ausência de telemetria com zero. Identidades de tentativa, execu
 
 O `SKILL.md` deve permanecer como control plane compacto da skill. Referências, schemas, contratos e scripts são carregados somente quando necessários ao passo corrente. Se uma referência for necessária para decidir um gate, sua ausência é falha de evidência, não autorização para ignorar o gate.
 
-## 6. Modelo de requisitos
+## 9. Catálogo machine-readable
+
+`config/skills-catalog.json` é a fonte única para a lista pública de skills, finalidade, entradas, modos, gatilhos, autoridade e capacidades exigidas. O README contém uma projeção gerada delimitada por marcadores; execute `scripts/build_catalog_docs.py --check` para detectar drift.
+
+`scripts/select_skill.py` produz uma shortlist explicável. Empate material ou ausência de gatilho retorna `UNKNOWN`; o roteador não substitui o julgamento semântico nem autoriza uma skill a executar uma ação que suas capacidades não suportem.
+
+`config/capabilities.json` define, para cada capacidade exigida, o estado quando ela estiver ausente e o fallback permitido. Ausência de escrita, execução, identidade imutável ou leitura remota nunca pode ser promovida a sucesso.
+
+## 10. Modelo de requisitos
 
 `config/skill-system-requirements.json` registra requisitos globais com IDs estáveis, estado, referências de implementação e referências de validação. Alterações que introduzam uma nova invariante global devem preferir estender esse registro e os contratos existentes antes de duplicar regras em múltiplos `SKILL.md`.
 
-## 7. Manifesto de capacidades
+## 11. Manifesto de capacidades
 
 `.github/skill-system-capabilities.json` descreve capacidades globais ativas do catálogo. O manifesto é declarativo e deve refletir comportamento realmente implementado. Uma capacidade não pode ser marcada como habilitada apenas porque está planejada.
 
-## 8. Segurança e autoridade
+## 12. Segurança e autoridade
 
 `docs/SECURITY.md` é a fonte transversal para limites de escrita, independência, credenciais, efeitos destrutivos e merge. Contratos específicos podem ser mais restritivos, nunca mais permissivos sem alteração explícita desta especificação.
 
-## 9. Validação
+## 13. Validação
 
 `python scripts/validate_repository.py` deve falhar quando:
 
@@ -115,6 +124,9 @@ O `SKILL.md` deve permanecer como control plane compacto da skill. Referências,
 - uma capacidade obrigatória estiver desabilitada sem mudança normativa;
 - requisitos declararem referências inexistentes quando a referência for local;
 - ownership canônico divergir;
-- uma skill obrigatória perder `SKILL.md`, contratos, referências, schemas ou testes.
+- uma skill obrigatória perder `SKILL.md`, contratos, referências, schemas ou testes;
+- o catálogo divergir dos metadados das skills;
+- uma cópia de contrato divergir do hash canônico;
+- links Markdown locais ou referências de skills deixarem de resolver.
 
 Novas invariantes globais devem incluir validação automatizada proporcional ao risco.

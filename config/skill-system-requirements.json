@@ -4,6 +4,10 @@
   "canonical_spec": "docs/SKILL_SYSTEM_SPEC.md",
   "security_model": "docs/SECURITY.md",
   "capabilities_manifest": ".github/skill-system-capabilities.json",
+  "skills_catalog": "config/skills-catalog.json",
+  "skills_catalog_schema": "schemas/skill-catalog.schema.json",
+  "capability_registry": "config/capabilities.json",
+  "capability_registry_schema": "schemas/capabilities.schema.json",
   "status_model": [
     "planned",
     "implemented",
@@ -125,7 +129,8 @@
         "file:entregar-issue/contracts/version.json"
       ],
       "validationRefs": [
-        "file:scripts/validate_repository.py"
+        "file:scripts/validate_contract_sync.py",
+        "file:tests/test_catalog_governance.py"
       ]
     },
     {
@@ -139,7 +144,65 @@
       "validationRefs": [
         "file:scripts/validate_repository.py"
       ]
+    },
+    {
+      "id": "SKSYS-011",
+      "title": "Machine-readable skill catalog",
+      "status": "validated",
+      "summary": "Every validated skill is registered with purpose, modes, triggers, authority and required capabilities in one catalog.",
+      "implementationRefs": [
+        "file:config/skills-catalog.json",
+        "file:schemas/skill-catalog.schema.json",
+        "file:scripts/select_skill.py"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_catalog.py",
+        "file:tests/test_catalog_governance.py"
+      ]
+    },
+    {
+      "id": "SKSYS-012",
+      "title": "Generated contract synchronization",
+      "status": "validated",
+      "summary": "Generated contract copies are checked against canonical bytes and cannot drift silently.",
+      "implementationRefs": [
+        "file:scripts/sync_contracts.py",
+        "file:scripts/validate_contract_sync.py"
+      ],
+      "validationRefs": [
+        "file:tests/test_catalog_governance.py",
+        "file:.github/workflows/validate.yml"
+      ]
+    },
+    {
+      "id": "SKSYS-013",
+      "title": "Documentation reference integrity",
+      "status": "validated",
+      "summary": "Local Markdown links, skill references and generated catalog documentation remain resolvable.",
+      "implementationRefs": [
+        "file:scripts/validate_docs.py",
+        "file:scripts/build_catalog_docs.py"
+      ],
+      "validationRefs": [
+        "file:tests/test_catalog_governance.py",
+        "file:.github/workflows/validate.yml"
+      ]
+    },
+    {
+      "id": "SKSYS-014",
+      "title": "Fail-closed capability contract",
+      "status": "validated",
+      "summary": "Skills declare required capabilities and deterministic fallbacks so missing access cannot become implicit success.",
+      "implementationRefs": [
+        "file:config/capabilities.json",
+        "file:schemas/capabilities.schema.json",
+        "file:config/skills-catalog.json"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_catalog.py",
+        "file:tests/test_catalog_governance.py"
+      ]
     }
   ],
-  "system_version": "2026-09-26.1"
+  "system_version": "2026-09-29.1"
 }

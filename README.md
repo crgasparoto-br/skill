@@ -6,23 +6,26 @@ As instruções centrais estão em Markdown e seguem um formato independente de 
 
 ## Catálogo
 
+<!-- BEGIN GENERATED: skill-catalog -->
 | Skill | Finalidade | Entrada principal |
 | --- | --- | --- |
-| [`entregar-issue`](./entregar-issue/) | Conduzir uma entrega ponta a ponta de uma issue, com estado, implementação, validação, CI e handoff para auditoria. | Issue, PR, branch ou pendência de software |
-| [`auditar-issue`](./auditar-issue/) | Auditar uma entrega em leitura, reconstruir evidências e emitir parecer independente. | Entrega congelada, identidade remota e SHA |
-| [`revisar-issue`](./revisar-issue/) | Tornar issues claras, testáveis e reconciliadas com a documentação canônica. | Issue específica ou lote de issues |
-| [`corrigir-ci`](./corrigir-ci/) | Acompanhar e remediar CI até estado terminal, devolvendo controle ao controlador de entrega. | Falha ou estado pendente de CI |
-| [`documentacao-repositorio`](./documentacao-repositorio/) | Governar fontes canônicas e manter documentação verificável. | Repositório, mudança de comportamento ou documentação |
-| [`design-interface`](./design-interface/) | Estruturar, implementar e validar interfaces com verificação visual e documentação. | Interface, fluxo visual ou mudança de UX |
-| [`fluxos-conversacionais`](./fluxos-conversacionais/) | Especificar e verificar fluxos persistentes, assíncronos ou conversacionais. | Fluxo com continuidade, callback, evento, retry ou estado |
+| [`auditar-issue`](./auditar-issue/) | Auditar uma entrega em leitura, reconstruindo evidências e preservando a independência do parecer. | Entrega congelada, identidade remota e SHA. |
+| [`corrigir-ci`](./corrigir-ci/) | Diagnosticar e remediar falhas de CI até um estado terminal verificável, sem fazer merge. | Falha ou estado pendente de CI. |
+| [`design-interface`](./design-interface/) | Projetar, implementar e validar interfaces com acessibilidade, responsividade e consistência visual. | Interface, fluxo visual ou mudança de UX. |
+| [`documentacao-repositorio`](./documentacao-repositorio/) | Governar fontes canônicas e manter documentação de repositórios verificável e atualizada. | Repositório, mudança de comportamento ou documentação. |
+| [`entregar-issue`](./entregar-issue/) | Conduzir a entrega ponta a ponta de uma issue com plano, implementação, gates, CI e handoff. | Issue, PR, branch ou pendência de software. |
+| [`fluxos-conversacionais`](./fluxos-conversacionais/) | Especificar e verificar fluxos persistentes, assíncronos ou conversacionais com estado e idempotência. | Fluxo com continuidade, callback, evento, retry ou estado. |
+| [`revisar-issue`](./revisar-issue/) | Tornar issues claras, testáveis e reconciliadas com a documentação canônica. | Issue específica ou lote de issues. |
+<!-- END GENERATED: skill-catalog -->
 
 ## Como uma IA utiliza uma skill
 
-1. Escolha a pasta cuja descrição corresponde à tarefa.
-2. Leia o `SKILL.md` da pasta escolhida.
-3. Siga as referências indicadas pelo próprio `SKILL.md` apenas quando o modo de execução exigir.
-4. Use `schemas/`, `contracts/`, `scripts/` e `tests/` como artefatos operacionais da skill, não como contexto obrigatório em toda invocação.
-5. Preserve a distinção entre verificação interna e auditoria independente descrita nas instruções.
+1. Leia `config/skills-catalog.json` para conhecer finalidade, modos, gatilhos, autoridade e capacidades exigidas.
+2. Use `scripts/select_skill.py --query "..." --json` como shortlist explicável; trate `UNKNOWN` ou empate como necessidade de desambiguação.
+3. Leia o `SKILL.md` da pasta escolhida.
+4. Siga as referências indicadas pelo próprio `SKILL.md` apenas quando o modo de execução exigir.
+5. Use `schemas/`, `contracts/`, `scripts/` e `tests/` como artefatos operacionais da skill, não como contexto obrigatório em toda invocação.
+6. Preserve a distinção entre verificação interna e auditoria independente descrita nas instruções.
 
 Exemplo de carregamento genérico:
 
@@ -68,6 +71,10 @@ O catálogo possui uma camada global de governança acima das regras específica
 
 - [`docs/SKILL_SYSTEM_SPEC.md`](./docs/SKILL_SYSTEM_SPEC.md) é a especificação mestre e define hierarquia de fontes, identidade exact-head, fail-closed, ownership, contexto suficiente e observabilidade;
 - [`config/skill-system-requirements.json`](./config/skill-system-requirements.json) registra requisitos globais com IDs estáveis e referências de implementação/validação;
+- [`config/skills-catalog.json`](./config/skills-catalog.json) é o catálogo machine-readable de skills, gatilhos, modos, autoridade e capacidades;
+- [`config/capabilities.json`](./config/capabilities.json) define estados e fallbacks quando uma capacidade necessária não está disponível;
+- [`schemas/skill-catalog.schema.json`](./schemas/skill-catalog.schema.json) formaliza o formato do catálogo;
+- [`schemas/capabilities.schema.json`](./schemas/capabilities.schema.json) formaliza o registro de capacidades;
 - [`.github/skill-system-capabilities.json`](./.github/skill-system-capabilities.json) declara as capacidades globais efetivamente habilitadas;
 - [`docs/SECURITY.md`](./docs/SECURITY.md) define limites de escrita, independência, merge, credenciais e efeitos destrutivos.
 
@@ -92,6 +99,16 @@ Valide a estrutura e os metadados do catálogo:
 
 ```bash
 python scripts/validate_repository.py
+python scripts/validate_catalog.py
+python scripts/sync_contracts.py --check
+python scripts/validate_docs.py
+python scripts/build_catalog_docs.py --check
+```
+
+Quando um contrato canônico for alterado, regenere as cópias antes de validar:
+
+```bash
+python scripts/sync_contracts.py --write
 ```
 
 Execute a suíte de testes das skills que possuem testes Python:
