@@ -26,6 +26,7 @@ def _versioning_fixture(tmp_path: Path) -> Path:
         "config/skill-system-requirements.json",
         ".github/skill-system-capabilities.json",
         "schemas/compatibility.schema.json",
+        "config/platform-adapters.json",
     ]
     for item in files:
         destination = tmp_path / item
@@ -90,6 +91,36 @@ def test_versioning_rejects_impossible_lineage_date(tmp_path: Path) -> None:
     _write_compatibility(root, document)
     errors = validate_versioning(root)
     assert any("internal_lineage_version must use a valid" in error for error in errors)
+
+
+def test_versioning_rejects_adapter_introduction_drift(tmp_path: Path) -> None:
+    root = _versioning_fixture(tmp_path)
+    platform_path = root / "config/platform-adapters.json"
+    platform = json.loads(platform_path.read_text(encoding="utf-8"))
+    platform["adapters"][0]["introduced_in"] = "0.1.0"
+    platform_path.write_text(json.dumps(platform, indent=2) + "\n", encoding="utf-8")
+    errors = validate_versioning(root)
+    assert any("compatibility min_release differs from platform introduced_in" in error for error in errors)
+
+
+def test_versioning_rejects_missing_adapter_release_row(tmp_path: Path) -> None:
+    root = _versioning_fixture(tmp_path)
+    release_doc = root / "docs/RELEASE.md"
+    release_doc.write_text(
+        release_doc.read_text(encoding="utf-8").replace("| `application` | `0.2.0` | `supported` |\n", ""),
+        encoding="utf-8",
+    )
+    errors = validate_versioning(root)
+    assert any("missing adapter row" in error and "application" in error for error in errors)
+
+
+def test_invalid_schema_returns_controlled_error(tmp_path: Path) -> None:
+    schema = tmp_path / "schema.json"
+    document = tmp_path / "document.json"
+    schema.write_text('{"type": 17}', encoding="utf-8")
+    document.write_text("{}", encoding="utf-8")
+    errors = validate_json_schema(schema, document, "invalid schema")
+    assert any("schema is invalid" in error for error in errors)
 
 
 def test_schema_dependency_is_fail_closed(monkeypatch, tmp_path: Path) -> None:

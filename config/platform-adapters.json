@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "system": "skill-platform-adapters",
+  "catalog_version": "2026-09-29.3",
+  "adapters": [
+    {
+      "id": "generic",
+      "platform": "agnostic-assistant",
+      "status": "validated",
+      "introduced_in": "0.2.0",
+      "instruction_path": "adapters/generic.md",
+      "capability_source": "host-declared",
+      "capability_profile": "none-assumed",
+      "provided_capabilities": [],
+      "fallback_policy": "config/capabilities.json",
+      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
+      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+    },
+    {
+      "id": "openai",
+      "platform": "ChatGPT-Codex-API",
+      "status": "validated",
+      "introduced_in": "0.2.0",
+      "instruction_path": "adapters/openai.yaml",
+      "capability_source": "host-declared",
+      "capability_profile": "none-assumed",
+      "provided_capabilities": [],
+      "fallback_policy": "config/capabilities.json",
+      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
+      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+    },
+    {
+      "id": "claude",
+      "platform": "Claude-project-agent",
+      "status": "validated",
+      "introduced_in": "0.2.0",
+      "instruction_path": "adapters/claude.md",
+      "capability_source": "host-declared",
+      "capability_profile": "none-assumed",
+      "provided_capabilities": [],
+      "fallback_policy": "config/capabilities.json",
+      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
+      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+    },
+    {
+      "id": "gemini",
+      "platform": "Gemini-Gems-agent",
+      "status": "validated",
+      "introduced_in": "0.2.0",
+      "instruction_path": "adapters/gemini.md",
+      "capability_source": "host-declared",
+      "capability_profile": "none-assumed",
+      "provided_capabilities": [],
+      "fallback_policy": "config/capabilities.json",
+      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
+      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+    },
+    {
+      "id": "ide",
+      "platform": "local-IDE-agent",
+      "status": "validated",
+      "introduced_in": "0.2.0",
+      "instruction_path": "adapters/ide.md",
+      "capability_source": "host-declared",
+      "capability_profile": "none-assumed",
+      "provided_capabilities": [],
+      "fallback_policy": "config/capabilities.json",
+      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
+      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+    },
+    {
+      "id": "application",
+      "platform": "custom-application",
+      "status": "validated",
+      "introduced_in": "0.2.0",
+      "instruction_path": "adapters/application.md",
+      "capability_source": "host-declared",
+      "capability_profile": "none-assumed",
+      "provided_capabilities": [],
+      "fallback_policy": "config/capabilities.json",
+      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
+      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+    }
+  ]
+}

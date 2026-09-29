@@ -109,19 +109,25 @@ O `SKILL.md` deve permanecer como control plane compacto da skill. Referências,
 
 Uma combinação de versões não declarada no manifesto deve permanecer `UNKNOWN` ou incompatível. Tags de release devem apontar para commits imutáveis e só devem ser criadas depois do merge e da execução dos gates de release.
 
-## 11. Modelo de requisitos
+## 11. Adaptadores de plataforma
+
+`config/platform-adapters.json` registra os ambientes suportados e seus arquivos de instrução. Todos os adapters usam `host-declared` e `none-assumed`: o ambiente deve declarar as capacidades reais da sessão, e o adapter nunca pode inventar acesso a Git, escrita, CI, navegador ou execução de testes.
+
+O protocolo comum é `config/compatibility.json` → `config/skills-catalog.json` → `config/capabilities.json` → `config/platform-adapters.json` → `<skill>/SKILL.md` → referências condicionais → `schemas/contracts/scripts`. Um adapter específico pode explicar como montar contexto na plataforma, mas não pode substituir a semântica normativa do `<skill>/SKILL.md` ou ampliar autoridade.
+
+## 12. Modelo de requisitos
 
 `config/skill-system-requirements.json` registra requisitos globais com IDs estáveis, estado, referências de implementação e referências de validação. Alterações que introduzam uma nova invariante global devem preferir estender esse registro e os contratos existentes antes de duplicar regras em múltiplos `SKILL.md`.
 
-## 12. Manifesto de capacidades
+## 13. Manifesto de capacidades
 
 `.github/skill-system-capabilities.json` descreve capacidades globais ativas do catálogo. O manifesto é declarativo e deve refletir comportamento realmente implementado. Uma capacidade não pode ser marcada como habilitada apenas porque está planejada.
 
-## 13. Segurança e autoridade
+## 14. Segurança e autoridade
 
 `docs/SECURITY.md` é a fonte transversal para limites de escrita, independência, credenciais, efeitos destrutivos e merge. Contratos específicos podem ser mais restritivos, nunca mais permissivos sem alteração explícita desta especificação.
 
-## 14. Validação
+## 15. Validação
 
 `python scripts/validate_repository.py` deve falhar quando:
 
@@ -135,6 +141,7 @@ Uma combinação de versões não declarada no manifesto deve permanecer `UNKNOW
 - uma cópia de contrato divergir do hash canônico;
 - links Markdown locais ou referências de skills deixarem de resolver;
 - a versão pública, catalog version, system version e compatibilidade divergirem;
-- uma release declarar uma migração ou skill fora do manifesto de compatibilidade.
+- uma release declarar uma migração, skill ou adapter fora do manifesto correspondente;
+- um adapter não declarar arquivo de instruções ou presumir capacidades do host.
 
 Novas invariantes globais devem incluir validação automatizada proporcional ao risco.

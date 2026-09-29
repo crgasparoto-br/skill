@@ -51,6 +51,7 @@ def validate_json_schema(schema_path: Path, document_path: Path, label: str) -> 
         return [f"{label}: document is missing: {document_path}"]
     try:
         from jsonschema import Draft202012Validator, FormatChecker
+        from jsonschema.exceptions import SchemaError
     except ImportError:
         return [f"{label}: jsonschema dependency unavailable; schema validation cannot be skipped"]
     try:
@@ -58,10 +59,17 @@ def validate_json_schema(schema_path: Path, document_path: Path, label: str) -> 
         document = load_json(document_path)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         return [f"{label}: cannot load schema or document: {exc}"]
-    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    try:
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    except SchemaError as exc:
+        return [f"{label}: schema is invalid: {exc.message}"]
+    try:
+        schema_errors = sorted(validator.iter_errors(document), key=lambda item: list(item.path))
+    except (SchemaError, TypeError, ValueError) as exc:
+        return [f"{label}: schema is invalid or cannot be evaluated: {exc}"]
     return [
         f"{label}: {'/'.join(str(part) for part in error.path) or '$'}: {error.message}"
-        for error in sorted(validator.iter_errors(document), key=lambda item: list(item.path))
+        for error in schema_errors
     ]
 
 
@@ -187,12 +195,79 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
             else:
                 errors.append(f"{skill_id}: contracts/version.json is missing")
 
+    adapters = compatibility.get("adapters")
+    adapter_manifest_path = root / "config" / "platform-adapters.json"
+    adapter_manifest: dict[str, Any] = {}
+    if not adapter_manifest_path.is_file():
+        errors.append("config/platform-adapters.json is missing while compatibility adapters are declared")
+    else:
+        try:
+            adapter_manifest = load_json(adapter_manifest_path)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            errors.append(f"platform adapter manifest is invalid: {exc}")
+            adapter_manifest = {}
+        expected_adapter_ids = {
+            item.get("id") for item in adapter_manifest.get("adapters", [])
+            if isinstance(item, dict)
+        }
+        actual_adapter_ids = {
+            item.get("id") for item in adapters
+            if isinstance(item, dict)
+        } if isinstance(adapters, list) else set()
+        if isinstance(adapters, list) and len(actual_adapter_ids) != len(adapters):
+            errors.append("compatibility adapter IDs must be unique")
+        if actual_adapter_ids != expected_adapter_ids:
+            errors.append(
+                f"compatibility adapters differ from platform manifest: expected={sorted(expected_adapter_ids)} actual={sorted(actual_adapter_ids)}"
+            )
+        if isinstance(adapters, list):
+            for item in adapters:
+                if not isinstance(item, dict):
+                    errors.append("compatibility adapters contains a non-object")
+                    continue
+                adapter_id = item.get("id")
+                if parse_semver(str(item.get("min_release"))) is None:
+                    errors.append(f"{adapter_id}: adapter min_release must use SemVer")
+                elif parse_semver(str(item.get("min_release"))) > parse_semver(release_version):
+                    errors.append(f"{adapter_id}: adapter min_release cannot be newer than release")
+                manifest_item = next(
+                    (candidate for candidate in adapter_manifest.get("adapters", [])
+                     if isinstance(candidate, dict) and candidate.get("id") == adapter_id),
+                    None,
+                )
+                if not isinstance(manifest_item, dict) or manifest_item.get("introduced_in") != item.get("min_release"):
+                    errors.append(f"{adapter_id}: compatibility min_release differs from platform introduced_in")
+
     if not changelog_path.is_file():
         errors.append("CHANGELOG.md is missing")
     elif f"[{release_version}]" not in changelog_path.read_text(encoding="utf-8"):
         errors.append(f"CHANGELOG.md lacks release [{release_version}]")
     if not release_doc.is_file():
         errors.append("docs/RELEASE.md is missing")
+    else:
+        release_text = release_doc.read_text(encoding="utf-8")
+        expected_doc_values = (
+            f"| `VERSION` | `{release_version}` |",
+            f"| `config/skills-catalog.json.catalog_version` | `{catalog.get('catalog_version')}` |",
+            f"| `config/skill-system-requirements.json.system_version` | `{compatibility.get('system_version')}` |",
+            "config/platform-adapters.json",
+            release_version,
+        )
+        for expected in expected_doc_values:
+            if expected not in release_text:
+                errors.append(f"docs/RELEASE.md is stale or missing: {expected}")
+        compatibility_by_id = {
+            item.get("id"): item for item in adapters
+            if isinstance(item, dict)
+        } if isinstance(adapters, list) else {}
+        for manifest_item in adapter_manifest.get("adapters", []):
+            if not isinstance(manifest_item, dict):
+                continue
+            adapter_id = manifest_item.get("id")
+            compatibility_item = compatibility_by_id.get(adapter_id, {})
+            expected_row = f"| `{adapter_id}` | `{manifest_item.get('introduced_in')}` | `{compatibility_item.get('status')}` |"
+            if expected_row not in release_text:
+                errors.append(f"docs/RELEASE.md is stale or missing adapter row: {expected_row}")
     return errors
 
 
