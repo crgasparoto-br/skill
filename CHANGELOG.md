@@ -10,10 +10,12 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 - contratos JSON Schema para casos, resultados e relatórios de avaliação;
 - gate de validação do harness integrado ao validador global e ao CI;
 - vinculação exata entre caso, adapter e resultado, atestação estrutural, verificação de relatórios e replay sem arquivos extras.
+- matriz V030-002 com 22 casos adversariais versionados para seleção, autoridade, capacidades, evidências, contexto insuficiente, leitura progressiva, read-only e contratos incompatíveis;
+- pares `sibling_case_id` recíprocos, controles de ações proibidas e evidências obrigatórias, com replay determinístico de cada regressão.
 
 ### Compatibility
 
-Esta alteração está planejada para a `v0.3.0` e ainda não altera a tag pública `v0.2.0`. O snapshot interno do sistema avança para `2026-09-29.4`; o contrato público continua `1.0.0` e a linhagem interna continua `2026-08-20.3`.
+Esta alteração está planejada para a `v0.3.0` e ainda não altera a tag pública `v0.2.0`. O snapshot interno do sistema avança para `2026-09-29.5`; o contrato público continua `1.0.0` e a linhagem interna continua `2026-08-20.3`.
 
 ## [0.2.0] — 2026-09-29
 

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-capability-006",
+  "outcome": "UNKNOWN",
+  "selected_skill": "auditar-issue",
+  "loaded_references": [
+    "auditar-issue/SKILL.md",
+    "config/capabilities.json"
+  ],
+  "actions": [],
+  "evidence": [
+    "capability-absence-observed",
+    "immutable-identity-unknown"
+  ],
+  "response_text": "UNKNOWN: UNKNOWN; immutable-identity; SHA. Regressão: identidade presumida não é evidência observável.",
+  "metrics": {
+    "external_calls": 0,
+    "duration_ms": 1,
+    "context_chars": 1200
+  },
+  "runtime": {
+    "status": "available",
+    "provider": "fixture",
+    "model": null,
+    "adapter": "generic",
+    "trust": "fixture",
+    "attestation": null,
+    "provenance": "versioned-deterministic-baseline"
+  }
+}

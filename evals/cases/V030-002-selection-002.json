@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-selection-002",
+  "category": "selection",
+  "locale": "pt-BR",
+  "release_version": "0.3.0",
+  "adapter": "generic",
+  "task": {
+    "user_prompt": "A solicitação exige revisar uma issue e auditar uma PR; ainda não foi definido se haverá implementação. Retorne uma shortlist explicável.",
+    "context_summary": "Duas intenções de catálogo permanecem diretamente aplicáveis e a memória não pode escolher por conta própria."
+  },
+  "context": {
+    "available_capabilities": [
+      "repository-read",
+      "repository-write",
+      "immutable-identity",
+      "evidence-execution",
+      "ci-read",
+      "test-execution",
+      "issue-read"
+    ],
+    "available_references": [
+      "config/skills-catalog.json",
+      "scripts/select_skill.py"
+    ],
+    "source_files": [
+      "config/skills-catalog.json",
+      "scripts/select_skill.py"
+    ]
+  },
+  "expected": {
+    "outcome": "UNKNOWN",
+    "selected_skill": null,
+    "loaded_references": [],
+    "required_evidence": [
+      "selection-shortlist",
+      "material-disambiguation"
+    ],
+    "forbidden_actions": [
+      "skill-execution",
+      "repository-write"
+    ],
+    "response_minimum": {
+      "min_chars": 32,
+      "required_markers": [
+        "UNKNOWN",
+        "shortlist",
+        "desambiguação"
+      ]
+    },
+    "selection": {
+      "candidate_skills": [
+        "revisar-issue",
+        "auditar-issue"
+      ],
+      "disambiguation_required": true,
+      "reason_markers": [
+        "shortlist",
+        "desambiguação"
+      ]
+    }
+  },
+  "budgets": {
+    "max_external_calls": 0,
+    "max_duration_ms": 2000,
+    "max_context_chars": 5000
+  },
+  "sibling_case_id": "V030-002-selection-001",
+  "notes": "Variação lexical do empate de seleção; não aceitar escolha por palavra isolada."
+}

@@ -18,6 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CASE_ID = "V030-001-runner-contract-001"
 
 
+def total_case_count() -> int:
+    return len(list((ROOT / "evals" / "cases").glob("*.json")))
+
+
 def fixture_result() -> dict:
     return json.loads(
         (ROOT / "evals" / "fixtures" / "results" / f"{CASE_ID}.json").read_text(encoding="utf-8")
@@ -49,21 +53,27 @@ def test_eval_harness_validates_cases_and_fixture_replay() -> None:
 def test_fixture_replay_passes_every_case() -> None:
     report = run_evaluations(ROOT, results_dir=ROOT / "evals" / "fixtures" / "results")
     assert report["mode"] == "replay"
-    assert report["summary"] == {"total": 1, "passed": 1, "failed": 0, "not_run": 0, "invalid": 0}
+    assert report["summary"] == {
+        "total": total_case_count(),
+        "passed": total_case_count(),
+        "failed": 0,
+        "not_run": 0,
+        "invalid": 0,
+    }
     assert report["cases"][0]["case_id"] == CASE_ID
-    assert report["cases"][0]["status"] == "PASS"
+    assert all(record["status"] == "PASS" for record in report["cases"])
 
 
 def test_validate_only_never_declares_behavioral_pass() -> None:
     report = run_evaluations(ROOT, validate_only=True)
     assert report["mode"] == "validate-only"
     assert report["summary"]["passed"] == 0
-    assert report["summary"]["not_run"] == 1
+    assert report["summary"]["not_run"] == total_case_count()
 
 
 def test_missing_runtime_is_not_run_not_pass(tmp_path: Path) -> None:
     report = run_evaluations(ROOT, results_dir=tmp_path)
-    assert report["summary"]["not_run"] == 1
+    assert report["summary"]["not_run"] == total_case_count()
     assert report["summary"]["invalid"] == 0
     assert report["cases"][0]["status"] == "NOT_RUN"
 
@@ -72,6 +82,7 @@ def test_invalid_result_is_invalid(tmp_path: Path) -> None:
     (tmp_path / f"{CASE_ID}.json").write_text("{}\n", encoding="utf-8")
     report = run_evaluations(ROOT, results_dir=tmp_path)
     assert report["summary"]["invalid"] == 1
+    assert report["summary"]["not_run"] == total_case_count() - 1
     assert report["cases"][0]["status"] == "INVALID"
 
 
@@ -79,8 +90,8 @@ def test_provider_invalid_json_object_is_invalid_not_runner_crash(tmp_path: Path
     provider = tmp_path / "provider.py"
     provider.write_text("print('{}')\n", encoding="utf-8")
     report = run_evaluations(ROOT, provider_command=f"{sys.executable} {provider}")
-    assert report["summary"]["invalid"] == 1
-    assert report["cases"][0]["status"] == "INVALID"
+    assert report["summary"]["invalid"] == total_case_count()
+    assert all(record["status"] == "INVALID" for record in report["cases"])
 
 
 @pytest.mark.parametrize("payload", ["null", "[]", "not-json"])
@@ -88,14 +99,14 @@ def test_provider_non_object_or_invalid_json_is_invalid(tmp_path: Path, payload:
     provider = tmp_path / "provider.py"
     provider.write_text(f"print({payload!r})\n", encoding="utf-8")
     report = run_evaluations(ROOT, provider_command=f"{sys.executable} {provider}")
-    assert report["summary"]["invalid"] == 1
+    assert report["summary"]["invalid"] == total_case_count()
 
 
 def test_provider_stdout_limit_is_enforced_during_capture(tmp_path: Path) -> None:
     provider = tmp_path / "provider.py"
     provider.write_text("print('x' * 1000001)\n", encoding="utf-8")
     report = run_evaluations(ROOT, provider_command=f"{sys.executable} {provider}")
-    assert report["summary"]["invalid"] == 1
+    assert report["summary"]["invalid"] == total_case_count()
 
 
 def test_provider_stdout_is_reassembled_incrementally(tmp_path: Path) -> None:
@@ -115,7 +126,7 @@ def test_provider_stdout_is_reassembled_incrementally(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     report = run_evaluations(ROOT, provider_command=f"{sys.executable} {provider}")
-    assert report["summary"]["not_run"] == 1
+    assert report["summary"]["not_run"] == total_case_count()
     assert report["summary"]["invalid"] == 0
 
 
@@ -136,7 +147,7 @@ def test_provider_command_is_never_accepted_as_trusted_pass(tmp_path: Path) -> N
     )
     report = run_evaluations(ROOT, provider_command=f"{sys.executable} {provider}")
     assert report["summary"]["passed"] == 0
-    assert report["summary"]["not_run"] == 1
+    assert report["summary"]["not_run"] == total_case_count()
 
 
 def test_timeout_kills_descendant_after_provider_leader_exits(tmp_path: Path) -> None:
@@ -150,7 +161,7 @@ def test_timeout_kills_descendant_after_provider_leader_exits(tmp_path: Path) ->
         encoding="utf-8",
     )
     report = run_evaluations(ROOT, provider_command=f"{sys.executable} {provider} {pid_file}")
-    assert report["summary"]["not_run"] == 1
+    assert report["summary"]["not_run"] == total_case_count()
     assert_pid_dead(pid_file)
 
 
@@ -165,7 +176,7 @@ def test_closed_provider_streams_still_kill_running_process(tmp_path: Path) -> N
         encoding="utf-8",
     )
     report = run_evaluations(ROOT, provider_command=f"{sys.executable} {provider} {pid_file}")
-    assert report["summary"]["not_run"] == 1
+    assert report["summary"]["not_run"] == total_case_count()
     assert_pid_dead(pid_file)
 
 
@@ -181,7 +192,7 @@ def test_closed_streams_kill_descendant_after_leader_exit(tmp_path: Path) -> Non
         encoding="utf-8",
     )
     report = run_evaluations(ROOT, provider_command=f"{sys.executable} {provider} {pid_file}")
-    assert report["summary"]["invalid"] == 1
+    assert report["summary"]["invalid"] == total_case_count()
     assert_pid_dead(pid_file)
 
 
@@ -222,7 +233,7 @@ def test_provider_result_with_wrong_case_id_is_invalid(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     report = run_evaluations(ROOT, provider_command=f"{sys.executable} {provider}")
-    assert report["summary"]["invalid"] == 1
+    assert report["summary"]["invalid"] == total_case_count()
 
 
 def test_replay_rejects_wrong_adapter(tmp_path: Path) -> None:
@@ -231,6 +242,7 @@ def test_replay_rejects_wrong_adapter(tmp_path: Path) -> None:
     (tmp_path / f"{CASE_ID}.json").write_text(json.dumps(result), encoding="utf-8")
     report = run_evaluations(ROOT, results_dir=tmp_path)
     assert report["summary"]["invalid"] == 1
+    assert report["summary"]["not_run"] == total_case_count() - 1
 
 
 def test_mismatched_outcome_fails(tmp_path: Path) -> None:
