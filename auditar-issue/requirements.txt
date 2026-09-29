@@ -1,2 +1,2 @@
-cryptography>=42
+cryptography>=50.0.1
 jsonschema>=4.26.0
