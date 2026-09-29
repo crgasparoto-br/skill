@@ -4,6 +4,8 @@ Coleção de skills reutilizáveis para assistentes de IA que trabalham com issu
 
 As instruções centrais estão em Markdown e seguem um formato independente de provedor. Os arquivos `agents/openai.yaml` são adaptadores opcionais para produtos compatíveis; uma IA que não reconheça esse formato pode usar diretamente cada `SKILL.md` e carregar as referências necessárias sob demanda.
 
+**Release atual:** [`0.2.0`](./VERSION) · **catálogo:** `2026-09-29.3` · **compatibilidade:** [`config/compatibility.json`](./config/compatibility.json). Para integração reproduzível, prefira uma tag `v<version>` ou um SHA imutável; `main` representa desenvolvimento contínuo.
+
 ## Catálogo
 
 <!-- BEGIN GENERATED: skill-catalog -->
@@ -51,7 +53,11 @@ O formato comum é deliberadamente simples:
 - `schemas/` e `contracts/`: contratos verificáveis e dados estruturados;
 - `scripts/`: validações determinísticas e utilitários executáveis;
 - `tests/`: regressões e invariantes da skill;
-- `agents/openai.yaml`: metadados opcionais para interfaces OpenAI compatíveis.
+- `agents/openai.yaml`: metadados locais opcionais para interfaces OpenAI compatíveis;
+- `adapters/`: instruções agnósticas e por plataforma para carregar o catálogo sem acoplamento a um provedor;
+- `config/compatibility.json`: matriz de compatibilidade entre release, catálogo, contratos e skills.
+- `config/platform-adapters.json`: manifesto dos ambientes suportados e da ordem de carregamento;
+- `docs/PLATFORM_ADAPTERS.md`: guia para adaptar o núcleo a cada host.
 
 ### ChatGPT, Codex e APIs compatíveis
 
@@ -75,6 +81,10 @@ O catálogo possui uma camada global de governança acima das regras específica
 - [`config/capabilities.json`](./config/capabilities.json) define estados e fallbacks quando uma capacidade necessária não está disponível;
 - [`schemas/skill-catalog.schema.json`](./schemas/skill-catalog.schema.json) formaliza o formato do catálogo;
 - [`schemas/capabilities.schema.json`](./schemas/capabilities.schema.json) formaliza o registro de capacidades;
+- [`VERSION`](./VERSION), [`CHANGELOG.md`](./CHANGELOG.md) e [`docs/RELEASE.md`](./docs/RELEASE.md) definem releases SemVer, migração e compatibilidade;
+- [`config/compatibility.json`](./config/compatibility.json) evita combinar versões de skills apenas por semelhança textual;
+- [`config/platform-adapters.json`](./config/platform-adapters.json) registra adapters, arquivos de instrução e a política de capacidades do host;
+- [`docs/PLATFORM_ADAPTERS.md`](./docs/PLATFORM_ADAPTERS.md) documenta generic, OpenAI, Claude, Gemini, IDE e application;
 - [`.github/skill-system-capabilities.json`](./.github/skill-system-capabilities.json) declara as capacidades globais efetivamente habilitadas;
 - [`docs/SECURITY.md`](./docs/SECURITY.md) define limites de escrita, independência, merge, credenciais e efeitos destrutivos.
 
@@ -103,6 +113,8 @@ python scripts/validate_catalog.py
 python scripts/sync_contracts.py --check
 python scripts/validate_docs.py
 python scripts/build_catalog_docs.py --check
+python scripts/validate_versioning.py
+python scripts/validate_adapters.py
 ```
 
 Quando um contrato canônico for alterado, regenere as cópias antes de validar:
@@ -127,6 +139,7 @@ A mesma validação é executada pelo workflow em [`.github/workflows/validate.y
 nome-da-skill/
 ├── SKILL.md
 ├── agents/          # adaptadores opcionais
+├── adapters/        # adaptadores de plataforma do catálogo
 ├── assets/          # ícones ou outros recursos de interface
 ├── contracts/       # contratos operacionais
 ├── references/      # detalhes carregados sob demanda
