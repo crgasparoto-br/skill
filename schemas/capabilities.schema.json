@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/crgasparoto-br/skill/blob/main/schemas/capabilities.schema.json",
+  "title": "Skill capability registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "system", "capabilities"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "system": {"const": "skill-capabilities"},
+    "capabilities": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "missing_state", "fallback"],
+        "properties": {
+          "description": {"type": "string", "minLength": 5},
+          "missing_state": {"enum": ["BLOCK", "UNKNOWN"]},
+          "fallback": {"enum": ["return-unknown", "return-plan-only"]}
+        }
+      }
+    }
+  }
+}

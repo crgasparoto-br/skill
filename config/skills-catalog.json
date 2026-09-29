@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "system": "skill-catalog",
+  "catalog_version": "2026-09-29.1",
+  "skills": [
+    {
+      "id": "auditar-issue",
+      "path": "auditar-issue",
+      "status": "validated",
+      "purpose": "audit",
+      "summary": "Auditar uma entrega em leitura, reconstruindo evidências e preservando a independência do parecer.",
+      "input": "Entrega congelada, identidade remota e SHA.",
+      "modes": ["independent", "pre-audit", "controller-adversarial"],
+      "read_only": true,
+      "write_owner": "auditar-issue",
+      "contract_version": "2026-08-20.3",
+      "positive_triggers": [
+        "auditar uma issue",
+        "auditar uma PR",
+        "revisão independente",
+        "parecer independente",
+        "verificar a entrega em somente leitura"
+      ],
+      "negative_triggers": [
+        "implementar a issue",
+        "corrigir o código",
+        "corrigir a CI"
+      ],
+      "required_capabilities": ["repository-read", "immutable-identity", "evidence-execution"]
+    },
+    {
+      "id": "corrigir-ci",
+      "path": "corrigir-ci",
+      "status": "validated",
+      "purpose": "ci-remediation",
+      "summary": "Diagnosticar e remediar falhas de CI até um estado terminal verificável, sem fazer merge.",
+      "input": "Falha ou estado pendente de CI.",
+      "modes": ["ci-remediation-loop"],
+      "read_only": false,
+      "write_owner": "corrigir-ci",
+      "contract_version": "2026-08-20.3",
+      "positive_triggers": [
+        "corrigir a CI",
+        "corrigir o pipeline",
+        "GitHub Actions falhou",
+        "checks estão vermelhos",
+        "continuar até a CI ficar verde"
+      ],
+      "negative_triggers": [
+        "fazer merge automaticamente",
+        "auditar independentemente"
+      ],
+      "required_capabilities": ["repository-read", "repository-write", "ci-read", "test-execution"]
+    },
+    {
+      "id": "design-interface",
+      "path": "design-interface",
+      "status": "validated",
+      "purpose": "interface",
+      "summary": "Projetar, implementar e validar interfaces com acessibilidade, responsividade e consistência visual.",
+      "input": "Interface, fluxo visual ou mudança de UX.",
+      "modes": ["implementation", "internal-verification", "independent-audit", "guidance"],
+      "read_only": false,
+      "write_owner": "assigned-scope",
+      "contract_version": "2026-08-20.3",
+      "positive_triggers": [
+        "alterar o layout",
+        "criar uma tela",
+        "melhorar a interface",
+        "validar responsividade",
+        "auditar visualmente"
+      ],
+      "negative_triggers": [
+        "mudança somente interna",
+        "corrigir a CI"
+      ],
+      "required_capabilities": ["repository-read", "repository-write", "visual-validation", "test-execution"]
+    },
+    {
+      "id": "documentacao-repositorio",
+      "path": "documentacao-repositorio",
+      "status": "validated",
+      "purpose": "documentation",
+      "summary": "Governar fontes canônicas e manter documentação de repositórios verificável e atualizada.",
+      "input": "Repositório, mudança de comportamento ou documentação.",
+      "modes": ["specification", "implementation", "internal-verification", "independent-audit", "guidance"],
+      "read_only": false,
+      "write_owner": "assigned-scope",
+      "contract_version": "2026-08-20.3",
+      "positive_triggers": [
+        "atualizar a documentação",
+        "revisar o README",
+        "manter a documentação atualizada",
+        "encontrar a fonte canônica",
+        "auditar a documentação"
+      ],
+      "negative_triggers": [
+        "implementar o código",
+        "fazer merge"
+      ],
+      "required_capabilities": ["repository-read", "repository-write", "test-execution"]
+    },
+    {
+      "id": "entregar-issue",
+      "path": "entregar-issue",
+      "status": "validated",
+      "purpose": "delivery",
+      "summary": "Conduzir a entrega ponta a ponta de uma issue com plano, implementação, gates, CI e handoff.",
+      "input": "Issue, PR, branch ou pendência de software.",
+      "modes": ["direct-delivery"],
+      "read_only": false,
+      "write_owner": "controller",
+      "contract_version": "2026-08-20.3",
+      "positive_triggers": [
+        "implementar uma issue",
+        "entregar uma PR",
+        "resolver uma pendência de software",
+        "fazer a entrega ponta a ponta",
+        "corrigir a issue e validar"
+      ],
+      "negative_triggers": [
+        "somente auditar",
+        "somente revisar a especificação",
+        "somente corrigir a CI"
+      ],
+      "required_capabilities": ["repository-read", "repository-write", "test-execution", "ci-read", "immutable-identity"]
+    },
+    {
+      "id": "fluxos-conversacionais",
+      "path": "fluxos-conversacionais",
+      "status": "validated",
+      "purpose": "conversation-flow",
+      "summary": "Especificar e verificar fluxos persistentes, assíncronos ou conversacionais com estado e idempotência.",
+      "input": "Fluxo com continuidade, callback, evento, retry ou estado.",
+      "modes": ["specification", "implementation", "internal-verification", "independent-audit", "guidance"],
+      "read_only": false,
+      "write_owner": "assigned-scope",
+      "contract_version": "2026-08-20.3",
+      "positive_triggers": [
+        "implementar um fluxo conversacional",
+        "tratar callback",
+        "adicionar retry idempotente",
+        "persistir estado entre mensagens",
+        "corrigir concorrência no fluxo"
+      ],
+      "negative_triggers": [
+        "operação totalmente síncrona",
+        "mudança sem continuidade de estado"
+      ],
+      "required_capabilities": ["repository-read", "repository-write", "test-execution", "immutable-identity"]
+    },
+    {
+      "id": "revisar-issue",
+      "path": "revisar-issue",
+      "status": "validated",
+      "purpose": "specification-review",
+      "summary": "Tornar issues claras, testáveis e reconciliadas com a documentação canônica.",
+      "input": "Issue específica ou lote de issues.",
+      "modes": ["standalone-review", "standalone-batch-review", "orchestrated-readiness-remediation"],
+      "read_only": false,
+      "write_owner": "assigned-scope",
+      "contract_version": "2026-08-20.3",
+      "positive_triggers": [
+        "revisar uma issue",
+        "melhorar os critérios de aceite",
+        "tornar a issue implementável",
+        "normalizar uma issue",
+        "reconciliar issue e documentação"
+      ],
+      "negative_triggers": [
+        "implementar o código",
+        "auditar a entrega congelada"
+      ],
+      "required_capabilities": ["repository-read", "issue-read", "test-execution"]
+    }
+  ]
+}

@@ -20,6 +20,16 @@ Não trate snapshots ou alegações do implementador como auditoria independente
 
 Substitua `<nome-da-skill>` por uma das pastas do catálogo.
 
+## Catálogo e seleção
+
+Antes de escolher uma skill, leia `config/skills-catalog.json`. Ele registra a finalidade, entrada, modos, gatilhos, autoridade de escrita e capacidades exigidas de cada skill. Quando houver ambiente executável, use:
+
+```bash
+python scripts/select_skill.py --query "descreva a tarefa" --json
+```
+
+O resultado é uma shortlist explicável, não uma autorização automática. `UNKNOWN` significa que não houve gatilho direto ou que existem candidatos materialmente empatados; nesse caso, desambigue a intenção antes de agir. Ausência de capacidade — por exemplo, não ter escrita no repositório ou leitura de CI — deve permanecer como bloqueio, `UNKNOWN` ou plano-only conforme o contrato da skill.
+
 ## Integração por tipo de produto
 
 | Ambiente | Como integrar | O que não é obrigatório |
@@ -48,6 +58,9 @@ Os testes não são instruções para o modelo; são evidência executável para
 
 ```bash
 python scripts/validate_repository.py
+python scripts/validate_catalog.py
+python scripts/sync_contracts.py --check
+python scripts/validate_docs.py
 pytest -q <nome-da-skill>/tests
 ```
 
