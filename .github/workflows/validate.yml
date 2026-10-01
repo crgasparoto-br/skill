@@ -54,3 +54,14 @@ jobs:
 
       - name: Run skill tests
         run: python -m pytest -q
+
+      - name: Package entregar-issue skill
+        run: python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip
+
+      - name: Upload entregar-issue skill package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: entregar-issue-skill-${{ github.sha }}
+          path: dist/skill.zip
+          if-no-files-found: error
+          retention-days: 7
