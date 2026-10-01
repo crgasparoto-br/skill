@@ -11,6 +11,7 @@ from pathlib import Path
 MAX_BYTES = 25 * 1024 * 1024
 SCRIPT_REF_RE = re.compile(r"(?<![A-Za-z0-9_.-])(scripts/[A-Za-z0-9_./-]+\.(?:py|sh))")
 ENTREGAR_REQUIRED = {
+    "scripts/runtime_resource_preflight.py",
     "scripts/build_handoff_certificate.py",
     "scripts/classify_audit_transport.py",
     "scripts/classify_handoff_recovery.py",
