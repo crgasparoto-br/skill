@@ -53,3 +53,5 @@ def test_packager_preserves_terminal_runtime_files(tmp_path: Path) -> None:
         names = set(archive.namelist())
     for rel in module.ENTREGAR_REQUIRED:
         assert f"entregar-issue/{rel}" in names
+    assert not any("__pycache__/" in name for name in names)
+    assert not any(name.endswith((".pyc", ".pyo")) for name in names)
