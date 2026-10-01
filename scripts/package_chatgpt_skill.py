@@ -28,7 +28,12 @@ def referenced_scripts(skill_dir: Path) -> set[str]:
         if path.is_symlink() or not path.is_file():
             continue
         text = path.read_text(encoding="utf-8")
-        refs.update(match.group(1) for match in SCRIPT_REF_RE.finditer(text))
+        for match in SCRIPT_REF_RE.finditer(text):
+            prefix = text[max(0, match.start() - 96):match.start()]
+            external = re.search(r"<([a-z0-9-]+)>/$", prefix)
+            if external and external.group(1) not in {"skill", skill_dir.name}:
+                continue
+            refs.add(match.group(1))
     return refs
 
 
