@@ -4,6 +4,12 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 
 ## [Unreleased]
 
+### Fixed
+
+- restaura o guard terminal `validate_delivery_completion.py` usado pelo controlador `entregar-issue`;
+- faz `validate_terminal_handoff.py` emitir `terminal-handoff-proof.json` consumível pelo completion guard;
+- adiciona empacotamento fail-closed da `entregar-issue`, validando scripts referenciados e publicando `skill.zip` completo como artefato da CI.
+
 ### Added
 
 - harness provider-agnostic de avaliações comportamentais com casos versionados, replay determinístico, métricas limitadas e relatórios hashable;
