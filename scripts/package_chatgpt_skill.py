@@ -20,6 +20,19 @@ ENTREGAR_REQUIRED = {
     "scripts/validate_terminal_handoff.py",
 }
 BASE_REQUIRED = {"SKILL.md", "agents/openai.yaml"}
+EXCLUDED_PATH_PARTS = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
+
+
+def is_packaged_file(path: Path, skill_dir: Path) -> bool:
+    if not path.is_file() or path.is_symlink():
+        return False
+    relative = path.relative_to(skill_dir)
+    if any(part in EXCLUDED_PATH_PARTS for part in relative.parts):
+        return False
+    if path.suffix in EXCLUDED_SUFFIXES:
+        return False
+    return True
 
 
 def referenced_scripts(skill_dir: Path) -> set[str]:
@@ -64,7 +77,7 @@ def archive_names(skill_dir: Path) -> list[str]:
     return [
         f"{skill_dir.name}/{path.relative_to(skill_dir).as_posix()}"
         for path in skill_dir.rglob("*")
-        if path.is_file() and not path.is_symlink()
+        if is_packaged_file(path, skill_dir)
     ]
 
 
@@ -77,7 +90,7 @@ def package(skill_dir: Path, output: Path) -> list[str]:
         output.unlink()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(skill_dir.rglob("*")):
-            if path.is_file() and not path.is_symlink():
+            if is_packaged_file(path, skill_dir):
                 zf.write(path, f"{skill_dir.name}/{path.relative_to(skill_dir).as_posix()}")
     if output.stat().st_size > MAX_BYTES:
         errors.append(f"skill archive exceeds 25 MiB: {output.stat().st_size} bytes")
