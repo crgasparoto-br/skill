@@ -240,6 +240,27 @@
         "remote-gate",
         "decision"
       ]
+    },
+    {
+      "id": "codebase-grounding",
+      "activate_when": {
+        "kind": "classification",
+        "field": "code_touched",
+        "equals": true
+      },
+      "controls": [
+        "GROUND-REUSE-001",
+        "GROUND-EXIST-001",
+        "GROUND-DEAD-001"
+      ],
+      "invalidates": [
+        "hygiene",
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
     }
   ],
   "governance": {

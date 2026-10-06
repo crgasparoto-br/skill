@@ -21,3 +21,4 @@ Inspecionar arquivos tocados e consumidores diretos. Corrigir somente:
 - Nao expandir caminhos sem causa verificavel.
 - Aceitar `no-change`.
 - Executar somente validacoes invalidadas pelo safe-fix.
+- Declarar cada caminho ou simbolo substituido conforme `GROUND-DEAD-001` em `codebase-grounding-gate.md`.
