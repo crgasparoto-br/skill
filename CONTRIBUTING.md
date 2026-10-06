@@ -12,26 +12,16 @@ Este repositório é uma base de skills para agentes de IA. Mudanças devem pres
 
 ## Validação local
 
-```bash
-python3 scripts/validate_repository.py
-python3 scripts/sync_contracts.py --check
-python3 scripts/validate_catalog.py
-python3 scripts/validate_docs.py
-python3 scripts/build_catalog_docs.py --check
-python3 -m pytest -q
-```
+Execute a sequência da seção [Validação local](./README.md#validação-local) do README; ela é idêntica ao CI.
 
-Se você alterou um contrato canônico, regenere as cópias com:
-
-```bash
-python3 scripts/sync_contracts.py --write
-```
-
-Não edite uma cópia gerada isoladamente.
+Se você alterou um contrato canônico ou uma fonte declarada em `config/shared-files.json`, regenere as cópias com `python scripts/sync_contracts.py --write`. Não edite uma cópia isoladamente.
 
 ## Alterações de skills
 
 - Mantenha `SKILL.md` abaixo de 500 linhas.
+- Todo arquivo em `references/`, `scripts/` ou `schemas/` precisa ser alcançável a partir do `SKILL.md`; ao substituir um arquivo, apague o antigo no mesmo PR.
+- Antes de criar arquivo novo, procure um existente que possa ser estendido; um arquivo replicado entre skills deve ser declarado em `config/shared-files.json`.
+- Schema que nenhum validador aplica é uma segunda fonte de verdade: aplique-o no validador ou não o mantenha.
 - Preserve divulgação progressiva; mova detalhes variantes para `references/`.
 - Use scripts para comportamento determinístico e testes para invariantes.
 - Diferencie verificação interna de auditoria independente.
