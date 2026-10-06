@@ -14,6 +14,18 @@ evals/
 └── run_evals.py           # runner e CLI
 ```
 
+## Cobertura de seleção
+
+A família `selection` cobre três formas distintas, e cada uma tem sua invariante em `scripts/validate_evals.py`:
+
+| Forma | Bloco `selection` | Esperado |
+| --- | --- | --- |
+| Empate material | `disambiguation_required: true` e pelo menos dois candidatos | `UNKNOWN` sem skill selecionado |
+| Seleção resolvida | `disambiguation_required: false` e exatamente o skill vencedor | `PASS` com skill selecionado |
+| Sem correspondência | ausente | `UNKNOWN` sem skill selecionado |
+
+Os casos resolvidos não são narrativos: `tests/test_v030_002_cases.py` aterra cada um no roteador real, comparando `scripts/select_skill.py` com o esperado declarado. Os casos sem correspondência documentam o limite de recall do roteador, que reconhece gatilhos como substring e portanto abstém-se quando o fraseado é reordenado.
+
 ## Modos
 
 Validar somente contratos, sem declarar aprovação comportamental:
@@ -74,3 +86,24 @@ Cada relatório contém:
 - resumo com `passed`, `failed`, `not_run` e `invalid`.
 
 O timestamp serve para observabilidade, mas não participa do hash lógico. Os fixtures em `evals/fixtures/results/` incluem o smoke case do runner e o baseline determinístico dos casos V030-002; `evals/fixtures/manifest.json` fixa os hashes dos resultados e a proveniência do baseline. Eles não representam uma aprovação de comportamento de um modelo real.
+
+## Regenerar fixtures
+
+Ao adicionar ou alterar um caso, grave o resultado correspondente em `evals/fixtures/results/` e refaça o manifesto, porque `validate_fixture_manifest` recusa qualquer divergência entre casos, arquivos e hashes:
+
+```bash
+python - <<'PY'
+import hashlib, json
+from pathlib import Path
+
+fixtures = Path("evals/fixtures/results")
+manifest_path = Path("evals/fixtures/manifest.json")
+manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+manifest["results"] = {
+    path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(fixtures.glob("*.json"))
+}
+manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+PY
+```
+
+O manifesto cobre exatamente os casos existentes: resultado sem caso, caso sem resultado e hash divergente falham de forma explícita.

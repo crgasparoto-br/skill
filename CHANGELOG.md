@@ -27,6 +27,8 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 
 ### Added
 
+- cobertura de **seleção resolvida** no harness de avaliações: quatro casos em pares de irmãos aterrados no roteador real, dois casos de fraseado reordenado que permanecem `UNKNOWN` e a regra da categoria `selection` em `scripts/validate_evals.py` distinguindo empate material, seleção resolvida e ausência de correspondência (`SKSYS-021`);
+- geração e verificação do relatório de replay de `evals/run_evals.py` no CI, exercitando `content_sha256`, `run_id` e o resumo, que antes não eram cobertos por nenhuma etapa;
 - forma canônica versionada para a issue que alimenta o fechamento de requisitos: [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/) com templates de desenvolvimento, defeito e epic, [`config/issue-templates.json`](./config/issue-templates.json) declarando as seções normativas lidas pelos extratores e [`scripts/validate_issue_templates.py`](./scripts/validate_issue_templates.py) reprovando template sem seção normativa ou com item pré-preenchido que viraria candidato de requisito (`SKSYS-020`);
 - [`AGENTS.md`](./AGENTS.md) como instrução normativa para agentes de IA que trabalham no repositório: hierarquia de fontes, fluxo de issue para `develop` e `develop` para `main`, forma canônica da issue, restrição de redação dos templates, validação local e regras de higiene;
 - `tests/test_issue_templates.py` provando que o texto de orientação dos templates é inerte para as regexes reais de `entregar-issue`, que as seções normativas declaradas continuam reconhecidas pelo parser independente de `auditar-issue` e que remover uma seção normativa ou inserir placeholder bloqueia o validador;

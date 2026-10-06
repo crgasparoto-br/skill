@@ -311,6 +311,21 @@
         "file:tests/test_issue_templates.py",
         "file:.github/workflows/validate.yml"
       ]
+    },
+    {
+      "id": "SKSYS-021",
+      "title": "Resolved selection is proven, not only abstention",
+      "status": "validated",
+      "summary": "The behavioral matrix covers resolved skill selection grounded in the real router, keeps the no-match case explicitly unknown, and exercises the persisted replay report in CI.",
+      "implementationRefs": [
+        "file:evals/cases/V030-002-selection-003.json",
+        "file:scripts/validate_evals.py",
+        "file:evals/README.md"
+      ],
+      "validationRefs": [
+        "file:tests/test_v030_002_cases.py",
+        "file:.github/workflows/validate.yml"
+      ]
     }
   ],
   "system_version": "2026-09-29.5"

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-selection-004",
+  "category": "selection",
+  "locale": "pt-BR",
+  "release_version": "0.3.0",
+  "adapter": "generic",
+  "task": {
+    "user_prompt": "entregar uma PR de ponta a ponta",
+    "context_summary": "Outro verbo de gatilho da mesma skill; a decisão não pode depender de uma única frase."
+  },
+  "context": {
+    "available_capabilities": [
+      "repository-read",
+      "repository-write",
+      "immutable-identity",
+      "evidence-execution",
+      "ci-read",
+      "test-execution",
+      "issue-read"
+    ],
+    "available_references": [
+      "config/skills-catalog.json",
+      "scripts/select_skill.py"
+    ],
+    "source_files": [
+      "config/skills-catalog.json",
+      "scripts/select_skill.py"
+    ]
+  },
+  "expected": {
+    "outcome": "PASS",
+    "selected_skill": "entregar-issue",
+    "loaded_references": [],
+    "required_evidence": [
+      "selection-shortlist",
+      "selection-decision"
+    ],
+    "forbidden_actions": [
+      "skill-execution",
+      "repository-write"
+    ],
+    "response_minimum": {
+      "min_chars": 32,
+      "required_markers": [
+        "entregar-issue",
+        "gatilho"
+      ]
+    },
+    "selection": {
+      "candidate_skills": [
+        "entregar-issue"
+      ],
+      "disambiguation_required": false,
+      "reason_markers": [
+        "maior pontuação",
+        "sem empate"
+      ]
+    }
+  },
+  "budgets": {
+    "max_external_calls": 0,
+    "max_duration_ms": 2000,
+    "max_context_chars": 5000
+  },
+  "sibling_case_id": "V030-002-selection-003",
+  "notes": "Seleção resolvida com fraseado alternativo da mesma intenção."
+}

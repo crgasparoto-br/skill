@@ -52,6 +52,11 @@ jobs:
       - name: Validate behavioral evaluation harness
         run: python scripts/validate_evals.py --root .
 
+      - name: Replay behavioral evaluations and verify the report
+        run: |
+          python evals/run_evals.py --root . --results-dir evals/fixtures/results --report /tmp/eval-report.json > /tmp/eval-report-stdout.json
+          python evals/run_evals.py --root . --verify-report /tmp/eval-report.json
+
       - name: Validate operational file reachability
         run: python scripts/validate_reachability.py --root .
 

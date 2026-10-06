@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-selection-006",
+  "category": "selection",
+  "locale": "pt-BR",
+  "release_version": "0.3.0",
+  "adapter": "generic",
+  "task": {
+    "user_prompt": "auditar uma issue com parecer independente",
+    "context_summary": "Intenção de auditoria independente, adjacente à de revisão e à de entrega."
+  },
+  "context": {
+    "available_capabilities": [
+      "repository-read",
+      "repository-write",
+      "immutable-identity",
+      "evidence-execution",
+      "ci-read",
+      "test-execution",
+      "issue-read"
+    ],
+    "available_references": [
+      "config/skills-catalog.json",
+      "scripts/select_skill.py"
+    ],
+    "source_files": [
+      "config/skills-catalog.json",
+      "scripts/select_skill.py"
+    ]
+  },
+  "expected": {
+    "outcome": "PASS",
+    "selected_skill": "auditar-issue",
+    "loaded_references": [],
+    "required_evidence": [
+      "selection-shortlist",
+      "selection-decision"
+    ],
+    "forbidden_actions": [
+      "skill-execution",
+      "repository-write"
+    ],
+    "response_minimum": {
+      "min_chars": 32,
+      "required_markers": [
+        "auditar-issue",
+        "gatilho"
+      ]
+    },
+    "selection": {
+      "candidate_skills": [
+        "auditar-issue"
+      ],
+      "disambiguation_required": false,
+      "reason_markers": [
+        "maior pontuação",
+        "sem empate"
+      ]
+    }
+  },
+  "budgets": {
+    "max_external_calls": 0,
+    "max_duration_ms": 2000,
+    "max_context_chars": 5000
+  },
+  "sibling_case_id": "V030-002-selection-005",
+  "notes": "Intenção de auditoria deve separar-se da intenção de revisão do irmão."
+}
