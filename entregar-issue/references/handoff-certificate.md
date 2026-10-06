@@ -1,5 +1,24 @@
 # Certificado de handoff independente
 
+## Quando ler este arquivo
+
+Ler quando for produzir ou consumir o certificado de handoff independente, inclusive drift pós-freeze e runtime connector-only.
+
+## Índice
+
+- [Objetivo](#objetivo)
+- [Regra](#regra)
+- [Preflight contra pacote herdado](#preflight-contra-pacote-herdado)
+- [Vinculo semantico do alvo](#vinculo-semantico-do-alvo)
+- [Identidade material e commit de resultados](#identidade-material-e-commit-de-resultados)
+- [Proveniencia](#proveniencia)
+- [Regra de consumo](#regra-de-consumo)
+- [Runtime connector-only](#runtime-connector-only)
+- [Drift pos-freeze e remediacao de CI](#drift-pos-freeze-e-remediacao-de-ci)
+- [Gate pre-publicacao do produtor](#gate-pre-publicacao-do-produtor)
+- [Gate terminal do produtor](#gate-terminal-do-produtor)
+- [Transporte de artefatos grandes](#transporte-de-artefatos-grandes)
+
 ## Objetivo
 
 Impedir que uma auditoria independente seja consumida para descobrir ausencia de artefatos de readiness que a entrega ja consegue verificar de forma deterministica, sem criar autorreferencia entre o certificado versionado e o SHA do commit que o contem.

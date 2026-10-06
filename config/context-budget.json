@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "system": "context-budget",
-  "description": "Custo de contexto do control plane e das referências, medido em bytes por arquivo e caracteres por linha. Substitui a regra de contagem de linhas, que não mede carregamento progressivo. Cada exceção registra a medição exata do arquivo: qualquer alteração exige atualizar a exceção de forma explícita, e um arquivo que passa a respeitar o padrão não pode manter exceção.",
+  "description": "Custo de contexto do control plane e das referências, medido em bytes por arquivo e caracteres por linha. Substitui a regra de contagem de linhas, que não mede carregamento progressivo. Cada exceção registra a medição exata do arquivo: qualquer alteração exige atualizar a exceção de forma explícita, e um arquivo que passa a respeitar o padrão não pode manter exceção. O teto de referência comporta o bloco de carregamento condicional e o índice exigidos por config/reference-index.json, para que a política de navegabilidade não seja penalizada pelo orçamento.",
   "discovery": {
     "control_plane": ["*/SKILL.md"],
     "reference": ["*/references/**/*.md"]
@@ -12,7 +12,7 @@
       "max_line_chars": 600
     },
     "reference": {
-      "max_bytes": 16384,
+      "max_bytes": 17408,
       "max_line_chars": 1000
     }
   },

@@ -69,6 +69,9 @@ jobs:
       - name: Validate genericity of permanent skill assets
         run: python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
 
+      - name: Validate navigability of skill references
+        run: python scripts/validate_reference_indexes.py --root .
+
       - name: Run skill tests
         run: python -m pytest -q
 

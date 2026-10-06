@@ -2,6 +2,20 @@
 
 > **Escopo de `.audit`:** materializar `.audit/entregar-issue` somente quando `audit_transport=certified-handoff`. Em `native-github-audit`, consumir identidade/evidencia remota exact-SHA conforme `references/native-github-audit-contract.md`.
 
+## Quando ler este arquivo
+
+Ler quando houver resolução de scripts ou artefatos no runtime, inclusive fallback connector-native por snapshot Git imutável.
+
+## Índice
+
+- [Objetivo](#objetivo)
+- [Propriedade dos caminhos](#propriedade-dos-caminhos)
+- [Resolucao do root da Skill](#resolucao-do-root-da-skill)
+- [Materializacao dos artefatos da entrega](#materializacao-dos-artefatos-da-entrega)
+- [Classificacao de falhas](#classificacao-de-falhas)
+- [Regra fail-closed correta](#regra-fail-closed-correta)
+- [Fallback connector-native por snapshot Git imutavel](#fallback-connector-native-por-snapshot-git-imutavel)
+
 ## Objetivo
 
 Evitar confundir recursos internos da Skill com arquivos do repositorio auditado e impedir que limitacoes do runtime sejam reportadas como defeitos da issue.

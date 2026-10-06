@@ -1,5 +1,27 @@
 # Matriz obrigatoria requisito -> ataque
 
+## Quando ler este arquivo
+
+Ler quando for derivar ataques por requisito, com obrigação, superfície, dimensão e controle negativo.
+
+## Índice
+
+- [Objetivo](#objetivo)
+- [Aplicabilidade](#aplicabilidade)
+- [Artefato](#artefato)
+- [Atomizacao por obrigacao](#atomizacao-por-obrigacao)
+- [Clausulas explicitas de cobertura de testes](#clausulas-explicitas-de-cobertura-de-testes)
+- [Superficies e dimensoes](#superficies-e-dimensoes)
+- [Derivacao de ataques](#derivacao-de-ataques)
+- [Cobertura de retencao por tier](#cobertura-de-retencao-por-tier)
+- [Propagacao de identidade semantica](#propagacao-de-identidade-semantica)
+- [Integridade semantica relacional](#integridade-semantica-relacional)
+- [Escopo evidencia -> efeito](#escopo-evidencia---efeito)
+- [Qualidade minima](#qualidade-minima)
+- [Evidencia quantitativa](#evidencia-quantitativa)
+- [Portao](#portao)
+- [Integridade da fonte antes da inferencia](#integridade-da-fonte-antes-da-inferencia)
+
 ## Objetivo
 
 Impedir que um criterio de aceite, superficie de risco ou cenario obrigatorio chegue pela primeira vez a auditoria independente sem ter sido transformado em um controle discriminante executado no SHA final.

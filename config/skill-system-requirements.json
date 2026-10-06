@@ -357,6 +357,20 @@
         "file:entregar-issue/tests/test_skill_genericity.py",
         "file:entregar-issue/tests/test_learning_generalization.py"
       ]
+    },
+    {
+      "id": "SKSYS-024",
+      "title": "Long references are navigable",
+      "status": "validated",
+      "summary": "Every reference above the declared byte threshold declares when it should be read and exposes an index whose anchors resolve and whose entries cover every section, so progressive loading can be selective.",
+      "implementationRefs": [
+        "file:config/reference-index.json",
+        "file:scripts/validate_reference_indexes.py"
+      ],
+      "validationRefs": [
+        "file:tests/test_reference_indexes.py",
+        "file:.github/workflows/validate.yml"
+      ]
     }
   ],
   "system_version": "2026-09-29.5"

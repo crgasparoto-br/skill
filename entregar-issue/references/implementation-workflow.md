@@ -1,5 +1,20 @@
 # Implementacao interna
 
+## Quando ler este arquivo
+
+Ler sempre: define preparar, implementar, validar durante a edição e fechar por requisito.
+
+## Índice
+
+- [Principio](#principio)
+- [Preparar](#preparar)
+- [Implementar](#implementar)
+- [Controles criticos preservados](#controles-criticos-preservados)
+- [Reconciliar risco pelo diff](#reconciliar-risco-pelo-diff)
+- [Remediar gate deterministico reprovado](#remediar-gate-deterministico-reprovado)
+- [Validar durante a edicao](#validar-durante-a-edicao)
+- [Fechamento por requisito](#fechamento-por-requisito)
+
 ## Principio
 
 Executar implementacao como uma etapa interna do mesmo controlador. Consumir snapshot, fechamento, risco, caminhos, work items e write ownership sem reatomizar a issue.

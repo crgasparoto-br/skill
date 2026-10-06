@@ -7,6 +7,33 @@
 
 # Auditoria da implementacao — [issue/titulo]
 
+## Quando ler este arquivo
+
+Ler quando for produzir o parecer, para usar a forma canônica do relatório e a matriz de requisitos.
+
+## Índice
+
+- [Motivo determinante](#motivo-determinante)
+- [Validade da execucao](#validade-da-execucao)
+- [Resumo executivo](#resumo-executivo)
+- [Escopo auditado](#escopo-auditado)
+- [Estado dos gates e alcance de testes](#estado-dos-gates-e-alcance-de-testes)
+- [Matriz de requisitos](#matriz-de-requisitos)
+- [Achados bloqueantes](#achados-bloqueantes)
+- [Recomendacoes opcionais](#recomendacoes-opcionais)
+- [Testes e validações](#testes-e-validações)
+- [Fronteira pública, privacidade e autorização](#fronteira-pública-privacidade-e-autorização)
+- [Auditoria documental](#auditoria-documental)
+- [Auditoria de interface](#auditoria-de-interface)
+- [Regressões e riscos](#regressões-e-riscos)
+- [Pendências objetivas](#pendências-objetivas)
+- [Proxima acao disponivel](#proxima-acao-disponivel)
+- [Proposta de issues corretivas](#proposta-de-issues-corretivas)
+- [Artefato de auditoria externa](#artefato-de-auditoria-externa)
+- [Artefatos controller v3](#artefatos-controller-v3)
+- [Audit escape](#audit-escape)
+- [Resultado inconclusivo por runtime](#resultado-inconclusivo-por-runtime)
+
 ## Motivo determinante
 
 [Explicar em um paragrafo o motivo determinante do resultado, mencionando requisitos bloqueadores, ressalvas ou a evidencia que sustenta a aprovacao.]
