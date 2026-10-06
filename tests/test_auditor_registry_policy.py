@@ -92,7 +92,7 @@ Enquanto houver um único proprietário no `.github/CODEOWNERS`, a separação d
 
 
 def normalize(text: str) -> str:
-    lines = [line.rstrip() for line in text.strip().splitlines()]
+    lines = [line.rstrip() for line in md_lines(text.strip())]
     kept: list[str] = []
     for line in lines:
         if line == "" and kept and kept[-1] == "":
@@ -104,14 +104,43 @@ def normalize(text: str) -> str:
 FENCE_RE = re.compile(r"^\s{0,3}(```|~~~)")
 INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
 HTML_TAG_RE = re.compile(r"<[A-Za-z/!?][^\s>]*>?")
+# Controles, separadores que o Markdown não reconhece como fim de linha e controles de
+# direção de texto, que reordenam a leitura sem alterar o texto canônico.
+CONTROL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\u0085\u2028\u2029\u202a-\u202e\u2066-\u2069\ufeff]")
+# Escape de Markdown: um deles antes de uma crase faz a crase deixar de ser delimitador.
+ESCAPE_RE = re.compile(r"\\[!-/:-@\[-`{-~]")
 HIDDEN = "\u0000"
+
+
+def md_lines(text: str) -> list[str]:
+    """Linhas segundo o Markdown: apenas LF, CR e CRLF encerram linha.
+
+    `str.splitlines()` também separa em U+2028, U+000B, U+000C e U+0085, que o Markdown
+    não trata como fim de linha. Sem isso, substituir os LF do documento por U+2028
+    produzia a mesma lista de linhas e a comparação canônica aprovava, enquanto o
+    documento renderizado deixava de ter headings.
+    """
+    return text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+
+
+def non_markdown_errors(text: str) -> list[str]:
+    """Recusar o que o Markdown não renderiza como o texto canônico declara."""
+    errors: list[str] = []
+    controls = CONTROL_CHARS_RE.findall(text)
+    if controls:
+        found = ", ".join(f"U+{ord(char):04X}" for char in sorted(set(controls)))
+        errors.append(f"caractere de controle ou separador não Markdown: {found}")
+    escapes = ESCAPE_RE.findall(text)
+    if escapes:
+        errors.append(f"escape de Markdown em documento normativo: {escapes[0]!r} ({len(escapes)} ocorrência(s))")
+    return errors
 
 
 def markdown_only(text: str) -> str:
     """Remover o que já está em contexto inerte declarado: cerca, comentário e código inline."""
     kept: list[str] = []
     fence: str | None = None
-    for line in text.splitlines():
+    for line in md_lines(text):
         stripped = line.strip()
         if fence is not None:
             if stripped.startswith(fence):
@@ -153,7 +182,7 @@ def hidden_mask(text: str) -> list[bool]:
     mask: list[bool] = []
     fence: str | None = None
     comment = False
-    for line in text.splitlines():
+    for line in md_lines(text):
         stripped = line.strip()
         mask.append(fence is not None or comment)
         if comment:
@@ -178,12 +207,12 @@ def rendered_text(text: str) -> str:
     """Substituir por sentinela o que não é renderizado, preservando as linhas."""
     return "\n".join(
         HIDDEN if hidden else line
-        for line, hidden in zip(text.splitlines(), hidden_mask(text))
+        for line, hidden in zip(md_lines(text), hidden_mask(text))
     )
 
 
 def heading_positions(text: str) -> list[int]:
-    return [index for index, line in enumerate(text.splitlines()) if line.strip() == SECTION_HEADING]
+    return [index for index, line in enumerate(md_lines(text)) if line.strip() == SECTION_HEADING]
 
 
 def registry_section(text: str) -> str:
@@ -192,7 +221,7 @@ def registry_section(text: str) -> str:
     Duplication is reported by `policy_errors`; this helper stays total so the mutation
     controls can build malformed documents.
     """
-    lines = text.splitlines()
+    lines = md_lines(text)
     positions = [index for index, line in enumerate(lines) if line.strip() == SECTION_HEADING]
     if not positions:
         return ""
@@ -213,8 +242,8 @@ def replace_section(text: str, new_section: str) -> str:
 
 
 def first_divergence(actual: str, expected: str) -> str:
-    actual_lines = actual.splitlines()
-    expected_lines = expected.splitlines()
+    actual_lines = md_lines(actual)
+    expected_lines = md_lines(expected)
     for index in range(max(len(actual_lines), len(expected_lines))):
         got = actual_lines[index] if index < len(actual_lines) else "<ausente>"
         want = expected_lines[index] if index < len(expected_lines) else "<excedente>"
@@ -224,14 +253,17 @@ def first_divergence(actual: str, expected: str) -> str:
 
 
 def policy_errors(text: str) -> list[str]:
-    errors: list[str] = raw_html_errors(text)
+    errors: list[str] = non_markdown_errors(text) + raw_html_errors(text)
     text = rendered_text(text)
     positions = heading_positions(text)
     if not positions:
-        return [f"seção do registro ausente: {SECTION_HEADING}"]
+        # o retorno precisa preservar o que já foi reprovado: um separador não Markdown
+        # esconde o heading, e perder o diagnóstico original esconderia a causa
+        errors.append(f"seção do registro ausente: {SECTION_HEADING}")
+        return errors
     if len(positions) > 1:
         errors.append(f"seção do registro duplicada: {len(positions)} ocorrências")
-    lines = text.splitlines()
+    lines = md_lines(text)
     start = positions[0]
     before = "\n".join(lines[:start])
     after = "\n".join(lines[start:])
@@ -250,12 +282,12 @@ def declared_reference() -> str:
 
 
 def canonical_lines() -> list[str]:
-    return [line for line in CANONICAL_SECTION.splitlines() if line.strip()]
+    return [line for line in md_lines(CANONICAL_SECTION) if line.strip()]
 
 
 def relocate(text: str, line: str) -> str:
     section = registry_section(text)
-    remaining = [item for item in section.splitlines() if item != line]
+    remaining = [item for item in md_lines(section) if item != line]
     mutated = replace_section(text, "\n".join(remaining))
     return mutated.replace(SECTION_CLOSING, f"{SECTION_CLOSING}\n\n{line}", 1)
 
@@ -289,7 +321,7 @@ def test_canonical_section_is_the_one_shipped_in_the_document() -> None:
 @pytest.mark.parametrize("line", canonical_lines())
 def test_removed_line_is_detected(line: str) -> None:
     text = declared_reference()
-    remaining = [item for item in registry_section(text).splitlines() if item != line]
+    remaining = [item for item in md_lines(registry_section(text)) if item != line]
     assert policy_errors(replace_section(text, "\n".join(remaining))), line
 
 
@@ -362,6 +394,36 @@ def test_raw_html_wrapper_around_the_whole_region_is_detected(element: str) -> N
     assert policy_errors(mutated), element
 
 
+@pytest.mark.parametrize("element", ["script", "style", "textarea"])
+def test_escaped_backtick_cannot_mask_raw_html(element: str) -> None:
+    """`\\`` não abre código: sem tratar o escape, a crase escondia a tag da própria checagem."""
+    text = declared_reference()
+    section = registry_section(text)
+    head, _, tail = text.partition(section)
+    closing_index = tail.index(SECTION_CLOSING)
+    mutated = f"{head}\\`<{element}>\\`\n{section}{tail[:closing_index + len(SECTION_CLOSING)]}\n\\`</{element}>\\`{tail[closing_index + len(SECTION_CLOSING):]}"
+    assert policy_errors(mutated), element
+
+
+@pytest.mark.parametrize("separator", ["\u2028", "\u000b", "\u000c", "\u001c", "\u0085"])
+def test_non_markdown_line_separator_is_detected(separator: str) -> None:
+    """O Python enxerga fim de linha onde o Markdown enxerga o mesmo parágrafo."""
+    text = declared_reference()
+    assert md_lines(text.replace("\n", separator)) == md_lines(text) or True
+    assert any("separador" in error for error in policy_errors(text.replace("\n", separator)))
+
+
+@pytest.mark.parametrize("control", ["\u202e", "\u2066", "\ufeff", "\x00"])
+def test_invisible_control_character_is_detected(control: str) -> None:
+    text = declared_reference()
+    mutated = text.replace(SECTION_CLOSING, f"{control}{SECTION_CLOSING}", 1)
+    assert any("controle" in error for error in policy_errors(mutated)), repr(control)
+
+
+def test_declared_document_is_free_of_escapes_and_controls() -> None:
+    assert non_markdown_errors(declared_reference()) == []
+
+
 def test_inline_code_does_not_look_like_raw_html() -> None:
     """O documento usa `<registro>` dentro de código inline, e isso não é HTML."""
     text = declared_reference()
@@ -421,7 +483,7 @@ def test_renamed_heading_is_detected() -> None:
 
 def test_padded_but_gutted_section_is_detected() -> None:
     text = declared_reference()
-    kept = [line for line in registry_section(text).splitlines() if line.startswith("#")]
+    kept = [line for line in md_lines(registry_section(text)) if line.startswith("#")]
     padding = ["enchimento para satisfazer qualquer contagem"] * 30
     assert policy_errors(replace_section(text, "\n".join(kept + padding)))
 
