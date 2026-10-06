@@ -7,7 +7,7 @@ REFERENCE = (ROOT / "references" / "implementation-provider-call-governance.md")
 
 
 def test_skill_loads_provider_governance_for_external_integrations():
-    assert "implementation-*" in SKILL
+    assert "references/implementation-provider-call-governance.md" in SKILL
     assert "uma tentativa do executor produza no maximo uma chamada outbound" in WORKFLOW
 
 

@@ -48,8 +48,7 @@ entregar-issue
   -> handoff/encaminhamento para auditar-issue independente
 ```
 
-Nunca invocar `orquestrador` dentro deste fluxo: ele e um modo alternativo de entrega, escolhido explicitamente pelo usuario. Tambem nao invocar wrappers legados como `issue-loop-engineer`, `implementar-issue` ou `higienizacao`.
-Nunca invocar `issue-loop-engineer`, `orquestrador`, `implementar-issue` ou `higienizacao` de dentro deste fluxo.
+Nunca invocar `issue-loop-engineer`, `orquestrador`, `implementar-issue` ou `higienizacao` de dentro deste fluxo: `orquestrador` e um modo alternativo de entrega, escolhido explicitamente pelo usuario; os demais sao wrappers legados.
 
 ## Carregamento progressivo
 
@@ -64,8 +63,12 @@ Ler somente quando aplicavel:
 
 - transicao, recorrencia ou decisao: `references/controller-loop-protocol.md`;
 - risco e perfil: `references/execution-profiles.md`;
-- autorizacao, persistencia, runtime, visual ou input parser: a referencia do gate correspondente;
-- entrada nao confiavel ou provider: referencias `implementation-*` correspondentes;
+- autorizacao ou persistencia: `references/persistence-authorization-gates.md`;
+- resolvedor, executor, retry/fallback, adapter ou provider em runtime: `references/runtime-contract-gates.md`;
+- impacto visual: `references/visual-gate.md`;
+- input parser: `references/input-parser-gate.md` e `references/controller-input-parser-controls.md`;
+- entrada nao confiavel: `references/implementation-untrusted-input-contract.md`;
+- chamada a provider: `references/implementation-provider-call-governance.md`;
 - PR aberta, publicacao, CI ou coleta remota: `references/pr-conflict-resolution.md`, `contracts/ci-ownership.json`, `references/github-actions-policy.md`, `references/finalize-after-ci.md`, `references/native-github-audit-contract.md` e, quando `audit_transport=certified-handoff`, `references/terminal-handoff.md`;
 - correcao de handoff `result-only` em PR ja aberta ou decisao sobre PR substituta: `references/result-only-pr-recovery.md`;
 - auditoria interna: `references/controller-audit-contract.md` e `references/controller-single-invocation.md`;
@@ -303,4 +306,4 @@ Nunca afirmar independencia apenas por trocar de Skill no mesmo contexto. Para q
 
 ## Contrato canonico
 
-Os artefatos internos legados do controlador continuam usando o contrato declarado em `contracts/version.json`. Em `native-github-audit`, nenhum certificado/handoff `.audit` e emitido. Em `certified-handoff`, para o certificado/handoff consumido por `auditar-issue`, usar `contract_version=2026-08-20.3` (default de `build_handoff_certificate.py`) ate a sincronizacao global dos contratos gerados. Nunca emitir handoff `2026-08-20.3` para um auditor que exige `2026-08-20.3`. Executar `scripts/controller_cli.py validate-contracts` e os testes focados; drift global preexistente deve ser reportado separadamente, nao mascarado por troca de numero.
+Os artefatos internos legados do controlador continuam usando o contrato declarado em `contracts/version.json`. Em `native-github-audit`, nenhum certificado/handoff `.audit` e emitido. Em `certified-handoff`, para o certificado/handoff consumido por `auditar-issue`, usar `contract_version=2026-08-20.3` (default de `build_handoff_certificate.py`). Nunca emitir handoff com `contract_version` diferente da exigida pelo auditor. Executar `scripts/controller_cli.py validate-contracts` e os testes focados; drift global preexistente deve ser reportado separadamente, nao mascarado por troca de numero.
