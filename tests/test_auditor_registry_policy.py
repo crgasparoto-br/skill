@@ -4,19 +4,24 @@ The registry that accepts an external audit report is kept outside the candidate
 repository, so nothing in the repository would notice if the procedure that maintains
 it disappeared from the documentation.
 
-Two earlier versions of this file failed an independent audit, and both failures are
-recorded here because they explain the shape of the checks:
+Three earlier versions of this file failed an independent audit, and each failure is the
+reason the current check has the shape it has:
 
-- the first checked literal markers only, so removing the clause a heading introduced
-  was not detected while the test claimed to cover every required element;
-- the second checked clause text over the whole document, so a clause moved to another
-  section, hidden in a Markdown comment, or inverted while keeping the literal was not
-  detected.
+1. literal markers only, so removing the clause a heading introduced was not detected;
+2. clause text searched over the whole document, so a clause moved to another section,
+   hidden in a Markdown comment, or inverted while keeping the literal was not detected;
+3. clause text anchored at line start but still a prefix match, so wrapping a clause in a
+   code fence, or appending a sentence that contradicts it, was not detected.
 
-The checks below are therefore scoped to the registry section, ignore commented text,
-and anchor each clause at the start of its own line. The clause wording is canonical:
-rewording a clause requires updating this table, and that is deliberate, because a gate
-that guesses synonyms cannot prove the procedure is still declared.
+Every one of those defects has the same root: a text that *contains* the policy is not a
+text that *declares* the policy, and the space of ways to contain without declaring is
+open-ended. The check therefore stopped trying to recognise the procedure and compares
+the section to the canonical form instead.
+
+The wording is canonical on purpose. To change the procedure, change `docs/SECURITY.md`
+and `CANONICAL_SECTION` in the same commit: the diff in this file is then the evidence
+that the change was deliberate. The section must also be declared exactly once, between
+the authority boundaries and the merge policy.
 
 These tests also keep the entry builder honest about the fingerprint it publishes.
 """
@@ -42,45 +47,70 @@ BUILDER = ROOT / "auditar-issue" / "scripts" / "build_trusted_auditor_entry.py"
 SCHEMA = ROOT / "auditar-issue" / "schemas" / "trusted-auditors.schema.json"
 
 SECTION_HEADING = "## Registro de auditores confiáveis"
-MIN_SECTION_LINES = 15
-MIN_CLAUSES = 22
+SECTION_OPENING = "## Fronteiras de autoridade"
+SECTION_CLOSING = "## Merge e release"
+MIN_CANONICAL_LINES = 20
 
-REQUIRED_CLAUSES = {
-    "subsecao de custodia e separacao": r"^### Custódia e separação de funções$",
-    "subsecao de procedimento": r"^### Procedimento$",
-    "subsecao de rotacao": r"^### Rotação e revogação$",
-    "subsecao de operador unico": r"^### Operador único$",
-    "registro inalteravel pelo candidato": r"^A independência de auditoria é arquitetural:.*registro que o candidato não pode alterar",
-    "custodiante autoriza e revoga": r"^- o \*\*custodiante\*\* mantém o registro: autoriza, adiciona e revoga chaves",
-    "produtor nao aprova o proprio registro": r"^- o \*\*produtor do candidato\*\* implementa a entrega e não pode manter, editar nem aprovar o próprio registro",
-    "detentor da chave nao implementa": r"^- o \*\*detentor da chave privada de auditoria\*\* assina pareceres em contexto separado e não pode ter participado da implementação auditada",
-    "funcoes nao acumulaveis": r"^- para o mesmo candidato, nenhuma dessas funções pode estar na mesma pessoa",
-    "chave gerada com senha e fora do contexto": r"^1\. gerar o par Ed25519 com `generate_auditor_keypair\.py`, com a chave privada cifrada por senha, fora do repositório e fora do contexto de implementação",
-    "fingerprint derivado da chave publicada": r"^2\. montar a entrada do registro com `build_trusted_auditor_entry\.py`, que deriva `public_key_sha256` dos bytes de `public_key_pem`",
-    "registro publicado fora do candidato": r"^3\. o custodiante revisa a entrada, confirma `repositories` e publica o registro no ambiente do operador, nunca no repositório do candidato",
-    "validacao por caminho local": r"^4\. a validação do parecer referencia o registro apenas por caminho local",
-    "rotacao periodica declarada": r"^- rotacionar no período declarado pelo custodiante",
-    "rotacao com janela para pareceres antigos": r"^- uma rotação adiciona a nova chave e mantém a anterior apenas durante a janela em que pareceres antigos ainda precisam ser validados",
-    "revogacao remove a entrada": r"^- revogar é remover a entrada",
-    "chave revogada nao aprova": r"^- parecer assinado por chave removida do registro não aprova, mesmo com assinatura válida",
-    "limitacao de operador unico": r"^Enquanto houver um único proprietário no `\.github/CODEOWNERS`, a separação de funções acima é regra de contrato, não garantia estrutural",
-    "declarar em vez de presumir": r"^- declarar a limitação em vez de presumir independência",
-    "chave privada fora do repositorio": r"^- manter a chave privada de auditoria fora do repositório e fora do contexto de implementação",
-    "independencia nao veio de separacao de pessoas": r"^- registrar no artefato de auditoria que a independência foi obtida por contexto separado e custódia declarada, não por separação de pessoas",
-    "distribuir o CODEOWNERS": r"^- distribuir o `CODEOWNERS` assim que houver uma segunda pessoa, antes de depender da separação para uma aprovação material",
-}
+CANONICAL_SECTION = """## Registro de auditores confiáveis
+
+A independência de auditoria é arquitetural: contexto separado, leitura somente e rederivação com parser próprio. O controle que fecha o ciclo é externo: `validate_external_audit_report.py --trusted-auditors <registro>` aceita apenas parecer assinado por chave presente em um registro que o candidato não pode alterar.
+
+### Custódia e separação de funções
+
+- o **custodiante** mantém o registro: autoriza, adiciona e revoga chaves;
+- o **produtor do candidato** implementa a entrega e não pode manter, editar nem aprovar o próprio registro;
+- o **detentor da chave privada de auditoria** assina pareceres em contexto separado e não pode ter participado da implementação auditada;
+- para o mesmo candidato, nenhuma dessas funções pode estar na mesma pessoa.
+
+### Procedimento
+
+1. gerar o par Ed25519 com `generate_auditor_keypair.py`, com a chave privada cifrada por senha, fora do repositório e fora do contexto de implementação;
+2. montar a entrada do registro com `build_trusted_auditor_entry.py`, que deriva `public_key_sha256` dos bytes de `public_key_pem` em vez de aceitar valor informado;
+3. o custodiante revisa a entrada, confirma `repositories` e publica o registro no ambiente do operador, nunca no repositório do candidato;
+4. a validação do parecer referencia o registro apenas por caminho local.
+
+### Rotação e revogação
+
+- rotacionar no período declarado pelo custodiante e sempre que houver dúvida sobre a custódia da chave privada;
+- uma rotação adiciona a nova chave e mantém a anterior apenas durante a janela em que pareceres antigos ainda precisam ser validados;
+- revogar é remover a entrada; `enabled` é constante `true` no esquema atual, então não existe desabilitação parcial sem que o esquema mude;
+- parecer assinado por chave removida do registro não aprova, mesmo com assinatura válida.
+
+### Operador único
+
+Enquanto houver um único proprietário no `.github/CODEOWNERS`, a separação de funções acima é regra de contrato, não garantia estrutural. Nesse cenário:
+
+- declarar a limitação em vez de presumir independência;
+- manter a chave privada de auditoria fora do repositório e fora do contexto de implementação, com senha distinta das demais;
+- registrar no artefato de auditoria que a independência foi obtida por contexto separado e custódia declarada, não por separação de pessoas;
+- distribuir o `CODEOWNERS` assim que houver uma segunda pessoa, antes de depender da separação para uma aprovação material."""
 
 
-def visible_text(text: str) -> str:
-    """Remove Markdown comments: text nobody reads cannot declare a procedure."""
-    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+def normalize(text: str) -> str:
+    lines = [line.rstrip() for line in text.strip().splitlines()]
+    kept: list[str] = []
+    for line in lines:
+        if line == "" and kept and kept[-1] == "":
+            continue
+        kept.append(line)
+    return "\n".join(kept)
+
+
+def heading_positions(text: str) -> list[int]:
+    return [index for index, line in enumerate(text.splitlines()) if line.strip() == SECTION_HEADING]
 
 
 def registry_section(text: str) -> str:
-    lines = visible_text(text).splitlines()
-    start = next((index for index, line in enumerate(lines) if line.strip() == SECTION_HEADING), None)
-    if start is None:
+    """Return the registry section, or the first occurrence when duplicated.
+
+    Duplication is reported by `policy_errors`; this helper stays total so the mutation
+    controls can build malformed documents.
+    """
+    lines = text.splitlines()
+    positions = [index for index, line in enumerate(lines) if line.strip() == SECTION_HEADING]
+    if not positions:
         return ""
+    start = positions[0]
     end = len(lines)
     for index in range(start + 1, len(lines)):
         if lines[index].startswith("## "):
@@ -92,39 +122,59 @@ def registry_section(text: str) -> str:
 def replace_section(text: str, new_section: str) -> str:
     section = registry_section(text)
     assert section, "a seção do registro precisa existir para ser mutada"
-    head, _, tail = visible_text(text).partition(section)
+    head, _, tail = text.partition(section)
     return head + new_section + tail
 
 
-def section_lines(text: str) -> list[str]:
-    return registry_section(text).splitlines()
-
-
-def clause_lines(text: str, pattern: str) -> list[str]:
-    return [line for line in section_lines(text) if re.search(pattern, line)]
+def first_divergence(actual: str, expected: str) -> str:
+    actual_lines = actual.splitlines()
+    expected_lines = expected.splitlines()
+    for index in range(max(len(actual_lines), len(expected_lines))):
+        got = actual_lines[index] if index < len(actual_lines) else "<ausente>"
+        want = expected_lines[index] if index < len(expected_lines) else "<excedente>"
+        if got != want:
+            return f"linha {index + 1}: esperado {want[:70]!r}, encontrado {got[:70]!r}"
+    return "divergência não localizada"
 
 
 def policy_errors(text: str) -> list[str]:
-    section = registry_section(text)
-    if not section:
+    errors: list[str] = []
+    positions = heading_positions(text)
+    if not positions:
         return [f"seção do registro ausente: {SECTION_HEADING}"]
-    errors = [
-        f"cláusula ausente: {label}"
-        for label, pattern in REQUIRED_CLAUSES.items()
-        if not re.search(pattern, section, re.MULTILINE)
-    ]
-    body = [
-        line
-        for line in section.splitlines()
-        if line.strip() and not line.startswith("###") and line.strip() != SECTION_HEADING
-    ]
-    if len(body) < MIN_SECTION_LINES:
-        errors.append(f"seção do registro com corpo insuficiente: {len(body)} linhas")
+    if len(positions) > 1:
+        errors.append(f"seção do registro duplicada: {len(positions)} ocorrências")
+    lines = text.splitlines()
+    start = positions[0]
+    before = "\n".join(lines[:start])
+    after = "\n".join(lines[start:])
+    if SECTION_OPENING not in before:
+        errors.append(f"seção do registro antes de {SECTION_OPENING}")
+    if SECTION_CLOSING not in after:
+        errors.append(f"seção do registro depois de {SECTION_CLOSING}")
+    section = registry_section(text)
+    if normalize(section) != normalize(CANONICAL_SECTION):
+        errors.append(f"procedimento do registro diverge da forma canônica em {first_divergence(normalize(section), normalize(CANONICAL_SECTION))}")
     return errors
 
 
 def declared_reference() -> str:
     return SECURITY.read_text(encoding="utf-8")
+
+
+def canonical_lines() -> list[str]:
+    return [line for line in CANONICAL_SECTION.splitlines() if line.strip()]
+
+
+def relocate(text: str, line: str) -> str:
+    section = registry_section(text)
+    remaining = [item for item in section.splitlines() if item != line]
+    mutated = replace_section(text, "\n".join(remaining))
+    return mutated.replace(SECTION_CLOSING, f"{SECTION_CLOSING}\n\n{line}", 1)
+
+
+def fence(line: str) -> list[str]:
+    return ["```markdown", line, "```"]
 
 
 # --- a política declarada -------------------------------------------------------------
@@ -134,85 +184,101 @@ def test_security_document_declares_the_registry_procedure() -> None:
     assert policy_errors(declared_reference()) == []
 
 
-def test_clause_set_is_not_silently_trimmed() -> None:
-    assert len(REQUIRED_CLAUSES) >= MIN_CLAUSES
+def test_canonical_section_is_substantial() -> None:
+    assert len(canonical_lines()) >= MIN_CANONICAL_LINES
+
+
+def test_canonical_section_is_the_one_shipped_in_the_document() -> None:
+    assert normalize(registry_section(declared_reference())) == normalize(CANONICAL_SECTION)
+
+
+# --- controles negativos: cada classe de mascaramento precisa ser detectada ------------
+#
+# Todas as classes abaixo passaram por alguma versão anterior deste arquivo. Nenhuma
+# delas é detectada por reconhecimento de texto; todas são detectadas porque alteram o
+# que a seção declara.
+
+
+@pytest.mark.parametrize("line", canonical_lines())
+def test_removed_line_is_detected(line: str) -> None:
+    text = declared_reference()
+    remaining = [item for item in registry_section(text).splitlines() if item != line]
+    assert policy_errors(replace_section(text, "\n".join(remaining))), line
+
+
+@pytest.mark.parametrize("line", canonical_lines())
+def test_relocated_line_is_detected(line: str) -> None:
+    assert policy_errors(relocate(declared_reference(), line)), line
+
+
+@pytest.mark.parametrize("line", canonical_lines())
+def test_commented_line_is_detected(line: str) -> None:
+    text = declared_reference()
+    section = registry_section(text)
+    mutated = replace_section(text, section.replace(line, f"<!-- {line} -->"))
+    assert policy_errors(mutated), line
+
+
+@pytest.mark.parametrize("line", canonical_lines())
+def test_fenced_line_is_detected(line: str) -> None:
+    """Cerca transforma procedimento em exemplo, e exemplo não é regra."""
+    text = declared_reference()
+    section = registry_section(text)
+    mutated = replace_section(text, section.replace(line, "\n".join(fence(line))))
+    assert policy_errors(mutated), line
+
+
+@pytest.mark.parametrize("line", canonical_lines())
+def test_contradicting_suffix_is_detected(line: str) -> None:
+    """Manter o literal e acrescentar a negação não pode continuar aprovando."""
+    text = declared_reference()
+    section = registry_section(text)
+    mutated = replace_section(text, section.replace(line, f"{line} É permitido o contrário do que esta linha afirma."))
+    assert policy_errors(mutated), line
+
+
+def test_fenced_body_is_detected() -> None:
+    text = declared_reference()
+    section = registry_section(text)
+    mutated = replace_section(text, "\n".join(["```markdown", section, "```"]))
+    assert policy_errors(mutated)
+
+
+def test_duplicated_section_is_detected() -> None:
+    text = declared_reference()
+    section = registry_section(text)
+    mutated = f"{text}\n\n{section}\n"
+    errors = policy_errors(mutated)
+    assert any("duplicada" in error for error in errors), errors
+
+
+def test_relocated_section_is_detected() -> None:
+    text = declared_reference()
+    section = registry_section(text)
+    without = replace_section(text, "").rstrip()
+    mutated = f"{without}\n\n{section}\n"
+    errors = policy_errors(mutated)
+    assert any("depois de" in error for error in errors), errors
 
 
 def test_missing_section_is_detected() -> None:
-    """A seção inteira é pré-condição: sem ela, nenhuma cláusula é avaliável."""
     text = declared_reference()
-    lines = [line for line in section_lines(text) if line.strip() != SECTION_HEADING]
-    errors = policy_errors(replace_section(text, "\n".join(lines)))
+    mutated = replace_section(text, "")
+    errors = policy_errors(mutated)
     assert errors == [f"seção do registro ausente: {SECTION_HEADING}"], errors
 
 
-# --- controles negativos: cada classe de remoção precisa ser detectada -----------------
-
-
-@pytest.mark.parametrize("label", list(REQUIRED_CLAUSES))
-def test_clause_removed_from_the_section_is_detected(label: str) -> None:
+def test_renamed_heading_is_detected() -> None:
     text = declared_reference()
-    pattern = REQUIRED_CLAUSES[label]
-    assert clause_lines(text, pattern), label
-    remaining = [line for line in section_lines(text) if not re.search(pattern, line)]
-    assert f"cláusula ausente: {label}" in policy_errors(replace_section(text, "\n".join(remaining))), label
-
-
-@pytest.mark.parametrize("label", list(REQUIRED_CLAUSES))
-def test_clause_relocated_outside_the_section_is_detected(label: str) -> None:
-    text = declared_reference()
-    pattern = REQUIRED_CLAUSES[label]
-    moved = clause_lines(text, pattern)
-    assert moved, label
-    remaining = [line for line in section_lines(text) if not re.search(pattern, line)]
-    mutated = replace_section(text, "\n".join(remaining))
-    mutated = mutated.replace("## Merge e release", "## Merge e release\n\n" + "\n".join(moved), 1)
-    assert f"cláusula ausente: {label}" in policy_errors(mutated), label
-
-
-@pytest.mark.parametrize("label", list(REQUIRED_CLAUSES))
-def test_clause_hidden_in_a_markdown_comment_is_detected(label: str) -> None:
-    text = declared_reference()
-    pattern = REQUIRED_CLAUSES[label]
-    lines = [f"<!-- {line} -->" if re.search(pattern, line) else line for line in section_lines(text)]
-    assert f"cláusula ausente: {label}" in policy_errors(replace_section(text, "\n".join(lines))), label
-
-
-def test_inverted_clause_is_detected() -> None:
-    text = declared_reference()
-    target = "- para o mesmo candidato, nenhuma dessas funções pode estar na mesma pessoa."
-    assert target in text
-    mutated = text.replace(target, "- é incorreto afirmar que para o mesmo candidato nenhuma dessas funções pode estar na mesma pessoa.")
-    assert "cláusula ausente: funcoes nao acumulaveis" in policy_errors(mutated)
+    section = registry_section(text).replace(SECTION_HEADING, "## Registro de auditores")
+    assert policy_errors(replace_section(text, section))
 
 
 def test_padded_but_gutted_section_is_detected() -> None:
     text = declared_reference()
-    kept = [line for line in section_lines(text) if line.startswith("#")]
-    padding = ["enchimento para satisfazer o corpo mínimo"] * (MIN_SECTION_LINES + 5)
-    errors = policy_errors(replace_section(text, "\n".join(kept + padding)))
-    assert any(error.startswith("cláusula ausente") for error in errors), errors
-
-
-def test_every_line_of_the_registry_section_is_load_bearing() -> None:
-    """Nenhuma linha do procedimento pode sumir sem que a checagem reprove."""
-    text = declared_reference()
-    lines = section_lines(text)
-    assert len([line for line in lines if line.strip()]) >= MIN_SECTION_LINES
-    unprotected = [
-        line
-        for index, line in enumerate(lines)
-        if line.strip()
-        and not policy_errors(replace_section(text, "\n".join(item for position, item in enumerate(lines) if position != index)))
-    ]
-    assert unprotected == [], unprotected
-
-
-def test_registry_section_is_bounded_by_the_next_heading() -> None:
-    section = registry_section(declared_reference())
-    assert section.startswith(SECTION_HEADING)
-    assert "## Merge e release" not in section
-    assert "### Operador único" in section
+    kept = [line for line in registry_section(text).splitlines() if line.startswith("#")]
+    padding = ["enchimento para satisfazer qualquer contagem"] * 30
+    assert policy_errors(replace_section(text, "\n".join(kept + padding)))
 
 
 # --- construtor de entrada -------------------------------------------------------------
