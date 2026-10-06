@@ -44,6 +44,7 @@ Os IDs abaixo são estáveis para issues, commits, avaliações e notas de relea
 | `V030-004` | Índices e economia de contexto | P1 | `planned` | Tornar referências longas navegáveis e rejeitar documentação sem instrução de carregamento seletivo. |
 | `V030-005` | Decisão sobre contrato `transitional` | P1 | `planned` | Publicar decisão de migração, compatibilidade, depreciação e eventual evolução SemVer. |
 | `V030-006` | Release e regressão comportamental | P1 | `planned` | Integrar avaliações informativas ao CI, registrar resultados e publicar `v0.3.0` reproduzível. |
+| `V030-007` | Genericidade de assets permanentes | P1 | `implemented` | Rejeitar acoplamento concreto a issue, host, caminho e identificador de domínio, e executar o validador sobre o catálogo. |
 
 ## 4. Entregas detalhadas
 
@@ -157,6 +158,14 @@ Integrar a qualidade comportamental sem transformar uma avaliação probabilíst
 
 A release `v0.3.0` só deve ser criada depois de uma auditoria independente do commit final, tag anotada e manifesto de compatibilidade atualizado.
 
+### V030-007 — Genericidade de assets permanentes
+
+O validador de genericidade existe desde a primeira versão com duas regras, e nunca era executado sobre o catálogo: a única invocação era um teste da própria skill sobre um diretório temporário. O alcance era menor que a invariante que o repositório declara.
+
+**Entregue em 2026-10-06**: `entregar-issue/scripts/validate_skill_genericity.py` passa a bloquear caminho absoluto de host, identificador concreto em prosa Markdown fora de exemplo delimitado e host externo concreto que não seja domínio reservado de exemplo ou host genérico declarado, além das duas regras preexistentes, e o CI passa a executar o validador sobre a raiz do catálogo. Requisito `SKSYS-023`.
+
+Permanece registrado um resíduo de proveniência: vinte schemas declaram `$id` em host reservado de exemplo cujo rótulo carrega o nome do produto de origem. O host é reservado por construção e portanto permitido pela regra, mas alterar a identidade de contratos versionados é mudança de compatibilidade e pertence a `V030-005`.
+
 ## 5. Sequência de implementação
 
 ### Fase A — fundação e segurança
@@ -201,6 +210,7 @@ A release será considerada pronta somente quando todos os critérios abaixo for
 - [ ] secret scanning, dependency review e auditoria de dependências estão ativos ou possuem decisão explícita e rastreável;
 - [ ] a licença foi escolhida e publicada;
 - [ ] referências longas possuem índice ou exceção documentada e validada;
+- [x] assets permanentes rejeitam acoplamento concreto a issue, host, caminho ou identificador de domínio, e o validador é executado sobre o catálogo;
 - [ ] a decisão do contrato `transitional` possui inventário, migração e compatibilidade testada;
 - [ ] a suíte determinística e os validadores do catálogo continuam verdes;
 - [ ] uma auditoria independente aprova o commit final;

@@ -66,6 +66,9 @@ jobs:
       - name: Validate context budget of control planes and references
         run: python scripts/validate_context_budget.py --root .
 
+      - name: Validate genericity of permanent skill assets
+        run: python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
+
       - name: Run skill tests
         run: python -m pytest -q
 

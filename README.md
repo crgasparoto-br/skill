@@ -130,6 +130,7 @@ python evals/run_evals.py --root . --verify-report /tmp/eval-report.json
 python scripts/validate_reachability.py --root .
 python scripts/validate_issue_templates.py --root .
 python scripts/validate_context_budget.py --root .
+python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
 python -m pytest -q
 ```
 

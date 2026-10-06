@@ -342,6 +342,21 @@
         "file:tests/test_validation_parity.py",
         "file:.github/workflows/validate.yml"
       ]
+    },
+    {
+      "id": "SKSYS-023",
+      "title": "Genericity of permanent assets is enforced",
+      "status": "validated",
+      "summary": "The genericity validator blocks numbered issue coupling, issue-derived permanent rules, absolute host paths, concrete identifiers in Markdown prose outside delimited examples, and concrete external hosts, and the workflow runs it over the catalog root.",
+      "implementationRefs": [
+        "file:entregar-issue/scripts/validate_skill_genericity.py",
+        "file:entregar-issue/references/learning-generalization.md",
+        "file:.github/workflows/validate.yml"
+      ],
+      "validationRefs": [
+        "file:entregar-issue/tests/test_skill_genericity.py",
+        "file:entregar-issue/tests/test_learning_generalization.py"
+      ]
     }
   ],
   "system_version": "2026-09-29.5"
