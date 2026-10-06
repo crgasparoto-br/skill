@@ -95,7 +95,7 @@ Não preencher ausência de telemetria com zero. Identidades de tentativa, execu
 
 O `SKILL.md` deve permanecer como control plane compacto da skill. Referências, schemas, contratos e scripts são carregados somente quando necessários ao passo corrente. Se uma referência for necessária para decidir um gate, sua ausência é falha de evidência, não autorização para ignorar o gate.
 
-## 9. Catálogo machine-readable
+## 6. Catálogo machine-readable
 
 `config/skills-catalog.json` é a fonte única para a lista pública de skills, finalidade, entradas, modos, gatilhos, autoridade e capacidades exigidas. O README contém uma projeção gerada delimitada por marcadores; execute `scripts/build_catalog_docs.py --check` para detectar drift.
 
@@ -103,19 +103,19 @@ O `SKILL.md` deve permanecer como control plane compacto da skill. Referências,
 
 `config/capabilities.json` define, para cada capacidade exigida, o estado quando ela estiver ausente e o fallback permitido. Ausência de escrita, execução, identidade imutável ou leitura remota nunca pode ser promovida a sucesso.
 
-## 10. Versionamento e compatibilidade
+## 7. Versionamento e compatibilidade
 
 `VERSION` é a versão pública SemVer do conjunto de skills e adaptadores. `config/skills-catalog.json.catalog_version` e `config/skill-system-requirements.json.system_version` identificam snapshots temporais internos. `config/compatibility.json` é a fonte canônica para mapear a release pública, a versão pública do contrato, a linhagem interna e a migração de cada skill.
 
 Uma combinação de versões não declarada no manifesto deve permanecer `UNKNOWN` ou incompatível. Tags de release devem apontar para commits imutáveis e só devem ser criadas depois do merge e da execução dos gates de release.
 
-## 11. Adaptadores de plataforma
+## 8. Adaptadores de plataforma
 
 `config/platform-adapters.json` registra os ambientes suportados e seus arquivos de instrução. Todos os adapters usam `host-declared` e `none-assumed`: o ambiente deve declarar as capacidades reais da sessão, e o adapter nunca pode inventar acesso a Git, escrita, CI, navegador ou execução de testes.
 
 O protocolo comum é `config/compatibility.json` → `config/skills-catalog.json` → `config/capabilities.json` → `config/platform-adapters.json` → `<skill>/SKILL.md` → referências condicionais → `schemas/contracts/scripts`. Um adapter específico pode explicar como montar contexto na plataforma, mas não pode substituir a semântica normativa do `<skill>/SKILL.md` ou ampliar autoridade.
 
-## 11.1 Avaliações comportamentais
+## 8.1 Avaliações comportamentais
 
 `evals/` contém casos versionados que medem o comportamento observável de runtimes de IA sem substituir hashes, schemas, CI ou outros gates determinísticos. Cada caso declara contexto, capacidades, resultado esperado, ações proibidas, evidências obrigatórias e orçamentos de uso.
 
@@ -123,19 +123,19 @@ O runner deve distinguir `PASS`, `FAIL`, `NOT_RUN` e `INVALID`. Runtime ausente,
 
 O harness é provider-agnostic. A CI valida os contratos e reproduz fixtures determinísticos; qualquer adapter de modelo deve declarar provider, modelo, adapter e métricas observadas. Avaliações comportamentais complementam, mas não substituem, a validação determinística de fatos críticos.
 
-## 12. Modelo de requisitos
+## 9. Modelo de requisitos
 
 `config/skill-system-requirements.json` registra requisitos globais com IDs estáveis, estado, referências de implementação e referências de validação. Alterações que introduzam uma nova invariante global devem preferir estender esse registro e os contratos existentes antes de duplicar regras em múltiplos `SKILL.md`.
 
-## 13. Manifesto de capacidades
+## 10. Manifesto de capacidades
 
 `.github/skill-system-capabilities.json` descreve capacidades globais ativas do catálogo. O manifesto é declarativo e deve refletir comportamento realmente implementado. Uma capacidade não pode ser marcada como habilitada apenas porque está planejada.
 
-## 14. Segurança e autoridade
+## 11. Segurança e autoridade
 
 `docs/SECURITY.md` é a fonte transversal para limites de escrita, independência, credenciais, efeitos destrutivos e merge. Contratos específicos podem ser mais restritivos, nunca mais permissivos sem alteração explícita desta especificação.
 
-## 15. Validação
+## 12. Validação
 
 `python scripts/validate_repository.py` deve falhar quando:
 
