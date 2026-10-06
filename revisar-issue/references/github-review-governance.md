@@ -1,13 +1,17 @@
 # Governanca de revisao GitHub standalone
 
-## Indice
+## Quando ler este arquivo
 
-1. Escopo da revisao
-2. Fonte canonica e documentacao
-3. Revisao em lote
-4. Escritas no GitHub
-5. Checklist de qualidade
-6. Limites
+Ler quando a revisão for standalone no GitHub, incluindo revisão em lote e escritas no repositório.
+
+## Índice
+
+- [1. Escopo da revisao](#1-escopo-da-revisao)
+- [2. Fonte canonica e documentacao](#2-fonte-canonica-e-documentacao)
+- [3. Revisao em lote](#3-revisao-em-lote)
+- [4. Escritas no GitHub](#4-escritas-no-github)
+- [5. Checklist de qualidade](#5-checklist-de-qualidade)
+- [6. Limites](#6-limites)
 
 ## 1. Escopo da revisao
 

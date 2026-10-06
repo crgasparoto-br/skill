@@ -1,5 +1,29 @@
 # Regras de evidência
 
+## Quando ler este arquivo
+
+Ler sempre na auditoria: define validade do parecer, hierarquia de confiança e evidência mínima por status.
+
+## Índice
+
+- [Validade do parecer](#validade-do-parecer)
+- [Hierarquia de confiança](#hierarquia-de-confiança)
+- [Evidência mínima por status](#evidência-mínima-por-status)
+- [Evidências inválidas isoladamente](#evidências-inválidas-isoladamente)
+- [Controles negativos estruturados](#controles-negativos-estruturados)
+- [Freshness de evidencia quantitativa](#freshness-de-evidencia-quantitativa)
+- [Rastreabilidade](#rastreabilidade)
+- [Evidência discriminante](#evidência-discriminante)
+- [Proveniencia em reenvio semanticamente identico](#proveniencia-em-reenvio-semanticamente-identico)
+- [Reprodução de causa raiz](#reprodução-de-causa-raiz)
+- [Evidência de contratos transitivos](#evidência-de-contratos-transitivos)
+- [Evidência de fronteira pública](#evidência-de-fronteira-pública)
+- [Evidência de autorização e falha temporária](#evidência-de-autorização-e-falha-temporária)
+- [Conflito entre pareceres](#conflito-entre-pareceres)
+- [Completude documental](#completude-documental)
+- [Evidencia remota de PR](#evidencia-remota-de-pr)
+- [Atribuicao em PRs acumuladas](#atribuicao-em-prs-acumuladas)
+
 ## Validade do parecer
 
 Evidência forte não transforma autoavaliação em auditoria independente. Uma execução no mesmo agente, conversa ou contexto da implementação pode encontrar e bloquear falhas e pode alimentar o gate operacional de um controlador de chamada unica, mas não pode aprovar o portão canônico de auditoria independente. Toda aprovação independente deve declarar contexto separado, procedência verificável e SHA imutável. Autodeclaração de independência dentro da mesma resposta ou conversa não é evidência.

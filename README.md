@@ -131,6 +131,7 @@ python scripts/validate_reachability.py --root .
 python scripts/validate_issue_templates.py --root .
 python scripts/validate_context_budget.py --root .
 python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
+python scripts/validate_reference_indexes.py --root .
 python -m pytest -q
 ```
 

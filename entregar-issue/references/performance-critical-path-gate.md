@@ -1,5 +1,22 @@
 # Gate de desempenho, instrumentacao e caminho critico
 
+## Quando ler este arquivo
+
+Ler quando a entrega tocar latência, métricas por etapa, caminho crítico, operação não essencial, carregamento tardio ou redução de I/O.
+
+## Índice
+
+- [Objetivo](#objetivo)
+- [Ativacao](#ativacao)
+- [Contrato estruturado obrigatorio](#contrato-estruturado-obrigatorio)
+- [Inventario do caminho produtivo](#inventario-do-caminho-produtivo)
+- [Cobertura completa de metricas por etapa](#cobertura-completa-de-metricas-por-etapa)
+- [Necessidade do trabalho no caminho critico](#necessidade-do-trabalho-no-caminho-critico)
+- [Fidelidade do benchmark ao caminho produtivo](#fidelidade-do-benchmark-ao-caminho-produtivo)
+- [Gates de desempenho com escopo](#gates-de-desempenho-com-escopo)
+- [Evidencia adversarial](#evidencia-adversarial)
+- [Portao](#portao)
+
 ## Objetivo
 
 Impedir que uma entrega de latencia/desempenho seja aprovada apenas porque um benchmark final melhorou. A entrega deve provar simultaneamente que:

@@ -41,7 +41,7 @@ Os IDs abaixo são estáveis para issues, commits, avaliações e notas de relea
 | `V030-001` | Harness de avaliações comportamentais | P0 | `implemented` | Executar casos versionados com resultado reproduzível, métricas e limites de custo/contexto. |
 | `V030-002` | Casos adversariais e regressões de comportamento | P0 | `implemented` | Cobrir seleção, prompt injection, contexto insuficiente, capacidades ausentes e evidência não executada. |
 | `V030-003` | Segurança e cadeia de suprimentos | P1 | `planned` | Escolher licença e ativar secret scanning, dependency review e auditoria de dependências. |
-| `V030-004` | Índices e economia de contexto | P1 | `planned` | Tornar referências longas navegáveis e rejeitar documentação sem instrução de carregamento seletivo. |
+| `V030-004` | Índices e economia de contexto | P1 | `implemented` | Tornar referências longas navegáveis e rejeitar documentação sem instrução de carregamento seletivo. |
 | `V030-005` | Decisão sobre contrato `transitional` | P1 | `planned` | Publicar decisão de migração, compatibilidade, depreciação e eventual evolução SemVer. |
 | `V030-006` | Release e regressão comportamental | P1 | `planned` | Integrar avaliações informativas ao CI, registrar resultados e publicar `v0.3.0` reproduzível. |
 | `V030-007` | Genericidade de assets permanentes | P1 | `implemented` | Rejeitar acoplamento concreto a issue, host, caminho e identificador de domínio, e executar o validador sobre o catálogo. |
@@ -124,6 +124,8 @@ A análise inicial identificou referências com mais de 100 linhas. Para cada re
 Criar `scripts/validate_reference_indexes.py` para verificar, no mínimo, limite de tamanho, presença de headings navegáveis, bloco de carregamento condicional e resolução dos anchors locais. O lint deve ignorar arquivos que sejam contratos, schemas ou fixtures quando o índice não fizer sentido, desde que essa exceção seja declarada.
 
 **Entregue em 2026-10-06** para o recorte de limite de tamanho: `config/context-budget.json` e `scripts/validate_context_budget.py` passaram a aplicar orçamento de contexto medido em bytes por arquivo e caracteres por linha a todo `SKILL.md` e a toda referência, substituindo a regra de 500 linhas que nenhum validador aplicava. Cinco exceções registram a medição exata dos arquivos que excedem o padrão hoje, e a lista só pode encolher. O lint de navegabilidade — headings, bloco `Quando ler este arquivo` e âncoras locais — continua aberto e pode ser absorvido por esse validador ou por um próprio. Requisito `SKSYS-022`.
+
+**Entregue em 2026-10-06** para o recorte de navegabilidade: `config/reference-index.json` declara o limiar em bytes — e não em linhas, pela mesma razão do orçamento de contexto — e `scripts/validate_reference_indexes.py` exige que toda referência acima do limiar declare quando deve ser lida e exponha um índice cujas âncoras resolvem e cujas entradas cobrem todas as seções. As doze referências acima de 8 KB receberam bloco de carregamento condicional e índice com âncoras, e as duas que já tinham índice passaram a ter âncoras resolvíveis. O teto de referência do orçamento subiu de 16 KiB para 17 KiB para comportar o bloco exigido, de modo que a política de navegabilidade não seja penalizada pelo orçamento. Requisito `SKSYS-024`.
 
 ### V030-005 — Decisão sobre o contrato `transitional`
 
@@ -210,6 +212,7 @@ A release será considerada pronta somente quando todos os critérios abaixo for
 - [ ] secret scanning, dependency review e auditoria de dependências estão ativos ou possuem decisão explícita e rastreável;
 - [ ] a licença foi escolhida e publicada;
 - [ ] referências longas possuem índice ou exceção documentada e validada;
+- [x] referências longas possuem bloco de carregamento condicional e índice com âncoras resolvíveis, verificado pelo lint de navegabilidade;
 - [x] assets permanentes rejeitam acoplamento concreto a issue, host, caminho ou identificador de domínio, e o validador é executado sobre o catálogo;
 - [ ] a decisão do contrato `transitional` possui inventário, migração e compatibilidade testada;
 - [ ] a suíte determinística e os validadores do catálogo continuam verdes;
