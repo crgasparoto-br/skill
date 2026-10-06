@@ -4,19 +4,24 @@ The registry that accepts an external audit report is kept outside the candidate
 repository, so nothing in the repository would notice if the procedure that maintains
 it disappeared from the documentation.
 
-Three earlier versions of this file failed an independent audit, and each failure is the
-reason the current check has the shape it has:
+Earlier versions of this file failed successive independent audits, and each failure is
+the reason the current check has the shape it has:
 
 1. literal markers only, so removing the clause a heading introduced was not detected;
 2. clause text searched over the whole document, so a clause moved to another section,
    hidden in a Markdown comment, or inverted while keeping the literal was not detected;
 3. clause text anchored at line start but still a prefix match, so wrapping a clause in a
-   code fence, or appending a sentence that contradicts it, was not detected.
+   code fence, or appending a sentence that contradicts it, was not detected;
+4. a section extraction that ignored rendered context, so a fence or a comment opened
+   before the heading and closed after the next heading hid the section while the
+   extracted slice stayed canonical;
+5. the same masking through raw HTML, which enumerating inert contexts cannot close.
 
-Every one of those defects has the same root: a text that *contains* the policy is not a
-text that *declares* the policy, and the space of ways to contain without declaring is
-open-ended. The check therefore stopped trying to recognise the procedure and compares
-the section to the canonical form instead.
+Every one of those defects has the same root: a document that *contains* the policy is not
+a document that *displays* the policy, and the space of ways to contain without displaying
+is open-ended. The check therefore stopped trying to recognise the procedure: it compares
+the section to the canonical form, and it requires the document to be renderable Markdown,
+rejecting raw HTML rather than enumerating the elements that can hide a rule.
 
 The wording is canonical on purpose. To change the procedure, change `docs/SECURITY.md`
 and `CANONICAL_SECTION` in the same commit: the diff in this file is then the evidence
@@ -97,7 +102,43 @@ def normalize(text: str) -> str:
 
 
 FENCE_RE = re.compile(r"^\s{0,3}(```|~~~)")
+INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
+HTML_TAG_RE = re.compile(r"<[A-Za-z/!?][^\s>]*>?")
 HIDDEN = "\u0000"
+
+
+def markdown_only(text: str) -> str:
+    """Remover o que já está em contexto inerte declarado: cerca, comentário e código inline."""
+    kept: list[str] = []
+    fence: str | None = None
+    for line in text.splitlines():
+        stripped = line.strip()
+        if fence is not None:
+            if stripped.startswith(fence):
+                fence = None
+            continue
+        if FENCE_RE.match(line):
+            fence = stripped[:3]
+            continue
+        kept.append(line)
+    without_comments = re.sub(r"<!--.*?-->", "", "\n".join(kept), flags=re.DOTALL)
+    return INLINE_CODE_RE.sub("``", without_comments)
+
+
+def raw_html_errors(text: str) -> list[str]:
+    """Recusar HTML bruto no documento normativo.
+
+    A quinta rodada de auditoria mostrou que enumerar contextos inertes não fecha nada:
+    depois de cerca e comentário, `<script>`, `<style>`, `<div hidden>`, `<noscript>`,
+    `<textarea>` e `<template>` escondiam a seção do mesmo modo. Em vez de enumerar, o
+    documento normativo passa a exigir Markdown renderizável: qualquer tag HTML fora de
+    código e de comentário reprova. O documento não usa HTML bruto, e uma norma de
+    segurança declarada em HTML inerte não é norma declarada.
+    """
+    tags = HTML_TAG_RE.findall(markdown_only(text))
+    if not tags:
+        return []
+    return [f"tag HTML bruta em documento normativo: {tags[0]!r} ({len(tags)} ocorrência(s))"]
 
 
 def hidden_mask(text: str) -> list[bool]:
@@ -183,7 +224,7 @@ def first_divergence(actual: str, expected: str) -> str:
 
 
 def policy_errors(text: str) -> list[str]:
-    errors: list[str] = []
+    errors: list[str] = raw_html_errors(text)
     text = rendered_text(text)
     positions = heading_positions(text)
     if not positions:
@@ -307,6 +348,45 @@ def test_outer_comment_around_the_whole_region_is_detected() -> None:
     closing_index = tail.index(SECTION_CLOSING)
     mutated = f"{head}<!--\n{section}{tail[:closing_index + len(SECTION_CLOSING)]}\n-->{tail[closing_index + len(SECTION_CLOSING):]}"
     assert policy_errors(mutated), "comentário externo precisa ser detectado"
+
+
+@pytest.mark.parametrize("element", ["script", "style", "div hidden", "noscript", "textarea", "template"])
+def test_raw_html_wrapper_around_the_whole_region_is_detected(element: str) -> None:
+    """Enumerar contexto inerte não fecha a classe; recusar HTML bruto fecha."""
+    name = element.split(" ")[0]
+    text = declared_reference()
+    section = registry_section(text)
+    head, _, tail = text.partition(section)
+    closing_index = tail.index(SECTION_CLOSING)
+    mutated = f"{head}<{element}>\n{section}{tail[:closing_index + len(SECTION_CLOSING)]}\n</{name}>{tail[closing_index + len(SECTION_CLOSING):]}"
+    assert policy_errors(mutated), element
+
+
+def test_inline_code_does_not_look_like_raw_html() -> None:
+    """O documento usa `<registro>` dentro de código inline, e isso não é HTML."""
+    text = declared_reference()
+    assert "`validate_external_audit_report.py --trusted-auditors <registro>`" in text
+    assert raw_html_errors(text) == []
+
+
+def test_raw_html_outside_the_section_is_also_detected() -> None:
+    text = declared_reference()
+    mutated = text.replace(SECTION_OPENING, f"<div hidden>\n{SECTION_OPENING}\n</div>", 1)
+    assert any("HTML bruta" in error for error in policy_errors(mutated))
+
+
+@pytest.mark.parametrize(
+    ("opening", "closing"),
+    [("<![CDATA[", "]]>"), ("<?php", "?>"), ("<!DOCTYPE html", ">"), ("<!-- nao fechado", "")],
+)
+def test_non_element_raw_html_cannot_open_an_inert_context(opening: str, closing: str) -> None:
+    """Declaração, instrução de processamento e comentário aberto também são contexto inerte."""
+    text = declared_reference()
+    section = registry_section(text)
+    head, _, tail = text.partition(section)
+    closing_index = tail.index(SECTION_CLOSING)
+    mutated = f"{head}{opening}\n{section}{tail[:closing_index + len(SECTION_CLOSING)]}\n{closing}{tail[closing_index + len(SECTION_CLOSING):]}"
+    assert policy_errors(mutated), opening
 
 
 def test_duplicated_section_is_detected() -> None:
