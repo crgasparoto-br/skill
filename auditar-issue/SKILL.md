@@ -73,6 +73,7 @@ Ler somente quando aplicavel:
 - certificado obrigatorio de handoff, somente quando `audit_transport=certified-handoff`: `references/handoff-certificate-preflight.md`;
 - criterio quantitativo, benchmark, percentil ou controle `evidence_kind=quantitative`: `references/quantitative-evidence-audit.md`;
 - `CODE-GROWTH-001` aplicavel ou artefato `code_growth` certificado: `references/code-growth-audit.md`;
+- diff com codigo executavel adicionado, referencia nova ou comportamento substituido: `references/codebase-grounding-audit.md`;
 - resolucao de scripts/artefatos no runtime: `references/runtime-resource-resolution.md`;
 - manifesto `base64-shards-v1`, artefato grande ou handoff transport-sharded: `references/large-artifact-consumption.md`;
 - apos primeiro blocker: `references/blocker-harvest.md`;

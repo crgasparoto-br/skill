@@ -12,6 +12,7 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 
 ### Added
 
+- gate `codebase-grounding` em `entregar-issue`: busca antes de criar (`GROUND-REUSE-001`), prova de existência antes de usar (`GROUND-EXIST-001`) e proibição de sobra (`GROUND-DEAD-001`), com validador determinístico contra o Git e refutação independente em `auditar-issue`;
 - harness provider-agnostic de avaliações comportamentais com casos versionados, replay determinístico, métricas limitadas e relatórios hashable;
 - contratos JSON Schema para casos, resultados e relatórios de avaliação;
 - gate de validação do harness integrado ao validador global e ao CI;
