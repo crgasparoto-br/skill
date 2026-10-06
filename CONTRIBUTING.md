@@ -21,7 +21,7 @@ Se você alterou um contrato canônico ou uma fonte declarada em `config/shared-
 
 ## Alterações de skills
 
-- Mantenha `SKILL.md` abaixo de 500 linhas.
+- Mantenha `SKILL.md` e as referências dentro do orçamento de contexto de `config/context-budget.json`, medido em bytes por arquivo e caracteres por linha. Um arquivo acima do padrão precisa de exceção declarada com justificativa e valor igual à medição atual; um arquivo que passe a respeitar o padrão não pode manter exceção.
 - Mantenha os templates de `.github/ISSUE_TEMPLATE/` com apenas headings e comentários: item pré-preenchido vira candidato de requisito no fechamento, e `tests/test_issue_templates.py` reprova a linha que produzir candidato.
 - Todo arquivo em `references/`, `scripts/` ou `schemas/` precisa ser alcançável a partir do `SKILL.md`; ao substituir um arquivo, apague o antigo no mesmo PR.
 - Antes de criar arquivo novo, procure um existente que possa ser estendido; um arquivo replicado entre skills deve ser declarado em `config/shared-files.json`.

@@ -27,6 +27,8 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 
 ### Added
 
+- orçamento de contexto aplicado ao control plane e às referências: [`config/context-budget.json`](./config/context-budget.json) declara limites de bytes por arquivo e caracteres por linha, e [`scripts/validate_context_budget.py`](./scripts/validate_context_budget.py) reprova arquivo acima do padrão sem exceção, exceção sem justificativa, exceção órfã, exceção desnecessária e exceção que divirja da medição atual (`SKSYS-022`);
+- teste de paridade que compara a sequência de validação executada pelo CI com a publicada em [`README.md`](./README.md) e [`AGENTS.md`](./AGENTS.md), e verifica que todo validador independente é alcançável a partir do workflow;
 - cobertura de **seleção resolvida** no harness de avaliações: quatro casos em pares de irmãos aterrados no roteador real, dois casos de fraseado reordenado que permanecem `UNKNOWN` e a regra da categoria `selection` em `scripts/validate_evals.py` distinguindo empate material, seleção resolvida e ausência de correspondência (`SKSYS-021`);
 - geração e verificação do relatório de replay de `evals/run_evals.py` no CI, exercitando `content_sha256`, `run_id` e o resumo, que antes não eram cobertos por nenhuma etapa;
 - forma canônica versionada para a issue que alimenta o fechamento de requisitos: [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/) com templates de desenvolvimento, defeito e epic, [`config/issue-templates.json`](./config/issue-templates.json) declarando as seções normativas lidas pelos extratores e [`scripts/validate_issue_templates.py`](./scripts/validate_issue_templates.py) reprovando template sem seção normativa ou com item pré-preenchido que viraria candidato de requisito (`SKSYS-020`);

@@ -63,6 +63,9 @@ jobs:
       - name: Validate canonical issue templates
         run: python scripts/validate_issue_templates.py --root .
 
+      - name: Validate context budget of control planes and references
+        run: python scripts/validate_context_budget.py --root .
+
       - name: Run skill tests
         run: python -m pytest -q
 

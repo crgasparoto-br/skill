@@ -129,6 +129,7 @@ python evals/run_evals.py --root . --results-dir evals/fixtures/results --report
 python evals/run_evals.py --root . --verify-report /tmp/eval-report.json
 python scripts/validate_reachability.py --root .
 python scripts/validate_issue_templates.py --root .
+python scripts/validate_context_budget.py --root .
 python -m pytest -q
 ```
 

@@ -326,6 +326,22 @@
         "file:tests/test_v030_002_cases.py",
         "file:.github/workflows/validate.yml"
       ]
+    },
+    {
+      "id": "SKSYS-022",
+      "title": "Enforced context budget",
+      "status": "validated",
+      "summary": "Control planes and references are bounded by measured bytes per file and characters per line, with an allowance list whose entries must equal the current measurement and therefore can only shrink.",
+      "implementationRefs": [
+        "file:config/context-budget.json",
+        "file:scripts/validate_context_budget.py",
+        "file:CONTRIBUTING.md"
+      ],
+      "validationRefs": [
+        "file:tests/test_context_budget.py",
+        "file:tests/test_validation_parity.py",
+        "file:.github/workflows/validate.yml"
+      ]
     }
   ],
   "system_version": "2026-09-29.5"
