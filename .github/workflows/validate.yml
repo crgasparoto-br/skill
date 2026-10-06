@@ -55,6 +55,9 @@ jobs:
       - name: Validate operational file reachability
         run: python scripts/validate_reachability.py --root .
 
+      - name: Validate canonical issue templates
+        run: python scripts/validate_issue_templates.py --root .
+
       - name: Run skill tests
         run: python -m pytest -q
 

@@ -2,8 +2,11 @@
 
 Este repositório é uma base de skills para agentes de IA. Mudanças devem preservar **rastreabilidade, fonte canônica única, fail-closed e evidência executável**.
 
+Leia [`AGENTS.md`](./AGENTS.md) antes de contribuir: ele é a instrução normativa para agentes de IA que trabalham neste repositório, incluindo o fluxo de branches e as regras de higiene.
+
 ## Antes de abrir uma alteração
 
+0. Abra uma issue usando um template de [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/). O corpo da issue alimenta o fechamento de requisitos do ciclo de entrega: use as seções `Escopo`, `Requisitos`, `Critérios de aceite` e `Invariantes`, escreva um item por linha e apague os comentários de orientação antes de abrir.
 1. Leia o `SKILL.md` afetado e as referências que ele carrega.
 2. Identifique a fonte canônica antes de editar uma cópia.
 3. Para uma nova invariante global, registre um requisito em `config/skill-system-requirements.json`.
@@ -19,6 +22,7 @@ Se você alterou um contrato canônico ou uma fonte declarada em `config/shared-
 ## Alterações de skills
 
 - Mantenha `SKILL.md` abaixo de 500 linhas.
+- Mantenha os templates de `.github/ISSUE_TEMPLATE/` com apenas headings e comentários: item pré-preenchido vira candidato de requisito no fechamento, e `tests/test_issue_templates.py` reprova a linha que produzir candidato.
 - Todo arquivo em `references/`, `scripts/` ou `schemas/` precisa ser alcançável a partir do `SKILL.md`; ao substituir um arquivo, apague o antigo no mesmo PR.
 - Antes de criar arquivo novo, procure um existente que possa ser estendido; um arquivo replicado entre skills deve ser declarado em `config/shared-files.json`.
 - Schema que nenhum validador aplica é uma segunda fonte de verdade: aplique-o no validador ou não o mantenha.

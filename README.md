@@ -91,6 +91,8 @@ O catálogo possui uma camada global de governança acima das regras específica
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) formaliza o escopo, as prioridades e os critérios de aceite da v0.3.0;
 - [`.github/skill-system-capabilities.json`](./.github/skill-system-capabilities.json) declara as capacidades globais efetivamente habilitadas;
 - [`docs/SECURITY.md`](./docs/SECURITY.md) define limites de escrita, independência, merge, credenciais e efeitos destrutivos.
+- [`AGENTS.md`](./AGENTS.md) é a instrução normativa para agentes de IA que trabalham neste repositório: hierarquia de fontes, fluxo de branches, forma canônica da issue, validação local e regras de higiene;
+- [`config/issue-templates.json`](./config/issue-templates.json) é a declaração única das seções normativas que os extratores de requisito leem no corpo da issue, aplicada em [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/) e validada por [`scripts/validate_issue_templates.py`](./scripts/validate_issue_templates.py).
 
 As regras globais usam `UNKNOWN` como estado material de evidência insuficiente. Ausência de informação não deve ser convertida em sucesso, `false`, zero ou `not-applicable`. Aprovação interna, auditoria independente, readiness de release e enforcement de merge são fatos distintos.
 
@@ -124,6 +126,7 @@ python scripts/validate_versioning.py --root .
 python scripts/validate_adapters.py --root .
 python scripts/validate_evals.py --root .
 python scripts/validate_reachability.py --root .
+python scripts/validate_issue_templates.py --root .
 python -m pytest -q
 ```
 
