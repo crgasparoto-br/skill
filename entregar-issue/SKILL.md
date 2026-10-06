@@ -74,6 +74,7 @@ Ler somente quando aplicavel:
 - auditoria interna: `references/controller-audit-contract.md` e `references/controller-single-invocation.md`;
 - controle negativo: `references/controller-adversarial-evidence.md`;
 - codigo executavel tocado (criar, usar ou substituir simbolo, API, dependencia ou caminho): `references/codebase-grounding-gate.md`;
+- arquivo de codigo novo ou ampliado: `references/code-growth-gate.md`;
 - matriz requisito -> ataque: `references/requirement-attack-matrix.md`;
 - referencias persistidas entre etapas: `references/reference-liveness-gate.md`;
 - saturacao de familias de risco: `references/risk-saturation-gate.md`;
@@ -215,7 +216,7 @@ Seguir `references/implementation-workflow.md`.
 
 Aplicar `references/hygiene.md` somente depois da implementacao funcional e antes do gate final.
 
-Quando o plano exigir `codebase-grounding`, fechar `codebase-grounding.json` nesta etapa e executar `scripts/validate_codebase_grounding.py` no gate final sobre o SHA congelado; resultado diferente de `READY` bloqueia o freeze.
+Quando o plano exigir `codebase-grounding`, fechar `codebase-grounding.json` nesta etapa e executar `scripts/validate_codebase_grounding.py` no gate final sobre o SHA congelado. Quando exigir `code-growth`, executar `scripts/check_code_growth.py` no mesmo ponto. Resultado diferente de `READY` em qualquer um bloqueia o freeze.
 
 - Inspecionar apenas arquivos tocados e consumidores diretos.
 - Corrigir somente duplicidade, codigo morto, dependencia sem uso ou complexidade introduzida/agravada pela entrega.
