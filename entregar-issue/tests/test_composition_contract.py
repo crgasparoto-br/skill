@@ -6,38 +6,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_init_execution_context(tmp_path):
-    out = tmp_path / "execution-context.json"
-    subprocess.run(
-        [
-            sys.executable,
-            str(ROOT / "scripts" / "init_execution_context.py"),
-            "--repository",
-            "owner/repo",
-            "--repo-path",
-            "/tmp/repo",
-            "--issue",
-            "123",
-            "--base-ref",
-            "main",
-            "--branch",
-            "issue-123",
-            "--profile",
-            "critical",
-            "--out",
-            str(out),
-        ],
-        check=True,
-    )
-    payload = json.loads(out.read_text())
-    assert payload["execution_profile"] == "critical"
-    assert payload["permissions"]["may_merge"] is False
-    assert payload["workflow_change_authorized"] is False
-    assert payload["manual_approval_workflow_authorized"] is False
-    assert payload["remote_action_mode"] == "observe-only"
-    assert payload["publish_policy"] == "single-final-candidate"
-
-
 def test_validate_subskill_result(tmp_path):
     result = tmp_path / "result.json"
     result.write_text(
@@ -45,7 +13,7 @@ def test_validate_subskill_result(tmp_path):
             {
                 "schema_version": 1,
                 "contract_version": "2026-08-20.3",
-                "skill": "implementar-issue",
+                "skill": "documentacao-repositorio",
                 "mode": "implementation",
                 "status": "passed",
                 "findings": [],
@@ -125,7 +93,7 @@ def test_noop_status_requires_skip_reason_and_contract_mismatch_is_supported(tmp
     payload = {
         "schema_version": 1,
         "contract_version": "2026-08-20.3",
-        "skill": "implementar-issue",
+        "skill": "documentacao-repositorio",
         "mode": "implementation",
         "status": "contract-mismatch",
         "findings": [],

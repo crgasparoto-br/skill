@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate every generated contract copy against the canonical manifest."""
+"""Validate every generated contract copy and declared shared file against its canonical source."""
 
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ except ImportError:  # pragma: no cover - direct script execution
     from catalog import ROOT, catalog_skill_ids, load_catalog, validate_catalog
 
 CANONICAL_SKILL = "entregar-issue"
+SHARED_FILES_MANIFEST = "config/shared-files.json"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -61,6 +62,55 @@ def validate_manifest_shape(manifest: dict[str, Any], label: str, errors: list[s
             continue
         normalized[name] = digest
     return normalized
+
+
+def _safe_relative(value: Any) -> bool:
+    return isinstance(value, str) and bool(value) and not value.startswith("/") and ".." not in Path(value).parts and "\\" not in value
+
+
+def load_shared_groups(root: Path, errors: list[str]) -> list[tuple[str, list[str]]]:
+    """Return (canonical, copies) pairs declared in config/shared-files.json."""
+    manifest = load_object(root / SHARED_FILES_MANIFEST, SHARED_FILES_MANIFEST, errors)
+    if manifest is None:
+        return []
+    if manifest.get("schema_version") != 1:
+        errors.append(f"{SHARED_FILES_MANIFEST}: schema_version must be 1")
+    groups = manifest.get("groups")
+    if not isinstance(groups, list) or not groups:
+        errors.append(f"{SHARED_FILES_MANIFEST}: groups must be a non-empty list")
+        return []
+    result: list[tuple[str, list[str]]] = []
+    seen: set[str] = set()
+    for index, group in enumerate(groups):
+        label = f"{SHARED_FILES_MANIFEST} groups[{index}]"
+        canonical = group.get("canonical") if isinstance(group, dict) else None
+        copies = group.get("copies") if isinstance(group, dict) else None
+        if not _safe_relative(canonical) or not isinstance(copies, list) or not copies or not all(_safe_relative(item) for item in copies):
+            errors.append(f"{label}: canonical and copies must be safe repository-relative paths")
+            continue
+        for path in (canonical, *copies):
+            if path in seen:
+                errors.append(f"{label}: path declared more than once: {path}")
+            seen.add(path)
+        result.append((canonical, list(copies)))
+    return result
+
+
+def validate_shared_files(root: Path = ROOT) -> list[str]:
+    errors: list[str] = []
+    for canonical, copies in load_shared_groups(root, errors):
+        source = root / canonical
+        if not source.is_file():
+            errors.append(f"shared canonical file missing: {canonical}")
+            continue
+        expected = sha256_file(source)
+        for copy in copies:
+            target = root / copy
+            if not target.is_file():
+                errors.append(f"shared copy missing: {copy} (canonical {canonical})")
+            elif sha256_file(target) != expected:
+                errors.append(f"shared copy differs from canonical: {copy} (edit {canonical} and run sync_contracts.py --write)")
+    return errors
 
 
 def validate_contract_sync(root: Path = ROOT) -> list[str]:
@@ -144,6 +194,7 @@ def validate_contract_sync(root: Path = ROOT) -> list[str]:
             if path.name not in skill_ids:
                 errors.append(f"unexpected skill directory outside catalog: {path.name}")
 
+    errors.extend(validate_shared_files(root))
     return errors
 
 

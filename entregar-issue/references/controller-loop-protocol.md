@@ -59,11 +59,9 @@ Registrar separadamente por `disposition=recommendation`. Nao bloquear aprovacao
 
 Antes de repetir etapa, registrar hipotese, input alterado, artefato invalidado e validacao a reexecutar. Sem mudanca relevante, nao repetir comandos caros nem recriar documentacao vigente.
 
-## Persistencia v5
+## Persistencia
 
-Usar `schema_version=5`. Manter `cycle-history.json` append-only e derivar a recorrencia de fingerprints desse arquivo. Nao aceitar `occurrence_count` informado sem correspondencia historica.
-
-Qualquer migracao de v2/v3/v4 para v5 deve invalidar auditoria, requisitos e gates antigos. A migracao nao converte declaracoes legadas em evidencias novas.
+Persistir o ciclo somente em `controller-context.json`, criado por `scripts/controller_cli.py init-context`, atualizado por `refresh-context` e avancado exclusivamente por `advance-cycle`. Derivar a recorrencia dos fingerprints registrados nos artefatos versionados do ciclo; nao aceitar contagem de ocorrencias declarada sem correspondencia historica.
 
 Todo ciclo deve manter manifesto de artefatos vinculado ao SHA. Arquivo ausente, hash divergente ou `head_sha` diferente invalida a aprovacao.
 

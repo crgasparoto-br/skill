@@ -32,7 +32,7 @@ Nao deduzir assinatura, parametro ou versao por analogia. Se a prova nao puder s
 
 ### GROUND-DEAD-001 — nao deixar sobra
 
-Para cada caminho ou simbolo substituido pela entrega, declarar `removed` ou `kept`. `kept` exige consumidor real no head. Dois caminhos para o mesmo comportamento, simbolo novo sem consumidor e codigo antigo mantido "por seguranca" bloqueiam. Complementa `references/hygiene.md`.
+Para cada caminho ou simbolo substituido pela entrega, declarar `removed` ou `kept`. `kept` exige consumidor real no head; para localizar importadores e chamadores reversos, usar `scripts/map_runtime_consumers.py --repo <checkout> --changed <path>` e tratar `coverage.complete=false` como `UNKNOWN`, nunca como ausencia de consumidor. Dois caminhos para o mesmo comportamento, simbolo novo sem consumidor e codigo antigo mantido "por seguranca" bloqueiam. Complementa `references/hygiene.md`.
 
 ## Validacao deterministica
 

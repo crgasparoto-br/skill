@@ -49,6 +49,8 @@ Superficie falsa nao compensa superficie real ausente; o gate deve preferir a se
 
 ## Varredura de saturacao
 
+Inicializar com `python <skill>/scripts/init_risk_saturation.py --attack-matrix <requirement-attack-matrix.json> --out <risk-saturation.json>`.
+
 Antes do freeze:
 
 1. rederivar familias a partir da especificacao, nao apenas do diff nem da propria matriz; o validador deve cruzar `requirement-closure.json` com a matriz para impedir autoclassificacao circular e recusar fechamento cujo `source_text`/flags nao coincidam com o snapshot canonico;

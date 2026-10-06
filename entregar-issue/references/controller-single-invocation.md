@@ -29,7 +29,7 @@ A ausencia de contexto limpo nao e bloqueio e nao autoriza chamar a auditoria de
 
 Parar em `INTERNALLY_APPROVED` quando a passagem interna estiver limpa mas nenhum auditor independente real estiver disponivel. Esse resultado e provisório e nao libera merge. Tambem parar por dez ciclos consumidos, impedimento externo real sem alternativa segura, acao destrutiva sem autorizacao ou issue impossivel de identificar unicamente.
 
-## Pacote neutro v5
+## Pacote neutro
 
 Antes da auditoria, congelar o manifesto de artefatos e bloquear escrita. A passagem controller-adversarial deve iniciar depois do freeze e terminar com `controller-audit-report.json` schema 3. Nao usar o handoff do implementador como substituto de `source-manifest`, rederivacao ou matriz de cobertura.
 

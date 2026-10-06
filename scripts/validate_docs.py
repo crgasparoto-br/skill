@@ -43,7 +43,7 @@ def local_link_errors(root: Path) -> list[str]:
                     continue
                 candidate = (path.parent / target).resolve()
                 if not candidate.exists():
-                    errors.append(f"{path.relative_to(root)}:{line_no}: broken local link {target}")
+                    errors.append(f"{path.relative_to(root).as_posix()}:{line_no}: broken local link {target}")
     return errors
 
 
@@ -62,7 +62,7 @@ def skill_reference_errors(root: Path) -> list[str]:
                     continue
                 candidate = (skill_md.parent / reference.rstrip(".,;:`)"))
                 if not candidate.exists():
-                    errors.append(f"{skill_md.relative_to(root)}:{line_no}: missing skill reference {reference}")
+                    errors.append(f"{skill_md.relative_to(root).as_posix()}:{line_no}: missing skill reference {reference}")
     return errors
 
 

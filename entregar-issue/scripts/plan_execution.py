@@ -416,14 +416,6 @@ def main() -> int:
                 if isinstance(raw_paths, list):
                     prior_scope = [str(value).strip() for value in raw_paths if str(value).strip()]
                 break
-        if not prior_scope:
-            # Compatibility with execution-plan v2 produced by the former orchestrator.
-            for item in previous.get('skill_plan', []):
-                if isinstance(item, dict) and item.get('skill') == 'implementar-issue':
-                    raw_paths = item.get('paths', [])
-                    if isinstance(raw_paths, list):
-                        prior_scope = [str(value).strip() for value in raw_paths if str(value).strip()]
-                    break
         implementation_scope = sorted(set(prior_scope) | set(work_item_paths))
         if previous.get('work_item_fingerprint') != work_item_fingerprint:
             implementation_scope = sorted(set(implementation_scope) | set(changed))

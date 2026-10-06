@@ -76,7 +76,7 @@ Mudanca em codigo, documentacao, configuracao, dependencia, Skill, head, base, m
 
 Quando houver chave Ed25519 previamente confiada e auditoria `independent`, exigir assinatura valida se o contrato externo a marcar como obrigatoria. Nao criar chave durante a auditoria para simular confianca previa.
 
-## Requisitos adicionais do estado v5
+## Requisitos adicionais da auditoria interna
 
 Para qualquer validade diferente de `absent`, exigir inicio e termino, somente leitura, rederivacao, pacote neutro hasheado, identidade coincidente e ausencia de modificacoes. Essas condicoes tambem se aplicam a `controller-adversarial`; nao sao exclusivas dos niveis isolado e independente.
 

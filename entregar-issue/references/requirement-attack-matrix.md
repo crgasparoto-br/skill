@@ -10,6 +10,8 @@ Aplicar a toda entrega com requisito comportamental, invariantes de estado, pers
 
 ## Artefato
 
+Inicializar com `python <skill>/scripts/init_requirement_attack_matrix.py --requirement-closure <requirement-closure.json> --head-sha <material-head> --out <requirement-attack-matrix.json>` e completar a partir dai; nao montar a estrutura manualmente.
+
 Produzir `.audit/entregar-issue/requirement-attack-matrix.json` antes do freeze. Cada requisito coberto deve possuir:
 
 - `requirement_id` e `obligation_ids`;

@@ -8,7 +8,8 @@ from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
 
-from orchestrator_gate.specification import extract_candidates, sha256_file
+from schema_validation import validate_against_schema
+from specification import extract_candidates, sha256_file
 from handoff_semantic_guards import validate_terminal_requirement_closure
 
 
@@ -34,6 +35,8 @@ def main() -> int:
     except Exception as exc:
         print(f"BLOCK: invalid specification coverage inputs: {exc}")
         return 2
+
+    validate_against_schema(closure, Path(__file__).resolve().parents[1] / "schemas" / "requirement-closure.schema.json", "requirement closure", errors)
 
     snapshot_ref = closure.get("specification_snapshot") or {}
     if snapshot_ref.get("sha256") != sha256_file(snapshot_path):

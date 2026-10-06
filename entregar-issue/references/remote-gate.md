@@ -1,18 +1,6 @@
 # Gate remoto por SHA
 
-## Coleta
-
-Usar `collect_remote_gate.py` em modo somente leitura. O script deve consultar o GitHub por `gh api` ou REST autenticada, guardar payloads brutos paginados, timestamps, hash do proprio coletor e hashes dos payloads. Campos derivados de estado remoto nao devem ser preenchidos manualmente. `--fixture-dir` existe somente para testes e snapshots com `source=fixture` nao podem aprovar um gate real. Nao disparar, reexecutar, cancelar ou aprovar workflow durante a coleta.
-
-Coletar e reconstruir:
-
-- PR antes e depois: head, base, estado, mergeabilidade e merge preview;
-- todos os runs do SHA antes e depois;
-- jobs e steps de cada workflow aplicavel;
-- artefatos de todos os runs bem-sucedidos do SHA e seus ZIPs;
-- handoff rastreavel da issue na PR.
-
-Depois das validacoes locais, `validate_internal_gate.py` deve consultar novamente o GitHub. Essa reconsulta seleciona novamente o ultimo run elegivel por workflow, inspeciona jobs, steps, inventario e conteudo dos artefatos e o handoff. Novo run falho, pendente, substituto ou divergente invalida o resultado.
+Observacao remota somente leitura do material SHA: snapshot inicial sob `delivery-snapshot`, transferencia para `corrigir-ci` e criterios de aplicabilidade de workflows. Politica de acoes permitidas: `contracts/github-actions-policy.md`.
 
 ## Snapshot inicial e transferencia de ownership
 
@@ -35,16 +23,12 @@ A transferencia tambem se aplica a `completed/failure`: o diagnostico/remediacao
 7. para `unrelated-preexisting`, vincular a baseline comprovada e nao ampliar o escopo;
 8. nunca fazer rerun ou dispatch para testar a hipotese; validar a correcao localmente, executar gate final afetado e publicar novo SHA somente quando houver mudanca material.
 
-## Proveniencia reconstruivel
-
-Cada payload bruto deve registrar label conhecida, endpoint exato, caminho, hash e horario. O validador deve reconstruir PR, runs, jobs, handoff e artefatos a partir desses arquivos e comparar com o snapshot. Declarar `source=gh-api` ou guardar `{}` nao comprova coleta.
-
 ## Base e merge preview
 
 Exigir:
 
 - `head_sha_before == head_sha_after == SHA congelado`;
-- `base_sha_before == base_sha_after == metadata.base_sha`;
+- `base_sha_before == base_sha_after == base_sha` congelado;
 - `merge_preview_sha_before == merge_preview_sha_after` e nao vazio;
 - base ref igual a da PR;
 - mergeabilidade resolvida e ausencia de conflito real. Tratar `mergeable_state=dirty` como conflito; `blocked`, `behind` e `unstable` nao sao conflito por si so e devem ser classificados pelo motivo real (policy/check/base desatualizada).
@@ -72,25 +56,6 @@ Para cada workflow de PR:
 - workflow nao aplicavel exige justificativa e evidencia;
 - se nenhum workflow for aplicavel, registrar `no_applicable_pr_workflows=true` com evidencia, sem run ficticio e sem criar workflow;
 - se um run existente estiver aguardando aprovacao manual, registrar `manual-approval-pending`, nao solicitar aprovacao e nao criar substituto.
-
-## Artefatos remotos
-
-Coletar artefatos produzidos por runs existentes como evidencia adicional. Nao criar ou alterar workflow apenas para publicar artefato.
-
-Artefato remoto e obrigatorio somente quando o perfil declarar explicitamente `audit_packet_published=true`; nesse caso, exigir kind `audit-manifest`. Evidencias visual, de persistencia, migration e documentacao devem ser produzidas e atestadas localmente e podem ser complementadas por artefatos remotos ja existentes.
-
-Cada artefato considerado deve pertencer a run concluido com sucesso no SHA final e possuir digest GitHub. O run pode usar outro evento somente quando o artefato nao estiver substituindo workflow obrigatorio de PR.
-
-O ZIP deve conter exatamente um `orquestrador-artifact.json`, `schema_version: 2`, com:
-
-- kind, `head_sha`, run ID, artifact ID, gerador e timestamp;
-- checks estruturados com IDs e claims;
-- resultados internos nao vazios;
-- caminho, SHA-256, tamanho, comando, exit codes, media type e IDs dos checks de cada resultado;
-- ligacao bidirecional entre checks e resultados.
-
-O coletor reabre o ZIP e recalcula tudo. Nome, heuristica, texto autodeclarado ou `--artifact-kind` nunca atribuem significado.
-
 
 ## Ordem entre CI e handoff terminal
 

@@ -83,6 +83,7 @@ O catálogo possui uma camada global de governança acima das regras específica
 - [`schemas/capabilities.schema.json`](./schemas/capabilities.schema.json) formaliza o registro de capacidades;
 - [`VERSION`](./VERSION), [`CHANGELOG.md`](./CHANGELOG.md) e [`docs/RELEASE.md`](./docs/RELEASE.md) definem releases SemVer, migração e compatibilidade;
 - [`config/compatibility.json`](./config/compatibility.json) evita combinar versões de skills apenas por semelhança textual;
+- [`config/shared-files.json`](./config/shared-files.json) declara a fonte canônica de cada arquivo replicado entre skills;
 - [`config/platform-adapters.json`](./config/platform-adapters.json) registra adapters, arquivos de instrução e a política de capacidades do host;
 - [`docs/PLATFORM_ADAPTERS.md`](./docs/PLATFORM_ADAPTERS.md) documenta generic, OpenAI, Claude, Gemini, IDE e application;
 - [`evals/README.md`](./evals/README.md) define o harness provider-agnostic de avaliações comportamentais;
@@ -97,7 +98,9 @@ A memória da conversa pode ajudar na continuidade, mas o estado necessário à 
 
 ## Governança dos contratos
 
-`entregar-issue` é o proprietário canônico dos contratos compartilhados de entrega. As demais skills registram essa relação em `contracts/version.json` e podem conter cópias geradas de schemas ou referências. Não altere uma cópia gerada isoladamente: atualize a fonte canônica e depois regenere ou sincronize as cópias correspondentes.
+`entregar-issue` é o proprietário canônico dos contratos compartilhados de entrega. As demais skills registram essa relação em `contracts/version.json`. Como cada skill é empacotada isoladamente, alguns scripts, schemas e testes também existem em mais de uma skill; [`config/shared-files.json`](./config/shared-files.json) declara a fonte canônica de cada um. Não altere uma cópia isoladamente: edite a fonte canônica e regenere com `python scripts/sync_contracts.py --write`.
+
+Nenhuma skill mantém referência, script ou schema que o próprio `SKILL.md` não alcance: `scripts/validate_reachability.py` reprova arquivos mortos em vez de deixá-los divergir.
 
 A separação operacional principal é:
 
@@ -108,41 +111,36 @@ A separação operacional principal é:
 
 ## Validação local
 
-Valide a estrutura e os metadados do catálogo:
+Esta é a mesma sequência executada pelo workflow [`.github/workflows/validate.yml`](./.github/workflows/validate.yml):
 
 ```bash
+python -m pip install -r entregar-issue/requirements-dev.txt -r auditar-issue/requirements-dev.txt
 python scripts/validate_repository.py
-python scripts/validate_catalog.py
-python scripts/sync_contracts.py --check
-python scripts/validate_docs.py
-python scripts/build_catalog_docs.py --check
-python scripts/validate_versioning.py
-python scripts/validate_adapters.py
+python scripts/validate_catalog.py --root .
+python scripts/sync_contracts.py --check --root .
+python scripts/validate_docs.py --root .
+python scripts/build_catalog_docs.py --check --root .
+python scripts/validate_versioning.py --root .
+python scripts/validate_adapters.py --root .
+python scripts/validate_evals.py --root .
+python scripts/validate_reachability.py --root .
+python -m pytest -q
 ```
 
-Quando um contrato canônico for alterado, regenere as cópias antes de validar:
+Quando um contrato canônico ou uma fonte declarada em `config/shared-files.json` for alterada, regenere as cópias antes de validar:
 
 ```bash
 python scripts/sync_contracts.py --write
 ```
 
-Execute a suíte de testes das skills que possuem testes Python:
-
-```bash
-python -m pip install -r entregar-issue/requirements-dev.txt
-python -m pip install -r auditar-issue/requirements-dev.txt
-pytest -q auditar-issue/tests corrigir-ci/tests design-interface/tests documentacao-repositorio/tests entregar-issue/tests fluxos-conversacionais/tests revisar-issue/tests
-```
-
-A mesma validação é executada pelo workflow em [`.github/workflows/validate.yml`](./.github/workflows/validate.yml).
+Hashes de contratos e pacotes são calculados sobre bytes; `.gitattributes` fixa LF para que o resultado seja idêntico em qualquer sistema operacional.
 
 ## Estrutura de uma skill
 
 ```text
 nome-da-skill/
 ├── SKILL.md
-├── agents/          # adaptadores opcionais
-├── adapters/        # adaptadores de plataforma do catálogo
+├── agents/          # metadados opcionais de interface (ex.: OpenAI)
 ├── assets/          # ícones ou outros recursos de interface
 ├── contracts/       # contratos operacionais
 ├── references/      # detalhes carregados sob demanda

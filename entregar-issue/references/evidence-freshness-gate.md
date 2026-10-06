@@ -21,7 +21,7 @@ A ausencia de `evidence_kind` nao desativa este gate quando a propria especifica
 
 ## Manifesto normalizado
 
-Produzir `.audit/entregar-issue/evidence-provenance.json` com `schema_version=1`, `material_head_sha` e uma entrada por evidencia ativa. Cada entrada deve registrar no minimo:
+Produzir `.audit/entregar-issue/evidence-provenance.json` com `schema_version=1`, `material_head_sha` e uma entrada por evidencia ativa; inicializar com `python <skill>/scripts/init_evidence_provenance.py --material-head-sha <sha> --out <evidence-provenance.json>`; o formato esta descrito em `schemas/evidence-provenance.schema.json`. Cada entrada deve registrar no minimo:
 
 - `evidence_id` estavel;
 - `kind`;

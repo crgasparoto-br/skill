@@ -6,7 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
-from orchestrator_gate.specification import extract_candidates, sha256_file
+from specification import extract_candidates, sha256_file
 
 
 def main() -> int:

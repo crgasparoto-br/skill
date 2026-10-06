@@ -1,0 +1,3 @@
+# Hashes de contratos, fixtures e pacotes são calculados sobre bytes:
+# o checkout precisa ser idêntico em qualquer plataforma.
+* text=auto eol=lf

@@ -8,7 +8,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
-from orchestrator_gate.specification import TEXTUAL_KINDS, sha256_file
+from specification import TEXTUAL_KINDS, sha256_file
 
 ID_RE = re.compile(r"^SRC-[A-Z0-9][A-Z0-9-]*$")
 

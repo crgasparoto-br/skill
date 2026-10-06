@@ -21,7 +21,6 @@ Em entrega governada, drift do handoff continua definido pela identidade remota,
 
 - Tratar `corrigir-ci` como dona somente da remediacao de CI durante sua invocacao. Ela nunca escolhe nem troca o controlador da entrega.
 - Quando chamada por `entregar-issue`, corrigir diretamente as causas `actionable-delivery` dentro desta Skill e devolver o envelope ao caller existente; nunca invocar `entregar-issue` recursivamente.
-- Nunca invocar `orquestrador` nem criar dispatch Delivery V2. Uma CI de entrega V2 deve ser tratada pelo proprio controller V2 ou por uma invocacao standalone explicitamente solicitada, sem conversao de controlador.
 - Em modo standalone, corrigir apenas a CI da PR/branch identificada e encerrar em `green-material` ou bloqueio real; nao sintetizar `return_control_to=entregar-issue` sem caller delegado.
 - Skills especializadas podem ser usadas apenas para analise ou recortes de dominio que nao assumam ownership global; nenhuma delas pode substituir o caller ou iniciar outro fluxo de entrega.
 
@@ -91,7 +90,7 @@ Depois de resolver, capturar pelo menos:
 
 5. Remediar todas as causas `actionable-delivery` da rodada.
    - Preferir o menor patch coeso e corrigir diretamente dentro desta Skill seguindo as convencoes do repositorio.
-   - Nunca invocar `entregar-issue` ou `orquestrador` para executar a remediacao; esta Skill ja possui o recorte de implementacao necessario para corrigir a causa da CI e deve preservar o caller original.
+   - Nunca invocar `entregar-issue` para executar a remediacao; esta Skill ja possui o recorte de implementacao necessario para corrigir a causa da CI e deve preservar o caller original.
    - Usar `revisar-issue` somente se uma ambiguidade material impedir a correcao.
    - Usar `design-interface`, `fluxos-conversacionais` ou `documentacao-repositorio` apenas quando a falha exigir a especialidade correspondente, sem transferir ownership global ou criar novo fluxo de entrega.
    - Se ja existir freeze/handoff e o head remoto passar a uma identidade material nao coberta pelo certificado, registrar desde este ponto que um fast path `post-ci-refreeze` sera obrigatorio depois de a CI material ficar verde; nao importa qual ator publicou a mudanca e nao permitir resposta final antes disso.
@@ -123,7 +122,7 @@ Depois de resolver, capturar pelo menos:
    - Se a entrega foi delegada por `entregar-issue`, nao executar refreeze, nao publicar `result-only-child` e nao chamar `entregar-issue`.
    - Construir `delivery-recovery-envelope` schema 2 com `return_control_to=entregar-issue`, `next_phase=finalize-after-ci`, `ci_owner_closed=true`, `previous_frozen_sha`, `material_head_sha`, `ci_state=green` e `recovery_hint`.
    - Para mudanca de codigo executavel, usar `recovery_hint.material_change=true`, `code_growth_recheck=true` e `resume_from=hygiene`; sem mudanca material desde o freeze, usar `material_change=false` e `resume_from=handoff|freeze`.
-   - Executar `scripts/validate_delivery_recovery_envelope.py` e retornar o envelope ao controlador. Esse retorno e a unica transicao permitida; nenhum callback de Skill e executado daqui.
+   - Executar `scripts/validate_delivery_recovery_envelope.py` (formato em `schemas/delivery-recovery-envelope.schema.json`) e retornar o envelope ao controlador. Esse retorno e a unica transicao permitida; nenhum callback de Skill e executado daqui.
    - Consultar `references/handoff-recertification.md` para o contrato de fronteira, nao para assumir ownership do handoff.
 
 10. Repetir somente enquanto a CI material nao estiver terminal.
@@ -143,7 +142,7 @@ Declarar quando:
 - o envelope schema 2 foi validado;
 - em modo delegado, `ci_owner_closed=true` e `next_phase=finalize-after-ci`.
 
-`green-material` e sucesso da subrotina de CI, nao aprovacao operacional da entrega. Em contexto delegado, nao executar latch de handoff nesta Skill.
+`green-material` e sucesso da subrotina de CI, nao aprovacao operacional da entrega. Em contexto delegado, nao executar latch de handoff nesta Skill. Em modo standalone com `governed_handoff_observed=true`, executar `scripts/validate_ci_terminal_state.py` com o certificado e a identidade remota relida antes de declarar `green-material`; resultado diferente de `READY` impede declarar sucesso.
 
 ### `blocked-external`
 

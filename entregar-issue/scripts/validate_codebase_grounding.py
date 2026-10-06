@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from orchestrator_gate.schema_validation import validate_against_schema
+from schema_validation import validate_against_schema
 from plan_execution import CODE_SUFFIXES, is_generated_path, is_test_path
 
 ROOT = Path(__file__).resolve().parents[1]

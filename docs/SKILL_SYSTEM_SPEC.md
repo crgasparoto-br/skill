@@ -78,7 +78,11 @@ Contexto progressivo é obrigatório para eficiência, mas redução de contexto
 
 ### 4.9 Contratos canônicos e cópias geradas
 
-`entregar-issue` permanece proprietário dos contratos compartilhados. Cópias em outras skills devem ser sincronizadas da fonte canônica; não editar uma cópia gerada isoladamente.
+`entregar-issue` permanece proprietário dos contratos compartilhados. Cópias em outras skills devem ser sincronizadas da fonte canônica; não editar uma cópia gerada isoladamente. Arquivos replicados fora de `contracts/` (scripts, schemas e testes compartilhados) declaram sua fonte canônica em `config/shared-files.json` e seguem a mesma regra.
+
+### 4.11 Sem arquivos mortos
+
+Toda referência, script e schema de uma skill deve ser alcançável a partir do seu `SKILL.md`. Arquivo inalcançável não é carregado, diverge em silêncio e cria instruções concorrentes; deve ser religado onde se aplica ou removido. Schema que nenhum validador aplica é uma segunda fonte de verdade e segue a mesma regra.
 
 ### 4.10 Observabilidade sem fabricação
 
@@ -146,7 +150,8 @@ O harness é provider-agnostic. A CI valida os contratos e reproduz fixtures det
 - ownership canônico divergir;
 - uma skill obrigatória perder `SKILL.md`, contratos, referências, schemas ou testes;
 - o catálogo divergir dos metadados das skills;
-- uma cópia de contrato divergir do hash canônico;
+- uma cópia de contrato ou um arquivo declarado em `config/shared-files.json` divergir da fonte canônica;
+- uma skill contiver referência, script ou schema inalcançável a partir do `SKILL.md`;
 - links Markdown locais ou referências de skills deixarem de resolver;
 - a versão pública, catalog version, system version e compatibilidade divergirem;
 - uma release declarar uma migração, skill ou adapter fora do manifesto correspondente;

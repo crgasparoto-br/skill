@@ -338,7 +338,7 @@ def test_preflight_forwards_learning_and_previous_snapshots_for_reaudit() -> Non
             "unresolved_controls": [],
         }), encoding="utf-8")
         escape = base / "audit-escape-closure.json"
-        rejection_id = "audit-rejection:A-001"
+        rejection_id = "audit-rejection:0f5d7c2e-5b1a-4c7e-9d3f-a00100000001"
         escape_payload = {
             "schema_version": 1,
             "escapes": [{

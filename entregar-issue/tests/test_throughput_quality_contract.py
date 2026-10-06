@@ -42,7 +42,7 @@ def test_single_writer_and_local_closure_are_required():
     assert "Tentar refutar" in audit
 
 
-def test_legacy_core_skills_are_not_delegated():
+def test_core_stages_are_internal_not_delegated():
     planner = read("scripts/plan_execution.py")
-    generated_core_entries = "('implementar-issue', 'implementation'" in planner or "('higienizacao', 'hygiene'" in planner
-    assert not generated_core_entries
+    assert "'stage': 'implementation'" in planner
+    assert "'stage': 'hygiene'" in planner

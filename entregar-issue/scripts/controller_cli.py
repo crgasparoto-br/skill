@@ -273,13 +273,8 @@ def validate_contracts(args: argparse.Namespace) -> int:
             digest = hashlib.sha256(contract_schema_path.read_bytes()).hexdigest()
             if digest != manifest["files"]["subskill-result.schema.json"]:
                 failures.append(f"{skill_dir.name}: packaged subskill schema drift")
-    policy_path = skills_root / "entregar-issue" / "references" / "github-actions-policy.md"
-    if policy_path.is_file():
-        digest = hashlib.sha256(policy_path.read_bytes()).hexdigest()
-        if digest != manifest["files"]["github-actions-policy.md"]:
-            failures.append("entregar-issue: GitHub Actions policy drift")
     canonical_contract_files = [
-        "stage-dependencies.json", "gate-registry.json", "ci-ownership.json",
+        "stage-dependencies.json", "gate-registry.json", "ci-ownership.json", "github-actions-policy.md",
     ]
     for name in canonical_contract_files:
         contract_path = skills_root / "entregar-issue" / "contracts" / name

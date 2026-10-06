@@ -93,7 +93,7 @@ Ocorrência omitida ou inventada reprova.
 
 ## Passagem C — auditor sombra
 
-Executar depois das Passagens A e B e antes do handoff:
+Executar depois da implementacao e do gate final interno e antes do handoff:
 
 1. ignorar descrição da PR, checklist e resumo da implementação;
 2. reler todas as fontes do snapshot;
@@ -108,7 +108,7 @@ A Passagem C é pré-auditoria interna e deve tentar reproduzir a disciplina da 
 
 ## Fechamento de contratos transitivos de runtime
 
-Quando o detector marcar `runtime_policy`, `adapter_contract`, `request_translation`, `legacy_compatibility` ou `documentation_claims`, preencher no `risk_profile` e comprovar nas famílias F28 a F33:
+Quando o contrato ou o diff contiver sinais de `runtime_policy`, `adapter_contract`, `request_translation`, `legacy_compatibility` ou `documentation_claims`, preencher no `risk_profile` e comprovar nas famílias F28 a F33 de [runtime-contract-gates.md](runtime-contract-gates.md):
 
 - `execution_state_boundaries`;
 - `control_propagation_paths`;
@@ -128,11 +128,11 @@ Após achado externo:
 3. adicionar o caso literal e dois casos irmãos;
 4. procurar o padrão em subissues e superfícies relacionadas;
 5. criar teste de regressão da skill quando o escape puder ser bloqueado deterministicamente;
-6. gerar novo handoff somente após repetir A, B e C no novo SHA.
+6. gerar novo handoff somente após repetir implementação, gate final e Passagem C no novo SHA.
 
 ## Fechamentos adicionais obrigatórios
 
-Além de `domain_inventories` e `observable_assertions`, preencher os três portões fail-closed:
+Além de `domain_inventories` e `observable_assertions`, preencher os três portões fail-closed (F25 a F27 de [critical-closure-gates.md](critical-closure-gates.md)):
 
 - `read_model_closures`: prova campo a campo de produtor, projeção pública, consumidor e superfície visível;
 - `canonical_source_consistency`: prova que todas as superfícies usam a mesma fonte com fixture divergente;
@@ -143,4 +143,4 @@ Todos começam como `pending`. `not-applicable` só é válido com justificativa
 
 ## Fechamento de entrada nao confiavel
 
-Quando o detector marcar `input_parser`, preencher `risk_profile.input_parser_contract` e comprovar F34. O fechamento deve atomizar representacao bruta, ordem de validacao, modos aceitos, campos consumidos, posicionamentos estruturais, codigo de erro e ausencia de efeitos; “arquivo invalido” ou “parser suporta XML/SGML” nao sao requisitos atomicos suficientes.
+Quando o contrato ou o diff envolver entrada nao confiavel ou parser, preencher `risk_profile.input_parser_contract` e comprovar F34 conforme [input-parser-gate.md](input-parser-gate.md). O fechamento deve atomizar representacao bruta, ordem de validacao, modos aceitos, campos consumidos, posicionamentos estruturais, codigo de erro e ausencia de efeitos; “arquivo invalido” ou “parser suporta XML/SGML” nao sao requisitos atomicos suficientes.

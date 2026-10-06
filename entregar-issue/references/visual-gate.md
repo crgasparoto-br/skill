@@ -29,7 +29,7 @@ Por rota:
 - tabelas/listas com roles e `aria-rowcount` coerente;
 - dialogs com label, descricao quando necessaria, foco inicial, Escape e restauracao de foco.
 
-As metricas devem satisfazer `schemas/visual-metrics.schema.json` e o contrato da rota.
+Inicializar as metricas com `python <skill>/scripts/init_visual_accessibility_metrics.py --head-sha <material-head> --out <visual-metrics.json>`; elas devem satisfazer `schemas/visual-metrics.schema.json` e o contrato da rota.
 
 ## Superficies dinamicas
 

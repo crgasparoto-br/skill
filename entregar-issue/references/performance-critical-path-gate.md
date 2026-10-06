@@ -152,6 +152,17 @@ Em ambos os modos:
 
 Comparar o inventario produtivo com o caminho realmente exercitado pelo harness. O teste deve falhar quando um wrapper, lookup, resolucao ou outra operacao before-terminal existe em producao e nao aparece como coberta nem como ponte explicitamente provada.
 
+## Gates de desempenho com escopo
+
+Quando o requisito de desempenho for tenant-scoped, por particao, por usuario, por status ou por qualquer outro filtro de isolamento:
+
+- medir a cardinalidade do mesmo escopo consultado; total global, linhas de outros tenants ou categorias excluidas nao podem compor o denominador de aprovacao;
+- inserir ruido deliberado fora do escopo e provar que esse ruido nao altera o resultado do gate;
+- registrar tamanho da pagina, candidatos do escopo alvo, linhas observadas no plano e limite proporcional permitido;
+- exigir controle negativo que reproduza leitura integral ou quase integral do escopo alvo e falhe mesmo quando o banco inteiro for muito maior;
+- preferir o plano da consulta real ou uma consulta estruturalmente identica, incluindo filtro, ordenacao, desempate e limite;
+- rejeitar verificadores que comparem linhas lidas no tenant alvo com contagem global do banco.
+
 ## Evidencia adversarial
 
 Os controles dessas superficies devem declarar:

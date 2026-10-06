@@ -155,7 +155,7 @@ def validate_adapters(root: Path = ROOT) -> list[str]:
 
     adapters_dir = root / "adapters"
     if adapters_dir.is_dir():
-        actual_paths = {str(path.relative_to(root)) for path in adapters_dir.iterdir() if path.is_file()}
+        actual_paths = {path.relative_to(root).as_posix() for path in adapters_dir.iterdir() if path.is_file()}
         extras = sorted(actual_paths - declared_paths)
         errors.extend(f"undeclared adapter instruction: {path}" for path in extras)
     if not (root / "docs" / "PLATFORM_ADAPTERS.md").is_file():

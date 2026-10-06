@@ -4,14 +4,31 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 
 ## [Unreleased]
 
+### Removed
+
+- fluxo legado de orquestração substituído pelo controlador atual: máquina de estados `orchestration-state` v3, `loop-state` v5 e sua migração, `evidence.json` v9, gate interno e coletor remoto do Orquestrador, importação de auditoria externa via estado aprovado e os testes que exercitavam somente esse código (`entregar-issue` passa de 163 para 108 arquivos em `references/`, `scripts/` e `schemas/`);
+- modo alternativo `orquestrador`/Delivery V2 e aliases de wrappers inexistentes (`issue-loop-engineer`, `implementar-issue`, `higienizacao`); delegação fica restrita às skills listadas no modelo arquitetural do `SKILL.md`;
+- cópias redundantes: `entregar-issue/references/github-actions-policy.md` (fica `contracts/`), `entregar-issue/schemas/controller-context.schema.json` (promovido ao contrato), `corrigir-ci/references/ci-ownership.md` e `design-interface/references/integration-contract.md`, que contradizia o controlador atual.
+
+### Changed
+
+- referências vivas que estavam desconectadas passam a ser carregadas pelo `SKILL.md`: snapshot de especificação e fechamento de requisitos (com seus scripts), gates críticos F20–F27, checklists de fechamento por categoria, gate remoto, matriz de impacto documental, checklist de auditoria e inicializadores de matriz, saturação, evidência padrão, proveniência e métricas visuais;
+- `runtime_graph` passa a ser exposto por `scripts/map_runtime_consumers.py` para a reconciliação pós-diff e para `GROUND-DEAD-001`; grafo incompleto resulta em `UNKNOWN`;
+- `requirement-closure.json` e `audit-remediation.json` passam a ser validados contra seus schemas; `execution-plan.json` e o envelope de `corrigir-ci` têm paridade schema↔validador verificada em teste;
+- resultado de subskill e `skill_plan` só aceitam skills do catálogo;
+- `auditar-issue` passa a usar o `validate_learning_closure.py` estrito de `entregar-issue` (antes aceitava `rejection_id` ausente).
+
 ### Fixed
 
+- hashes de contratos e fixtures dependiam do final de linha do checkout; `.gitattributes` fixa LF e os validadores usam caminhos POSIX;
 - restaura o guard terminal `validate_delivery_completion.py` usado pelo controlador `entregar-issue`;
 - faz `validate_terminal_handoff.py` emitir `terminal-handoff-proof.json` consumível pelo completion guard;
 - adiciona empacotamento fail-closed da `entregar-issue`, validando scripts referenciados e publicando `skill.zip` completo como artefato da CI.
 
 ### Added
 
+- `config/shared-files.json` declara a fonte canônica dos arquivos replicados entre skills, verificados e regenerados por `sync_contracts.py` (SKSYS-012);
+- `scripts/validate_reachability.py` reprova referência, script ou schema inalcançável a partir do `SKILL.md` (SKSYS-019);
 - `CODE-GROWTH-001` passa a ser produzido pela entrega: `check_code_growth.py` mede o crescimento de arquivos de código com política padrão (300/500/20) sobrescrevível por `.github/code-growth-policy.json` lido do SHA base, e o certificado exige o relatório quando o escopo toca código;
 - certificado de handoff passa a exigir `codebase_grounding` quando o escopo local da issue toca código; o validador compartilhado recalcula a aplicabilidade e rejeita rebaixamento ou relatório stale;
 - gate `codebase-grounding` em `entregar-issue`: busca antes de criar (`GROUND-REUSE-001`), prova de existência antes de usar (`GROUND-EXIST-001`) e proibição de sobra (`GROUND-DEAD-001`), com validador determinístico contra o Git e refutação independente em `auditar-issue`;

@@ -10,6 +10,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from jsonschema import Draft202012Validator
+
 ROOT = Path(__file__).resolve().parents[1]
 CONTROLLER_SCRIPTS = ROOT / "scripts"
 DELIVERY_SCRIPTS = ROOT / "scripts"
@@ -29,10 +31,9 @@ def load_script(name: str, path: Path):
     return module
 
 
-CONTROLLER = load_script("issue_loop_controller_cli", CONTROLLER_SCRIPTS / "controller_cli.py")
+CONTROLLER = load_script("delivery_controller_cli", CONTROLLER_SCRIPTS / "controller_cli.py")
 PLANNER = load_script("delivery_plan_execution", DELIVERY_SCRIPTS / "plan_execution.py")
-PROJECTOR = load_script("delivery_project_controller", DELIVERY_SCRIPTS / "project_controller_context.py")
-STATE_INITIALIZER = load_script("delivery_state_initializer", DELIVERY_SCRIPTS / "init_orchestration_state.py")
+from planning_contract_runtime import CATALOG_SKILLS  # noqa: E402
 
 
 def invoke_main(module, args: list[str]) -> None:
@@ -67,11 +68,13 @@ class PlanningTests(unittest.TestCase):
             self.assertEqual(len(payload["applicable_skills"]), len(set(payload["applicable_skills"])))
             self.assertTrue(payload["publication"]["allowed"])
             self.assertTrue({"implementation", "documentation-delta", "hygiene"}.issubset({item["stage"] for item in payload["internal_plan"]}))
-            self.assertTrue({item["skill"] for item in payload["skill_plan"]}.isdisjoint({"implementar-issue", "higienizacao", "orquestrador", "issue-loop-engineer"}))
+            self.assertTrue({item["skill"] for item in payload["skill_plan"]} <= CATALOG_SKILLS)
             for request in payload["domain_requests"]:
                 self.assertEqual(len(request["input_fingerprint"]), 64)
                 self.assertIn("requirements", request)
                 self.assertIn("paths", request)
+            schema = json.loads((ROOT / "schemas" / "execution-plan.schema.json").read_text(encoding="utf-8"))
+            self.assertEqual(list(Draft202012Validator(schema).iter_errors(payload)), [])
 
     def test_requirement_driven_plan_works_before_files_are_known(self):
         with tempfile.TemporaryDirectory() as temp_value:
@@ -169,36 +172,6 @@ class PlanningTests(unittest.TestCase):
             self.assertEqual(verification["requirements"], ["R1", "R2"])
             self.assertIn("implementer", verification["reason"])
             self.assertIn("planner", verification["reason"])
-
-    def test_projected_context_preserves_controller_cycle(self):
-        with tempfile.TemporaryDirectory() as temp_value:
-            temp = Path(temp_value)
-            context = self.init_context(temp, cycle=3)
-            out = temp / "execution.json"
-            invoke_main(PROJECTOR, ["--controller-context", str(context), "--out", str(out)])
-            payload = json.loads(out.read_text())
-            self.assertEqual(payload["cycle"], 3)
-            self.assertEqual(payload["controller_cycle"], 3)
-            self.assertEqual(payload["cycle_authority"], "entregar-issue")
-
-    def test_state_projection_uses_controller_context_without_duplicate_identity_args(self):
-        with tempfile.TemporaryDirectory() as temp_value:
-            temp = Path(temp_value)
-            subprocess.run(["git", "init", "-q", str(temp)], check=True)
-            subprocess.run(["git", "-C", str(temp), "config", "user.email", "test@example.com"], check=True)
-            subprocess.run(["git", "-C", str(temp), "config", "user.name", "Test"], check=True)
-            (temp / "README.md").write_text("test\n")
-            subprocess.run(["git", "-C", str(temp), "add", "README.md"], check=True)
-            subprocess.run(["git", "-C", str(temp), "commit", "-qm", "init"], check=True)
-            branch = subprocess.check_output(["git", "-C", str(temp), "branch", "--show-current"], text=True).strip()
-            context = temp / "controller.json"
-            invoke_main(CONTROLLER, ["init-context", "--repository", "owner/repo", "--repository-path", str(temp), "--issue", "5", "--base-ref", branch, "--branch", branch, "--controller-cycle", "4", "--out", str(context)])
-            state = temp / "state.json"
-            invoke_main(STATE_INITIALIZER, ["--controller-context", str(context), "--out", str(state)])
-            payload = json.loads(state.read_text())
-            self.assertEqual(payload["controller_cycle"], 4)
-            self.assertEqual(payload["cycle"], 4)
-            self.assertEqual(payload["cycle_authority"], "entregar-issue")
 
     def test_identity_reobservation_reuses_the_entire_plan(self):
         with tempfile.TemporaryDirectory() as temp_value:

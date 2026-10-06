@@ -13,6 +13,8 @@ ISSUE_REF = re.compile(r"\b(?:issue|pr|pull request)\s*#?\s*\d+\b", re.IGNORECAS
 REPO_ISSUE = re.compile(r"\b[a-z0-9_.-]+/[a-z0-9_.-]+#\d+\b", re.IGNORECASE)
 SHA40 = re.compile(r"\b[a-f0-9]{40}\b", re.IGNORECASE)
 REF_HEAD = re.compile(r"\brefs/heads/[A-Za-z0-9._/-]+\b")
+REJECTION_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
+SHA256 = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 
 
 def load(path: Path) -> dict:
@@ -42,8 +44,22 @@ def main() -> int:
     classification = data.get("classification")
     if classification not in {"implementation-only", "systemic-escape"}:
         errors.append("classification must be implementation-only or systemic-escape")
-    if not isinstance(data.get("source_event"), dict):
+    source_event = data.get("source_event")
+    if not isinstance(source_event, dict):
         errors.append("source_event is required")
+        source_event = {}
+    source_kind = str(source_event.get("kind") or "").strip().lower().replace("_", "-")
+    if not ("independent" in source_kind and "rejection" in source_kind):
+        errors.append("learning closure source_event must identify an independent rejection")
+    rejection_id = str(source_event.get("rejection_id") or "").strip()
+    if not REJECTION_ID.fullmatch(rejection_id):
+        errors.append("independent rejection source_event requires stable rejection_id")
+    report_sha = str(source_event.get("audit_report_sha256") or "").strip()
+    if report_sha and not SHA256.fullmatch(report_sha):
+        errors.append("independent rejection source_event audit_report_sha256 is invalid")
+    finding_ids = source_event.get("finding_ids")
+    if finding_ids is not None and (not isinstance(finding_ids, list) or any(not str(item).strip() for item in finding_ids)):
+        errors.append("independent rejection source_event finding_ids must be a list of non-empty identifiers")
 
     learning = data.get("generalized_learning")
     if classification == "implementation-only":

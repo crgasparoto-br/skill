@@ -168,10 +168,9 @@ Relacionar cada achado visual aos requisitos e à severidade no relatório princ
 Incluir esta secao somente quando `RESULTADO: REPROVADA` e houver remediacao executavel. O auditor nao implementa nem altera o candidato; a continuidade apenas reaproveita os findings estruturados e deve preservar o controlador de origem.
 
 - `delivery_origin=direct-entregar-issue`: **Implementar pendencias:** `@Entregar Issue implementar pendencias desta auditoria`
-- `delivery_origin=delivery-v2`: **Retomar pelo orquestrador:** `@Orquestrador Issue <issue_number>`
 - `delivery_origin=standalone-unknown`: omitir comando de continuidade; entregar somente os findings.
 
-Para `delivery-not-ready`, `delivery-not-saturated` ou `remediation-incomplete`, aplicar a mesma regra por origem. No fluxo direto, `entregar-issue` seleciona `handoff-only`, `post-write-refreeze`, `fresh-handoff-required`, remediacao de saturacao ou work items conforme a identidade/findings. Quando o material SHA direto ja possuir CI exact-SHA terminal verde e faltar apenas fechamento/handoff, o resultado estruturado deve preferir `next_phase=finalize-after-ci`, evitando nova discovery, implementacao ou rodada de `corrigir-ci` para o mesmo material. Em V2, nao emitir `return_control_to=entregar-issue` nem converter a remediacao para o modo direto. Omitir toda esta secao em `APROVADA`, `APROVADA COM RESSALVAS`, `APROVADA INTERNAMENTE` e `INCONCLUSIVA`, inclusive quando houver apenas `audit-runtime-limitation`.
+Para `delivery-not-ready`, `delivery-not-saturated` ou `remediation-incomplete`, aplicar a mesma regra por origem. No fluxo direto, `entregar-issue` seleciona `handoff-only`, `post-write-refreeze`, `fresh-handoff-required`, remediacao de saturacao ou work items conforme a identidade/findings. Quando o material SHA direto ja possuir CI exact-SHA terminal verde e faltar apenas fechamento/handoff, o resultado estruturado deve preferir `next_phase=finalize-after-ci`, evitando nova discovery, implementacao ou rodada de `corrigir-ci` para o mesmo material. Omitir toda esta secao em `APROVADA`, `APROVADA COM RESSALVAS`, `APROVADA INTERNAMENTE` e `INCONCLUSIVA`, inclusive quando houver apenas `audit-runtime-limitation`.
 
 ## Proposta de issues corretivas
 

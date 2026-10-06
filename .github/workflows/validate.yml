@@ -52,6 +52,9 @@ jobs:
       - name: Validate behavioral evaluation harness
         run: python scripts/validate_evals.py --root .
 
+      - name: Validate operational file reachability
+        run: python scripts/validate_reachability.py --root .
+
       - name: Run skill tests
         run: python -m pytest -q
 

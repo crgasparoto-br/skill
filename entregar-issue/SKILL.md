@@ -1,6 +1,6 @@
 ---
 name: entregar-issue
-description: "Executar diretamente, sem despachar para a Delivery V2/orquestrador, a entrega ponta a ponta de issues em repositorios de software com um unico controlador, plano e estado: revisar readiness quando necessario, implementar codigo/testes/schemas/configuracao/documentacao, validar durante a edicao, aplicar higiene limitada ao diff, acionar especialidades condicionais, executar gates finais, congelar o candidato, acompanhar CI ate estado terminal por delegacao automatica a corrigir-ci, remediar falhas sem novo prompt e preparar auditoria independente. Usar quando o usuario informar uma issue, PR, branch ou pendencias e esperar continuidade autonoma. Nunca fazer merge nem declarar auditoria independente no mesmo contexto."
+description: "Conduzir a entrega ponta a ponta de issues em repositorios de software com um unico controlador, plano e estado: revisar readiness quando necessario, implementar codigo/testes/schemas/configuracao/documentacao, validar durante a edicao, aplicar higiene limitada ao diff, acionar especialidades condicionais, executar gates finais, congelar o candidato, acompanhar CI ate estado terminal por delegacao automatica a corrigir-ci, remediar falhas sem novo prompt e preparar auditoria independente. Usar quando o usuario informar uma issue, PR, branch ou pendencias e esperar continuidade autonoma. Nunca fazer merge nem declarar auditoria independente no mesmo contexto."
 ---
 
 # Entregar Issue
@@ -12,17 +12,6 @@ Produzir o menor candidato completo, rastreavel e localmente verde para uma issu
 O objetivo operacional e concluir a entrega, sempre que nao houver impedimento real, em **uma unica invocacao de nivel superior**. Estado de CI `pending-no-run`, `queued`, `waiting` ou `in_progress` nunca e motivo para devolver o controle ao usuario: transferir a propriedade temporaria da CI para `corrigir-ci`, aguardar o terminal e retomar automaticamente a entrega.
 
 A verificacao executada no mesmo contexto e interna. Somente `auditar-issue` em contexto realmente separado pode liberar aprovacao operacional.
-
-## Modo de execucao direto
-
-Executar esta Skill sempre como controlador direto da entrega no repositorio alvo. Nao consultar `delivery-v2-controller-targets.json`, nao criar ingresso `[delivery-v2-dispatch]` e nao transferir a implementacao para a Delivery V2 apenas porque o repositorio esteja cadastrado no orquestrador.
-
-`entregar-issue` e `orquestrador` sao caminhos alternativos e explicitamente selecionados pelo usuario:
-
-- `@Entregar Issue <n>`: executar este fluxo direto, usando conectores/web/checkout disponiveis nesta sessao.
-- `@Orquestrador Issue <n>`: usar a Skill `orquestrador`, que despacha a Delivery V2 do repositorio.
-
-Nunca fazer fallback automatico de um modo para o outro. Se o modo direto encontrar impedimento real, reportar o impedimento do proprio modo direto; nao despachar silenciosamente o orquestrador.
 
 ## Modelo arquitetural
 
@@ -48,7 +37,7 @@ entregar-issue
   -> handoff/encaminhamento para auditar-issue independente
 ```
 
-Nunca invocar `issue-loop-engineer`, `orquestrador`, `implementar-issue` ou `higienizacao` de dentro deste fluxo: `orquestrador` e um modo alternativo de entrega, escolhido explicitamente pelo usuario; os demais sao wrappers legados.
+Este modelo e a lista completa de delegacoes: nunca invocar skill que nao apareca nele nem presumir que uma skill externa exista; etapa sem skill listada e executada internamente ou bloqueada como impedimento real.
 
 ## Carregamento progressivo
 
@@ -69,7 +58,7 @@ Ler somente quando aplicavel:
 - input parser: `references/input-parser-gate.md` e `references/controller-input-parser-controls.md`;
 - entrada nao confiavel: `references/implementation-untrusted-input-contract.md`;
 - chamada a provider: `references/implementation-provider-call-governance.md`;
-- PR aberta, publicacao, CI ou coleta remota: `references/pr-conflict-resolution.md`, `contracts/ci-ownership.json`, `references/github-actions-policy.md`, `references/finalize-after-ci.md`, `references/native-github-audit-contract.md` e, quando `audit_transport=certified-handoff`, `references/terminal-handoff.md`;
+- PR aberta, publicacao, CI ou coleta remota: `references/remote-gate.md`, `references/pr-conflict-resolution.md`, `contracts/ci-ownership.json`, `contracts/github-actions-policy.md`, `references/finalize-after-ci.md`, `references/native-github-audit-contract.md` e, quando `audit_transport=certified-handoff`, `references/terminal-handoff.md`;
 - correcao de handoff `result-only` em PR ja aberta ou decisao sobre PR substituta: `references/result-only-pr-recovery.md`;
 - auditoria interna: `references/controller-audit-contract.md` e `references/controller-single-invocation.md`;
 - controle negativo: `references/controller-adversarial-evidence.md`;
@@ -128,7 +117,6 @@ Nao carregar referencias condicionais por antecipacao.
 Quando `audit_transport=certified-handoff`, manter em `.audit/entregar-issue/`:
 
 - `controller-context.json`;
-- `delivery-state.json` ou `loop-state.json` schema 5 durante compatibilidade;
 - `source-manifest.json`;
 - `specification-snapshot.json`;
 - `requirement-closure.json`;
@@ -151,13 +139,14 @@ Artefatos JSON canonicos do modo `certified-handoff` podem ser fisicamente `plai
 
 Inicializar contexto uma vez por `scripts/controller_cli.py init-context`; o comando deve registrar `artifact_reuse` classificando qualquer pacote `.audit/entregar-issue` existente antes de permitir reuso. Atualizar identidade, fontes, baseline, workflows e metricas em uma unica chamada `refresh-context` quando possivel; `refresh-context` deve reclassificar o pacote contra `repository/base_ref/branch/PR` atuais mesmo quando nenhum outro campo material mudou. Depois de reconstruir/publicar um pacote que antes era `foreign-target`, executar `refresh-context` novamente e exigir `artifact_reuse.status=current-target` no modo com contexto local, ou a classificacao equivalente via `delivery_target_binding.py` em `connector-only`. Registrar `planning_runs`, `subskill_calls`, `focused_checks`, `full_suites`, `remote_collections`, `material_commits`, `handoff_commits` e reuso; timestamps e telemetria nao invalidam etapas. Gerar KPIs com `scripts/report_controller_efficiency.py` quando avaliar performance do controlador.
 
-Usar `controller_mode=delivery-single-invocation`. Aceitar `issue-loop-single-invocation` apenas como alias de entrada durante a migracao; normalizar internamente para o modo novo.
+Usar `controller_mode=delivery-single-invocation`.
 
 ## Fluxo deterministico
 
 ### 0. Preflight unico
 
 1. Resolver repositorio, issue, branch, PR, base, instrucoes locais e permissoes; essa resolucao e a fonte de verdade do alvo, nunca os arquivos `.audit` herdados.
+1.1. Antes de executar qualquer script desta Skill, rodar `scripts/runtime_resource_preflight.py`; `FAIL` (script referenciado ausente no pacote) e impedimento real de runtime, nunca motivo para reescrever ou presumir o comportamento do script.
 2. Classificar uma unica vez a capacidade de execucao como `local-git`, `connector-only` ou `artifact-bundle`. Se checkout/dependencias nao estiverem utilizaveis, nao repetir clone, instalacao ou tentativa equivalente sem evidencia nova de que o impedimento mudou.
 3. Antes de reutilizar qualquer artefato existente, aplicar `references/delivery-target-binding.md`. Em checkout local, `controller_cli.py init-context` classifica automaticamente `.audit/entregar-issue` e, quando `base_sha` estiver disponivel, prova origem herdada comparando bytes via Git contra esse SHA exato. Em `connector-only`, materializar `handoff-ready.json` e `specification-snapshot.json` do head remoto quando existirem, materializar os mesmos paths do base SHA em diretorio separado e executar `scripts/delivery_target_binding.py --base-audit-dir <base>`.
 4. Se o estado for `inherited-base-artifact`, `foreign-target`, `partial-current-target` ou `unbound-or-invalid`, manter `reuse_allowed=false`, ignorar o pacote anterior como evidencia e reconstruir os artefatos canonicos da entrega atual. `inherited-base-artifact` e historico neutro da base, nao finding do produto e nao evidencia de que a entrega atual produziu handoff. Isso nao bloqueia a implementacao e nao autoriza apagar historico.
@@ -172,7 +161,7 @@ Usar `controller_mode=delivery-single-invocation`. Aceitar `issue-loop-single-in
 
 1. Derivar requisitos testaveis, criterios, caminhos e riscos. Separar explicitamente comportamento de invariantes estruturais: `must_not`, `must_reuse`, `must_be_single_source`, `must_not_depend_on`, `precedence_invariants` e `forbidden_implementation` quando presentes.
 2. Invocar `revisar-issue` somente quando faltar decisao material capaz de produzir implementacoes divergentes.
-3. Construir snapshot e fechamento uma vez. Recalcular somente por mudanca material.
+3. Construir snapshot e fechamento uma vez, com `scripts/build_specification_snapshot.py` conforme `references/specification-snapshot.md` e `scripts/init_requirement_closure.py` conforme `references/requirement-closure-gate.md`. Recalcular somente por mudanca material.
 4. Produzir `requirement-closure.json` com prova esperada para cada requisito antes de editar e validar que nenhum candidato extraido das fontes canonicas desapareceu do fechamento. Preservar em cada obrigacao `source_id`, `source_sha256`, `source_line`, `source_text` e `flags` exatamente como no snapshot; chave/candidate count sem o texto canonico nao e fechamento valido. Tratar todo item de lista Markdown sob secoes normativas como `Escopo/Scope`, `Requisitos/Requirements`, `Criterios de aceite/Acceptance criteria` e `Invariantes/Invariants` como candidato obrigatorio mesmo quando o verbo inicial nao estiver no vocabulario heuristico; excluir explicitamente secoes `Fora de escopo/Out of scope` e `Referencias/References`. O controle deve possuir teste transferivel que prove captura de verbos antes desconhecidos e falha de cobertura quando um item normativo for removido da closure.
 5. Para cada requisito material, formular antes da implementacao uma `plausible_wrong_implementation` que passaria no caminho feliz e derivar a familia de ataque e todas as `risk_surfaces` tecnicamente acessiveis correspondentes. Se varias obrigacoes forem ligadas ao mesmo requisito, manter a atomizacao de verificacao por obrigacao; nao usar a agregacao do requisito para reduzir numero de ataques.
 6. Inicializar `requirement-attack-matrix.json`; consultar `audit-escape-pattern-catalog.json` e ativar padroes anteriores cujos sinais aparecam no contrato atual, carregando `required_attack_dimensions` como piso de cobertura e ampliando-o quando a arquitetura atual expuser novas superficies. Nao aceitar a matriz como autoridade sobre a propria aplicabilidade: rederivar familias/superficies de `source_texts`, inclusive `idempotency:duplicate-processing` para retry/callback/replay/reprocessamento, `authorization:session-target-binding` quando o alvo vem da sessao autenticada, `public-boundary:request-target-override` quando body/request nao pode escolher o alvo, `tenant-isolation:tenant-scope-isolation` quando tenant/perfil/organizacao/workspace deve permanecer isolado, segregado ou sem vazamento, `structural-contract:canonical-source-consistency` para catalogo/definicao canonica compartilhada, `structural-contract:specified-test-matrix` quando a fonte enumera casos que os testes devem cobrir, `structural-contract:semantic-identity-propagation` quando o contrato contiver dois ou mais campos de identidade vizinhos e `structural-contract:relational-semantic-integrity` quando houver fonte unica/canonica, proibicao de mistura/conversao implicita ou uma dimensao material repetida em registros ligados. `authorization` nao satisfaz nem substitui `tenant-isolation`: quando ambas forem exigidas pela mesma clausula, manter as duas familias e controles discriminantes separados. Inferir `concurrency-atomicity` apenas de sinais concretos de concorrencia/serializacao/lock; a flag ampla `atomicity` ou a palavra `canônico` nao bastam. Nao inferir reporting temporal de palavras soltas como `complete/completa`: exigir contexto de cobertura, disponibilidade, janela, retencao ou relatorio.
@@ -183,7 +172,7 @@ Usar `controller_mode=delivery-single-invocation`. Aceitar `issue-loop-single-in
 
 ### 2. Plano unico
 
-Executar `scripts/plan_execution.py` uma vez com contexto, requisitos, caminhos, plano anterior e work items.
+Executar `scripts/plan_execution.py` uma vez com contexto, requisitos, caminhos, plano anterior e work items; o formato do plano e `schemas/execution-plan.schema.json`.
 
 O plano deve:
 
@@ -207,7 +196,7 @@ Seguir `references/implementation-workflow.md`.
 3. Alterar o menor conjunto coeso que entregue o comportamento ponta a ponta e executar validacoes focadas durante a edicao.
 4. Fechar cada requisito com arquivos, comportamento, teste positivo, `risk_surfaces`, controle negativo primario por superficie, casos irmaos discriminantes e regressao e registrar tudo em `requirement-attack-matrix.json`. Para requisito com varias obrigacoes, preencher `obligation_control_map` cobrindo todas as obrigacoes com controles primarios distintos; para clausula que enumera cobertura de testes, preencher `test_coverage_contract` sem omitir nenhum caso e ligar cada caso a um controle `test` distinto. Para requisito estrutural, executar tambem o gate de `references/structural-invariant-gate.md`; resultado publico correto nao substitui a prova da forma de implementacao exigida.
 5. Para referencias usadas em etapa posterior, executar `REF-LIVE-001` e caso irmao aplicavel; para destinos temporais, executar os controles `TEMP-PERIOD-001`/`TEMP-DEST-001` quando aplicaveis. Para reporting com retencao, preencher `coverage_contract.retained_tiers`; cada tier usado deve possuir controle de cobertura proprio no entrypoint real. Em granularidade de bucket, usar cutoff fora da borda e provar que purge, query e `availableFrom` normalizam para a mesma borda/timezone; requisitar exatamente desde a borda deve retornar `complete`.
-6. Quando `produced_diff` estabilizar, executar uma unica reconciliacao pos-diff das superficies materiais reveladas por entrypoints, consumidores, runtime graph, persistencia, fronteiras e dependencias tocadas. Cruzar somente o delta de superficies com a matriz existente; superficie nova reabre o mesmo work item e recebe controle focado antes de sair da implementacao, sem recalcular o plano inteiro.
+6. Quando `produced_diff` estabilizar, executar uma unica reconciliacao pos-diff das superficies materiais reveladas por entrypoints, consumidores, runtime graph (`scripts/map_runtime_consumers.py`; `coverage.complete=false` mantem a superficie `UNKNOWN`), persistencia, fronteiras e dependencias tocadas. Cruzar somente o delta de superficies com a matriz existente; superficie nova reabre o mesmo work item e recebe controle focado antes de sair da implementacao, sem recalcular o plano inteiro.
 7. Descobrir todos os erros baratos relacionados antes de devolver a rodada; depois do primeiro finding, percorrer tambem requisitos/familias ainda sem controle discriminante para colher blockers independentes baratos no mesmo ciclo.
 8. Atualizar documentacao simples por delta no mesmo recorte. Quando houver mudanca semantica normativa, executar `DOC-SEMANTIC-DRIFT-001`: buscar fora do diff, classificar todas as alegacoes antigas relevantes e reabrir o work item se surgir fonte canonica concorrente.
 9. Permanecer em correcao enquanto houver falha executavel, requisito sem prova, familia de risco material nao saturada, superficie pos-diff sem controle ou controle herdado nao executado. O gate final confirma cobertura; nao deve ser a primeira etapa a descobrir ataque barato derivavel do contrato ou do diff.
@@ -283,7 +272,7 @@ Usar `ci_mode=delivery-snapshot` somente para a primeira observacao do material 
    - `native-github-audit`: seguir `references/native-github-audit-contract.md`; **nao** gerar `.audit/entregar-issue`, `handoff-ready.json` ou `result-only-child`. Reconsultar identidade remota, changed paths e checks/runs exact-head e emitir `terminal_native_audit_ready=READY` vinculado ao material head corrente.
    - `certified-handoff`: gerar o pacote neutro e `handoff-ready.json` usando `evidence_profile=standard` por padrao; promover para `critical` somente pelos sinais objetivos de `references/execution-profiles.md`, e usar `light` somente quando realmente nao houver comportamento material. Antes do builder, calcular o **issue-local diff** `work_item_start_sha..material_head_sha`, normalizar sua lista de paths e certifica-la em `scope.work_item_start_sha`, `scope.material_head_sha`, `scope.issue_changed_paths` e `scope.issue_delta_sha256`. Certificar tambem `subject.issue_number` e `subject.pull_request_number` separadamente. O diff `base_ref..PR head` e apenas contexto acumulado e nunca substitui o issue-local diff. O pacote pode usar shards somente depois de o JSON logico ter passado os gates; o sharding e transporte, nao nova evidencia. Se `artifact_reuse.status != current-target`, nenhuma existencia previa de `handoff-ready.json` satisfaz esta etapa; gerar certificado novo a partir das fontes/artefatos correntes. **Antes da primeira escrita remota do filho de resultados**, construir localmente o commit `result-only-child` exato, com parent material, blobs/manifests/shards finais e changed paths prospectivos; executar `validate_terminal_handoff.py` em modo de simulacao local usando esse SHA local como `published_head_sha=current_head_sha`, mais snapshots historicos/material-parent aplicaveis. Corrigir localmente ate `READY`. Somente entao publicar o pacote completo em filho direto `result-only-child` e validar parent + allowlist.
 8. Em `certified-handoff`, guardar o SHA retornado pela publicacao como `published_handoff_head_sha` e aplicar integralmente a barreira pos-escrita de `references/terminal-handoff.md`. Em `native-github-audit`, nao existe filho de resultados: depois da ultima escrita material, fazer nova consulta remota e exigir que `current_head_sha == material_head_sha` congelado e que os checks/runs obrigatorios desse SHA continuem verdes; qualquer drift material exige revalidacao/refreeze antes de liberar auditoria.
-9. Encaminhar para `auditar-issue` somente em contexto separado, CI material verde e um fechamento terminal valido para o transporte selecionado: `terminal_handoff=READY` em `certified-handoff` ou `terminal_native_audit_ready=READY` em `native-github-audit`. No modo certificado, manter os requisitos de `standard-evidence`/matriz/saturacao conforme perfil. Qualquer identidade stale, commit material posterior ou impedimento real encerra com `Libera auditoria: NAO`.
+9. Encaminhar para `auditar-issue` somente em contexto separado, CI material verde e um fechamento terminal valido para o transporte selecionado: `terminal_handoff=READY` em `certified-handoff` ou `terminal_native_audit_ready=READY` em `native-github-audit`. Confirmar esse fechamento com `scripts/validate_delivery_completion.py` (passando `terminal-handoff-proof.json` emitido por `validate_terminal_handoff.py` em `certified-handoff`); qualquer `BLOCK` impede a saida apta a auditoria. No modo certificado, manter os requisitos de `standard-evidence`/matriz/saturacao conforme perfil. Qualquer identidade stale, commit material posterior ou impedimento real encerra com `Libera auditoria: NAO`.
 
 ## Fast paths
 
@@ -302,7 +291,7 @@ Usar `ci_mode=delivery-snapshot` somente para a primeira observacao do material 
 
 Declarar exatamente um estado:
 
-- `aprovado-operacionalmente-sem-ressalvas`: somente com auditoria independente valida recebida;
+- `aprovado-operacionalmente-sem-ressalvas`: somente com `external-audit.json` assinado por `auditar-issue` em contexto separado para o material head corrente e aceito por `<auditar-issue>/scripts/validate_external_audit_report.py <external-audit.json> --trusted-auditors <registro>`, com registro de auditores que o candidato nao pode alterar; parecer apenas textual nunca basta;
 - `aprovado-internamente-pendente-auditoria-independente`;
 - `bloqueado-por-impedimento-real`.
 

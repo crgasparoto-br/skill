@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_SHA = hashlib.sha256(b"canonical negative").hexdigest()
 sys.path.insert(0, str(ROOT / "scripts"))
-from orchestrator_gate.specification import flags_for
+from specification import flags_for
 
 
 def test_canonical_adapter_contract_is_classified_as_structural_canonical_path() -> None:
