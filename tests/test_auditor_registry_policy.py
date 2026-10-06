@@ -96,6 +96,51 @@ def normalize(text: str) -> str:
     return "\n".join(kept)
 
 
+FENCE_RE = re.compile(r"^\s{0,3}(```|~~~)")
+HIDDEN = "\u0000"
+
+
+def hidden_mask(text: str) -> list[bool]:
+    """Marcar a linha que o leitor não lê como Markdown normal.
+
+    Uma quarta rodada de auditoria mostrou que a comparação canônica podia ser
+    contornada abrindo uma cerca ou um comentário antes do heading da seção e
+    fechando depois do heading seguinte: o recorte extraído continuava idêntico à
+    forma canônica enquanto o procedimento deixava de ser renderizado. O contexto
+    passa a ser parte da checagem, não do recorte.
+    """
+    mask: list[bool] = []
+    fence: str | None = None
+    comment = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        mask.append(fence is not None or comment)
+        if comment:
+            if "-->" in stripped:
+                comment = False
+            continue
+        if fence is not None:
+            if stripped.startswith(fence):
+                fence = None
+            continue
+        if "<!--" in stripped:
+            remainder = stripped.split("<!--", 1)[1]
+            comment = "-->" not in remainder
+            continue
+        if FENCE_RE.match(line):
+            fence = stripped[:3]
+            mask[-1] = True
+    return mask
+
+
+def rendered_text(text: str) -> str:
+    """Substituir por sentinela o que não é renderizado, preservando as linhas."""
+    return "\n".join(
+        HIDDEN if hidden else line
+        for line, hidden in zip(text.splitlines(), hidden_mask(text))
+    )
+
+
 def heading_positions(text: str) -> list[int]:
     return [index for index, line in enumerate(text.splitlines()) if line.strip() == SECTION_HEADING]
 
@@ -139,6 +184,7 @@ def first_divergence(actual: str, expected: str) -> str:
 
 def policy_errors(text: str) -> list[str]:
     errors: list[str] = []
+    text = rendered_text(text)
     positions = heading_positions(text)
     if not positions:
         return [f"seção do registro ausente: {SECTION_HEADING}"]
@@ -242,6 +288,25 @@ def test_fenced_body_is_detected() -> None:
     section = registry_section(text)
     mutated = replace_section(text, "\n".join(["```markdown", section, "```"]))
     assert policy_errors(mutated)
+
+
+def test_outer_fence_around_the_whole_region_is_detected() -> None:
+    """Cerca aberta antes da seção e fechada depois: o recorte canônico ficava intacto."""
+    text = declared_reference()
+    section = registry_section(text)
+    head, _, tail = text.partition(section)
+    closing_index = tail.index(SECTION_CLOSING)
+    mutated = f"{head}```markdown\n{section}{tail[:closing_index + len(SECTION_CLOSING)]}\n```{tail[closing_index + len(SECTION_CLOSING):]}"
+    assert policy_errors(mutated), "cerca externa precisa ser detectada"
+
+
+def test_outer_comment_around_the_whole_region_is_detected() -> None:
+    text = declared_reference()
+    section = registry_section(text)
+    head, _, tail = text.partition(section)
+    closing_index = tail.index(SECTION_CLOSING)
+    mutated = f"{head}<!--\n{section}{tail[:closing_index + len(SECTION_CLOSING)]}\n-->{tail[closing_index + len(SECTION_CLOSING):]}"
+    assert policy_errors(mutated), "comentário externo precisa ser detectado"
 
 
 def test_duplicated_section_is_detected() -> None:
