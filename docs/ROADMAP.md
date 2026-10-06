@@ -98,7 +98,7 @@ Cada caso deve possuir pelo menos uma variação próxima (`sibling case`) para 
 Fechar as lacunas de manutenção restantes:
 
 1. escolher e adicionar uma licença explícita, sem assumir MIT ou outra licença por conveniência;
-2. adicionar templates de issue e completar as instruções de contribuição;
+2. adicionar templates de issue e completar as instruções de contribuição — **entregue em 2026-10-06** para o recorte de forma de issue: `.github/ISSUE_TEMPLATE/`, `AGENTS.md`, `config/issue-templates.json`, `scripts/validate_issue_templates.py` e `tests/test_issue_templates.py`, com o requisito `SKSYS-020` registrado; a escolha de licença e as ferramentas de cadeia de suprimentos deste mesmo item continuam abertas;
 3. habilitar secret scanning e dependency review no GitHub, respeitando o princípio de menor privilégio;
 4. adicionar `pip-audit` ou ferramenta equivalente para dependências Python;
 5. definir a política para exceções, vulnerabilidades sem correção e atualizações incompatíveis;

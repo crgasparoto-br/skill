@@ -17,6 +17,7 @@ try:
     from validate_adapters import validate_adapters
     from validate_evals import validate_evals
     from validate_reachability import validate_reachability
+    from validate_issue_templates import validate_issue_templates
 except ImportError:  # pragma: no cover - package import fallback
     from .catalog import catalog_skill_ids, load_catalog, validate_catalog
     from .validate_contract_sync import validate_contract_sync
@@ -25,6 +26,7 @@ except ImportError:  # pragma: no cover - package import fallback
     from .validate_adapters import validate_adapters
     from .validate_evals import validate_evals
     from .validate_reachability import validate_reachability
+    from .validate_issue_templates import validate_issue_templates
 
 ROOT = Path(__file__).resolve().parents[1]
 SYSTEM_VERSION = "2026-09-29.5"
@@ -57,6 +59,13 @@ GLOBAL_FILES = {
     "evals/fixtures/manifest.json",
     "scripts/validate_evals.py",
     ".github/skill-system-capabilities.json",
+    "AGENTS.md",
+    "config/issue-templates.json",
+    "scripts/validate_issue_templates.py",
+    ".github/ISSUE_TEMPLATE/feature.md",
+    ".github/ISSUE_TEMPLATE/bug.md",
+    ".github/ISSUE_TEMPLATE/epic.md",
+    ".github/ISSUE_TEMPLATE/config.yml",
 }
 REQUIRED_CAPABILITIES = {
     "canonical_controller": "entregar-issue",
@@ -328,6 +337,7 @@ def main() -> int:
     errors.extend(f"adapters: {error}" for error in validate_adapters(ROOT))
     errors.extend(f"avaliações: {error}" for error in validate_evals(ROOT))
     errors.extend(f"alcançabilidade: {error}" for error in validate_reachability(ROOT))
+    errors.extend(f"formato de issue: {error}" for error in validate_issue_templates(ROOT))
 
     if errors:
         print("Validação falhou:")

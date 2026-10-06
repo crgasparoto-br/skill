@@ -295,6 +295,22 @@
         "file:tests/test_reachability.py",
         "file:.github/workflows/validate.yml"
       ]
+    },
+    {
+      "id": "SKSYS-020",
+      "title": "Canonical issue specification form",
+      "status": "validated",
+      "summary": "The issue body that feeds requirement closure has a versioned canonical form: normative sections are declared once, templates stay inert so no placeholder becomes a requirement candidate, and the declaration is cross-checked against the independent audit parser.",
+      "implementationRefs": [
+        "file:config/issue-templates.json",
+        "file:.github/ISSUE_TEMPLATE/feature.md",
+        "file:AGENTS.md"
+      ],
+      "validationRefs": [
+        "file:scripts/validate_issue_templates.py",
+        "file:tests/test_issue_templates.py",
+        "file:.github/workflows/validate.yml"
+      ]
     }
   ],
   "system_version": "2026-09-29.5"

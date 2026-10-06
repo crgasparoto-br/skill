@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "system": "issue-templates",
+  "description": "Seções normativas que os extratores de requisito leem no corpo da issue. Declaração única, cruzada por teste com a regex independente de auditar-issue.",
+  "templates_dir": ".github/ISSUE_TEMPLATE",
+  "required_templates": ["feature", "bug", "epic"],
+  "normative_sections": [
+    "Escopo",
+    "Requisitos",
+    "Critérios de aceite",
+    "Invariantes"
+  ],
+  "non_normative_markers": [
+    "Fora de escopo",
+    "Out of scope",
+    "Referências",
+    "References"
+  ],
+  "guidance_sources": [
+    "AGENTS.md",
+    "revisar-issue/references/specification-standard.md"
+  ]
+}

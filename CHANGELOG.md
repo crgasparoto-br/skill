@@ -27,6 +27,9 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 
 ### Added
 
+- forma canônica versionada para a issue que alimenta o fechamento de requisitos: [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/) com templates de desenvolvimento, defeito e epic, [`config/issue-templates.json`](./config/issue-templates.json) declarando as seções normativas lidas pelos extratores e [`scripts/validate_issue_templates.py`](./scripts/validate_issue_templates.py) reprovando template sem seção normativa ou com item pré-preenchido que viraria candidato de requisito (`SKSYS-020`);
+- [`AGENTS.md`](./AGENTS.md) como instrução normativa para agentes de IA que trabalham no repositório: hierarquia de fontes, fluxo de issue para `develop` e `develop` para `main`, forma canônica da issue, restrição de redação dos templates, validação local e regras de higiene;
+- `tests/test_issue_templates.py` provando que o texto de orientação dos templates é inerte para as regexes reais de `entregar-issue`, que as seções normativas declaradas continuam reconhecidas pelo parser independente de `auditar-issue` e que remover uma seção normativa ou inserir placeholder bloqueia o validador;
 - `config/shared-files.json` declara a fonte canônica dos arquivos replicados entre skills, verificados e regenerados por `sync_contracts.py` (SKSYS-012);
 - `scripts/validate_reachability.py` reprova referência, script ou schema inalcançável a partir do `SKILL.md` (SKSYS-019);
 - `CODE-GROWTH-001` passa a ser produzido pela entrega: `check_code_growth.py` mede o crescimento de arquivos de código com política padrão (300/500/20) sobrescrevível por `.github/code-growth-policy.json` lido do SHA base, e o certificado exige o relatório quando o escopo toca código;
