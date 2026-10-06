@@ -232,6 +232,128 @@ def test_build_and_validate_handoff_certificate() -> None:
         assert "hash mismatch" in proc.stdout
 
 
+def write_grounding(base: Path, subject_sha: str = HEAD) -> Path:
+    path = base / "codebase-grounding.json"
+    path.write_text(json.dumps({
+        "schema_version": 1, "subject_sha": subject_sha, "base_sha": BASE,
+        "creations": [], "references": [], "replacements": [],
+    }), encoding="utf-8")
+    return path
+
+
+def write_growth(base: Path, status: str = "passed", subject_sha: str = HEAD) -> Path:
+    path = base / "code-growth.json"
+    path.write_text(json.dumps({
+        "schema_version": 1, "control_id": "CODE-GROWTH-001", "status": status, "subject_sha": subject_sha,
+        "base_sha": BASE, "policy": {"source": "default"}, "files": [],
+        "blocking_files": [] if status == "passed" else [{"path": "server/issue-42.ts", "reason": "too large"}],
+    }), encoding="utf-8")
+    return path
+
+
+def code_evidence(base: Path) -> tuple[str, ...]:
+    return ("--codebase-grounding", str(write_grounding(base)), "--code-growth", str(write_growth(base)))
+
+
+def build_scoped_certificate(base: Path, changed_path: str, *extra: str):
+    files = build_valid_delivery(base)
+    cert = base / "handoff-ready.json"
+    proc = run(
+        "build_handoff_certificate.py",
+        "--specification-snapshot", str(files["snapshot"]),
+        "--repository", "owner/repo", "--work-item-kind", "issue", "--work-item-number", "42",
+        "--work-item-start-sha", BASE, "--issue-changed-path", changed_path,
+        "--requirement-closure", str(files["closure"]),
+        "--attack-matrix", str(files["attack"]),
+        "--risk-saturation", str(files["risk"]),
+        "--inherited-controls", str(files["inherited"]),
+        "--head-sha", HEAD, "--base-sha", BASE,
+        "--contract-version", "2026-08-20.3", "--out", str(cert), *extra,
+    )
+    return proc, cert
+
+
+def validate_certificate(cert: Path, base: Path):
+    return run(
+        "validate_handoff_certificate.py",
+        "--certificate", str(cert), "--artifacts-dir", str(base),
+        "--head-sha", HEAD, "--base-sha", BASE, "--contract-version", "2026-08-20.3",
+    )
+
+
+def test_code_scope_requires_codebase_grounding_in_certificate() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        proc, _ = build_scoped_certificate(base, "server/issue-42.ts")
+        assert proc.returncode == 2
+        assert "requires --codebase-grounding" in proc.stdout
+        proc, _ = build_scoped_certificate(base, "server/issue-42.ts", "--codebase-grounding", str(write_grounding(base)))
+        assert proc.returncode == 2
+        assert "requires --code-growth" in proc.stdout
+
+
+def test_blocked_or_stale_code_growth_cannot_be_certified() -> None:
+    for status, subject, message in (("blocked", HEAD, "CODE-GROWTH-001 did not pass"), ("passed", BASE, "code growth is stale")):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            proc, _ = build_scoped_certificate(
+                base, "server/issue-42.ts",
+                "--codebase-grounding", str(write_grounding(base)), "--code-growth", str(write_growth(base, status, subject)),
+            )
+            assert proc.returncode == 2
+            assert message in proc.stdout
+
+
+def test_stale_codebase_grounding_cannot_be_certified() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        proc, _ = build_scoped_certificate(base, "server/issue-42.ts", "--codebase-grounding", str(write_grounding(base, BASE)))
+        assert proc.returncode == 2
+        assert "stale for material head" in proc.stdout
+
+
+def test_certified_codebase_grounding_resists_downgrade_and_staleness() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        proc, cert = build_scoped_certificate(base, "server/issue-42.ts", *code_evidence(base))
+        assert proc.returncode == 0, proc.stdout
+        payload = json.loads(cert.read_text(encoding="utf-8"))
+        assert payload["controls"] == {"codebase_grounding": {"applicable": True}, "code_growth": {"applicable": True}}
+        assert validate_certificate(cert, base).returncode == 0
+
+        for key in ("codebase_grounding", "code_growth"):
+            assert key in payload["artifacts"]
+            downgraded = dict(payload, controls={**payload["controls"], key: {"applicable": False}})
+            cert.write_text(json.dumps(downgraded), encoding="utf-8")
+            proc = validate_certificate(cert, base)
+            assert proc.returncode == 2
+            assert f"omits {key} control" in proc.stdout
+
+            removed = dict(payload, artifacts={k: v for k, v in payload["artifacts"].items() if k != key})
+            cert.write_text(json.dumps(removed), encoding="utf-8")
+            proc = validate_certificate(cert, base)
+            assert proc.returncode == 2
+            assert f"certificate lacks artifact {key}" in proc.stdout
+
+
+def test_documentation_only_scope_does_not_require_codebase_grounding() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        proc, cert = build_scoped_certificate(base, "docs/guide.md")
+        assert proc.returncode == 0, proc.stdout
+        payload = json.loads(cert.read_text(encoding="utf-8"))
+        assert payload["controls"] == {"codebase_grounding": {"applicable": False}, "code_growth": {"applicable": False}}
+        assert not {"codebase_grounding", "code_growth"} & set(payload["artifacts"])
+        assert validate_certificate(cert, base).returncode == 0
+
+
+def test_code_suffixes_have_a_single_definition() -> None:
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import plan_execution
+    import validate_handoff_certificate
+    assert validate_handoff_certificate.CODE_SUFFIXES == plan_execution.CODE_SUFFIXES
+
+
 def test_build_handoff_certificate_keeps_pr_and_issue_identity_separate() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
@@ -243,6 +365,7 @@ def test_build_handoff_certificate_keeps_pr_and_issue_identity_separate() -> Non
             "--repository", "owner/repo", "--work-item-kind", "pr", "--work-item-number", "43",
             "--issue-number", "42", "--pull-request-number", "43",
             "--work-item-start-sha", BASE, "--issue-changed-path", "server/issue-42.ts",
+            *code_evidence(base),
             "--requirement-closure", str(files["closure"]),
             "--attack-matrix", str(files["attack"]),
             "--risk-saturation", str(files["risk"]),

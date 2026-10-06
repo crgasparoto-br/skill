@@ -73,7 +73,7 @@ def _run(
     material_parent_escape: Path | None = None, previous_inherited: Path | None = None,
     previous_escape: Path | None = None, current: str | None = None,
     current_parent: str | None = None, current_paths: list[str] | None = None,
-    post_handoff_paths: list[str] | None = None,
+    post_handoff_paths: list[str] | None = None, proof_out: Path | None = None,
 ):
     cmd = [
         sys.executable, str(SCRIPT),
@@ -105,6 +105,8 @@ def _run(
         cmd += ["--previous-inherited-controls", str(previous_inherited)]
     if previous_escape is not None:
         cmd += ["--previous-audit-escape-closure", str(previous_escape)]
+    if proof_out is not None:
+        cmd += ["--proof-out", str(proof_out)]
     for path in paths:
         cmd += ["--published-changed-path", path]
     for path in (current_paths if current_paths is not None else paths):
@@ -142,6 +144,33 @@ def test_terminal_guard_accepts_direct_result_only_child() -> None:
         assert proc.returncode == 0, proc.stdout
         assert "owner/repo issue #42" in proc.stdout
         assert "READY: terminal handoff published" in proc.stdout
+
+
+def test_terminal_guard_writes_machine_readable_ready_proof() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        material = "a" * 40
+        published = "d" * 40
+        cert, artifacts, _allowed = _fixture(base, material)
+        proof = base / "terminal-handoff-proof.json"
+        proc = _run(
+            cert,
+            artifacts,
+            material,
+            published,
+            material,
+            [".audit/entregar-issue/handoff-ready.json"],
+            proof_out=proof,
+        )
+        assert proc.returncode == 0, proc.stdout
+        payload = json.loads(proof.read_text(encoding="utf-8"))
+        assert payload["status"] == "READY"
+        assert payload["audit_transport"] == "certified-handoff"
+        assert payload["material_head_sha"] == material
+        assert payload["published_handoff_head_sha"] == published
+        assert payload["current_head_sha"] == published
+        assert payload["issue_number"] == 42
+        assert payload["pull_request_number"] == 99
 
 
 def test_terminal_guard_rejects_material_commit_after_valid_handoff() -> None:

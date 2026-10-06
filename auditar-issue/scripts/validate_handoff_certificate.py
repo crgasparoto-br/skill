@@ -11,6 +11,18 @@ from pathlib import Path
 from audit_artifact_io import artifact_metadata, load_json_artifact
 
 
+# Must stay equal to plan_execution.CODE_SUFFIXES; the auditor copy of this file has no planner to import.
+CODE_SUFFIXES = (
+    '.py', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx', '.java', '.kt',
+    '.go', '.rs', '.rb', '.php', '.cs', '.c', '.cc', '.cpp', '.h', '.hpp',
+    '.swift', '.scala', '.sh', '.bash', '.zsh', '.ps1', '.sql', '.vue', '.svelte',
+)
+
+
+def scope_touches_code(paths: list[str]) -> bool:
+    return any(str(path).lower().endswith(CODE_SUFFIXES) for path in paths)
+
+
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -154,10 +166,15 @@ def main() -> int:
         if remediation_mode in {"systemic-remediation", "mixed-remediation"}:
             if profile != "critical": errors.append("systemic audit remediation requires critical evidence profile")
             required.update({"audit_escape_closure", "learning_closure", "inherited_controls"})
-    declared_optional = {"evidence_provenance", "code_growth"} & set(artifacts)
-    growth_control = (cert.get("controls") or {}).get("code_growth") or {}
-    if growth_control.get("applicable") is True:
-        required.add("code_growth")
+    declared_optional = {"evidence_provenance", "code_growth", "codebase_grounding"} & set(artifacts)
+    certified_scope = cert.get("scope") if isinstance(cert.get("scope"), dict) else {}
+    code_scope = scope_touches_code(certified_scope.get("issue_changed_paths") or [])
+    for key in ("codebase_grounding", "code_growth"):
+        control = (cert.get("controls") or {}).get(key) or {}
+        if code_scope and control.get("applicable") is not True:
+            errors.append(f"certificate omits {key} control although issue-local scope touches code")
+        if control.get("applicable") is True:
+            required.add(key)
     artifact_paths: dict[str, Path] = {}
     for key in sorted(required | declared_optional):
         item = artifacts.get(key)
@@ -235,6 +252,20 @@ def main() -> int:
                 target_mismatch |= compare_target("specification snapshot repository", snapshot.get("repository"), args.repository, errors)
                 if expected_issue_number is not None:
                     target_mismatch |= compare_target("specification snapshot issue", snapshot.get("issue"), expected_issue_number, errors)
+
+    for key in ("codebase_grounding", "code_growth"):
+        if key not in artifact_paths or not artifact_paths[key].is_file():
+            continue
+        label = key.replace("_", " ")
+        try:
+            report = load(artifact_paths[key])
+        except Exception as exc:
+            errors.append(f"cannot read certified {label}: {exc}")
+            continue
+        if report.get("subject_sha") != material_head:
+            errors.append(f"certified {label} is stale for material head")
+        if key == "code_growth" and (report.get("status") != "passed" or report.get("blocking_files")):
+            errors.append("certified CODE-GROWTH-001 did not pass")
 
     scope = cert.get("scope")
     if isinstance(scope, dict):

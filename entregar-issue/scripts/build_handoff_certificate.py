@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_json_artifact
+from validate_handoff_certificate import scope_touches_code
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REPO_DIR = ".audit/entregar-issue"
@@ -86,6 +87,8 @@ def main() -> int:
     parser.add_argument("--risk-saturation")
     parser.add_argument("--inherited-controls")
     parser.add_argument("--evidence-provenance")
+    parser.add_argument("--codebase-grounding", help="codebase-grounding.json; mandatory when the issue-local scope touches code")
+    parser.add_argument("--code-growth", help="CODE-GROWTH-001 report; mandatory when the issue-local scope touches code")
     parser.add_argument("--audit-escape-closure")
     parser.add_argument("--learning-closure")
     parser.add_argument("--audit-remediation")
@@ -213,6 +216,27 @@ def main() -> int:
             "issue_changed_paths": issue_paths,
             "issue_delta_sha256": issue_scope_digest(args.work_item_start_sha, args.head_sha, issue_paths),
         }
+
+    code_scope = scope_touches_code(issue_scope["issue_changed_paths"]) if issue_scope else "unknown"
+    for key, value in (("codebase_grounding", args.codebase_grounding), ("code_growth", args.code_growth)):
+        label = key.replace("_", " ")
+        if not value:
+            if code_scope is True:
+                print(f"BLOCK: issue-local scope touches code and requires --{key.replace('_', '-')}")
+                return 2
+            continue
+        files[key] = Path(value).resolve()
+        try:
+            report = load_json_artifact(files[key], require_object=True)
+        except Exception as exc:
+            print(f"BLOCK: cannot read {label}: {exc}")
+            return 2
+        if report.get("subject_sha") != args.head_sha:
+            print(f"BLOCK: {label} is stale for material head")
+            return 2
+        if key == "code_growth" and (report.get("status") != "passed" or report.get("blocking_files")):
+            print("BLOCK: CODE-GROWTH-001 did not pass")
+            return 2
 
     try:
         run([
@@ -348,6 +372,10 @@ def main() -> int:
         },
         "artifacts": {
             name: artifact_metadata(path) for name, path in files.items()
+        },
+        "controls": {
+            "codebase_grounding": {"applicable": code_scope},
+            "code_growth": {"applicable": code_scope},
         },
         "previous_independent_rejection": bool(args.previous_independent_rejection),
     }

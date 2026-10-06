@@ -17,7 +17,9 @@ O certificado deve ser produzido por `scripts/build_handoff_certificate.py` some
 - inherited controls completos no SHA material final;
 - audit escape closure completa quando houver rejeicao independente anterior;
 - learning closure completa quando houver rejeicao independente anterior;
-- identidade material final congelada.
+- identidade material final congelada;
+- `codebase-grounding.json` com `validate_codebase_grounding.py` em `READY` quando o escopo local da issue tocar codigo; passar `--codebase-grounding` ao builder, que bloqueia a ausencia ou o SHA stale e registra `controls.codebase_grounding.applicable`;
+- relatorio `CODE-GROWTH-001` em `passed` no mesmo caso, passado ao builder com `--code-growth`.
 
 ## Preflight contra pacote herdado
 

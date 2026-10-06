@@ -62,6 +62,7 @@ def main() -> int:
     parser.add_argument("--previous-audit-escape-closure")
     parser.add_argument("--material-parent-inherited-controls")
     parser.add_argument("--material-parent-audit-escape-closure")
+    parser.add_argument("--proof-out", help="Write a machine-readable READY proof after all terminal guards pass")
     args = parser.parse_args()
 
     errors: list[str] = []
@@ -293,6 +294,31 @@ def main() -> int:
         if proc.returncode != 0:
             print(proc.stdout.strip() or "BLOCK: published re-audit handoff semantic validation failed")
             return 2
+
+    proof = {
+        "schema_version": 1,
+        "status": "READY",
+        "audit_transport": "certified-handoff",
+        "repository": args.repository,
+        "issue_number": expected_issue_number,
+        "pull_request_number": expected_pull_request,
+        "work_item_kind": args.work_item_kind,
+        "work_item_number": args.work_item_number,
+        "base_ref": args.base_ref,
+        "head_ref": args.head_ref,
+        "base_sha": args.base_sha,
+        "material_head_sha": args.material_head_sha,
+        "published_handoff_head_sha": args.published_head_sha,
+        "published_parent_sha": args.published_parent_sha,
+        "current_head_sha": args.current_head_sha,
+        "current_parent_sha": args.current_parent_sha,
+        "published_changed_paths": sorted(changed),
+        "current_changed_paths": sorted(current_changed),
+    }
+    if args.proof_out:
+        proof_out = Path(args.proof_out).resolve()
+        proof_out.parent.mkdir(parents=True, exist_ok=True)
+        proof_out.write_text(json.dumps(proof, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     print(
         "READY: terminal handoff published "

@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "codebase-grounding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "subject_sha", "base_sha", "creations", "references", "replacements"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "subject_sha": {"$ref": "#/$defs/sha"},
+    "base_sha": {"$ref": "#/$defs/sha"},
+    "creations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "kind", "search", "decision", "justification"],
+        "properties": {
+          "path": {"$ref": "#/$defs/text"},
+          "kind": {"enum": ["file", "symbol", "endpoint", "table", "config", "dependency"]},
+          "name": {"$ref": "#/$defs/text"},
+          "search": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["queries", "scope", "candidates"],
+            "properties": {
+              "queries": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}},
+              "scope": {"$ref": "#/$defs/text"},
+              "candidates": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["path", "reason_not_reused"],
+                  "properties": {
+                    "path": {"$ref": "#/$defs/text"},
+                    "reason_not_reused": {"$ref": "#/$defs/text"}
+                  }
+                }
+              }
+            }
+          },
+          "decision": {"enum": ["reuse", "extend", "create"]},
+          "justification": {"$ref": "#/$defs/text"}
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["symbol", "kind", "used_in", "verified_by"],
+        "properties": {
+          "symbol": {"$ref": "#/$defs/text"},
+          "kind": {"enum": ["local", "dependency"]},
+          "used_in": {"$ref": "#/$defs/text"},
+          "defined_at": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "line"],
+            "properties": {"path": {"$ref": "#/$defs/text"}, "line": {"type": "integer", "minimum": 1}}
+          },
+          "manifest": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "name"],
+            "properties": {"path": {"$ref": "#/$defs/text"}, "name": {"$ref": "#/$defs/text"}}
+          },
+          "verified_by": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["command", "exit_code"],
+            "properties": {"command": {"$ref": "#/$defs/text"}, "exit_code": {"const": 0}}
+          }
+        },
+        "allOf": [
+          {"if": {"properties": {"kind": {"const": "local"}}}, "then": {"required": ["defined_at"]}},
+          {"if": {"properties": {"kind": {"const": "dependency"}}}, "then": {"required": ["manifest"]}}
+        ]
+      }
+    },
+    "replacements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["old_path", "disposition"],
+        "properties": {
+          "old_path": {"$ref": "#/$defs/text"},
+          "old_symbol": {"$ref": "#/$defs/text"},
+          "disposition": {"enum": ["removed", "kept"]},
+          "consumer": {"$ref": "#/$defs/text"}
+        },
+        "allOf": [
+          {"if": {"properties": {"disposition": {"const": "kept"}}}, "then": {"required": ["old_symbol", "consumer"]}}
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "text": {"type": "string", "minLength": 1, "pattern": "\\S"}
+  }
+}
