@@ -46,6 +46,8 @@ python scripts/validate_codebase_grounding.py \
 
 O validador confere contra o Git: SHA exato, registro de busca para todo arquivo de codigo adicionado, existencia dos candidatos citados, presenca do simbolo na linha declarada, presenca da dependencia no manifesto, consumidor que realmente contem o simbolo e disposicao de cada substituicao. Sem checkout executavel o resultado e `UNKNOWN`, nao aprovacao.
 
-## Limite conhecido
+Em `certified-handoff`, passar o relatorio ao builder com `--codebase-grounding`. Quando o escopo local da issue toca codigo, o builder bloqueia sem o relatorio ou com `subject_sha` stale, e `validate_handoff_certificate.py` (entrega e auditoria) recalcula a aplicabilidade a partir do escopo certificado.
 
-O validador prova que o declarado e verdadeiro; nao prova que a lista de referencias esta completa. Completude e refutada pela auditoria independente (`auditar-issue/references/codebase-grounding-audit.md`).
+## Limites conhecidos
+
+O certificado prova que o relatorio existe e pertence ao SHA; executar o validador em `READY` antes do builder continua sendo obrigacao do controlador. O validador prova que o declarado e verdadeiro; nao prova que a lista de referencias esta completa. Completude e refutada pela auditoria independente (`auditar-issue/references/codebase-grounding-audit.md`).

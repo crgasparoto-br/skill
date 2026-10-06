@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_json_artifact
+from validate_handoff_certificate import scope_touches_code
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REPO_DIR = ".audit/entregar-issue"
@@ -86,6 +87,7 @@ def main() -> int:
     parser.add_argument("--risk-saturation")
     parser.add_argument("--inherited-controls")
     parser.add_argument("--evidence-provenance")
+    parser.add_argument("--codebase-grounding", help="codebase-grounding.json; mandatory when the issue-local scope touches code")
     parser.add_argument("--audit-escape-closure")
     parser.add_argument("--learning-closure")
     parser.add_argument("--audit-remediation")
@@ -213,6 +215,21 @@ def main() -> int:
             "issue_changed_paths": issue_paths,
             "issue_delta_sha256": issue_scope_digest(args.work_item_start_sha, args.head_sha, issue_paths),
         }
+
+    grounding_applicable = scope_touches_code(issue_scope["issue_changed_paths"]) if issue_scope else "unknown"
+    if args.codebase_grounding:
+        files["codebase_grounding"] = Path(args.codebase_grounding).resolve()
+        try:
+            grounding_subject = load_json_artifact(files["codebase_grounding"], require_object=True).get("subject_sha")
+        except Exception as exc:
+            print(f"BLOCK: cannot read codebase grounding: {exc}")
+            return 2
+        if grounding_subject != args.head_sha:
+            print("BLOCK: codebase grounding is stale for material head")
+            return 2
+    elif grounding_applicable is True:
+        print("BLOCK: issue-local scope touches code and requires --codebase-grounding")
+        return 2
 
     try:
         run([
@@ -348,6 +365,9 @@ def main() -> int:
         },
         "artifacts": {
             name: artifact_metadata(path) for name, path in files.items()
+        },
+        "controls": {
+            "codebase_grounding": {"applicable": grounding_applicable},
         },
         "previous_independent_rejection": bool(args.previous_independent_rejection),
     }
