@@ -88,6 +88,7 @@ def main() -> int:
     parser.add_argument("--inherited-controls")
     parser.add_argument("--evidence-provenance")
     parser.add_argument("--codebase-grounding", help="codebase-grounding.json; mandatory when the issue-local scope touches code")
+    parser.add_argument("--code-growth", help="CODE-GROWTH-001 report; mandatory when the issue-local scope touches code")
     parser.add_argument("--audit-escape-closure")
     parser.add_argument("--learning-closure")
     parser.add_argument("--audit-remediation")
@@ -216,20 +217,26 @@ def main() -> int:
             "issue_delta_sha256": issue_scope_digest(args.work_item_start_sha, args.head_sha, issue_paths),
         }
 
-    grounding_applicable = scope_touches_code(issue_scope["issue_changed_paths"]) if issue_scope else "unknown"
-    if args.codebase_grounding:
-        files["codebase_grounding"] = Path(args.codebase_grounding).resolve()
+    code_scope = scope_touches_code(issue_scope["issue_changed_paths"]) if issue_scope else "unknown"
+    for key, value in (("codebase_grounding", args.codebase_grounding), ("code_growth", args.code_growth)):
+        label = key.replace("_", " ")
+        if not value:
+            if code_scope is True:
+                print(f"BLOCK: issue-local scope touches code and requires --{key.replace('_', '-')}")
+                return 2
+            continue
+        files[key] = Path(value).resolve()
         try:
-            grounding_subject = load_json_artifact(files["codebase_grounding"], require_object=True).get("subject_sha")
+            report = load_json_artifact(files[key], require_object=True)
         except Exception as exc:
-            print(f"BLOCK: cannot read codebase grounding: {exc}")
+            print(f"BLOCK: cannot read {label}: {exc}")
             return 2
-        if grounding_subject != args.head_sha:
-            print("BLOCK: codebase grounding is stale for material head")
+        if report.get("subject_sha") != args.head_sha:
+            print(f"BLOCK: {label} is stale for material head")
             return 2
-    elif grounding_applicable is True:
-        print("BLOCK: issue-local scope touches code and requires --codebase-grounding")
-        return 2
+        if key == "code_growth" and (report.get("status") != "passed" or report.get("blocking_files")):
+            print("BLOCK: CODE-GROWTH-001 did not pass")
+            return 2
 
     try:
         run([
@@ -367,7 +374,8 @@ def main() -> int:
             name: artifact_metadata(path) for name, path in files.items()
         },
         "controls": {
-            "codebase_grounding": {"applicable": grounding_applicable},
+            "codebase_grounding": {"applicable": code_scope},
+            "code_growth": {"applicable": code_scope},
         },
         "previous_independent_rejection": bool(args.previous_independent_rejection),
     }

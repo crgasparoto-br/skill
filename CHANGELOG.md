@@ -12,6 +12,7 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 
 ### Added
 
+- `CODE-GROWTH-001` passa a ser produzido pela entrega: `check_code_growth.py` mede o crescimento de arquivos de código com política padrão (300/500/20) sobrescrevível por `.github/code-growth-policy.json` lido do SHA base, e o certificado exige o relatório quando o escopo toca código;
 - certificado de handoff passa a exigir `codebase_grounding` quando o escopo local da issue toca código; o validador compartilhado recalcula a aplicabilidade e rejeita rebaixamento ou relatório stale;
 - gate `codebase-grounding` em `entregar-issue`: busca antes de criar (`GROUND-REUSE-001`), prova de existência antes de usar (`GROUND-EXIST-001`) e proibição de sobra (`GROUND-DEAD-001`), com validador determinístico contra o Git e refutação independente em `auditar-issue`;
 - harness provider-agnostic de avaliações comportamentais com casos versionados, replay determinístico, métricas limitadas e relatórios hashable;

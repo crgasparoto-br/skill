@@ -29,9 +29,14 @@ def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def fixture(base: Path, *, grounding_sha: str | None = HEAD, declare_control: bool = True) -> Path:
+def fixture(base: Path, *, grounding_sha: str | None = HEAD, declare_control: bool = True, growth_status: str = "passed") -> Path:
     grounding = base / "codebase-grounding.json"
     grounding.write_text(json.dumps({"schema_version": 1, "subject_sha": grounding_sha}), encoding="utf-8")
+    growth = base / "code-growth.json"
+    growth.write_text(json.dumps({
+        "control_id": "CODE-GROWTH-001", "status": growth_status, "subject_sha": HEAD,
+        "policy": {}, "blocking_files": [],
+    }), encoding="utf-8")
     spec = base / "specification-snapshot.json"
     spec.write_text(json.dumps({"repository": "owner/repo", "issue": 598}), encoding="utf-8")
     closure = base / "requirement-closure.json"
@@ -69,8 +74,9 @@ def fixture(base: Path, *, grounding_sha: str | None = HEAD, declare_control: bo
             "specification_snapshot": {"name": spec.name, "sha256": sha(spec)},
             "requirement_closure": {"name": closure.name, "sha256": sha(closure)},
             "codebase_grounding": {"name": grounding.name, "sha256": sha(grounding)},
+            "code_growth": {"name": growth.name, "sha256": sha(growth)},
         },
-        "controls": {"codebase_grounding": {"applicable": True}} if declare_control else {},
+        "controls": {key: {"applicable": True} for key in ("codebase_grounding", "code_growth")} if declare_control else {},
         "previous_independent_rejection": False,
     }), encoding="utf-8")
     return cert
@@ -112,6 +118,7 @@ def test_code_scope_without_codebase_grounding_control_is_rejected() -> None:
         proc = run(fixture(base, declare_control=False), base, [ISSUE_PATH])
         assert proc.returncode == 2
         assert "omits codebase_grounding control" in proc.stdout
+        assert "omits code_growth control" in proc.stdout
 
 
 def test_stale_codebase_grounding_is_rejected() -> None:
@@ -120,6 +127,14 @@ def test_stale_codebase_grounding_is_rejected() -> None:
         proc = run(fixture(base, grounding_sha=BASE), base, [ISSUE_PATH])
         assert proc.returncode == 2
         assert "codebase grounding is stale for material head" in proc.stdout
+
+
+def test_blocked_code_growth_report_is_rejected() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        proc = run(fixture(base, growth_status="blocked"), base, [ISSUE_PATH])
+        assert proc.returncode == 2
+        assert "certified CODE-GROWTH-001 did not pass" in proc.stdout
 
 
 def test_pr_wide_inherited_path_cannot_be_attributed_to_issue_local_delta() -> None:
