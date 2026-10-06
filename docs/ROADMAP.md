@@ -171,7 +171,7 @@ Permanece registrado um resíduo de proveniência: vinte schemas declaram `$id` 
 
 ### V030-008 — Governança do registro de auditores confiáveis
 
-A independência de auditoria é garantida arquiteturalmente, por contexto separado, leitura somente e rederivação com parser próprio. O controle que fecha o ciclo é externo: o registro de auditores confiáveis consumido por `validate_external_audit_report.py`. Esse registro não existe no repositório, e isso é correto, mas o procedimento que o mantém não estava declarado em nenhum lugar.
+A independência de auditoria tem dois tipos de controle, e eles não têm a mesma força. O que é imposto por código é o contexto separado, a leitura somente e a rederivação com parser próprio. O que fecha o ciclo é um controle externo e operacional: o registro de auditores confiáveis consumido por `validate_external_audit_report.py`, cuja validade depende de quem custodia a chave. Esse registro não existe no repositório, e isso é correto, mas o procedimento que o mantém não estava declarado em nenhum lugar.
 
 **Entregue em 2026-10-06**: `docs/SECURITY.md` passa a declarar custódia, separação entre produtor e aprovador, procedimento de geração e custódia de chave, rotação, revogação e a limitação de operador único, que é registrada em vez de presumida. `auditar-issue/scripts/build_trusted_auditor_entry.py` monta a entrada do registro derivando `public_key_sha256` dos bytes publicados, recusa arquivo com chave privada, recusa chave que não seja Ed25519 e valida a própria saída contra o esquema. Requisito `SKSYS-025`.
 
