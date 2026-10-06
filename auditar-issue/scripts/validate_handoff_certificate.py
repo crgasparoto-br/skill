@@ -11,6 +11,18 @@ from pathlib import Path
 from audit_artifact_io import artifact_metadata, load_json_artifact
 
 
+# Must stay equal to plan_execution.CODE_SUFFIXES; the auditor copy of this file has no planner to import.
+CODE_SUFFIXES = (
+    '.py', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx', '.java', '.kt',
+    '.go', '.rs', '.rb', '.php', '.cs', '.c', '.cc', '.cpp', '.h', '.hpp',
+    '.swift', '.scala', '.sh', '.bash', '.zsh', '.ps1', '.sql', '.vue', '.svelte',
+)
+
+
+def scope_touches_code(paths: list[str]) -> bool:
+    return any(str(path).lower().endswith(CODE_SUFFIXES) for path in paths)
+
+
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -154,7 +166,13 @@ def main() -> int:
         if remediation_mode in {"systemic-remediation", "mixed-remediation"}:
             if profile != "critical": errors.append("systemic audit remediation requires critical evidence profile")
             required.update({"audit_escape_closure", "learning_closure", "inherited_controls"})
-    declared_optional = {"evidence_provenance", "code_growth"} & set(artifacts)
+    declared_optional = {"evidence_provenance", "code_growth", "codebase_grounding"} & set(artifacts)
+    grounding_control = (cert.get("controls") or {}).get("codebase_grounding") or {}
+    certified_scope = cert.get("scope") if isinstance(cert.get("scope"), dict) else {}
+    if scope_touches_code(certified_scope.get("issue_changed_paths") or []) and grounding_control.get("applicable") is not True:
+        errors.append("certificate omits codebase_grounding control although issue-local scope touches code")
+    if grounding_control.get("applicable") is True:
+        required.add("codebase_grounding")
     growth_control = (cert.get("controls") or {}).get("code_growth") or {}
     if growth_control.get("applicable") is True:
         required.add("code_growth")
@@ -235,6 +253,15 @@ def main() -> int:
                 target_mismatch |= compare_target("specification snapshot repository", snapshot.get("repository"), args.repository, errors)
                 if expected_issue_number is not None:
                     target_mismatch |= compare_target("specification snapshot issue", snapshot.get("issue"), expected_issue_number, errors)
+
+    if "codebase_grounding" in artifact_paths and artifact_paths["codebase_grounding"].is_file():
+        try:
+            grounding_subject = load(artifact_paths["codebase_grounding"]).get("subject_sha")
+        except Exception as exc:
+            errors.append(f"cannot read certified codebase grounding: {exc}")
+        else:
+            if grounding_subject != material_head:
+                errors.append("certified codebase grounding is stale for material head")
 
     scope = cert.get("scope")
     if isinstance(scope, dict):

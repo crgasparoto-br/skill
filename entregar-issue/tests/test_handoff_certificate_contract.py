@@ -232,6 +232,98 @@ def test_build_and_validate_handoff_certificate() -> None:
         assert "hash mismatch" in proc.stdout
 
 
+def write_grounding(base: Path, subject_sha: str = HEAD) -> Path:
+    path = base / "codebase-grounding.json"
+    path.write_text(json.dumps({
+        "schema_version": 1, "subject_sha": subject_sha, "base_sha": BASE,
+        "creations": [], "references": [], "replacements": [],
+    }), encoding="utf-8")
+    return path
+
+
+def build_scoped_certificate(base: Path, changed_path: str, *extra: str):
+    files = build_valid_delivery(base)
+    cert = base / "handoff-ready.json"
+    proc = run(
+        "build_handoff_certificate.py",
+        "--specification-snapshot", str(files["snapshot"]),
+        "--repository", "owner/repo", "--work-item-kind", "issue", "--work-item-number", "42",
+        "--work-item-start-sha", BASE, "--issue-changed-path", changed_path,
+        "--requirement-closure", str(files["closure"]),
+        "--attack-matrix", str(files["attack"]),
+        "--risk-saturation", str(files["risk"]),
+        "--inherited-controls", str(files["inherited"]),
+        "--head-sha", HEAD, "--base-sha", BASE,
+        "--contract-version", "2026-08-20.3", "--out", str(cert), *extra,
+    )
+    return proc, cert
+
+
+def validate_certificate(cert: Path, base: Path):
+    return run(
+        "validate_handoff_certificate.py",
+        "--certificate", str(cert), "--artifacts-dir", str(base),
+        "--head-sha", HEAD, "--base-sha", BASE, "--contract-version", "2026-08-20.3",
+    )
+
+
+def test_code_scope_requires_codebase_grounding_in_certificate() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        proc, _ = build_scoped_certificate(Path(tmp), "server/issue-42.ts")
+        assert proc.returncode == 2
+        assert "requires --codebase-grounding" in proc.stdout
+
+
+def test_stale_codebase_grounding_cannot_be_certified() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        proc, _ = build_scoped_certificate(base, "server/issue-42.ts", "--codebase-grounding", str(write_grounding(base, BASE)))
+        assert proc.returncode == 2
+        assert "stale for material head" in proc.stdout
+
+
+def test_certified_codebase_grounding_resists_downgrade_and_staleness() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        grounding = write_grounding(base)
+        proc, cert = build_scoped_certificate(base, "server/issue-42.ts", "--codebase-grounding", str(grounding))
+        assert proc.returncode == 0, proc.stdout
+        payload = json.loads(cert.read_text(encoding="utf-8"))
+        assert payload["controls"]["codebase_grounding"] == {"applicable": True}
+        assert "codebase_grounding" in payload["artifacts"]
+        assert validate_certificate(cert, base).returncode == 0
+
+        downgraded = dict(payload, controls={"codebase_grounding": {"applicable": False}})
+        cert.write_text(json.dumps(downgraded), encoding="utf-8")
+        proc = validate_certificate(cert, base)
+        assert proc.returncode == 2
+        assert "omits codebase_grounding control" in proc.stdout
+
+        removed = dict(payload, artifacts={k: v for k, v in payload["artifacts"].items() if k != "codebase_grounding"})
+        cert.write_text(json.dumps(removed), encoding="utf-8")
+        proc = validate_certificate(cert, base)
+        assert proc.returncode == 2
+        assert "certificate lacks artifact codebase_grounding" in proc.stdout
+
+
+def test_documentation_only_scope_does_not_require_codebase_grounding() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        proc, cert = build_scoped_certificate(base, "docs/guide.md")
+        assert proc.returncode == 0, proc.stdout
+        payload = json.loads(cert.read_text(encoding="utf-8"))
+        assert payload["controls"]["codebase_grounding"] == {"applicable": False}
+        assert "codebase_grounding" not in payload["artifacts"]
+        assert validate_certificate(cert, base).returncode == 0
+
+
+def test_code_suffixes_have_a_single_definition() -> None:
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import plan_execution
+    import validate_handoff_certificate
+    assert validate_handoff_certificate.CODE_SUFFIXES == plan_execution.CODE_SUFFIXES
+
+
 def test_build_handoff_certificate_keeps_pr_and_issue_identity_separate() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
@@ -243,6 +335,7 @@ def test_build_handoff_certificate_keeps_pr_and_issue_identity_separate() -> Non
             "--repository", "owner/repo", "--work-item-kind", "pr", "--work-item-number", "43",
             "--issue-number", "42", "--pull-request-number", "43",
             "--work-item-start-sha", BASE, "--issue-changed-path", "server/issue-42.ts",
+            "--codebase-grounding", str(write_grounding(base)),
             "--requirement-closure", str(files["closure"]),
             "--attack-matrix", str(files["attack"]),
             "--risk-saturation", str(files["risk"]),

@@ -29,7 +29,9 @@ def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def fixture(base: Path) -> Path:
+def fixture(base: Path, *, grounding_sha: str | None = HEAD, declare_control: bool = True) -> Path:
+    grounding = base / "codebase-grounding.json"
+    grounding.write_text(json.dumps({"schema_version": 1, "subject_sha": grounding_sha}), encoding="utf-8")
     spec = base / "specification-snapshot.json"
     spec.write_text(json.dumps({"repository": "owner/repo", "issue": 598}), encoding="utf-8")
     closure = base / "requirement-closure.json"
@@ -66,7 +68,9 @@ def fixture(base: Path) -> Path:
         "artifacts": {
             "specification_snapshot": {"name": spec.name, "sha256": sha(spec)},
             "requirement_closure": {"name": closure.name, "sha256": sha(closure)},
+            "codebase_grounding": {"name": grounding.name, "sha256": sha(grounding)},
         },
+        "controls": {"codebase_grounding": {"applicable": True}} if declare_control else {},
         "previous_independent_rejection": False,
     }), encoding="utf-8")
     return cert
@@ -100,6 +104,22 @@ def test_pr_and_issue_identity_are_independent_and_issue_local_scope_is_accepted
         cert = fixture(base)
         proc = run(cert, base, [ISSUE_PATH])
         assert proc.returncode == 0, proc.stdout
+
+
+def test_code_scope_without_codebase_grounding_control_is_rejected() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        proc = run(fixture(base, declare_control=False), base, [ISSUE_PATH])
+        assert proc.returncode == 2
+        assert "omits codebase_grounding control" in proc.stdout
+
+
+def test_stale_codebase_grounding_is_rejected() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        proc = run(fixture(base, grounding_sha=BASE), base, [ISSUE_PATH])
+        assert proc.returncode == 2
+        assert "codebase grounding is stale for material head" in proc.stdout
 
 
 def test_pr_wide_inherited_path_cannot_be_attributed_to_issue_local_delta() -> None:

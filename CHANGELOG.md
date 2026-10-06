@@ -12,6 +12,7 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 
 ### Added
 
+- certificado de handoff passa a exigir `codebase_grounding` quando o escopo local da issue toca código; o validador compartilhado recalcula a aplicabilidade e rejeita rebaixamento ou relatório stale;
 - gate `codebase-grounding` em `entregar-issue`: busca antes de criar (`GROUND-REUSE-001`), prova de existência antes de usar (`GROUND-EXIST-001`) e proibição de sobra (`GROUND-DEAD-001`), com validador determinístico contra o Git e refutação independente em `auditar-issue`;
 - harness provider-agnostic de avaliações comportamentais com casos versionados, replay determinístico, métricas limitadas e relatórios hashable;
 - contratos JSON Schema para casos, resultados e relatórios de avaliação;

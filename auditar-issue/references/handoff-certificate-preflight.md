@@ -24,6 +24,7 @@ Artefatos por perfil:
 - `light`: `specification_snapshot` + `requirement_closure` e controles especializados explicitamente certificados;
 - `standard`: acima + `standard_evidence` exact-material-head;
 - `critical`: acima + `requirement_attack_matrix`, `risk_saturation`, `inherited_controls` e artefatos especializados aplicaveis;
+- qualquer perfil cujo `scope.issue_changed_paths` toque codigo: `codebase_grounding` exact-material-head; a aplicabilidade e recalculada do escopo certificado e nao pode ser rebaixada pelo certificado;
 - rejeicao independente anterior: sempre exigir `audit_remediation` + `audit_source_result`; usar perfil de risco real. Exigir `critical` + `audit_escape_closure` + `learning_closure` + historico somente quando `remediation_mode=systemic-remediation|mixed-remediation`.
 
 ## Artefato herdado da base
