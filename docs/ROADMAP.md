@@ -177,7 +177,11 @@ A independência de auditoria tem dois tipos de controle, e eles não têm a mes
 
 Fica aberto: distribuir o `.github/CODEOWNERS` entre produtor e aprovador quando houver uma segunda pessoa. Enquanto houver um único proprietário, a separação é regra de contrato e está declarada como limitação.
 
-A seção do procedimento é comparada com a forma canônica declarada em `tests/test_auditor_registry_policy.py`, e não reconhecida por marcadores. Rodadas sucessivas de auditoria independente reprovaram versões anteriores da checagem, cada uma explorando uma forma nova de conter a política sem exibi-la: remoção de cláusula, relocação, comentário, cerca de código, sufixo contraditório, envoltório externo, HTML bruto, escape de crase e separador de linha que o Markdown não reconhece. A comparação canônica fecha a classe de mascaramento textual, e o documento normativo passou a exigir Markdown renderizável, recusando HTML bruto, escape de Markdown e caractere de controle em vez de enumerar as formas de esconder uma regra. A contrapartida está declarada em `AGENTS.md`: alterar a seção exige alterar a forma canônica no mesmo commit, e esse diff exige auditoria independente contra a issue, porque o teste prova deliberação e não preservação dos requisitos.
+A seção do procedimento é comparada com a forma canônica declarada em `tests/test_auditor_registry_policy.py`, e não reconhecida por marcadores. A comparação normaliza apenas o que o Markdown ignora — espaço à direita e linha vazia sobrando — e o documento precisa ser Markdown renderizável: recuo que tira o heading da renderização, contexto inerte, HTML bruto, escape de Markdown, caractere de controle e separador que o Markdown não reconhece reprovam.
+
+Rodadas sucessivas de auditoria independente reprovaram versões anteriores da checagem, cada uma explorando uma forma de conter a política sem exibi-la: remoção de cláusula, relocação, comentário, cerca de código, sufixo contraditório, envoltório externo, HTML bruto, escape de crase, separador que o Markdown não reconhece e recuo no heading. A lista de formas recusadas é a soma dessas rodadas, não a prova de que a enumeração terminou, e a redação do item evita afirmar fechamento.
+
+A contrapartida está declarada em `AGENTS.md`: alterar a seção exige alterar a forma canônica no mesmo commit, e esse diff exige auditoria independente contra a issue, porque o teste prova deliberação e não preservação dos requisitos.
 
 ## 5. Sequência de implementação
 

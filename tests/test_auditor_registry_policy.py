@@ -92,7 +92,17 @@ Enquanto houver um único proprietário no `.github/CODEOWNERS`, a separação d
 
 
 def normalize(text: str) -> str:
-    lines = [line.rstrip() for line in md_lines(text.strip())]
+    """Normalizar só o que o Markdown ignora: espaço à direita e linha vazia sobrando.
+
+    A sétima rodada de auditoria mostrou que normalizar o espaço à esquerda apagava uma
+    diferença que o renderizador respeita: um heading indentado com tab, quatro espaços
+    ou espaço Unicode deixava de ser heading, e a comparação canônica aprovava.
+    """
+    lines = [line.rstrip() for line in md_lines(text)]
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
     kept: list[str] = []
     for line in lines:
         if line == "" and kept and kept[-1] == "":
@@ -212,7 +222,8 @@ def rendered_text(text: str) -> str:
 
 
 def heading_positions(text: str) -> list[int]:
-    return [index for index, line in enumerate(md_lines(text)) if line.strip() == SECTION_HEADING]
+    """Posição do heading na coluna zero: recuo muda o que o Markdown renderiza."""
+    return [index for index, line in enumerate(md_lines(text)) if line == SECTION_HEADING]
 
 
 def registry_section(text: str) -> str:
@@ -222,7 +233,7 @@ def registry_section(text: str) -> str:
     controls can build malformed documents.
     """
     lines = md_lines(text)
-    positions = [index for index, line in enumerate(lines) if line.strip() == SECTION_HEADING]
+    positions = [index for index, line in enumerate(lines) if line == SECTION_HEADING]
     if not positions:
         return ""
     start = positions[0]
@@ -267,9 +278,9 @@ def policy_errors(text: str) -> list[str]:
     start = positions[0]
     before = "\n".join(lines[:start])
     after = "\n".join(lines[start:])
-    if SECTION_OPENING not in before:
+    if SECTION_OPENING not in md_lines(before):
         errors.append(f"seção do registro antes de {SECTION_OPENING}")
-    if SECTION_CLOSING not in after:
+    if SECTION_CLOSING not in md_lines(after):
         errors.append(f"seção do registro depois de {SECTION_CLOSING}")
     section = registry_section(text)
     if normalize(section) != normalize(CANONICAL_SECTION):
@@ -479,6 +490,34 @@ def test_renamed_heading_is_detected() -> None:
     text = declared_reference()
     section = registry_section(text).replace(SECTION_HEADING, "## Registro de auditores")
     assert policy_errors(replace_section(text, section))
+
+
+@pytest.mark.parametrize("prefix", ["\t", "    ", "   ", "\u00a0", "\u2003", "\u3000", "\u1680", "\u2009"])
+def test_indented_heading_is_detected(prefix: str) -> None:
+    """Recuo no heading tira a seção da renderização: o Markdown não vê o heading."""
+    text = declared_reference()
+    section = md_lines(registry_section(text))
+    section[0] = prefix + SECTION_HEADING
+    assert policy_errors(replace_section(text, "\n".join(section))), repr(prefix)
+
+
+@pytest.mark.parametrize("prefix", ["\t", "    ", "\u00a0"])
+def test_indented_section_body_line_is_detected(prefix: str) -> None:
+    """Recuo em linha interna também muda o que o Markdown renderiza."""
+    text = declared_reference()
+    section = registry_section(text)
+    target = "- declarar a limitação em vez de presumir independência;"
+    assert target in section
+    mutated = replace_section(text, section.replace(target, prefix + target))
+    assert policy_errors(mutated), repr(prefix)
+
+
+@pytest.mark.parametrize("wrapper", ["`{0}`", "[{0}](#x)", "<!-- {0} -->"])
+def test_boundary_heading_must_be_a_rendered_heading(wrapper: str) -> None:
+    """A fronteira precisa ser heading renderizado, não texto que apenas contém o literal."""
+    text = declared_reference()
+    mutated = text.replace(SECTION_OPENING, wrapper.format(SECTION_OPENING), 1)
+    assert policy_errors(mutated), wrapper
 
 
 def test_padded_but_gutted_section_is_detected() -> None:
