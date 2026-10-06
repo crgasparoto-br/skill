@@ -18,6 +18,7 @@ try:
     from validate_evals import validate_evals
     from validate_reachability import validate_reachability
     from validate_issue_templates import validate_issue_templates
+    from validate_context_budget import validate_context_budget
 except ImportError:  # pragma: no cover - package import fallback
     from .catalog import catalog_skill_ids, load_catalog, validate_catalog
     from .validate_contract_sync import validate_contract_sync
@@ -27,6 +28,7 @@ except ImportError:  # pragma: no cover - package import fallback
     from .validate_evals import validate_evals
     from .validate_reachability import validate_reachability
     from .validate_issue_templates import validate_issue_templates
+    from .validate_context_budget import validate_context_budget
 
 ROOT = Path(__file__).resolve().parents[1]
 SYSTEM_VERSION = "2026-09-29.5"
@@ -66,6 +68,8 @@ GLOBAL_FILES = {
     ".github/ISSUE_TEMPLATE/bug.md",
     ".github/ISSUE_TEMPLATE/epic.md",
     ".github/ISSUE_TEMPLATE/config.yml",
+    "config/context-budget.json",
+    "scripts/validate_context_budget.py",
 }
 REQUIRED_CAPABILITIES = {
     "canonical_controller": "entregar-issue",
@@ -338,6 +342,7 @@ def main() -> int:
     errors.extend(f"avaliações: {error}" for error in validate_evals(ROOT))
     errors.extend(f"alcançabilidade: {error}" for error in validate_reachability(ROOT))
     errors.extend(f"formato de issue: {error}" for error in validate_issue_templates(ROOT))
+    errors.extend(f"orçamento de contexto: {error}" for error in validate_context_budget(ROOT))
 
     if errors:
         print("Validação falhou:")

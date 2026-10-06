@@ -122,6 +122,8 @@ A análise inicial identificou referências com mais de 100 linhas. Para cada re
 
 Criar `scripts/validate_reference_indexes.py` para verificar, no mínimo, limite de tamanho, presença de headings navegáveis, bloco de carregamento condicional e resolução dos anchors locais. O lint deve ignorar arquivos que sejam contratos, schemas ou fixtures quando o índice não fizer sentido, desde que essa exceção seja declarada.
 
+**Entregue em 2026-10-06** para o recorte de limite de tamanho: `config/context-budget.json` e `scripts/validate_context_budget.py` passaram a aplicar orçamento de contexto medido em bytes por arquivo e caracteres por linha a todo `SKILL.md` e a toda referência, substituindo a regra de 500 linhas que nenhum validador aplicava. Cinco exceções registram a medição exata dos arquivos que excedem o padrão hoje, e a lista só pode encolher. O lint de navegabilidade — headings, bloco `Quando ler este arquivo` e âncoras locais — continua aberto e pode ser absorvido por esse validador ou por um próprio. Requisito `SKSYS-022`.
+
 ### V030-005 — Decisão sobre o contrato `transitional`
 
 A compatibilidade atual mantém a linhagem interna `2026-08-20.3` e o contrato público `1.0.0` em modo transitional. Antes de alterar qualquer constante de contrato, produzir um inventário dos consumidores e uma decisão registrada:

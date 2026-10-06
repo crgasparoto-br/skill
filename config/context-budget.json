@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "system": "context-budget",
+  "description": "Custo de contexto do control plane e das referências, medido em bytes por arquivo e caracteres por linha. Substitui a regra de contagem de linhas, que não mede carregamento progressivo. Cada exceção registra a medição exata do arquivo: qualquer alteração exige atualizar a exceção de forma explícita, e um arquivo que passa a respeitar o padrão não pode manter exceção.",
+  "discovery": {
+    "control_plane": ["*/SKILL.md"],
+    "reference": ["*/references/**/*.md"]
+  },
+  "defaults": {
+    "control_plane": {
+      "max_bytes": 32768,
+      "max_line_chars": 600
+    },
+    "reference": {
+      "max_bytes": 16384,
+      "max_line_chars": 1000
+    }
+  },
+  "allowances": {
+    "entregar-issue/SKILL.md": {
+      "max_bytes": 60732,
+      "max_line_chars": 2293,
+      "reason": "Control plane mais crítico do catálogo: define os gates de ancoragem no código, crescimento de código, fechamento de requisitos e handoff. Reduzir exige mover conteúdo para referências já carregadas, o que é uma entrega própria."
+    },
+    "auditar-issue/SKILL.md": {
+      "max_bytes": 34453,
+      "max_line_chars": 1974,
+      "reason": "Control plane da auditoria independente, com o contrato de rederivação e os gates de refutação. Reduzir depende de separar o preflight proporcional em referência carregada condicionalmente."
+    },
+    "corrigir-ci/SKILL.md": {
+      "max_line_chars": 749,
+      "reason": "Control plane da remediação de CI acima do padrão apenas na densidade de uma linha; o custo total de bytes já respeita o padrão."
+    },
+    "entregar-issue/references/terminal-handoff.md": {
+      "max_line_chars": 1848,
+      "reason": "Referência do handoff terminal, com uma linha que enumera o envelope completo. Dividir a enumeração é melhoria editorial fora do escopo desta entrega."
+    },
+    "entregar-issue/references/handoff-certificate.md": {
+      "max_line_chars": 1610,
+      "reason": "Referência do certificado de handoff, com uma linha que enumera os campos obrigatórios. Dividir a enumeração é melhoria editorial fora do escopo desta entrega."
+    }
+  }
+}

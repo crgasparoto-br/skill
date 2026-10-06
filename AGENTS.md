@@ -59,6 +59,7 @@ python evals/run_evals.py --root . --results-dir evals/fixtures/results --report
 python evals/run_evals.py --root . --verify-report /tmp/eval-report.json
 python scripts/validate_reachability.py --root .
 python scripts/validate_issue_templates.py --root .
+python scripts/validate_context_budget.py --root .
 python -m pytest -q
 ```
 
@@ -76,7 +77,7 @@ Estas regras existem para impedir sujeira, ambiguidade, código obsoleto e dupli
 - Não manter arquivo inalcançável: toda referência, script e schema de uma skill precisa ser alcançável a partir do seu `SKILL.md`, reprovado por `scripts/validate_reachability.py`.
 - Não criar segunda fonte de verdade: schema que nenhum validador aplica é removido ou passa a ser aplicado.
 - Buscar arquivo existente antes de criar outro; arquivo replicado entre skills precisa entrar em `config/shared-files.json`.
-- Manter cada `SKILL.md` compacto como control plane: abaixo de 500 linhas e sem parágrafos densos que misturem cláusulas independentes.
+- Manter cada `SKILL.md` compacto como control plane dentro do orçamento de [config/context-budget.json](config/context-budget.json), medido em bytes por arquivo e caracteres por linha, sem parágrafos densos que misturem cláusulas independentes. A contagem de linhas não mede carregamento progressivo e não é mais a regra.
 - Preservar `UNKNOWN` quando faltar evidência; nunca converter ausência em `false`, zero, sucesso ou `not-applicable`.
 - Distinguir verificação interna de auditoria independente; trocar de skill no mesmo contexto não cria independência.
 - Não registrar credenciais, tokens, dados pessoais ou artefatos `.audit/` reais no repositório.
