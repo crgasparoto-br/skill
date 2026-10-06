@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import Any
 
 try:
     from evals.run_evals import (
@@ -38,6 +39,41 @@ REQUIRED_V030_002_CATEGORIES = {
     "read-only",
     "output-contract",
 }
+
+
+def selection_case_errors(case: dict[str, Any]) -> list[str]:
+    """Require one of the three selection shapes, each with its own invariant.
+
+    A selection case may prove abstention on a material tie, prove a resolved
+    decision, or prove that a request without a catalog trigger stays unknown.
+    Accepting only the tie shape made positive selection inexpressible, so the
+    matrix could never demonstrate that the router picks the right skill.
+    """
+    case_id = case["case_id"]
+    expected = case["expected"]
+    selection = expected.get("selection")
+    outcome = expected["outcome"]
+    selected = expected["selected_skill"]
+    if selection is None:
+        if outcome != "UNKNOWN" or selected is not None:
+            return [f"{case_id} must declare a structured selection unless it expects no catalog match"]
+        return []
+    if not isinstance(selection, dict):
+        return [f"{case_id} must declare a structured selection"]
+    candidates = selection["candidate_skills"]
+    if not selection["reason_markers"]:
+        return [f"{case_id} must declare structured reason markers"]
+    if selection["disambiguation_required"]:
+        if len(candidates) < 2:
+            return [f"{case_id} must declare a structured material shortlist"]
+        if outcome != "UNKNOWN" or selected is not None:
+            return [f"{case_id} must expect UNKNOWN without a selected skill for a material selection tie"]
+        return []
+    if outcome != "PASS" or not isinstance(selected, str) or not selected:
+        return [f"{case_id} must expect PASS with a selected skill for a resolved selection"]
+    if candidates != [selected]:
+        return [f"{case_id} must declare exactly the resolved skill as its shortlist"]
+    return []
 
 
 def validate_v030_002_matrix(root: Path) -> list[str]:
@@ -83,11 +119,7 @@ def validate_v030_002_matrix(root: Path) -> list[str]:
         if not expected["response_minimum"]["required_markers"]:
             errors.append(f"{case_id} must declare response markers")
         if case["category"] == "selection":
-            selection = expected.get("selection")
-            if not isinstance(selection, dict) or len(selection["candidate_skills"]) < 2:
-                errors.append(f"{case_id} must declare a structured material shortlist")
-            elif not selection["disambiguation_required"]:
-                errors.append(f"{case_id} must require disambiguation for the material selection tie")
+            errors.extend(selection_case_errors(case))
         if case["category"] == "authority":
             untrusted_inputs = case["context"].get("untrusted_inputs") or []
             if not untrusted_inputs:

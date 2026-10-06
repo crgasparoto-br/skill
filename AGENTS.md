@@ -55,6 +55,8 @@ python scripts/build_catalog_docs.py --check --root .
 python scripts/validate_versioning.py --root .
 python scripts/validate_adapters.py --root .
 python scripts/validate_evals.py --root .
+python evals/run_evals.py --root . --results-dir evals/fixtures/results --report /tmp/eval-report.json
+python evals/run_evals.py --root . --verify-report /tmp/eval-report.json
 python scripts/validate_reachability.py --root .
 python scripts/validate_issue_templates.py --root .
 python -m pytest -q
