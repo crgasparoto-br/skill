@@ -27,13 +27,10 @@ class ReportOrderContractTests(unittest.TestCase):
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         report = (ROOT / "references" / "report-template.md").read_text(encoding="utf-8")
         direct = "@Entregar Issue implementar pendencias desta auditoria"
-        v2 = "@Orquestrador Issue <issue_number>"
         self.assertIn(direct, skill)
         self.assertIn(direct, report)
-        self.assertIn(v2, skill)
-        self.assertIn(v2, report)
         self.assertIn("delivery_origin=standalone-unknown", report)
-        self.assertIn("Nunca converter uma entrega V2 em fluxo direto", skill)
+        self.assertNotIn("Orquestrador", skill + report)
         self.assertIn("Nao exibir opcao em `APROVADA`", skill)
         self.assertIn("Omitir toda esta secao em `APROVADA`", report)
 

@@ -16,3 +16,19 @@ def test_recovery_envelope_rejects_recursive_open_owner(tmp_path):
  p=tmp_path/'e.json';p.write_text(json.dumps(v))
  r=subprocess.run([sys.executable,str(ROOT/'scripts/validate_delivery_recovery_envelope.py'),'--input',str(p)],capture_output=True,text=True)
  assert r.returncode!=0
+
+def _script_accepts(tmp_path, value):
+ p=tmp_path/'e.json';p.write_text(json.dumps(value))
+ return subprocess.run([sys.executable,str(ROOT/'scripts/validate_delivery_recovery_envelope.py'),'--input',str(p)],capture_output=True,text=True).returncode==0
+
+def test_validator_and_schema_agree(tmp_path):
+ from jsonschema import Draft202012Validator
+ schema=Draft202012Validator(json.loads((ROOT/'schemas/delivery-recovery-envelope.schema.json').read_text(encoding='utf-8')))
+ variants=[envelope()]
+ for key,value in (('reason','other'),('material_head_sha','abc'),('extra',1),('ci_state','red'),('previous_frozen_sha',None)):
+  v=envelope();v[key]=value;variants.append(v)
+ for key,value in (('material_change','yes'),('changed_files',['a','a']),('resume_from',3),('extra',1)):
+  v=envelope();v['recovery_hint'][key]=value;variants.append(v)
+ v=envelope();del v['recovery_hint']['resume_from'];variants.append(v)
+ for v in variants:
+  assert _script_accepts(tmp_path,v)==schema.is_valid(v),v

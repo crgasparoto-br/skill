@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_tenant_scoped_performance_gate_rejects_global_denominator():
-    evidence = (ROOT / "references" / "controller-evidence-enforcement.md").read_text(encoding="utf-8")
+    evidence = (ROOT / "references" / "performance-critical-path-gate.md").read_text(encoding="utf-8")
     assert "total global" in evidence
     assert "ruido deliberado fora do escopo" in evidence
     assert "consulta estruturalmente identica" in evidence

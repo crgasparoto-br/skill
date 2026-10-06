@@ -1,7 +1,6 @@
 interface:
   display_name: Entregar Issue
-  short_description: 'Executar diretamente, sem despachar para a Delivery V2/orquestrador,
-    a entrega ponta a ponta de issues em repositorios de software com um unico controlador,
+  short_description: 'Conduzir a entrega ponta a ponta de issues em repositorios de software com um unico controlador,
     plano e estado: revisar readiness quando necessario, implementar codigo/testes/schemas/configuracao/documentacao,
     validar durante a edicao, aplicar higiene limitada ao diff, acionar especialidades
     condicionais, executar gates finais, congelar o candidato, acompanhar CI ate estado

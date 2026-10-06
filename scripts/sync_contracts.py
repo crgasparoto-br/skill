@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synchronize generated contract copies from entregar-issue/contracts."""
+"""Synchronize generated contract copies and declared shared files from their canonical sources."""
 
 from __future__ import annotations
 
@@ -11,10 +11,10 @@ from typing import Any
 
 try:
     from .catalog import ROOT, catalog_skill_ids, load_catalog, validate_catalog
-    from .validate_contract_sync import CANONICAL_SKILL, load_object, sha256_file, validate_manifest_shape, validate_contract_sync
+    from .validate_contract_sync import CANONICAL_SKILL, load_object, load_shared_groups, sha256_file, validate_manifest_shape, validate_contract_sync
 except ImportError:  # pragma: no cover - direct script execution
     from catalog import ROOT, catalog_skill_ids, load_catalog, validate_catalog
-    from validate_contract_sync import CANONICAL_SKILL, load_object, sha256_file, validate_manifest_shape, validate_contract_sync
+    from validate_contract_sync import CANONICAL_SKILL, load_object, load_shared_groups, sha256_file, validate_manifest_shape, validate_contract_sync
 
 
 def canonical_manifest(root: Path) -> tuple[Path, dict[str, Any]]:
@@ -43,7 +43,7 @@ def refreshed_manifest(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
 
 
 def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def synchronize(root: Path) -> list[str]:
@@ -78,7 +78,18 @@ def synchronize(root: Path) -> list[str]:
             "files": {name: canonical["files"][name] for name in sorted(names)},
         }
         write_json(target_manifest_path, generated)
-    return []
+
+    errors: list[str] = []
+    for canonical, copies in load_shared_groups(root, errors):
+        source = root / canonical
+        if not source.is_file():
+            errors.append(f"shared canonical file missing: {canonical}")
+            continue
+        for copy in copies:
+            target = root / copy
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(source.read_bytes())
+    return errors
 
 
 def main() -> int:

@@ -100,7 +100,7 @@
       "summary": "Delivery snapshot and CI remediation ownership are mutually exclusive for the same material SHA and return control structurally.",
       "implementationRefs": [
         "file:entregar-issue/contracts/ci-ownership.json",
-        "file:corrigir-ci/references/ci-ownership.md"
+        "file:corrigir-ci/contracts/ci-ownership.json"
       ],
       "validationRefs": [
         "file:corrigir-ci/tests/test_ci_ownership_contract.py"
@@ -177,10 +177,11 @@
       "id": "SKSYS-012",
       "title": "Generated contract synchronization",
       "status": "validated",
-      "summary": "Generated contract copies are checked against canonical bytes and cannot drift silently.",
+      "summary": "Generated contract copies and files declared in config/shared-files.json are checked against canonical bytes and cannot drift silently.",
       "implementationRefs": [
         "file:scripts/sync_contracts.py",
-        "file:scripts/validate_contract_sync.py"
+        "file:scripts/validate_contract_sync.py",
+        "file:config/shared-files.json"
       ],
       "validationRefs": [
         "file:tests/test_catalog_governance.py",
@@ -280,6 +281,19 @@
       "validationRefs": [
         "file:tests/test_v030_002_cases.py",
         "file:scripts/validate_evals.py"
+      ]
+    },
+    {
+      "id": "SKSYS-019",
+      "title": "No unreachable operational files",
+      "status": "validated",
+      "summary": "Every reference, script and schema shipped by a skill is reachable from its SKILL.md; dead files are deleted instead of left to drift.",
+      "implementationRefs": [
+        "file:scripts/validate_reachability.py"
+      ],
+      "validationRefs": [
+        "file:tests/test_reachability.py",
+        "file:.github/workflows/validate.yml"
       ]
     }
   ],

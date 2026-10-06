@@ -1,28 +1,30 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+POLICY = ROOT / "contracts" / "github-actions-policy.md"
 
 
 def test_controller_defaults_to_observe_only_single_publish():
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8").lower()
-    policy = (ROOT / "references" / "github-actions-policy.md").read_text(encoding="utf-8").lower()
+    policy = POLICY.read_text(encoding="utf-8").lower()
     assert "somente leitura" in skill
     assert "um candidato" in skill
+    assert "observe-only" in policy
     assert "nao disparar, reexecutar, cancelar ou aprovar" in policy
+    assert "nao criar `workflow_dispatch`" in policy
+    assert "aprovacao manual" in policy
     assert "nao pedir aprovacao ao usuario" in policy
     assert "commit vazio" in policy
 
 def test_completed_failure_is_actionable_without_remote_rerun():
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8").lower()
-    policy = (ROOT / "references" / "github-actions-policy.md").read_text(encoding="utf-8").lower()
-    contract = (ROOT / "contracts" / "github-actions-policy.md").read_text(encoding="utf-8").lower()
-    for text in (policy, contract):
-        assert "completed/failure" in text
-        assert "actionable-delivery" in text
-        assert "external-infrastructure" in text
-        assert "unrelated-preexisting" in text
-        assert "sem novo prompt" in text
-        assert "continuam proibidos rerun, dispatch" in text
+    text = POLICY.read_text(encoding="utf-8").lower()
+    assert "completed/failure" in text
+    assert "actionable-delivery" in text
+    assert "external-infrastructure" in text
+    assert "unrelated-preexisting" in text
+    assert "sem novo prompt" in text
+    assert "continuam proibidos rerun, dispatch" in text
     import json
     ownership = json.loads((ROOT / "contracts" / "ci-ownership.json").read_text())
     assert ownership["modes"]["delivery-snapshot"]["observation"] == "single-snapshot-per-material-sha"

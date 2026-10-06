@@ -58,7 +58,7 @@ Portao de release: <liberado somente para independent | pendente>
 
 Nunca chamar aprovacao interna de conclusao operacional. Nunca usar CI pendente como motivo voluntario para encerrar a entrega; continuar via `corrigir-ci` ate terminal. Nunca autorizar merge, fechamento ou release sem validade `independent`.
 
-## Evidencias v5 a declarar
+## Evidencias a declarar
 
 - hash do `controller-audit-report` schema 3;
 - quantidade de fontes no `source-manifest`;

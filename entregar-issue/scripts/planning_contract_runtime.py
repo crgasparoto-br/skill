@@ -11,6 +11,11 @@ from datetime import datetime
 from typing import Any
 
 CONTRACT_VERSION = '2026-08-20.3'
+# Mirrors config/skills-catalog.json; tests/test_catalog_governance.py keeps both in sync.
+CATALOG_SKILLS = frozenset({
+    'auditar-issue', 'corrigir-ci', 'design-interface', 'documentacao-repositorio',
+    'entregar-issue', 'fluxos-conversacionais', 'revisar-issue',
+})
 METRIC_NAMES = (
     'issue_full_reads', 'documentation_full_scans', 'planning_runs',
     'subskill_calls', 'focused_checks', 'full_suites', 'freezes',
@@ -254,8 +259,8 @@ def validate_execution_plan(payload: dict[str, Any]) -> None:
             _fail(f'skill_plan[{index}] must be an object')
         if item.get('action') not in {'run', 'reuse-candidate', 'not-applicable', 'conditional'}:
             _fail(f'skill_plan[{index}].action is invalid')
-        if not isinstance(item.get('skill'), str) or not item['skill']:
-            _fail(f'skill_plan[{index}].skill is required')
+        if item.get('skill') not in CATALOG_SKILLS:
+            _fail(f'skill_plan[{index}].skill must be a catalog skill')
         if not isinstance(item.get('reason'), str) or not item['reason']:
             _fail(f'skill_plan[{index}].reason is required')
         if not _is_sha256(item.get('input_fingerprint')):
@@ -355,7 +360,7 @@ def validate_execution_context(payload: dict[str, Any]) -> None:
     if payload['publish_policy'] != 'single-final-candidate':
         _fail('publish_policy must be single-final-candidate')
     controller_mode = payload.get('controller_mode')
-    if controller_mode not in {None, 'delivery-single-invocation', 'issue-loop-single-invocation'}:
+    if controller_mode not in {None, 'delivery-single-invocation'}:
         _fail('controller_mode is invalid')
     for key in ('controller_context_id', 'return_control_to'):
         value = payload.get(key)
@@ -370,18 +375,15 @@ def validate_execution_context(payload: dict[str, Any]) -> None:
     revision = payload.get('controller_state_revision')
     if revision is not None and (not _is_int(revision) or revision < 1):
         _fail('controller_state_revision must be null or >= 1')
-    if payload.get('cycle_authority') not in {None, 'entregar-issue', 'orquestrador', 'issue-loop-engineer'}:
+    if payload.get('cycle_authority') not in {None, 'entregar-issue'}:
         _fail('cycle_authority is invalid')
     context_hash = payload.get('controller_context_sha256')
     if context_hash is not None and not _is_sha256(context_hash):
         _fail('controller_context_sha256 must be null or a lowercase SHA-256')
-    if controller_mode in {'delivery-single-invocation', 'issue-loop-single-invocation'}:
+    if controller_mode == 'delivery-single-invocation':
         for key in ('controller_cycle', 'controller_state_revision', 'cycle_authority', 'controller_context_sha256'):
             if payload.get(key) is None:
                 _fail(f'{key} is required in controller mode')
-        allowed_authorities = {'entregar-issue'} if controller_mode == 'delivery-single-invocation' else {'entregar-issue', 'issue-loop-engineer'}
-        if payload['cycle_authority'] not in allowed_authorities:
-            _fail('cycle_authority is invalid for controller mode')
 
 
 def _validate_evidence_artifact(value: Any, field: str) -> None:
@@ -418,7 +420,8 @@ def validate_subskill_result(payload: dict[str, Any]) -> None:
         _fail('subskill schema_version must be 1')
     if payload['contract_version'] != CONTRACT_VERSION:
         _fail(f'subskill contract_version must be {CONTRACT_VERSION}')
-    _require_string(payload, 'skill')
+    if payload['skill'] not in CATALOG_SKILLS:
+        _fail('subskill skill must be a catalog skill')
     _require_string(payload, 'mode')
     statuses = {
         'passed', 'passed-with-limitations', 'findings', 'specification-gap',

@@ -4,14 +4,18 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import re
 from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 from audit_artifact_io import load_json_artifact
 
 VERSION = "2026-08-20.3"
 MODES = {"targeted-remediation", "systemic-remediation"}
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.I)
+SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schemas" / "audit-remediation.schema.json"
 
 
 def load(path: Path) -> dict:
@@ -133,6 +137,10 @@ def main() -> int:
         print(f"BLOCK: invalid audit remediation input: {exc}")
         return 2
 
+    schema = Draft202012Validator(json.loads(SCHEMA_PATH.read_text(encoding="utf-8")))
+    for error in sorted(schema.iter_errors(ledger), key=lambda item: list(item.absolute_path)):
+        location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+        errors.append(f"audit remediation schema violation at {location}: {error.message}")
     if ledger.get("schema_version") != 1:
         errors.append("audit remediation schema_version must be 1")
     if ledger.get("contract_version") != VERSION:

@@ -17,7 +17,7 @@ Manter documentacao como parte verificavel da entrega sem repetir a mesma descob
 - `independent-audit`;
 - `guidance`.
 
-Ler sempre `references/impact-record.md`. Ler `references/delivery-contract.md` somente sob composicao; `source-completeness.md` ao fechar inventario e `contradiction-scan.md` para qualquer mudanca semantica normativa: estado, rota, nome, arquitetura, autorizacao/permissao/capability, allow/deny, default/preset, provisionamento/seed/trigger, disponibilidade ou comportamento automatico.
+Ler sempre `references/impact-record.md` e `references/impact-matrix.md`. Ler `references/delivery-contract.md` somente sob composicao; `source-completeness.md` ao fechar inventario e `contradiction-scan.md` para qualquer mudanca semantica normativa: estado, rota, nome, arquitetura, autorizacao/permissao/capability, allow/deny, default/preset, provisionamento/seed/trigger, disponibilidade ou comportamento automatico.
 
 ## Registro unico
 

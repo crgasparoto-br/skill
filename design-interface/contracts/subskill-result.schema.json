@@ -26,8 +26,15 @@
       "const": "2026-08-20.3"
     },
     "skill": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "auditar-issue",
+        "corrigir-ci",
+        "design-interface",
+        "documentacao-repositorio",
+        "entregar-issue",
+        "fluxos-conversacionais",
+        "revisar-issue"
+      ]
     },
     "mode": {
       "type": "string",

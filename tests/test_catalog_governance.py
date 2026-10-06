@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 
 from scripts.build_catalog_docs import render_catalog, validate_readme_catalog
 from scripts.catalog import load_catalog, validate_catalog
 from scripts.select_skill import rank_skills
-from scripts.validate_contract_sync import validate_contract_sync
+from scripts.validate_contract_sync import validate_contract_sync, validate_shared_files
 from scripts.validate_docs import local_link_errors, skill_reference_errors
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -115,3 +116,34 @@ def test_contract_validator_detects_generated_copy_drift(tmp_path: Path) -> None
     }), encoding="utf-8")
     errors = validate_contract_sync(tmp_path)
     assert any("hash mismatch" in error for error in errors)
+
+
+def test_runtime_skill_allowlist_matches_catalog() -> None:
+    source = (ROOT / "entregar-issue" / "scripts" / "planning_contract_runtime.py").read_text(encoding="utf-8")
+    assignment = next(
+        node for node in ast.parse(source).body
+        if isinstance(node, ast.Assign) and any(getattr(target, "id", "") == "CATALOG_SKILLS" for target in node.targets)
+    )
+    runtime = set(ast.literal_eval(assignment.value.args[0]))
+    catalog = {item["id"] for item in load_catalog(ROOT)["skills"]}
+    schema = json.loads((ROOT / "entregar-issue" / "contracts" / "subskill-result.schema.json").read_text(encoding="utf-8"))
+    assert runtime == catalog
+    assert set(schema["properties"]["skill"]["enum"]) == catalog
+
+
+def test_shared_files_are_byte_identical_to_canonical() -> None:
+    assert validate_shared_files(ROOT) == []
+
+
+def test_shared_file_drift_is_detected(tmp_path: Path) -> None:
+    (tmp_path / "config").mkdir()
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    (tmp_path / "a" / "tool.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "b" / "tool.py").write_text("x = 2\n", encoding="utf-8")
+    (tmp_path / "config" / "shared-files.json").write_text(json.dumps({
+        "schema_version": 1,
+        "groups": [{"canonical": "a/tool.py", "copies": ["b/tool.py"]}],
+    }), encoding="utf-8")
+    errors = validate_shared_files(tmp_path)
+    assert any("differs from canonical" in error for error in errors)

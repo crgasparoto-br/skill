@@ -16,6 +16,7 @@ try:
     from validate_versioning import validate_versioning
     from validate_adapters import validate_adapters
     from validate_evals import validate_evals
+    from validate_reachability import validate_reachability
 except ImportError:  # pragma: no cover - package import fallback
     from .catalog import catalog_skill_ids, load_catalog, validate_catalog
     from .validate_contract_sync import validate_contract_sync
@@ -23,6 +24,7 @@ except ImportError:  # pragma: no cover - package import fallback
     from .validate_versioning import validate_versioning
     from .validate_adapters import validate_adapters
     from .validate_evals import validate_evals
+    from .validate_reachability import validate_reachability
 
 ROOT = Path(__file__).resolve().parents[1]
 SYSTEM_VERSION = "2026-09-29.5"
@@ -41,6 +43,7 @@ GLOBAL_FILES = {
     "docs/RELEASE.md",
     "docs/ROADMAP.md",
     "config/platform-adapters.json",
+    "config/shared-files.json",
     "schemas/platform-adapters.schema.json",
     "docs/PLATFORM_ADAPTERS.md",
     "evals/README.md",
@@ -324,6 +327,7 @@ def main() -> int:
     errors.extend(f"versionamento: {error}" for error in validate_versioning(ROOT))
     errors.extend(f"adapters: {error}" for error in validate_adapters(ROOT))
     errors.extend(f"avaliações: {error}" for error in validate_evals(ROOT))
+    errors.extend(f"alcançabilidade: {error}" for error in validate_reachability(ROOT))
 
     if errors:
         print("Validação falhou:")

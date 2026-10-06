@@ -79,4 +79,11 @@ Antes de encerrar a implementacao, registrar para cada requisito:
 - regressao;
 - limitacao ou pendencia real.
 
+Antes de declarar o requisito fechado, carregar somente o checklist aplicavel:
+
+- contrato publico, catalogo/planilha, verbos, fidelidade de testes ou fechamento campo a campo: `implementation-fechamento-contrato.md`;
+- fronteira publica, mutacao condicionada, concorrencia, vigencia, permissoes, transicao terminal ou formulario com retry: `implementation-fechamento-alto-risco.md`;
+- adapter, provider, politica de runtime, traducao de request ou compatibilidade legada: `implementation-fechamento-infraestrutura-runtime.md`;
+- leitura/projecao publica, fonte canonica em multiplas superficies ou documentacao concorrente: `implementation-fechamento-leitura-consistencia.md`.
+
 Nenhum requisito segue ao gate final com superficie material conhecida sem controle focado executado. Executar uma leitura final do diff e procurar erros irmaos da mesma causa. Nao devolver a rodada com apenas o primeiro erro barato descoberto.

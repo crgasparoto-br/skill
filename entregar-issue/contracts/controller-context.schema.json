@@ -255,6 +255,65 @@
     "updated_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "artifact_reuse": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "status",
+        "reuse_allowed",
+        "requires_fresh_handoff",
+        "foreign_target_detected",
+        "expected_subject",
+        "checked_paths",
+        "reasons"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "status": {
+          "enum": [
+            "fresh",
+            "current-target",
+            "inherited-base-artifact",
+            "foreign-target",
+            "partial-current-target",
+            "unbound-or-invalid"
+          ]
+        },
+        "reuse_allowed": {
+          "type": "boolean"
+        },
+        "requires_fresh_handoff": {
+          "type": "boolean"
+        },
+        "foreign_target_detected": {
+          "type": "boolean"
+        },
+        "expected_subject": {
+          "type": "object"
+        },
+        "observed_subject": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "checked_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true
