@@ -385,6 +385,24 @@
       "validationRefs": [
         "file:tests/test_auditor_registry_policy.py"
       ]
+    },
+    {
+      "id": "SKSYS-026",
+      "title": "Dependency resolution is reproducible and exceptions are declared",
+      "status": "validated",
+      "summary": "Every skill manifest has a sibling lockfile pinning exact versions and sha256 hashes of the transitive closure, an offline deterministic validator rejects drift, missing hashes, open ranges, orphan annotations and malformed policy exceptions, and the advisory lookup runs outside the required sequence and reports UNKNOWN instead of success when it cannot verify.",
+      "implementationRefs": [
+        "file:config/dependency-policy.json",
+        "file:scripts/validate_dependency_locks.py",
+        "file:scripts/lock_dependencies.py",
+        "file:scripts/audit_dependencies.py",
+        "file:docs/RELEASE.md"
+      ],
+      "validationRefs": [
+        "file:tests/test_dependency_locks.py",
+        "file:.github/workflows/validate.yml",
+        "file:.github/workflows/dependency-audit.yml"
+      ]
     }
   ],
   "system_version": "2026-09-29.5"

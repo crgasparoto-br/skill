@@ -93,6 +93,7 @@ O catálogo possui uma camada global de governança acima das regras específica
 - [`docs/SECURITY.md`](./docs/SECURITY.md) define limites de escrita, independência, merge, credenciais e efeitos destrutivos.
 - [`AGENTS.md`](./AGENTS.md) é a instrução normativa para agentes de IA que trabalham neste repositório: hierarquia de fontes, fluxo de branches, forma canônica da issue, validação local e regras de higiene;
 - [`config/issue-templates.json`](./config/issue-templates.json) é a declaração única das seções normativas que os extratores de requisito leem no corpo da issue, aplicada em [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/) e validada por [`scripts/validate_issue_templates.py`](./scripts/validate_issue_templates.py).
+- [`config/dependency-policy.json`](./config/dependency-policy.json) declara a política de exceção de vulnerabilidade, validada por [`scripts/validate_dependency_locks.py`](./scripts/validate_dependency_locks.py); os lockfiles por skill fixam versão e hash, e [`scripts/audit_dependencies.py`](./scripts/audit_dependencies.py) consulta o banco externo no workflow [`.github/workflows/dependency-audit.yml`](./.github/workflows/dependency-audit.yml), fora da sequência obrigatória.
 
 As regras globais usam `UNKNOWN` como estado material de evidência insuficiente. Ausência de informação não deve ser convertida em sucesso, `false`, zero ou `not-applicable`. Aprovação interna, auditoria independente, readiness de release e enforcement de merge são fatos distintos.
 
@@ -132,6 +133,7 @@ python scripts/validate_issue_templates.py --root .
 python scripts/validate_context_budget.py --root .
 python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
 python scripts/validate_reference_indexes.py --root .
+python scripts/validate_dependency_locks.py --root .
 python -m pytest -q
 ```
 

@@ -49,3 +49,31 @@ Cada adapter validado deve aparecer em `config/platform-adapters.json` e `config
 | `application` | `0.2.0` | `supported` |
 
 Ao remover uma versão, mantenha uma nota de migração e a última release que a suporta. Não apague o histórico do changelog para esconder uma quebra.
+
+## Dependências e política de exceção
+
+Cada manifest de skill (`<skill>/requirements*.txt`) tem um lockfile irmão com o mesmo nome e sufixo `.lock.txt`, que
+fixa versão exata e hash sha256 de cada distribuição do fechamento transitivo. O lockfile é derivado, nunca fonte de
+verdade: alteração de dependência começa no manifest e o lockfile é regenerado.
+
+```bash
+python scripts/lock_dependencies.py --manifest entregar-issue/requirements.txt
+python scripts/validate_dependency_locks.py --root .
+```
+
+O lockfile registra no cabeçalho o manifest de origem, o contexto de resolução e o comando de regeneração. Como o hash
+corresponde à distribuição escolhida naquele contexto, regenerar em outra plataforma pode alterar o hash sem alterar a
+versão; a regeneração é uma alteração revisável, e o validador reprova entrada sem hash justamente para que a mudança
+apareça.
+
+Vulnerabilidade sem correção disponível só pode ser tolerada com exceção declarada em
+[`config/dependency-policy.json`](../config/dependency-policy.json), com identificador, pacote, justificativa e data de
+revisão. Exceção sem justificativa, sem data, com identificador repetido ou apontando pacote ausente dos lockfiles
+reprova a validação obrigatória. Exceção com data vencida é reportada como aviso e não reprova, porque data vencida é
+decisão de pessoa e não defeito de arquivo.
+
+A consulta ao banco de vulnerabilidade é do workflow
+[`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml), com gatilho agendado, manual e em
+pull request que toca manifest, lockfile ou política. Ela nunca faz parte da sequência obrigatória: quando o banco ou a
+ferramenta não estão disponíveis, o resultado é `UNKNOWN` e reprova aquele job, porque ausência de verificação não é
+verificação de ausência.

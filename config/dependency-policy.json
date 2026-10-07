@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "policy": "Vulnerabilidade sem correcao disponivel so pode ser tolerada com excecao declarada aqui, com justificativa e data de revisao. Excecao vencida nao reprova a validacao offline: ela e reportada como aviso, porque data vencida e decisao de pessoa e nao defeito de arquivo. Excecao sem justificativa, sem data, com identificador repetido ou apontando pacote ausente dos lockfiles reprova.",
+  "documented_in": "docs/RELEASE.md",
+  "validator": "scripts/validate_dependency_locks.py",
+  "exceptions": []
+}

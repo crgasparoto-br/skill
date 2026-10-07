@@ -72,6 +72,9 @@ jobs:
       - name: Validate navigability of skill references
         run: python scripts/validate_reference_indexes.py --root .
 
+      - name: Validate dependency lockfiles and exception policy
+        run: python scripts/validate_dependency_locks.py --root .
+
       - name: Run skill tests
         run: python -m pytest -q
 

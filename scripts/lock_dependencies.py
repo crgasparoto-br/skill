@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""Gera lockfile de dependências a partir do manifest de uma skill.
+
+O repositório declarava dependências com faixa aberta, como `cryptography>=50.0.1`, e o CI
+instalava a faixa. A versão que roda na CI não era a versão que roda na máquina de quem
+executa a sequência local, e nenhuma das duas era registrada. Sem registro, uma diferença
+de resolução entre dois ambientes muda o resultado da auditoria sem que nada no
+repositório mude.
+
+Este utilitário resolve o manifest e escreve, ao lado dele, um lockfile com versão exata e
+hash de cada distribuição do fechamento transitivo. Ele é utilitário de manutenção: usa
+rede, e por isso não participa da sequência de validação obrigatória.
+
+O lockfile é derivado, nunca fonte de verdade. Alteração de dependência começa no manifest,
+e `scripts/validate_dependency_locks.py` reprova lockfile dessincronizado.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import platform
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+LOCK_SUFFIX = ".lock.txt"
+NORMALIZE_RE = re.compile(r"[-_.]+")
+
+
+def normalize(name: str) -> str:
+    """Nome normalizado conforme PEP 503."""
+    return NORMALIZE_RE.sub("-", name.strip().lower())
+
+
+def requirement_name(line: str) -> str | None:
+    """Extrair o nome de uma linha de requisito, ignorando comentário, extra e marcador.
+
+    Devolve None para linha vazia, comentário, opção e inclusão `-r`.
+    """
+    stripped = line.split("#", 1)[0].strip()
+    if not stripped or stripped.startswith("-"):
+        return None
+    name = re.split(r"[<>=!~;\[\s]", stripped, maxsplit=1)[0].strip()
+    return normalize(name) if name else None
+
+
+def declared_names(manifest: Path, root: Path) -> set[str]:
+    """Nomes declarados no manifest, seguindo `-r` recursivamente."""
+    names: set[str] = set()
+    seen: set[Path] = set()
+
+    def walk(path: Path) -> None:
+        resolved = path.resolve()
+        if resolved in seen or not path.is_file():
+            return
+        seen.add(resolved)
+        for line in path.read_text(encoding="utf-8").splitlines():
+            stripped = line.split("#", 1)[0].strip()
+            if stripped.startswith("-r"):
+                target = stripped[2:].strip()
+                if target:
+                    walk((path.parent / target).resolve())
+                continue
+            name = requirement_name(line)
+            if name:
+                names.add(name)
+
+    walk(manifest)
+    return names
+
+
+def resolve(manifest: Path) -> dict:
+    """Resolver o manifest com pip e devolver o relatório de instalação."""
+    with tempfile.TemporaryDirectory() as tmp:
+        report = Path(tmp) / "report.json"
+        command = [
+            sys.executable, "-m", "pip", "install",
+            "--quiet", "--dry-run", "--ignore-installed",
+            "--report", str(report), "-r", str(manifest),
+        ]
+        completed = subprocess.run(command, capture_output=True, text=True, check=False)
+        if completed.returncode != 0 or not report.is_file():
+            raise SystemExit(
+                f"falha ao resolver {manifest}:\n{completed.stderr.strip()[-2000:]}"
+            )
+        return json.loads(report.read_text(encoding="utf-8"))
+
+
+def parents_of(report: dict) -> dict[str, set[str]]:
+    """Mapa pacote -> quem o requer, a partir de `requires_dist` de cada instalação."""
+    parents: dict[str, set[str]] = {}
+    provides: dict[str, list[str]] = {}
+    for item in report["install"]:
+        name = normalize(item["metadata"]["name"])
+        provides[name] = item["metadata"].get("requires_dist") or []
+    for name, requires in provides.items():
+        for requirement in requires:
+            child = requirement_name(requirement)
+            if child and child in provides and child != name:
+                parents.setdefault(child, set()).add(name)
+    return parents
+
+
+def artifact_hash(item: dict) -> tuple[str, str]:
+    """Hash e nome do arquivo da distribuição escolhida na resolução."""
+    download = item.get("download_info", {})
+    archive = download.get("archive_info", {})
+    value = str(archive.get("hash") or "")
+    if value.startswith("sha256="):
+        value = "sha256:" + value[len("sha256="):]
+    filename = str(download.get("url") or "").rsplit("/", 1)[-1]
+    return value, filename
+
+
+def build_lock(manifest: Path, root: Path, report: dict) -> str:
+    declared = declared_names(manifest, root)
+    parents = parents_of(report)
+    entries: dict[str, tuple[str, str, str, set[str]]] = {}
+    for item in report["install"]:
+        metadata = item["metadata"]
+        name = normalize(metadata["name"])
+        version = str(metadata["version"])
+        digest, filename = artifact_hash(item)
+        entries[name] = (version, digest, filename, parents.get(name, set()))
+
+    relative = manifest.relative_to(root).as_posix()
+    lines = [
+        f"# lockfile gerado de {relative}",
+        f"# contexto: python {platform.python_version()} em {platform.system().lower()} {platform.machine()}",
+        f"# regenerar: python scripts/lock_dependencies.py --manifest {relative}",
+        "# nao editar a mao: alterar o manifest e regenerar",
+        "",
+    ]
+    for name in sorted(entries):
+        version, digest, filename, requirement_parents = entries[name]
+        if name not in declared and requirement_parents:
+            lines.append(f"# via {', '.join(sorted(requirement_parents))}")
+        lines.append(f"{name}=={version} \\")
+        lines.append(f"    --hash={digest}")
+        lines.append(f"# arquivo: {filename}")
+    return "\n".join(lines) + "\n"
+
+
+def lock_path(manifest: Path) -> Path:
+    return manifest.with_name(manifest.stem + LOCK_SUFFIX)
+
+
+def manifests_for(root: Path, skill: str | None) -> list[Path]:
+    pattern = f"{skill}/requirements*.txt" if skill else "*/requirements*.txt"
+    return sorted(
+        path
+        for path in root.glob(pattern)
+        if path.is_file() and not path.name.endswith(LOCK_SUFFIX)
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Gerar lockfile de dependências de uma skill.")
+    parser.add_argument("--root", default=".", help="raiz do repositório")
+    parser.add_argument("--skill", help="skill específica; sem isso, todas")
+    parser.add_argument("--check", action="store_true", help="não escrever; falhar se o lock mudaria")
+    args = parser.parse_args(argv)
+
+    root = Path(args.root).resolve()
+    manifests = manifests_for(root, args.skill)
+    if not manifests:
+        print("nenhum manifest encontrado", file=sys.stderr)
+        return 1
+
+    drifted: list[str] = []
+    for manifest in manifests:
+        content = build_lock(manifest, root, resolve(manifest))
+        target = lock_path(manifest)
+        current = target.read_text(encoding="utf-8") if target.is_file() else ""
+        if args.check:
+            if current != content:
+                drifted.append(target.relative_to(root).as_posix())
+            continue
+        target.write_text(content, encoding="utf-8")
+        print(f"escrito {target.relative_to(root).as_posix()}")
+
+    if args.check:
+        if drifted:
+            for path in drifted:
+                print(f"lockfile dessincronizado: {path}", file=sys.stderr)
+            return 1
+        print("Lockfiles sincronizados: OK")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

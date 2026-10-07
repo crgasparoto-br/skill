@@ -20,6 +20,7 @@ try:
     from validate_issue_templates import validate_issue_templates
     from validate_context_budget import validate_context_budget
     from validate_reference_indexes import validate_reference_indexes
+    from validate_dependency_locks import validate_dependency_locks
 except ImportError:  # pragma: no cover - package import fallback
     from .catalog import catalog_skill_ids, load_catalog, validate_catalog
     from .validate_contract_sync import validate_contract_sync
@@ -31,6 +32,7 @@ except ImportError:  # pragma: no cover - package import fallback
     from .validate_issue_templates import validate_issue_templates
     from .validate_context_budget import validate_context_budget
     from .validate_reference_indexes import validate_reference_indexes
+    from .validate_dependency_locks import validate_dependency_locks
 
 ROOT = Path(__file__).resolve().parents[1]
 SYSTEM_VERSION = "2026-09-29.5"
@@ -74,6 +76,11 @@ GLOBAL_FILES = {
     "config/reference-index.json",
     "scripts/validate_context_budget.py",
     "scripts/validate_reference_indexes.py",
+    "config/dependency-policy.json",
+    "scripts/validate_dependency_locks.py",
+    "scripts/lock_dependencies.py",
+    "scripts/audit_dependencies.py",
+    ".github/workflows/dependency-audit.yml",
 }
 REQUIRED_CAPABILITIES = {
     "canonical_controller": "entregar-issue",
@@ -348,6 +355,7 @@ def main() -> int:
     errors.extend(f"formato de issue: {error}" for error in validate_issue_templates(ROOT))
     errors.extend(f"orçamento de contexto: {error}" for error in validate_context_budget(ROOT))
     errors.extend(f"índice de referência: {error}" for error in validate_reference_indexes(ROOT))
+    errors.extend(f"dependências: {error}" for error in validate_dependency_locks(ROOT))
 
     if errors:
         print("Validação falhou:")
