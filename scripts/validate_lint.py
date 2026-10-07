@@ -33,7 +33,10 @@ POLICY = Path("config") / "lint-policy.json"
 REQUIRED_STATES = {"selected", "partial", "dismissed"}
 MINIMUM_REASON_CHARS = 40
 MINIMUM_JUSTIFICATION_CHARS = 8
-LOCKFILE_NAME = "requirements.lock.txt"
+# Instalação declarada: o pip pelo lockfile, com verificação de hash, e nada além disso. A forma é
+# exata porque procura textual deixaria passar `echo pip install ... && outra coisa`.
+INSTALL_RE = re.compile(r"python3? -m pip install --require-hashes(?: -r [A-Za-z0-9_./-]+\.lock\.txt)+")
+INVOCATION_RE = re.compile(r"[a-z][a-z0-9-]* [a-z][a-z0-9-]*")
 ENTRY_RE = re.compile(r"[A-Z]+\d*")
 # Diretivas que a ferramenta reconhece: marcador em qualquer caixa e diretiva de arquivo com
 # prefixo `ruff:` ou `flake8:`. A leitura e feita sobre comentarios reais, entao a ocorrencia
@@ -175,16 +178,22 @@ def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
         install = tool.get("install")
         if (
             not isinstance(install, str)
-            or "pip install" not in install
-            or "--require-hashes" not in install
-            or LOCKFILE_NAME not in install
+            or not INSTALL_RE.fullmatch(install)
+            or ".." in install
         ):
             errors.append(
-                "politica: tool.install precisa instalar pelo lockfile com --require-hashes"
+                "politica: tool.install precisa ser a instalacao do lockfile com --require-hashes"
             )
         invocation = tool.get("invocation")
-        if not isinstance(invocation, str) or not invocation.startswith(f"{tool.get('name')} "):
-            errors.append("politica: tool.invocation precisa invocar a ferramenta declarada")
+        if (
+            not isinstance(invocation, str)
+            or not INVOCATION_RE.fullmatch(invocation)
+            or not invocation.startswith(f"{tool.get('name')} ")
+        ):
+            errors.append("politica: tool.invocation precisa ser a invocacao exata da ferramenta")
+    description = policy.get("description")
+    if not isinstance(description, str) or not description.strip():
+        errors.append("politica: description precisa ser texto nao vazio")
 
     if not re.fullmatch(r"py3\d{2}", str(policy.get("target_version", ""))):
         errors.append("politica: target_version precisa ser alvo explicito, como py312")

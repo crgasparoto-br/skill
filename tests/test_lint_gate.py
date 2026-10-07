@@ -204,6 +204,19 @@ def test_policy_artifacts_are_registered_in_the_aggregate_validator() -> None:
     assert "validate_lint(ROOT)" in text
 
 
+def test_workflow_classification_is_registered_in_the_aggregate_validator() -> None:
+    """A classificação do workflow precisa ser executada pelo agregador, e não só pelo teste."""
+    text = (ROOT / "scripts" / "validate_repository.py").read_text(encoding="utf-8")
+    assert "validate_workflow_classification(ROOT)" in text
+    assert '"scripts/validate_workflow_classification.py"' in text
+
+
+def test_workflow_classification_runs_in_every_sequence() -> None:
+    command = "python scripts/validate_workflow_classification.py --root ."
+    for name in ("README.md", "AGENTS.md", ".github/workflows/validate.yml"):
+        assert command in (ROOT / name).read_text(encoding="utf-8"), name
+
+
 def test_validation_sequence_runs_the_gate_everywhere() -> None:
     command = "python scripts/validate_lint.py --root ."
     for name in ("README.md", "AGENTS.md", ".github/workflows/validate.yml"):
@@ -546,6 +559,28 @@ def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -
     def float_line_length(policy: dict) -> None:
         policy["line_length"]["value"] = 100.0
 
+    def forged_install(policy: dict) -> None:
+        policy["tool"]["install"] = (
+            "echo pip install --require-hashes -r requirements.lock.txt && /tmp/escondido"
+        )
+
+    def outside_install(policy: dict) -> None:
+        policy["tool"]["install"] = (
+            "python -m pip install --require-hashes -r ../fora/requirements.lock.txt"
+        )
+
+    def forged_invocation(policy: dict) -> None:
+        policy["tool"]["invocation"] = "ruff check && /tmp/escondido"
+
+    def single_token_invocation(policy: dict) -> None:
+        policy["tool"]["invocation"] = "ruff"
+
+    def null_description(policy: dict) -> None:
+        policy["description"] = None
+
+    def list_description(policy: dict) -> None:
+        policy["description"] = []
+
     def dict_state(policy: dict) -> None:
         policy["families"][0]["state"] = {}
 
@@ -566,6 +601,12 @@ def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -
         "line-length-booleano": boolean_line_length,
         "estado-dicionario": dict_state,
         "estado-lista": list_state,
+        "install-forjado": forged_install,
+        "install-fora-da-raiz": outside_install,
+        "invocacao-forjada": forged_invocation,
+        "invocacao-sem-subcomando": single_token_invocation,
+        "descricao-nula": null_description,
+        "descricao-lista": list_description,
     }
     for label, mutate in shapes.items():
         policy = load_policy()

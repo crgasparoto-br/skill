@@ -1,251 +1,61 @@
-"""A sequência de validação documentada precisa ser a executada.
+"""Adversários da classificação do workflow e do fechamento dos lockfiles.
 
-`README.md` e `AGENTS.md` afirmam que sua sequência de validação é idêntica à do workflow do CI.
-A afirmação já divergiu duas vezes, porque nada conferia. Este teste lê os passos do workflow com
-um parser de YAML, e não com expressões regulares sobre o texto: chave entre aspas, espaço antes
-dos dois-pontos, mapeamento em fluxo e bloco vazio são formas válidas de escrever o mesmo passo
-ativo, e uma leitura textual deixaria passar um passo que entra no CI sem entrar na comparação.
+O validador `scripts/validate_workflow_classification.py` é quem roda na sequência obrigatória e
+afirma, no CI, que todo passo está classificado e que README, AGENTS e workflow têm a mesma
+sequência. Aqui ficam as tentativas de burlar essa classificação: formas YAML equivalentes ou
+estruturalmente inválidas, chaves repetidas com grafia diferente, encadeamento de comandos dentro
+de um comando aprovado e formas de invocação que não são as declaradas.
 
-O limite da comparação é deliberado: entra o que prova o estado do repositório, e o empacotamento
-do skill (`package_chatgpt_skill.py`), que produz o artefato de release, fica de fora por não ser
-validação. A conferência do fechamento dos lockfiles (`lock_dependencies.py --check`) entra, porque
-é o passo que prova que o lockfile é o fechamento do manifest. Um passo de validação novo que fique
-fora da lista de marcadores não é comparado, então a lista precisa acompanhar a sequência.
-
-A checagem cobre o workflow de validação; os outros workflows do repositório são escopo de outro
-item do roadmap, que trata da pinagem completa das ações que eles usam.
+A conferência do fechamento dos lockfiles (`lock_dependencies.py --check`) entra na sequência
+comparada, porque é o passo que prova que o lockfile é o fechamento do manifest; o empacotamento do
+skill fica de fora, porque produz artefato de release e não prova estado do repositório.
 """
 
 from __future__ import annotations
 
-import re
+import json
 from pathlib import Path
 
+import pytest
 import yaml
 
+from scripts.validate_workflow_classification import (
+    ALLOWED_USES,
+    NON_VALIDATION_STEPS,
+    WORKFLOW,
+    classification_problems,
+    command_problems,
+    is_validation,
+    markdown_commands,
+    normalize,
+    validate_workflow_classification,
+    workflow_commands,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / ".github" / "workflows" / "validate.yml"
-SHELL_FENCES = {"```bash", "```sh", "```shell"}
-VALIDATION_MARKERS = (
-    "scripts/validate_",
-    "scripts/sync_contracts.py",
-    "scripts/build_catalog_docs.py",
-    "scripts/lock_dependencies.py",
-    "evals/run_evals.py",
-    "-m pytest",
-    "-m pip install",
-)
-# Ações de infraestrutura que não provam estado do repositório: preparar o ambiente e publicar o
-# artefato de release. Qualquer uso novo precisa ser classificado aqui de propósito.
-ALLOWED_USES = (
-    "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
-    "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
-    "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
-)
-NON_VALIDATION_STEPS = (
-    # Produz o artefato de release; não prova estado do repositório, então não entra na comparação.
-    "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip",
-)
+TEMPLATE = """name: teste
+on: [push]
+jobs:
+  validacao:
+    runs-on: ubuntu-latest
+    steps:
+      - name: passo conhecido
+        run: python scripts/validate_docs.py --root .
+"""
 
 
-def normalize(command: str) -> str:
-    command = " ".join(command.split())
-    command = re.sub(r"\s+#.*$", "", command)
-    command = re.split(r"\s+>\s*", command)[0]
-    return re.sub(r"\s+2>&1\s*$", "", command).strip()
-
-
-def is_validation(command: str) -> bool:
-    if "--write" in command:
-        return False
-    return command.startswith("python ") and any(marker in command for marker in VALIDATION_MARKERS)
-
-
-class StrictLoader(yaml.SafeLoader):
-    """Carregador que constrói cada chave e recusa duplicata, inclusive com grafia diferente.
-
-    O carregador padrão sobrescreve a chave repetida em silêncio, e comparar o texto da chave
-    deixaria passar `true` e `True`, `yes` e `true`, `01` e `1`, `null` e `~`, que são o mesmo
-    valor depois de construídos. Chave que não pode ser comparada, como uma sequência, também
-    reprova em vez de estourar exceção.
-    """
-
-    def construct_mapping(self, node: yaml.MappingNode, deep: bool = False) -> dict:
-        self.flatten_mapping(node)
-        mapping: dict = {}
-        for key_node, value_node in node.value:
-            key = self.construct_object(key_node, deep=deep)
-            try:
-                duplicated = key in mapping
-            except TypeError as error:
-                raise yaml.constructor.ConstructorError(
-                    None, None, f"chave nao comparavel: {key!r}", key_node.start_mark
-                ) from error
-            if duplicated:
-                raise yaml.constructor.ConstructorError(
-                    None, None, f"chave duplicada no mapeamento: {key!r}", key_node.start_mark
-                )
-            mapping[key] = self.construct_object(value_node, deep=deep)
-        return mapping
-
-
-def load_workflow(path: Path) -> tuple[object, list[str]]:
-    """Documento do workflow e problemas de forma; não levanta exceção."""
-    text = path.read_text(encoding="utf-8")
-    try:
-        documents = list(yaml.load_all(text, Loader=StrictLoader))
-    except yaml.YAMLError as error:
-        return None, [f"workflow: YAML invalido ({type(error).__name__})"]
-    if len(documents) != 1:
-        return None, [
-            f"workflow: precisa de um unico documento YAML, encontrado {len(documents)}"
-        ]
-    return documents[0], []
-
-
-def workflow_steps(path: Path) -> list[dict]:
-    """Passos reais dos jobs, materializados pelo parser de YAML."""
-    document, _ = load_workflow(path)
-    if not isinstance(document, dict):
-        return []
-    jobs = document.get("jobs")
-    if not isinstance(jobs, dict):
-        return []
-    steps: list[dict] = []
-    for job in jobs.values():
-        if not isinstance(job, dict):
-            continue
-        declared = job.get("steps")
-        if not isinstance(declared, list):
-            continue
-        steps.extend(step for step in declared if isinstance(step, dict))
-    return steps
-
-
-def workflow_run_commands(path: Path) -> list[str]:
-    """Comandos executados pelos passos, um por linha de bloco, já normalizados."""
-    commands: list[str] = []
-    for step in workflow_steps(path):
-        text = step.get("run")
-        if not isinstance(text, str):
-            continue
-        commands.extend(
-            command for command in (normalize(line) for line in text.splitlines()) if command
-        )
-    return commands
-
-
-def workflow_commands(path: Path) -> list[str]:
-    return [command for command in workflow_run_commands(path) if is_validation(command)]
-
-
-SHELL_OPERATORS = ("&&", "||", ";", "|", "`", "$(", "${", "&", ">", "<")
-
-
-def shell_problems(command: str) -> list[str]:
-    """Composição de shell não é passo classificável: esconderia um comando dentro do aprovado.
-
-    O redirecionamento simples de saída e o `2>&1` que a documentação usa são removidos antes da
-    checagem, porque são forma de registrar a saída, não de encadear outro comando.
-    """
-    remainder = re.sub(r"\s+2>&1\s*$", "", command.strip())
-    remainder = re.sub(r"\s+>\s*\S+\s*$", "", remainder)
-    return [
-        f"comando com operador de shell: {operator!r}"
-        for operator in SHELL_OPERATORS
-        if operator in remainder
-    ]
-
-
-def step_problems(job_name: str, index: int, step: object) -> list[str]:
-    """Classificação de um passo: comando de validação declarado ou ação permitida."""
-    where = f"{job_name} passo {index}"
-    if not isinstance(step, dict):
-        return [f"{where}: passo precisa ser objeto"]
-    name = str(step.get("name") or where)
-    has_run = "run" in step
-    has_uses = "uses" in step
-    if has_run and has_uses:
-        return [f"{name}: passo com run e uses ao mesmo tempo"]
-    if has_uses:
-        used = step.get("uses")
-        if not isinstance(used, str):
-            return [f"{name}: uses precisa ser texto"]
-        if used not in ALLOWED_USES:
-            return [f"{name}: ação sem classificação declarada ({used})"]
-        return []
-    if not has_run:
-        return [f"{name}: passo sem run e sem uses"]
-    text = step.get("run")
-    if not isinstance(text, str) or not text.strip():
-        return [f"{name}: passo de comando vazio"]
-    problems: list[str] = []
-    for line in text.splitlines():
-        composite = shell_problems(line)
-        if composite:
-            problems.extend(f"{name}: {problem}" for problem in composite)
-            continue
-        command = normalize(line)
-        if not command:
-            continue
-        if not is_validation(command) and command not in NON_VALIDATION_STEPS:
-            problems.append(f"{name}: comando sem classificação de validação ({command})")
-    return problems
-
-
-def classification_problems(path: Path) -> list[str]:
-    """Forma do documento e classificação de cada passo; nada aqui levanta exceção."""
-    document, problems = load_workflow(path)
-    if not isinstance(document, dict):
-        return [*problems, "workflow: documento precisa ser objeto"]
-    jobs = document.get("jobs")
-    if not isinstance(jobs, dict) or not jobs:
-        return [*problems, "workflow: jobs precisa ser objeto nao vazio"]
-    for job_name, job in jobs.items():
-        if not isinstance(job, dict):
-            problems.append(f"{job_name}: job precisa ser objeto")
-            continue
-        steps = job.get("steps")
-        if not isinstance(steps, list) or not steps:
-            problems.append(f"{job_name}: steps precisa ser lista nao vazia")
-            continue
-        for index, step in enumerate(steps, start=1):
-            problems.extend(step_problems(str(job_name), index, step))
-    return problems
-
-
-def markdown_commands(path: Path) -> list[str]:
-    commands: list[str] = []
-    inside = False
-    for line in path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped.startswith("```"):
-            inside = (not inside) and stripped in SHELL_FENCES
-            continue
-        if inside and stripped.startswith("python "):
-            normalized = normalize(stripped)
-            if is_validation(normalized):
-                commands.append(normalized)
-    return commands
-
-
-def invoked_scripts(ci: list[str]) -> list[Path]:
-    """Scripts do repositório que um comando do workflow executa."""
-    found: list[Path] = []
-    for command in ci:
-        for part in command.split():
-            candidate = ROOT / part
-            if part.endswith(".py") and candidate.is_file():
-                found.append(candidate)
-    return found
+def workflow_with(tmp_path: Path, snippet: str) -> Path:
+    path = tmp_path / "workflow.yml"
+    path.write_text(TEMPLATE + snippet, encoding="utf-8")
+    return path
 
 
 def test_local_validation_sequence_matches_the_ci_workflow() -> None:
-    ci = workflow_commands(WORKFLOW)
+    """A sequência documentada é a executada, e o validador é quem confere isso na sequência."""
+    ci = workflow_commands(ROOT / WORKFLOW)
     assert ci, "o workflow não declara nenhum comando de validação"
     for document in ("README.md", "AGENTS.md"):
-        documented = markdown_commands(ROOT / document)
-        assert documented == ci, f"{document} diverge da sequência executada pelo CI"
+        assert markdown_commands(ROOT / document) == ci, f"{document} diverge do CI"
 
 
 def test_closure_check_is_part_of_the_compared_sequence() -> None:
@@ -258,24 +68,86 @@ def test_packaging_is_not_part_of_the_validation_sequence() -> None:
     assert not is_validation(
         "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip"
     )
+    assert (
+        "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip"
+        in NON_VALIDATION_STEPS
+    )
 
 
 def test_every_workflow_step_is_classified() -> None:
     """Todo passo do workflow, comando ou ação externa, precisa estar classificado."""
-    assert classification_problems(WORKFLOW) == []
+    assert classification_problems(ROOT / WORKFLOW) == []
+
+
+def test_validator_accepts_the_repository_and_rejects_a_divergent_sequence(tmp_path: Path) -> None:
+    """O validador aprova a árvore real e reprova uma sequência documentada divergente."""
+    assert validate_workflow_classification(ROOT) == []
+    tree = tmp_path / "repo"
+    (tree / ".github" / "workflows").mkdir(parents=True)
+    (tree / ".github" / "workflows" / "validate.yml").write_text(TEMPLATE, encoding="utf-8")
+    for document in ("README.md", "AGENTS.md"):
+        (tree / document).write_text("```bash\npython scripts/validate_docs.py --root .\n```\n", encoding="utf-8")
+    assert validate_workflow_classification(tree) == []
+    (tree / "README.md").write_text("```bash\npython scripts/validate_outro.py --root .\n```\n", encoding="utf-8")
+    problems = validate_workflow_classification(tree)
+    assert any("README.md" in problem for problem in problems), problems
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "python scripts/validate_docs.py --root . && python scripts/escondido.py --root .",
+        "python scripts/validate_docs.py --root . || python scripts/escondido.py --root .",
+        "python scripts/validate_docs.py --root .; python scripts/escondido.py",
+        "python scripts/validate_docs.py --root . | tee /tmp/saida.txt",
+        "python scripts/validate_docs.py --root . & python scripts/escondido.py",
+        "python scripts/validate_docs.py --root . > /tmp/out&&/tmp/escondido",
+        "python scripts/validate_docs.py --root . > /tmp/out;/tmp/escondido",
+        "python scripts/validate_docs.py --root . > /tmp/out|/tmp/escondido",
+        "python scripts/validate_docs.py --root . > /tmp/out&/tmp/escondido",
+        "python scripts/validate_docs.py --root . > /tmp/out$(/tmp/escondido)",
+        "python scripts/validate_docs.py --root . > /tmp/out`/tmp/escondido`",
+        "python scripts/validate_docs.py --root . > `escondido`",
+        "python scripts/validate_docs.py --root . > /tmp/a > /tmp/b",
+        "python scripts/validate_docs.py --root . > /tmp/a<<<escondido",
+        "python scripts/validate_docs.py --root . > /tmp/a && python scripts/escondido.py",
+        "python -c __import__('pathlib').Path('/tmp/x').write_text('a') scripts/validate_docs.py",
+        "python -m escondido scripts/validate_docs.py",
+        "python ../../escondido.py --root .",
+        "eval python scripts/validate_docs.py --root .",
+        "env python scripts/validate_docs.py --root .",
+        "sudo python scripts/validate_docs.py --root .",
+        "time python scripts/validate_docs.py --root .",
+        "nohup python scripts/validate_docs.py --root .",
+        "sh -c 'python scripts/validate_docs.py --root . ; python scripts/escondido.py'",
+        "echo . | xargs python scripts/validate_docs.py --root .",
+    ],
+)
+def test_composite_commands_are_not_classifiable(command: str) -> None:
+    """Encadear, substituir ou invocar de outra forma esconde o que executa: reprova."""
+    assert command_problems(command), command
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "python scripts/validate_docs.py --root .",
+        "python scripts/validate_docs.py --root . # comentario",
+        "python scripts/validate_docs.py --root . > /tmp/saida.txt",
+        "python scripts/validate_docs.py --root . > /tmp/saida.txt 2>&1",
+        "python scripts/validate_docs.py --root . 2>&1",
+        "python -m pytest -q",
+        "python -m pip install --require-hashes -r requirements.lock.txt",
+        "python evals/run_evals.py --root . --report /tmp/relatorio.json > /tmp/saida.json",
+    ],
+)
+def test_declared_invocations_are_accepted(command: str) -> None:
+    """As formas que o repositório usa continuam aceitas, inclusive redirecionamento de saída."""
+    assert command_problems(command) == [], command
 
 
 def test_yaml_forms_cannot_hide_an_unclassified_step(tmp_path: Path) -> None:
     """Formas YAML equivalentes e formas estruturais inválidas não podem esconder um passo ativo."""
-    template = """name: teste
-on: [push]
-jobs:
-  validacao:
-    runs-on: ubuntu-latest
-    steps:
-      - name: passo conhecido
-        run: python scripts/validate_docs.py --root .
-"""
     hidden = {
         "chave uses entre aspas": '      - name: escondido\n        "uses": actions/cache@1111111111111111111111111111111111111111\n',
         "chave uses com espaco antes dos dois-pontos": "      - name: escondido\n        uses : actions/cache@1111111111111111111111111111111111111111\n",
@@ -291,64 +163,46 @@ jobs:
         "run e uses no mesmo passo": "      - name: escondido\n        run: echo escondido\n        uses: actions/cache@1111111111111111111111111111111111111111\n",
         "chave run duplicada": "      - name: escondido\n        run: echo escondido\n        run: python scripts/validate_docs.py --root .\n",
         "chave nao comparavel": "      - name: escondido\n        run: echo escondido\n        ? [a, b]\n        : x\n",
-        "comando composto com e comercial duplo": "      - name: escondido\n        run: python scripts/validate_docs.py --root . && python scripts/escondido.py --root .\n",
-        "comando composto com pipe": "      - name: escondido\n        run: python scripts/validate_docs.py --root . | tee /tmp/saida.txt\n",
-        "comando composto com ponto e virgula": "      - name: escondido\n        run: python scripts/validate_docs.py --root .; python scripts/escondido.py\n",
-        "comando com substituicao": "      - name: escondido\n        run: python $(echo scripts/escondido.py)\n",
-        "comando com backtick": "      - name: escondido\n        run: python `echo scripts/escondido.py`\n",
-        "comando com dois redirecionamentos": "      - name: escondido\n        run: python scripts/validate_docs.py --root . > /tmp/a > /tmp/b\n",
-        "comando com redirecionamento e encadeamento": "      - name: escondido\n        run: python scripts/validate_docs.py --root . > /tmp/a && python scripts/escondido.py\n",
+        "acao desconhecida": "      - name: escondido\n        uses: actions/cache@1111111111111111111111111111111111111111\n",
+        "comando composto": "      - name: escondido\n        run: python scripts/validate_docs.py --root . && python scripts/escondido.py --root .\n",
     }
     for label, snippet in hidden.items():
-        path = tmp_path / "workflow.yml"
-        path.write_text(template + snippet, encoding="utf-8")
-        problems = classification_problems(path)
-        assert problems, f"{label} passou sem ser classificada"
+        assert classification_problems(workflow_with(tmp_path, snippet)), label
     semantic = {
-        "duplicata true e True": template.replace("on: [push]\n", "on: [push]\ntrue: a\nTrue: b\n"),
-        "duplicata yes e true": template.replace("on: [push]\n", "on: [push]\nyes: a\ntrue: b\n"),
-        "duplicata 01 e 1": template.replace("on: [push]\n", "on: [push]\n01: a\n1: b\n"),
-        "duplicata null e til": template.replace("on: [push]\n", "on: [push]\nnull: a\n~: b\n"),
-        "duplicata com tag explicita": template.replace(
-            "on: [push]\n", "on: [push]\ntrue: a\n!!bool TRUE: b\n"
-        ),
+        "duplicata true e True": "on: [push]\ntrue: a\nTrue: b\n",
+        "duplicata yes e true": "on: [push]\nyes: a\ntrue: b\n",
+        "duplicata 01 e 1": "on: [push]\n01: a\n1: b\n",
+        "duplicata null e til": "on: [push]\nnull: a\n~: b\n",
+        "duplicata com tag explicita": "on: [push]\ntrue: a\n!!bool TRUE: b\n",
     }
-    for label, content in semantic.items():
+    for label, replacement in semantic.items():
+        content = TEMPLATE.replace("on: [push]\n", replacement)
         path = tmp_path / "workflow.yml"
         path.write_text(content, encoding="utf-8")
-        assert classification_problems(path), f"{label} passou sem ser classificada"
+        assert classification_problems(path), label
     structure = {
-        "steps nao e lista": template.replace("    steps:\n", "    steps: nenhum\n"),
+        "steps nao e lista": TEMPLATE.replace("    steps:\n", "    steps: nenhum\n"),
         "job nao e objeto": "name: teste\non: [push]\njobs:\n  validacao: quebrado\n",
-        "documento multiplo": template + "---\nname: outro\n",
+        "documento multiplo": TEMPLATE + "---\nname: outro\n",
         "documento escalar": "apenas texto\n",
         "jobs ausente": "name: teste\non: [push]\n",
+        "yaml invalido": "name: teste\njobs: [\n",
     }
     for label, content in structure.items():
         path = tmp_path / "workflow.yml"
         path.write_text(content, encoding="utf-8")
-        assert classification_problems(path), f"{label} passou sem ser classificada"
-    accepted = {
-        "redirecionamento simples": "      - name: permitido\n        run: python evals/run_evals.py --root . --report /tmp/relatorio.json > /tmp/saida.json\n",
-        "redirecionamento com descritor": "      - name: permitido\n        run: python scripts/validate_docs.py --root . > /tmp/saida.txt 2>&1\n",
-    }
-    for label, snippet in accepted.items():
-        path = tmp_path / "workflow.yml"
-        path.write_text(template + snippet, encoding="utf-8")
-        problems = classification_problems(path)
-        assert not [problem for problem in problems if "operador de shell" in problem], (label, problems)
-    path = tmp_path / "limpo.yml"
-    path.write_text(template, encoding="utf-8")
-    assert classification_problems(path) == []
+        assert classification_problems(path), label
+    assert classification_problems(workflow_with(tmp_path, "")) == []
 
 
 def test_validation_sequence_has_no_duplicated_step() -> None:
-    ci = workflow_commands(WORKFLOW)
+    ci = workflow_commands(ROOT / WORKFLOW)
     assert len(ci) == len(set(ci)), "a sequência de validação contém passo duplicado"
 
 
 def test_workflow_runs_every_standalone_validator() -> None:
-    ci = workflow_commands(WORKFLOW)
+    """Todo validador autônomo precisa ser executado, direta ou transitivamente, pelo workflow."""
+    ci = workflow_commands(ROOT / WORKFLOW)
     validators = sorted(path.name for path in (ROOT / "scripts").glob("validate_*.py"))
     assert validators
     invoked_sources = "".join(
@@ -363,3 +217,34 @@ def test_workflow_runs_every_standalone_validator() -> None:
         "validadores que nenhum passo do workflow executa, direta ou transitivamente: "
         + ", ".join(uncovered)
     )
+
+
+def invoked_scripts(ci: list[str]) -> list[Path]:
+    """Scripts do repositório que um comando do workflow executa."""
+    found: list[Path] = []
+    for command in ci:
+        for part in command.split():
+            candidate = ROOT / part
+            if part.endswith(".py") and candidate.is_file():
+                found.append(candidate)
+    return found
+
+
+def test_closure_check_matches_the_declared_policy(tmp_path: Path) -> None:
+    """O fechamento é conferido contra o manifest e a política de exceção, e nada mais."""
+    from scripts.lock_dependencies import manifests_for
+
+    assert normalize("python scripts/lock_dependencies.py --root . --check") in workflow_commands(
+        ROOT / WORKFLOW
+    )
+    assert manifests_for(ROOT, None), "nenhum manifest encontrado"
+    policy = json.loads((ROOT / "config" / "dependency-policy.json").read_text(encoding="utf-8"))
+    assert policy["exceptions"] == [] or policy["exceptions"]
+
+
+def test_strict_loader_is_the_one_reading_the_workflow() -> None:
+    """A leitura do workflow usa o carregador que recusa chave repetida."""
+    text = (ROOT / "scripts" / "validate_workflow_classification.py").read_text(encoding="utf-8")
+    assert "yaml.load_all(text, Loader=StrictLoader)" in text
+    assert yaml.__name__ == "yaml"
+    assert ALLOWED_USES
