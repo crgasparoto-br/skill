@@ -199,6 +199,24 @@ def build_work_items(root: Path, report: dict) -> list[dict]:
     return items
 
 
+def work_item_schema_errors(items: list[dict]) -> list[str]:
+    """Contrato do próprio work item, conferido em memória antes de qualquer escrita."""
+    schema_path = Path(__file__).resolve().parents[1] / "schemas" / "hygiene-work-item.schema.json"
+    if not schema_path.is_file():
+        return ["schema do work item ausente"]
+    try:
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        from jsonschema import Draft202012Validator
+    except (OSError, json.JSONDecodeError, ImportError) as error:
+        return [f"schema do work item indisponivel ({error.__class__.__name__})"]
+    validator = Draft202012Validator(schema)
+    return [
+        f"work item {item.get('id')}: {list(error.path)}: {error.message}"
+        for item in items
+        for error in validator.iter_errors(item)
+    ]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Gera work items a partir do relatorio de higiene")
     parser.add_argument("--root", type=Path, default=None)
@@ -228,6 +246,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERRO: {error}", file=sys.stderr)
         return 2
     items = build_work_items(root, report)
+    # O work item tambem passa pelo proprio contrato antes de sair: relatorio valido pode carregar
+    # combinacao que o contrato do work item recusa, e o artefato nao pode nascer invalido.
+    problems = work_item_schema_errors(items)
+    if problems:
+        print("ERRO: work item nao atende ao contrato:", file=sys.stderr)
+        for problem in problems[:5]:
+            print(f"- {problem}", file=sys.stderr)
+        return 2
     if args.json or args.out_dir is None:
         sys.stdout.write(json.dumps(items, ensure_ascii=False, indent=2) + "\n")
         return 0

@@ -117,6 +117,7 @@ def _history_errors(name: str, entry: dict) -> list[str]:
         return [f"politica: classes.{name}.baseline_history precisa declarar a historia da linha de base"]
     errors: list[str] = []
     values: list[int] = []
+    previous: int | None = None
     for index, item in enumerate(history):
         if not isinstance(item, dict):
             errors.append(f"politica: classes.{name}.baseline_history[{index}] precisa ser objeto")
@@ -125,14 +126,16 @@ def _history_errors(name: str, entry: dict) -> list[str]:
         if not isinstance(value, int) or isinstance(value, bool):
             errors.append(f"politica: classes.{name}.baseline_history[{index}].value precisa ser inteiro")
             continue
-        problem = reason_problem(item.get("reason"))
-        if problem is not None:
-            errors.append(
-                f"politica: classes.{name}.baseline_history[{index}].reason {problem}"
-            )
+        # Crescer divida exige motivo escrito; reduzir e progresso e pode ser declarado sem justificar,
+        # mas motivo presente precisa ter forma, para que o campo nao vire lugar de preenchimento.
+        if value > (previous if previous is not None else value) or item.get("reason") is not None:
+            problem = reason_problem(item.get("reason"))
+            if problem is not None:
+                errors.append(
+                    f"politica: classes.{name}.baseline_history[{index}].reason {problem}"
+                )
         values.append(value)
-    if values and values != sorted(values):
-        errors.append(f"politica: classes.{name}.baseline_history precisa estar em ordem nao decrescente")
+        previous = value
     if values and entry.get("baseline") != values[-1]:
         errors.append(
             f"politica: classes.{name}.baseline precisa ser o ultimo valor da historia declarada"
@@ -192,8 +195,15 @@ def _scope_errors(scope: object) -> list[str]:
         if not isinstance(entry, dict):
             errors.append(f"politica: scope.exclude_paths[{index}] precisa ser objeto com path e reason")
             continue
-        if not isinstance(entry.get("path"), str) or not entry["path"]:
+        declared_path = entry.get("path")
+        if not isinstance(declared_path, str) or not declared_path:
             errors.append(f"politica: scope.exclude_paths[{index}].path precisa ser texto")
+        elif Path(declared_path).is_absolute() or ".." in Path(declared_path).parts:
+            # Exclusao que sai da raiz nao exclusao de caminho da arvore auditada: ela aparentaria
+            # excluir algo do repositorio sem sair dele.
+            errors.append(
+                f"politica: scope.exclude_paths[{index}].path precisa ser caminho relativo dentro da raiz"
+            )
         problem = reason_problem(entry.get("reason"))
         if problem is not None:
             errors.append(f"politica: scope.exclude_paths[{index}].reason {problem}")
@@ -308,7 +318,8 @@ def coverage_errors(root: Path, report: dict, policy: dict) -> list[str]:
         errors.append("cobertura: nenhum arquivo analisado; escopo vazio nao e arvore limpa")
     declared = declared_exclusions(policy)
     for path in sorted(declared):
-        if not (root / path).is_file():
+        candidate = (root / path).resolve()
+        if not candidate.is_relative_to(root.resolve()) or not candidate.is_file():
             errors.append(f"cobertura: exclusao declarada sem arquivo correspondente: {path}")
     reported_excluded = {
         entry.get("path") for entry in report.get("excluded", []) if isinstance(entry, dict)

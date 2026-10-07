@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "system": "hygiene-policy",
-  "description": "Política da varredura global de higiene. A política é a única fonte dos limiares, das exclusões, das exceções e da linha de base: nenhum limiar vive no código, exclusão de caminho exige motivo escrito e aparece no relatório, exceção sem justificativa escrita reprova, e classe medida contra linha de base não aceita exceção item a item — ela cresce apenas por entrada nova na história declarada, com motivo registrado. Cada classe declara o que não vê, porque uma classe que reivindica completude produz confiança falsa.",
+  "description": "Política da varredura global de higiene. A política é a única fonte dos limiares, do escopo, das exclusões, das exceções e da linha de base: nenhum limiar vive no código, sufixo de texto conferido na busca por citação é declarado, exclusão de caminho exige motivo escrito, é caminho relativo dentro da raiz e aparece no relatório, exceção sem justificativa escrita reprova, e classe medida contra linha de base não aceita exceção item a item — ela cresce apenas por entrada nova na história declarada, com motivo registrado, e reduzir é progresso e não exige justificativa. Cada classe declara o que não vê, porque uma classe que reivindica completude produz confiança falsa.",
   "scope": {
     "include_suffixes": [
       ".py"
@@ -16,7 +16,21 @@
       "build",
       "evals/fixtures"
     ],
-    "exclude_paths": []
+    "exclude_paths": [],
+    "corpus_suffixes": [
+      ".md",
+      ".rst",
+      ".adoc",
+      ".py",
+      ".json",
+      ".yaml",
+      ".yml",
+      ".sh",
+      ".txt",
+      ".toml",
+      ".cfg",
+      ".ini"
+    ]
   },
   "classes": {
     "duplication": {
@@ -24,7 +38,7 @@
       "min_body_lines": 12,
       "exclude_declared_copies": true,
       "exclude_tests": true,
-      "limits": "Compara corpos de função normalizados por AST, apagando nome de variável, de parâmetro e de função chamada, além do literal de documentação; operador, constante e nome de atributo permanecem, porque somar não é subtrair e chamar upper não é chamar lower. Não vê duplicação entre linguagens, duplicação de bloco dentro de uma função, nem equivalência semântica entre corpos diferentes. Cópia declarada em config/shared-files.json é exclusão legítima, e não achado."
+      "limits": "Compara corpos de função normalizados por AST, apagando nome de variável, de parâmetro, de função chamada e de definição aninhada, além do literal de documentação; operador, constante e nome de atributo permanecem, porque somar não é subtrair e chamar upper não é chamar lower. Considera duplicação entre funções, inclusive no mesmo arquivo, porque duas cópias divergem na primeira alteração. Não vê duplicação entre linguagens, duplicação de bloco interno de uma função, nem equivalência semântica entre corpos diferentes. Cópia declarada em config/shared-files.json é exclusão legítima, e não achado."
     },
     "dead-module": {
       "state": "gated",
@@ -65,11 +79,11 @@
   },
   "accepted": [
     {
-      "id": "duplication:f3da40a5fc489be8",
+      "id": "duplication:b7e16a9b955acdef",
       "reason": "Guarda de inferencia de terminal duplicada entre a skill de entrega e a de auditoria, empacotadas de forma independente; consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria, registrada como work item pela propria varredura."
     },
     {
-      "id": "duplication:85dfe6bdc8392138",
+      "id": "duplication:5a8f5b683ebad425",
       "reason": "Guarda de inferencia de terminal duplicada entre a skill de entrega e a de auditoria, empacotadas de forma independente; consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria, registrada como work item pela propria varredura."
     }
   ],

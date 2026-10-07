@@ -24,8 +24,8 @@ Precisão não é detalhe de implementação: é contrato. Uma classe que acusa 
 
 | Classe | Vê | Não vê |
 | --- | --- | --- |
-| `duplication` | Corpo de função normalizado por AST, idêntico entre arquivos, acima do tamanho mínimo | Duplicação entre linguagens, bloco interno de função, equivalência semântica entre corpos diferentes |
-| `dead-module` | Módulo sem importador e sem invocação declarada, contando import absoluto e relativo | Referência montada em tempo de execução por nome fora de arquivo texto, plugin carregado por convenção de diretório |
+| `duplication` | Corpo de função normalizado por AST, idêntico entre funções, inclusive no mesmo arquivo, acima do tamanho mínimo | Duplicação entre linguagens, bloco interno de função, equivalência semântica entre corpos diferentes |
+| `dead-module` | Módulo sem importador e sem invocação declarada, com import absoluto resolvido pela raiz e pelo diretório de quem importa e import relativo resolvido pelo pacote | Referência montada em tempo de execução por nome fora de arquivo texto, plugin carregado por convenção de diretório |
 | `dead-symbol` | Função, classe e atribuição simples de nível de módulo sem nenhuma ocorrência do nome na árvore | Uso por `getattr`, por nome montado ou por registro dinâmico; atributo de classe, variável local e nome reexportado por import |
 | `unused-dependency` | Requisito declarado que nenhum módulo do escopo importa | Import indireto por caminho condicional, dependência de dependência |
 | `complexity` | Complexidade ciclomática do próprio corpo da função acima do teto | Complexidade cognitiva, tamanho de arquivo, acoplamento entre módulos, ramo de função aninhada |
@@ -34,14 +34,15 @@ Consequência prática: `dead-symbol` trata **qualquer** ocorrência do nome com
 
 Duas precisões valem para a normalização e para a medida, porque errar para mais custa mais caro que não acusar:
 
-- `duplication` apaga nome de variável, de parâmetro e de função chamada, além do literal de documentação. Operador, constante e nome de atributo permanecem: somar não é subtrair, `upper` não é `lower`, e tratar os dois como cópia produziria dívida inexistente.
+- `duplication` apaga nome de variável, de parâmetro, de função chamada e de definição aninhada, além do literal de documentação. Operador, constante e nome de atributo permanecem: somar não é subtrair, `upper` não é `lower`, e tratar os dois como cópia produziria dívida inexistente. Apagar menos também custa: renomear uma variável esconderia a cópia, e o achado sumiria sem que a dívida saísse.
 - `complexity` mede só o corpo da própria função. Função aninhada é unidade própria, medida por si, e gestão de recurso com `with` não cria caminho independente, então não conta como ramo.
 
 ## Contrato da política
 A política `config/hygiene-policy.json` é a única fonte de limiar, exceção e linha de base. Alterar limiar exige alterar a política, e a alteração fica visível na revisão.
 
 - `scope`: sufixos incluídos, diretórios excluídos e caminhos excluídos. Excluir diretório de teste ou de fixture é decisão declarada, não otimização.
-- `scope.exclude_paths`: lista de objetos `{path, reason}`. Excluir um arquivo coberto exige motivo escrito e aparece no relatório em `excluded`; exclusão sem arquivo correspondente reprova, e escopo que não analisa nenhum arquivo reprova, porque nenhum dos dois é árvore limpa.
+- `scope.exclude_paths`: lista de objetos `{path, reason}`. Excluir um arquivo coberto exige motivo escrito e aparece no relatório em `excluded`; exclusão sem arquivo correspondente reprova, e escopo que não analisa nenhum arquivo reprova, porque nenhum dos dois é árvore limpa. O caminho precisa ser relativo e ficar dentro da raiz: exclusão que sai da árvore aparentaria excluir algo do repositório sem excluir nada.
+- `scope.corpus_suffixes`: formatos de texto conferidos na busca por citação de módulo e de símbolo. A lista fica na política porque formato fora dela não é visto, e limite de formato escondido no código produz falso positivo em classe `gated`.
 - `classes.<nome>.state`: `gated` ou `reported`.
 - `classes.<nome>.limits`: o que a classe não vê, em texto. Campo obrigatório: classe sem limite declarado reivindica completude, e isso reprova.
 - `classes.duplication.min_body_lines`, `classes.complexity.max_complexity`: limiares. São campos obrigatórios: limiar que sai da política não cai em valor padrão escondido no código, ele reprova.
@@ -65,7 +66,7 @@ Classe `reported` existe para dívida estrutural pré-existente, como complexida
 - contagem acima da linha de base é dívida nova e reprova;
 - contagem abaixo é linha de base folgada e também reprova, porque deixa de medir o que já foi corrigido.
 
-Reduzir a linha de base registra progresso de forma verificável. Aumentar exige entrada nova na história declarada, com motivo escrito, e a linha de base corrente precisa ser o último valor dessa história:
+Reduzir a linha de base registra progresso de forma verificável e não exige justificativa: a entrada pode ser declarada só com o valor. Aumentar exige entrada nova na história declarada, com motivo escrito, e a linha de base corrente precisa ser o último valor dessa história:
 
 ```json
 "baseline_history": [

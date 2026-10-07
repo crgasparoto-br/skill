@@ -23,7 +23,25 @@ BASE_POLICY = {
     "schema_version": 1,
     "system": "hygiene-policy",
     "description": "Politica de teste com texto suficiente para passar na validacao de forma.",
-    "scope": {"include_suffixes": [".py"], "exclude_dirs": [], "exclude_paths": []},
+    "scope": {
+        "include_suffixes": [".py"],
+        "exclude_dirs": [],
+        "exclude_paths": [],
+        "corpus_suffixes": [
+            ".md",
+            ".rst",
+            ".adoc",
+            ".py",
+            ".json",
+            ".yaml",
+            ".yml",
+            ".sh",
+            ".txt",
+            ".toml",
+            ".cfg",
+            ".ini",
+        ],
+    },
     "classes": {
         "duplication": {
             "state": "gated",
@@ -695,3 +713,182 @@ def test_external_report_must_satisfy_the_contract(tmp_path: Path) -> None:
     )
     assert result.returncode == 2
     assert "nao atende ao contrato" in result.stderr
+
+
+def test_baseline_history_accepts_reduction(tmp_path: Path) -> None:
+    """Achado bloqueante: a catraca recusava a redução legítima da linha de base."""
+    document = measured_policy()
+    document["classes"]["complexity"]["baseline"] = 0
+    document["classes"]["complexity"]["baseline_history"] = [
+        {"value": 1, "reason": "Medicao inicial da arvore de teste com motivo escrito na forma."},
+        {"value": 0, "reason": "A divida medida caiu nesta entrega e a linha de base registra o progresso."},
+    ]
+    assert validate_hygiene.policy_errors(document) == []
+    document["classes"]["complexity"]["baseline_history"] = [
+        {"value": 1, "reason": "Medicao inicial da arvore de teste com motivo escrito na forma."},
+        {"value": 2},
+    ]
+    assert any("reason" in error for error in validate_hygiene.policy_errors(document))
+
+
+def test_exclusion_outside_root_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante: exclusão com caminho fora da raiz passava como exclusão válida."""
+    outside = tmp_path / "outside.py"
+    outside.write_text("VALUE = 1\n", encoding="utf-8")
+    for declared in (str(outside), "../outside.py", "pkg/../../outside.py"):
+        document = policy_variant(
+            **{
+                "scope.exclude_paths": [
+                    {"path": declared, "reason": "Exclusao declarada com motivo textual longo para teste."}
+                ]
+            }
+        )
+        assert any(
+            "caminho relativo dentro da raiz" in error
+            for error in validate_hygiene.policy_errors(document)
+        ), declared
+
+
+def test_covered_directory_does_not_vanish(tmp_path: Path) -> None:
+    """Achado bloqueante: diretório com sufixo coberto saía do conjunto sem aparecer no relatório."""
+    tree = make_tree(tmp_path, {"alpha.py": "def used(value):\n    return value\n"})
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "x.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (tree / "bad.py").symlink_to(outside, target_is_directory=True)
+    report = scan(tree)
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["bad.py"]
+    assert any("nao analisado" in error for error in validate_hygiene.validate_hygiene(tree))
+
+
+def test_duplication_normalizes_identifiers(tmp_path: Path) -> None:
+    """Achado bloqueante: a normalização não apagava identificador, e renomeação escondia a cópia."""
+    body = (
+        "def {name}({argument}):\n"
+        "    total = 0\n"
+        "    for item in {argument}:\n"
+        "        total += item\n"
+        "    return {helper}(total)\n"
+    )
+    first = body.format(name="alpha", argument="values", helper="process")
+    second = body.format(name="beta", argument="entries", helper="consolidate")
+    findings = findings_of(
+        scan(make_tree(tmp_path, {"a.py": first, "b.py": second}, policy_variant(**{"classes.duplication.min_body_lines": 2}))),
+        "duplication",
+    )
+    assert len(findings) == 2
+    different = second.replace("total += item", "total -= item")
+    assert (
+        findings_of(
+            scan(
+                make_tree(
+                    tmp_path / "second",
+                    {"a.py": first, "b.py": different},
+                    policy_variant(**{"classes.duplication.min_body_lines": 2}),
+                )
+            ),
+            "duplication",
+        )
+        == []
+    )
+
+
+def test_relative_import_does_not_keep_homonym_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: import relativo mantinha vivo um módulo homônimo fora do pacote."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "orphan.py": "VALUE = 1\n",
+            "pkg/consumer.py": "from . import orphan\n",
+            "pkg/orphan.py": "OTHER = 2\n",
+            "README.md": "`pkg/consumer.py`\n",
+        },
+    )
+    assert [finding["path"] for finding in findings_of(scan(tree), "dead-module")] == ["orphan.py"]
+
+
+def test_sibling_import_keeps_module_alive(tmp_path: Path) -> None:
+    """Regressão do próprio endurecimento: irmão de diretório não pode virar módulo morto."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "skill/scripts/helper.py": "def run():\n    return 1\n",
+            "skill/scripts/entry.py": "from helper import run\n",
+            "README.md": "`skill/scripts/entry.py`\n",
+        },
+    )
+    assert findings_of(scan(tree), "dead-module") == []
+
+
+def test_assignment_inside_module_block_is_a_symbol(tmp_path: Path) -> None:
+    """Achado bloqueante: atribuição dentro de controle de fluxo no módulo não era analisada."""
+    tree = make_tree(
+        tmp_path,
+        {"alpha.py": "if True:\n    HIDDEN = 1\n", "README.md": "`alpha.py`\n"},
+    )
+    assert [finding["symbol"] for finding in findings_of(scan(tree), "dead-symbol")] == ["HIDDEN"]
+
+
+def test_declared_corpus_covers_restructured_text(tmp_path: Path) -> None:
+    """Achado bloqueante: citação em formato fora da lista fixa virava falso positivo."""
+    tree = make_tree(
+        tmp_path,
+        {"alpha.py": "def public_api(value):\n    return value\n", "README.rst": "public_api is documented here.\n"},
+    )
+    assert findings_of(scan(tree), "dead-symbol") == []
+    policy = policy_variant(**{"scope.corpus_suffixes": [".py"]})
+    assert validate_hygiene.policy_errors(policy) == []
+    assert findings_of(
+        scan(make_tree(tmp_path / "second", {"alpha.py": "def public_api(value):\n    return value\n", "README.rst": "public_api\n"}, policy)),
+        "dead-symbol",
+    ) != []
+
+
+def test_corpus_suffixes_must_be_declared() -> None:
+    """O limite de formato não pode ficar escondido no código."""
+    document = copy.deepcopy(BASE_POLICY)
+    document["scope"].pop("corpus_suffixes")
+    try:
+        hygiene_scan.corpus_suffixes(document)
+    except hygiene_scan.HygieneError:
+        pass
+    else:
+        raise AssertionError("sufixo de corpus ausente precisa reprovar")
+
+
+def test_inline_comment_with_tab_is_not_a_dependency(tmp_path: Path) -> None:
+    """Achado bloqueante: comentário precedido de tabulação virava nome de dependência."""
+    tree = make_tree(
+        tmp_path,
+        {"requirements.txt": "requests\t# needed by runtime\n", "alpha.py": "import requests\n"},
+    )
+    assert findings_of(scan(tree), "unused-dependency") == []
+
+
+def test_work_item_is_validated_against_its_contract(tmp_path: Path) -> None:
+    """Achado não bloqueante: relatório válido podia gerar work item inválido."""
+    import subprocess
+
+    report = scan(make_tree(tmp_path, {"orphan.py": "VALUE = 1\n", "README.md": "`VALUE`\n"}))
+    entry = next(item for item in report["classes"] if item["name"] == "dead-module")
+    entry["findings"].append(dict(entry["findings"][0]))
+    entry["open"] = 2
+    report["summary"]["open"] = 2
+    forged = tmp_path / "forged.json"
+    forged.write_text(json.dumps(report), encoding="utf-8")
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(tmp_path),
+            "--report",
+            str(forged),
+            "--json",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "work item nao atende ao contrato" in result.stderr

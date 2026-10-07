@@ -241,6 +241,18 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A segunda rodada de auditoria corrigiu o que o primeiro endurecimento ainda não garantia: a catraca passou a
+aceitar redução da linha de base sem justificativa e a exigir motivo apenas para crescimento, exclusão de
+caminho passou a ser caminho relativo confinado à raiz, diretório com sufixo coberto passou a entrar como
+cobertura não analisada em vez de desaparecer, a normalização da duplicação passou a apagar identificador de
+fato — o dump anterior omitia o nome do campo e a promessa não se cumpria —, o import relativo passou a ser
+resolvido contra o pacote e o absoluto contra o diretório de quem importa, o que fecha a colisão de nome sem
+acusar o idioma de import entre irmãos, atribuição dentro de controle de fluxo no nível do módulo passou a
+contar como símbolo, os formatos de texto conferidos na busca por citação passaram a ser declarados na política
+em `scope.corpus_suffixes`, comentário em linha precedido de tabulação deixou de virar nome de dependência, e o
+work item passou a ser conferido contra o próprio contrato antes de sair; a contagem de uso de símbolo passou a
+ser feita em uma passada só, reduzindo o tempo da suíte do perfil de cerca de dois minutos e meio para cerca de
+quinze segundos.
 A entrega foi endurecida pela auditoria independente: classe medida contra linha de base deixou de aceitar
 exceção item a item, a linha de base passou a viver numa história declarada em que crescer exige entrada nova
 com motivo, exclusão de caminho passou a exigir motivo e a aparecer no relatório, escopo vazio e exclusão sem

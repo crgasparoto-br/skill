@@ -35,19 +35,58 @@ import hashlib
 import json
 import re
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 DEFAULT_POLICY = Path("config") / "hygiene-policy.json"
 SHARED_FILES = Path("config") / "shared-files.json"
-TEXT_SUFFIXES = {".md", ".py", ".json", ".yaml", ".yml", ".sh", ".txt", ".toml", ".cfg", ".ini"}
-NAME_RE = re.compile(r"[A-Za-z0-9_./-]+\.(?:py|md|json|ya?ml|sh|txt|toml|cfg|ini)\b")
 IDENTIFIER_FIELD_RE = re.compile(r"\b(?:name|id|arg)='[^']*'")
+IDENTIFIER_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+COMMENT_START_RE = re.compile(r"\s+#")
 CLASSES = ("duplication", "dead-module", "dead-symbol", "unused-dependency", "complexity")
 
 
 class HygieneError(Exception):
     """Falha de leitura ou de política que impede a varredura de ser honesta."""
+
+
+def scope_of(policy: dict) -> dict:
+    """Seção de escopo da política, sempre um mapa."""
+    scope = policy.get("scope")
+    return scope if isinstance(scope, dict) else {}
+
+
+def corpus_suffixes(policy: dict) -> set[str]:
+    """Sufixos de arquivo texto conferidos na busca por citação, declarados na política.
+
+    A busca por citação não vê formato fora desta lista. O limite precisa estar declarado: sufixo
+    escondido no código produz falso positivo em classe `gated`, e a política é a única fonte disso.
+    """
+    declared = scope_of(policy).get("corpus_suffixes")
+    if not isinstance(declared, list) or not declared:
+        raise HygieneError("politica: scope.corpus_suffixes precisa declarar os sufixos de texto")
+    return {str(suffix) for suffix in declared}
+
+
+def citation_pattern(policy: dict) -> re.Pattern[str]:
+    """Expressão que reconhece citação de caminho, montada dos sufixos declarados."""
+    suffixes = {*corpus_suffixes(policy), *(scope_of(policy).get("include_suffixes") or [])}
+    names = sorted(
+        {re.escape(str(suffix).lstrip(".")) for suffix in suffixes if str(suffix).startswith(".")}
+    )
+    return re.compile(rf"[A-Za-z0-9_./-]+\.(?:{'|'.join(names)})\b")
+
+
+def identifier_counts(texts: dict[str, str]) -> Counter[str]:
+    """Contagem de cada identificador do corpus, em uma passada só.
+
+    Contar por definição recompilando expressão sobre o corpus inteiro custa definições vezes corpus e
+    torna o gate lento em árvore grande; uma passada mantém o custo proporcional ao corpus.
+    """
+    counts: Counter[str] = Counter()
+    for text in texts.values():
+        counts.update(IDENTIFIER_TOKEN_RE.findall(text))
+    return counts
 
 
 def read_text(path: Path) -> str:
@@ -147,9 +186,22 @@ def scope_files(
     files: list[Path] = []
     refused: list[dict] = []
     for candidate in candidates:
-        if candidate.is_dir():
-            continue
         rel = safe_relative(candidate, root)
+        if candidate.is_dir():
+            # Diretorio, ou link para diretorio, com sufixo coberto: nao e arquivo analisavel, e sair
+            # do conjunto sem aparecer no relatorio seria cobertura encolhida em silencio.
+            if candidate.suffix in suffixes:
+                refused.append(
+                    {
+                        "path": rel,
+                        "reason": (
+                            "link simbolico para diretorio, e nao arquivo regular"
+                            if candidate.is_symlink()
+                            else "caminho coberto que e diretorio, e nao arquivo regular"
+                        ),
+                    }
+                )
+            continue
         if candidate.suffix not in suffixes:
             continue
         if candidate.is_symlink() and not candidate.exists():
@@ -238,14 +290,16 @@ def cyclomatic_complexity(node: ast.AST) -> int:
 def normalized_body(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
     """Forma do corpo sem nome de variável, parâmetro, função chamada e literal de documentação.
 
-    Só identificador é apagado. Operador, constante e nome de atributo permanecem: somar e subtrair
-    o mesmo valor não são a mesma função, e chamar `upper` não é chamar `lower`. Apagar tudo isso
-    produziria cópia onde não existe cópia, que é o erro mais caro desta classe.
+    Só identificador é apagado: nome de variável, de parâmetro, de função chamada e de definição
+    aninhada. Operador, constante e nome de atributo permanecem: somar e subtrair o mesmo valor não
+    são a mesma função, e chamar `upper` não é chamar `lower`. Apagar tudo isso produziria cópia onde
+    não existe cópia, que é o erro mais caro desta classe; apagar menos faria a renomeação de uma
+    variável esconder a cópia, que é o segundo erro mais caro.
     """
     body = [statement for statement in node.body if not is_docstring(statement)]
     if not body:
         return None
-    dump = ast.dump(ast.Module(body=body, type_ignores=[]), annotate_fields=False)
+    dump = ast.dump(ast.Module(body=body, type_ignores=[]))
     return IDENTIFIER_FIELD_RE.sub("ID='ID'", dump)
 
 
@@ -265,11 +319,11 @@ def finding_identity(class_name: str, parts: list[str]) -> str:
 
 def corpus_texts(root: Path, policy: dict) -> dict[str, str]:
     """Texto de todos os arquivos analisáveis da árvore, para as regras de referência."""
-    scope = policy.get("scope") if isinstance(policy.get("scope"), dict) else {}
-    exclude_dirs = set(scope.get("exclude_dirs") or [])
+    exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
+    suffixes = corpus_suffixes(policy)
     texts: dict[str, str] = {}
     for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
-        if not path.is_file() or path.suffix not in TEXT_SUFFIXES:
+        if not path.is_file() or path.suffix not in suffixes:
             continue
         rel = relative(path, root)
         if set(Path(rel).parts) & exclude_dirs:
@@ -281,7 +335,7 @@ def corpus_texts(root: Path, policy: dict) -> dict[str, str]:
     return texts
 
 
-def named_paths(texts: dict[str, str], root: Path) -> set[str]:
+def named_paths(texts: dict[str, str], root: Path, pattern: re.Pattern[str]) -> set[str]:
     """Caminhos citados por algum arquivo, resolvidos na raiz e no diretório de quem cita.
 
     A citação pode vir como caminho a partir da raiz (`scripts/x.py`), como caminho a partir do
@@ -297,7 +351,7 @@ def named_paths(texts: dict[str, str], root: Path) -> set[str]:
         by_name[Path(rel).name].append(rel)
     for rel, text in texts.items():
         directory = Path(rel).parent.as_posix()
-        for token in NAME_RE.findall(text):
+        for token in pattern.findall(text):
             cleaned = token.strip("./")
             if not cleaned:
                 continue
@@ -356,24 +410,49 @@ def detect_duplication(
     return findings
 
 
+def resolve_import(imported: set[str], package: list[str], parts: list[str]) -> None:
+    """Acrescenta as formas resolvidas de um nome importado ao conjunto de módulos alcançados."""
+    if not parts:
+        return
+    imported.add(".".join(parts))
+    if package:
+        imported.add(".".join([*package, *parts]))
+
+
+def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
+    """Módulos importados, resolvidos contra a raiz e contra o diretório de quem importa.
+
+    Três formas precisam ser resolvidas para não acusar falso positivo nem falso negativo:
+
+    - absoluta a partir da raiz (`import scripts.catalog`), resolvida pela raiz;
+    - absoluta entre irmãos de diretório (`from handoff_origin import x`), porque script de skill roda
+      com o próprio diretório no caminho de importação, resolvida contra o diretório de quem importa;
+    - relativa (`from . import orphan`), resolvida contra o pacote de quem importa, que é o que impede
+      a colisão de nome: o relativo alcança `pkg/orphan.py`, e não um `orphan.py` solto na raiz.
+    """
+    imported: set[str] = set()
+    for rel, tree in modules.items():
+        package = list(Path(rel).parent.parts)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    resolve_import(imported, package, alias.name.split("."))
+            elif isinstance(node, ast.ImportFrom):
+                depth = min(node.level - 1, len(package)) if node.level else 0
+                base = [*package[: len(package) - depth], *(node.module.split(".") if node.module else [])]
+                resolve_import(imported, package, base)
+                for alias in node.names:
+                    resolve_import(imported, package, [*base, alias.name])
+    return imported
+
+
 def detect_dead_modules(
     root: Path, policy: dict, modules: dict[str, ast.Module], texts: dict[str, str]
 ) -> list[dict]:
     config = policy["classes"]["dead-module"]
     declared_entries = {entry for entry in config.get("entry_points", []) if isinstance(entry, str)}
-    named = named_paths(texts, root)
-    imported: set[str] = set()
-    for tree in modules.values():
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                imported.update(alias.name for alias in node.names)
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    imported.add(node.module)
-                    imported.update(f"{node.module}.{alias.name}" for alias in node.names)
-                else:
-                    # `from . import x`: sem modulo textual, o importado e o proprio alias.
-                    imported.update(alias.name for alias in node.names)
+    named = named_paths(texts, root, citation_pattern(policy))
+    imported = imported_modules(modules)
     findings: list[dict] = []
     for rel in sorted(modules):
         path = Path(rel)
@@ -381,13 +460,7 @@ def detect_dead_modules(
             continue
         if rel in declared_entries or rel in named or path.name in named:
             continue
-        module_name = rel[:-3].replace("/", ".")
-        stem = path.stem
-        if any(
-            entry in (module_name, stem)
-            or entry.endswith(("." + stem, "." + module_name))
-            for entry in imported
-        ):
+        if rel[:-3].replace("/", ".") in imported:
             continue
         findings.append(
             {
@@ -413,7 +486,7 @@ def detect_dead_symbols(
     config = policy["classes"]["dead-symbol"]
     exclude_tests = bool(config.get("exclude_tests", True))
     ignore = {name for name in config.get("ignore_names", []) if isinstance(name, str)}
-    corpus = "\n".join(texts.values())
+    counts = identifier_counts(texts)
     definitions: dict[str, list[str]] = defaultdict(list)
     for rel in sorted(modules):
         path = Path(rel)
@@ -421,7 +494,9 @@ def detect_dead_symbols(
             continue
         tree = modules[rel]
         parents = parent_map(tree)
-        for node in tree.body:
+        # Escopo do modulo inclui o que roda dentro de controle de fluxo: `if`, `try` e `with` no nivel
+        # do modulo ligam nome no namespace do modulo, e ignorar isso deixaria simbolo morto invisivel.
+        for node in own_scope_nodes(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 definitions[node.name].append(f"{rel}::{qualname(node, parents)}")
             elif isinstance(node, (ast.Assign, ast.AnnAssign)):
@@ -431,8 +506,7 @@ def detect_dead_symbols(
     for name, places in sorted(definitions.items()):
         if name in ignore or name.startswith("__"):
             continue
-        occurrences = len(re.findall(rf"\b{re.escape(name)}\b", corpus))
-        if occurrences > len(places):
+        if counts.get(name, 0) > len(places):
             continue
         for place in places:
             rel, symbol = place.split("::", 1)
@@ -484,7 +558,7 @@ def detect_unused_dependencies(root: Path, policy: dict, texts: dict[str, str]) 
         except HygieneError:
             continue
         for raw in lines:
-            line = raw.split(" #", 1)[0].strip()
+            line = COMMENT_START_RE.split(raw, maxsplit=1)[0].strip()
             if not line or line.startswith(("#", "-")):
                 continue
             name = re.split(r"[<>=!~\[;]", line, maxsplit=1)[0].strip()
