@@ -96,6 +96,9 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Destino com mais de um link e recusado, porque escrita por link alcancaria a arvore medida sem sair dela, e relatorio com contagem decimal e recusado, porque o esquema aceita `1.0` como inteiro.
 - Toda classe declarada como medida exige linha de base declarada, e as chaves da catraca valem em toda classe: medir contra alvo nao declarado nao e medicao, e a mesma decisao nao pode ser recusada como chave desconhecida.
 - O import relativo que sobe alem do pacote do importador nao soma esse pacote ao alvo, porque somar manteria vivo um homonimo que ninguem importa.
+- A citacao de nome solto resolve contra o escopo medido: em modo direcionado, homonimo fora do alvo nao torna ambigua uma citacao que dentro do alvo e unica.
+- Escopo declarado fora do tipo reprova a politica, e nao derruba o gate, a varredura e o gerador com excecao crua.
+- Destino em ciclo de links, ou com pai que nao e diretorio, e recusado antes de qualquer escrita: falha de artefato nao sai como excecao crua nem como publicacao parcial.
 - O destino de `--report` e de `--markdown` e arquivo, e o de `--out-dir` e diretorio conferido pelo que existe de fato no sistema de arquivos, inclusive link quebrado: artefato nao nasce de excecao crua nem de publicacao parcial.
 - Caminho declarado precisa ser texto simples: NUL e quebra de linha nao sao caminho, e politica invalida reprova em vez de derrubar o validador.
 - O relatorio Markdown publica o escopo excluido, e nao so o JSON: artefato humano sem a exclusao induziria leitura de cobertura completa sobre escopo reduzido por declaracao.

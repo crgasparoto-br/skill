@@ -714,8 +714,28 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
     return texts, refused
 
 
+def measured_scope_root(root: Path, paths: list[str] | None) -> Path:
+    """Raiz do escopo medido, que é a base do índice de nome solto.
+
+    Em modo direcionado, um homônimo fora do alvo tornaria ambígua uma citação que, dentro do alvo, é
+    única, e criaria achado que não existe na medição. Alvo fora da raiz não estreita o escopo: ele é
+    recusado antes, e estreitar por ele mediria outra árvore.
+    """
+    if not paths or len(paths) != 1:
+        return root
+    candidate = root / paths[0]
+    resolved_root = root.resolve()
+    if candidate.is_dir() and candidate.resolve().is_relative_to(resolved_root):
+        return candidate
+    return root
+
+
 def named_paths(
-    texts: dict[str, str], root: Path, suffixes: set[str], policy: dict
+    texts: dict[str, str],
+    root: Path,
+    suffixes: set[str],
+    policy: dict,
+    paths: list[str] | None = None,
 ) -> dict[str, set[str]]:
     """Caminhos citados por algum arquivo, resolvidos na raiz e no diretório de quem cita.
 
@@ -727,7 +747,7 @@ def named_paths(
     resolved_root = root.resolve()
     exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
     excluded_paths = set(declared_exclusions(policy))
-    walked, _ = walk_scope(root, root, exclude_dirs)
+    walked, _ = walk_scope(measured_scope_root(root, paths), root, exclude_dirs)
     known = {
         relative(path, root)
         for path in walked
@@ -920,7 +940,11 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
 
 
 def detect_dead_modules(
-    root: Path, policy: dict, modules: dict[str, ast.Module], texts: dict[str, str]
+    root: Path,
+    policy: dict,
+    modules: dict[str, ast.Module],
+    texts: dict[str, str],
+    paths: list[str] | None = None,
 ) -> list[dict]:
     config = policy["classes"]["dead-module"]
     exclude_tests = bool(config.get("exclude_tests", False))
@@ -930,7 +954,7 @@ def detect_dead_modules(
         for entry in config.get("entry_points", [])
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
-    named = named_paths(texts, root, citation_suffixes(policy), policy)
+    named = named_paths(texts, root, citation_suffixes(policy), policy, paths)
     imported = imported_modules(modules)
     findings: list[dict] = []
     for rel in sorted(modules):
@@ -1414,7 +1438,7 @@ def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tu
     not_analyzed.extend(refused_corpus)
     findings: list[dict] = []
     findings.extend(detect_duplication(root, policy, modules, texts))
-    findings.extend(detect_dead_modules(root, policy, modules, texts))
+    findings.extend(detect_dead_modules(root, policy, modules, texts, paths))
     findings.extend(detect_dead_symbols(root, policy, modules, texts))
     dependency_findings, refused_manifests = detect_unused_dependencies(root, policy, modules, paths)
     not_analyzed.extend(refused_manifests)
@@ -1521,11 +1545,17 @@ def write_target(path: Path, root: Path, label: str) -> Path:
     """
     try:
         target = path.resolve()
-    except OSError as error:
+    except (OSError, RuntimeError) as error:
         # Caminho especial, link em ciclo ou árvore sem permissão: recusa controlada, nunca exceção crua.
-        raise HygieneError(f"{label} nao pode ser resolvido: {error.strerror or error}") from error
+        # `resolve()` levanta `RuntimeError` em ciclo de links, e nao `OSError`.
+        raise HygieneError(f"{label} nao pode ser resolvido: {error}") from error
     if target.is_relative_to(root):
         raise HygieneError(f"{label} dentro da arvore medida: use caminho fora de {root.name}")
+    parent = target.parent
+    if parent.exists() and not parent.is_dir():
+        # Pai que não é diretório só apareceria na escrita, depois da validação: conferir aqui mantém a
+        # recusa controlada e evita publicação parcial.
+        raise HygieneError(f"{label} tem pai que nao e diretorio: {parent}")
     if target.exists() and not target.is_dir():
         # Alvo com mais de um link pode ser o mesmo arquivo de dentro da árvore: a checagem de caminho é
         # lexical, e a escrita por link alteraria a árvore medida sem sair dela. Diretório tem mais de um
@@ -1604,12 +1634,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- {problem}", file=sys.stderr)
         return 1
     payload = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
-    if args.report:
-        targets["--report"].write_text(payload, encoding="utf-8")
-    else:
-        sys.stdout.write(payload)
-    if args.markdown:
-        targets["--markdown"].write_text(render_markdown(report), encoding="utf-8")
+    try:
+        if args.report:
+            targets["--report"].write_text(payload, encoding="utf-8")
+        else:
+            sys.stdout.write(payload)
+        if args.markdown:
+            targets["--markdown"].write_text(render_markdown(report), encoding="utf-8")
+    except OSError as error:
+        # Falha de escrita não pode sair como exceção crua: o relatório é artefato, e artefato que não
+        # nasce por inteiro não pode parecer publicado.
+        print(f"ERRO: falha ao gravar o relatorio: {error}", file=sys.stderr)
+        return 1
     return 0
 
 

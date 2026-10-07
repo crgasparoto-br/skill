@@ -241,6 +241,10 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A décima sétima rodada de auditoria corrigiu o que as dezesseis anteriores ainda não garantiam: escopo declarado fora do tipo
+passou a reprovar a política, em vez de derrubar o gate; a citação de nome solto passou a resolver contra o escopo medido, e não
+contra a árvore inteira; destino em ciclo de links passou a ser recusado com mensagem; e pai de destino que não é diretório passou a
+ser conferido antes da escrita, em vez de aparecer como exceção crua.
 A décima sexta rodada de auditoria corrigiu o que as quinze anteriores ainda não garantiam: as chaves da catraca passaram a valer
 em toda classe, e não só em complexidade, que era o único lugar onde a linha de base podia ser declarada; o import relativo que sobe
 além do pacote do importador deixou de manter vivo um homônimo que ninguém importa; o destino de `--report` e `--markdown` deixou de

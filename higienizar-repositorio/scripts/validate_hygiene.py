@@ -302,12 +302,16 @@ def _path_text_problem(value: str) -> str | None:
     return None
 
 
-def _exclude_dir_errors(scope: dict) -> list[str]:
+def _exclude_dir_errors(scope: object) -> list[str]:
     """Diretório excluído precisa ser nome de diretório relativo dentro da raiz.
 
     `.` e caminho absoluto esvaziariam o conjunto analisado por declaração, e escopo vazio declarado
     como se fosse medição é a forma mais barata de esconder dívida.
     """
+    if not isinstance(scope, dict):
+        # `scope` fora do tipo já reprova por si; sem esta guarda, o gate morreria com exceção crua em
+        # vez de reprovar a política, e o mesmo caminho é usado pela varredura e pelo gerador.
+        return []
     declared = scope.get("exclude_dirs")
     if not isinstance(declared, list):
         return []

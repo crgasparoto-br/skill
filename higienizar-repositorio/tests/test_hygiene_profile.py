@@ -2794,3 +2794,81 @@ def test_producer_contract_is_the_same_as_the_gate() -> None:
     """Achado não bloqueante: o produtor não conferia o decimal que o gate confere."""
     forged = {"schema_version": 1.0, "analyzed": 1.0}
     assert any("nao decimal" in error for error in hygiene_scan.report_contract_errors(forged))
+
+
+def test_policy_scope_out_of_type_is_refused_without_crash() -> None:
+    """Achado bloqueante: `scope` fora do tipo derrubava o gate com exceção crua."""
+    for value in (None, [], "x", 1, True):
+        policy = policy_variant()
+        policy["scope"] = value
+        errors = validate_hygiene.policy_errors(policy)
+        assert "politica: scope precisa ser objeto" in errors, value
+
+
+def test_targeted_citation_resolves_in_measured_scope(tmp_path: Path) -> None:
+    """Achado bloqueante: homônimo fora do alvo tornava ambígua citação única dentro do alvo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/orphan.py": "V = 1\n",
+            "other/orphan.py": "V = 2\n",
+            "README.md": "See orphan.py\n",
+        },
+        policy_variant(accepted=[], **{"scope.exclude_paths": []}),
+    )
+    report, _ = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree), ["pkg"])
+    assert [entry["path"] for entry in findings_of(report, "dead-module")] == []
+    # Fora do modo direcionado o homônimo é ambíguo de verdade, e a citação não decide por ninguém.
+    report, _ = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree))
+    assert "pkg/orphan.py" in [entry["path"] for entry in findings_of(report, "dead-module")]
+
+
+def test_symlink_loop_in_target_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: ciclo de links escapava do tratamento e saía como exceção crua."""
+    first = tmp_path / "a"
+    second = tmp_path / "b"
+    first.symlink_to(second)
+    second.symlink_to(first)
+    tree = make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    for flag in ("--report", "--markdown"):
+        result = subprocess.run(
+            [sys.executable, str(SCRIPTS / "hygiene_scan.py"), "--root", str(tree), flag, str(first)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode != 0, flag
+        assert "nao pode ser resolvido" in result.stderr, flag
+        assert "Traceback" not in result.stderr, flag
+    result = subprocess.run(
+        [sys.executable, str(SCRIPTS / "build_hygiene_work_items.py"), "--root", str(REPO_ROOT), "--out-dir", str(first)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "Traceback" not in result.stderr
+
+
+def test_target_with_parent_that_is_not_directory_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: pai que não é diretório só aparecia na escrita, como exceção crua."""
+    parent = tmp_path / "pai"
+    parent.write_text("x", encoding="utf-8")
+    tree = make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    for flag in ("--report", "--markdown"):
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS / "hygiene_scan.py"),
+                "--root",
+                str(tree),
+                flag,
+                str(parent / "out.json"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode != 0, flag
+        assert "pai que nao e diretorio" in result.stderr, flag
+        assert "Traceback" not in result.stderr, flag
