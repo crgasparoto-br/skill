@@ -134,6 +134,7 @@ python scripts/validate_context_budget.py --root .
 python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
 python scripts/validate_reference_indexes.py --root .
 python scripts/validate_dependency_locks.py --root .
+python scripts/lock_dependencies.py --root . --check  # resolucao real: exige rede
 python -m pytest -q
 ```
 

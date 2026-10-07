@@ -1007,3 +1007,36 @@ def test_root_manifest_without_lockfile_is_detected(tmp_path: Path) -> None:
     root = minimal(tmp_path)
     (root / "requirements.txt").write_text("packaging>=26.3\n", encoding="utf-8")
     assert main(["--root", str(root), "--quiet"]) == 1
+
+
+# ------------------------------------------- décima rodada: robustez e fechamento
+
+
+@pytest.mark.parametrize("mode", ["dangling", "directory"])
+def test_non_regular_lockfile_is_reported_without_traceback(tmp_path: Path, mode: str,
+                                                            capsys: pytest.CaptureFixture[str]) -> None:
+    """Parecer precisa ser controlado: ler symlink pendente não pode derrubar o gate."""
+    root = tmp_path / "repo"
+    (root / "skill").mkdir(parents=True)
+    (root / "config").mkdir()
+    (root / "config" / "dependency-policy.json").write_text(
+        json.dumps({"schema_version": 1, "exceptions": []}), encoding="utf-8"
+    )
+    (root / "skill" / "requirements.txt").write_text("cryptography>=50.0.1\n", encoding="utf-8")
+    target = root / "skill" / ("sumiu.lock.txt" if mode == "dangling" else "dir")
+    if mode == "directory":
+        target.mkdir()
+    (root / "skill" / "requirements.lock.txt").symlink_to(target)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    captured = capsys.readouterr()
+    assert "nao regular" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_locked_index_ignores_non_regular_lockfiles(tmp_path: Path) -> None:
+    from scripts.validate_dependency_locks import locked_index
+
+    root = tmp_path / "repo"
+    (root / "skill").mkdir(parents=True)
+    (root / "skill" / "requirements.lock.txt").symlink_to(root / "skill" / "sumiu.lock.txt")
+    assert locked_index(root) == {}

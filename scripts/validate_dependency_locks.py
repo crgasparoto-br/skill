@@ -323,10 +323,16 @@ def locked_index(root: Path) -> dict[str, set[str]]:
     """Pacote -> versões fixadas em lockfile confinado à raiz."""
     index: dict[str, set[str]] = {}
     for lock in discover_lockfiles(root):
-        # Lockfile que resolve para fora da raiz não pode alimentar o índice da política.
-        if not confined(lock, root):
+        # Lockfile que resolve para fora da raiz não pode alimentar o índice da política, e
+        # lockfile que não é arquivo regular não pode ser lido: ler um symlink pendente
+        # derrubaria o gate com traceback em vez de reprovar de forma controlada.
+        if not confined(lock, root) or not lock.is_file():
             continue
-        entries, _ = parse_lock(lock.read_text(encoding="utf-8"))
+        try:
+            text = lock.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        entries, _ = parse_lock(text)
         for name, entry in entries.items():
             index.setdefault(name, set()).add(entry["version"])
     return index
@@ -524,6 +530,8 @@ def validate_dependency_locks(root: Path) -> list[str]:
     for lock in discover_lockfiles(root):
         if not confined(lock, root):
             errors.append(f"{relative(lock, root)}: lockfile resolve para fora da raiz do repositorio")
+        elif not lock.is_file():
+            errors.append(f"{relative(lock, root)}: lockfile ausente, pendente ou nao regular")
         elif lock not in paired:
             errors.append(f"{relative(lock, root)}: lockfile sem manifest correspondente")
     policy_errors, _ = validate_policy(root, locked_index(root))

@@ -37,8 +37,17 @@ jobs:
         with:
           python-version: "3.12"
 
+      # O gate interpreta gramática PEP 440, 508 e 427 pelo `packaging`, que é dependência
+      # declarada: instalá-la do próprio lockfile com verificação de digest mantém o gate sem
+      # tocar a rede, e sem ela o gate reprova em vez de aprovar por omissão.
+      - name: Instalar o ferramental do catalogo a partir do lockfile
+        run: python -m pip install --require-hashes -r requirements.lock.txt
+
       - name: Validar lockfiles e politica de excecao
         run: python scripts/validate_dependency_locks.py --root .
+
+      - name: Validar fechamento resolvido dos lockfiles
+        run: python scripts/lock_dependencies.py --root . --check
 
       - name: Instalar pip-audit
         run: python -m pip install --quiet pip-audit

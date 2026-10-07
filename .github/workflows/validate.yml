@@ -81,6 +81,12 @@ jobs:
       - name: Validate dependency lockfiles and exception policy
         run: python scripts/validate_dependency_locks.py --root .
 
+      # O gate offline prova forma e vínculo, mas não pode resolver dependências. A resolução
+      # real é o que demonstra que o lockfile é o fechamento do manifest: comparar o lockfile
+      # regenerado reprova fechamento forjado e transitiva que um extra ativa e ficou de fora.
+      - name: Validate that lockfiles match the resolved closure
+        run: python scripts/lock_dependencies.py --root . --check
+
       - name: Run skill tests
         run: python -m pytest -q
 
