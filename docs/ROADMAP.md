@@ -241,6 +241,10 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A vigésima rodada de auditoria corrigiu o que as dezenove anteriores ainda não garantiam: a publicação deixou de deixar temporário
+órfão quando um artefato posterior falha e passou a recusar destino que é diretório; o alvo direcionado que é link de diretório passou a
+ser recusado no início da caminhada, sem medir o diretório real; a identidade da exceção declarada passou a ser validada no formato do
+relatório, também em modo direcionado; e o alvo inexistente com `..` passou a ser rotulado de forma canônica.
 A décima nona rodada de auditoria corrigiu o que as dezoito anteriores ainda não garantiam: a publicação passou a ser atômica por
 arquivo temporário e `os.replace`, sem destino truncado e sem destruir o artefato anterior; o import absoluto passou a ser procurado na
 raiz do projeto e no diretório de quem importa; a varredura direcionada deixou de acusar como órfã a exceção de achado fora do alvo; e a

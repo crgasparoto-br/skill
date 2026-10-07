@@ -3073,3 +3073,88 @@ def test_redundant_dot_in_citation_still_names_the_file(tmp_path: Path) -> None:
         policy_variant(accepted=[]),
     )
     assert [entry["path"] for entry in findings_of(scan(tree), "dead-module")] == []
+
+
+def test_publication_leaves_no_temporary_when_second_destination_is_a_directory(tmp_path: Path) -> None:
+    """Achado bloqueante: falha do segundo destino deixava temporário órfão no diretório."""
+    tree = make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    dest = tmp_path / "fora"
+    dest.mkdir()
+    report_path = dest / "report.json"
+    report_path.write_text("ANTERIOR", encoding="utf-8")
+    (dest / "markdown.md").mkdir()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(report_path),
+            "--markdown",
+            str(dest / "markdown.md"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "Traceback" not in result.stderr
+    assert report_path.read_text(encoding="utf-8") == "ANTERIOR"
+    assert sorted(item.name for item in dest.iterdir()) == ["markdown.md", "report.json"]
+
+
+def test_targeted_walk_refuses_directory_symlink_target(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo que é link de diretório media o diretório real, fora do alvo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/consumer.py": "X = 1\n",
+            "other/orphan.py": "VALUE = 1\n",
+            "README.md": "Use pkg/consumer.py\n",
+        },
+        policy_variant(accepted=[]),
+    )
+    (tree / "pkg" / "alias").symlink_to(tree / "other", target_is_directory=True)
+    policy = hygiene_scan.load_policy(tree)
+    report, problems = hygiene_scan.build_report(tree, policy, ["pkg/alias"])
+    assert problems == []
+    assert report["analyzed"] == 0
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["pkg/alias"]
+    assert findings_of(report, "dead-module") == []
+
+
+def test_exception_identity_must_be_a_finding_identity(tmp_path: Path) -> None:
+    """Achado bloqueante: identidade arbitrária era aceita em varredura direcionada."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"alpha.py": "V = 1\n", "README.md": "Use alpha.py\n"},
+        policy_variant(accepted=[{"id": "garbage", "reason": "Excecao declarada para caso externo ainda nao medido."}]),
+    )
+    (tmp_path / "fora").mkdir()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--paths",
+            "alpha.py",
+            "--report",
+            str(tmp_path / "fora" / "report.json"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "identidade de achado" in result.stderr
+    assert not (tmp_path / "fora" / "report.json").exists()
+
+
+def test_missing_target_with_dotdot_gets_canonical_label(tmp_path: Path) -> None:
+    """Ressalva: alvo inexistente com `..` publicava o caminho como foi escrito."""
+    tree = make_tree(tmp_path, {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    policy = hygiene_scan.load_policy(tree)
+    report, _ = hygiene_scan.build_report(tree, policy, ["foo/../missing.py"])
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["missing.py"]

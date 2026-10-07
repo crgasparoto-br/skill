@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path, PurePosixPath
 
@@ -429,6 +430,9 @@ def _identity_errors(policy: dict) -> list[str]:
     return errors
 
 
+IDENTITY_RE = re.compile(r"[a-z][a-z-]*:[0-9a-f]{16}")
+
+
 def _justified_error(index: int, entry: object, label: str) -> list[str]:
     """Exceção e cobertura declarada precisam de justificativa escrita, nunca texto vazio."""
     if not isinstance(entry, dict):
@@ -438,6 +442,13 @@ def _justified_error(index: int, entry: object, label: str) -> list[str]:
     if not isinstance(value, str) or not value:
         return [f"politica: {label}[{index}].{field} precisa ser texto"]
     errors: list[str] = []
+    if field == "id" and not IDENTITY_RE.fullmatch(value):
+        # A identidade da exceção é a do relatório: texto arbitrário não corresponde a achado nenhum, e
+        # aceitá-lo deixaria a política declarar exceção que não pode ser conferida.
+        return [
+            f"politica: {label}[{index}].id precisa ser identidade de achado no formato "
+            "classe:16 digitos hexadecimais"
+        ]
     if field == "path":
         if any(character in value for character in ("\x00", "\n", "\r")):
             # NUL e quebra de linha não são caminho: `Path.resolve()` levanta exceção não controlada, e

@@ -281,6 +281,15 @@ def walk_scope(start: Path, root: Path, skip: set[str]) -> tuple[list[Path], lis
     A recusa é sempre relativa a `root`: no modo direcionado o início é o alvo, e dois alvos com o mesmo
     nome de diretório recusado ficariam indistinguíveis se o caminho fosse relativo ao alvo.
     """
+    if start.is_symlink() and start.is_dir():
+        # O início da caminhada segue a mesma regra das entradas: link de diretório não é percorrido, senão
+        # o modo direcionado mediria o diretório real e ainda declararia o alvo como não analisado.
+        return [], [
+            {
+                "path": safe_relative(start, root) or ".",
+                "reason": "link simbolico para diretorio: a varredura nao segue link",
+            }
+        ]
     found: list[Path] = []
     refused: list[dict] = []
     pending = [start]
@@ -327,8 +336,14 @@ def normalized_targets(root: Path, paths: list[str] | None) -> set[str] | None:
         return None
     targets: set[str] = set()
     for raw in paths:
+        # O alvo não é resolvido antes da caminhada: resolver perderia a identidade do link, e um alvo que
+        # é link de diretório seria percorrido como o diretório real, medindo arquivo fora do alvo. A
+        # recusa de link de diretório vive em `walk_scope`, que recebe o caminho como foi declarado.
         try:
-            candidate = (root / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
+            candidate = root / raw if not Path(raw).is_absolute() else Path(raw)
+            if not candidate.resolve().is_relative_to(root.resolve()):
+                continue
+            candidate = candidate.resolve()
         except (OSError, RuntimeError):
             # Link quebrado ou em ciclo não resolve: a recusa já está no conjunto analisado, e aqui o
             # alvo simplesmente não restringe manifest nenhum.
@@ -397,7 +412,10 @@ def scope_files(
                 )
                 continue
             if candidate.is_dir():
-                walked, refusals = walk_scope(candidate, root, exclude_dirs)
+                # A caminhada recebe o caminho como foi declarado: resolver antes perderia a identidade do
+                # link, e um alvo que é link de diretório seria percorrido como o diretório real, medindo
+                # arquivo fora do alvo que a própria varredura declara não analisado.
+                walked, refusals = walk_scope(literal, root, exclude_dirs)
                 candidates.extend(walked)
                 missing.extend(refusals)
             elif candidate.is_file():
@@ -409,7 +427,9 @@ def scope_files(
                 # depender de onde a árvore está no disco.
                 missing.append(
                     {
-                        "path": safe_relative(literal, root),
+                        # O rótulo é o alvo normalizado: `foo/../missing.py` e `missing.py` são o mesmo
+                        # alvo, e publicar a forma informada faria o relatório depender de como foi escrita.
+                        "path": safe_relative(candidate, root),
                         "reason": "alvo direcionado que nao existe",
                     }
                 )
@@ -1537,14 +1557,36 @@ def publish_artifacts(targets: dict[str, Path], contents: dict[str, str]) -> int
     mesmo quando a execução é reprovada. Preparar em arquivo temporário ao lado do destino e publicar por
     `os.replace` mantém o destino intacto até a publicação, que é o que "transacional" significa.
     """
+    staged: dict[str, Path] = {}
     try:
-        staged = {label: stage_artifact(target, contents[label]) for label, target in targets.items()}
+        for label, target in targets.items():
+            # Destino que é diretório nunca é substituído por arquivo: sem esta recusa, o `os.replace`
+            # falharia depois de publicar os artefatos anteriores.
+            if target.is_dir():
+                raise IsADirectoryError(21, "destino e diretorio", str(target))
+            staged[label] = stage_artifact(target, contents[label])
     except OSError as error:
+        discard_artifacts(staged)
         print(f"ERRO: falha ao gravar o relatorio: {error}", file=sys.stderr)
         return 1
-    for label, temporary in staged.items():
-        temporary.replace(targets[label])
+    try:
+        for label, temporary in staged.items():
+            temporary.replace(targets[label])
+    except OSError as error:
+        # Falha na publicação não pode deixar temporário no diretório de destino.
+        discard_artifacts(staged)
+        print(f"ERRO: falha ao publicar o relatorio: {error}", file=sys.stderr)
+        return 1
     return 0
+
+
+def discard_artifacts(staged: dict[str, Path]) -> None:
+    """Remove os temporários ainda não publicados; o que já foi publicado não tem mais temporário."""
+    for temporary in staged.values():
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:  # pragma: no cover - limpeza nunca derruba a execução
+            continue
 
 
 def stage_artifact(target: Path, content: str) -> Path:
