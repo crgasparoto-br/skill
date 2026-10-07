@@ -790,3 +790,71 @@ def test_confined_helper_rejects_escaping_paths(tmp_path: Path) -> None:
     assert confined(inside, root) is True
     assert confined(outside, root) is False
     assert confined(link, root) is False
+
+
+# ------------------------------------------- sétima rodada de auditoria independente
+
+
+@pytest.mark.parametrize(("left", "right", "expected"), [
+    ("50.0.2post1.dev1", "50.0.2post1", -1),
+    ("50.0.2post1", "50.0.2post1.dev1", 1),
+    ("1.0.dev1", "1.0a1", -1),
+    ("1.0a1.dev1", "1.0a1", -1),
+    ("1.0a1", "1.0b1", -1),
+    ("1.0", "1.0.post1", -1),
+    ("1.0", "1.0.0", 0),
+    ("2.0.0rc1", "2.0.0", -1),
+])
+def test_pep440_ordering_of_phase_axes(left: str, right: str, expected: int) -> None:
+    """Pré, pós e dev são eixos independentes: colapsá-los tornaria `post1.dev1` igual a `post1`."""
+    assert compare(left, right) == expected
+
+
+def test_dev_suffix_after_post_is_not_equal(tmp_path: Path) -> None:
+    manifest = "cryptography==50.0.2post1\n"
+    lock = MINIMAL_LOCK.replace("cryptography==50.0.2", "cryptography==50.0.2post1.dev1")
+    lock = lock.replace("cryptography-50.0.2-py3-none-any.whl", "cryptography-50.0.2post1.dev1-py3-none-any.whl")
+    assert run(minimal(tmp_path, manifest=manifest, lock=lock)) == 1
+
+
+@pytest.mark.parametrize(("artifact", "expected"), [
+    ("cryptography-50.0.2-py3-none-any.whl", True),
+    ("cryptography-50.0.2-fake.whl", False),
+    ("cryptography-50.0.2.tar.gz", True),
+    ("cryptography-50.0.2-extra.tar.gz", False),
+])
+def test_distribution_grammar(artifact: str, expected: bool) -> None:
+    """A wheel nomeia Python, ABI e plataforma; o sdist tem exatamente dois campos."""
+    from scripts.validate_dependency_locks import artifact_matches
+
+    assert artifact_matches("cryptography", "50.0.2", artifact) is expected
+
+
+@pytest.mark.parametrize("mode", ["dangling", "directory"])
+def test_non_regular_manifest_is_not_silently_skipped(tmp_path: Path, mode: str,
+                                                      capsys: pytest.CaptureFixture[str]) -> None:
+    """Omitir o manifest faria uma mudança deixar de ser verificada sem erro."""
+    root = tmp_path / "repo"
+    (root / "skill").mkdir(parents=True)
+    (root / "config").mkdir()
+    (root / "config" / "dependency-policy.json").write_text(
+        json.dumps({"schema_version": 1, "exceptions": []}), encoding="utf-8"
+    )
+    (root / "skill" / "requirements.lock.txt").write_text(MINIMAL_LOCK, encoding="utf-8")
+    # O alvo fica dentro da raiz para exercitar a regra de arquivo não regular, e não a de
+    # confinamento.
+    target = root / "skill" / ("sumiu.txt" if mode == "dangling" else "dir")
+    if mode == "directory":
+        target.mkdir()
+    (root / "skill" / "requirements.txt").symlink_to(target)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "nao regular" in capsys.readouterr().err
+
+
+def test_discovery_includes_symlinked_manifest(tmp_path: Path) -> None:
+    from scripts.validate_dependency_locks import discover_manifests
+
+    root = tmp_path / "repo"
+    (root / "skill").mkdir(parents=True)
+    (root / "skill" / "requirements.txt").symlink_to(tmp_path / "sumiu.txt")
+    assert [path.name for path in discover_manifests(root)] == ["requirements.txt"]

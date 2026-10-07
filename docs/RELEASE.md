@@ -71,7 +71,7 @@ reprova entrada sem hash ou sem artefato justamente para que a mudança apareça
 
 | Verificação | Onde roda | O que prova |
 | --- | --- | --- |
-| Forma e vínculo | `scripts/validate_dependency_locks.py`, obrigatório e offline | Manifest e lockfile precisam resolver para dentro da raiz do repositório, e a política também: um caminho que escape traria para a verificação arquivo que o repositório não versiona. Cada requisito declarado aparece com versão que **satisfaz o especificador declarado**, inclusive a semântica de versão local em `==` e `!=`; inclusão `-r` que não resolve, não é manifest ou sai da raiz reprova, opção que o gate não implementa reprova em vez de ser ignorada, e linha de requisito que o gate não interpreta reprova em vez de ser descartada; requisito com marcador falso não é exigido, avaliado contra o interpretador que executa o gate, com a gramática do marcador validada por inteiro antes de qualquer atalho lógico; a cadeia `# via` alcança pacote declarado; o lockfile aceita somente `--hash` como opção e uma anotação de artefato por entrada; cada entrada nomeia artefato com sufixo de distribuição e campos de nome e versão exatamente iguais aos fixados; cada exceção nomeia pacote e versão existentes |
+| Forma e vínculo | `scripts/validate_dependency_locks.py`, obrigatório e offline | Manifest e lockfile precisam resolver para dentro da raiz do repositório, e a política também, e um manifest que não seja arquivo regular reprova em vez de ser omitido da descoberta: um caminho que escape traria para a verificação arquivo que o repositório não versiona. Cada requisito declarado aparece com versão que **satisfaz o especificador declarado**, com ordenação PEP 440 completa em que pré, pós e dev são eixos independentes e com a semântica de versão local em `==` e `!=`; inclusão `-r` que não resolve, não é manifest ou sai da raiz reprova, opção que o gate não implementa reprova em vez de ser ignorada, e linha de requisito que o gate não interpreta reprova em vez de ser descartada; requisito com marcador falso não é exigido, avaliado contra o interpretador que executa o gate, com a gramática do marcador validada por inteiro antes de qualquer atalho lógico; a cadeia `# via` alcança pacote declarado; o lockfile aceita somente `--hash` como opção e uma anotação de artefato por entrada; cada entrada nomeia artefato com sufixo de distribuição e campos de nome e versão exatamente iguais aos fixados, com a gramática da distribuição verificada — a wheel precisa nomear Python, ABI e plataforma, e o sdist tem exatamente dois campos; cada exceção nomeia pacote e versão existentes |
 | Integridade do digest | `scripts/audit_dependencies.py`, fora da sequência obrigatória | O digest corresponde ao artefato, conferido por `pip download --no-deps --require-hashes`; um hash arbitrário com formato válido só é detectável com o artefato em mãos |
 | Vulnerabilidade | `scripts/audit_dependencies.py` | Nenhum aviso do banco de vulnerabilidade ficou fora da política |
 
@@ -86,6 +86,10 @@ cabeçalho. O digest pertence à distribuição escolhida naquele contexto, e po
 escolher outro arquivo, com outro digest, e reprovar a instalação por divergência de hash. Esse é o comportamento
 pretendido: a divergência aparece em vez de passar silenciosamente. A sequência obrigatória usa Python 3.12, a mesma
 versão registrada nos lockfiles, e adotar uma matriz de versões exigiria um lockfile por versão.
+
+A garantia de confinamento é sobre o caminho resolvido: symlink que escape reprova, e um hard link para arquivo fora
+da raiz permanece sob o caminho resolvido, o que é uma limitação conhecida da verificação, não uma afirmação de
+proveniência por inode.
 
 O cabeçalho é documentação, não autoridade: marcador de ambiente é avaliado contra o interpretador que executa o gate,
 e não contra o contexto declarado no comentário. Um comentário editável como autoridade permitiria declarar um

@@ -137,21 +137,24 @@ def parse_version(text: str) -> tuple:
         else:
             dev = value
         position = token.end()
-    if dev is not None and pre is None and post is None:
-        phase = (0, dev, 0)
-    elif pre is not None:
-        phase = (1, pre[0], pre[1])
-    elif post is None:
-        phase = (2, 0, 0)
+    # Pré, pós e dev são eixos independentes: o dev torna a versão anterior à mesma versão
+    # sem dev, e colapsar os três em uma única fase faria `50.0.2post1.dev1` ser igual a
+    # `50.0.2post1`.
+    if pre is not None:
+        pre_key = (1, pre[0], pre[1])
+    elif post is None and dev is not None:
+        pre_key = (0, 0, 0)
     else:
-        phase = (3, 0, post)
-    return (epoch, release, phase, local)
+        pre_key = (2, 0, 0)
+    post_key = (1, post) if post is not None else (0, 0)
+    dev_key = (0, dev) if dev is not None else (1, 0)
+    return (epoch, release, pre_key, post_key, dev_key, local)
 
 
 def version_key(text: str) -> tuple:
     """Compatibilidade com quem só precisa da ordem de release."""
-    epoch, release, phase, _ = parse_version(text)
-    return (epoch, release, phase)
+    epoch, release, pre_key, post_key, dev_key, _ = parse_version(text)
+    return (epoch, release, pre_key, post_key, dev_key)
 
 
 def compare_local(left: tuple[str, ...], right: tuple[str, ...]) -> int:
@@ -181,8 +184,8 @@ def compare(left: str, right: str) -> int:
     quando os dois lados o declaram: `1.0+abc` e `1.0` são iguais para faixa, e `1.0+abc` e
     `1.0+def` não são iguais entre si.
     """
-    left_epoch, left_release, left_phase, left_local = parse_version(left)
-    right_epoch, right_release, right_phase, right_local = parse_version(right)
+    left_epoch, left_release, left_phase, left_post, left_dev, left_local = parse_version(left)
+    right_epoch, right_release, right_phase, right_post, right_dev, right_local = parse_version(right)
     if left_epoch != right_epoch:
         return -1 if left_epoch < right_epoch else 1
     width = max(len(left_release), len(right_release))
@@ -190,8 +193,8 @@ def compare(left: str, right: str) -> int:
     right_padded = right_release + (0,) * (width - len(right_release))
     if left_padded != right_padded:
         return -1 if left_padded < right_padded else 1
-    if left_phase != right_phase:
-        return -1 if left_phase < right_phase else 1
+    if (left_phase, left_post, left_dev) != (right_phase, right_post, right_dev):
+        return -1 if (left_phase, left_post, left_dev) < (right_phase, right_post, right_dev) else 1
     if left_local and right_local:
         return compare_local(left_local, right_local)
     return 0
@@ -245,8 +248,8 @@ def satisfies(version: str, specifier: str) -> bool:
                     return False
                 continue
             outcome = compare(current, target)
-            target_local = parse_version(target)[3]
-            current_local = parse_version(current)[3]
+            target_local = parse_version(target)[5]
+            current_local = parse_version(current)[5]
             # A PEP 440 só ignora o segmento local quando o alvo não declara um: com alvo
             # local, `==` exige o mesmo local e `!=` exige local diferente.
             if operator == "==" and (outcome != 0 or (target_local and current_local != target_local)):
@@ -293,9 +296,16 @@ def artifact_matches(name: str, version: str, filename: str) -> bool:
     parts = stem.split("-")
     if len(parts) < 2:
         return False
-    if normalize(parts[0]) != name:
+    if normalize(parts[0]) != name or parts[1] != version:
         return False
-    return parts[1] == version
+    if filename.endswith(".whl"):
+        # Uma wheel nomeia nome, versão e as etiquetas de Python, ABI e plataforma; sem as três
+        # etiquetas o nome não é distribuição publicável.
+        if len(parts) < 5 or not all(parts[-3:]):
+            return False
+    elif len(parts) != 2:
+        return False
+    return True
 
 
 # --------------------------------------------------------------------------- marcadores
@@ -554,6 +564,8 @@ def validate_manifest(root: Path, manifest: Path) -> list[str]:
     errors: list[str] = []
     if not confined(manifest, root):
         return [f"{relative(manifest, root)}: manifest resolve para fora da raiz do repositorio"]
+    if not manifest.is_file():
+        return [f"{relative(manifest, root)}: manifest ausente, pendente ou nao regular"]
     lock = manifest.with_name(manifest.stem + LOCK_SUFFIX)
     if not lock.is_file():
         return [f"{relative(manifest, root)}: falta o lockfile {relative(lock, root)}"]
@@ -687,7 +699,10 @@ def discover_manifests(root: Path) -> list[Path]:
     return sorted(
         path
         for path in root.glob("*/requirements*.txt")
-        if path.is_file() and not path.name.endswith(LOCK_SUFFIX)
+        # Symlink pendente e symlink para diretório não são arquivos regulares, mas continuam
+        # sendo manifest esperado: omiti-los faria uma mudança de manifest deixar de ser
+        # verificada sem erro.
+        if (path.is_file() or path.is_symlink()) and not path.name.endswith(LOCK_SUFFIX)
     )
 
 
