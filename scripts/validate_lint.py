@@ -33,6 +33,7 @@ POLICY = Path("config") / "lint-policy.json"
 REQUIRED_STATES = {"selected", "partial", "dismissed"}
 MINIMUM_REASON_CHARS = 40
 MINIMUM_JUSTIFICATION_CHARS = 8
+LOCKFILE_NAME = "requirements.lock.txt"
 ENTRY_RE = re.compile(r"[A-Z]+\d*")
 # Diretivas que a ferramenta reconhece: marcador em qualquer caixa e diretiva de arquivo com
 # prefixo `ruff:` ou `flake8:`. A leitura e feita sobre comentarios reais, entao a ocorrencia
@@ -168,6 +169,22 @@ def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
         errors.append("politica: tool.name precisa ser 'ruff'")
     elif not re.fullmatch(r"\d+\.\d+\.\d+", str(tool.get("version", ""))):
         errors.append("politica: tool.version precisa ser versao fixada no formato X.Y.Z")
+    else:
+        # Campo declarado e nao validado vira contrato que ninguem cumpre: a instalacao precisa ser a
+        # do lockfile com verificacao de hash, e a invocacao precisa ser a da ferramenta declarada.
+        install = tool.get("install")
+        if (
+            not isinstance(install, str)
+            or "pip install" not in install
+            or "--require-hashes" not in install
+            or LOCKFILE_NAME not in install
+        ):
+            errors.append(
+                "politica: tool.install precisa instalar pelo lockfile com --require-hashes"
+            )
+        invocation = tool.get("invocation")
+        if not isinstance(invocation, str) or not invocation.startswith(f"{tool.get('name')} "):
+            errors.append("politica: tool.invocation precisa invocar a ferramenta declarada")
 
     if not re.fullmatch(r"py3\d{2}", str(policy.get("target_version", ""))):
         errors.append("politica: target_version precisa ser alvo explicito, como py312")

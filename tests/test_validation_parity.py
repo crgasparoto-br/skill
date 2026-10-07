@@ -139,6 +139,24 @@ def workflow_commands(path: Path) -> list[str]:
     return [command for command in workflow_run_commands(path) if is_validation(command)]
 
 
+SHELL_OPERATORS = ("&&", "||", ";", "|", "`", "$(", "${", "&", ">", "<")
+
+
+def shell_problems(command: str) -> list[str]:
+    """Composição de shell não é passo classificável: esconderia um comando dentro do aprovado.
+
+    O redirecionamento simples de saída e o `2>&1` que a documentação usa são removidos antes da
+    checagem, porque são forma de registrar a saída, não de encadear outro comando.
+    """
+    remainder = re.sub(r"\s+2>&1\s*$", "", command.strip())
+    remainder = re.sub(r"\s+>\s*\S+\s*$", "", remainder)
+    return [
+        f"comando com operador de shell: {operator!r}"
+        for operator in SHELL_OPERATORS
+        if operator in remainder
+    ]
+
+
 def step_problems(job_name: str, index: int, step: object) -> list[str]:
     """Classificação de um passo: comando de validação declarado ou ação permitida."""
     where = f"{job_name} passo {index}"
@@ -163,6 +181,10 @@ def step_problems(job_name: str, index: int, step: object) -> list[str]:
         return [f"{name}: passo de comando vazio"]
     problems: list[str] = []
     for line in text.splitlines():
+        composite = shell_problems(line)
+        if composite:
+            problems.extend(f"{name}: {problem}" for problem in composite)
+            continue
         command = normalize(line)
         if not command:
             continue
@@ -269,6 +291,13 @@ jobs:
         "run e uses no mesmo passo": "      - name: escondido\n        run: echo escondido\n        uses: actions/cache@1111111111111111111111111111111111111111\n",
         "chave run duplicada": "      - name: escondido\n        run: echo escondido\n        run: python scripts/validate_docs.py --root .\n",
         "chave nao comparavel": "      - name: escondido\n        run: echo escondido\n        ? [a, b]\n        : x\n",
+        "comando composto com e comercial duplo": "      - name: escondido\n        run: python scripts/validate_docs.py --root . && python scripts/escondido.py --root .\n",
+        "comando composto com pipe": "      - name: escondido\n        run: python scripts/validate_docs.py --root . | tee /tmp/saida.txt\n",
+        "comando composto com ponto e virgula": "      - name: escondido\n        run: python scripts/validate_docs.py --root .; python scripts/escondido.py\n",
+        "comando com substituicao": "      - name: escondido\n        run: python $(echo scripts/escondido.py)\n",
+        "comando com backtick": "      - name: escondido\n        run: python `echo scripts/escondido.py`\n",
+        "comando com dois redirecionamentos": "      - name: escondido\n        run: python scripts/validate_docs.py --root . > /tmp/a > /tmp/b\n",
+        "comando com redirecionamento e encadeamento": "      - name: escondido\n        run: python scripts/validate_docs.py --root . > /tmp/a && python scripts/escondido.py\n",
     }
     for label, snippet in hidden.items():
         path = tmp_path / "workflow.yml"
@@ -299,6 +328,15 @@ jobs:
         path = tmp_path / "workflow.yml"
         path.write_text(content, encoding="utf-8")
         assert classification_problems(path), f"{label} passou sem ser classificada"
+    accepted = {
+        "redirecionamento simples": "      - name: permitido\n        run: python evals/run_evals.py --root . --report /tmp/relatorio.json > /tmp/saida.json\n",
+        "redirecionamento com descritor": "      - name: permitido\n        run: python scripts/validate_docs.py --root . > /tmp/saida.txt 2>&1\n",
+    }
+    for label, snippet in accepted.items():
+        path = tmp_path / "workflow.yml"
+        path.write_text(template + snippet, encoding="utf-8")
+        problems = classification_problems(path)
+        assert not [problem for problem in problems if "operador de shell" in problem], (label, problems)
     path = tmp_path / "limpo.yml"
     path.write_text(template, encoding="utf-8")
     assert classification_problems(path) == []

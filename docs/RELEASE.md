@@ -108,7 +108,9 @@ reduzir o conjunto analisado em silêncio ou tratar o vazio como aprovação.
 ### Forma bruta da política
 Booleano e fração não são inteiros: `schema_version: true`, `schema_version: 1.0`, `line_length.value: true` e
 `line_length.value: 100.0` reprovam, porque em Python `True == 1` e `1.0 == 1` e a coerção aceitaria uma forma que
-ninguém declarou. O que a política exige é o inteiro exato. O estado de família precisa ser texto, e uma
+ninguém declarou. O que a política exige é o inteiro exato. Os campos `tool.install` e `tool.invocation` também são verificados, e não
+apenas declarados: a instalação precisa ser a do lockfile com `--require-hashes` e a invocação precisa chamar a
+ferramenta declarada. O estado de família precisa ser texto, e uma
 forma que não pode sequer ser comparada, como dicionário ou lista, reprova em vez de estourar.
 ### Limite declarado
 O gate verifica presença e extensão do motivo declarado, não a veracidade dele: um motivo longo e enganoso passa.
@@ -193,7 +195,10 @@ A sequência documentada é comparada com a do workflow pelo teste de paridade, 
 e é fail-closed na forma do documento: exige um único documento, recusa chave duplicada no mesmo mapeamento, exige
 `jobs` objeto não vazio, cada job objeto, `steps` lista não vazia e cada passo objeto com `run` ou `uses` — e não os
 dois —, com valor textual. Chave repetida é recusada pelo valor construído, então `true` e `True`, `01` e `1`, `null`
-e `~` contam como a mesma chave, e chave que não pode ser comparada reprova em vez de estourar. Assim, uma forma alternativa de escrever o mesmo passo ativo, ou uma forma estrutural
+e `~` contam como a mesma chave, e chave que não pode ser comparada reprova em vez de estourar. Cada linha de
+`run` precisa ser uma invocação simples: composição de shell (`&&`, `||`, `;`, `|`), substituição (`$()`, crase) e
+redirecionamento extra reprovam, porque encadear outro comando dentro de um comando aprovado esconderia o que executa;
+o redirecionamento simples de saída e o `2>&1` continuam aceitos, porque registram a saída em vez de encadear. Assim, uma forma alternativa de escrever o mesmo passo ativo, ou uma forma estrutural
 inválida que o parser aceitaria, não passa sem classificação.
 A consulta ao banco de vulnerabilidade e a verificação de integridade são do workflow
 [`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml), com gatilho agendado, manual e em
