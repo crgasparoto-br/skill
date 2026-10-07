@@ -31,6 +31,7 @@ from scripts.validate_dependency_locks import confined, relative
 POLICY = Path("config") / "lint-policy.json"
 REQUIRED_STATES = {"selected", "partial", "dismissed"}
 MINIMUM_REASON_CHARS = 40
+MINIMUM_JUSTIFICATION_CHARS = 8
 ENTRY_RE = re.compile(r"[A-Z]+\d*")
 # Diretivas que a ferramenta reconhece: marcador em qualquer caixa e diretiva de arquivo com
 # prefixo `ruff:` ou `flake8:`. A leitura e feita sobre comentarios reais, entao a ocorrencia
@@ -105,7 +106,7 @@ def family_errors(
             if not ENTRY_RE.fullmatch(item):
                 errors.append(f"politica: familia {prefix} declara {label} invalido: {item!r}")
                 continue
-            if not any(code.startswith(item) for code in family_codes):
+            if re.sub(r"[^A-Z]", "", item) != prefix:
                 errors.append(
                     f"politica: familia {prefix} declara {label} {item}, que nao pertence a familia"
                 )
@@ -303,7 +304,25 @@ def python_files(root: Path, policy: dict, errors: list[str]) -> list[Path]:
 
     found: list[Path] = []
     for dirpath, dirnames, filenames in os.walk(root, onerror=onerror):
-        dirnames[:] = sorted(name for name in dirnames if name not in excluded)
+        kept: list[str] = []
+        for name in sorted(dirnames):
+            if name in excluded:
+                continue
+            directory = Path(dirpath) / name
+            if directory.is_symlink():
+                # A caminhada nao segue link de diretorio: o conteudo sairia da analise sem
+                # aparecer, entao o caso e reprovado para que a resolucao seja explicita.
+                if confined(directory, root):
+                    errors.append(
+                        f"{relative(directory, root)}: diretorio do escopo e link simbolico e nao e seguido"
+                    )
+                else:
+                    errors.append(
+                        f"{relative(directory, root)}: diretorio do escopo aponta para fora da raiz"
+                    )
+                continue
+            kept.append(name)
+        dirnames[:] = kept
         for name in sorted(filenames):
             if not name.endswith(extensions):
                 continue
@@ -360,8 +379,16 @@ def suppression_errors(root: Path, files: list[Path], policy: dict, errors: list
             for code in re.split(r"[,\s]+", codes.strip()):
                 if code.upper() not in allowed:
                     errors.append(f"{where}: supressao de {code} fora da lista permitida na politica")
-            if JUSTIFICATION_SEPARATOR not in comment[match.end():]:
-                errors.append(f"{where}: supressao sem justificativa apos ' - '")
+            tail = comment[match.end():]
+            separator = tail.find(JUSTIFICATION_SEPARATOR)
+            justification = (
+                tail[separator + len(JUSTIFICATION_SEPARATOR):].strip() if separator >= 0 else ""
+            )
+            if len(justification) < MINIMUM_JUSTIFICATION_CHARS:
+                errors.append(
+                    f"{where}: supressao sem justificativa propria de pelo menos "
+                    f"{MINIMUM_JUSTIFICATION_CHARS} caracteres apos ' - '"
+                )
 
 
 def run_tool(
@@ -404,8 +431,11 @@ def run_tool(
     if completed.returncode not in (0, 1):
         errors.append(f"ruff: execucao falhou: {completed.stderr.strip()[:200]}")
         return []
+    if not completed.stdout.strip():
+        errors.append("ruff: saida da analise vazia")
+        return []
     try:
-        violations = json.loads(completed.stdout or "[]")
+        violations = json.loads(completed.stdout)
     except json.JSONDecodeError:
         errors.append("ruff: saida da analise em formato inesperado")
         return []
@@ -442,6 +472,8 @@ def validate_lint(root: Path) -> list[str]:
 
     select, ignore = selection_of(policy)
     files = python_files(root, policy, errors)
+    if not files:
+        errors.append("escopo: nenhum arquivo coberto encontrado; conjunto vazio nao pode ser aprovacao")
     suppression_errors(root, files, policy, errors)
 
     violations = run_tool(

@@ -62,9 +62,9 @@ da regra, não no nível do prefixo: uma família aplicada precisa aplicar todas
 precisa deixar cada regra decidida entre aplicada e desligada, e uma família dispensada não pode selecionar nem
 desligar nada. Uma família parcial que desliga tudo é recusada, porque isso é uma dispensa disfarçada. Acrescentar
 uma família nova ao catalogo da ferramenta sem decidir sobre ela reprova o gate, e uma dispensa sem motivo escrito
-também, de modo que a cobertura não pode encolher em silêncio. A versão da ferramenta é fixada exatamente no manifest e no lockfile e
-declarada na política: subir de versão muda o catalogo de regras e exige decisão explícita, e a divergência entre a
-versão instalada e a declarada reprova.
+também, de modo que a cobertura não pode encolher em silêncio. A versão da ferramenta é fixada exatamente no manifest e no lockfile, o que o gate de
+dependências confere, e declarada na política: este gate compara a versão instalada com a declarada e reprova a
+divergência, porque subir de versão muda o catalogo de regras e exige decisão explícita.
 ### O que cada verificação prova
 | Verificação | O que prova |
 | --- | --- |
@@ -96,8 +96,13 @@ no mesmo commit.
 ### Escopo varrido
 O que o gate varre é declarado na política, não presumido pelo código: os sufixos cobertos (`.py` e `.pyi`) e os
 diretórios excluídos, que são controle de versão, cache de ferramenta ou saída de empacotamento gerada. Um arquivo
-coberto que seja link simbólico para fora da raiz, um diretório ilegível e uma saída da ferramenta em formato
-inesperado reprovam com causa explícita, em vez de reduzir o conjunto analisado em silêncio.
+coberto que seja link simbólico para fora da raiz, um diretório do escopo que seja link simbólico, um diretório
+ilegível, uma saída da ferramenta vazia ou em formato inesperado e um conjunto varrido sem nenhum arquivo coberto
+reprovam com causa explícita, em vez de reduzir o conjunto analisado em silêncio ou tratar o vazio como aprovação.
+### Limite declarado
+O gate verifica presença e extensão do motivo declarado, não a veracidade dele: um motivo longo e enganoso passa.
+A honestidade do motivo depende da revisão independente da mudança, e é por isso que alterar a política é alteração
+revisável que precisa vir no mesmo commit do código que ela autoriza.
 
 ## Dependências e política de exceção
 

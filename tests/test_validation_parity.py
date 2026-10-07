@@ -4,6 +4,13 @@
 That claim drifted twice already, because nothing checked it. This test reads the
 commands out of the workflow and out of the documented bash blocks and compares
 them in order.
+
+O limite da comparação é deliberado: entra o que prova o estado do repositório, e o
+empacotamento do skill (`package_chatgpt_skill.py`), que produz o artefato de release,
+fica de fora por não ser validação. A conferência do fechamento dos lockfiles
+(`lock_dependencies.py --check`) entra, porque é o passo que prova que o lockfile é o
+fechamento do manifest. Um passo de validação novo que fique fora da lista de marcadores
+não é comparado, então a lista precisa acompanhar a sequência.
 """
 
 from __future__ import annotations
@@ -18,6 +25,7 @@ VALIDATION_MARKERS = (
     "scripts/validate_",
     "scripts/sync_contracts.py",
     "scripts/build_catalog_docs.py",
+    "scripts/lock_dependencies.py",
     "evals/run_evals.py",
     "-m pytest",
     "-m pip install",
@@ -26,6 +34,7 @@ VALIDATION_MARKERS = (
 
 def normalize(command: str) -> str:
     command = " ".join(command.split())
+    command = re.sub(r"\s+#.*$", "", command)
     command = re.split(r"\s+>\s*", command)[0]
     return re.sub(r"\s+2>&1\s*$", "", command).strip()
 
@@ -84,6 +93,18 @@ def test_local_validation_sequence_matches_the_ci_workflow() -> None:
     for document in ("README.md", "AGENTS.md"):
         documented = markdown_commands(ROOT / document)
         assert documented == ci, f"{document} diverge da sequência executada pelo CI"
+
+
+def test_closure_check_is_part_of_the_compared_sequence() -> None:
+    """A conferência do fechamento dos lockfiles é validação e não pode sair da comparação."""
+    assert is_validation("python scripts/lock_dependencies.py --root . --check")
+
+
+def test_packaging_is_not_part_of_the_validation_sequence() -> None:
+    """O empacotamento do skill é release: fica fora da sequência comparada de propósito."""
+    assert not is_validation(
+        "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip"
+    )
 
 
 def test_validation_sequence_has_no_duplicated_step() -> None:

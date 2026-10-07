@@ -349,3 +349,78 @@ def test_scope_is_declared_in_the_policy() -> None:
     assert scope["extensions"] == [".py", ".pyi"]
     assert "dist" in scope["excluded_directories"]
     assert len(scope["reason"]) >= 40
+
+
+def test_directory_symlink_outside_the_root_is_rejected(tmp_path: Path) -> None:
+    """Diretório linkado para fora não pode sair da análise em silêncio."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "bad.py").write_text(UNUSED_IMPORT_MODULE, encoding="utf-8")
+    tree = make_tree(tmp_path / "tree", load_policy(), {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"})
+    (tree / "link").symlink_to(outside, target_is_directory=True)
+    errors = validate_lint(tree)
+    assert any("diretorio do escopo aponta para fora da raiz" in error for error in errors), errors
+
+
+def test_directory_symlink_inside_the_root_is_rejected(tmp_path: Path) -> None:
+    """Diretório linkado não é seguido, então o caso é reprovado em vez de analisado em parte."""
+    tree = make_tree(tmp_path, load_policy(), {"real/mod.py": UNUSED_IMPORT_MODULE})
+    (tree / "link").symlink_to(tree / "real", target_is_directory=True)
+    errors = validate_lint(tree)
+    assert any("link simbolico e nao e seguido" in error for error in errors), errors
+
+
+def test_tree_without_covered_files_is_rejected(tmp_path: Path) -> None:
+    """Conjunto vazio de arquivos cobertos não pode ser aprovado."""
+    tree = make_tree(tmp_path, load_policy(), {"notes.md": "sem codigo aqui\n"})
+    errors = validate_lint(tree)
+    assert any("nenhum arquivo coberto encontrado" in error for error in errors), errors
+
+
+def test_justification_without_text_is_rejected(tmp_path: Path) -> None:
+    """O separador sozinho, mesmo com o código permitido, não é justificativa."""
+    source = "import json  # noqa: E402 -   \n"
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": source})
+    errors = validate_lint(tree)
+    assert any("sem justificativa propria" in error for error in errors), errors
+
+
+def test_entry_with_letters_of_another_family_is_rejected(tmp_path: Path) -> None:
+    """A parte alfabética da entrada precisa ser o prefixo da família, não um começo textual."""
+    policy = load_policy()
+    set_family(policy, "PLC", "selected", ["P"], [])
+    tree = make_tree(tmp_path, policy, {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"})
+    errors = validate_lint(tree)
+    assert any("nao pertence a familia" in error for error in errors), errors
+
+
+def test_empty_tool_output_is_a_controlled_failure(tmp_path: Path) -> None:
+    """Saída vazia da ferramenta não pode virar aprovação."""
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    executable = fake / "ruff"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "arguments = sys.argv[1:]\n"
+        "if 'rule' in arguments:\n"
+        "    print('[{\"code\": \"F401\"}]')\n"
+        "elif '--version' in arguments:\n"
+        "    print('ruff 0.14.1')\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    tree = make_tree(tmp_path / "tree", load_policy(), {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"})
+    environment = dict(os.environ)
+    environment["PATH"] = f"{fake}:{environment.get('PATH', '')}"
+    completed = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "validate_lint.py"), "--root", str(tree)],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(ROOT),
+        env=environment,
+    )
+    assert completed.returncode == 1
+    assert "saida da analise vazia" in completed.stderr
+    assert "Traceback" not in completed.stderr
