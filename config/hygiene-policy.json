@@ -38,13 +38,14 @@
       "min_body_lines": 12,
       "exclude_declared_copies": true,
       "exclude_tests": true,
-      "limits": "Compara corpos de função normalizados por AST, apagando nome de variável, de parâmetro, de função chamada e de definição aninhada, além do literal de documentação; operador, constante e nome de atributo permanecem, porque somar não é subtrair e chamar upper não é chamar lower. Considera duplicação entre funções, inclusive no mesmo arquivo, porque duas cópias divergem na primeira alteração. Não vê duplicação entre linguagens, duplicação de bloco interno de uma função, nem equivalência semântica entre corpos diferentes. Cópia declarada em config/shared-files.json é exclusão legítima, e não achado."
+      "limits": "Não vê cópia com identificador e constante diferentes, nem cópia entre repositórios, e não compara arquivo que shared-files.json declara compartilhado. Corpo abaixo de min_body_lines não entra, e o limiar mede linhas de código do corpo: decorator, assinatura e literal de documentação não contam. Arquivo de teste fica fora quando exclude_tests é declarado."
     },
     "dead-module": {
       "state": "gated",
       "entry_points": [],
-      "limits": "Não vê referência montada em tempo de execução por nome fora de arquivo texto, nem plugin carregado por convenção de diretório. A varredura de módulo não inclui diretório de teste, declarado em exclude_tests, porque módulo de teste é alcançado pelo executor e não por import do produto.",
-      "exclude_tests": true
+      "limits": "Não vê referência montada em tempo de execução por nome fora de arquivo texto, nem plugin carregado por convenção de diretório. Diretório de teste fica fora quando exclude_tests é declarado, e arquivo de pacote é ponto de entrada quando package_init_is_entry é declarado: teste é alcançado pelo executor e pacote é alcançado pelo import de quem usa o pacote, não por citação no próprio repositório.",
+      "exclude_tests": true,
+      "package_init_is_entry": true
     },
     "dead-symbol": {
       "state": "gated",
@@ -52,7 +53,7 @@
       "ignore_names": [
         "__all__"
       ],
-      "limits": "Não vê uso por getattr, por nome montado, por registro dinâmico do nome, nem ocorrência fora dos formatos de texto declarados em scope.corpus_suffixes. Nome de protocolo consumido pelo próprio interpretador é declarado em ignore_names, sem exceção escondida no código."
+      "limits": "Não vê uso por getattr, por nome montado, por registro dinâmico do nome, nem ocorrência fora dos formatos de texto declarados em scope.corpus_suffixes. Nome de protocolo consumido pelo próprio interpretador é declarado em ignore_names, sem exceção escondida no código. Citação é resolvida por caminho, na raiz e no diretório de quem cita: citação que sai da raiz não conta, e nome solto não alcança homônimo em outro diretório."
     },
     "unused-dependency": {
       "state": "gated",

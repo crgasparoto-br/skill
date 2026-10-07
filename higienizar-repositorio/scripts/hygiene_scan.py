@@ -200,6 +200,8 @@ def scope_files(
     refused: list[dict] = []
     for candidate in candidates:
         rel = safe_relative(candidate, root)
+        if in_excluded_dir(rel, exclude_dirs) or rel in excluded:
+            continue
         if candidate.is_dir():
             # Diretorio, ou link para diretorio, com sufixo coberto: nao e arquivo analisavel, e sair
             # do conjunto sem aparecer no relatorio seria cobertura encolhida em silencio.
@@ -225,8 +227,6 @@ def scope_files(
             continue
         if not candidate.resolve().is_relative_to(root):
             refused.append({"path": rel, "reason": "o caminho resolve para fora da raiz do repositorio"})
-            continue
-        if in_excluded_dir(rel, exclude_dirs) or rel in excluded:
             continue
         files.append(candidate)
     return sorted(files, key=lambda item: relative(item, root)), refused, [
@@ -352,6 +352,28 @@ class IdentifierNeutralizer(ast.NodeTransformer):
         return node
 
 
+def body_statements(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.stmt]:
+    """Instruções do corpo, sem o literal de documentação.
+
+    Só a primeira instrução pode ser docstring: tratar qualquer `Expr(Constant(str))` como documentação
+    apagaria literal de expressão e faria dois corpos com constantes diferentes passarem por cópia.
+    """
+    body = list(node.body)
+    if body and is_docstring(body[0]):
+        body = body[1:]
+    return body
+
+
+def body_line_span(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
+    """Linhas de código do corpo: sem decorator, sem assinatura e sem literal de documentação."""
+    body = body_statements(node)
+    if not body:
+        return 0
+    first = body[0].lineno
+    last = body[-1].end_lineno or body[-1].lineno
+    return last - first + 1
+
+
 def normalized_body(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
     """Forma do corpo sem nome de variável, parâmetro, função chamada e literal de documentação.
 
@@ -361,7 +383,7 @@ def normalized_body(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
     não existe cópia, que é o erro mais caro desta classe; apagar menos faria a renomeação de uma
     variável esconder a cópia, que é o segundo erro mais caro.
     """
-    body = [statement for statement in node.body if not is_docstring(statement)]
+    body = body_statements(node)
     if not body:
         return None
     neutral = deepcopy(ast.Module(body=body, type_ignores=[]))
@@ -375,6 +397,22 @@ def is_docstring(statement: ast.stmt) -> bool:
         and isinstance(statement.value, ast.Constant)
         and isinstance(statement.value.value, str)
     )
+
+
+def disambiguate(places: list[tuple[str, str]]) -> list[str]:
+    """Rótulo estável por definição: nome repetido no mesmo arquivo ganha ordem, sem número de linha.
+
+    Redefinir o mesmo nome é Python legal, e duas definições com o mesmo rótulo produziriam achados com
+    identidade repetida: o relatório não distinguiria as duas e o gate reprovaria a árvore por uma
+    ambiguidade do rótulo, não do código.
+    """
+    seen: dict[tuple[str, str], int] = defaultdict(int)
+    labels: list[str] = []
+    for rel, symbol in places:
+        seen[(rel, symbol)] += 1
+        order = seen[(rel, symbol)]
+        labels.append(f"{rel}::{symbol}" if order == 1 else f"{rel}::{symbol}#{order}")
+    return labels
 
 
 def finding_identity(class_name: str, parts: list[str]) -> str:
@@ -397,10 +435,17 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
     texts: dict[str, str] = {}
     refused: list[dict] = []
     for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
-        if not path.is_file() or path.suffix not in suffixes:
-            continue
         rel = relative(path, root)
         if in_excluded_dir(rel, exclude_dirs) or rel in excluded_paths:
+            continue
+        if path.suffix not in suffixes:
+            continue
+        if path.is_symlink() and not path.is_file():
+            # Link quebrado, ou link para caminho que não é arquivo regular, é cobertura de texto que
+            # não foi lida: some do conjunto e o relatório declararia árvore limpa sem ter lido tudo.
+            refused.append({"path": rel, "reason": "link simbolico quebrado no corpus de citacao"})
+            continue
+        if not path.is_file():
             continue
         if not path.resolve().is_relative_to(resolved_root):
             refused.append({"path": rel, "reason": "caminho de corpus que resolve para fora da raiz"})
@@ -420,23 +465,35 @@ def named_paths(texts: dict[str, str], root: Path, pattern: re.Pattern[str]) -> 
     formas contam, porque todas são invocação declarada para quem lê a instrução.
     """
     named: set[str] = set()
-    known = sorted(
-        relative(path, root) for path in root.rglob("*") if path.is_file()
-    )
+    known = {relative(path, root) for path in root.rglob("*") if path.is_file()}
     by_name: dict[str, list[str]] = defaultdict(list)
-    for rel in known:
+    for rel in sorted(known):
         by_name[Path(rel).name].append(rel)
     for rel, text in texts.items():
         directory = Path(rel).parent.as_posix()
+        skill_root = Path(rel).parts[0] if len(Path(rel).parts) > 1 else ""
         for token in pattern.findall(text):
-            cleaned = token.strip("./")
-            if not cleaned:
+            cleaned = token.removeprefix("./")
+            # Citação ancorada em marcador de lugar (`<skill>/scripts/x.py`) chega aqui com a barra
+            # inicial, porque o padrão não casa o marcador: a barra é âncora, não caminho absoluto.
+            cleaned = cleaned.lstrip("/") if cleaned.startswith("/") else cleaned
+            parts = Path(cleaned).parts
+            # Citação que sai da raiz não é invocação declarada de arquivo da árvore.
+            if not cleaned or ".." in parts:
                 continue
-            candidates = {cleaned, f"{directory}/{cleaned}" if directory != "." else cleaned}
-            for candidate in candidates:
-                if candidate in known:
-                    named.add(candidate)
-            named.update(by_name.get(Path(cleaned).name, []))
+            candidates = {cleaned}
+            if directory != ".":
+                candidates.add(f"{directory}/{cleaned}")
+            if skill_root:
+                candidates.add(f"{skill_root}/{cleaned}")
+            matched = {candidate for candidate in candidates if candidate in known}
+            if not matched and len(parts) == 1:
+                # Nome solto alcança o arquivo de mesmo nome só quando ele é único na árvore: havendo
+                # homônimos, o nome solto é ambíguo e não identifica invocação de nenhum deles.
+                homonyms = by_name.get(cleaned, [])
+                if len(homonyms) == 1:
+                    matched = {homonyms[0]}
+            named.update(matched)
     return named
 
 
@@ -458,15 +515,19 @@ def detect_duplication(
         if exclude_tests and (path.name.startswith("test_") or "tests" in path.parts):
             continue
         tree = modules[rel]
+        places: list[tuple[str, str]] = []
+        forms: list[str] = []
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
-            lines = (node.end_lineno or node.lineno) - node.lineno + 1
-            if lines < minimum:
+            if body_line_span(node) < minimum:
                 continue
             form = normalized_body(node)
             if form:
-                groups[form].append(f"{rel}::{node.name}")
+                places.append((rel, node.name))
+                forms.append(form)
+        for label, form in zip(disambiguate(places), forms, strict=True):
+            groups[form].append(label)
     findings: list[dict] = []
     for form, members in groups.items():
         if len(members) < 2:
@@ -507,6 +568,9 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
     - relativa (`from . import orphan`), resolvida contra o pacote de quem importa, que é o que impede
       a colisão de nome: o relativo alcança `pkg/orphan.py`, e não um `orphan.py` solto na raiz.
     """
+    # `from .. import x` sobe para fora do pacote de quem importa; alcançar a raiz só é válido se a
+    # própria raiz for pacote declarado, e sem isso o import não alcança módulo nenhum.
+    root_is_package = "__init__.py" in modules
     imported: set[str] = set()
     for rel, tree in modules.items():
         package = list(Path(rel).parent.parts)
@@ -516,9 +580,11 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
                     resolve_import(imported, package, alias.name.split("."))
             elif isinstance(node, ast.ImportFrom):
                 depth = node.level - 1
+                # Import relativo além do pacote é inválido e não alcança módulo nenhum; resolver por
+                # aproximação manteria vivo um módulo que ninguém importa.
                 if depth > len(package) or (node.level == 1 and not package):
-                    # Import relativo além do pacote é inválido e não alcança módulo nenhum; resolver
-                    # por aproximação manteria vivo um módulo que ninguém importa.
+                    continue
+                if depth == len(package) and not root_is_package:
                     continue
                 base = [*package[: len(package) - depth], *(node.module.split(".") if node.module else [])]
                 resolve_import(imported, package, base)
@@ -532,17 +598,18 @@ def detect_dead_modules(
 ) -> list[dict]:
     config = policy["classes"]["dead-module"]
     exclude_tests = bool(config.get("exclude_tests", False))
+    package_init_is_entry = bool(config.get("package_init_is_entry", False))
     declared_entries = {entry for entry in config.get("entry_points", []) if isinstance(entry, str)}
     named = named_paths(texts, root, citation_pattern(policy))
     imported = imported_modules(modules)
     findings: list[dict] = []
     for rel in sorted(modules):
         path = Path(rel)
-        if path.name == "__init__.py":
+        if package_init_is_entry and path.name == "__init__.py":
             continue
         if exclude_tests and (path.name.startswith("test_") or "tests" in path.parts):
             continue
-        if rel in declared_entries or rel in named or path.name in named:
+        if rel in declared_entries or rel in named:
             continue
         if rel[:-3].replace("/", ".") in imported:
             continue
@@ -580,12 +647,15 @@ def detect_dead_symbols(
         parents = parent_map(tree)
         # Escopo do modulo inclui o que roda dentro de controle de fluxo: `if`, `try` e `with` no nivel
         # do modulo ligam nome no namespace do modulo, e ignorar isso deixaria simbolo morto invisivel.
+        entries: list[tuple[str, str, str]] = []
         for node in own_scope_nodes(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                definitions[node.name].append(f"{rel}::{qualname(node, parents)}")
+                entries.append((node.name, rel, qualname(node, parents)))
             elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-                for assigned in assigned_names(node):
-                    definitions[assigned].append(f"{rel}::{assigned}")
+                entries.extend((assigned, rel, assigned) for assigned in assigned_names(node))
+        labels = disambiguate([(entry_rel, place) for _, entry_rel, place in entries])
+        for (key, _, _), label in zip(entries, labels, strict=True):
+            definitions[key].append(label)
     findings: list[dict] = []
     for name, places in sorted(definitions.items()):
         if name in ignore:
@@ -607,24 +677,43 @@ def detect_dead_symbols(
     return findings
 
 
-def scoped_manifests(root: Path, policy: dict, paths: list[str] | None) -> list[Path]:
-    """Manifests dentro do escopo declarado: diretório excluído, caminho excluído e modo direcionado."""
-    exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
-    excluded_paths = set(declared_exclusions(policy))
-    targets = set(paths or [])
-    return sorted(
-        path
-        for path in root.rglob("requirements*.txt")
-        if not path.name.endswith(".lock.txt")
-        and not in_excluded_dir(relative(path, root), exclude_dirs)
-        and relative(path, root) not in excluded_paths
-        and (not targets or relative(path, root) in targets)
+def in_targets(rel: str, targets: set[str]) -> bool:
+    """Alvo do modo direcionado cobre o caminho e a subárvore, como no conjunto analisado."""
+    return not targets or any(
+        rel == target or rel.startswith(target.rstrip("/") + "/") for target in targets
     )
 
 
+def scoped_manifests(
+    root: Path, policy: dict, paths: list[str] | None
+) -> tuple[list[Path], list[dict]]:
+    """Manifests no escopo declarado, e o que ficou fora por resolver para fora da raiz.
+
+    Manifest é lido do disco: link que resolve para fora da árvore entraria como declaração de fora e
+    faria o resultado depender de arquivo que a varredura não mede.
+    """
+    exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
+    excluded_paths = set(declared_exclusions(policy))
+    targets = set(paths or [])
+    resolved_root = root.resolve()
+    manifests: list[Path] = []
+    refused: list[dict] = []
+    for path in sorted(root.rglob("requirements*.txt")):
+        if path.name.endswith(".lock.txt"):
+            continue
+        rel = relative(path, root)
+        if in_excluded_dir(rel, exclude_dirs) or rel in excluded_paths or not in_targets(rel, targets):
+            continue
+        if not path.resolve().is_relative_to(resolved_root):
+            refused.append({"path": rel, "reason": "manifest que resolve para fora da raiz"})
+            continue
+        manifests.append(path)
+    return manifests, refused
+
+
 def detect_unused_dependencies(
-    root: Path, policy: dict, texts: dict[str, str], paths: list[str] | None = None
-) -> list[dict]:
+    root: Path, policy: dict, modules: dict[str, ast.Module], paths: list[str] | None = None
+) -> tuple[list[dict], list[dict]]:
     """Requisito declarado e nunca importado no escopo do manifest.
 
     Manifest fora do escopo — em diretório excluído, em caminho excluído ou fora do modo direcionado —
@@ -637,23 +726,15 @@ def detect_unused_dependencies(
         for key, value in (config.get("import_name_map") or {}).items()
     }
     tools = {str(name).lower() for name in config.get("tool_dependencies", [])}
-    excluded_dirs = set(scope_of(policy).get("exclude_dirs") or [])
-    excluded_paths = set(declared_exclusions(policy))
-    manifests = scoped_manifests(root, policy, paths)
+    manifests, refused = scoped_manifests(root, policy, paths)
     findings: list[dict] = []
     for manifest in manifests:
         manifest_rel = relative(manifest, root)
         directory = manifest.parent
         prefix = "" if directory == root else directory.relative_to(root).as_posix() + "/"
         imported: set[str] = set()
-        for rel in sorted(texts):
+        for rel, tree in sorted(modules.items()):
             if not rel.startswith(prefix) or not rel.endswith(".py"):
-                continue
-            if in_excluded_dir(rel, excluded_dirs) or rel in excluded_paths:
-                continue
-            try:
-                tree = ast.parse(texts[rel])
-            except SyntaxError:
                 continue
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
@@ -690,7 +771,7 @@ def detect_unused_dependencies(
                     ),
                 }
             )
-    return findings
+    return findings, refused
 
 
 def detect_complexity(policy: dict, modules: dict[str, ast.Module]) -> list[dict]:
@@ -702,18 +783,22 @@ def detect_complexity(policy: dict, modules: dict[str, ast.Module]) -> list[dict
     for rel in sorted(modules):
         tree = modules[rel]
         parents = parent_map(tree)
+        measured: list[tuple[str, int]] = []
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
             score = cyclomatic_complexity(node)
             if score <= limit:
                 continue
-            symbol = qualname(node, parents)
+            measured.append((qualname(node, parents), score))
+        labels = disambiguate([(rel, symbol) for symbol, _ in measured])
+        for label, (_, score) in zip(labels, measured, strict=True):
+            symbol = label.split("::", 1)[1]
             findings.append(
                 {
-                    "id": finding_identity("complexity", [rel, symbol, str(score)]),
+                    "id": finding_identity("complexity", [rel, label, str(score)]),
                     "class": "complexity",
-                    "location": f"{rel}::{symbol}",
+                    "location": label,
                     "path": rel,
                     "symbol": symbol,
                     "value": score,
@@ -788,7 +873,9 @@ def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tu
     findings.extend(detect_duplication(root, policy, modules, texts))
     findings.extend(detect_dead_modules(root, policy, modules, texts))
     findings.extend(detect_dead_symbols(root, policy, modules, texts))
-    findings.extend(detect_unused_dependencies(root, policy, texts, paths))
+    dependency_findings, refused_manifests = detect_unused_dependencies(root, policy, modules, paths)
+    not_analyzed.extend(refused_manifests)
+    findings.extend(dependency_findings)
     findings.extend(detect_complexity(policy, modules))
     findings, problems = apply_policy_states(policy, findings)
     findings.sort(key=lambda item: (item["class"], item["location"]))

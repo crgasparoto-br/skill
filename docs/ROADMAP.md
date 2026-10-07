@@ -241,6 +241,18 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A quarta rodada de auditoria corrigiu o que as três anteriores ainda não garantiam: o import relativo deixou de
+alcançar além do pacote e só alcança a raiz quando a raiz é pacote declarado; a citação de arquivo passou a ser
+resolvida por caminho — raiz, diretório de quem cita e raiz da skill —, com âncora de marcador de lugar aceita,
+caminho que sai da raiz ignorado e nome solto aceito apenas quando único na árvore, o que fecha a colisão entre
+homônimos; a normalização da duplicação passou a remover apenas o literal de documentação, e não qualquer literal
+de expressão; o limiar de corpo passou a medir linhas de código do corpo, sem decorator, assinatura nem
+documentação; a definição repetida do mesmo nome passou a receber rótulo com ordem de aparição, o que elimina
+identidade repetida em árvore Python legal; o modo direcionado por diretório passou a alcançar o manifest da
+subárvore; o import da classe de dependência passou a ser lido dos módulos analisados, e não do corpus de citação;
+manifest que resolve para fora da raiz passou a ser recusado como cobertura; link quebrado em formato de texto
+passou a entrar em cobertura não analisada; e o arquivo de pacote passou a ser ponto de entrada declarado em
+`package_init_is_entry`, em vez de exceção fixa no código.
 A terceira rodada de auditoria corrigiu o que as duas anteriores ainda não garantiam: a exclusão de diretório
 passou a cobrir a subárvore inteira, inclusive quando a entrada é caminho composto como `evals/fixtures`, e
 passou a valer também para a busca por citação e para a classe de dependência sem uso; a leitura de texto para

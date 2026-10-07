@@ -26,10 +26,11 @@ Precisão não é detalhe de implementação: é contrato. Uma classe que acusa 
 | Classe | Vê | Não vê |
 | --- | --- | --- |
 | `duplication` | Corpo de função normalizado por AST, idêntico entre funções, inclusive no mesmo arquivo, acima do tamanho mínimo | Duplicação entre linguagens, bloco interno de função, equivalência semântica entre corpos diferentes |
-| `dead-module` | Módulo sem importador e sem invocação declarada, com import absoluto resolvido pela raiz e pelo diretório de quem importa e import relativo resolvido pelo pacote; diretório de teste fica fora quando a política declara `exclude_tests` | Referência montada em tempo de execução por nome fora de arquivo texto, plugin carregado por convenção de diretório |
+| `dead-module` | Módulo sem importador e sem invocação declarada, com import absoluto resolvido pela raiz e pelo diretório de quem importa e import relativo resolvido pelo pacote, sem alcançar além dele; citação resolvida por caminho, e nome solto só quando é único na árvore; diretório de teste fica fora quando a política declara `exclude_tests` e arquivo de pacote é ponto de entrada quando declara `package_init_is_entry` | Referência montada em tempo de execução por nome fora de arquivo texto, plugin carregado por convenção de diretório, citação que sai da raiz |
 | `dead-symbol` | Função, classe e atribuição simples de nível de módulo sem nenhuma ocorrência do nome na árvore, contando os formatos de texto declarados em `scope.corpus_suffixes` | Uso por `getattr`, por nome montado ou por registro dinâmico; atributo de classe, variável local e nome reexportado por import; nome de protocolo declarado em `ignore_names` |
 | `unused-dependency` | Requisito declarado que nenhum módulo do escopo importa, em manifest dentro do escopo declarado | Import indireto por caminho condicional, dependência de dependência, manifest em diretório ou caminho excluído |
 | `complexity` | Complexidade ciclomática do próprio corpo da função acima do teto | Complexidade cognitiva, tamanho de arquivo, acoplamento entre módulos, ramo de função aninhada, ramo de default de parâmetro e de decorator, e lambda |
+| Identidade | Rótulo `arquivo::símbolo`, com ordem de aparição quando o nome se repete no mesmo arquivo, e identidade derivada de conteúdo material | Número de linha: mover código não muda achado nem exceção aceita |
 
 Consequência prática: `dead-symbol` trata **qualquer** ocorrência do nome como referência, porque uma citação em documentação ou em literal de string já indica que alguém depende daquele nome. `dead-module` aceita citação em qualquer arquivo texto da árvore como invocação declarada, pela mesma razão.
 
@@ -51,6 +52,7 @@ A política `config/hygiene-policy.json` é a única fonte de limiar, exceção 
 - `classes.unused-dependency.tool_dependencies`: dependência executada como ferramenta, e não importada. `pytest`, `ruff` e `pip-audit` são desse tipo.
 - `classes.dead-module.entry_points`: módulo alcançado por convenção, e não por import ou citação.
 - `classes.dead-module.exclude_tests`: diretório de teste fora da varredura de módulo, porque teste é alcançado pelo executor e não por import do produto. A exclusão é declarada, e não fixa no código.
+- `classes.dead-module.package_init_is_entry`: arquivo de pacote como ponto de entrada, porque é alcançado pelo import de quem usa o pacote, e não por citação no repositório. Também declarado, pela mesma razão.
 - `classes.dead-symbol.ignore_names`: nome de protocolo consumido pelo próprio interpretador. Também declarado, pela mesma razão: exceção escondida no código não é auditável.
 - `classes.complexity.baseline_history`: história da linha de base, em lista de `{value, reason}`. Ver a seção de linha de base e catraca.
 
@@ -83,7 +85,7 @@ A história é a forma verificável de catraca sem depender do histórico do Git
 ## Cobertura e arquivo não analisado
 Arquivo que o escopo inclui e a varredura não conseguiu analisar aparece em `not_analyzed`, com causa: erro de sintaxe, arquivo ilegível, link simbólico quebrado, caminho que não é arquivo regular, caminho que resolve para fora da raiz. O validador reprova enquanto o caminho não estiver corrigido ou declarado em `not_analyzed_allowed`, com justificativa — e reprova também no sentido inverso: permissão declarada que não corresponde a nenhum arquivo não analisado é exceção órfã.
 
-A leitura de texto para citacao fica contida na raiz: link que resolve para fora da árvore entra em `not_analyzed`, porque texto de fora nao pode apagar achado da arvore medida. A validação é somente leitura sobre a árvore varrida, inclusive na conferência do contrato do relatório, que acontece em memória. Validar não escreve, não altera e não remove arquivo na raiz analisada, e por isso a varredura pode rodar em árvore somente leitura.
+A leitura de texto para citacao fica contida na raiz, e o mesmo vale para manifest: link que resolve para fora da árvore entra em `not_analyzed`, porque conteudo de fora nao pode apagar achado da arvore medida. Link quebrado em formato de texto tambem entra, porque cobertura que nao foi lida nao pode passar por arvore limpa. A validação é somente leitura sobre a árvore varrida, inclusive na conferência do contrato do relatório, que acontece em memória. Validar não escreve, não altera e não remove arquivo na raiz analisada, e por isso a varredura pode rodar em árvore somente leitura.
 
 A regra existe porque cobertura que encolhe em silêncio é indistinguível de aprovação. Um arquivo que sai do conjunto analisado sem aparecer no relatório faz o número melhorar sem que a árvore melhore.
 
@@ -93,7 +95,7 @@ A varredura produz um work item por classe com achado, não um por achado. A cla
 O corpo sai na forma canônica lida pelos extratores de requisito, com uma linha por item nas seções normativas. O artefato não abre issue: abrir issue é ação externa com efeito para terceiros, e a decisão de abrir, priorizar e executar é do ciclo de entrega.
 
 ## Modo direcionado
-O modo direcionado restringe o conjunto analisado: arquivos, manifests e, portanto, os achados das cinco classes. A busca por citação continua lendo a árvore inteira, porque citação é propriedade da árvore: restringi-la ao alvo faria um nome citado fora do alvo parecer morto dentro dele, que é falso positivo em classe `gated`. O modo é para conferir um subsistema, e não para reduzir o custo de leitura.
+O modo direcionado restringe o conjunto analisado: arquivos, manifests e, portanto, os achados das cinco classes. Alvo em diretório cobre a subárvore, e o manifest é lido do módulo analisado, não do corpus de citação: o corpus existe para citar, e não para decidir import. A busca por citação continua lendo a árvore inteira, porque citação é propriedade da árvore: restringi-la ao alvo faria um nome citado fora do alvo parecer morto dentro dele, que é falso positivo em classe `gated`. O modo é para conferir um subsistema, e não para reduzir o custo de leitura.
 ## Fronteira com a higiene do diff
 `entregar-issue/references/hygiene.md` continua sendo a higiene da entrega: arquivo tocado, consumidor direto, símbolo substituído. Esta skill mede a árvore inteira, sob demanda, e não substitui nenhum gate do ciclo.
 

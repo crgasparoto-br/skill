@@ -1069,3 +1069,164 @@ def test_exclusion_path_must_be_canonical() -> None:
         assert any(
             "caminho canonico" in error for error in validate_hygiene.policy_errors(document)
         ), declared
+
+
+def test_relative_import_beyond_package_keeps_module_dead(tmp_path: Path) -> None:
+    """Achado bloqueante: `from .. import` no primeiro nível ainda resolvia na raiz."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/consumer.py": "from .. import orphan\n",
+            "orphan.py": "V = 1\n",
+            "README.md": "`pkg/consumer.py`\n",
+        },
+    )
+    assert [finding["path"] for finding in findings_of(scan(tree), "dead-module")] == ["orphan.py"]
+    package = make_tree(
+        tmp_path / "second",
+        {
+            "__init__.py": "V = 1\n",
+            "pkg/consumer.py": "from .. import orphan\n",
+            "orphan.py": "V = 1\n",
+            "README.md": "`pkg/consumer.py` `orphan.py`\n",
+        },
+        policy_variant(**{"classes.dead-module.package_init_is_entry": True}),
+    )
+    assert findings_of(scan(package), "dead-module") == []
+
+
+def test_citation_resolution_rejects_escape_and_homonym(tmp_path: Path) -> None:
+    """Achado bloqueante: citação com `..` e homônimo de outro diretório mantinham módulo vivo."""
+    escaping = make_tree(
+        tmp_path, {"orphan.py": "V = 1\n", "README.md": "Use ../orphan.py\n"}
+    )
+    assert [finding["path"] for finding in findings_of(scan(escaping), "dead-module")] == ["orphan.py"]
+    homonyms = make_tree(
+        tmp_path / "second",
+        {
+            "pkg/orphan.py": "V = 1\n",
+            "other/orphan.py": "V = 1\n",
+            "README.md": "See pkg/orphan.py\n",
+        },
+    )
+    assert [finding["path"] for finding in findings_of(scan(homonyms), "dead-module")] == [
+        "other/orphan.py"
+    ]
+    unique = make_tree(
+        tmp_path / "third",
+        {"pkg/orphan.py": "V = 1\n", "README.md": "See orphan.py\n"},
+    )
+    assert findings_of(scan(unique), "dead-module") == []
+
+
+def test_normalization_keeps_expression_literal(tmp_path: Path) -> None:
+    """Achado bloqueante: literal de expressão era removido como se fosse documentação."""
+    policy = policy_variant(**{"classes.duplication.min_body_lines": 2})
+    body = 'def {name}(x):\n    total = x + 1\n    "{literal}"\n    return total\n'
+    findings = findings_of(
+        scan(
+            make_tree(
+                tmp_path,
+                {
+                    "a.py": body.format(name="alpha", literal="foo"),
+                    "b.py": body.format(name="beta", literal="bar"),
+                },
+                policy,
+            )
+        ),
+        "duplication",
+    )
+    assert findings == []
+
+
+def test_min_body_lines_measures_code_body(tmp_path: Path) -> None:
+    """Achado não bloqueante: limiar media a definição inteira, incluindo docstring."""
+    policy = policy_variant(**{"classes.duplication.min_body_lines": 4})
+    body = 'def {name}(x):\n    """Documentacao\n\n    com varias linhas.\n    """\n    return x\n'
+    findings = findings_of(
+        scan(
+            make_tree(
+                tmp_path, {"a.py": body.format(name="alpha"), "b.py": body.format(name="beta")}, policy
+            )
+        ),
+        "duplication",
+    )
+    assert findings == []
+
+
+def test_targeted_directory_covers_child_manifest(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo em diretório não alcançava o manifest da subárvore."""
+    tree = make_tree(tmp_path, {"sub/requirements.txt": "requests>=2\n", "sub/a.py": "import json\n"})
+    report, _ = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree), ["sub"])
+    assert [finding["symbol"] for finding in findings_of(report, "unused-dependency")] == ["requests"]
+
+
+def test_dependency_scope_does_not_depend_on_corpus_suffixes(tmp_path: Path) -> None:
+    """Achado bloqueante: import era lido do corpus de citação, e não dos módulos analisados."""
+    policy = policy_variant(**{"scope.corpus_suffixes": [".md"]})
+    assert validate_hygiene.policy_errors(policy) == []
+    tree = make_tree(
+        tmp_path, {"requirements.txt": "requests>=2\n", "alpha.py": "import requests\n"}, policy
+    )
+    assert findings_of(scan(tree), "unused-dependency") == []
+
+
+def test_manifest_symlink_outside_root_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: manifest com link para fora da raiz era lido."""
+    outside = tmp_path / "outside.txt"
+    outside.write_text("pytest>=9\n", encoding="utf-8")
+    tree = make_tree(tmp_path / "tree", {"alpha.py": "def used(value):\n    return value\n"})
+    (tree / "requirements.txt").symlink_to(outside)
+    report = scan(tree)
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["requirements.txt"]
+    assert findings_of(report, "unused-dependency") == []
+
+
+def test_broken_corpus_symlink_is_reported(tmp_path: Path) -> None:
+    """Achado bloqueante: link quebrado em formato de corpus desaparecia do relatório."""
+    tree = make_tree(tmp_path, {"alpha.py": "def used(value):\n    return value\n"})
+    (tree / "notes.md").symlink_to(tree / "missing.md")
+    report = scan(tree)
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["notes.md"]
+    assert any("nao analisado" in error for error in validate_hygiene.validate_hygiene(tree))
+
+
+def test_package_init_is_declared_entry(tmp_path: Path) -> None:
+    """Achado bloqueante: `__init__.py` era exceção fixa no código."""
+    files = {
+        "pkg/__init__.py": "UNREFERENCED = 1\n",
+        "pkg/other.py": "V = 1\n",
+        "README.md": "`pkg/other.py` `V`\n",
+    }
+    declared = make_tree(tmp_path, files, policy_variant(**{"classes.dead-module.package_init_is_entry": True}))
+    assert findings_of(scan(declared), "dead-module") == []
+    plain = make_tree(
+        tmp_path / "second", files, policy_variant(**{"classes.dead-module.package_init_is_entry": False})
+    )
+    assert [finding["path"] for finding in findings_of(scan(plain), "dead-module")] == [
+        "pkg/__init__.py"
+    ]
+
+
+def test_repeated_name_gets_distinct_identity(tmp_path: Path) -> None:
+    """Achado bloqueante: nome redefinido no mesmo arquivo produzia identidade repetida."""
+    duplicated = make_tree(
+        tmp_path,
+        {
+            "a.py": (
+                "def f(x):\n    total = x + 1\n    return total\n"
+                "\n\n"
+                "def f(y):\n    total = y + 1\n    return total\n"
+            ),
+            "b.py": "def g(z):\n    total = z + 1\n    return total\n",
+        },
+        policy_variant(**{"classes.duplication.min_body_lines": 2}),
+    )
+    report, problems = hygiene_scan.build_report(duplicated, hygiene_scan.load_policy(duplicated))
+    assert problems == []
+    locations = sorted(finding["location"] for finding in findings_of(report, "duplication"))
+    assert locations == ["a.py::f", "a.py::f#2", "b.py::g"]
+    # O gate reprova os achados abertos, e não a árvore: o que não pode aparecer é ambiguidade de rótulo.
+    assert not any(
+        "identidade repetida" in error for error in validate_hygiene.validate_hygiene(duplicated)
+    )
