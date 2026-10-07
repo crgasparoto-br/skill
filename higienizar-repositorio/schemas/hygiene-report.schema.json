@@ -12,6 +12,7 @@
     "policy_schema_version",
     "mode",
     "analyzed",
+    "excluded",
     "not_analyzed",
     "classes",
     "summary"
@@ -184,6 +185,28 @@
         "not_analyzed": {
           "type": "integer",
           "minimum": 0
+        }
+      }
+    },
+    "excluded": {
+      "type": "array",
+      "description": "Exclusões declaradas na política, com o motivo escrito, para que o escopo varrido não encolha em silêncio.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "reason"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     }

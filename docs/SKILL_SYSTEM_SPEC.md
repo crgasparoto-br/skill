@@ -137,13 +137,19 @@ acima do teto — e transformá-las em trabalho rastreável.
 Invariantes:
 
 - cada classe declara o que **não** vê, porque classe que reivindica completude produz confiança falsa;
-- a política é a única fonte de limiar, exceção e linha de base, e nenhum limiar vive no código;
-- achado aberto em classe controlada exige correção ou exceção declarada com justificativa escrita;
-- a identidade de um achado é derivada do conteúdo, e não do número de linha;
-- classe medida contra linha de base reprova tanto acima quanto abaixo dela, e exceção órfã reprova;
-- arquivo que o escopo inclui e a varredura não analisa precisa estar declarado, para que a cobertura
-  não encolha em silêncio;
-- a varredura é determinística e offline, e o relatório é validado contra schema;
+- a política é a única fonte de limiar, exclusão, exceção e linha de base, limiar exigido pela classe
+  precisa estar declarado, e nenhum limiar vive no código;
+- achado aberto em classe controlada exige correção ou exceção declarada com justificativa escrita, e a
+  justificativa precisa ter forma de texto: extensão, palavras e variedade;
+- a identidade de um achado é derivada do conteúdo material — caminho, símbolo e valor medido —, e não
+  do número de linha, de modo que alteração substantiva invalida a exceção antiga;
+- classe medida contra linha de base não aceita exceção item a item, reprova tanto acima quanto abaixo
+  da contagem declarada, e cresce apenas por entrada nova na história de linha de base, com motivo;
+- exceção órfã reprova nos dois sentidos: exceção sem achado e permissão de cobertura sem arquivo;
+- exclusão de caminho é declaração com motivo escrito e aparece no relatório, e arquivo que o escopo
+  inclui e a varredura não analisa precisa estar declarado, para que a cobertura não encolha em silêncio;
+- a varredura é determinística e offline, o relatório é validado contra schema em memória, e a validação
+  é somente leitura sobre a árvore varrida;
 - o perfil relata e propõe: não implementa correção, não abre issue e não tem autoridade de merge.
 
 ## 9. Modelo de requisitos

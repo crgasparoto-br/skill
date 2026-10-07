@@ -241,11 +241,24 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A entrega foi endurecida pela auditoria independente: classe medida contra linha de base deixou de aceitar
+exceção item a item, a linha de base passou a viver numa história declarada em que crescer exige entrada nova
+com motivo, exclusão de caminho passou a exigir motivo e a aparecer no relatório, escopo vazio e exclusão sem
+arquivo reprovam, link quebrado e caminho que resolve para fora da raiz entram como cobertura não analisada em
+vez de desaparecer, permissão de cobertura órfã reprova, a validação do relatório passou a ser em memória e
+somente leitura sobre a árvore varrida, a identidade do achado de complexidade passou a incluir o valor medido,
+a justificativa passou a exigir forma de texto e não apenas extensão, a normalização da duplicação deixou de
+apagar operador e constante, o import relativo passou a contar como import, a classe de símbolo morto passou a
+cobrir atribuição simples de módulo, a complexidade deixou de contar função aninhada e `with` como ramo, o
+comentário em linha do manifest deixou de virar nome de dependência, e o limiar exigido pela classe não cai mais
+em default escondido no código; a varredura passou a acusar, na própria árvore, o símbolo morto
+`DECISION_KINDS`, removido em vez de aceito.
 Critério de aceite: `python3 higienizar-repositorio/scripts/validate_hygiene.py --root .` aprova a árvore
 entregue com a política declarada; o gate reprova achado aberto sem exceção, contagem fora da linha de base,
-exceção órfã, arquivo não analisado não declarado, política com classe ausente, classe desconhecida, estado
-inválido, limiar incoerente e justificativa curta, e a varredura acusa cada classe no fixture que a reproduz,
-sem acusar árvore limpa; a suíte completa continua aprovada; a sequência de validação é idêntica em CI,
+exceção órfã, permissão de cobertura órfã, exclusão sem motivo, exclusão sem arquivo, escopo vazio, arquivo não
+analisado não declarado, política com classe ausente, classe desconhecida, estado inválido, limiar incoerente,
+limiar ausente, história de linha de base incoerente, justificativa de preenchimento e relatório que não atende
+ao contrato, e a varredura acusa cada classe no fixture que a reproduz, sem acusar árvore limpa; a suíte completa continua aprovada; a sequência de validação é idêntica em CI,
 `README.md` e `AGENTS.md`, com o gate na mesma posição, verificado por
 `scripts/validate_workflow_classification.py`; o requisito global, o changelog e este roadmap registram a
 entrega.

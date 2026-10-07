@@ -28,14 +28,15 @@ A higiene que acompanha uma entrega olha o diff: arquivo tocado, consumidor dire
 - Somente leitura sobre o produto: a varredura escreve apenas o relatorio e os work items.
 - Sem autoridade de merge, sem autoridade de implementacao e sem abertura automatica de issue.
 - Work item produzido aqui e entrada para o controlador de entrega, que decide escopo, prioridade e execucao.
-- A politica e a unica fonte de limiar, excecao e linha de base. Nenhum limiar vive no codigo.
+- A politica e a unica fonte de limiar, exclusao, excecao e linha de base. Nenhum limiar vive no codigo, e limiar exigido pela classe precisa estar declarado: campo ausente nao cai em default escondido.
+- A varredura e somente leitura inclusive na validacao: o gate confere o relatorio contra o schema em memoria, sem criar, alterar ou remover arquivo na raiz varrida.
 
 ## Classes de deteccao
-- `duplication`: corpos de funcao normalizados por AST, identicos em arquivos diferentes; copia declarada em `config/shared-files.json` e exclusao legitima, e nao achado.
-- `dead-module`: modulo que nenhum outro modulo importa e que nenhuma invocacao declarada alcanca.
-- `dead-symbol`: simbolo de nivel de modulo cujo nome nao aparece em nenhum lugar da arvore alem da propria definicao.
-- `unused-dependency`: requisito declarado em manifest e nunca importado no escopo do manifest, com ferramenta executada declarada na politica.
-- `complexity`: complexidade ciclomatica por funcao acima do teto declarado; classe reportada, medida contra linha de base.
+- `duplication`: corpos de funcao normalizados por AST, identicos em arquivos diferentes. A normalizacao apaga nome de variavel, de parametro e de funcao chamada, e o literal de documentacao; operador, constante e nome de atributo permanecem, porque somar nao e subtrair. Copia declarada em `config/shared-files.json` e exclusao legitima, e nao achado.
+- `dead-module`: modulo que nenhum outro modulo importa e que nenhuma invocacao declarada alcanca, contando import absoluto e relativo.
+- `dead-symbol`: simbolo de nivel de modulo — funcao, classe e atribuicao simples — cujo nome nao aparece em nenhum lugar da arvore alem da propria definicao.
+- `unused-dependency`: requisito declarado em manifest e nunca importado no escopo do manifest, com ferramenta executada declarada na politica e comentario em linha descartado do nome.
+- `complexity`: complexidade ciclomatica do proprio corpo da funcao acima do teto declarado; funcao aninhada e medida por si e gestao de recurso com `with` nao conta como ramo.
 
 Cada classe declara na politica o que **nao** ve. Tratar o relatorio como completo onde a classe declara limite e erro de leitura, nao de ferramenta.
 
@@ -49,12 +50,14 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O p
 
 ## Leitura do relatorio
 - `open` em classe `gated` e divida sem decisao: corrigir ou declarar em `accepted`, com justificativa escrita.
-- `accepted` e divida conhecida e aceita, com motivo registrado: continua sendo work item.
-- Classe `reported` mede contra linha de base declarada; a contagem precisa ser exatamente a linha de base, nem acima nem abaixo.
-- `not_analyzed` e buraco de cobertura, nunca limpeza: arquivo ilegivel, fora da raiz ou com erro de sintaxe precisa ser corrigido ou declarado na politica.
+- `accepted` e divida conhecida e aceita, com motivo registrado: continua sendo work item. A justificativa precisa ser texto de verdade — extensao minima, palavras e variedade —, porque preenchimento nao e justificativa; o merito e da revisao, a forma e do gate.
+- Classe `reported` nao aceita excecao item a item: a divida dela e agregada e a contagem precisa ser exatamente a linha de base declarada, nem acima (divida nova) nem abaixo (linha de base folgada).
+- A linha de base de classe `reported` vive numa historia declarada na politica: crescer exige entrada nova com motivo escrito, e diminuir e sempre permitido.
+- `excluded` e exclusao declarada com motivo, visivel no relatorio: escopo que encolhe sem aparecer no relatorio e indistinguivel de aprovacao, e o gate reprova.
+- `not_analyzed` e buraco de cobertura, nunca limpeza: arquivo ilegivel, link quebrado, caminho que resolve para fora da raiz ou erro de sintaxe precisa ser corrigido ou declarado na politica. Permissao declarada sem arquivo correspondente tambem reprova.
 
 ## Contratos
-- `schemas/hygiene-report.schema.json`: contrato do relatorio da varredura.
+- `schemas/hygiene-report.schema.json`: contrato do relatorio da varredura, incluindo escopo varrido e exclusoes declaradas.
 - `schemas/hygiene-work-item.schema.json`: contrato do work item na forma canonica.
 - `schemas/subskill-result.schema.json`: contrato de resultado de subskill compartilhado com o catalogo.
 

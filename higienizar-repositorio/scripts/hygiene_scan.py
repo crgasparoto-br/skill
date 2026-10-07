@@ -42,6 +42,7 @@ DEFAULT_POLICY = Path("config") / "hygiene-policy.json"
 SHARED_FILES = Path("config") / "shared-files.json"
 TEXT_SUFFIXES = {".md", ".py", ".json", ".yaml", ".yml", ".sh", ".txt", ".toml", ".cfg", ".ini"}
 NAME_RE = re.compile(r"[A-Za-z0-9_./-]+\.(?:py|md|json|ya?ml|sh|txt|toml|cfg|ini)\b")
+IDENTIFIER_FIELD_RE = re.compile(r"\b(?:name|id|arg)='[^']*'")
 CLASSES = ("duplication", "dead-module", "dead-symbol", "unused-dependency", "complexity")
 
 
@@ -100,17 +101,42 @@ def relative(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
-def scope_files(root: Path, policy: dict, paths: list[str] | None = None) -> tuple[list[Path], list[dict]]:
-    """Arquivos no escopo declarado e arquivos recusados, que precisam aparecer no relatório."""
+def safe_relative(path: Path, root: Path) -> str:
+    """Caminho relativo à raiz quando possível; fora dela, o caminho absoluto como está."""
+    try:
+        return relative(path, root)
+    except ValueError:
+        return path.as_posix()
+
+
+def declared_exclusions(policy: dict) -> dict[str, str]:
+    """Exclusão declarada de caminho: motivo escrito na política, nunca otimização silenciosa."""
+    scope = policy.get("scope") if isinstance(policy.get("scope"), dict) else {}
+    declared: dict[str, str] = {}
+    for entry in scope.get("exclude_paths") or []:
+        if isinstance(entry, dict) and isinstance(entry.get("path"), str):
+            declared[entry["path"]] = str(entry.get("reason") or "")
+    return declared
+
+
+def scope_files(
+    root: Path, policy: dict, paths: list[str] | None = None
+) -> tuple[list[Path], list[dict], list[dict]]:
+    """Arquivos no escopo, arquivos recusados e exclusões declaradas.
+
+    Arquivo coberto que não pode ser lido entra em recusados com a causa, em vez de desaparecer do
+    conjunto analisado: cobertura que encolhe em silêncio é indistinguível de aprovação.
+    """
+    root = root.resolve()
     scope = policy.get("scope") if isinstance(policy.get("scope"), dict) else {}
     suffixes = set(scope.get("include_suffixes") or [".py"])
     exclude_dirs = set(scope.get("exclude_dirs") or [])
-    exclude_paths = set(scope.get("exclude_paths") or [])
+    excluded = declared_exclusions(policy)
     candidates: list[Path] = []
     if paths:
         for raw in paths:
             candidate = (root / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
-            if root.resolve() not in candidate.parents and candidate != root.resolve():
+            if not candidate.is_relative_to(root):
                 raise HygieneError(f"caminho fora da raiz: {raw}")
             if candidate.is_dir():
                 candidates.extend(candidate.rglob("*"))
@@ -121,14 +147,26 @@ def scope_files(root: Path, policy: dict, paths: list[str] | None = None) -> tup
     files: list[Path] = []
     refused: list[dict] = []
     for candidate in candidates:
-        if not candidate.is_file() or candidate.suffix not in suffixes:
+        if candidate.is_dir():
             continue
-        rel = relative(candidate, root)
-        parts = set(Path(rel).parts)
-        if parts & exclude_dirs or rel in exclude_paths:
+        rel = safe_relative(candidate, root)
+        if candidate.suffix not in suffixes:
+            continue
+        if candidate.is_symlink() and not candidate.exists():
+            refused.append({"path": rel, "reason": "link simbolico quebrado: o alvo nao existe"})
+            continue
+        if not candidate.is_file():
+            refused.append({"path": rel, "reason": "caminho coberto que nao e arquivo regular"})
+            continue
+        if not candidate.resolve().is_relative_to(root):
+            refused.append({"path": rel, "reason": "o caminho resolve para fora da raiz do repositorio"})
+            continue
+        if set(Path(rel).parts) & exclude_dirs or rel in excluded:
             continue
         files.append(candidate)
-    return sorted(files, key=lambda item: relative(item, root)), refused
+    return sorted(files, key=lambda item: relative(item, root)), refused, [
+        {"path": path, "reason": reason} for path, reason in sorted(excluded.items())
+    ]
 
 
 def parse_module(path: Path, root: Path) -> tuple[ast.Module | None, list[dict]]:
@@ -162,11 +200,29 @@ def parent_map(tree: ast.AST) -> dict[ast.AST, ast.AST]:
     return parents
 
 
+def own_scope_nodes(node: ast.AST) -> list[ast.AST]:
+    """Nós do próprio escopo: função aninhada, lambda e classe aninhada são unidades separadas."""
+    collected: list[ast.AST] = []
+    stack = list(ast.iter_child_nodes(node))
+    while stack:
+        current = stack.pop()
+        collected.append(current)
+        if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+            continue
+        stack.extend(ast.iter_child_nodes(current))
+    return collected
+
+
 def cyclomatic_complexity(node: ast.AST) -> int:
-    """Complexidade ciclomática: caminhos independentes contados a partir do corpo da função."""
+    """Complexidade ciclomática da própria função.
+
+    Conta só os ramos do próprio corpo: função aninhada é medida por si, e somá-la aqui inflaria a
+    função externa. `with` não entra, porque não cria caminho independente — tratá-lo como ramo
+    transformaria gestão de recurso em dívida inexistente.
+    """
     score = 1
-    for child in ast.walk(node):
-        if isinstance(child, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.ExceptHandler, ast.With, ast.AsyncWith)):
+    for child in own_scope_nodes(node):
+        if isinstance(child, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.ExceptHandler)):
             score += 1
         elif isinstance(child, ast.BoolOp):
             score += len(child.values) - 1
@@ -180,20 +236,25 @@ def cyclomatic_complexity(node: ast.AST) -> int:
 
 
 def normalized_body(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
-    """Forma do corpo sem nome, sem literal de documentação e sem identificador."""
-    body = [
-        statement
-        for statement in node.body
-        if not (
-            isinstance(statement, ast.Expr)
-            and isinstance(statement.value, ast.Constant)
-            and isinstance(statement.value.value, str)
-        )
-    ]
+    """Forma do corpo sem nome de variável, parâmetro, função chamada e literal de documentação.
+
+    Só identificador é apagado. Operador, constante e nome de atributo permanecem: somar e subtrair
+    o mesmo valor não são a mesma função, e chamar `upper` não é chamar `lower`. Apagar tudo isso
+    produziria cópia onde não existe cópia, que é o erro mais caro desta classe.
+    """
+    body = [statement for statement in node.body if not is_docstring(statement)]
     if not body:
         return None
     dump = ast.dump(ast.Module(body=body, type_ignores=[]), annotate_fields=False)
-    return re.sub(r"\b[A-Za-z_][A-Za-z0-9_]*\b", "ID", dump)
+    return IDENTIFIER_FIELD_RE.sub("ID='ID'", dump)
+
+
+def is_docstring(statement: ast.stmt) -> bool:
+    return (
+        isinstance(statement, ast.Expr)
+        and isinstance(statement.value, ast.Constant)
+        and isinstance(statement.value.value, str)
+    )
 
 
 def finding_identity(class_name: str, parts: list[str]) -> str:
@@ -252,7 +313,9 @@ def detect_duplication(
     root: Path, policy: dict, modules: dict[str, ast.Module], texts: dict[str, str]
 ) -> list[dict]:
     config = policy["classes"]["duplication"]
-    minimum = int(config.get("min_body_lines", 12))
+    if "min_body_lines" not in config:
+        raise HygieneError("politica: classes.duplication.min_body_lines precisa ser declarado")
+    minimum = int(config["min_body_lines"])
     exclude_copies = bool(config.get("exclude_declared_copies", True))
     exclude_tests = bool(config.get("exclude_tests", True))
     declared = shared_declared_paths(root) if exclude_copies else set()
@@ -304,9 +367,13 @@ def detect_dead_modules(
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 imported.update(alias.name for alias in node.names)
-            elif isinstance(node, ast.ImportFrom) and node.module:
-                imported.add(node.module)
-                imported.update(f"{node.module}.{alias.name}" for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    imported.add(node.module)
+                    imported.update(f"{node.module}.{alias.name}" for alias in node.names)
+                else:
+                    # `from . import x`: sem modulo textual, o importado e o proprio alias.
+                    imported.update(alias.name for alias in node.names)
     findings: list[dict] = []
     for rel in sorted(modules):
         path = Path(rel)
@@ -334,6 +401,12 @@ def detect_dead_modules(
     return findings
 
 
+def assigned_names(node: ast.stmt) -> list[str]:
+    """Nomes simples atribuídos no nível do módulo; desempacotamento e alvo não textual ficam fora."""
+    targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+    return [target.id for target in targets if isinstance(target, ast.Name) and target.id.isidentifier()]
+
+
 def detect_dead_symbols(
     root: Path, policy: dict, modules: dict[str, ast.Module], texts: dict[str, str]
 ) -> list[dict]:
@@ -351,6 +424,9 @@ def detect_dead_symbols(
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 definitions[node.name].append(f"{rel}::{qualname(node, parents)}")
+            elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+                for assigned in assigned_names(node):
+                    definitions[assigned].append(f"{rel}::{assigned}")
     findings: list[dict] = []
     for name, places in sorted(definitions.items()):
         if name in ignore or name.startswith("__"):
@@ -408,7 +484,7 @@ def detect_unused_dependencies(root: Path, policy: dict, texts: dict[str, str]) 
         except HygieneError:
             continue
         for raw in lines:
-            line = raw.strip()
+            line = raw.split(" #", 1)[0].strip()
             if not line or line.startswith(("#", "-")):
                 continue
             name = re.split(r"[<>=!~\[;]", line, maxsplit=1)[0].strip()
@@ -438,7 +514,9 @@ def detect_unused_dependencies(root: Path, policy: dict, texts: dict[str, str]) 
 
 def detect_complexity(policy: dict, modules: dict[str, ast.Module]) -> list[dict]:
     config = policy["classes"]["complexity"]
-    limit = int(config.get("max_complexity", 30))
+    if "max_complexity" not in config:
+        raise HygieneError("politica: classes.complexity.max_complexity precisa ser declarado")
+    limit = int(config["max_complexity"])
     findings: list[dict] = []
     for rel in sorted(modules):
         tree = modules[rel]
@@ -452,7 +530,7 @@ def detect_complexity(policy: dict, modules: dict[str, ast.Module]) -> list[dict
             symbol = qualname(node, parents)
             findings.append(
                 {
-                    "id": finding_identity("complexity", [rel, symbol]),
+                    "id": finding_identity("complexity", [rel, symbol, str(score)]),
                     "class": "complexity",
                     "location": f"{rel}::{symbol}",
                     "path": rel,
@@ -465,7 +543,18 @@ def detect_complexity(policy: dict, modules: dict[str, ast.Module]) -> list[dict
 
 
 def apply_policy_states(policy: dict, findings: list[dict]) -> tuple[list[dict], list[str]]:
-    """Aplica exceções declaradas e calcula o estado de cada achado; devolve problemas da política."""
+    """Aplica exceções declaradas e calcula o estado de cada achado; devolve problemas da política.
+
+    Classe medida contra linha de base não aceita exceção item a item: a dívida dela é agregada e
+    medida contra a história declarada, e aceitar um item esconderia justamente a contagem que a
+    linha de base existe para medir.
+    """
+    classes = policy.get("classes") if isinstance(policy.get("classes"), dict) else {}
+    measured = {
+        name
+        for name, config in classes.items()
+        if isinstance(config, dict) and config.get("state") == "reported"
+    }
     accepted = {}
     for entry in policy.get("accepted", []) if isinstance(policy.get("accepted"), list) else []:
         if not isinstance(entry, dict):
@@ -482,6 +571,12 @@ def apply_policy_states(policy: dict, findings: list[dict]) -> tuple[list[dict],
             problems.append(f"achado com identidade repetida: {identity}")
         seen.add(identity)
         reason = accepted.get(identity)
+        if reason is not None and finding["class"] in measured:
+            problems.append(
+                f"classe medida contra linha de base nao aceita excecao: {identity} "
+                f"(a divida e agregada: ajuste a linha de base com motivo declarado)"
+            )
+            reason = None
         if reason is None:
             finding["state"] = "open"
             finding.pop("justification", None)
@@ -497,7 +592,7 @@ def apply_policy_states(policy: dict, findings: list[dict]) -> tuple[list[dict],
 
 def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tuple[dict, list[str]]:
     """Relatório completo da varredura e problemas estruturais encontrados no caminho."""
-    files, refused = scope_files(root, policy, paths)
+    files, refused, excluded = scope_files(root, policy, paths)
     modules: dict[str, ast.Module] = {}
     not_analyzed: list[dict] = list(refused)
     for path in files:
@@ -541,6 +636,7 @@ def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tu
         "policy_schema_version": policy.get("schema_version"),
         "mode": "targeted" if paths else "sweep",
         "analyzed": len(modules),
+        "excluded": excluded,
         "not_analyzed": not_analyzed,
         "classes": classes,
         "summary": {
@@ -595,7 +691,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--policy", type=Path, default=None)
     parser.add_argument("--report", type=Path, default=None, help="caminho do relatorio JSON")
     parser.add_argument("--markdown", type=Path, default=None, help="caminho do relatorio Markdown")
-    parser.add_argument("--paths", nargs="*", default=None, help="modo direcionado a caminhos")
+    parser.add_argument("--paths", nargs="+", default=None, help="modo direcionado a caminhos")
     args = parser.parse_args(argv)
     root = (args.root or Path()).resolve()
     try:

@@ -21,9 +21,11 @@ from pathlib import Path
 
 try:
     from .hygiene_scan import HygieneError, build_report, load_policy
+    from .validate_hygiene import schema_errors
 except ImportError:  # pragma: no cover - execucao direta do script
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from hygiene_scan import HygieneError, build_report, load_policy
+    from validate_hygiene import schema_errors
 
 CLASS_TEXT = {
     "duplication": {
@@ -208,6 +210,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.report is not None:
             report = json.loads(args.report.read_text(encoding="utf-8"))
+            # Relatorio externo entra pela mesma porta: sem conferir o contrato, o work item
+            # carregaria a proveniencia de um arquivo que ninguem validou.
+            problems = schema_errors(report)
+            if problems:
+                print("ERRO: relatorio nao atende ao contrato:", file=sys.stderr)
+                for problem in problems[:5]:
+                    print(f"- {problem}", file=sys.stderr)
+                return 2
         else:
             policy = load_policy(root)
             report, problems = build_report(root, policy)

@@ -100,7 +100,6 @@ TEXTUAL_KINDS = {
     "issue-body", "issue-comment", "subissue", "user-decision", "document",
     "attachment-extract", "spreadsheet-extract", "other-text",
 }
-DECISION_KINDS = {"issue-body", "issue-comment", "subissue", "user-decision"}
 
 def sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()

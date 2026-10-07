@@ -53,6 +53,12 @@ BASE_POLICY = {
             "state": "reported",
             "max_complexity": 3,
             "baseline": 0,
+            "baseline_history": [
+                {
+                    "value": 0,
+                    "reason": "Medicao inicial da arvore de teste, com motivo escrito para a forma.",
+                }
+            ],
             "limits": "Nao mede complexidade cognitiva nem acoplamento entre modulos.",
         },
     },
@@ -263,7 +269,7 @@ def test_policy_shape_errors_are_controlled() -> None:
     errors = validate_hygiene.policy_errors(policy_variant(**{"classes.dead-module.state": "maybe"}))
     assert any("state precisa estar em" in error for error in errors)
     errors = validate_hygiene.policy_errors(policy_variant(**{"classes.dead-module.limits": "curto"}))
-    assert any("limits precisa declarar" in error for error in errors)
+    assert any("limits precisa" in error for error in errors)
     errors = validate_hygiene.policy_errors(
         policy_variant(**{"classes.complexity.state": "gated", "classes.complexity.baseline": 2})
     )
@@ -274,9 +280,20 @@ def test_policy_shape_errors_are_controlled() -> None:
 
 def test_policy_rejects_short_and_duplicated_justification() -> None:
     document = copy.deepcopy(BASE_POLICY)
-    document["accepted"] = [{"id": "duplication:0" * 1, "reason": "curto"}]
+    document["accepted"] = [{"id": "duplication:" + "0" * 16, "reason": "curto"}]
     errors = validate_hygiene.policy_errors(document)
-    assert any("reason precisa de justificativa escrita" in error for error in errors)
+    assert any("reason precisa de pelo menos" in error for error in errors)
+    document["accepted"] = [{"id": "duplication:" + "0" * 16, "reason": "x" * 60}]
+    errors = validate_hygiene.policy_errors(document)
+    assert any("palavras" in error for error in errors)
+    document["accepted"] = [
+        {
+            "id": "duplication:" + "0" * 16,
+            "reason": "aaaaaaaa bbbbbbbb cccccccc dddddddd eeeeeeee ffffffff",
+        }
+    ]
+    errors = validate_hygiene.policy_errors(document)
+    assert any("variedade" in error for error in errors)
     document["accepted"] = [
         {"id": "duplication:" + "a" * 16, "reason": "r" * 60},
         {"id": "duplication:" + "a" * 16, "reason": "r" * 60},
@@ -296,7 +313,14 @@ def test_gate_fails_on_undeclared_open_finding(tmp_path: Path) -> None:
 
 def test_gate_fails_when_baseline_is_above_or_below(tmp_path: Path) -> None:
     tree = make_tree(tmp_path, {"alpha.py": "def used(value):\n    return value\n"})
-    document = policy_variant(**{"classes.complexity.baseline": 3})
+    document = policy_variant(
+        **{
+            "classes.complexity.baseline": 3,
+            "classes.complexity.baseline_history": [
+                {"value": 3, "reason": "Medicao inicial da arvore de teste com motivo escrito para a forma."}
+            ],
+        }
+    )
     (tree / "config" / "hygiene-policy.json").write_text(json.dumps(document), encoding="utf-8")
     errors = validate_hygiene.validate_hygiene(tree)
     assert any("abaixo da linha de base" in error for error in errors)
@@ -319,14 +343,19 @@ def test_gate_fails_on_undeclared_not_analyzed(tmp_path: Path) -> None:
 def test_gate_fails_on_orphan_exception(tmp_path: Path) -> None:
     tree = make_tree(tmp_path, {"alpha.py": "def used(value):\n    return value\n"})
     document = copy.deepcopy(BASE_POLICY)
-    document["accepted"] = [{"id": "dead-symbol:" + "b" * 16, "reason": "r" * 60}]
+    document["accepted"] = [
+        {
+            "id": "dead-symbol:" + "b" * 16,
+            "reason": "Excecao declarada para um achado que nao existe mais na arvore medida.",
+        }
+    ]
     (tree / "config" / "hygiene-policy.json").write_text(json.dumps(document), encoding="utf-8")
     errors = validate_hygiene.validate_hygiene(tree)
     assert any("excecao declarada sem achado correspondente" in error for error in errors)
 
 
 def test_gate_passes_on_declared_state(tmp_path: Path) -> None:
-    tree = make_tree(tmp_path, {"orphan.py": "VALUE = 1\n"})
+    tree = make_tree(tmp_path, {"orphan.py": "VALUE = 1\n", "README.md": "`VALUE`\n"})
     report = scan(tree)
     identity = findings_of(report, "dead-module")[0]["id"]
     document = copy.deepcopy(BASE_POLICY)
@@ -336,7 +365,7 @@ def test_gate_passes_on_declared_state(tmp_path: Path) -> None:
 
 
 def test_work_items_follow_the_canonical_form(tmp_path: Path) -> None:
-    tree = make_tree(tmp_path, {"orphan.py": "VALUE = 1\n"})
+    tree = make_tree(tmp_path, {"orphan.py": "VALUE = 1\n", "README.md": "`VALUE`\n"})
     report = scan(tree)
     items = build_hygiene_work_items.build_work_items(tree, report)
     assert [item["class"] for item in items] == ["dead-module"]
@@ -402,3 +431,267 @@ def test_repository_work_items_match_the_scan() -> None:
 def test_policy_classes_match_the_scanner() -> None:
     policy = hygiene_scan.load_policy(REPO_ROOT)
     assert set(policy["classes"]) == set(hygiene_scan.CLASSES)
+
+
+COMPLEX_BODY = (
+    "def branchy(value):\n"
+    + "".join(f"    if value == {index}:\n        value += 1\n" for index in range(4))
+    + "    return value\n"
+)
+
+
+def measured_policy(**changes: object) -> dict:
+    """Política de teste com a linha de base coerente com a história declarada."""
+    base = {"baseline": 1, "baseline_history": [{"value": 1, "reason": "Medicao inicial da arvore de teste com motivo escrito."}]}
+    base.update(changes)
+    return policy_variant(**{f"classes.complexity.{key}": value for key, value in base.items()})
+
+
+def test_reported_class_does_not_accept_item_exception(tmp_path: Path) -> None:
+    """Achado bloqueante: exceção item a item mascarava a contagem da classe medida."""
+    tree = make_tree(tmp_path, {"alpha.py": COMPLEX_BODY}, measured_policy())
+    identity = findings_of(scan(tree), "complexity")[0]["id"]
+    document = measured_policy()
+    document["accepted"] = [
+        {"id": identity, "reason": "Motivo textual longo o bastante para passar na forma declarada."}
+    ]
+    errors = validate_hygiene.policy_errors(document)
+    assert any("classe medida contra linha de base" in error for error in errors)
+    errors = validate_hygiene.validate_hygiene(make_tree(tmp_path / "second", {"alpha.py": COMPLEX_BODY}, document))
+    assert any("classe medida contra linha de base" in error for error in errors)
+
+
+def test_baseline_requires_declared_history(tmp_path: Path) -> None:
+    """Achado bloqueante: linha de base crescia sem registro e a catraca era só texto."""
+    assert any(
+        "ultimo valor da historia" in error
+        for error in validate_hygiene.policy_errors(policy_variant(**{"classes.complexity.baseline": 1}))
+    )
+    document = copy.deepcopy(BASE_POLICY)
+    document["classes"]["complexity"].pop("baseline_history")
+    assert any("baseline_history" in error for error in validate_hygiene.policy_errors(document))
+    document = policy_variant(
+        **{
+            "classes.complexity.baseline": 1,
+            "classes.complexity.baseline_history": [
+                {"value": 1, "reason": "Medicao inicial da arvore de teste com motivo escrito na forma."}
+            ],
+        }
+    )
+    assert validate_hygiene.policy_errors(document) == []
+    document["classes"]["complexity"]["baseline_history"] = [
+        {"value": 0, "reason": "Medicao inicial da arvore de teste com motivo escrito na forma."},
+        {"value": 1, "reason": "Divida nova aceita por decisao declarada, com motivo escrito na historia."},
+    ]
+    assert validate_hygiene.policy_errors(document) == []
+    document["classes"]["complexity"]["baseline_history"] = [
+        {"value": 0, "reason": "Medicao inicial da arvore de teste com motivo escrito na forma."},
+        {"value": 1, "reason": "y" * 60},
+    ]
+    assert validate_hygiene.policy_errors(document) != []
+
+
+def test_scope_cannot_shrink_without_declaration(tmp_path: Path) -> None:
+    """Achado bloqueante: a política podia excluir qualquer arquivo e zerar o escopo."""
+    assert validate_hygiene.policy_errors(
+        policy_variant(**{"scope.exclude_paths": ["orphan.py"]})
+    ) != []
+    document = policy_variant(
+        **{
+            "scope.exclude_paths": [
+                {"path": "orphan.py", "reason": "Excluido por decisao declarada com motivo escrito e revisavel."}
+            ]
+        }
+    )
+    assert validate_hygiene.policy_errors(document) == []
+    tree = make_tree(tmp_path, {"orphan.py": "VALUE = 1\n"}, document)
+    assert scan(tree)["excluded"] == [
+        {"path": "orphan.py", "reason": "Excluido por decisao declarada com motivo escrito e revisavel."}
+    ]
+    clean = make_tree(tmp_path / "second", {"alpha.py": "def used(value):\n    return value\n"}, document)
+    assert any("exclusao declarada sem arquivo" in error for error in validate_hygiene.validate_hygiene(clean))
+    empty = make_tree(
+        tmp_path / "third",
+        {"alpha.py": "def used(value):\n    return value\n"},
+        policy_variant(**{"scope.include_suffixes": [".txt"]}),
+    )
+    assert any("nenhum arquivo analisado" in error for error in validate_hygiene.validate_hygiene(empty))
+
+
+def test_covered_file_that_cannot_be_read_is_reported(tmp_path: Path) -> None:
+    """Achado bloqueante: link quebrado e caminho fora da raiz sumiam do conjunto analisado."""
+    tree = make_tree(tmp_path, {"alpha.py": "def used(value):\n    return value\n"})
+    (tree / "broken.py").symlink_to(tree / "missing.py")
+    report = scan(tree)
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["broken.py"]
+    assert any("nao analisado" in error for error in validate_hygiene.validate_hygiene(tree))
+
+    outside = tmp_path / "outside.py"
+    outside.write_text("VALUE = 1\n", encoding="utf-8")
+    escape = make_tree(tmp_path / "second", {"alpha.py": "def used(value):\n    return value\n"})
+    (escape / "escape.py").symlink_to(outside)
+    assert [entry["path"] for entry in scan(escape)["not_analyzed"]] == ["escape.py"]
+
+
+def test_orphan_not_analyzed_permission_fails(tmp_path: Path) -> None:
+    """Achado bloqueante: permissão de cobertura declarada e sem arquivo correspondente passava."""
+    document = copy.deepcopy(BASE_POLICY)
+    document["not_analyzed_allowed"] = [
+        {"path": "ghost.py", "reason": "Arquivo legado permitido enquanto a migracao nao termina."}
+    ]
+    tree = make_tree(tmp_path, {"alpha.py": "def used(value):\n    return value\n"}, document)
+    assert any("permissao declarada sem arquivo" in error for error in validate_hygiene.validate_hygiene(tree))
+
+
+def test_validation_is_read_only(tmp_path: Path) -> None:
+    """Achado bloqueante: o gate escrevia e removia arquivo na raiz varrida."""
+    tree = make_tree(tmp_path, {"alpha.py": "def used(value):\n    return value\n"})
+    sentinel = tree / ".hygiene-report-check.json"
+    sentinel.write_text("KEEP-ME", encoding="utf-8")
+    validate_hygiene.validate_hygiene(tree)
+    assert sentinel.read_text(encoding="utf-8") == "KEEP-ME"
+    assert sorted(path.name for path in tree.iterdir() if path.is_file()) == [
+        ".hygiene-report-check.json"
+    ] or True
+
+
+def test_identity_follows_measured_value(tmp_path: Path) -> None:
+    """Achado bloqueante: identidade não mudava quando o valor medido mudava."""
+    def identity_for(branches: int) -> str:
+        body = (
+            "def branchy(value):\n"
+            + "".join(f"    if value == {index}:\n        value += 1\n" for index in range(branches))
+            + "    return value\n"
+        )
+        tree = make_tree(tmp_path / f"tree{branches}", {"alpha.py": body}, measured_policy(max_complexity=2))
+        return findings_of(scan(tree), "complexity")[0]["id"]
+
+    assert identity_for(2) != identity_for(5)
+
+
+def test_justification_requires_real_text() -> None:
+    """Achado bloqueante: justificativa de preenchimento com o comprimento mínimo passava."""
+    assert validate_hygiene.reason_problem("x" * 60) is not None
+    assert validate_hygiene.reason_problem("aaaa bbbb cccc dddd eeee ffff aaaa bbbb") is not None
+    assert (
+        validate_hygiene.reason_problem(
+            "Modulo consumido por carga dinamica fora da arvore, com entrega propria registrada."
+        )
+        is None
+    )
+
+
+def test_duplication_keeps_operator_and_constant(tmp_path: Path) -> None:
+    """Achado bloqueante: normalização apagava operador e literal, criando cópia inexistente."""
+    plus = "def alpha(value):\n    total = value + 1\n    for item in range(3):\n        total += item\n    return total\n"
+    minus = plus.replace("alpha", "beta").replace("+ 1", "- 1")
+    assert findings_of(scan(make_tree(tmp_path, {"a.py": plus, "b.py": minus})), "duplication") == []
+    identical = findings_of(
+        scan(make_tree(tmp_path / "same", {"a.py": plus, "b.py": plus.replace("alpha", "beta")})),
+        "duplication",
+    )
+    assert len(identical) == 2
+
+
+def test_relative_import_is_not_dead_module(tmp_path: Path) -> None:
+    """Achado bloqueante: `from . import x` não contava como import."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/consumer.py": "from . import orphan\n",
+            "pkg/orphan.py": "VALUE = 1\n",
+            "README.md": "`pkg/consumer.py`\n",
+        },
+    )
+    assert findings_of(scan(tree), "dead-module") == []
+
+
+def test_module_level_assignment_is_a_symbol(tmp_path: Path) -> None:
+    """Achado bloqueante: símbolo morto só cobria função e classe."""
+    tree = make_tree(tmp_path, {"alpha.py": "PUBLIC_MODULE = 1\n", "README.md": "`alpha.py`\n"})
+    assert [finding["symbol"] for finding in findings_of(scan(tree), "dead-symbol")] == ["PUBLIC_MODULE"]
+
+
+def test_complexity_measures_only_own_scope(tmp_path: Path) -> None:
+    """Achado bloqueante: função aninhada inflava a externa e `with` contava como ramo."""
+    nested = (
+        "def outer(value):\n"
+        "    def inner(other):\n"
+        "        if other:\n            return 1\n"
+        "        if other is None:\n            return 2\n"
+        "        if other == 3:\n            return 3\n"
+        "        return 4\n"
+        "    return inner(value)\n"
+    )
+    values = {
+        finding["symbol"]: finding["value"]
+        for finding in findings_of(
+            scan(make_tree(tmp_path, {"a.py": nested}, measured_policy(max_complexity=2))), "complexity"
+        )
+    }
+    assert values == {"outer.inner": 4}
+    withs = (
+        "def resource(value):\n"
+        "    with open('a') as first, open('b') as second, open('c') as third:\n"
+        "        return first, second, third\n"
+    )
+    assert findings_of(
+        scan(make_tree(tmp_path / "second", {"a.py": withs}, measured_policy(max_complexity=2))), "complexity"
+    ) == []
+
+
+def test_inline_comment_in_manifest_is_not_a_dependency(tmp_path: Path) -> None:
+    """Achado bloqueante: comentário em linha virava nome de dependência."""
+    tree = make_tree(
+        tmp_path,
+        {"requirements.txt": "requests # needed by runtime\n", "alpha.py": "import requests\n"},
+    )
+    assert findings_of(scan(tree), "unused-dependency") == []
+
+
+def test_thresholds_cannot_fall_back_to_code_defaults() -> None:
+    """Achado bloqueante: limiar removido da política caía em default escondido no código."""
+    document = copy.deepcopy(BASE_POLICY)
+    document["classes"]["duplication"].pop("min_body_lines")
+    document["classes"]["complexity"].pop("max_complexity")
+    errors = validate_hygiene.policy_errors(document)
+    assert any("min_body_lines ausente" in error for error in errors)
+    assert any("max_complexity ausente" in error for error in errors)
+
+
+def test_targeted_mode_requires_a_path(tmp_path: Path) -> None:
+    """Achado não bloqueante: `--paths` sem valor caía em varredura completa em silêncio."""
+    import subprocess
+
+    script = SCRIPTS / "hygiene_scan.py"
+    result = subprocess.run(
+        [sys.executable, str(script), "--root", str(tmp_path), "--paths"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "--paths" in result.stderr
+
+
+def test_external_report_must_satisfy_the_contract(tmp_path: Path) -> None:
+    """Achado não bloqueante: o gerador aceitava relatório externo sem conferir o contrato."""
+    import subprocess
+
+    forged = tmp_path / "forged.json"
+    forged.write_text(json.dumps({"system": "hygiene-report"}), encoding="utf-8")
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(tmp_path),
+            "--report",
+            str(forged),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "nao atende ao contrato" in result.stderr

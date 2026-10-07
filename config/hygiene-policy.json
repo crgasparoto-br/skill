@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "system": "hygiene-policy",
-  "description": "Política da varredura global de higiene. A política é a única fonte dos limiares, das exceções e da linha de base: nenhum limiar vive no código, exceção sem justificativa escrita reprova, e a linha de base de uma classe reportada só pode diminuir sem nova decisão registrada. Cada classe declara o que não vê, porque uma classe que reivindica completude produz confiança falsa.",
+  "description": "Política da varredura global de higiene. A política é a única fonte dos limiares, das exclusões, das exceções e da linha de base: nenhum limiar vive no código, exclusão de caminho exige motivo escrito e aparece no relatório, exceção sem justificativa escrita reprova, e classe medida contra linha de base não aceita exceção item a item — ela cresce apenas por entrada nova na história declarada, com motivo registrado. Cada classe declara o que não vê, porque uma classe que reivindica completude produz confiança falsa.",
   "scope": {
     "include_suffixes": [
       ".py"
@@ -24,7 +24,7 @@
       "min_body_lines": 12,
       "exclude_declared_copies": true,
       "exclude_tests": true,
-      "limits": "Compara corpos de função normalizados por AST, ignorando nome, literal de documentação e identificador. Não vê duplicação entre linguagens, duplicação de bloco dentro de uma função, nem equivalência semântica entre corpos diferentes. Cópia declarada em config/shared-files.json é exclusão legítima, e não achado."
+      "limits": "Compara corpos de função normalizados por AST, apagando nome de variável, de parâmetro e de função chamada, além do literal de documentação; operador, constante e nome de atributo permanecem, porque somar não é subtrair e chamar upper não é chamar lower. Não vê duplicação entre linguagens, duplicação de bloco dentro de uma função, nem equivalência semântica entre corpos diferentes. Cópia declarada em config/shared-files.json é exclusão legítima, e não achado."
     },
     "dead-module": {
       "state": "gated",
@@ -35,7 +35,7 @@
       "state": "gated",
       "exclude_tests": true,
       "ignore_names": [],
-      "limits": "Considera morto o símbolo de nível de módulo cujo nome não aparece em nenhum lugar da árvore além da própria definição. Não vê uso por getattr, por nome montado ou por registro dinâmico, e por isso qualquer ocorrência do nome já conta como referência."
+      "limits": "Considera morto o símbolo de nível de módulo — função, classe e atribuição simples — cujo nome não aparece em nenhum lugar da árvore além da própria definição. Não vê uso por getattr, por nome montado ou por registro dinâmico, e por isso qualquer ocorrência do nome já conta como referência; atributo de classe, variável local e nome reexportado por import ficam fora do escopo."
     },
     "unused-dependency": {
       "state": "gated",
@@ -54,57 +54,23 @@
       "state": "reported",
       "max_complexity": 30,
       "baseline": 47,
-      "limits": "Mede complexidade ciclomática por função. Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento. A classe é reportada com linha de base declarada: função acima do teto conta para a linha de base, e a linha de base não pode crescer."
+      "limits": "Mede complexidade ciclomática por função, contando ramos do próprio corpo: função aninhada é medida por si e gestão de recurso com with não é ramo. Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento. A classe é reportada com linha de base declarada em história: a contagem aberta precisa ser exatamente a linha de base atual, e crescer exige entrada nova na história com motivo escrito.",
+      "baseline_history": [
+        {
+          "value": 47,
+          "reason": "Medicao inicial da arvore na entrada do perfil: divida estrutural de complexidade pre-existente, medida de uma vez para que a classe seja reportada em vez de declarada item a item."
+        }
+      ]
     }
   },
   "accepted": [
     {
-      "id": "duplication:dcc3b055a844350c",
-      "reason": "Funcao compartilhada entre duas skills que sao empacotadas de forma independente; deduplicar exige declarar um modulo compartilhado em config/shared-files.json, o que e decisao de contrato com entrega propria, registrada como work item."
+      "id": "duplication:f3da40a5fc489be8",
+      "reason": "Guarda de inferencia de terminal duplicada entre a skill de entrega e a de auditoria, empacotadas de forma independente; consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria, registrada como work item pela propria varredura."
     },
     {
-      "id": "duplication:e65718af3c42dcaf",
-      "reason": "Funcao compartilhada entre duas skills que sao empacotadas de forma independente; deduplicar exige declarar um modulo compartilhado em config/shared-files.json, o que e decisao de contrato com entrega propria, registrada como work item."
-    },
-    {
-      "id": "duplication:f49132ce6d1525ef",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
-    },
-    {
-      "id": "duplication:70528dcb05b63d8d",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
-    },
-    {
-      "id": "duplication:c4d398feee870d90",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
-    },
-    {
-      "id": "duplication:7ad637e4ce52a16a",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
-    },
-    {
-      "id": "duplication:4e75f55ce67a68f7",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
-    },
-    {
-      "id": "duplication:5dc6cd6f7c6a7684",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
-    },
-    {
-      "id": "duplication:4c0435be6f1bb111",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
-    },
-    {
-      "id": "duplication:1a9ee84783cb3d7b",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
-    },
-    {
-      "id": "duplication:da9b4bcc19d4a773",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
-    },
-    {
-      "id": "duplication:0f5d030957574219",
-      "reason": "Preambulo de CLI repetido entre validadores independentes da raiz, cada um executavel direto e sem dependencia entre si; consolidar exige um helper compartilhado e um contrato de empacotamento proprio, registrado como work item pela propria varredura."
+      "id": "duplication:85dfe6bdc8392138",
+      "reason": "Guarda de inferencia de terminal duplicada entre a skill de entrega e a de auditoria, empacotadas de forma independente; consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria, registrada como work item pela propria varredura."
     }
   ],
   "not_analyzed_allowed": []
