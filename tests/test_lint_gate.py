@@ -507,3 +507,39 @@ def test_tool_that_disappears_before_the_analysis_is_rejected(tmp_path: Path) ->
     assert completed.returncode == 1
     assert "indisponivel no momento da analise" in completed.stderr
     assert "Traceback" not in completed.stderr
+
+
+def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -> None:
+    """Forma bruta inválida reprova com a causa da política, sem traceback e sem sintoma da ferramenta."""
+    clean = "def total(values: list[int]) -> int:\n    return sum(values)\n"
+
+    def drop_families(policy: dict) -> None:
+        policy.pop("families")
+
+    def null_families(policy: dict) -> None:
+        policy["families"] = None
+
+    def entry_not_object(policy: dict) -> None:
+        policy["families"].append("quebrado")
+
+    def null_select(policy: dict) -> None:
+        policy["families"][0]["select"] = None
+
+    def null_suppressions(policy: dict) -> None:
+        policy["allowed_suppressions"] = None
+
+    shapes = {
+        "families-ausente": drop_families,
+        "families-nulo": null_families,
+        "entrada-nao-objeto": entry_not_object,
+        "select-nulo": null_select,
+        "supressoes-nulas": null_suppressions,
+    }
+    for label, mutate in shapes.items():
+        policy = load_policy()
+        mutate(policy)
+        tree = make_tree(tmp_path / label, policy, {"mod.py": clean})
+        errors = validate_lint(tree)
+        assert errors, label
+        assert any(error.startswith("politica:") for error in errors), (label, errors)
+        assert not any(error.startswith("ruff:") for error in errors), (label, errors)

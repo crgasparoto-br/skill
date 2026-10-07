@@ -214,9 +214,10 @@ viole família aplicada, política que não cubra o catalogo, família que não 
 dispensa sem motivo escrito, versão divergente, supressão com código fora da lista permitida, supressão sem
 justificativa e diretiva de arquivo sem código; a suíte completa continua aprovada sem mudança de comportamento
 observável; a sequência de validação é idêntica em CI, `README.md` e `AGENTS.md`, com o gate na mesma posição,
-verificado por `tests/test_validation_parity.py`, que compara a sequência de validação, exige que todo passo do
-workflow, comando ou ação externa, esteja classificado como validação ou declarado como não validação, e inclui a
-conferência do fechamento dos lockfiles e o replay do relatório de avaliações; o CI acrescenta apenas o empacotamento do skill, que é release e não
+verificado por `tests/test_validation_parity.py`, que lê os passos do workflow com um parser de YAML em vez de
+expressões regulares sobre o texto, compara a sequência de validação, exige que todo passo, comando ou ação externa,
+esteja classificado como validação ou declarado como não validação, e inclui a conferência do fechamento dos lockfiles
+e o replay do relatório de avaliações; o CI acrescenta apenas o empacotamento do skill, que é release e não
 validação; e o requisito global, o changelog e este roadmap registram a entrega.
 ## 5. Sequência de implementação
 

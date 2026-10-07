@@ -211,12 +211,17 @@ def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
             errors.append(f"politica: familia {prefix} aplicada nao pode carregar motivo de dispensa")
         errors.extend(family_errors(prefix, state, select, ignore, catalog))
 
-    missing = sorted(set(catalog.values()) - seen)
-    extra = sorted(seen - set(catalog.values()))
-    if missing:
-        errors.append(f"politica: familias do catalogo sem decisao: {', '.join(missing)}")
-    if extra:
-        errors.append(f"politica: familias declaradas que nao existem no catalogo: {', '.join(extra)}")
+    if not catalog:
+        # Sem catalogo, a cobertura nao pode ser conferida e uma lista de familias faltantes seria
+        # ruido em cima da causa real, que ja foi registrada ao listar o catalogo.
+        errors.append("politica: catalogo de regras indisponivel; cobertura de familias nao pode ser conferida")
+    else:
+        missing = sorted(set(catalog.values()) - seen)
+        extra = sorted(seen - set(catalog.values()))
+        if missing:
+            errors.append(f"politica: familias do catalogo sem decisao: {', '.join(missing)}")
+        if extra:
+            errors.append(f"politica: familias declaradas que nao existem no catalogo: {', '.join(extra)}")
 
     suppressions = policy.get("allowed_suppressions")
     if not isinstance(suppressions, list):
@@ -232,10 +237,23 @@ def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
     return errors
 
 
+def declared_codes(policy: dict, key: str) -> list[str]:
+    """Codigos declarados numa chave das familias, tolerando forma bruta invalida."""
+    families = policy.get("families")
+    if not isinstance(families, list):
+        return []
+    codes: set[str] = set()
+    for entry in families:
+        if not isinstance(entry, dict):
+            continue
+        declared = entry.get(key)
+        if isinstance(declared, list):
+            codes.update(str(code) for code in declared)
+    return sorted(codes)
+
+
 def selection_of(policy: dict) -> tuple[list[str], list[str]]:
-    select = sorted({str(code) for entry in policy["families"] for code in entry.get("select", [])})
-    ignore = sorted({str(code) for entry in policy["families"] for code in entry.get("ignore", [])})
-    return select, ignore
+    return declared_codes(policy, "select"), declared_codes(policy, "ignore")
 
 
 def tool_path() -> str | None:
@@ -376,9 +394,10 @@ def suppression_errors(root: Path, files: list[Path], policy: dict, errors: list
     de arquivo com prefixo `ruff:` ou `flake8:`. Supressao de arquivo sem codigo e recusada porque
     desliga a analise inteira sem deixar o alvo declarado.
     """
+    declared = policy.get("allowed_suppressions")
     allowed = {
         str(entry.get("code")).upper()
-        for entry in policy.get("allowed_suppressions", [])
+        for entry in (declared if isinstance(declared, list) else [])
         if isinstance(entry, dict)
     }
     for path in files:
@@ -492,6 +511,10 @@ def validate_lint(root: Path) -> list[str]:
     catalog = catalog_of(executable, errors)
     policy_problems = policy_errors(policy, catalog)
     errors.extend(policy_problems)
+    if policy_problems:
+        # Politica invalida interrompe aqui: selecao, arquivos, supressoes e analise dependem de uma
+        # politica integra, e seguir em frente trocaria a causa pelo sintoma ou estouraria traceback.
+        return errors
     version = installed_version(executable, errors)
     declared = str(policy.get("tool", {}).get("version", ""))
     if version and declared and version != declared:
@@ -503,21 +526,15 @@ def validate_lint(root: Path) -> list[str]:
         errors.append("escopo: nenhum arquivo coberto encontrado; conjunto vazio nao pode ser aprovacao")
     suppression_errors(root, files, policy, errors)
 
-    # Politica quebrada nao executa a analise: a selecao pode ser invalida e a causa seria
-    # confundida com o sintoma que a ferramenta reportaria em cima dela.
-    violations = (
-        []
-        if policy_problems
-        else run_tool(
-            root,
-            executable,
-            str(policy.get("target_version", "py312")),
-            int((policy.get("line_length") or {}).get("value") or 0),
-            select,
-            ignore,
-            files,
-            errors,
-        )
+    violations = run_tool(
+        root,
+        executable,
+        str(policy.get("target_version", "py312")),
+        int((policy.get("line_length") or {}).get("value") or 0),
+        select,
+        ignore,
+        files,
+        errors,
     )
     for violation in violations:
         location = violation.get("location") or {}
