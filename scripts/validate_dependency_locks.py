@@ -530,6 +530,19 @@ def reaches_declared(name: str, entries: dict[str, dict], declared: set[str]) ->
     return False
 
 
+def confined(path: Path, root: Path) -> bool:
+    """O caminho resolvido permanece sob a raiz do repositório.
+
+    Um manifest ou lockfile que seja symlink para fora da raiz faria o conjunto coberto vir de
+    arquivo que o repositório não versiona, e a reprodutibilidade depende de o artefato
+    verificado ser o artefato versionado.
+    """
+    try:
+        return path.resolve().is_relative_to(root)
+    except OSError:
+        return False
+
+
 def relative(path: Path, root: Path) -> str:
     try:
         return path.relative_to(root).as_posix()
@@ -539,9 +552,13 @@ def relative(path: Path, root: Path) -> str:
 
 def validate_manifest(root: Path, manifest: Path) -> list[str]:
     errors: list[str] = []
+    if not confined(manifest, root):
+        return [f"{relative(manifest, root)}: manifest resolve para fora da raiz do repositorio"]
     lock = manifest.with_name(manifest.stem + LOCK_SUFFIX)
     if not lock.is_file():
         return [f"{relative(manifest, root)}: falta o lockfile {relative(lock, root)}"]
+    if not confined(lock, root):
+        return [f"{relative(lock, root)}: lockfile resolve para fora da raiz do repositorio"]
 
     text = lock.read_text(encoding="utf-8")
     where = relative(lock, root)
@@ -604,6 +621,8 @@ def validate_policy(root: Path, locked: dict[str, set[str]]) -> tuple[list[str],
     path = root / POLICY_RELATIVE
     if not path.is_file():
         return [f"{POLICY_RELATIVE}: ausente"], warnings
+    if not confined(path, root):
+        return [f"{POLICY_RELATIVE}: resolve para fora da raiz do repositorio"], warnings
 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))

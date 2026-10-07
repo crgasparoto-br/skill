@@ -729,3 +729,64 @@ def test_repeated_artifact_annotation_is_detected(tmp_path: Path) -> None:
         f"cryptography==50.0.2 \\\n    --hash=sha256:{DIGEST}\n"
     )
     assert run(minimal(tmp_path, lock=lock)) == 1
+
+
+# ------------------------------------------- sexta rodada de auditoria independente
+
+
+def build_outside_pair(tmp_path: Path) -> tuple[Path, Path, Path]:
+    """Par manifest/lock regular dentro da raiz e cópia fora dela."""
+    root = tmp_path / "repo"
+    (root / "skill").mkdir(parents=True)
+    (root / "config").mkdir()
+    (root / "config" / "dependency-policy.json").write_text(
+        json.dumps({"schema_version": 1, "exceptions": []}), encoding="utf-8"
+    )
+    outside = tmp_path / "externo"
+    outside.mkdir()
+    (outside / "requirements.txt").write_text("cryptography>=50.0.1\n", encoding="utf-8")
+    (outside / "requirements.lock.txt").write_text(MINIMAL_LOCK, encoding="utf-8")
+    return root, outside, root / "skill"
+
+
+def test_symlinked_manifest_outside_the_root_is_detected(tmp_path: Path,
+                                                         capsys: pytest.CaptureFixture[str]) -> None:
+    """Manifest fora da raiz traria para a verificação arquivo que o repositório não versiona."""
+    root, outside, skill = build_outside_pair(tmp_path)
+    (skill / "requirements.txt").symlink_to(outside / "requirements.txt")
+    (skill / "requirements.lock.txt").write_text(MINIMAL_LOCK, encoding="utf-8")
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "manifest resolve para fora" in capsys.readouterr().err
+
+
+def test_symlinked_lockfile_outside_the_root_is_detected(tmp_path: Path,
+                                                         capsys: pytest.CaptureFixture[str]) -> None:
+    root, outside, skill = build_outside_pair(tmp_path)
+    (skill / "requirements.txt").write_text("cryptography>=50.0.1\n", encoding="utf-8")
+    (skill / "requirements.lock.txt").symlink_to(outside / "requirements.lock.txt")
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "lockfile resolve para fora" in capsys.readouterr().err
+
+
+def test_regular_manifest_and_lockfile_still_pass(tmp_path: Path) -> None:
+    root, _, skill = build_outside_pair(tmp_path)
+    (skill / "requirements.txt").write_text("cryptography>=50.0.1\n", encoding="utf-8")
+    (skill / "requirements.lock.txt").write_text(MINIMAL_LOCK, encoding="utf-8")
+    assert main(["--root", str(root), "--quiet"]) == 0
+
+
+def test_confined_helper_rejects_escaping_paths(tmp_path: Path) -> None:
+    from scripts.validate_dependency_locks import confined
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    inside = root / "skill" / "requirements.txt"
+    inside.parent.mkdir()
+    inside.write_text("cryptography>=50.0.1\n", encoding="utf-8")
+    outside = tmp_path / "externo.txt"
+    outside.write_text("", encoding="utf-8")
+    link = root / "skill" / "link.txt"
+    link.symlink_to(outside)
+    assert confined(inside, root) is True
+    assert confined(outside, root) is False
+    assert confined(link, root) is False
