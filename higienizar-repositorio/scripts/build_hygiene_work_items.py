@@ -24,11 +24,17 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 
 try:
-    from .hygiene_scan import HygieneError, build_report, load_policy, write_target
+    from .hygiene_scan import (
+        HygieneError,
+        build_report,
+        load_policy,
+        publish_artifacts,
+        write_target,
+    )
     from .validate_hygiene import coverage_errors, policy_errors, schema_errors
 except ImportError:  # pragma: no cover - execucao direta do script
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from hygiene_scan import HygieneError, build_report, load_policy, write_target
+    from hygiene_scan import HygieneError, build_report, load_policy, publish_artifacts, write_target
     from validate_hygiene import coverage_errors, policy_errors, schema_errors
 
 CLASS_TEXT = {
@@ -320,13 +326,19 @@ def main(argv: list[str] | None = None) -> int:
         # que não nasce por inteiro não pode parecer publicado.
         print(f"ERRO: falha ao criar {args.out_dir}: {error}", file=sys.stderr)
         return 1
+    # Todos os itens são preparados antes de qualquer publicação: execução reprovada não pode deixar work
+    # item pela metade no diretório de saída.
+    targets: dict[str, Path] = {}
+    contents: dict[str, str] = {}
     for item in items:
-        (args.out_dir / f"{item['id']}.json").write_text(
-            json.dumps(item, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
-        (args.out_dir / f"{item['id']}.md").write_text(item["body_markdown"], encoding="utf-8")
-    print(f"{len(items)} work item(s) escritos em {args.out_dir}")
-    return 0
+        for suffix, content in (
+            ("json", json.dumps(item, ensure_ascii=False, indent=2) + "\n"),
+            ("md", item["body_markdown"]),
+        ):
+            label = f"{item['id']}.{suffix}"
+            targets[label] = args.out_dir / label
+            contents[label] = content
+    return publish_artifacts(targets, contents)
 
 
 if __name__ == "__main__":

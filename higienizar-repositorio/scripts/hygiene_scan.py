@@ -34,8 +34,11 @@ import ast
 import fnmatch
 import hashlib
 import json
+import os
+import posixpath
 import re
 import sys
+import tempfile
 from collections import Counter, defaultdict
 from copy import deepcopy
 from pathlib import Path
@@ -714,6 +717,18 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
     return texts, refused
 
 
+def normalized_citation(value: str) -> str | None:
+    """Citação normalizada, ou `None` quando ela não aponta para arquivo nenhum.
+
+    `././x.py`, `pkg/./x.py` e separadores repetidos citam o mesmo arquivo: normalizar antes de resolver
+    evita acusar dívida em citação que aponta para arquivo existente. `.` e vazio não citam nada.
+    """
+    normalized = posixpath.normpath(value)
+    if normalized in (".", ""):
+        return None
+    return normalized
+
+
 def named_paths(
     texts: dict[str, str],
     root: Path,
@@ -750,44 +765,66 @@ def named_paths(
         directory = Path(rel).parent.as_posix()
         skill_root = Path(rel).parts[0] if len(Path(rel).parts) > 1 else ""
         for cited, start in citation_paths(text, suffixes):
-            cleaned = cited.removeprefix("./")
-            if cleaned.startswith("/"):
-                # A barra inicial só é âncora quando o caminho vem logo depois de um marcador de lugar,
-                # como em `<skill>/scripts/x.py`: fora disso é caminho absoluto, que não é citação de
-                # arquivo da árvore e não pode manter módulo vivo.
-                if not PLACEHOLDER_ANCHOR_RE.search(text[:start]):
-                    continue
-                cleaned = cleaned.lstrip("/")
-            if not cleaned:
+            cleaned = normalized_citation(cited.removeprefix("./"))
+            if cleaned is None or not citation_is_inside(cleaned, text[:start]):
                 continue
-            parts = Path(cleaned).parts
-            resolved = ""
-            if ".." in parts:
-                # Citação com `..` só é recusada quando de fato sai da raiz: `sub/../x.py` cita `x.py`
-                # dentro da árvore, e descartar por conter `..` acusaria dívida que não existe.
-                base = (root / directory) if directory != "." else root
-                try:
-                    inside = (base / cleaned).resolve()
-                except (OSError, RuntimeError):
-                    continue
-                if not inside.is_relative_to(root.resolve()):
-                    continue
-                resolved = inside.relative_to(root.resolve()).as_posix()
-            candidates = {resolved or cleaned}
-            if not resolved and directory != ".":
-                candidates.add(f"{directory}/{cleaned}")
-            if not resolved and skill_root:
-                candidates.add(f"{skill_root}/{cleaned}")
-            matched = {candidate for candidate in candidates if candidate in known}
-            if not matched and len(parts) == 1:
-                # Nome solto alcança o arquivo de mesmo nome só quando ele é único na árvore: havendo
-                # homônimos, o nome solto é ambíguo e não identifica invocação de nenhum deles.
-                homonyms = by_name.get(cleaned, [])
-                if len(homonyms) == 1:
-                    matched = {homonyms[0]}
-            for item in matched:
+            for item in matched_citations(cleaned, root, directory, skill_root, known, by_name):
                 named[item].add(rel)
     return named
+
+
+def citation_is_inside(cited: str, prefix: str) -> bool:
+    """A citação aponta para arquivo da árvore?
+
+    A barra inicial só é âncora quando o caminho vem logo depois de um marcador de lugar, como em
+    `<skill>/scripts/x.py`: fora disso é caminho absoluto, que não é citação de arquivo da árvore e não
+    pode manter módulo vivo.
+    """
+    if not cited:
+        return False
+    if cited.startswith("/"):
+        return bool(PLACEHOLDER_ANCHOR_RE.search(prefix))
+    return True
+
+
+def matched_citations(
+    cited: str,
+    root: Path,
+    directory: str,
+    skill_root: str,
+    known: set[str],
+    by_name: dict[str, list[str]],
+) -> set[str]:
+    """Caminhos da árvore que a citação alcança, considerando as formas em que ela pode ser escrita."""
+    cleaned = cited.lstrip("/")
+    if not cleaned:
+        return set()
+    parts = Path(cleaned).parts
+    resolved = ""
+    if ".." in parts:
+        # Citação com `..` só é recusada quando de fato sai da raiz: `sub/../x.py` cita `x.py` dentro da
+        # árvore, e descartar por conter `..` acusaria dívida que não existe.
+        base = root if directory == "." else root / directory
+        try:
+            inside = (base / cleaned).resolve()
+        except (OSError, RuntimeError):
+            return set()
+        if not inside.is_relative_to(root.resolve()):
+            return set()
+        resolved = inside.relative_to(root.resolve()).as_posix()
+    candidates = {resolved or cleaned}
+    if not resolved and directory != ".":
+        candidates.add(f"{directory}/{cleaned}")
+    if not resolved and skill_root:
+        candidates.add(f"{skill_root}/{cleaned}")
+    matched = {candidate for candidate in candidates if candidate in known}
+    if not matched and len(parts) == 1:
+        # Nome solto alcança o arquivo de mesmo nome só quando ele é único na árvore: havendo homônimos,
+        # o nome solto é ambíguo e não identifica invocação de nenhum deles.
+        homonyms = by_name.get(cleaned, [])
+        if len(homonyms) == 1:
+            matched = {homonyms[0]}
+    return matched
 
 
 def detect_duplication(
@@ -906,6 +943,17 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     resolve_import(imported, package, alias.name.split("."))
+            elif isinstance(node, ast.ImportFrom) and node.level == 0:
+                # Import absoluto é procurado no caminho de importação, que inclui a raiz do projeto e o
+                # diretório de quem importa: `from helper import run` dentro de `pkg/` alcança a raiz, e
+                # `import catalog` dentro de `scripts/` alcança o irmão. Sem as duas formas, módulo usado
+                # ficaria morto.
+                base = list(node.module.split(".")) if node.module else []
+                resolve_import(imported, [], base)
+                resolve_import(imported, package, base)
+                for alias in node.names:
+                    resolve_import(imported, [], [*base, alias.name])
+                    resolve_import(imported, package, [*base, alias.name])
             elif isinstance(node, ast.ImportFrom):
                 depth = node.level - 1
                 # Import relativo além do pacote é inválido e não alcança módulo nenhum; resolver por
@@ -1357,7 +1405,9 @@ def report_contract_errors(report: dict) -> list[str]:
     ]
 
 
-def apply_policy_states(policy: dict, findings: list[dict]) -> tuple[list[dict], list[str]]:
+def apply_policy_states(
+    policy: dict, findings: list[dict], targeted: bool = False
+) -> tuple[list[dict], list[str]]:
     """Aplica exceções declaradas e calcula o estado de cada achado; devolve problemas da política.
 
     Classe medida contra linha de base não aceita exceção item a item: a dívida dela é agregada e
@@ -1403,7 +1453,9 @@ def apply_policy_states(policy: dict, findings: list[dict]) -> tuple[list[dict],
             finding["state"] = "accepted"
             finding["justification"] = reason
     for identity, reason in sorted(accepted.items()):
-        if identity in seen:
+        if identity in seen or targeted:
+            # Em modo direcionado o universo medido é o alvo: exceção de achado fora dele não pode ser
+            # julgada órfã, porque o achado correspondente não foi procurado.
             continue
         problems.append(f"excecao declarada sem achado correspondente: {identity} ({reason[:60]})")
     return findings, problems
@@ -1431,7 +1483,7 @@ def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tu
     not_analyzed.extend(refused_manifests)
     findings.extend(dependency_findings)
     findings.extend(detect_complexity(policy, modules))
-    findings, problems = apply_policy_states(policy, findings)
+    findings, problems = apply_policy_states(policy, findings, bool(paths))
     findings.sort(key=lambda item: (item["class"], item["location"]))
     # Um caminho pode ser recusado por mais de uma leitura — escopo e corpus —, e o relatório precisa
     # de uma entrada por caminho: duplicata de cobertura inflaria a contagem sem informar nada novo.
@@ -1476,6 +1528,41 @@ def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tu
         },
     }
     return report, problems
+
+
+def publish_artifacts(targets: dict[str, Path], contents: dict[str, str]) -> int:
+    """Publica os artefatos de forma transacional: ou todos aparecem, ou nenhum é tocado.
+
+    Escrita direta no destino deixa arquivo truncado quando falha no meio e destrói o artefato anterior
+    mesmo quando a execução é reprovada. Preparar em arquivo temporário ao lado do destino e publicar por
+    `os.replace` mantém o destino intacto até a publicação, que é o que "transacional" significa.
+    """
+    try:
+        staged = {label: stage_artifact(target, contents[label]) for label, target in targets.items()}
+    except OSError as error:
+        print(f"ERRO: falha ao gravar o relatorio: {error}", file=sys.stderr)
+        return 1
+    for label, temporary in staged.items():
+        temporary.replace(targets[label])
+    return 0
+
+
+def stage_artifact(target: Path, content: str) -> Path:
+    """Prepara o conteúdo ao lado do destino e devolve o temporário, ainda não publicado.
+
+    O temporário vive no mesmo diretório do destino para que a publicação seja um `os.replace`, que é
+    atômico no mesmo sistema de arquivos. Falha no meio da escrita deixa apenas o temporário, que o
+    próprio tratamento remove, e nunca um destino truncado nem o artefato anterior perdido.
+    """
+    handle, name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
+    temporary = Path(name)
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            stream.write(content)
+    except OSError:
+        temporary.unlink(missing_ok=True)
+        raise
+    return temporary
 
 
 def render_markdown(report: dict) -> str:
@@ -1619,24 +1706,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     payload = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
     contents = {"--report": payload, "--markdown": render_markdown(report)}
-    written: list[Path] = []
-    try:
-        if args.report:
-            targets["--report"].write_text(contents["--report"], encoding="utf-8")
-            written.append(targets["--report"])
-        else:
-            sys.stdout.write(payload)
-        if args.markdown:
-            targets["--markdown"].write_text(contents["--markdown"], encoding="utf-8")
-            written.append(targets["--markdown"])
-    except OSError as error:
-        # Falha de escrita não pode sair como exceção crua, e execução reprovada não pode deixar
-        # artefato para trás: metade do relatório no disco pareceria relatório publicado.
-        for path in written:
-            path.unlink(missing_ok=True)
-        print(f"ERRO: falha ao gravar o relatorio: {error}", file=sys.stderr)
-        return 1
-    return 0
+    if not args.report:
+        sys.stdout.write(payload)
+    return publish_artifacts(targets, contents)
 
 
 if __name__ == "__main__":

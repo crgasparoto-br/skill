@@ -2946,8 +2946,9 @@ def test_generator_refuses_output_that_cannot_be_created(tmp_path: Path) -> None
         text=True,
         check=False,
     )
-    assert result.returncode == 1
-    assert "falha ao criar" in result.stderr
+    # O destino impossível é recusado antes ou durante a criação; em qualquer caso, sem exceção crua.
+    assert result.returncode in (1, 2)
+    assert "ERRO:" in result.stderr
     assert "Traceback" not in result.stderr
 
 
@@ -2974,3 +2975,101 @@ def test_failed_publication_leaves_no_artifact(tmp_path: Path) -> None:
     assert result.returncode == 1
     assert "falha ao gravar o relatorio" in result.stderr
     assert not report_path.exists()
+
+
+def _run_with_file_limit(arguments: list[str], limit: int) -> subprocess.CompletedProcess:
+    """Executa o script com limite de tamanho de arquivo, para forçar falha no meio da escrita."""
+    script = (
+        "import resource, runpy, sys\n"
+        f"resource.setrlimit(resource.RLIMIT_FSIZE, ({limit}, {limit}))\n"
+        f"sys.argv = {arguments!r}\n"
+        f"runpy.run_path({arguments[0]!r}, run_name='__main__')\n"
+    )
+    return subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, check=False)
+
+
+def test_partial_write_leaves_no_artifact_and_keeps_previous_one(tmp_path: Path) -> None:
+    """Achado bloqueante: falha no meio da escrita deixava arquivo truncado e destruía o anterior."""
+    tree = make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    target = tmp_path / "fora" / "report.json"
+    target.parent.mkdir()
+    target.write_text("ANTERIOR", encoding="utf-8")
+    result = _run_with_file_limit(
+        [str(SCRIPTS / "hygiene_scan.py"), "--root", str(tree), "--report", str(target)], 1024
+    )
+    assert result.returncode != 0
+    assert "Traceback" not in result.stderr
+    # O artefato anterior continua íntegro e nenhum temporário sobra no diretório.
+    assert target.read_text(encoding="utf-8") == "ANTERIOR"
+    assert [item.name for item in target.parent.iterdir()] == ["report.json"]
+
+
+def test_generator_partial_write_leaves_no_work_item(tmp_path: Path) -> None:
+    """Achado bloqueante: falha de escrita dos itens saía como exceção crua e deixava arquivo parcial."""
+    out_dir = tmp_path / "saida"
+    out_dir.mkdir()
+    result = _run_with_file_limit(
+        [str(SCRIPTS / "build_hygiene_work_items.py"), "--root", str(REPO_ROOT), "--out-dir", str(out_dir)], 512
+    )
+    assert result.returncode != 0
+    assert "Traceback" not in result.stderr
+    assert list(out_dir.iterdir()) == []
+
+
+def test_absolute_import_resolves_at_root_and_at_importer_directory(tmp_path: Path) -> None:
+    """Achado bloqueante: import absoluto dentro de pacote deixava o módulo usado como morto."""
+    tree = make_tree(
+        tmp_path / "raiz",
+        {
+            "helper.py": "def run():\n    return 1\n",
+            "pkg/consumer.py": "from helper import run\n",
+            "README.md": "Use pkg/consumer.py\n",
+        },
+        policy_variant(accepted=[]),
+    )
+    assert [entry["path"] for entry in findings_of(scan(tree), "dead-module")] == []
+    sibling = make_tree(
+        tmp_path / "irmao",
+        {
+            "pkg/orphan.py": "V = 1\n",
+            "pkg/consumer.py": "from pkg import orphan\n",
+            "README.md": "Use pkg/consumer.py\n",
+        },
+        policy_variant(accepted=[]),
+    )
+    assert [entry["path"] for entry in findings_of(scan(sibling), "dead-module")] == []
+
+
+def test_targeted_scan_does_not_orphan_exceptions_outside_the_target(tmp_path: Path) -> None:
+    """Achado bloqueante: exceção de achado fora do alvo era acusada como órfã."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(REPO_ROOT),
+            "--paths",
+            "higienizar-repositorio/scripts/hygiene_scan.py",
+            "--report",
+            str(tmp_path / "report.json"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "report.json").is_file()
+
+
+def test_redundant_dot_in_citation_still_names_the_file(tmp_path: Path) -> None:
+    """Achado bloqueante: citação com `.` redundante não mantinha o módulo vivo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "orphan.py": "V = 1\n",
+            "pkg/other.py": "V = 2\n",
+            "README.md": "Use ././orphan.py and pkg/./other.py\n",
+        },
+        policy_variant(accepted=[]),
+    )
+    assert [entry["path"] for entry in findings_of(scan(tree), "dead-module")] == []
