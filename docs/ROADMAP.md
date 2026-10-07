@@ -109,14 +109,15 @@ Fechar as lacunas de manutenção restantes:
 6. decidir se haverá matriz de versões Python além de 3.11 e, caso haja, testá-la no CI;
 7. manter actions pinadas por SHA completo e validar o pin em cada atualização.
 
-Os passos 4 e 5 foram **entregues em 2026-10-06**: os quatro manifests de skill têm lockfile irmão com versão exata e hash
-do fechamento transitivo, gerado por `scripts/lock_dependencies.py` e verificado offline por
-`scripts/validate_dependency_locks.py`, que reprova lockfile dessincronizado, entrada sem hash, faixa aberta, anotação
-`# via` órfã, entrada duplicada e exceção de política sem justificativa, sem data ou apontando pacote ausente. A
-consulta ao banco de vulnerabilidade fica em `.github/workflows/dependency-audit.yml`, com gatilho agendado e manual,
-e reporta `UNKNOWN` quando não consegue verificar, em vez de tratar ausência de verificação como verificação de
-ausência. O passo 1 continua sendo decisão do proprietário, e os passos 3 e 6 dependem de configuração do repositório
-no GitHub e de decidir a matriz de versões.
+Os passos 4 e 5 foram **entregues em 2026-10-06**: os quatro manifests de skill têm lockfile irmão com versão exata,
+artefato nomeado e hash sha256 do fechamento transitivo, gerado por `scripts/lock_dependencies.py` e verificado offline
+por `scripts/validate_dependency_locks.py`, que reprova lockfile dessincronizado, versão fixada fora do especificador
+declarado, entrada sem hash, entrada sem artefato ou com artefato incompatível, anotação `# via` órfã, entrada duplicada
+e exceção de política sem justificativa, sem data, sem pacote, sem versão ou apontando resolução inexistente. A
+integridade do digest, conferida contra o artefato, e a consulta ao banco de vulnerabilidade ficam em
+`.github/workflows/dependency-audit.yml`, com gatilho agendado e manual, e reportam `UNKNOWN` quando não conseguem
+verificar, em vez de tratar ausência de verificação como verificação de ausência. O passo 1 continua sendo decisão do
+proprietário, e os passos 3 e 6 dependem de configuração do repositório no GitHub e de decidir a matriz de versões.
 
 A licença é uma decisão do proprietário e deve ser registrada em uma alteração própria ou em um commit claramente identificável. A habilitação de uma ferramenta planejada só ocorre depois que seu workflow realmente executa e possui tratamento documentado para falhas.
 

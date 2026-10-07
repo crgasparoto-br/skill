@@ -13,6 +13,10 @@ rede, e por isso não participa da sequência de validação obrigatória.
 
 O lockfile é derivado, nunca fonte de verdade. Alteração de dependência começa no manifest,
 e `scripts/validate_dependency_locks.py` reprova lockfile dessincronizado.
+
+Cada entrada declara `# via` quando é transitiva e `# arquivo: <distribuição>` antes da
+própria linha, para que o digest tenha um artefato nomeado a que se referir: um hash
+sintaticamente válido e arbitrário não pode passar como garantia.
 """
 
 from __future__ import annotations
@@ -138,9 +142,9 @@ def build_lock(manifest: Path, root: Path, report: dict) -> str:
         version, digest, filename, requirement_parents = entries[name]
         if name not in declared and requirement_parents:
             lines.append(f"# via {', '.join(sorted(requirement_parents))}")
+        lines.append(f"# arquivo: {filename}")
         lines.append(f"{name}=={version} \\")
         lines.append(f"    --hash={digest}")
-        lines.append(f"# arquivo: {filename}")
     return "\n".join(lines) + "\n"
 
 

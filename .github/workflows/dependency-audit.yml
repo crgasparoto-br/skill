@@ -4,6 +4,10 @@ name: Dependency audit
 # separado: ela complementa a sequencia obrigatoria de `validate.yml` e nunca a substitui.
 # Indisponibilidade do banco e reportada como UNKNOWN e reprova o job, porque ausencia de
 # verificacao nao e verificacao de ausencia.
+#
+# A integridade do digest e do artefato so pode ser conferida com o artefato em maos, e por
+# isso tambem vive aqui: o gate offline prova que a entrada nomeia a distribuicao e que o
+# especificador declarado e satisfeito, mas nao afirma integridade que nao pode verificar.
 
 on:
   workflow_dispatch:

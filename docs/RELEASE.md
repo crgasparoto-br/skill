@@ -53,27 +53,55 @@ Ao remover uma versão, mantenha uma nota de migração e a última release que 
 ## Dependências e política de exceção
 
 Cada manifest de skill (`<skill>/requirements*.txt`) tem um lockfile irmão com o mesmo nome e sufixo `.lock.txt`, que
-fixa versão exata e hash sha256 de cada distribuição do fechamento transitivo. O lockfile é derivado, nunca fonte de
-verdade: alteração de dependência começa no manifest e o lockfile é regenerado.
+fixa versão exata, o artefato escolhido e o hash sha256 de cada distribuição do fechamento transitivo. O lockfile é
+derivado, nunca fonte de verdade: alteração de dependência começa no manifest e o lockfile é regenerado.
 
 ```bash
 python scripts/lock_dependencies.py --manifest entregar-issue/requirements.txt
 python scripts/validate_dependency_locks.py --root .
 ```
 
-O lockfile registra no cabeçalho o manifest de origem, o contexto de resolução e o comando de regeneração. Como o hash
-corresponde à distribuição escolhida naquele contexto, regenerar em outra plataforma pode alterar o hash sem alterar a
-versão; a regeneração é uma alteração revisável, e o validador reprova entrada sem hash justamente para que a mudança
-apareça.
+Cada entrada declara `# via <pais>` quando é transitiva e `# arquivo: <distribuição>` antes da própria linha, para que
+o digest tenha um artefato nomeado a que se referir. O cabeçalho registra o manifest de origem, o contexto de
+resolução e o comando de regeneração. Como o hash corresponde à distribuição escolhida naquele contexto, regenerar em
+outra plataforma pode alterar o hash sem alterar a versão; a regeneração é uma alteração revisável, e o validador
+reprova entrada sem hash ou sem artefato justamente para que a mudança apareça.
+
+### O que cada verificação prova
+
+| Verificação | Onde roda | O que prova |
+| --- | --- | --- |
+| Forma e vínculo | `scripts/validate_dependency_locks.py`, obrigatório e offline | O manifest tem lockfile; cada requisito declarado aparece com versão que **satisfaz o especificador declarado**; a cadeia `# via` alcança pacote declarado; cada entrada nomeia artefato compatível com nome e versão; cada exceção nomeia pacote e versão existentes |
+| Integridade do digest | `scripts/audit_dependencies.py`, fora da sequência obrigatória | O digest corresponde ao artefato, conferido por `pip download --no-deps --require-hashes`; um hash arbitrário com formato válido só é detectável com o artefato em mãos |
+| Vulnerabilidade | `scripts/audit_dependencies.py` | Nenhum aviso do banco de vulnerabilidade ficou fora da política |
+
+O gate offline não afirma integridade que não pode verificar: ele prova o vínculo entre nome, versão, artefato e
+digest, e a satisfação do especificador. Um digest fabricado passa pelo gate offline e reprova na verificação de
+integridade, que é onde o artefato está disponível.
+
+### Política de exceção
 
 Vulnerabilidade sem correção disponível só pode ser tolerada com exceção declarada em
-[`config/dependency-policy.json`](../config/dependency-policy.json), com identificador, pacote, justificativa e data de
-revisão. Exceção sem justificativa, sem data, com identificador repetido ou apontando pacote ausente dos lockfiles
-reprova a validação obrigatória. Exceção com data vencida é reportada como aviso e não reprova, porque data vencida é
-decisão de pessoa e não defeito de arquivo.
+[`config/dependency-policy.json`](../config/dependency-policy.json), com identificador, **pacote**, **versão fixada**,
+justificativa e data de revisão. A versão é obrigatória porque tolerar um pacote sem dizer qual versão permitiria
+encobrir qualquer versão futura.
 
-A consulta ao banco de vulnerabilidade é do workflow
+Reprova: exceção sem justificativa, sem data, sem pacote, sem versão, com identificador repetido, apontando pacote ou
+versão ausentes dos lockfiles, com data fora da forma `YYYY-MM-DD`; e exceção cujo identificador não aparece em nenhum
+achado do banco, porque ela toleraria algo que o banco não reporta.
+
+Não reprova, e é reportado como aviso: exceção com data de revisão vencida, porque data vencida é decisão de pessoa e
+não defeito de arquivo.
+
+A auditoria exige que a exceção case identificador **e** pacote **e** versão do achado: só o identificador permitiria
+encobrir outra dependência.
+
+### Workflow
+
+A sequência obrigatória instala as dependências de teste do próprio lockfile com `--require-hashes`, de modo que o ambiente que executa o gate é o ambiente registrado.
+
+A consulta ao banco de vulnerabilidade e a verificação de integridade são do workflow
 [`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml), com gatilho agendado, manual e em
-pull request que toca manifest, lockfile ou política. Ela nunca faz parte da sequência obrigatória: quando o banco ou a
-ferramenta não estão disponíveis, o resultado é `UNKNOWN` e reprova aquele job, porque ausência de verificação não é
-verificação de ausência.
+pull request que toca manifest, lockfile ou política. Ele nunca faz parte da sequência obrigatória: quando o banco, o
+artefato ou a ferramenta não estão disponíveis, o resultado é `UNKNOWN` e reprova aquele job, porque ausência de
+verificação não é verificação de ausência.

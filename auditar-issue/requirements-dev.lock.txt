@@ -4,55 +4,55 @@
 # nao editar a mao: alterar o manifest e regenerar
 
 # via jsonschema, pytest, referencing
+# arquivo: attrs-26.1.0-py3-none-any.whl
 attrs==26.1.0 \
     --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309
-# arquivo: attrs-26.1.0-py3-none-any.whl
 # via cryptography
+# arquivo: cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
 cffi==2.1.1 \
     --hash=sha256:c1453022f490d2459a11819d83ad1d586e9ff65a12ac3e705ffebd46d3685dcf
-# arquivo: cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+# arquivo: cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl
 cryptography==50.0.2 \
     --hash=sha256:9dab55f57c74c3cad24c323bacbbd04be4705ba6eb0d92e920b1fc4837ed5079
-# arquivo: cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl
 # via pytest
+# arquivo: iniconfig-2.3.1-py3-none-any.whl
 iniconfig==2.3.1 \
     --hash=sha256:9121e2c1fdb355232495be3194c8dfe87ccc2d5dee45947b78e68f499790d7a7
-# arquivo: iniconfig-2.3.1-py3-none-any.whl
+# arquivo: jsonschema-4.26.0-py3-none-any.whl
 jsonschema==4.26.0 \
     --hash=sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce
-# arquivo: jsonschema-4.26.0-py3-none-any.whl
 # via jsonschema
+# arquivo: jsonschema_specifications-2025.9.1-py3-none-any.whl
 jsonschema-specifications==2025.9.1 \
     --hash=sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe
-# arquivo: jsonschema_specifications-2025.9.1-py3-none-any.whl
 # via pytest
+# arquivo: packaging-26.3-py3-none-any.whl
 packaging==26.3 \
     --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
-# arquivo: packaging-26.3-py3-none-any.whl
 # via pytest
+# arquivo: pluggy-1.6.0-py3-none-any.whl
 pluggy==1.6.0 \
     --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
-# arquivo: pluggy-1.6.0-py3-none-any.whl
 # via cffi
+# arquivo: pycparser-3.0-py3-none-any.whl
 pycparser==3.0 \
     --hash=sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992
-# arquivo: pycparser-3.0-py3-none-any.whl
 # via pytest
+# arquivo: pygments-2.21.0-py3-none-any.whl
 pygments==2.21.0 \
     --hash=sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9
-# arquivo: pygments-2.21.0-py3-none-any.whl
+# arquivo: pytest-9.1.1-py3-none-any.whl
 pytest==9.1.1 \
     --hash=sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c
-# arquivo: pytest-9.1.1-py3-none-any.whl
 # via jsonschema, jsonschema-specifications
+# arquivo: referencing-0.37.0-py3-none-any.whl
 referencing==0.37.0 \
     --hash=sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231
-# arquivo: referencing-0.37.0-py3-none-any.whl
 # via jsonschema, referencing
+# arquivo: rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 rpds-py==2026.9.1 \
     --hash=sha256:addeda51556dac7c1a2f14cda62db8b621cd12afba3091d03a96c72932387eab
-# arquivo: rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 # via cryptography, referencing
+# arquivo: typing_extensions-4.16.0-py3-none-any.whl
 typing-extensions==4.16.0 \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8
-# arquivo: typing_extensions-4.16.0-py3-none-any.whl

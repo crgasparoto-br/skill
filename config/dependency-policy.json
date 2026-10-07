@@ -1,6 +1,13 @@
 {
   "schema_version": 1,
-  "policy": "Vulnerabilidade sem correcao disponivel so pode ser tolerada com excecao declarada aqui, com justificativa e data de revisao. Excecao vencida nao reprova a validacao offline: ela e reportada como aviso, porque data vencida e decisao de pessoa e nao defeito de arquivo. Excecao sem justificativa, sem data, com identificador repetido ou apontando pacote ausente dos lockfiles reprova.",
+  "policy": "Vulnerabilidade sem correcao disponivel so pode ser tolerada com excecao declarada aqui, com pacote, versao fixada, justificativa e data de revisao. A excecao precisa nomear a versao fixada que ela tolera, porque tolerar um pacote sem dizer qual versao permitiria encobrir qualquer versao futura. Excecao vencida nao reprova a validacao offline: ela e reportada como aviso, porque data vencida e decisao de pessoa e nao defeito de arquivo. Excecao sem justificativa, sem data, sem pacote, sem versao, com identificador repetido, apontando pacote ou versao ausentes dos lockfiles reprova; e a auditoria reprova excecao cujo identificador nao aparece em nenhum achado do banco de vulnerabilidade.",
+  "fields": {
+    "id": "identificador do aviso, como aparece no banco de vulnerabilidade",
+    "package": "nome do pacote, normalizado como no lockfile",
+    "version": "versao fixada que a excecao tolera, exatamente como no lockfile",
+    "justification": "por que a exposicao e aceitavel, com pelo menos 20 caracteres",
+    "review_by": "data YYYY-MM-DD da proxima revisao"
+  },
   "documented_in": "docs/RELEASE.md",
   "validator": "scripts/validate_dependency_locks.py",
   "exceptions": []
