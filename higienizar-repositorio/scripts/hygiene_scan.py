@@ -251,7 +251,8 @@ def safe_relative(path: Path, root: Path) -> str:
     try:
         return relative(path, root)
     except ValueError:
-        return path.name
+        # A raiz do sistema não tem nome: o rótulo precisa existir para o relatório manter contrato.
+        return path.name or path.anchor or "."
 
 
 def declared_exclusions(policy: dict) -> dict[str, str]:
@@ -746,14 +747,25 @@ def named_paths(
                 if not PLACEHOLDER_ANCHOR_RE.search(text[:start]):
                     continue
                 cleaned = cleaned.lstrip("/")
-            parts = Path(cleaned).parts
-            # Citação que sai da raiz não é invocação declarada de arquivo da árvore.
-            if not cleaned or ".." in parts:
+            if not cleaned:
                 continue
-            candidates = {cleaned}
-            if directory != ".":
+            parts = Path(cleaned).parts
+            resolved = ""
+            if ".." in parts:
+                # Citação com `..` só é recusada quando de fato sai da raiz: `sub/../x.py` cita `x.py`
+                # dentro da árvore, e descartar por conter `..` acusaria dívida que não existe.
+                base = (root / directory) if directory != "." else root
+                try:
+                    inside = (base / cleaned).resolve()
+                except (OSError, RuntimeError):
+                    continue
+                if not inside.is_relative_to(root.resolve()):
+                    continue
+                resolved = inside.relative_to(root.resolve()).as_posix()
+            candidates = {resolved or cleaned}
+            if not resolved and directory != ".":
                 candidates.add(f"{directory}/{cleaned}")
-            if skill_root:
+            if not resolved and skill_root:
                 candidates.add(f"{skill_root}/{cleaned}")
             matched = {candidate for candidate in candidates if candidate in known}
             if not matched and len(parts) == 1:
@@ -1127,10 +1139,17 @@ def toml_requirements(text: str) -> list[str]:
     poetry = tool.get("poetry") if isinstance(tool.get("poetry"), dict) else {}
     tables = [poetry.get("dependencies"), poetry.get("dev-dependencies")]
     groups = poetry.get("group")
-    if isinstance(groups, dict):
-        tables.extend(
-            group.get("dependencies") for group in groups.values() if isinstance(group, dict)
-        )
+    if groups is not None and not isinstance(groups, dict):
+        raise HygieneError("manifest toml invalido: tool.poetry.group precisa ser tabela")
+    for name, group in (groups or {}).items():
+        if not isinstance(group, dict):
+            raise HygieneError(f"manifest toml invalido: tool.poetry.group.{name} precisa ser tabela")
+        table = group.get("dependencies")
+        if table is not None and not isinstance(table, dict):
+            raise HygieneError(
+                f"manifest toml invalido: tool.poetry.group.{name}.dependencies precisa ser tabela"
+            )
+        tables.append(table)
     for table in tables:
         if table is not None and not isinstance(table, dict):
             raise HygieneError("manifest toml invalido: tabela de dependencia do Poetry precisa ser tabela")
@@ -1428,6 +1447,15 @@ def render_markdown(report: dict) -> str:
             if finding["state"] == "accepted":
                 suffix = f" — aceito: {finding.get('justification', '')}"
             lines.append(f"- `{finding['location']}` — {finding['detail']}{suffix}")
+    if report["excluded"] or report.get("excluded_dirs"):
+        # Exclusão fora do artefato humano induziria leitura de cobertura completa sobre escopo
+        # reduzido por declaração.
+        lines.extend(["", "## Excluídos por declaração", ""])
+        lines.extend(f"- `{entry['path']}` — {entry['reason']}" for entry in report["excluded"])
+        lines.extend(
+            f"- `{name}/` — diretório excluído por declaração"
+            for name in report.get("excluded_dirs", [])
+        )
     if report["not_analyzed"]:
         lines.extend(["", "## Não analisados", ""])
         lines.extend(

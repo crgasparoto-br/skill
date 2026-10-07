@@ -2097,3 +2097,99 @@ def test_report_exposes_declared_excluded_dirs(tmp_path: Path) -> None:
     policy = policy_variant(**{"scope.exclude_dirs": ["vendor", ".git", "__pycache__"]})
     tree = make_tree(tmp_path, {"a.py": "V = 1\n", "README.md": "`a.py`\n"}, policy)
     assert scan(tree)["excluded_dirs"] == [".git", "__pycache__", "vendor"]
+
+
+def test_class_key_of_another_class_is_rejected() -> None:
+    """Achado bloqueante: chave de outra classe passava e não era medida por ninguém."""
+    for name, key, value in (
+        ("dead-symbol", "max_complexity", 99),
+        ("duplication", "tool_dependencies", ["x"]),
+        ("complexity", "import_name_map", {"a": "b"}),
+        ("dead-module", "min_body_lines", 3),
+    ):
+        policy = policy_variant(**{f"classes.{name}.{key}": value})
+        errors = validate_hygiene.policy_errors(policy)
+        assert any(f"classes.{name}.{key}" in error for error in errors), (name, key)
+    # `baseline` é chave da classe `complexity`, e o valor precisa casar com a história declarada.
+    allowed = policy_variant(**{"classes.complexity.baseline": 47})
+    assert [error for error in validate_hygiene.policy_errors(allowed) if "nao e chave" in error] == []
+
+
+def test_exclude_dirs_requires_canonical_relative_path() -> None:
+    """Achado bloqueante: forma não canônica era aceita e excluía outro diretório."""
+    for value in (["a/../vendor"], ["a/./vendor"], ["a//vendor"]):
+        policy = policy_variant(**{"scope.exclude_dirs": value})
+        assert any("exclude_dirs" in error for error in validate_hygiene.policy_errors(policy)), value
+    allowed = policy_variant(**{"scope.exclude_dirs": ["vendor", "a/b"]})
+    assert [error for error in validate_hygiene.policy_errors(allowed) if "exclude_dirs" in error] == []
+
+
+def test_poetry_group_hierarchy_is_validated(tmp_path: Path) -> None:
+    """Achado bloqueante: hierarquia inválida de grupo Poetry desaparecia da medição."""
+    for content in (
+        '[tool.poetry.group]\ndev = "malformed"\n',
+        '[tool.poetry]\ngroup = "malformed"\n',
+        '[tool.poetry.group.dev]\ndependencies = "malformed"\n',
+    ):
+        tree = make_tree(
+            tmp_path / str(abs(hash(content))),
+            {"a.py": "import json\n", "README.md": "`a.py`\n", "pyproject.toml": content},
+        )
+        report = scan(tree)
+        assert [entry["path"] for entry in report["not_analyzed"]] == ["pyproject.toml"], content
+        assert findings_of(report, "unused-dependency") == []
+    valid = make_tree(
+        tmp_path / "valido",
+        {
+            "a.py": "import json\n",
+            "README.md": "`a.py`\n",
+            "pyproject.toml": '[tool.poetry.group.dev.dependencies]\nrequests = "^2"\n',
+        },
+    )
+    assert [item["symbol"] for item in findings_of(scan(valid), "unused-dependency")] == ["requests"]
+
+
+def test_citation_with_dot_dot_inside_root_keeps_module_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: citação válida com `..` era descartada e virava falso positivo."""
+    inside = make_tree(
+        tmp_path / "dentro",
+        {"sub/keep.py": "V = 1\n", "orphan.py": "V = 1\n", "README.md": "Use sub/../orphan.py\n"},
+    )
+    assert [finding["location"] for finding in findings_of(scan(inside), "dead-module")] == ["sub/keep.py"]
+    escaping = make_tree(
+        tmp_path / "fora",
+        {"sub/keep.py": "V = 1\n", "orphan.py": "V = 1\n", "README.md": "Use ../orphan.py\n"},
+    )
+    assert [finding["location"] for finding in findings_of(scan(escaping), "dead-module")] == [
+        "orphan.py",
+        "sub/keep.py",
+    ]
+
+
+def test_suppressor_with_wrong_type_is_rejected() -> None:
+    """Achado não bloqueante: supressor de tipo errado era ignorado em silêncio."""
+    for name, key, value in (
+        ("dead-symbol", "ignore_names", "__all__"),
+        ("dead-symbol", "ignore_names", {"name": "x"}),
+        ("dead-module", "entry_points", {"name": "orphan.py"}),
+    ):
+        policy = policy_variant(**{f"classes.{name}.{key}": value})
+        errors = validate_hygiene.policy_errors(policy)
+        assert any(f"classes.{name}.{key} precisa ser lista" in error for error in errors), (name, key)
+
+
+def test_markdown_report_exposes_declared_exclusions(tmp_path: Path) -> None:
+    """Achado não bloqueante: o artefato humano omitia o escopo excluído."""
+    policy = policy_variant(**{"scope.exclude_dirs": ["vendor"]})
+    tree = make_tree(tmp_path, {"a.py": "V = 1\n", "README.md": "`a.py`\n"}, policy)
+    markdown = hygiene_scan.render_markdown(scan(tree))
+    assert "## Excluídos por declaração" in markdown
+    assert "`vendor/`" in markdown
+
+
+def test_system_root_target_publishes_non_empty_label(tmp_path: Path) -> None:
+    """Achado não bloqueante: alvo `/` produzia rótulo vazio e reprovava o contrato."""
+    tree = make_tree(tmp_path, {"a.py": "V = 1\n", "README.md": "`a.py`\n"})
+    report, _ = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree), ["/"])
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["/"]
+    assert hygiene_scan.report_contract_errors(report) == []

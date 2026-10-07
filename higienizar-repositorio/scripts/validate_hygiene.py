@@ -30,10 +30,15 @@ import json
 import sys
 from pathlib import Path, PurePosixPath
 
+# O validador não escreve na árvore analisada, e bytecode de módulo importado é escrita: sem isto, a
+# própria execução deixaria `__pycache__` dentro da raiz que ela afirma não alterar.
+sys.dont_write_bytecode = True
+
 try:
     from .hygiene_scan import (
         CLASSES,
         DEFAULT_POLICY,
+        REQUIRED_CLASS_KEYS,
         HygieneError,
         build_report,
         declared_exclusions,
@@ -47,6 +52,7 @@ except ImportError:  # pragma: no cover - execucao direta do script
     from hygiene_scan import (
         CLASSES,
         DEFAULT_POLICY,
+        REQUIRED_CLASS_KEYS,
         HygieneError,
         build_report,
         declared_exclusions,
@@ -70,11 +76,11 @@ EXTRA_CLASS_KEYS = {
 # Chaves específicas validadas por nome, e não por tipo: entram aqui para que a lista de chaves
 # conhecidas de cada classe seja uma só, usada tanto pela exigência quanto pela recusa de chave
 # desconhecida, e para que a lista não divirja do que a validação de fato lê.
-NAMED_CLASS_KEYS = {
-    "duplication": ("exclude_declared_copies",),
-    "dead-module": ("entry_points", "package_init_is_entry"),
-    "dead-symbol": ("ignore_names",),
-    "complexity": ("baseline_history",),
+# Chaves de decisão por classe, montadas a partir da mesma tabela que o produtor exige: chave de outra
+# classe na classe errada é decisão declarada que ninguém mede, e passaria em silêncio.
+CLASS_DECISION_KEYS = {
+    **{name: (*keys, "state", "limits") for name, keys in REQUIRED_CLASS_KEYS.items()},
+    "complexity": (*REQUIRED_CLASS_KEYS["complexity"], "state", "limits", "baseline", "baseline_history"),
 }
 INT_KEYS = ("min_body_lines", "max_complexity", "baseline")
 BOOL_KEYS = ("exclude_declared_copies", "exclude_tests")
@@ -212,8 +218,13 @@ def _suppressor_errors(name: str, entry: dict) -> list[str]:
     """
     errors: list[str] = []
     for key in SUPPRESSOR_KEYS:
+        if key not in entry:
+            continue
         entries = entry.get(key)
         if not isinstance(entries, list):
+            # Tipo errado não é ausência: declarar supressor como texto ou objeto parece silenciar
+            # achado e não silencia nada, e o que parece e não é precisa reprovar.
+            errors.append(f"politica: classes.{name}.{key} precisa ser lista de objetos com name e reason")
             continue
         for index, item in enumerate(entries):
             label = f"classes.{name}.{key}[{index}]"
@@ -256,15 +267,7 @@ def _unknown_class_key_errors(name: str, entry: dict) -> list[str]:
     Chave escrita com nome parecido, como `accepted` dentro da classe, seria lida como decisão declarada
     por quem escreve e ignorada por quem mede: a política mentiria sem que ninguém percebesse.
     """
-    allowed = {
-        *COMMON_CLASS_KEYS,
-        *EXTRA_CLASS_KEYS.get(name, ()),
-        *NAMED_CLASS_KEYS.get(name, ()),
-        *INT_KEYS,
-        *BOOL_KEYS,
-        *LIST_KEYS,
-        *DICT_KEYS,
-    }
+    allowed = set(CLASS_DECISION_KEYS.get(name, COMMON_CLASS_KEYS))
     return [
         f"politica: classes.{name}.{key} nao e chave de decisao conhecida"
         for key in sorted(set(entry) - allowed)
@@ -289,10 +292,18 @@ def _exclude_dir_errors(scope: dict) -> list[str]:
             errors.append(
                 f"politica: scope.exclude_dirs[{index}] precisa ser diretorio relativo dentro da raiz"
             )
-        elif entry.startswith("./") or entry.endswith("/"):
+            continue
+        parts = PurePosixPath(entry).parts
+        if (
+            entry != PurePosixPath(entry).as_posix()
+            or not parts
+            or any(part in {".", ".."} for part in parts)
+        ):
+            # `a/../vendor`, `a/./vendor` e `a//vendor` não são o diretório pretendido: a comparação de
+            # escopo usa os componentes declarados, então forma não canônica exclui outra coisa.
             errors.append(
-                f"politica: scope.exclude_dirs[{index}] precisa ser diretorio canonico, sem `./` "
-                "nem barra final"
+                f"politica: scope.exclude_dirs[{index}] precisa ser diretorio canonico, sem `.`, "
+                "`..`, barra duplicada nem barra final"
             )
     return errors
 

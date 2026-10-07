@@ -241,6 +241,12 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A décima primeira rodada de auditoria corrigiu o que as dez anteriores ainda não garantiam: chave de decisão passou a
+valer só na classe a que pertence; `exclude_dirs` passou a exigir caminho relativo canônico, sem `..`, `.` nem barra
+duplicada no meio; hierarquia inválida de grupo do Poetry passou a ser recusa visível; citação com `..` passou a ser
+recusada só quando de fato sai da raiz; supressor com tipo errado passou a reprovar; o Markdown passou a publicar o
+escopo excluído; o rótulo de alvo externo sem nome passou a existir; e a validação passou a não deixar bytecode na árvore
+analisada.
 A décima rodada de auditoria corrigiu o que as nove anteriores ainda não garantiam: alvo direcionado que escapa da raiz
 passou a deixar o escopo vazio, em vez de reabrir o percurso livre de manifest; o índice de citação passou a ser o do
 escopo medido, sem link de corpus que sai da raiz e sem autocitação; link quebrado e link em ciclo passaram a receber o

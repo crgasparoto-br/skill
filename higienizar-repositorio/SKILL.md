@@ -79,13 +79,18 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Estrutura invalida em formato declarado, como escalar em `project.optional-dependencies`, e recusa visivel, e nao uma dependencia por caractere.
 - O gerador de work items tambem recusa escrever dentro da arvore medida: artefato gravado no objeto medido pode apagar a divida que ele mesmo descreve.
 - Relatorio com problema de politica nao e publicado: a reprovacao acontece antes da gravacao, e nao depois de o arquivo existir.
-- `exclude_dirs` exige diretorio relativo canonico dentro da raiz, e chave desconhecida dentro de uma classe e erro: `.` esvaziaria o escopo por declaracao, e chave com nome parecido mentiria sem que ninguem percebesse. Link quebrado e link em ciclo seguem a mesma regra, e alvo externo mantem o escopo vazio: conjunto vazio de alvos nao e ausencia de restricao.
 - O rotulo de caminho de fora da raiz e apenas o nome do arquivo: caminho absoluto no relatorio quebraria a comparacao entre copias equivalentes da arvore.
 - O indice de citacao e o do escopo medido, e a autocitacao nao conta: nem arquivo excluido, nem link de corpus que sai da raiz, nem o proprio texto do arquivo mantem modulo vivo.
 - Estrutura invalida em formato declarado, como escalar em `project.optional-dependencies`, e recusa visivel, e nao uma dependencia por caractere.
 - O gerador de work items tambem recusa escrever dentro da arvore medida: artefato gravado no objeto medido pode apagar a divida que ele mesmo descreve.
 - Relatorio com problema de politica nao e publicado: a reprovacao acontece antes da gravacao, e nao depois de o arquivo existir.
-- `exclude_dirs` exige diretorio relativo canonico dentro da raiz, e chave desconhecida dentro de uma classe e erro: `.` esvaziaria o escopo por declaracao, e chave com nome parecido mentiria sem que ninguem percebesse.
+- `exclude_dirs` exige diretorio relativo canonico dentro da raiz, sem `.`, `..`, barra duplicada nem barra final: forma nao canonica exclui outro diretorio, e `.` esvaziaria o escopo por declaracao.
+- Chave de decisao so vale na classe a que pertence, e chave com nome parecido e erro: decisao de outra classe, ou nome que parece decisao, mentiria sem que ninguem percebesse.
+- Supressor declarado com tipo errado reprova, em vez de ser ignorado: texto ou objeto no lugar da lista parece silenciar achado e nao silencia nada.
+- Citacao com `..` e recusada somente quando de fato sai da raiz: `sub/../x.py` cita `x.py` dentro da arvore, e descartar por conter `..` acusaria divida que nao existe.
+- Hierarquia invalida do Poetry, em `tool.poetry.group` e em `dependencies` de grupo, e recusa visivel: declaracao de dependencia que desaparece da medicao e divida escondida.
+- O relatorio Markdown publica o escopo excluido, e nao so o JSON: artefato humano sem a exclusao induziria leitura de cobertura completa sobre escopo reduzido por declaracao.
+- A validacao nao deixa bytecode na arvore analisada: `__pycache__` de modulo importado e escrita dentro da raiz que a execucao afirma nao alterar.
 - O relatorio nao pode ser gravado dentro da arvore medida: evidencia gravada no objeto medido entra no corpus de citacao, muda a medicao seguinte e pode sobrescrever arquivo coberto.
 - O comando da varredura reprova politica que o gate reprova, antes de medir: medir com politica invalida publicaria evidencia que ninguem pode aceitar.
 - O modo direcionado usa a raiz do repositorio para rotular cobertura, e nao o alvo: dois alvos com o mesmo diretorio recusado ficariam indistinguiveis, e alvo inexistente publica caminho relativo canonico.
