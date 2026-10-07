@@ -199,17 +199,23 @@ A contrapartida está declarada em `AGENTS.md`: alterar a seção exige alterar 
 ### V030-009 — Análise estática real do código
 Entregue o gate `scripts/validate_lint.py` com a política `config/lint-policy.json`: cada família de regras do Ruff
 aparece exatamente uma vez como aplicada, aplicada em parte com a parte desligada declarada, ou dispensada com motivo
-escrito; a seleção efetiva é derivada da política, nunca embutida no código; a versão da ferramenta é fixada no
-manifest e no lockfile e declarada na política, com reprovação por divergência; supressão em linha só é aceita com
-código permitido e justificativa na própria linha; e o gate roda sem rede e sem cache. A árvore foi corrigida até
+escrito; a cobertura é conferida no nível da regra, de modo que família aplicada com seleção estreita, família
+parcial que não decide sobre alguma regra e família parcial que desliga tudo reprovam; a seleção efetiva é derivada
+da política, nunca embutida no código; a versão da ferramenta é fixada no manifest e no lockfile e declarada na
+política, com reprovação por divergência; supressão em linha ou de arquivo só é aceita com código permitido e
+justificativa na própria diretiva, e diretiva de arquivo sem código é recusada; o escopo varrido é declarado na
+política, e arquivo coberto fora da raiz, diretório ilegível e saída inesperada da ferramenta reprovam em vez de
+reduzir o conjunto analisado em silêncio; e o gate roda sem rede e sem cache. A árvore foi corrigida até
 passar limpo em 216 arquivos: import morto, variável não usada, nome de laço reatribuído, exceção sem encadeamento,
 caminho via `os`, fuso ambíguo, alias de flag de expressão regular, `subprocess` sem `check`, ordenação de import,
 `stdout`/`stderr` explícitos e compreensões desnecessárias.
 Critério de aceite: `python3 scripts/validate_lint.py --root .` aprova a árvore entregue; reprova arquivo novo que
-viole família aplicada, política que não cubra o catalogo, dispensa sem motivo escrito, versão divergente, supressão
-com código fora da lista permitida e supressão sem justificativa; a suíte completa continua aprovada sem mudança de
-comportamento observável; a sequência obrigatória é idêntica em CI, `README.md` e `AGENTS.md`; e o requisito global,
-o changelog e este roadmap registram a entrega.
+viole família aplicada, política que não cubra o catalogo, família que não decida sobre alguma de suas regras,
+dispensa sem motivo escrito, versão divergente, supressão com código fora da lista permitida, supressão sem
+justificativa e diretiva de arquivo sem código; a suíte completa continua aprovada sem mudança de comportamento
+observável; a sequência de validação é idêntica em CI, `README.md` e `AGENTS.md`, com o gate na mesma posição,
+verificado por `tests/test_validation_parity.py`, e o CI acrescenta apenas os passos de empacotamento e de replay de
+avaliações, que não são validação; e o requisito global, o changelog e este roadmap registram a entrega.
 ## 5. Sequência de implementação
 
 ### Fase A — fundação e segurança

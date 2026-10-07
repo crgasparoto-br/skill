@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Gate deterministico de analise estatica do codigo Python do catalogo.
 
-A politica em `config/lint-policy.json` e a unica fonte da selecao de regras: cada familia do
-catalogo do Ruff aparece exatamente uma vez como aplicada, aplicada em parte com a parte desligada
-declarada, ou dispensada com motivo escrito. O gate reprova quando a politica nao cobre o catalogo,
-quando uma dispensa nao tem motivo suficiente, quando a ferramenta nao esta instalada, quando a
-versao executada diverge da declarada, quando existe supressao em linha com codigo fora da lista
-permitida ou sem justificativa propria, e quando qualquer regra aplicada e violada.
+A politica em `config/lint-policy.json` e a unica fonte da decisao sobre regras: cada familia do
+catalogo da ferramenta aparece exatamente uma vez como aplicada, aplicada em parte com a parte
+desligada declarada, ou dispensada com motivo escrito, e a cobertura e conferida no nivel da regra,
+nao apenas no nivel do prefixo. O gate reprova quando a politica nao cobre o catalogo, quando uma
+familia nao decide sobre todas as suas regras, quando uma dispensa nao tem motivo suficiente, quando
+a ferramenta nao esta instalada, quando a versao executada diverge da declarada, quando existe
+supressao em linha ou de arquivo com codigo fora da lista permitida ou sem justificativa propria,
+quando um arquivo coberto esta fora da raiz ou em diretorio ilegivel, e quando qualquer regra
+aplicada e violada.
 """
 
 from __future__ import annotations
@@ -14,6 +17,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -27,11 +31,15 @@ from scripts.validate_dependency_locks import confined, relative
 POLICY = Path("config") / "lint-policy.json"
 REQUIRED_STATES = {"selected", "partial", "dismissed"}
 MINIMUM_REASON_CHARS = 40
-# O marcador e montado para que o proprio codigo do gate nao contenha a sequencia que ele procura.
-SUPPRESSION_RE = re.compile(r"#" + r"\s*noqa(?::\s*(?P<codes>[A-Za-z0-9]+(?:[,\s]+[A-Za-z0-9]+)*))?")
+ENTRY_RE = re.compile(r"[A-Z]+\d*")
+# Diretivas que a ferramenta reconhece: marcador em qualquer caixa e diretiva de arquivo com
+# prefixo `ruff:` ou `flake8:`. A leitura e feita sobre comentarios reais, entao a ocorrencia
+# dentro de string nao conta como supressao.
+DIRECTIVE_RE = re.compile(r"#\s*(?:(?P<scope>ruff|flake8)\s*:\s*)?noqa(?P<rest>:\s*(?P<codes>[A-Za-z0-9]+(?:[,\s]+[A-Za-z0-9]+)*))?", re.IGNORECASE)
 JUSTIFICATION_SEPARATOR = " - "
 MAXIMUM_REPORTED = 200
-CATALOG_TIMEOUT_SECONDS = 120
+MAXIMUM_LISTED_CODES = 8
+TOOL_TIMEOUT_SECONDS = 120
 
 
 def load_policy(root: Path, errors: list[str]) -> dict | None:
@@ -50,8 +58,96 @@ def load_policy(root: Path, errors: list[str]) -> dict | None:
     return data
 
 
-def policy_errors(policy: dict, catalog: set[str]) -> list[str]:
-    """Integridade da politica: catalogo coberto, motivos presentes, supressoes declaradas."""
+def shortlist(codes: set[str] | list[str]) -> str:
+    ordered = sorted(codes)
+    if len(ordered) <= MAXIMUM_LISTED_CODES:
+        return ", ".join(ordered)
+    return f"{', '.join(ordered[:MAXIMUM_LISTED_CODES])} e mais {len(ordered) - MAXIMUM_LISTED_CODES}"
+
+
+def covered(codes: set[str], entries: list[str]) -> set[str]:
+    """Regras do conjunto cobertas por entradas, que podem ser prefixo ou codigo completo."""
+    return {code for code in codes if any(code.startswith(entry) for entry in entries)}
+
+
+def scope_errors(policy: dict) -> list[str]:
+    """O escopo do gate e declarado, nao presumido pelo codigo."""
+    errors: list[str] = []
+    scope = policy.get("scope")
+    if not isinstance(scope, dict):
+        return ["politica: scope precisa ser objeto com extensions, excluded_directories e reason"]
+    extensions = scope.get("extensions")
+    if not isinstance(extensions, list) or not extensions:
+        errors.append("politica: scope.extensions precisa ser lista nao vazia")
+    elif any(not isinstance(item, str) or not item.startswith(".") for item in extensions):
+        errors.append("politica: scope.extensions aceita apenas sufixos iniciados por ponto")
+    excluded = scope.get("excluded_directories")
+    if not isinstance(excluded, list) or not excluded:
+        errors.append("politica: scope.excluded_directories precisa ser lista nao vazia")
+    elif any(not isinstance(item, str) or not item for item in excluded):
+        errors.append("politica: scope.excluded_directories aceita apenas nomes de diretorio")
+    reason = scope.get("reason")
+    if not isinstance(reason, str) or len(reason.strip()) < MINIMUM_REASON_CHARS:
+        errors.append("politica: scope.reason precisa de motivo escrito suficiente")
+    return errors
+
+
+def family_errors(
+    prefix: str, state: str, select: list, ignore: list, catalog: dict[str, str]
+) -> list[str]:
+    """A familia precisa decidir sobre todas as suas regras, no nivel da regra."""
+    errors: list[str] = []
+    family_codes = {code for code, family in catalog.items() if family == prefix}
+    entries = [str(item).upper() for item in select]
+    ignored_entries = [str(item).upper() for item in ignore]
+    for label, items in (("select", entries), ("ignore", ignored_entries)):
+        for item in items:
+            if not ENTRY_RE.fullmatch(item):
+                errors.append(f"politica: familia {prefix} declara {label} invalido: {item!r}")
+                continue
+            if not any(code.startswith(item) for code in family_codes):
+                errors.append(
+                    f"politica: familia {prefix} declara {label} {item}, que nao pertence a familia"
+                )
+    if not family_codes:
+        return errors
+    selected = covered(family_codes, entries)
+    ignored = covered(family_codes, ignored_entries)
+    if state == "selected":
+        if ignored:
+            errors.append(
+                f"politica: familia {prefix} aplicada nao pode desligar regra: {shortlist(ignored)}"
+            )
+        pending = family_codes - selected
+        if pending:
+            errors.append(
+                f"politica: familia {prefix} aplicada nao decide sobre toda a familia: {shortlist(pending)}"
+            )
+    elif state == "partial":
+        # A ferramenta aplica `select` menos `ignore`, entao sobreposicao e a forma normal de
+        # aplicar a familia inteira e desligar partes. O que nao pode acontecer e sobrar regra sem
+        # decisao, nem a parte parcial desligar tudo e virar dispensa disfarcada.
+        if not ignored:
+            errors.append(
+                f"politica: familia {prefix} parcial precisa declarar a parte desligada em ignore"
+            )
+        pending = family_codes - (selected | ignored)
+        if pending:
+            errors.append(
+                f"politica: familia {prefix} parcial deixa regra sem decisao: {shortlist(pending)}"
+            )
+        applied = selected - ignored
+        if not applied:
+            errors.append(
+                f"politica: familia {prefix} parcial desliga a familia inteira; use dismissed com motivo"
+            )
+    elif select or ignore:
+        errors.append(f"politica: familia {prefix} dispensada nao pode selecionar nem desligar regra")
+    return errors
+
+
+def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
+    """Integridade da politica: catalogo coberto, regras decididas, motivos e supressoes."""
     errors: list[str] = []
     if policy.get("schema_version") != 1:
         errors.append("politica: schema_version precisa ser 1")
@@ -64,6 +160,16 @@ def policy_errors(policy: dict, catalog: set[str]) -> list[str]:
 
     if not re.fullmatch(r"py3\d{2}", str(policy.get("target_version", ""))):
         errors.append("politica: target_version precisa ser alvo explicito, como py312")
+
+    line_length = policy.get("line_length") or {}
+    if not isinstance(line_length.get("value"), int) or line_length["value"] <= 0:
+        errors.append("politica: line_length.value precisa ser inteiro positivo")
+    else:
+        reason = line_length.get("reason")
+        if not isinstance(reason, str) or len(reason.strip()) < MINIMUM_REASON_CHARS:
+            errors.append("politica: line_length.reason precisa de motivo escrito suficiente")
+
+    errors.extend(scope_errors(policy))
 
     families = policy.get("families")
     if not isinstance(families, list) or not families:
@@ -91,10 +197,6 @@ def policy_errors(policy: dict, catalog: set[str]) -> list[str]:
         if not isinstance(select, list) or not isinstance(ignore, list):
             errors.append(f"politica: familia {prefix} precisa declarar select e ignore como listas")
             continue
-        if state == "dismissed" and select:
-            errors.append(f"politica: familia {prefix} dispensada nao pode selecionar regra")
-        if state == "selected" and not select:
-            errors.append(f"politica: familia {prefix} selecionada precisa de select nao vazio")
         reason = entry.get("reason")
         if state != "selected":
             if not isinstance(reason, str) or len(reason.strip()) < MINIMUM_REASON_CHARS:
@@ -104,9 +206,10 @@ def policy_errors(policy: dict, catalog: set[str]) -> list[str]:
                 )
         elif reason not in (None, ""):
             errors.append(f"politica: familia {prefix} aplicada nao pode carregar motivo de dispensa")
+        errors.extend(family_errors(prefix, state, select, ignore, catalog))
 
-    missing = sorted(catalog - seen)
-    extra = sorted(seen - catalog)
+    missing = sorted(set(catalog.values()) - seen)
+    extra = sorted(seen - set(catalog.values()))
     if missing:
         errors.append(f"politica: familias do catalogo sem decisao: {', '.join(missing)}")
     if extra:
@@ -127,36 +230,47 @@ def policy_errors(policy: dict, catalog: set[str]) -> list[str]:
 
 
 def selection_of(policy: dict) -> tuple[list[str], list[str]]:
-    select = sorted({code for entry in policy["families"] for code in entry.get("select", [])})
-    ignore = sorted({code for entry in policy["families"] for code in entry.get("ignore", [])})
+    select = sorted({str(code) for entry in policy["families"] for code in entry.get("select", [])})
+    ignore = sorted({str(code) for entry in policy["families"] for code in entry.get("ignore", [])})
     return select, ignore
 
 
-def catalog_of(errors: list[str]) -> set[str]:
-    """Familias de regras que a ferramenta instalada declara conhecer."""
+def catalog_of(errors: list[str]) -> dict[str, str]:
+    """Codigo de regra para familia, segundo o catalogo da ferramenta instalada."""
     try:
         completed = subprocess.run(
             ["ruff", "rule", "--all", "--output-format", "json"],
             capture_output=True,
             text=True,
             check=False,
-            timeout=CATALOG_TIMEOUT_SECONDS,
+            timeout=TOOL_TIMEOUT_SECONDS,
         )
     except FileNotFoundError:
         errors.append("ruff: nao instalado; instalar pelo lockfile antes de validar")
-        return set()
+        return {}
     except subprocess.TimeoutExpired:
         errors.append("ruff: tempo esgotado ao listar o catalogo de regras")
-        return set()
+        return {}
     if completed.returncode != 0:
         errors.append(f"ruff: falha ao listar o catalogo: {completed.stderr.strip()[:200]}")
-        return set()
+        return {}
     try:
         rules = json.loads(completed.stdout)
     except json.JSONDecodeError:
         errors.append("ruff: catalogo de regras em formato inesperado")
-        return set()
-    return {re.sub(r"[^A-Z]", "", str(rule.get("code", ""))) for rule in rules}
+        return {}
+    if not isinstance(rules, list) or not rules:
+        errors.append("ruff: catalogo de regras em formato inesperado")
+        return {}
+    catalog: dict[str, str] = {}
+    for rule in rules:
+        code = rule.get("code") if isinstance(rule, dict) else None
+        if not isinstance(code, str) or not code:
+            errors.append("ruff: entrada de catalogo sem codigo de regra")
+            return {}
+        normalized = code.upper()
+        catalog[normalized] = re.sub(r"[^A-Z]", "", normalized)
+    return catalog
 
 
 def installed_version(errors: list[str]) -> str | None:
@@ -174,17 +288,33 @@ def installed_version(errors: list[str]) -> str | None:
     return match.group(1)
 
 
-def python_files(root: Path) -> list[Path]:
-    """Arquivos Python sob a raiz, excluindo o que nao e codigo versionado do catalogo."""
-    excluded_parts = {".git", "__pycache__", ".ruff_cache", ".pytest_cache", ".mypy_cache", "dist"}
-    found = []
-    for path in root.rglob("*.py"):
-        if any(part in excluded_parts for part in path.parts):
-            continue
-        if not confined(path, root):
-            continue
-        found.append(path)
-    return sorted(found)
+def python_files(root: Path, policy: dict, errors: list[str]) -> list[Path]:
+    """Arquivos do escopo declarado, com falha explicita em vez de omissao silenciosa."""
+    scope = policy.get("scope") or {}
+    extensions = tuple(str(item) for item in scope.get("extensions") or ())
+    excluded = {str(item) for item in scope.get("excluded_directories") or ()}
+    if not extensions:
+        errors.append("politica: scope.extensions precisa declarar os sufixos cobertos")
+        return []
+
+    def onerror(error: OSError) -> None:
+        location = getattr(error, "filename", None) or "desconhecido"
+        errors.append(f"{location}: diretorio ilegivel ({error.strerror or error.__class__.__name__})")
+
+    found: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(root, onerror=onerror):
+        dirnames[:] = sorted(name for name in dirnames if name not in excluded)
+        for name in sorted(filenames):
+            if not name.endswith(extensions):
+                continue
+            path = Path(dirpath) / name
+            if not confined(path, root):
+                errors.append(
+                    f"{relative(path, root)}: arquivo coberto aponta para fora da raiz do repositorio"
+                )
+                continue
+            found.append(path)
+    return found
 
 
 def comments_of(text: str) -> list[tuple[int, str]]:
@@ -200,9 +330,14 @@ def comments_of(text: str) -> list[tuple[int, str]]:
 
 
 def suppression_errors(root: Path, files: list[Path], policy: dict, errors: list[str]) -> None:
-    """Supressao precisa estar declarada na politica e justificada na propria linha."""
+    """Supressao precisa estar declarada na politica e justificada na propria diretiva.
+
+    A leitura cobre as formas que a ferramenta reconhece: o marcador em qualquer caixa e a diretiva
+    de arquivo com prefixo `ruff:` ou `flake8:`. Supressao de arquivo sem codigo e recusada porque
+    desliga a analise inteira sem deixar o alvo declarado.
+    """
     allowed = {
-        str(entry.get("code"))
+        str(entry.get("code")).upper()
         for entry in policy.get("allowed_suppressions", [])
         if isinstance(entry, dict)
     }
@@ -213,16 +348,17 @@ def suppression_errors(root: Path, files: list[Path], policy: dict, errors: list
             errors.append(f"{relative(path, root)}: ilegivel ou fora de UTF-8")
             continue
         for number, comment in comments_of(text):
-            match = SUPPRESSION_RE.search(comment)
+            match = DIRECTIVE_RE.search(comment)
             if not match:
                 continue
             where = f"{relative(path, root)}:{number}"
             codes = match.group("codes")
             if not codes:
-                errors.append(f"{where}: supressao sem codigo de regra")
+                kind = "de arquivo" if match.group("scope") else "sem codigo de regra"
+                errors.append(f"{where}: supressao {kind} sem codigo declarado")
                 continue
             for code in re.split(r"[,\s]+", codes.strip()):
-                if code not in allowed:
+                if code.upper() not in allowed:
                     errors.append(f"{where}: supressao de {code} fora da lista permitida na politica")
             if JUSTIFICATION_SEPARATOR not in comment[match.end():]:
                 errors.append(f"{where}: supressao sem justificativa apos ' - '")
@@ -237,7 +373,7 @@ def run_tool(
     files: list[Path],
     errors: list[str],
 ) -> list[dict]:
-    """Executa a ferramenta sem cache, exatamente com a selecao declarada na politica."""
+    """Executa a ferramenta sem cache, exatamente com a decisao declarada na politica."""
     if not files:
         return []
     command = [
@@ -258,7 +394,7 @@ def run_tool(
             text=True,
             check=False,
             cwd=str(root),
-            timeout=CATALOG_TIMEOUT_SECONDS * 5,
+            timeout=TOOL_TIMEOUT_SECONDS * 5,
         )
     except FileNotFoundError:
         return []
@@ -269,14 +405,28 @@ def run_tool(
         errors.append(f"ruff: execucao falhou: {completed.stderr.strip()[:200]}")
         return []
     try:
-        return json.loads(completed.stdout or "[]")
+        violations = json.loads(completed.stdout or "[]")
     except json.JSONDecodeError:
-        errors.append("ruff: saida em formato inesperado")
+        errors.append("ruff: saida da analise em formato inesperado")
         return []
+    if not isinstance(violations, list):
+        errors.append("ruff: saida da analise em formato inesperado")
+        return []
+    for violation in violations:
+        if not isinstance(violation, dict):
+            errors.append("ruff: diagnostico em formato inesperado")
+            return []
+        if not isinstance(violation.get("code"), str) or not isinstance(violation.get("filename"), str):
+            errors.append("ruff: diagnostico sem codigo de regra ou arquivo")
+            return []
+        if violation.get("location") is not None and not isinstance(violation.get("location"), dict):
+            errors.append("ruff: diagnostico com localizacao em formato inesperado")
+            return []
+    return violations
 
 
 def validate_lint(root: Path) -> list[str]:
-    """Valida a politica e executa a analise com a selecao declarada."""
+    """Valida a politica e executa a analise com a decisao declarada."""
     root = root.resolve()
     errors: list[str] = []
     policy = load_policy(root, errors)
@@ -291,14 +441,17 @@ def validate_lint(root: Path) -> list[str]:
         errors.append(f"ruff: versao instalada {version} diverge da declarada {declared}")
 
     select, ignore = selection_of(policy)
-    files = python_files(root)
+    files = python_files(root, policy, errors)
     suppression_errors(root, files, policy, errors)
 
-    line_length = int((policy.get("line_length") or {}).get("value") or 0)
-    if line_length <= 0:
-        errors.append("politica: line_length.value precisa ser inteiro positivo")
     violations = run_tool(
-        root, str(policy.get("target_version", "py312")), line_length, select, ignore, files, errors
+        root,
+        str(policy.get("target_version", "py312")),
+        int((policy.get("line_length") or {}).get("value") or 0),
+        select,
+        ignore,
+        files,
+        errors,
     )
     for violation in violations:
         location = violation.get("location") or {}
@@ -307,7 +460,7 @@ def validate_lint(root: Path) -> list[str]:
             f"{violation.get('code')} {violation.get('message')}"
         )
     if not errors:
-        print(f"Lint OK: {len(files)} arquivo(s) Python sem violacao das regras aplicadas.")
+        print(f"Lint OK: {len(files)} arquivo(s) coberto(s) sem violacao das regras aplicadas.")
     return errors
 
 

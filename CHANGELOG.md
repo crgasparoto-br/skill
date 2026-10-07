@@ -19,6 +19,7 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 - `auditar-issue` passa a usar o `validate_learning_closure.py` estrito de `entregar-issue` (antes aceitava `rejection_id` ausente).
 
 ### Fixed
+- gate de análise estática endurecido após auditoria independente: a cobertura passou a ser conferida no nível da regra (família aplicada com seleção estreita, família parcial sem parte desligada declarada, família parcial que desliga tudo e entrada de outra família reprovam), a leitura de supressão passou a reconhecer o marcador em qualquer caixa e a diretiva de arquivo com prefixo `ruff:`/`flake8:`, com recusa de diretiva de arquivo sem código, o escopo varrido passou a ser declarado na política (`.py` e `.pyi`, com diretórios excluídos justificados), e a descoberta passou a reprovar arquivo coberto fora da raiz, diretório ilegível e saída da ferramenta em formato inesperado em vez de omitir código ou estourar traceback;
 
 - hashes de contratos e fixtures dependiam do final de linha do checkout; `.gitattributes` fixa LF e os validadores usam caminhos POSIX;
 - restaura o guard terminal `validate_delivery_completion.py` usado pelo controlador `entregar-issue`;

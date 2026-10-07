@@ -57,9 +57,12 @@ o Ruff com a seleção derivada de `config/lint-policy.json` e reprova qualquer 
 python scripts/validate_lint.py --root .
 ```
 A política é a única fonte da seleção: toda família de regras do Ruff aparece exatamente uma vez como aplicada,
-aplicada em parte com a parte desligada declarada, ou dispensada com motivo escrito. Acrescentar uma família nova ao
-catalogo da ferramenta sem decidir sobre ela reprova o gate, e uma dispensa sem motivo escrito também, de modo que a
-cobertura não pode encolher em silêncio. A versão da ferramenta é fixada exatamente no manifest e no lockfile e
+aplicada em parte com a parte desligada declarada, ou dispensada com motivo escrito. A cobertura é conferida no nível
+da regra, não no nível do prefixo: uma família aplicada precisa aplicar todas as suas regras, uma família parcial
+precisa deixar cada regra decidida entre aplicada e desligada, e uma família dispensada não pode selecionar nem
+desligar nada. Uma família parcial que desliga tudo é recusada, porque isso é uma dispensa disfarçada. Acrescentar
+uma família nova ao catalogo da ferramenta sem decidir sobre ela reprova o gate, e uma dispensa sem motivo escrito
+também, de modo que a cobertura não pode encolher em silêncio. A versão da ferramenta é fixada exatamente no manifest e no lockfile e
 declarada na política: subir de versão muda o catalogo de regras e exige decisão explícita, e a divergência entre a
 versão instalada e a declarada reprova.
 ### O que cada verificação prova
@@ -70,6 +73,10 @@ versão instalada e a declarada reprova.
 | Versão instalada igual à declarada | que o resultado não depende de uma versão implícita da ferramenta |
 | Supressão em linha com código permitido e justificativa própria | que a supressão foi revisada no ponto em que aparece |
 | Supressão que não suprime nada | que uma diretiva morta não permanece no código |
+| Regra sem decisão dentro da família | que a cobertura não encolhe por seleção estreita nem por `ignore` contraditório |
+| Diretiva em qualquer caixa e diretiva de arquivo | que a supressão que a ferramenta reconhece não escapa da política |
+| Arquivo coberto fora da raiz, em diretório ilegível ou com sufixo coberto | que a descoberta reprova em vez de omitir código em silêncio |
+| Saída da ferramenta em formato inesperado | que a falha é reprovação com causa explícita, nunca traceback nem aprovação |
 | Diagnóstico de regra aplicada | que a sujeira reprova a entrega em vez de depender de revisão manual |
 ### O que fica fora, e por quê
 As famílias dispensadas e as partes desligadas das famílias parciais estão declaradas na própria política, cada uma
@@ -78,10 +85,19 @@ longas de propósito; docstring por símbolo, porque a documentação normativa 
 regras de segurança no estilo bandit, que se sobrepõem a `docs/SECURITY.md` e à auditoria de dependências; captura
 ampla de exceção, que é o contrato fail-closed dos validadores; e complexidade, que não é sinal de correção aqui.
 ### Supressões
-Uma supressão em linha (`noqa`) só é aceita quando o código está na lista permitida da política e a própria linha
-traz a justificativa depois de ` - `. A lista permitida existe para o caso em que o import precisa vir depois do
-ajuste de `sys.path`, situação em que o `noqa` é local e o motivo fica visível. Corrigir o diagnóstico é preferível a
-suprimi-lo, e uma supressão nova exige decisão de política no mesmo commit.
+Uma supressão só é aceita quando o código está na lista permitida da política e a própria diretiva traz a
+justificativa depois de ` - `. A leitura cobre as formas que a ferramenta reconhece: o marcador em qualquer caixa e a
+diretiva de arquivo com prefixo `ruff:` ou `flake8:`. Supressão de arquivo sem código é recusada, porque desliga a
+análise inteira sem deixar o alvo declarado, e diretiva que não suprime nada reprova. A leitura é feita sobre
+comentários reais, então a mesma sequência dentro de uma string não conta como supressão. A lista permitida existe
+para o caso em que o import precisa vir depois do ajuste de `sys.path`, situação em que a supressão é local e o
+motivo fica visível. Corrigir o diagnóstico é preferível a suprimi-lo, e uma supressão nova exige decisão de política
+no mesmo commit.
+### Escopo varrido
+O que o gate varre é declarado na política, não presumido pelo código: os sufixos cobertos (`.py` e `.pyi`) e os
+diretórios excluídos, que são controle de versão, cache de ferramenta ou saída de empacotamento gerada. Um arquivo
+coberto que seja link simbólico para fora da raiz, um diretório ilegível e uma saída da ferramenta em formato
+inesperado reprovam com causa explícita, em vez de reduzir o conjunto analisado em silêncio.
 
 ## Dependências e política de exceção
 

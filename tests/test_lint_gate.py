@@ -40,6 +40,23 @@ def make_tree(tmp_path: Path, policy: dict, sources: dict[str, str]) -> Path:
     return tmp_path
 
 
+UNUSED_VARIABLE_MODULE = "def f() -> None:\n    unused = 1\n"
+
+
+def set_family(policy: dict, prefix: str, state: str, select: list[str], ignore: list[str]) -> None:
+    """Troca a decisao de uma familia para exercitar a tentativa de burla do gate."""
+    for entry in policy["families"]:
+        if entry["prefix"] == prefix:
+            entry.update({"state": state, "select": select, "ignore": ignore})
+            entry["reason"] = (
+                None
+                if state == "selected"
+                else "motivo declarado apenas para exercitar a tentativa de burla do gate"
+            )
+            return
+    raise AssertionError(f"familia {prefix} ausente")
+
+
 def dismiss(policy: dict, prefix: str, reason: str = "dispensa declarada de teste com motivo escrito suficiente") -> None:
     for entry in policy["families"]:
         if entry["prefix"] == prefix:
@@ -61,7 +78,7 @@ def test_policy_covers_every_family_of_the_installed_tool() -> None:
     if not catalog:
         pytest.skip(f"ruff indisponivel para listar o catalogo: {errors}")
     declared = {entry["prefix"] for entry in load_policy()["families"]}
-    assert catalog == declared
+    assert set(catalog.values()) == declared
 
 
 def test_clean_module_is_approved(tmp_path: Path) -> None:
@@ -214,3 +231,121 @@ def test_tool_is_available_for_the_gate() -> None:
 
 def test_environment_can_locate_python_for_the_gate() -> None:
     assert os.environ.get("PATH")
+
+
+def test_narrow_selection_inside_an_applied_family_is_rejected(tmp_path: Path) -> None:
+    """Cobertura e conferida no nivel da regra: select estreito nao pode encolher a familia."""
+    policy = load_policy()
+    set_family(policy, "F", "selected", ["F401"], [])
+    tree = make_tree(tmp_path, policy, {"mod.py": UNUSED_VARIABLE_MODULE})
+    errors = validate_lint(tree)
+    assert any("nao decide sobre toda a familia" in error for error in errors), errors
+
+
+def test_partial_family_without_disabled_part_is_rejected(tmp_path: Path) -> None:
+    policy = load_policy()
+    set_family(policy, "F", "partial", ["F401"], [])
+    tree = make_tree(tmp_path, policy, {"mod.py": UNUSED_VARIABLE_MODULE})
+    errors = validate_lint(tree)
+    assert any("parte desligada" in error for error in errors), errors
+
+
+def test_applied_family_cannot_disable_rules(tmp_path: Path) -> None:
+    policy = load_policy()
+    set_family(policy, "F", "selected", ["F"], ["F"])
+    tree = make_tree(tmp_path, policy, {"mod.py": UNUSED_IMPORT_MODULE})
+    errors = validate_lint(tree)
+    assert any("nao pode desligar regra" in error for error in errors), errors
+
+
+def test_entry_from_another_family_is_rejected(tmp_path: Path) -> None:
+    policy = load_policy()
+    set_family(policy, "F", "selected", ["A"], [])
+    tree = make_tree(tmp_path, policy, {"mod.py": UNUSED_VARIABLE_MODULE})
+    errors = validate_lint(tree)
+    assert any("nao pertence a familia" in error for error in errors), errors
+
+
+def test_partial_family_that_disables_everything_is_rejected(tmp_path: Path) -> None:
+    policy = load_policy()
+    set_family(policy, "PERF", "partial", ["PERF"], ["PERF"])
+    tree = make_tree(tmp_path, policy, {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"})
+    errors = validate_lint(tree)
+    assert any("desliga a familia inteira" in error for error in errors), errors
+
+
+def test_uppercase_directive_is_read_as_suppression(tmp_path: Path) -> None:
+    source = "import json  # NOQA: F401 - motivo proprio da tentativa de burla\n"
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": source})
+    errors = validate_lint(tree)
+    assert any("fora da lista permitida" in error for error in errors), errors
+
+
+def test_file_level_directive_is_read_as_suppression(tmp_path: Path) -> None:
+    source = "import json  # ruff: noqa: F401\n"
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": source})
+    errors = validate_lint(tree)
+    assert any("fora da lista permitida" in error for error in errors), errors
+
+
+def test_file_level_directive_without_codes_is_rejected(tmp_path: Path) -> None:
+    source = "import json  # ruff: noqa\n"
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": source})
+    errors = validate_lint(tree)
+    assert any("supressao de arquivo sem codigo declarado" in error for error in errors), errors
+
+
+def test_stub_file_is_covered_by_the_scope(tmp_path: Path) -> None:
+    tree = make_tree(tmp_path, load_policy(), {"mod.pyi": "import json\n"})
+    errors = validate_lint(tree)
+    assert any("F401" in error for error in errors), errors
+
+
+def test_symlink_outside_the_root_is_rejected(tmp_path: Path) -> None:
+    outside = tmp_path / "outside.py"
+    outside.write_text("import json\n", encoding="utf-8")
+    tree = make_tree(tmp_path / "tree", load_policy(), {})
+    (tree / "link.py").symlink_to(outside)
+    errors = validate_lint(tree)
+    assert any("fora da raiz do repositorio" in error for error in errors), errors
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignora permissao de diretorio")
+def test_unreadable_directory_is_rejected(tmp_path: Path) -> None:
+    tree = make_tree(tmp_path, load_policy(), {"secret/mod.py": UNUSED_IMPORT_MODULE})
+    secret = tree / "secret"
+    secret.chmod(0o000)
+    try:
+        errors = validate_lint(tree)
+    finally:
+        secret.chmod(0o755)
+    assert any("diretorio ilegivel" in error for error in errors), errors
+
+
+def test_unexpected_tool_output_is_a_controlled_failure(tmp_path: Path) -> None:
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    executable = fake / "ruff"
+    executable.write_text("#!/usr/bin/env python3\nimport sys\nprint('null')\n", encoding="utf-8")
+    executable.chmod(0o755)
+    tree = make_tree(tmp_path / "tree", load_policy(), {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"})
+    environment = dict(os.environ)
+    environment["PATH"] = f"{fake}:{environment.get('PATH', '')}"
+    completed = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "validate_lint.py"), "--root", str(tree)],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(ROOT),
+        env=environment,
+    )
+    assert completed.returncode == 1
+    assert "Traceback" not in completed.stderr
+    assert "formato inesperado" in completed.stderr
+
+
+def test_scope_is_declared_in_the_policy() -> None:
+    scope = load_policy()["scope"]
+    assert scope["extensions"] == [".py", ".pyi"]
+    assert "dist" in scope["excluded_directories"]
+    assert len(scope["reason"]) >= 40

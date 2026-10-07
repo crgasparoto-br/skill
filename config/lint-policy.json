@@ -11,6 +11,21 @@
     "value": 200,
     "reason": "o repositorio escreve linhas longas de proposito, em prosa e em mensagens de erro; o valor existe para que as regras de ordenacao e formatacao de import nao rewrapem o que o repositorio escreve em uma linha, e E501 permanece dispensado"
   },
+  "scope": {
+    "extensions": [
+      ".py",
+      ".pyi"
+    ],
+    "excluded_directories": [
+      ".git",
+      "__pycache__",
+      ".ruff_cache",
+      ".pytest_cache",
+      ".mypy_cache",
+      "dist"
+    ],
+    "reason": "o gate cobre codigo Python versionado, incluindo stubs .pyi; os diretorios excluidos sao controle de versao, cache de ferramenta ou saida de empacotamento gerada, e nenhum deles e fonte do catalogo"
+  },
   "description": "Politica de analise estatica do codigo Python do catalogo. Toda familia de regras do Ruff aparece exatamente uma vez: aplicada por inteiro, aplicada em parte com a parte desligada declarada, ou dispensada com motivo escrito. O gate scripts/validate_lint.py deriva a selecao daqui e reprova quando a politica nao cobre o catalogo, quando uma dispensa nao tem motivo, quando a versao executada diverge da declarada e quando existe supressao fora da lista permitida.",
   "families": [
     {
