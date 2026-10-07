@@ -241,6 +241,14 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A sétima rodada de auditoria corrigiu o que as seis anteriores ainda não garantiam: a varredura passou a percorrer a
+árvore por conta própria, e diretório ilegível e link de diretório passaram a aparecer como cobertura não analisada em
+vez de sumirem do relatório; o motivo de cobertura passou a ser escrito com caminho relativo, o que torna o relatório
+idêntico entre cópias equivalentes da mesma árvore; identificador e caminho de arquivo passaram a seguir a gramática
+Unicode de Python; `import pkg` passou a alcançar `pkg/__init__.py`; requisito com URL direta passou a ser analisado
+pelo nome canônico; o comando que produz o relatório passou a conferir o contrato antes de gravar; o modo direcionado
+passou a usar alvo canônico também para manifest; `not_analyzed_allowed` passou a exigir caminho relativo canônico; e
+supressor declarativo passou a exigir nome e motivo escritos.
 A sexta rodada de auditoria corrigiu o que as cinco anteriores ainda não garantiam: a âncora de marcador de lugar
 passou a exigir `<...>` fechado imediatamente antes do caminho, e não qualquer `>`; identificador capturado por
 padrão estrutural, como `case int(left)`, passou a ser apagado na normalização, enquanto nome de argumento nomeado

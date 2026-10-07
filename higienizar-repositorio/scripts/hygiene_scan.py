@@ -41,7 +41,9 @@ from pathlib import Path
 
 DEFAULT_POLICY = Path("config") / "hygiene-policy.json"
 SHARED_FILES = Path("config") / "shared-files.json"
-IDENTIFIER_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+# `\w` cobre identificador Unicode, que `ast` e `str.isidentifier()` aceitam: padrão ASCII acusaria
+# símbolo morto em código correto e bloquearia classe controlada.
+IDENTIFIER_TOKEN_RE = re.compile(r"[^\W\d]\w*")
 COMMENT_START_RE = re.compile(r"\s+#")
 CLASSES = ("duplication", "dead-module", "dead-symbol", "unused-dependency", "complexity")
 
@@ -93,7 +95,7 @@ def citation_pattern(policy: dict) -> re.Pattern[str]:
     names = sorted(
         {re.escape(str(suffix).lstrip(".")) for suffix in suffixes if str(suffix).startswith(".")}
     )
-    return re.compile(rf"[A-Za-z0-9_./-]+\.(?:{'|'.join(names)})\b")
+    return re.compile(rf"[\w./-]+\.(?:{'|'.join(names)})\b")
 
 
 def identifier_counts(texts: dict[str, str]) -> Counter[str]:
@@ -108,15 +110,18 @@ def identifier_counts(texts: dict[str, str]) -> Counter[str]:
     return counts
 
 
-def read_text(path: Path) -> str:
+def read_text(path: Path, label: str | None = None) -> str:
+    name = label or path.name
     try:
         return path.read_text(encoding="utf-8")
     except FileNotFoundError as error:
         raise HygieneError(f"arquivo ausente: {path}") from error
     except UnicodeDecodeError as error:
-        raise HygieneError(f"arquivo nao esta em UTF-8: {path}") from error
+        raise HygieneError(f"arquivo nao esta em UTF-8: {name}") from error
     except OSError as error:
-        raise HygieneError(f"arquivo ilegivel: {path} ({error.strerror or error.__class__.__name__})") from error
+        raise HygieneError(
+            f"arquivo ilegivel: {name} ({error.strerror or error.__class__.__name__})"
+        ) from error
 
 
 # Chave de decisão obrigatória por classe: o validador e a varredura leem a mesma tabela, para que a
@@ -207,6 +212,67 @@ def declared_exclusions(policy: dict) -> dict[str, str]:
     return declared
 
 
+def walk_scope(root: Path, skip: set[str]) -> tuple[list[Path], list[dict]]:
+    """Todos os caminhos sob a raiz, e o que não pôde ser percorrido.
+
+    `rglob` não desce diretório sem permissão de leitura e não avisa, e não segue link para diretório: a
+    varredura mediria menos do que o escopo inclui e ainda assim declararia cobertura completa. Diretório
+    excluído por declaração não é percorrido nem recusado, porque a exclusão já está no relatório.
+    """
+    found: list[Path] = []
+    refused: list[dict] = []
+    pending = [root]
+    while pending:
+        current = pending.pop()
+        try:
+            entries = sorted(current.iterdir(), key=lambda item: item.as_posix())
+        except OSError as error:
+            refused.append(
+                {
+                    "path": safe_relative(current, root) or ".",
+                    "reason": f"diretorio ilegivel ({error.strerror or error.__class__.__name__})",
+                }
+            )
+            continue
+        for entry in entries:
+            rel = safe_relative(entry, root)
+            if in_excluded_dir(rel, skip):
+                continue
+            found.append(entry)
+            if entry.is_symlink() and entry.is_dir():
+                # Link de diretório não é seguido: entrar nele mediria fora da raiz em silêncio.
+                refused.append(
+                    {
+                        "path": rel,
+                        "reason": "link simbolico para diretorio: a varredura nao segue link",
+                    }
+                )
+                continue
+            if entry.is_dir():
+                pending.append(entry)
+    return found, refused
+
+
+def normalized_targets(root: Path, paths: list[str] | None) -> set[str]:
+    """Alvos do modo direcionado em forma canônica relativa à raiz.
+
+    Alvo absoluto dentro da raiz e `.` precisam virar o mesmo caminho relativo que o resto do relatório
+    usa, senão a subárvore seria analisada e o manifest dela ficaria de fora.
+    """
+    targets: set[str] = set()
+    for raw in paths or []:
+        candidate = (root / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
+        if not candidate.is_relative_to(root):
+            raise HygieneError(f"caminho fora da raiz: {raw}")
+        rel = safe_relative(candidate, root)
+        if not rel or rel == ".":
+            # `.` e a propria raiz: cobre a arvore inteira, e comparar com "." deixaria o manifest da
+            # subarvore de fora enquanto os arquivos eram analisados.
+            return set()
+        targets.add(rel)
+    return targets
+
+
 def scope_files(
     root: Path, policy: dict, paths: list[str] | None = None
 ) -> tuple[list[Path], list[dict], list[dict]]:
@@ -223,12 +289,14 @@ def scope_files(
     candidates: list[Path] = []
     missing: list[dict] = []
     if paths:
-        for raw in paths:
+        for raw in sorted(paths):
             candidate = (root / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
             if not candidate.is_relative_to(root):
                 raise HygieneError(f"caminho fora da raiz: {raw}")
             if candidate.is_dir():
-                candidates.extend(candidate.rglob("*"))
+                walked, refusals = walk_scope(candidate, exclude_dirs)
+                candidates.extend(walked)
+                missing.extend(refusals)
             elif candidate.is_file():
                 candidates.append(candidate)
             else:
@@ -236,7 +304,9 @@ def scope_files(
                 # relatório limpo com modo direcionado, que é indistinguível de uma árvore sem achado.
                 missing.append({"path": raw, "reason": "alvo direcionado que nao existe"})
     else:
-        candidates.extend(root.rglob("*"))
+        walked, refusals = walk_scope(root, exclude_dirs)
+        candidates.extend(walked)
+        missing.extend(refusals)
     files: list[Path] = []
     refused: list[dict] = list(missing)
     for candidate in candidates:
@@ -278,7 +348,7 @@ def scope_files(
 def parse_module(path: Path, root: Path) -> tuple[ast.Module | None, list[dict]]:
     rel = relative(path, root)
     try:
-        text = read_text(path)
+        text = read_text(path, rel)
     except HygieneError as error:
         return None, [{"path": rel, "reason": str(error)}]
     try:
@@ -628,6 +698,23 @@ def resolve_import(imported: set[str], package: list[str], parts: list[str]) -> 
         imported.add(".".join([*package, *parts]))
 
 
+def requirement_name(line: str) -> str:
+    """Nome da distribuição declarada, pelo parser canônico quando ele está disponível.
+
+    Requisito com URL direta, como `requests @ https://example.invalid/requests.whl`, tem o nome antes do
+    `@`: cortar só em operador de versão trataria a linha inteira como nome e acusaria dependência que é
+    importada.
+    """
+    try:
+        from packaging.requirements import InvalidRequirement, Requirement
+    except ImportError:  # pragma: no cover - ausencia da biblioteca cai no corte textual
+        return re.split(r"[<>=!~\[;@]", line, maxsplit=1)[0].strip()
+    try:
+        return Requirement(line).name
+    except InvalidRequirement:
+        return re.split(r"[<>=!~\[;@]", line, maxsplit=1)[0].strip()
+
+
 def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
     """Módulos importados, resolvidos contra a raiz e contra o diretório de quem importa.
 
@@ -670,7 +757,11 @@ def detect_dead_modules(
     config = policy["classes"]["dead-module"]
     exclude_tests = bool(config.get("exclude_tests", False))
     package_init_is_entry = bool(config.get("package_init_is_entry", False))
-    declared_entries = {entry for entry in config.get("entry_points", []) if isinstance(entry, str)}
+    declared_entries = {
+        entry["name"]
+        for entry in config.get("entry_points", [])
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+    }
     named = named_paths(texts, root, citation_pattern(policy))
     imported = imported_modules(modules)
     findings: list[dict] = []
@@ -682,7 +773,10 @@ def detect_dead_modules(
             continue
         if rel in declared_entries or rel in named:
             continue
-        if rel[:-3].replace("/", ".") in imported:
+        dotted = rel[:-3].replace("/", ".")
+        # `import pkg` alcança `pkg/__init__.py`: o módulo do pacote é o próprio nome importado, e
+        # comparar só `pkg.__init__` acusaria módulo morto em pacote Python normal.
+        if dotted in imported or (dotted.endswith(".__init__") and dotted[:-9] in imported):
             continue
         findings.append(
             {
@@ -707,7 +801,11 @@ def detect_dead_symbols(
 ) -> list[dict]:
     config = policy["classes"]["dead-symbol"]
     exclude_tests = bool(config.get("exclude_tests", True))
-    ignore = {name for name in config.get("ignore_names", []) if isinstance(name, str)}
+    ignore = {
+        entry["name"]
+        for entry in config.get("ignore_names", [])
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+    }
     counts = identifier_counts(texts)
     definitions: dict[str, list[str]] = defaultdict(list)
     for rel in sorted(modules):
@@ -752,15 +850,6 @@ def detect_dead_symbols(
     return findings
 
 
-def normalize_target(raw: str) -> str:
-    """Alvo do modo direcionado em forma canônica: sem prefixo `./` e sem barra final.
-
-    `sub`, `./sub` e `sub/` são o mesmo diretório, e comparar a string bruta faria o manifest da
-    subárvore desaparecer em duas das três formas.
-    """
-    return raw.strip().removeprefix("./").rstrip("/")
-
-
 def in_targets(rel: str, targets: set[str]) -> bool:
     """Alvo do modo direcionado cobre o caminho e a subárvore, como no conjunto analisado."""
     return not targets or any(rel == target or rel.startswith(target + "/") for target in targets)
@@ -776,7 +865,7 @@ def scoped_manifests(
     """
     exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
     excluded_paths = set(declared_exclusions(policy))
-    targets = {normalize_target(raw) for raw in (paths or []) if normalize_target(raw)}
+    targets = normalized_targets(root.resolve(), paths)
     resolved_root = root.resolve()
     manifests: list[Path] = []
     refused: list[dict] = []
@@ -825,7 +914,7 @@ def detect_unused_dependencies(
                     imported.add(node.module.split(".")[0])
         try:
             try:
-                lines = read_text(manifest).splitlines()
+                lines = read_text(manifest, relative(manifest, root)).splitlines()
             except HygieneError as error:
                 # Manifest é entrada da classe: falha de leitura não pode sair do relatório só porque o
                 # sufixo dele não está no corpus de citação.
@@ -837,7 +926,7 @@ def detect_unused_dependencies(
             line = COMMENT_START_RE.split(raw, maxsplit=1)[0].strip()
             if not line or line.startswith(("#", "-")):
                 continue
-            name = re.split(r"[<>=!~\[;]", line, maxsplit=1)[0].strip()
+            name = requirement_name(line)
             if not name:
                 continue
             lowered = name.lower()
@@ -910,6 +999,34 @@ def detect_complexity(policy: dict, modules: dict[str, ast.Module]) -> list[dict
     return findings
 
 
+SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schemas" / "hygiene-report.schema.json"
+
+
+def report_contract_errors(report: dict) -> list[str]:
+    """Relatório conferido contra o contrato, do mesmo modo que o validador faz.
+
+    O produtor precisa conferir antes de gravar: comando documentado como origem do relatório que sai com
+    sucesso e grava artefato fora do contrato publica evidência que ninguém pode aceitar.
+    """
+    if not SCHEMA_PATH.is_file():
+        return ["contrato: schema do relatorio ausente"]
+    try:
+        schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        return [f"contrato: schema do relatorio ilegivel ({error.__class__.__name__})"]
+    try:
+        from jsonschema import Draft202012Validator
+    except ImportError:
+        return [
+            "contrato: biblioteca de schema ausente; o relatorio nao pode ser aprovado sem ser conferido"
+        ]
+    validator = Draft202012Validator(schema)
+    return [
+        f"contrato: {list(error.path)}: {error.message}"
+        for error in sorted(validator.iter_errors(report), key=lambda item: list(item.path))
+    ]
+
+
 def apply_policy_states(policy: dict, findings: list[dict]) -> tuple[list[dict], list[str]]:
     """Aplica exceções declaradas e calcula o estado de cada achado; devolve problemas da política.
 
@@ -931,6 +1048,10 @@ def apply_policy_states(policy: dict, findings: list[dict]) -> tuple[list[dict],
         reason = entry.get("reason")
         if isinstance(identity, str):
             accepted[identity] = str(reason or "")
+            if not accepted[identity].strip():
+                # Exceção sem motivo escrito não é decisão declarada: aceitar aqui produziria achado aceito
+                # sem justificativa, que é o que o contrato do relatório proíbe.
+                raise HygieneError(f"politica: accepted sem motivo escrito para {identity}")
     problems: list[str] = []
     seen: set[str] = set()
     for finding in findings:
@@ -1075,6 +1196,12 @@ def main(argv: list[str] | None = None) -> int:
     except HygieneError as error:
         print(f"ERRO: {error}", file=sys.stderr)
         return 2
+    contract = report_contract_errors(report)
+    if contract:
+        print("Relatorio fora do contrato:", file=sys.stderr)
+        for problem in contract:
+            print(f"- {problem}", file=sys.stderr)
+        return 1
     payload = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
     if args.report:
         args.report.write_text(payload, encoding="utf-8")

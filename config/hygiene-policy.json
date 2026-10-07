@@ -51,7 +51,10 @@
       "state": "gated",
       "exclude_tests": true,
       "ignore_names": [
-        "__all__"
+        {
+          "name": "__all__",
+          "reason": "nome de protocolo consumido pelo proprio interpretador, e nao simbolo declarado no codigo"
+        }
       ],
       "limits": "Não vê uso por getattr, por nome montado, por registro dinâmico do nome, nem ocorrência fora dos formatos de texto declarados em scope.corpus_suffixes. Nome de protocolo consumido pelo próprio interpretador é declarado em ignore_names, sem exceção escondida no código. Citação é resolvida por caminho, na raiz e no diretório de quem cita: citação que sai da raiz não conta, e nome solto não alcança homônimo em outro diretório."
     },

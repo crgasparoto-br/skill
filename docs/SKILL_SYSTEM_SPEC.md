@@ -151,8 +151,9 @@ Invariantes:
   conferido na busca por citação e exclusão por classe — teste, arquivo de pacote e nome de protocolo — são
   declarados na política, nunca fixos no código, e toda chave de decisão é obrigatória, sem default silencioso; a
   leitura de texto e de manifest fica contida na raiz; citação é resolvida por caminho, com nome solto aceito apenas
-  quando único na árvore e marcador de lugar só reconhecido fechado; e arquivo, manifest ou alvo que o escopo inclui e
-  a varredura não analisa precisa estar declarado, para que a cobertura não encolha em silêncio;
+  quando único na árvore e marcador de lugar só reconhecido fechado; e arquivo, manifest, diretório ilegível ou alvo
+  que o escopo inclui e a varredura não analisa precisa estar declarado, para que a cobertura não encolha em silêncio,
+  com motivo escrito em caminho relativo e supressor declarado com nome e motivo;
 - a varredura é determinística e offline, o relatório é validado contra schema em memória, e a validação
   é somente leitura sobre a árvore varrida;
 - o perfil relata e propõe: não implementa correção, não abre issue e não tem autoridade de merge.

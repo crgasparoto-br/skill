@@ -65,7 +65,11 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Caminho absoluto nao e citacao de arquivo da arvore, e marcador de lugar so conta quando esta fechado logo antes do caminho, como `<skill>/scripts/x.py`; um `>` solto nao e ancora.
 - Rotulo sem sufixo pertence a definicao que aparece primeiro no texto, contando tambem a que fica abaixo do limiar: numerar so o conjunto medido daria o mesmo rotulo a duas definicoes.
 - A varredura reprova politica sem chave de decisao declarada, e nao so o validador: medir com semantica implicita seria evidencia que a propria politica nao sustenta.
-- `not_analyzed` e buraco de cobertura, nunca limpeza: arquivo ilegivel, link quebrado, manifest ilegivel, alvo direcionado que nao existe, caminho que resolve para fora da raiz ou erro de sintaxe precisa ser corrigido ou declarado na politica. Permissao declarada sem arquivo correspondente tambem reprova.
+- O comando que produz o relatorio confere o contrato antes de gravar: artefato fora do contrato nao vira arquivo, e excecao sem motivo escrito reprova a varredura.
+- Percorrer a arvore e trabalho da varredura, e nao de `rglob`: diretorio ilegivel e link para diretorio aparecem como cobertura nao analisada, em vez de sumirem.
+- Motivo de cobertura nao carrega caminho absoluto: duas copias identicas da mesma arvore precisam produzir o mesmo relatorio, e caminho de fora da raiz declarado em `not_analyzed_allowed` reprova.
+- Supressor declarativo, em `entry_points` e em `ignore_names`, declara nome e motivo escritos: lista de texto solto esconderia nome arbitrario sem auditabilidade.
+- `not_analyzed` e buraco de cobertura, nunca limpeza: arquivo ilegivel, diretorio ilegivel, link quebrado, link de diretorio, manifest ilegivel, alvo direcionado que nao existe, caminho que resolve para fora da raiz ou erro de sintaxe precisa ser corrigido ou declarado na politica. Permissao declarada sem arquivo correspondente tambem reprova.
 
 ## Contratos
 - `schemas/hygiene-report.schema.json`: contrato do relatorio da varredura, incluindo escopo varrido e exclusoes declaradas.

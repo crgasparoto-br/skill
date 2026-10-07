@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -1009,7 +1010,16 @@ def test_dunder_symbol_needs_declaration(tmp_path: Path) -> None:
     declared = make_tree(
         tmp_path / "second",
         {"alpha.py": "__version__ = \"1\"\n", "README.md": "`alpha.py`\n"},
-        policy_variant(**{"classes.dead-symbol.ignore_names": ["__version__"]}),
+        policy_variant(
+            **{
+                "classes.dead-symbol.ignore_names": [
+                    {
+                        "name": "__version__",
+                        "reason": "nome publicado pelo empacotador, e nao simbolo usado no codigo",
+                    }
+                ]
+            }
+        ),
     )
     assert findings_of(scan(declared), "dead-symbol") == []
 
@@ -1479,3 +1489,148 @@ def test_report_schema_requires_justification_when_accepted() -> None:
     assert conditional, "schema precisa exigir justificativa no estado aceito"
     assert conditional[0]["then"]["required"] == ["justification"]
     assert conditional[0]["if"]["properties"]["state"]["const"] == "accepted"
+
+
+def test_unreadable_and_symlinked_directories_are_reported(tmp_path: Path) -> None:
+    """Achado bloqueante: diretório ilegível e link de diretório sumiam da cobertura."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "alpha.py": "V = 1\n",
+            "consumer.py": "V = 2\n",
+            "README.md": "`alpha.py` `consumer.py`\n",
+            "vendor/x.py": "VALUE = 1\n",
+        },
+        policy_variant(**{"classes.complexity.baseline": 0}),
+    )
+    vendor = tree / "vendor"
+    vendor.chmod(0o000)
+    try:
+        report = scan(tree)
+    finally:
+        vendor.chmod(0o755)
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["vendor"]
+
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "x.py").write_text("VALUE = 1\n", encoding="utf-8")
+    linked = make_tree(tmp_path / "linked", {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"})
+    (linked / "vendor").symlink_to(outside)
+    assert [entry["path"] for entry in scan(linked)["not_analyzed"]] == ["vendor"]
+
+
+def test_report_is_identical_between_equivalent_roots(tmp_path: Path) -> None:
+    """Achado bloqueante: motivo carregava caminho absoluto e quebrava o determinismo."""
+    files = {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"}
+    first = make_tree(tmp_path / "a", files)
+    second = make_tree(tmp_path / "b", files)
+    (first / "requirements.txt").write_bytes(b"\xff")
+    (second / "requirements.txt").write_bytes(b"\xff")
+    report_first = scan(first)
+    report_second = scan(second)
+    assert json.dumps(report_first, sort_keys=True) == json.dumps(report_second, sort_keys=True)
+    reason = report_first["not_analyzed"][0]["reason"]
+    assert "requirements.txt" in reason
+    assert str(tmp_path) not in reason
+
+
+def test_unicode_identifier_and_path_are_analyzed(tmp_path: Path) -> None:
+    """Achado bloqueante: identificador e nome de arquivo Unicode não eram reconhecidos."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "ação.py": "def fusão(valor):\n    return fusão(valor) if valor else 1\n",
+            "README.md": "Use ação.py; `ação.py`\n",
+        },
+    )
+    report = scan(tree)
+    assert findings_of(report, "dead-symbol") == []
+    assert findings_of(report, "dead-module") == []
+
+
+def test_package_import_keeps_init_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: `import pkg` não alcançava `pkg/__init__.py`."""
+    tree = make_tree(
+        tmp_path,
+        {"pkg/__init__.py": "VALUE = 1\n", "consumer.py": "import pkg\n", "README.md": "`consumer.py`\n"},
+        policy_variant(**{"classes.dead-module.package_init_is_entry": False}),
+    )
+    assert findings_of(scan(tree), "dead-module") == []
+
+
+def test_direct_url_requirement_uses_its_name(tmp_path: Path) -> None:
+    """Achado bloqueante: requisito com URL direta era analisado como nome inteiro."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "alpha.py": "import requests\n",
+            "README.md": "`alpha.py`\n",
+            "requirements.txt": "requests @ https://example.invalid/requests.whl\n",
+        },
+    )
+    assert findings_of(scan(tree), "unused-dependency") == []
+
+
+def test_scan_command_fails_closed_on_invalid_report(tmp_path: Path) -> None:
+    """Achado bloqueante: o produtor gravava relatório fora do contrato e saía com sucesso."""
+    tree = make_tree(
+        tmp_path,
+        {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n", "orphan.py": "SECRET = 1\n"},
+    )
+    policy_path = tree / "config" / "hygiene-policy.json"
+    document = json.loads(policy_path.read_text(encoding="utf-8"))
+    document["accepted"] = [{"id": "dead-symbol:x", "reason": ""}]
+    policy_path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+    output = tree / "report.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode != 0
+    assert not output.exists()
+
+
+def test_targeted_mode_uses_canonical_targets(tmp_path: Path) -> None:
+    """Achado não bloqueante: alvo absoluto e `.` analisavam a subárvore e omitiam o manifest."""
+    tree = make_tree(
+        tmp_path,
+        {"sub/alpha.py": "V = 1\n", "sub/requirements.txt": "requests>=2\n", "README.md": "`sub/alpha.py`\n"},
+    )
+    document = hygiene_scan.load_policy(tree)
+    for raw in (str(tree / "sub"), ".", "sub", "./sub", "sub/"):
+        report, _ = hygiene_scan.build_report(tree, document, [raw])
+        assert [finding["location"] for finding in findings_of(report, "unused-dependency")] == [
+            "sub/requirements.txt::requests"
+        ], raw
+
+
+def test_policy_rejects_absolute_coverage_path_and_bare_suppressor() -> None:
+    """Achados não bloqueantes: caminho absoluto na cobertura e supressor sem motivo."""
+    coverage = policy_variant()
+    coverage["not_analyzed_allowed"] = [
+        {"path": "/tmp/orphan.py", "reason": "motivo escrito com extensao suficiente para passar"}
+    ]
+    errors = validate_hygiene.policy_errors(coverage)
+    assert any("not_analyzed_allowed[0].path" in error for error in errors)
+
+    suppressor = policy_variant(**{"classes.dead-symbol.ignore_names": ["__version__"]})
+    errors = validate_hygiene.policy_errors(suppressor)
+    assert any("ignore_names[0]" in error for error in errors)
+
+    declared = policy_variant(
+        **{
+            "classes.dead-symbol.ignore_names": [
+                {"name": "__version__", "reason": "nome publicado pelo empacotador, e nao simbolo do codigo"}
+            ]
+        }
+    )
+    assert [error for error in validate_hygiene.policy_errors(declared) if "ignore_names" in error] == []

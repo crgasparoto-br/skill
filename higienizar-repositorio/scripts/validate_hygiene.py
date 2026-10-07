@@ -39,6 +39,7 @@ try:
         declared_exclusions,
         load_policy,
         missing_class_keys,
+        report_contract_errors,
     )
 except ImportError:  # pragma: no cover - execucao direta do script
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -51,6 +52,7 @@ except ImportError:  # pragma: no cover - execucao direta do script
         declared_exclusions,
         load_policy,
         missing_class_keys,
+        report_contract_errors,
     )
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
@@ -63,7 +65,7 @@ COMMON_CLASS_KEYS = ("state", "limits")
 EXTRA_CLASS_KEYS = {"duplication": ("min_body_lines",), "complexity": ("max_complexity",)}
 INT_KEYS = ("min_body_lines", "max_complexity", "baseline")
 BOOL_KEYS = ("exclude_declared_copies", "exclude_tests")
-LIST_KEYS = ("entry_points", "ignore_names", "tool_dependencies")
+LIST_KEYS = ("tool_dependencies",)
 DICT_KEYS = ("import_name_map",)
 
 
@@ -162,6 +164,34 @@ def _class_threshold_errors(name: str, entry: dict) -> list[str]:
     return errors
 
 
+SUPPRESSOR_KEYS = ("entry_points", "ignore_names")
+
+
+def _suppressor_errors(name: str, entry: dict) -> list[str]:
+    """Supressor declarativo precisa dizer o que silencia e por quê.
+
+    Lista de texto solto esconde nome ou caminho arbitrário sem motivo: a decisão continua explícita na
+    política, mas sem auditabilidade. Cada entrada declara `name` e `reason` escritos.
+    """
+    errors: list[str] = []
+    for key in SUPPRESSOR_KEYS:
+        entries = entry.get(key)
+        if not isinstance(entries, list):
+            continue
+        for index, item in enumerate(entries):
+            label = f"classes.{name}.{key}[{index}]"
+            if not isinstance(item, dict):
+                errors.append(f"politica: {label} precisa ser objeto com name e reason")
+                continue
+            declared = item.get("name")
+            if not isinstance(declared, str) or not declared:
+                errors.append(f"politica: {label}.name precisa ser texto")
+            problem = reason_problem(item.get("reason"))
+            if problem is not None:
+                errors.append(f"politica: {label}.reason {problem}")
+    return errors
+
+
 def _class_errors(name: str, entry: object) -> list[str]:
     if not isinstance(entry, dict):
         return [f"politica: classes.{name} precisa ser objeto"]
@@ -177,6 +207,7 @@ def _class_errors(name: str, entry: object) -> list[str]:
     errors.extend(_typed_errors(entry, name, LIST_KEYS, list, "lista de texto"))
     errors.extend(_typed_errors(entry, name, DICT_KEYS, dict, "mapeamento de texto para texto"))
     errors.extend(_class_threshold_errors(name, entry))
+    errors.extend(_suppressor_errors(name, entry))
     return errors
 
 
@@ -261,8 +292,23 @@ def _justified_error(index: int, entry: object, label: str) -> list[str]:
     value = entry.get(field)
     if not isinstance(value, str) or not value:
         return [f"politica: {label}[{index}].{field} precisa ser texto"]
+    errors: list[str] = []
+    if field == "path":
+        declared_path = Path(value)
+        if declared_path.is_absolute() or ".." in declared_path.parts:
+            # Caminho absoluto aqui permitiria declarar cobertura de fora da arvore, e o relatorio deixaria
+            # de ser comparavel entre raizes equivalentes.
+            errors.append(
+                f"politica: {label}[{index}].path precisa ser caminho relativo dentro da raiz"
+            )
+        elif PurePosixPath(value).as_posix() != value:
+            errors.append(
+                f"politica: {label}[{index}].path precisa ser caminho canonico, sem prefixo nem repeticao"
+            )
     problem = reason_problem(entry.get("reason"))
-    return [f"politica: {label}[{index}].reason {problem}"] if problem is not None else []
+    if problem is not None:
+        errors.append(f"politica: {label}[{index}].reason {problem}")
+    return errors
 
 
 def _declared_errors(policy: dict) -> list[str]:
@@ -404,22 +450,8 @@ def determinism_errors(root: Path, policy: dict, first: dict) -> list[str]:
 
 
 def schema_errors(report: dict) -> list[str]:
-    """Contrato do relatório conferido em memória: a validação não escreve na árvore varrida."""
-    if not SCHEMA.is_file():
-        return ["contrato: schema do relatorio ausente"]
-    try:
-        schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        return [f"contrato: schema do relatorio ilegivel ({error.__class__.__name__})"]
-    try:
-        from jsonschema import Draft202012Validator
-    except ImportError:
-        return ["contrato: biblioteca de schema ausente; o relatorio nao pode ser aprovado sem ser conferido"]
-    validator = Draft202012Validator(schema)
-    return [
-        f"contrato: {list(error.path)}: {error.message}"
-        for error in sorted(validator.iter_errors(report), key=lambda item: list(item.path))
-    ]
+    """Contrato do relatório conferido pela mesma função que o produtor usa antes de gravar."""
+    return report_contract_errors(report)
 
 
 def validate_hygiene(root: Path) -> list[str]:
