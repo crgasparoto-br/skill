@@ -371,6 +371,20 @@
         "file:tests/test_reference_indexes.py",
         "file:.github/workflows/validate.yml"
       ]
+    },
+    {
+      "id": "SKSYS-025",
+      "title": "Trusted auditor registry has a declared procedure",
+      "status": "validated",
+      "summary": "The security document declares custody, producer and approver separation, key handling, rotation, revocation and the single-operator limitation, and the registry entry builder derives the fingerprint from the published key and refuses material the schema rejects.",
+      "implementationRefs": [
+        "file:docs/SECURITY.md",
+        "file:auditar-issue/scripts/build_trusted_auditor_entry.py",
+        "file:auditar-issue/references/external-audit-contract.md"
+      ],
+      "validationRefs": [
+        "file:tests/test_auditor_registry_policy.py"
+      ]
     }
   ],
   "system_version": "2026-09-29.5"

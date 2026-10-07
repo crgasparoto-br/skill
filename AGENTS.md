@@ -82,6 +82,8 @@ Estas regras existem para impedir sujeira, ambiguidade, código obsoleto e dupli
 - Manter cada `SKILL.md` compacto como control plane dentro do orçamento de [config/context-budget.json](config/context-budget.json), medido em bytes por arquivo e caracteres por linha, sem parágrafos densos que misturem cláusulas independentes. A contagem de linhas não mede carregamento progressivo e não é mais a regra.
 - Preservar `UNKNOWN` quando faltar evidência; nunca converter ausência em `false`, zero, sucesso ou `not-applicable`.
 - Distinguir verificação interna de auditoria independente; trocar de skill no mesmo contexto não cria independência.
+- Tratar alteração de seção canônica como mudança de política: quando um teste compara uma seção normativa com uma forma canônica, alterar a seção exige alterar a forma canônica no mesmo commit, e esse diff passa a exigir auditoria independente contra a issue vigente. O teste prova que a mudança foi deliberada, não que ela preserva os requisitos.
+- Escrever documento normativo em Markdown renderizável: contexto inerte — cerca, comentário ou HTML bruto — e recurso de parser — escape de Markdown, caractere de controle, separador que o Markdown não reconhece como fim de linha — escondem a norma sem alterar o texto canônico. O procedimento do registro de auditores recusa esses recursos em vez de enumerar as formas de esconder uma regra.
 - Não registrar credenciais, tokens, dados pessoais ou artefatos `.audit/` reais no repositório.
 - Não adicionar autoridade de merge, ação destrutiva ou ampliação de permissão por conveniência.
 

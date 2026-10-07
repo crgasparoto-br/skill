@@ -40,6 +40,40 @@ Opera em leitura e deve reconstruir a evidência necessária de forma independen
 
 Recebem um recorte explícito. Não assumem a coordenação global, não repetem discovery geral sem necessidade e não ampliam permissões além do recorte.
 
+## Registro de auditores confiáveis
+
+A independência de auditoria é arquitetural: contexto separado, leitura somente e rederivação com parser próprio. O controle que fecha o ciclo é externo: `validate_external_audit_report.py --trusted-auditors <registro>` aceita apenas parecer assinado por chave presente em um registro que o candidato não pode alterar.
+
+### Custódia e separação de funções
+
+- o **custodiante** mantém o registro: autoriza, adiciona e revoga chaves;
+- o **produtor do candidato** implementa a entrega e não pode manter, editar nem aprovar o próprio registro;
+- o **detentor da chave privada de auditoria** assina pareceres em contexto separado e não pode ter participado da implementação auditada;
+- para o mesmo candidato, nenhuma dessas funções pode estar na mesma pessoa.
+
+### Procedimento
+
+1. gerar o par Ed25519 com `generate_auditor_keypair.py`, com a chave privada cifrada por senha, fora do repositório e fora do contexto de implementação;
+2. montar a entrada do registro com `build_trusted_auditor_entry.py`, que deriva `public_key_sha256` dos bytes de `public_key_pem` em vez de aceitar valor informado;
+3. o custodiante revisa a entrada, confirma `repositories` e publica o registro no ambiente do operador, nunca no repositório do candidato;
+4. a validação do parecer referencia o registro apenas por caminho local.
+
+### Rotação e revogação
+
+- rotacionar no período declarado pelo custodiante e sempre que houver dúvida sobre a custódia da chave privada;
+- uma rotação adiciona a nova chave e mantém a anterior apenas durante a janela em que pareceres antigos ainda precisam ser validados;
+- revogar é remover a entrada; `enabled` é constante `true` no esquema atual, então não existe desabilitação parcial sem que o esquema mude;
+- parecer assinado por chave removida do registro não aprova, mesmo com assinatura válida.
+
+### Operador único
+
+Enquanto houver um único proprietário no `.github/CODEOWNERS`, a separação de funções acima é regra de contrato, não garantia estrutural. Nesse cenário:
+
+- declarar a limitação em vez de presumir independência;
+- manter a chave privada de auditoria fora do repositório e fora do contexto de implementação, com senha distinta das demais;
+- registrar no artefato de auditoria que a independência foi obtida por contexto separado e custódia declarada, não por separação de pessoas;
+- distribuir o `CODEOWNERS` assim que houver uma segunda pessoa, antes de depender da separação para uma aprovação material.
+
 ## Merge e release
 
 Distinguir sempre:

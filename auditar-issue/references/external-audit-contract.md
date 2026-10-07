@@ -25,6 +25,22 @@ python <skill>/scripts/generate_auditor_keypair.py \
 
 Entregar somente a chave publica ao responsavel pelo Entregar Issue. Nunca compartilhar, anexar, versionar ou incluir a chave privada no ZIP da skill.
 
+## Montar o registro de auditores
+
+O registro vive fora do repositorio do candidato, entao nenhum teste do repositorio detecta uma entrada malformada: a falha aparece depois, na validacao do parecer, com aparencia de relatorio invalido. Montar a entrada com o utilitario evita essa classe de erro, porque `public_key_sha256` e derivado do proprio `public_key_pem` e nao aceito como valor informado.
+
+```bash
+python <skill>/scripts/build_trusted_auditor_entry.py \
+  --public-key <local-publico>/auditor-public.pem \
+  --key-id <id-da-chave> \
+  --name "<nome do auditor>" \
+  --repository <owner/repo> \
+  --registry \
+  --out <local-seguro>/trusted-auditors.json
+```
+
+O utilitario recusa arquivo que contenha chave privada, chave que nao seja Ed25519 e saida que o esquema `trusted-auditors.schema.json` rejeite. Custodia, separacao entre produtor e aprovador, rotacao, revogacao e a limitacao de operador unico estao declaradas em `docs/SECURITY.md`.
+
 ## Inicializar o relatorio
 
 Usar os valores exatos do handoff:
