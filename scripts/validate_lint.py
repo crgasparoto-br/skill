@@ -149,12 +149,18 @@ def family_errors(
     return errors
 
 
+def is_exact_integer(value: object) -> bool:
+    """Inteiro de verdade: booleano e float nao contam, mesmo quando comparam igual a um inteiro."""
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
     """Integridade da politica: catalogo coberto, regras decididas, motivos e supressoes."""
     errors: list[str] = []
     schema_version = policy.get("schema_version")
-    if isinstance(schema_version, bool) or schema_version != 1:
-        # Em Python `True == 1`: sem excluir booleano, `schema_version: true` passaria como versao.
+    if not is_exact_integer(schema_version) or schema_version != 1:
+        # Em Python `True == 1` e `1.0 == 1`: sem exigir inteiro exato, `true` e `1.0` passariam
+        # como versao de schema que ninguem declarou.
         errors.append("politica: schema_version precisa ser o inteiro 1")
 
     tool = policy.get("tool")
@@ -171,12 +177,8 @@ def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
         # Forma bruta invalida reprova aqui: consultar campo de um escalar trocaria a causa por um
         # traceback, que e exatamente o que a interrupcao da validacao existe para evitar.
         errors.append("politica: line_length precisa ser objeto")
-    elif (
-        isinstance(line_length.get("value"), bool)
-        or not isinstance(line_length.get("value"), int)
-        or line_length["value"] <= 0
-    ):
-        errors.append("politica: line_length.value precisa ser inteiro positivo, nao booleano")
+    elif not is_exact_integer(line_length.get("value")) or line_length["value"] <= 0:
+        errors.append("politica: line_length.value precisa ser inteiro positivo, nao booleano nem fracao")
     else:
         reason = line_length.get("reason")
         if not isinstance(reason, str) or len(reason.strip()) < MINIMUM_REASON_CHARS:

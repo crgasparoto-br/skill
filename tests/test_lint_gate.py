@@ -540,6 +540,12 @@ def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -
     def boolean_line_length(policy: dict) -> None:
         policy["line_length"]["value"] = True
 
+    def float_schema(policy: dict) -> None:
+        policy["schema_version"] = 1.0
+
+    def float_line_length(policy: dict) -> None:
+        policy["line_length"]["value"] = 100.0
+
     def dict_state(policy: dict) -> None:
         policy["families"][0]["state"] = {}
 
@@ -555,6 +561,8 @@ def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -
         "line-length-escalar": scalar_line_length,
         "line-length-lista": list_line_length,
         "schema-version-booleano": boolean_schema,
+        "schema-version-fracao": float_schema,
+        "line-length-fracao": float_line_length,
         "line-length-booleano": boolean_line_length,
         "estado-dicionario": dict_state,
         "estado-lista": list_state,

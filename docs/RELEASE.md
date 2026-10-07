@@ -106,8 +106,9 @@ ou em ciclo, um diretório ilegível, uma saída da ferramenta vazia ou em forma
 no momento da análise e um conjunto varrido sem nenhum arquivo coberto reprovam com causa explícita, em vez de
 reduzir o conjunto analisado em silêncio ou tratar o vazio como aprovação.
 ### Forma bruta da política
-Booleano não é inteiro: `schema_version: true` e `line_length.value: true` reprovam, porque em Python
-`True == 1` e a coerção aceitaria uma forma que ninguém declarou. O estado de família precisa ser texto, e uma
+Booleano e fração não são inteiros: `schema_version: true`, `schema_version: 1.0`, `line_length.value: true` e
+`line_length.value: 100.0` reprovam, porque em Python `True == 1` e `1.0 == 1` e a coerção aceitaria uma forma que
+ninguém declarou. O que a política exige é o inteiro exato. O estado de família precisa ser texto, e uma
 forma que não pode sequer ser comparada, como dicionário ou lista, reprova em vez de estourar.
 ### Limite declarado
 O gate verifica presença e extensão do motivo declarado, não a veracidade dele: um motivo longo e enganoso passa.
