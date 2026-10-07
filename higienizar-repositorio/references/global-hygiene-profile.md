@@ -125,7 +125,7 @@ Os três instrumentos convivem sem sobreposição:
 | --- | --- | --- |
 | Higiene do diff (`GROUND-DEAD-001`, `CODE-GROWTH-001`) | Arquivos tocados pela entrega | Em toda entrega |
 | Gate de lint e análise estática | Estilo, formato, erro estático | Em toda entrega |
-| Perfil de higiene global | Árvore inteira, quatro classes estruturais | Sob demanda |
+| Perfil de higiene global | Árvore inteira, cinco classes estruturais | Sob demanda |
 
 ## Quando a varredura acusa a própria entrega
 Achado novo na entrega em curso é bloqueante, não ruído. A ordem de tratamento é: corrigir quando for correto corrigir; declarar exceção com justificativa quando a correção exigir entrega própria; emitir work item nos dois casos.

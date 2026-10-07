@@ -241,6 +241,10 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A décima quinta rodada de auditoria corrigiu o que as quatorze anteriores ainda não garantiam: relatório com contagem decimal
+passou a ser recusado, porque o esquema aceita `1.0` como inteiro; alvos equivalentes escritos de forma diferente passaram a ser
+recusados como o mesmo caminho; destino com mais de um link passou a ser recusado, porque a escrita alcançaria a árvore medida; e
+qualquer classe declarada como medida passou a exigir linha de base, não apenas complexidade.
 A décima quarta rodada de auditoria corrigiu o que as treze anteriores ainda não garantiam: a versão da política passou a exigir o
 inteiro exato, linha de base negativa passou a reprovar, a varredura passou a recusar dois artefatos no mesmo caminho e o gerador
 passou a recusar diretório de saída já preenchido, para que artefato de execução anterior não circule como evidência atual.

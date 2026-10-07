@@ -2614,3 +2614,100 @@ def test_generator_refuses_reused_output_directory(tmp_path: Path) -> None:
     )
     assert result.returncode == 2
     assert "ja tem conteudo" in result.stderr
+
+
+def test_report_with_decimal_numbers_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: `jsonschema` aceita `1.0` como inteiro e o relatório passava."""
+    report = scan(
+        make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    )
+    for field in ("schema_version", "policy_schema_version", "analyzed"):
+        forged = copy.deepcopy(report)
+        forged[field] = float(forged[field])
+        errors = validate_hygiene.schema_errors(forged)
+        assert any("nao decimal" in error for error in errors), field
+    forged = copy.deepcopy(report)
+    forged["summary"]["open"] = float(forged["summary"]["open"])
+    assert any("nao decimal" in error for error in validate_hygiene.schema_errors(forged))
+    assert validate_hygiene.schema_errors(report) == []
+
+
+def test_scan_refuses_equivalent_targets(tmp_path: Path) -> None:
+    """Achado bloqueante: caminhos lexicalmente diferentes alcançavam o mesmo arquivo."""
+    tree = make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    out = tmp_path / "saida"
+    out.mkdir()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(out / "a"),
+            "--markdown",
+            str(out / "sub" / ".." / "a"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "caminhos diferentes" in result.stderr
+    assert not (out / "a").exists()
+
+
+def test_scan_refuses_target_linked_to_the_tree(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo com mais de um link escrevia em arquivo da árvore medida."""
+    tree = make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    out = tmp_path / "saida"
+    out.mkdir()
+    (out / "report.json").hardlink_to(tree / "alpha.py")
+    before = (tree / "alpha.py").read_text(encoding="utf-8")
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(out / "report.json"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "mais de um link" in result.stderr
+    assert (tree / "alpha.py").read_text(encoding="utf-8") == before
+
+
+def test_measured_class_without_baseline_is_refused() -> None:
+    """Achado bloqueante: só complexidade exigia linha de base, e o estado medido é genérico."""
+    policy = policy_variant()
+    policy["classes"]["dead-module"]["state"] = "reported"
+    policy["classes"]["dead-module"].pop("baseline", None)
+    policy["classes"]["dead-module"].pop("baseline_history", None)
+    errors = validate_hygiene.policy_errors(policy)
+    assert any("baseline_history precisa declarar a historia" in error for error in errors)
+
+
+def test_generator_refuses_output_path_that_is_a_file(tmp_path: Path) -> None:
+    """Achado não bloqueante: destino existente que não é diretório causava traceback."""
+    target = tmp_path / "arquivo"
+    target.write_text("x", encoding="utf-8")
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(REPO_ROOT),
+            "--out-dir",
+            str(target),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "nao e diretorio" in result.stderr

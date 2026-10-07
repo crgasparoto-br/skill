@@ -179,17 +179,19 @@ def _class_threshold_errors(name: str, entry: dict) -> list[str]:
         errors.append("politica: classes.duplication.min_body_lines precisa ser >= 2")
     baseline = entry.get("baseline")
     if isinstance(baseline, int) and not isinstance(baseline, bool) and baseline < 0:
-        errors.append("politica: classes.complexity.baseline nao pode ser negativo")
+        errors.append(f"politica: classes.{name}.baseline nao pode ser negativo")
     ceiling = entry.get("max_complexity")
-    if name == "complexity":
-        if isinstance(ceiling, int) and ceiling < 2:
-            errors.append("politica: classes.complexity.max_complexity precisa ser >= 2")
-        if entry.get("state") == "reported":
-            errors.extend(_history_errors(name, entry))
-        elif "baseline" in entry or "baseline_history" in entry:
-            # Historia de linha de base é declaração de linha de base: aceitá-la em classe controlada
-            # deixaria a mesma decisão entrar por outra chave, sem que ninguém a medisse.
-            errors.append("politica: classe gated nao pode declarar baseline")
+    if name == "complexity" and isinstance(ceiling, int) and ceiling < 2:
+        errors.append("politica: classes.complexity.max_complexity precisa ser >= 2")
+    # A catraca vale para toda classe medida, e não só para complexidade: classe declarada como medida
+    # sem linha de base seria medida contra alvo que ninguém declarou, e a varredura publicaria o
+    # relatório antes de o gate reprovar a contagem.
+    if entry.get("state") == "reported":
+        errors.extend(_history_errors(name, entry))
+    elif "baseline" in entry or "baseline_history" in entry:
+        # Historia de linha de base é declaração de linha de base: aceitá-la em classe controlada
+        # deixaria a mesma decisão entrar por outra chave, sem que ninguém a medisse.
+        errors.append(f"politica: classe {entry.get('state')} nao pode declarar baseline")
     return errors
 
 
@@ -592,9 +594,34 @@ def determinism_errors(root: Path, policy: dict, first: dict) -> list[str]:
     return []
 
 
+def float_errors(document: object, path: str = "") -> list[str]:
+    """Valor decimal no relatório, recusado como inteiro fora do contrato.
+
+    `jsonschema` aceita `1.0` para `type: integer`, e `1.0 == 1` em Python: sem esta regra, uma
+    contagem decimal passaria como a contagem declarada, e a comparação entre relatórios não a pegaria.
+    """
+    if isinstance(document, bool):
+        return []
+    if isinstance(document, float):
+        return [f"contrato: {path or 'relatorio'} precisa ser inteiro, e nao decimal"]
+    if isinstance(document, dict):
+        return [
+            problem
+            for key, value in document.items()
+            for problem in float_errors(value, f"{path}.{key}" if path else str(key))
+        ]
+    if isinstance(document, list):
+        return [
+            problem
+            for index, value in enumerate(document)
+            for problem in float_errors(value, f"{path}[{index}]")
+        ]
+    return []
+
+
 def schema_errors(report: dict) -> list[str]:
     """Contrato do relatório conferido pela mesma função que o produtor usa antes de gravar."""
-    return report_contract_errors(report)
+    return [*report_contract_errors(report), *float_errors(report)]
 
 
 def validate_hygiene(root: Path) -> list[str]:

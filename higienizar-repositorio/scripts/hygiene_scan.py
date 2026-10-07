@@ -1510,6 +1510,14 @@ def write_target(path: Path, root: Path, label: str) -> Path:
     target = path.resolve()
     if target.is_relative_to(root):
         raise HygieneError(f"{label} dentro da arvore medida: use caminho fora de {root.name}")
+    if target.exists() and not target.is_dir():
+        # Alvo com mais de um link pode ser o mesmo arquivo de dentro da árvore: a checagem de caminho é
+        # lexical, e a escrita por link alteraria a árvore medida sem sair dela. Diretório tem mais de um
+        # link por construção, e o diretório de destino é conferido por quem escreve.
+        if target.stat().st_nlink > 1:
+            raise HygieneError(f"{label} aponta para arquivo com mais de um link: use arquivo novo")
+        if not target.is_file():
+            raise HygieneError(f"{label} precisa ser arquivo regular")
     return target
 
 
@@ -1535,7 +1543,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = (args.root or Path()).resolve()
     try:
-        if args.report is not None and args.markdown is not None and args.report == args.markdown:
+        if (
+            args.report is not None
+            and args.markdown is not None
+            and args.report.resolve() == args.markdown.resolve()
+        ):
             # Um artefato sobrescrevendo o outro deixaria o JSON perdido e o Markdown publicado como se
             # fosse o relatório.
             raise HygieneError("--report e --markdown precisam ser caminhos diferentes")

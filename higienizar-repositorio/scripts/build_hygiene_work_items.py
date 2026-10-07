@@ -234,6 +234,9 @@ def main(argv: list[str] | None = None) -> int:
             # Work item é evidência sobre a árvore: gravado dentro dela entra no corpus de citação e pode
             # apagar a dívida que ele mesmo descreve, como já vale para o relatório.
             write_target(args.out_dir, root, "--out-dir")
+            if args.out_dir.exists() and not args.out_dir.is_dir():
+                print(f"ERRO: {args.out_dir} existe e nao e diretorio", file=sys.stderr)
+                return 2
             if args.out_dir.is_dir() and any(args.out_dir.iterdir()):
                 # Reutilizar o diretório conservaria work item de execução anterior, e dívida já
                 # corrigida continuaria publicada como se fosse atual.
