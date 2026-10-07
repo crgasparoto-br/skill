@@ -1,0 +1,562 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "ruff",
+    "version": "0.14.1",
+    "install": "python -m pip install --require-hashes -r requirements.lock.txt",
+    "invocation": "ruff check"
+  },
+  "target_version": "py312",
+  "line_length": {
+    "value": 200,
+    "reason": "o repositorio escreve linhas longas de proposito, em prosa e em mensagens de erro; o valor existe para que as regras de ordenacao e formatacao de import nao rewrapem o que o repositorio escreve em uma linha, e E501 permanece dispensado"
+  },
+  "scope": {
+    "extensions": [
+      ".py",
+      ".pyi"
+    ],
+    "excluded_directories": [
+      ".git",
+      "__pycache__",
+      ".ruff_cache",
+      ".pytest_cache",
+      ".mypy_cache",
+      "dist"
+    ],
+    "reason": "o gate cobre codigo Python versionado, incluindo stubs .pyi; os diretorios excluidos sao controle de versao, cache de ferramenta ou saida de empacotamento gerada, e nenhum deles e fonte do catalogo"
+  },
+  "description": "Politica de analise estatica do codigo Python do catalogo. Toda familia de regras do Ruff aparece exatamente uma vez: aplicada por inteiro, aplicada em parte com a parte desligada declarada, ou dispensada com motivo escrito. O gate scripts/validate_lint.py deriva a selecao daqui e reprova quando a politica nao cobre o catalogo, quando uma dispensa nao tem motivo, quando a versao executada diverge da declarada e quando existe supressao fora da lista permitida.",
+  "families": [
+    {
+      "prefix": "A",
+      "state": "selected",
+      "select": [
+        "A"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "AIR",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "regras de Airflow: o repositório não usa Airflow"
+    },
+    {
+      "prefix": "ANN",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "anotação em todo símbolo exigiria reescrita extensa; as entradas públicas já são anotadas e a completude de anotação é trabalho próprio"
+    },
+    {
+      "prefix": "ARG",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "argumento não usado é permitido onde a assinatura é imposta por interface, protocolo ou callback, casos em que a regra só produz supressão sem garantia nova"
+    },
+    {
+      "prefix": "ASYNC",
+      "state": "selected",
+      "select": [
+        "ASYNC"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "B",
+      "state": "selected",
+      "select": [
+        "B"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "BLE",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "captura ampla é o contrato fail-closed dos validadores: qualquer falha precisa virar reprovação reportada, e estreitar a exceção trocaria reprovação por traceback"
+    },
+    {
+      "prefix": "C",
+      "state": "partial",
+      "select": [
+        "C4"
+      ],
+      "ignore": [
+        "C90"
+      ],
+      "reason": "C4 (compreensões) é aplicado; C901 (complexidade) é dispensado porque complexidade não é sinal de correção e forçaria decomposição artificial de validadores"
+    },
+    {
+      "prefix": "COM",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "vírgula final é formatação, fora do escopo declarado"
+    },
+    {
+      "prefix": "CPY",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "o repositório não usa cabeçalho de copyright por arquivo"
+    },
+    {
+      "prefix": "D",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "docstring por símbolo não é o veículo da documentação normativa, que vive em SKILL.md, nas referências e no README; exigir docstring em todo símbolo público produziria texto vazio"
+    },
+    {
+      "prefix": "DJ",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "regras de Django: o repositório não usa Django"
+    },
+    {
+      "prefix": "DOC",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "mesma razão de D: documentação normativa não é docstring por símbolo"
+    },
+    {
+      "prefix": "DTZ",
+      "state": "selected",
+      "select": [
+        "DTZ"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "E",
+      "state": "partial",
+      "select": [
+        "E"
+      ],
+      "ignore": [
+        "E1",
+        "E2",
+        "E3",
+        "E5",
+        "E7"
+      ],
+      "reason": "E4 (imports) e E9 (erros de execução) são aplicados; E1, E2, E3, E5 e E7 são dispensados porque recuo, espaço em branco, largura de linha e statement compacto são escolha declarada do repositório; E402 comparece por supressão declarada em linha"
+    },
+    {
+      "prefix": "EM",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "as mensagens de exceção são texto em português montado com f-string, deliberado nos validadores; separar em constante afastaria a mensagem do contexto que a explica"
+    },
+    {
+      "prefix": "ERA",
+      "state": "selected",
+      "select": [
+        "ERA"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "EXE",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "o shebang dos scripts é informativo: a invocação normativa é `python3 caminho/script.py` e a execução direta não faz parte do contrato"
+    },
+    {
+      "prefix": "F",
+      "state": "selected",
+      "select": [
+        "F"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "FA",
+      "state": "selected",
+      "select": [
+        "FA"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "FAST",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "regras de FastAPI: o repositório não usa FastAPI"
+    },
+    {
+      "prefix": "FBT",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "booleano posicional é usado em APIs internas curtas, sem ambiguidade real"
+    },
+    {
+      "prefix": "FIX",
+      "state": "selected",
+      "select": [
+        "FIX"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "FLY",
+      "state": "selected",
+      "select": [
+        "FLY"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "FURB",
+      "state": "selected",
+      "select": [
+        "FURB"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "G",
+      "state": "selected",
+      "select": [
+        "G"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "I",
+      "state": "selected",
+      "select": [
+        "I"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "ICN",
+      "state": "selected",
+      "select": [
+        "ICN"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "INP",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "os diretórios de scripts e testes são pacotes implícitos por desenho, para permitir execução direta sem instalação"
+    },
+    {
+      "prefix": "INT",
+      "state": "selected",
+      "select": [
+        "INT"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "ISC",
+      "state": "selected",
+      "select": [
+        "ISC"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "LOG",
+      "state": "selected",
+      "select": [
+        "LOG"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "N",
+      "state": "selected",
+      "select": [
+        "N"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "NPY",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "regras de NumPy: o repositório não usa NumPy"
+    },
+    {
+      "prefix": "PD",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "regras de pandas: o repositório não usa pandas"
+    },
+    {
+      "prefix": "PERF",
+      "state": "partial",
+      "select": [
+        "PERF"
+      ],
+      "ignore": [
+        "PERF401"
+      ],
+      "reason": "PERF401 (laco de acumulo que poderia virar compreensao ou extend) e dispensado: os validadores acumulam diagnostico com condicao, aninhamento e contexto, e a compreensao longa que a regra pede e menos legivel que o laco explicito; e regra de micro-otimizacao e nao altera garantia"
+    },
+    {
+      "prefix": "PGH",
+      "state": "selected",
+      "select": [
+        "PGH"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "PIE",
+      "state": "selected",
+      "select": [
+        "PIE"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "PLC",
+      "state": "partial",
+      "select": [
+        "PLC"
+      ],
+      "ignore": [
+        "PLC0415"
+      ],
+      "reason": "PLC é aplicado, exceto PLC0415 (import fora do topo): o import tardio é usado de propósito para manter baixo o custo do gate em caminhos que não executam o módulo"
+    },
+    {
+      "prefix": "PLE",
+      "state": "selected",
+      "select": [
+        "PLE"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "PLR",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "limiares de complexidade e valor mágico forçariam decomposição artificial de validadores e testes com muitos casos tabulados, sem ganho de verificação"
+    },
+    {
+      "prefix": "PLW",
+      "state": "selected",
+      "select": [
+        "PLW"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "PT",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "os testes usam assert direto e nomes descritivos; a regra exigiria reescrever centenas de asserções sem ganho de verificação"
+    },
+    {
+      "prefix": "PTH",
+      "state": "selected",
+      "select": [
+        "PTH"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "PYI",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "o repositório não publica arquivos de stub .pyi"
+    },
+    {
+      "prefix": "Q",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "o estilo de aspas é misto e deliberado; unificar é formatação, fora do escopo"
+    },
+    {
+      "prefix": "RET",
+      "state": "selected",
+      "select": [
+        "RET"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "RSE",
+      "state": "selected",
+      "select": [
+        "RSE"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "RUF",
+      "state": "selected",
+      "select": [
+        "RUF"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "S",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "as verificações no estilo bandit se sobrepõem ao documento de segurança e à auditoria de dependências, e o repositório invoca subprocess com lista fixa de argumentos, caso em que as regras só produziriam supressão"
+    },
+    {
+      "prefix": "SIM",
+      "state": "selected",
+      "select": [
+        "SIM"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "SLF",
+      "state": "selected",
+      "select": [
+        "SLF"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "SLOT",
+      "state": "selected",
+      "select": [
+        "SLOT"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "T",
+      "state": "partial",
+      "select": [
+        "T"
+      ],
+      "ignore": [
+        "T201",
+        "T203"
+      ],
+      "reason": "T100 (chamada de depurador) é aplicado; T201 e T203 (print e pprint) são dispensados porque os validadores imprimem o veredito na saída padrão por contrato"
+    },
+    {
+      "prefix": "TC",
+      "state": "selected",
+      "select": [
+        "TC"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "TD",
+      "state": "selected",
+      "select": [
+        "TD"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "TID",
+      "state": "selected",
+      "select": [
+        "TID"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "TRY",
+      "state": "dismissed",
+      "select": [],
+      "ignore": [],
+      "reason": "o repositório levanta exceção com mensagem formatada e converte falha em reprovação controlada; as regras do tryceratops exigiriam classes de exceção por caso sem ganho"
+    },
+    {
+      "prefix": "UP",
+      "state": "selected",
+      "select": [
+        "UP"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "W",
+      "state": "selected",
+      "select": [
+        "W"
+      ],
+      "ignore": [],
+      "reason": null
+    },
+    {
+      "prefix": "YTT",
+      "state": "selected",
+      "select": [
+        "YTT"
+      ],
+      "ignore": [],
+      "reason": null
+    }
+  ],
+  "allowed_suppressions": [
+    {
+      "code": "E402",
+      "reason": "o arquivo monta o caminho de import antes de importar o módulo local; a supressão é local e justificada na própria linha"
+    },
+    {
+      "code": "SLF001",
+      "reason": "o teste cobre funcao interna do modulo por decisao declarada de cobertura; a alternativa seria expor a funcao no contrato publico sem necessidade"
+    }
+  ]
+}

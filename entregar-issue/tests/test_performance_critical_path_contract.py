@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from plan_execution import classify_changes, infer_signals, required_gates_from_registry
+from plan_execution import classify_changes, infer_signals, required_gates_from_registry  # noqa: E402 - sys.path ajustado acima antes do import local
 
 
 def read(relative: str) -> str:

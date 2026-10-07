@@ -6,7 +6,7 @@ import argparse
 import hashlib
 import json
 import unicodedata
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -60,7 +60,7 @@ TEST_DIR_MARKERS = {'test', 'tests', '__tests__', 'spec', 'specs', 'fixtures'}
 
 
 def now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+    return datetime.now(UTC).isoformat().replace('+00:00', 'Z')
 
 
 def load_object(path: Path) -> dict[str, Any]:
@@ -89,7 +89,7 @@ def read_changed_files(path: Path) -> list[str]:
     changed = value.get('changed_files', []) if isinstance(value, dict) else value
     if not isinstance(changed, list) or any(not isinstance(item, str) for item in changed):
         raise ValueError('changed-files must contain a string array')
-    return sorted(set(item.strip() for item in changed if item.strip()))
+    return sorted({item.strip() for item in changed if item.strip()})
 
 
 def requirement_parts(item: Any) -> tuple[str | None, str]:
@@ -178,11 +178,11 @@ def normalize_domain_request(item: dict[str, Any]) -> dict[str, Any]:
     raw_requirements = item.get('requirements', [])
     if not isinstance(raw_requirements, list):
         raise ValueError('domain request requirements must be an array')
-    requirements = sorted(set(str(value).strip() for value in raw_requirements if str(value).strip()))
+    requirements = sorted({str(value).strip() for value in raw_requirements if str(value).strip()})
     raw_paths = item.get('paths', [])
     if not isinstance(raw_paths, list):
         raise ValueError('domain request paths must be an array')
-    paths = sorted(set(str(value).strip() for value in raw_paths if str(value).strip()))
+    paths = sorted({str(value).strip() for value in raw_paths if str(value).strip()})
     reason = item.get('reason', 'domain-impact')
     if not isinstance(reason, str) or not reason.strip():
         reason = 'domain-impact'

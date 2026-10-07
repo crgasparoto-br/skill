@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json
+
+import argparse
+import json
 from pathlib import Path
+
 VERSION="2026-08-20.3"
 # Runtime mirror of schemas/delivery-recovery-envelope.schema.json; tests/test_delivery_recovery_envelope_contract.py checks parity.
 REASONS={'post-ci-refreeze','handoff-only'}

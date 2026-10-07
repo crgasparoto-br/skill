@@ -178,7 +178,7 @@ def markdown_only(text: str) -> str:
     """Remover o que já está em contexto inerte declarado: cerca, comentário e código inline."""
     lines = md_lines(text)
     mask = hidden_mask(text)
-    kept = "\n".join(line for line, hidden in zip(lines, mask) if not hidden)
+    kept = "\n".join(line for line, hidden in zip(lines, mask, strict=False) if not hidden)
     without_comments = re.sub(r"<!--.*?-->", "", kept, flags=re.DOTALL)
     return INLINE_CODE_RE.sub("``", without_comments)
 
@@ -236,7 +236,7 @@ def rendered_text(text: str) -> str:
     """Substituir por sentinela o que não é renderizado, preservando as linhas."""
     return "\n".join(
         HIDDEN if hidden else line
-        for line, hidden in zip(md_lines(text), hidden_mask(text))
+        for line, hidden in zip(md_lines(text), hidden_mask(text), strict=False)
     )
 
 
@@ -389,7 +389,7 @@ def test_contradicting_suffix_is_detected(line: str) -> None:
 def test_fenced_body_is_detected() -> None:
     text = declared_reference()
     section = registry_section(text)
-    mutated = replace_section(text, "\n".join(["```markdown", section, "```"]))
+    mutated = replace_section(text, f"```markdown\n{section}\n```")
     assert policy_errors(mutated)
 
 

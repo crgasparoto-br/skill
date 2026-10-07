@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
+
 import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 
 def test_ci_modes_are_mutually_exclusive_and_return_to_controller():

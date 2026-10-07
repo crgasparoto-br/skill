@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_json_artifact, pack_json_artifact
+from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_json_artifact, pack_json_artifact  # noqa: E402 - sys.path ajustado acima antes do import local
 
 
 def test_round_trip_and_metadata_are_exact() -> None:

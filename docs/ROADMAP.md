@@ -45,6 +45,7 @@ Os IDs abaixo são estáveis para issues, commits, avaliações e notas de relea
 | `V030-005` | Decisão sobre contrato `transitional` | P1 | `planned` | Publicar decisão de migração, compatibilidade, depreciação e eventual evolução SemVer. |
 | `V030-006` | Release e regressão comportamental | P1 | `planned` | Integrar avaliações informativas ao CI, registrar resultados e publicar `v0.3.0` reproduzível. |
 | `V030-007` | Genericidade de assets permanentes | P1 | `implemented` | Rejeitar acoplamento concreto a issue, host, caminho e identificador de domínio, e executar o validador sobre o catálogo. |
+| `V030-009` | Análise estática real do código | P1 | `implemented` | Aplicar famílias de regras com política declarada, reprovar sujeira, import morto e supressão não declarada, e manter a cobertura de regras impossível de encolher em silêncio. |
 | `V030-008` | Governança do registro de auditores confiáveis | P2 | `implemented` | Declarar custódia, separação entre produtor e aprovador, rotação, revogação e limitação de operador único, e tornar a entrada de registro verificável. |
 
 ## 4. Entregas detalhadas
@@ -195,6 +196,32 @@ Rodadas sucessivas de auditoria independente reprovaram versões anteriores da c
 
 A contrapartida está declarada em `AGENTS.md`: alterar a seção exige alterar a forma canônica no mesmo commit, e esse diff exige auditoria independente contra a issue, porque o teste prova deliberação e não preservação dos requisitos.
 
+### V030-009 — Análise estática real do código
+Entregue o gate `scripts/validate_lint.py` com a política `config/lint-policy.json`: cada família de regras do Ruff
+aparece exatamente uma vez como aplicada, aplicada em parte com a parte desligada declarada, ou dispensada com motivo
+escrito; a cobertura é conferida no nível da regra, de modo que família aplicada com seleção estreita, família
+parcial que não decide sobre alguma regra e família parcial que desliga tudo reprovam; a seleção efetiva é derivada
+da política, nunca embutida no código; a versão da ferramenta é fixada no manifest e no lockfile e declarada na
+política, com reprovação por divergência; supressão em linha ou de arquivo só é aceita com código permitido e
+justificativa na própria diretiva, e diretiva de arquivo sem código é recusada; o escopo varrido é declarado na
+política, e arquivo coberto fora da raiz, diretório ilegível e saída inesperada da ferramenta reprovam em vez de
+reduzir o conjunto analisado em silêncio; e o gate roda sem rede e sem cache. A árvore foi corrigida até
+passar limpo sobre toda a árvore Python coberta: import morto, variável não usada, nome de laço reatribuído, exceção sem encadeamento,
+caminho via `os`, fuso ambíguo, alias de flag de expressão regular, `subprocess` sem `check`, ordenação de import,
+`stdout`/`stderr` explícitos e compreensões desnecessárias.
+Critério de aceite: `python3 scripts/validate_lint.py --root .` aprova a árvore entregue; reprova arquivo novo que
+viole família aplicada, política que não cubra o catalogo, família que não decida sobre alguma de suas regras,
+dispensa sem motivo escrito, versão divergente, supressão com código fora da lista permitida, supressão sem
+justificativa e diretiva de arquivo sem código; a suíte completa continua aprovada sem mudança de comportamento
+observável; a sequência de validação é idêntica em CI, `README.md` e `AGENTS.md`, com o gate na mesma posição,
+verificado por `scripts/validate_workflow_classification.py`, que está na sequência obrigatória, lê os passos do
+workflow com um parser de YAML em vez de expressões regulares sobre o texto, exige que todo passo, comando ou ação
+externa esteja classificado como validação ou declarado como não validação, classifica cada linha de `run` por
+gramática e pelo alvo declarado — script de validação que existe sob a raiz ou módulo declarado, argumentos sem
+metacaractere de shell e no máximo um redirecionamento simples — e compara
+a sequência de validação entre CI, README e AGENTS, incluindo a conferência do fechamento dos lockfiles e o replay do
+relatório de avaliações; o CI acrescenta apenas o empacotamento do skill, que é release e não
+validação; e o requisito global, o changelog e este roadmap registram a entrega.
 ## 5. Sequência de implementação
 
 ### Fase A — fundação e segurança

@@ -9,8 +9,10 @@ import io
 import json
 import posixpath
 import shutil
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 ARTIFACT_FORMAT = "base64-shards-v1"
 COMPRESSION = "gzip"
@@ -204,7 +206,7 @@ def pack_json_artifact(
     if shard_bytes % 4:
         raise ValueError("shard_bytes must be divisible by 4 for base64 alignment")
 
-    existing = load_json_artifact(path)
+    load_json_artifact(path)
     raw, transport = read_logical_bytes(path)
     if transport is not None:
         return artifact_metadata(path)

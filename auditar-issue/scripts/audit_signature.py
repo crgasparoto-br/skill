@@ -9,16 +9,16 @@ from copy import deepcopy
 from datetime import datetime
 from typing import Any
 
-REJECTION_ID_RE = re.compile(r"^audit-rejection:[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
-
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
+REJECTION_ID_RE = re.compile(r"^audit-rejection:[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
+
 
 def _parse_time(value: object, label: str, errors: list[str]) -> datetime | None:
     try:
-        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return datetime.fromisoformat(str(value))
     except Exception:
         errors.append(f"{label} is not a valid ISO-8601 timestamp")
         return None
@@ -102,7 +102,7 @@ def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -
             if gate.get("observed_exit_code") == 0:
                 errors.append("failed_gate observed_exit_code must be non-zero")
                 break
-            if not re.fullmatch(r"[0-9a-f]{64}", str(gate.get("evidence_sha256") or ""), re.I):
+            if not re.fullmatch(r"[0-9a-f]{64}", str(gate.get("evidence_sha256") or ""), re.IGNORECASE):
                 errors.append("failed_gate requires evidence_sha256")
                 break
     finding_ids = [item.get("id") for item in findings if isinstance(item, dict)]

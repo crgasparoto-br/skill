@@ -50,6 +50,77 @@ Cada adapter validado deve aparecer em `config/platform-adapters.json` e `config
 
 Ao remover uma versão, mantenha uma nota de migração e a última release que a suporta. Não apague o histórico do changelog para esconder uma quebra.
 
+## Análise estática do código
+O código Python do catálogo é verificado por um gate determinístico e offline, `scripts/validate_lint.py`, que executa
+o Ruff com a seleção derivada de `config/lint-policy.json` e reprova qualquer diagnóstico das regras aplicadas.
+```bash
+python scripts/validate_lint.py --root .
+```
+A política é a única fonte da seleção: toda família de regras do Ruff aparece exatamente uma vez como aplicada,
+aplicada em parte com a parte desligada declarada, ou dispensada com motivo escrito. A cobertura é conferida no nível
+da regra, não no nível do prefixo: uma família aplicada precisa aplicar todas as suas regras, uma família parcial
+precisa deixar cada regra decidida entre aplicada e desligada, e uma família dispensada não pode selecionar nem
+desligar nada. Uma família parcial que desliga tudo é recusada, porque isso é uma dispensa disfarçada. Acrescentar
+uma família nova ao catalogo da ferramenta sem decidir sobre ela reprova o gate, e uma dispensa sem motivo escrito
+também, de modo que a cobertura não pode encolher em silêncio. A versão da ferramenta é fixada exatamente no manifest e no lockfile, o que o gate de
+dependências confere, e declarada na política: este gate compara a versão instalada com a declarada e reprova a
+divergência, porque subir de versão muda o catalogo de regras e exige decisão explícita.
+### O que cada verificação prova
+| Verificação | O que prova |
+| --- | --- |
+| Família do catalogo sem decisão | que nenhuma família de regras ficou desligada por omissão |
+| Família dispensada sem motivo escrito | que a dispensa é deliberada e revisável |
+| Versão instalada igual à declarada | que o resultado não depende de uma versão implícita da ferramenta |
+| Supressão em linha com código permitido e justificativa própria | que a supressão foi revisada no ponto em que aparece |
+| Supressão que não suprime nada | que uma diretiva morta não permanece no código |
+| Regra sem decisão dentro da família | que a cobertura não encolhe por seleção estreita nem por `ignore` contraditório |
+| Diretiva em qualquer caixa e diretiva de arquivo | que a supressão que a ferramenta reconhece não escapa da política |
+| Arquivo coberto fora da raiz, em diretório ilegível ou com sufixo coberto | que a descoberta reprova em vez de omitir código em silêncio |
+| Saída da ferramenta em formato inesperado | que a falha é reprovação com causa explícita, nunca traceback nem aprovação |
+| Diagnóstico de regra aplicada | que a sujeira reprova a entrega em vez de depender de revisão manual |
+### O que fica fora, e por quê
+As famílias dispensadas e as partes desligadas das famílias parciais estão declaradas na própria política, cada uma
+com o motivo escrito. O recorte mais visível: formatação e largura de linha, porque o repositório escreve linhas
+longas de propósito; docstring por símbolo, porque a documentação normativa vive em `SKILL.md` e nas referências;
+regras de segurança no estilo bandit, que se sobrepõem a `docs/SECURITY.md` e à auditoria de dependências; captura
+ampla de exceção, que é o contrato fail-closed dos validadores; e complexidade, que não é sinal de correção aqui.
+### Supressões
+Uma supressão só é aceita quando o código está na lista permitida da política e a própria diretiva traz a
+justificativa depois de ` - `. Uma política quebrada interrompe a validação ali: seleção, arquivos, supressões e análise
+dependem de uma política íntegra, então nada derivado dela é consultado e a reprovação traz a causa em vez do sintoma
+que a ferramenta reportaria em cima de uma seleção inválida. Forma bruta inválida, como `families` ausente ou nulo,
+entrada de família que não é objeto, `select` que não é lista e `line_length` que não é objeto reprovam pelo mesmo
+caminho, sem traceback.
+A leitura cobre as formas que a ferramenta reconhece: o marcador em qualquer caixa e a
+diretiva de arquivo com prefixo `ruff:` ou `flake8:`. Supressão de arquivo sem código é recusada, porque desliga a
+análise inteira sem deixar o alvo declarado, e diretiva que não suprime nada reprova. A leitura é feita sobre
+comentários reais, então a mesma sequência dentro de uma string não conta como supressão. A lista permitida existe
+para o caso em que o import precisa vir depois do ajuste de `sys.path`, situação em que a supressão é local e o
+motivo fica visível. Corrigir o diagnóstico é preferível a suprimi-lo, e uma supressão nova exige decisão de política
+no mesmo commit.
+### Escopo varrido
+O que o gate varre é declarado na política, não presumido pelo código: os sufixos cobertos (`.py` e `.pyi`) e os
+diretórios excluídos, que são controle de versão, cache de ferramenta ou saída de empacotamento gerada. Um arquivo
+coberto que seja link simbólico para fora da raiz, um diretório do escopo que seja link simbólico, um link quebrado
+ou em ciclo, um diretório ilegível, uma saída da ferramenta vazia ou em formato inesperado, a ausência do executável
+no momento da análise e um conjunto varrido sem nenhum arquivo coberto reprovam com causa explícita, em vez de
+reduzir o conjunto analisado em silêncio ou tratar o vazio como aprovação.
+### Forma bruta da política
+Booleano e fração não são inteiros: `schema_version: true`, `schema_version: 1.0`, `line_length.value: true` e
+`line_length.value: 100.0` reprovam, porque em Python `True == 1` e `1.0 == 1` e a coerção aceitaria uma forma que
+ninguém declarou. O que a política exige é o inteiro exato. Os campos `tool.install` e `tool.invocation` também são verificados, e não
+apenas declarados, e por forma exata: a instalação precisa ser o pip pelo lockfile com `--require-hashes`, com
+caminho relativo dentro da raiz, e a invocação precisa ser a ferramenta declarada com seu subcomando. `description`
+precisa ser texto não vazio, e a instalação precisa ter um único `-r`, com lockfile relativo, sem `..`, sem caminho
+absoluto e sem lockfile extra ou repetido. Procura textual deixaria passar `echo pip install ... && outra coisa`. O estado de família precisa ser texto, e uma
+forma que não pode sequer ser comparada, como dicionário ou lista, reprova em vez de estourar.
+### Limite declarado
+O gate verifica presença e extensão do motivo declarado, não a veracidade dele: um motivo longo e enganoso passa.
+A honestidade do motivo depende da revisão independente da mudança, e é por isso que alterar a política é alteração
+revisável que precisa vir no mesmo commit do código que ela autoriza.
+Os diretórios excluídos são pulados por nome, então um link simbólico que use um desses nomes não é inspecionado: o
+que decide é o escopo declarado na política, e alterá-lo é a forma de mudar o conjunto varrido.
+
 ## Dependências e política de exceção
 
 Cada manifest de skill (`<skill>/requirements*.txt`) tem um lockfile irmão com o mesmo nome e sufixo `.lock.txt`, que
@@ -122,6 +193,27 @@ encobrir outra dependência.
 
 A sequência obrigatória instala as dependências de teste do próprio lockfile com `--require-hashes`, de modo que o ambiente que executa o gate é o ambiente registrado.
 
+A sequência documentada é comparada com a do workflow pelo teste de paridade, que lê os passos com um parser de YAML
+e é fail-closed na forma do documento: exige um único documento, recusa chave duplicada no mesmo mapeamento, exige
+`jobs` objeto não vazio, cada job objeto, `steps` lista não vazia e cada passo objeto com `run` ou `uses` — e não os
+dois —, com valor textual. Chave repetida é recusada pelo valor construído, então `true` e `True`, `01` e `1`, `null`
+e `~` contam como a mesma chave, e chave que não pode ser comparada reprova em vez de estourar. Cada linha de
+`run` é conferido em duas partes, e nenhuma delas é procura textual. A linha inteira precisa casar com a gramática
+declarada: `python` seguido de um alvo e de argumentos sem metacaractere de shell, com no máximo um redirecionamento
+simples de saída, com ou sem `2>&1`. Composição (`&&`, `||`, `;`, `|`, `&`), substituição (`$()`, crase), aspas,
+escape, descritor de arquivo (`2>`, `1>`, `10>`), redirecionamento extra, `python -c` e invólucros (`eval`, `env`,
+`sudo`, `time`, `nohup`, `xargs`, `sh -c`) não casam. Além disso, o alvo precisa estar declarado: um script de
+validação declarado um a um, que existe como arquivo regular sob a raiz e não passa por link simbólico, ou um dos
+módulos declarados (`pip`, `pytest`). Assim um marcador escrito em um argumento não promove um script arbitrário, um
+nome parecido sem arquivo não passa, um `validate_algo.py` recém-criado não entra na sequência por conta própria e um
+link com nome declarado não vale pelo conteúdo que ele aponta.
+
+Duas limitações são declaradas, e não achados: o destino do redirecionamento é conferido como texto de comando, sem
+confinamento de caminho, porque a sequência grava o relatório de avaliações em `/tmp`; e a autenticação de um comando
+de módulo recai sobre o alvo declarado (`pip`, `pytest`), não sobre cada argumento, de modo que mudar argumentos de um
+passo já declarado aparece na revisão da mudança, e não como reprovação do gate. Essa classificação é executada por `scripts/validate_workflow_classification.py`, que está na sequência
+obrigatória e também confere a paridade entre CI, README e AGENTS, e não apenas por um teste. Assim, uma forma alternativa de escrever o mesmo passo ativo, ou uma forma estrutural
+inválida que o parser aceitaria, não passa sem classificação.
 A consulta ao banco de vulnerabilidade e a verificação de integridade são do workflow
 [`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml), com gatilho agendado, manual e em
 pull request que toca manifest, lockfile ou política. Ele nunca faz parte da sequência obrigatória: quando o banco, o

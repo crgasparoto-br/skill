@@ -203,11 +203,29 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Gerar lockfile de dependências de uma skill.")
     parser.add_argument("--root", default=".", help="raiz do repositório")
     parser.add_argument("--skill", help="skill específica; sem isso, todas")
+    parser.add_argument("--manifest", help="manifest específico, relativo à raiz; sem isso, todos")
     parser.add_argument("--check", action="store_true", help="não escrever; falhar se o lock mudaria")
     args = parser.parse_args(argv)
 
     root = Path(args.root).resolve()
-    manifests = manifests_for(root, args.skill)
+    if args.manifest is not None:
+        # O cabeçalho do lockfile manda regenerar por manifest: selecionar um caminho fora da raiz
+        # deixaria o gerador escrever onde não deve, então o caminho é confinado antes de tudo.
+        if not args.manifest.strip():
+            # Valor vazio é entrada declarada e inválida, não ausência de seleção: tratar como
+            # ausência escolheria todos os manifests sem que ninguém tenha pedido.
+            print("manifest vazio: informe um caminho relativo a raiz", file=sys.stderr)
+            return 1
+        if Path(args.manifest).is_absolute():
+            print(f"manifest precisa ser caminho relativo a raiz: {args.manifest}", file=sys.stderr)
+            return 1
+        candidate = (root / args.manifest).resolve()
+        if not candidate.is_file() or (candidate != root and root not in candidate.parents):
+            print(f"manifest fora da raiz ou inexistente: {args.manifest}", file=sys.stderr)
+            return 1
+        manifests = [candidate]
+    else:
+        manifests = manifests_for(root, args.skill)
     if not manifests:
         print("nenhum manifest encontrado", file=sys.stderr)
         return 1

@@ -8,13 +8,12 @@ import json
 import re
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
-
 from audit_artifact_io import load_json_artifact
+from jsonschema import Draft202012Validator
 
 VERSION = "2026-08-20.3"
 MODES = {"targeted-remediation", "systemic-remediation"}
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.I)
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schemas" / "audit-remediation.schema.json"
 
 
@@ -116,9 +115,8 @@ def validate_gate_replay(item: dict, expected_gate: dict, head_sha: str, label: 
     if expected_gate.get("exit_code") is not None and original.get("exit_code") != expected_gate.get("exit_code"):
         errors.append(f"{label} original failed gate exit_code differs from audit result")
     expected_evidence = expected_gate.get("evidence_sha256") or ""
-    if expected_evidence and SHA256_RE.fullmatch(expected_evidence):
-        if original.get("evidence_sha256") != expected_evidence:
-            errors.append(f"{label} original failed gate evidence hash differs from audit result")
+    if expected_evidence and SHA256_RE.fullmatch(expected_evidence) and original.get("evidence_sha256") != expected_evidence:
+        errors.append(f"{label} original failed gate evidence hash differs from audit result")
 
 
 def main() -> int:

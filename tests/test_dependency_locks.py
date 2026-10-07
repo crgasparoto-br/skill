@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import json
 import socket
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -1080,3 +1082,60 @@ def test_invalid_utf8_is_reported_without_traceback(tmp_path: Path, target: str,
     captured = capsys.readouterr()
     assert "UTF-8" in captured.err or "ilegivel" in captured.err
     assert "Traceback" not in captured.err
+
+
+def test_manifest_selector_refuses_a_path_outside_the_root(tmp_path: Path) -> None:
+    """O gerador aceita um manifest específico, mas não escreve fora da raiz."""
+    tree = tmp_path / "repo"
+    tree.mkdir()
+    (tree / "requirements.txt").write_text("packaging>=24.0\n", encoding="utf-8")
+    (tmp_path / "outside.txt").write_text("packaging>=24.0\n", encoding="utf-8")
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "lock_dependencies.py"),
+            "--root",
+            str(tree),
+            "--manifest",
+            "../outside.txt",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(REPO_ROOT),
+    )
+    assert completed.returncode == 1
+    assert "fora da raiz" in completed.stderr
+    absolute = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "lock_dependencies.py"),
+            "--root",
+            str(tree),
+            "--manifest",
+            str(tree / "requirements.txt"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(REPO_ROOT),
+    )
+    assert absolute.returncode == 1
+    assert "relativo a raiz" in absolute.stderr
+    empty = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "lock_dependencies.py"),
+            "--root",
+            str(tree),
+            "--manifest",
+            "",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(REPO_ROOT),
+    )
+    assert empty.returncode == 1
+    assert "manifest vazio" in empty.stderr
+

@@ -10,8 +10,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from risk_inference import derive_families_from_text, derive_surfaces, required_test_cases_from_texts
-from validate_requirement_attack_matrix import validate_test_coverage_contract
+from risk_inference import derive_families_from_text, derive_surfaces, required_test_cases_from_texts  # noqa: E402 - sys.path ajustado acima antes do import local
+from validate_requirement_attack_matrix import validate_test_coverage_contract  # noqa: E402 - sys.path ajustado acima antes do import local
 
 HEAD = "a" * 40
 EVIDENCE_SHA = hashlib.sha256(b"evidence").hexdigest()
@@ -20,7 +20,7 @@ EVIDENCE_SHA = hashlib.sha256(b"evidence").hexdigest()
 def run(script: str, *args: str):
     return subprocess.run(
         [sys.executable, str(ROOT / "scripts" / script), *args],
-        text=True,
+        check=False, text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )

@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from risk_inference import derive_families_from_text, derive_surfaces
+from risk_inference import derive_families_from_text, derive_surfaces  # noqa: E402 - sys.path ajustado acima antes do import local
 
 HEAD = "d" * 40
 EVIDENCE_SHA = hashlib.sha256(b"evidence").hexdigest()
@@ -24,7 +24,7 @@ CANONICAL = [
 def run(script: str, *args: str):
     return subprocess.run(
         [sys.executable, str(ROOT / "scripts" / script), *args],
-        text=True,
+        check=False, text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -53,12 +53,7 @@ def control(control_id: str, family: str, surface: str, dimension: str) -> dict:
 
 
 def test_risk_inference_preserves_material_commercial_historical_and_lifecycle_families() -> None:
-    text = "\n".join([
-        "Mudança posterior de plano não reatribui histórico.",
-        "Qualquer cobrança futura exige autorização explícita, desativação e rollback.",
-        "Reconhecer receita proporcionalmente ao período de prestação do serviço e por competência.",
-        "Limitação temporária admite uma extensão adicional com aprovação de segundo administrador.",
-    ])
+    text = "Mudança posterior de plano não reatribui histórico.\nQualquer cobrança futura exige autorização explícita, desativação e rollback.\nReconhecer receita proporcionalmente ao período de prestação do serviço e por competência.\nLimitação temporária admite uma extensão adicional com aprovação de segundo administrador."
     families = derive_families_from_text(text)
     assert {"historical-immutability", "authorization", "rollback", "temporal-consistency", "concurrency-atomicity"} <= families
     surfaces = {(item["risk_family"], item["surface"]) for item in derive_surfaces([text])}

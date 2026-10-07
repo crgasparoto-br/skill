@@ -11,28 +11,32 @@ from typing import Any
 
 try:
     from catalog import catalog_skill_ids, load_catalog, validate_catalog
-    from validate_contract_sync import validate_contract_sync
-    from validate_docs import validate_docs
-    from validate_versioning import validate_versioning
     from validate_adapters import validate_adapters
-    from validate_evals import validate_evals
-    from validate_reachability import validate_reachability
-    from validate_issue_templates import validate_issue_templates
     from validate_context_budget import validate_context_budget
-    from validate_reference_indexes import validate_reference_indexes
+    from validate_contract_sync import validate_contract_sync
     from validate_dependency_locks import validate_dependency_locks
+    from validate_docs import validate_docs
+    from validate_evals import validate_evals
+    from validate_issue_templates import validate_issue_templates
+    from validate_lint import validate_lint
+    from validate_reachability import validate_reachability
+    from validate_reference_indexes import validate_reference_indexes
+    from validate_versioning import validate_versioning
+    from validate_workflow_classification import validate_workflow_classification
 except ImportError:  # pragma: no cover - package import fallback
     from .catalog import catalog_skill_ids, load_catalog, validate_catalog
-    from .validate_contract_sync import validate_contract_sync
-    from .validate_docs import validate_docs
-    from .validate_versioning import validate_versioning
     from .validate_adapters import validate_adapters
-    from .validate_evals import validate_evals
-    from .validate_reachability import validate_reachability
-    from .validate_issue_templates import validate_issue_templates
     from .validate_context_budget import validate_context_budget
-    from .validate_reference_indexes import validate_reference_indexes
+    from .validate_contract_sync import validate_contract_sync
     from .validate_dependency_locks import validate_dependency_locks
+    from .validate_docs import validate_docs
+    from .validate_evals import validate_evals
+    from .validate_issue_templates import validate_issue_templates
+    from .validate_lint import validate_lint
+    from .validate_reachability import validate_reachability
+    from .validate_reference_indexes import validate_reference_indexes
+    from .validate_versioning import validate_versioning
+    from .validate_workflow_classification import validate_workflow_classification
 
 ROOT = Path(__file__).resolve().parents[1]
 SYSTEM_VERSION = "2026-09-29.5"
@@ -82,11 +86,10 @@ GLOBAL_FILES = {
     "config/reference-index.json",
     "scripts/validate_context_budget.py",
     "scripts/validate_reference_indexes.py",
-    "config/dependency-policy.json",
-    "scripts/validate_dependency_locks.py",
-    "scripts/lock_dependencies.py",
-    "scripts/audit_dependencies.py",
     ".github/workflows/dependency-audit.yml",
+    "config/lint-policy.json",
+    "scripts/validate_lint.py",
+    "scripts/validate_workflow_classification.py",
 }
 REQUIRED_CAPABILITIES = {
     "canonical_controller": "entregar-issue",
@@ -362,6 +365,10 @@ def main() -> int:
     errors.extend(f"orçamento de contexto: {error}" for error in validate_context_budget(ROOT))
     errors.extend(f"índice de referência: {error}" for error in validate_reference_indexes(ROOT))
     errors.extend(f"dependências: {error}" for error in validate_dependency_locks(ROOT))
+    errors.extend(f"lint: {error}" for error in validate_lint(ROOT))
+    errors.extend(
+        f"classificação de workflow: {error}" for error in validate_workflow_classification(ROOT)
+    )
 
     if errors:
         print("Validação falhou:")

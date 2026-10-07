@@ -40,7 +40,7 @@ def main() -> int:
     private_out.parent.mkdir(parents=True, exist_ok=True)
     public_out.parent.mkdir(parents=True, exist_ok=True)
     private_out.write_bytes(private_pem)
-    os.chmod(private_out, stat.S_IRUSR | stat.S_IWUSR)
+    private_out.chmod(stat.S_IRUSR | stat.S_IWUSR)
     public_out.write_bytes(public_pem)
     print(str(public_out))
     if not password:

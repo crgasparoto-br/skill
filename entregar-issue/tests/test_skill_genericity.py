@@ -28,7 +28,7 @@ NUMBERED_TEST_FILENAME = "test_issue_123_escape.py"
 def run(root: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(VALIDATOR), "--skill-root", str(root)],
-        text=True,
+        check=False, text=True,
         stdout=subprocess.PIPE,
     )
 

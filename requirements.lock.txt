@@ -6,3 +6,9 @@
 # arquivo: packaging-26.3-py3-none-any.whl
 packaging==26.3 \
     --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+# arquivo: pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+pyyaml==6.0.3 \
+    --hash=sha256:ba1cc08a7ccde2d2ec775841541641e4548226580ab850948cbfda66a1befcdc
+# arquivo: ruff-0.14.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+ruff==0.14.1 \
+    --hash=sha256:cabcaa9ccf8089fb4fdb78d17cc0e28241520f50f4c2e88cb6261ed083d85151

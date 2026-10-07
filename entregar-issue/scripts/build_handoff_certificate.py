@@ -15,7 +15,7 @@ import json
 import posixpath
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_json_artifact
@@ -44,7 +44,7 @@ def skill_hash(root: Path) -> str:
 
 
 def run(args: list[str]) -> list[str]:
-    proc = subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc = subprocess.run(args, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if proc.returncode != 0:
         raise RuntimeError(proc.stdout.strip() or "validator failed")
     return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
@@ -334,7 +334,7 @@ def main() -> int:
     payload = {
         "schema_version": 2,
         "status": "ready",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "identity": {
             # head_sha is retained as a compatibility alias for material_head_sha.
             "head_sha": args.head_sha,

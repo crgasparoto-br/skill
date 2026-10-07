@@ -1,5 +1,8 @@
-import json, subprocess, sys
+import json
+import subprocess
+import sys
 from pathlib import Path
+
 ROOT=Path(__file__).resolve().parents[1]
 
 def payload(material_change=True):
@@ -7,14 +10,14 @@ def payload(material_change=True):
 
 def test_finalize_checkpoint_accepts_closed_ci_owner(tmp_path):
     p=tmp_path/'e.json';p.write_text(json.dumps(payload()),encoding='utf-8')
-    r=subprocess.run([sys.executable,str(ROOT/'scripts/finalize_after_ci_checkpoint.py'),'--input',str(p)],capture_output=True,text=True)
+    r=subprocess.run([sys.executable,str(ROOT/'scripts/finalize_after_ci_checkpoint.py'),'--input',str(p)],check=False, capture_output=True,text=True)
     assert r.returncode==0,r.stdout+r.stderr
     assert 'finalize-after-ci checkpoint accepted' in r.stdout
 
 def test_finalize_checkpoint_rejects_open_ci_owner(tmp_path):
     v=payload();v['ci_owner_closed']=False
     p=tmp_path/'e.json';p.write_text(json.dumps(v),encoding='utf-8')
-    r=subprocess.run([sys.executable,str(ROOT/'scripts/finalize_after_ci_checkpoint.py'),'--input',str(p)],capture_output=True,text=True)
+    r=subprocess.run([sys.executable,str(ROOT/'scripts/finalize_after_ci_checkpoint.py'),'--input',str(p)],check=False, capture_output=True,text=True)
     assert r.returncode!=0
 
 def test_skill_forbids_ping_pong_controller():

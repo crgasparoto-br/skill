@@ -81,7 +81,7 @@ class ControllerAuditResultTests(unittest.TestCase):
                         control["evidence_sha256"] = hashlib.sha256(evidence.read_bytes()).hexdigest()
             path = root / "report.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
-            return subprocess.run([sys.executable, str(SCRIPT), str(path)], capture_output=True, text=True)
+            return subprocess.run([sys.executable, str(SCRIPT), str(path)], check=False, capture_output=True, text=True)
 
     def test_accepts_complete_approved_report(self):
         self.assertEqual(self.run_report(self.valid_report()).returncode, 0)

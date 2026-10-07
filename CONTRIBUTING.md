@@ -32,6 +32,12 @@ Se você alterou um contrato canônico ou uma fonte declarada em `config/shared-
 - Preserve `UNKNOWN` quando faltar evidência.
 - Não adicione autoridade de merge, ações destrutivas ou acesso a credenciais por conveniência.
 
+## Alterações de código
+
+- Código Python passa por `python scripts/validate_lint.py --root .`, que executa o Ruff com a seleção declarada em [`config/lint-policy.json`](./config/lint-policy.json). Corrigir o diagnóstico é preferível a suprimi-lo.
+- Uma supressão em linha precisa usar código permitido na política e trazer a justificativa na própria linha, depois de ` - `. Uma supressão que não suprime nada reprova.
+- Ampliar ou reduzir a cobertura de regras é decisão de política: altere `config/lint-policy.json` com motivo escrito no mesmo commit, e não a seleção do gate.
+
 ## Pull requests
 
 Descreva a fonte canônica alterada, os contratos afetados, a estratégia de validação e qualquer mudança de comportamento. O CI deve passar antes da revisão. Mudanças incompatíveis precisam explicar migração e impacto nas skills consumidoras.

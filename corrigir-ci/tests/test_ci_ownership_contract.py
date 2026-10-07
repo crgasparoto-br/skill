@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 ROOT=Path(__file__).resolve().parents[1]
 
 def test_ci_remediation_mode_returns_to_existing_controller():

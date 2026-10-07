@@ -113,13 +113,13 @@ def _run(
         cmd += ["--current-changed-path", path]
     for path in (post_handoff_paths or []):
         cmd += ["--post-handoff-changed-path", path]
-    return subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return subprocess.run(cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
 def test_terminal_guard_requires_actual_published_child() -> None:
     with tempfile.TemporaryDirectory() as td:
         material = "a" * 40
-        cert, artifacts, allowed = _fixture(Path(td), material)
+        cert, artifacts, _allowed = _fixture(Path(td), material)
         proc = _run(cert, artifacts, material, material, material, [".audit/entregar-issue/handoff-ready.json"])
         assert proc.returncode == 2
         assert "remote head is still the material head" in proc.stdout
@@ -129,7 +129,7 @@ def test_terminal_guard_rejects_material_path_in_handoff_child() -> None:
     with tempfile.TemporaryDirectory() as td:
         material = "a" * 40
         published = "d" * 40
-        cert, artifacts, allowed = _fixture(Path(td), material)
+        cert, artifacts, _allowed = _fixture(Path(td), material)
         proc = _run(cert, artifacts, material, published, material, [".audit/entregar-issue/handoff-ready.json", "server/app.ts"])
         assert proc.returncode == 2
         assert "non-handoff paths" in proc.stdout
@@ -139,7 +139,7 @@ def test_terminal_guard_accepts_direct_result_only_child() -> None:
     with tempfile.TemporaryDirectory() as td:
         material = "a" * 40
         published = "d" * 40
-        cert, artifacts, allowed = _fixture(Path(td), material)
+        cert, artifacts, _allowed = _fixture(Path(td), material)
         proc = _run(cert, artifacts, material, published, material, [".audit/entregar-issue/handoff-ready.json"])
         assert proc.returncode == 0, proc.stdout
         assert "owner/repo issue #42" in proc.stdout
@@ -234,7 +234,7 @@ def test_terminal_guard_rejects_handoff_subject_from_another_work_item() -> None
     with tempfile.TemporaryDirectory() as td:
         material = "a" * 40
         published = "d" * 40
-        cert, artifacts, allowed = _fixture(Path(td), material)
+        cert, artifacts, _allowed = _fixture(Path(td), material)
         proc = _run(cert, artifacts, material, published, material, [".audit/entregar-issue/handoff-ready.json"], work_item_number=43)
         assert proc.returncode == 2
         assert "certificate subject work_item_number differs" in proc.stdout
@@ -245,7 +245,7 @@ def test_terminal_guard_rejects_forged_current_subject_with_stale_snapshot() -> 
     with tempfile.TemporaryDirectory() as td:
         material = "a" * 40
         published = "d" * 40
-        cert, artifacts, allowed = _fixture(Path(td), material)
+        cert, artifacts, _allowed = _fixture(Path(td), material)
         payload = json.loads(cert.read_text(encoding="utf-8"))
         payload["subject"]["work_item_number"] = 43
         _write_json(cert, payload)
@@ -268,7 +268,7 @@ def test_terminal_systemic_reaudit_guard_requires_historical_snapshots() -> None
     with tempfile.TemporaryDirectory() as td:
         material = "a" * 40
         published = "d" * 40
-        cert, artifacts, allowed = _fixture(Path(td), material)
+        cert, artifacts, _allowed = _fixture(Path(td), material)
         payload = json.loads(cert.read_text(encoding="utf-8"))
         payload["previous_independent_rejection"] = True
         payload["evidence_profile"] = "critical"
@@ -285,7 +285,7 @@ def test_terminal_targeted_reaudit_does_not_require_previous_inherited_controls(
         base = Path(td)
         material = "a" * 40
         published = "d" * 40
-        cert, artifacts, allowed = _fixture(base, material)
+        cert, artifacts, _allowed = _fixture(base, material)
         previous_escape = base / "previous-audit-escape-closure.json"
         _write_json(previous_escape, {"schema_version": 1, "escapes": []})
         payload = json.loads(cert.read_text(encoding="utf-8"))

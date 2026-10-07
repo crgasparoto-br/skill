@@ -14,7 +14,7 @@ GENERICITY = ROOT / "scripts" / "validate_skill_genericity.py"
 def run_learning(path: Path):
     return subprocess.run(
         [sys.executable, str(VALIDATOR), "--learning-closure", str(path)],
-        text=True,
+        check=False, text=True,
         stdout=subprocess.PIPE,
     )
 
@@ -88,7 +88,7 @@ def test_genericity_gate_rejects_numbered_issue_test_filename() -> None:
         (root / "tests" / "test_issue_123_escape.py").write_text("def test_x(): pass\n", encoding="utf-8")
         proc = subprocess.run(
             [sys.executable, str(GENERICITY), "--skill-root", str(root)],
-            text=True,
+            check=False, text=True,
             stdout=subprocess.PIPE,
         )
         assert proc.returncode == 2

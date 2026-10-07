@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import copy
 import hashlib
 import json
@@ -15,11 +16,12 @@ import subprocess
 import sys
 import tempfile
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
+
 MAX_PROVIDER_OUTPUT_BYTES = 1_000_000
 FIXTURE_PROVENANCE = "versioned-deterministic-baseline"
 
@@ -238,22 +240,14 @@ def evaluate_result(
 
 
 def _terminate_process_group(process: subprocess.Popen[bytes]) -> None:
-    try:
+    with contextlib.suppress(ProcessLookupError):
         os.killpg(process.pid, signal.SIGTERM)
-    except ProcessLookupError:
-        pass
-    try:
+    with contextlib.suppress(subprocess.TimeoutExpired):
         process.wait(timeout=0.25)
-    except subprocess.TimeoutExpired:
-        pass
-    try:
+    with contextlib.suppress(ProcessLookupError):
         os.killpg(process.pid, signal.SIGKILL)
-    except ProcessLookupError:
-        pass
-    try:
+    with contextlib.suppress(subprocess.TimeoutExpired):
         process.wait(timeout=1)
-    except subprocess.TimeoutExpired:
-        pass
 
 
 def invoke_provider(command: str, case: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None, int]:
@@ -368,7 +362,7 @@ def report_for(harness_version: str, mode: str, cases: list[tuple[Path, dict[str
         "release_versions": release_versions,
         "run_id": run_id,
         "inputs": inputs,
-        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "content_sha256": "",
         "cases": records,
         "summary": summary,
@@ -509,7 +503,7 @@ def run_evaluations(
             if result_errors:
                 records.append(_record(case, "INVALID", result.get("outcome"), *result_errors))
                 continue
-        elif error and (error.startswith("resultado ") or error.startswith("provider-result-invalid:")):
+        elif error and (error.startswith(("resultado ", "provider-result-invalid:"))):
             records.append(_record(case, "INVALID", None, error))
             continue
         records.append(evaluate_result(case, result, reason=error, source_mode=source_mode))

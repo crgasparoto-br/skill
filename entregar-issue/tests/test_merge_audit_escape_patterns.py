@@ -15,7 +15,7 @@ def test_merge_preserves_required_attack_dimensions(tmp_path):
             {'risk_family':'authorization','surface':'filesystem','dimension':'cross-role-secret'},
         ]
     }]}))
-    proc=subprocess.run([sys.executable,str(ROOT/'scripts'/'merge_audit_escape_patterns.py'),'--closure',str(closure),'--catalog',str(catalog)],text=True,stdout=subprocess.PIPE)
+    proc=subprocess.run([sys.executable,str(ROOT/'scripts'/'merge_audit_escape_patterns.py'),'--closure',str(closure),'--catalog',str(catalog)],check=False, text=True,stdout=subprocess.PIPE)
     assert proc.returncode==0
     data=json.loads(catalog.read_text())
     dims=data['patterns'][0]['required_attack_dimensions']

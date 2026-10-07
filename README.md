@@ -95,6 +95,7 @@ O catálogo possui uma camada global de governança acima das regras específica
 - [`config/issue-templates.json`](./config/issue-templates.json) é a declaração única das seções normativas que os extratores de requisito leem no corpo da issue, aplicada em [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/) e validada por [`scripts/validate_issue_templates.py`](./scripts/validate_issue_templates.py).
 - [`config/dependency-policy.json`](./config/dependency-policy.json) declara a política de exceção de vulnerabilidade, exigindo pacote e versão fixada, validada por [`scripts/validate_dependency_locks.py`](./scripts/validate_dependency_locks.py); os lockfiles por skill fixam versão, artefato e hash, e [`scripts/audit_dependencies.py`](./scripts/audit_dependencies.py) confere a integridade do digest contra o artefato e consulta o banco externo no workflow [`.github/workflows/dependency-audit.yml`](./.github/workflows/dependency-audit.yml), fora da sequência obrigatória.
 
+- [`config/lint-policy.json`](./config/lint-policy.json) decide cada família de regras do Ruff, aplicada, aplicada em parte com a parte desligada declarada ou dispensada com motivo escrito, e [`scripts/validate_lint.py`](./scripts/validate_lint.py) executa a análise com essa seleção, reprovando diagnóstico, política incompleta, versão divergente e supressão não declarada.
 As regras globais usam `UNKNOWN` como estado material de evidência insuficiente. Ausência de informação não deve ser convertida em sucesso, `false`, zero ou `not-applicable`. Aprovação interna, auditoria independente, readiness de release e enforcement de merge são fatos distintos.
 
 A memória da conversa pode ajudar na continuidade, mas o estado necessário à correção deve ser reconstruível a partir do repositório, GitHub e artefatos explicitamente versionados.
@@ -134,6 +135,8 @@ python scripts/validate_context_budget.py --root .
 python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
 python scripts/validate_reference_indexes.py --root .
 python scripts/validate_dependency_locks.py --root .
+python scripts/validate_lint.py --root .
+python scripts/validate_workflow_classification.py --root .
 python scripts/lock_dependencies.py --root . --check  # resolucao real: exige rede
 python -m pytest -q
 ```

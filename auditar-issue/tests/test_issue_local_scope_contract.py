@@ -101,7 +101,7 @@ def run(cert: Path, base: Path, issue_paths: list[str]):
     ]
     for path in issue_paths:
         cmd.extend(["--issue-changed-path", path])
-    return subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return subprocess.run(cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
 def test_pr_and_issue_identity_are_independent_and_issue_local_scope_is_accepted() -> None:

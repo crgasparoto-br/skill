@@ -81,6 +81,11 @@ jobs:
       - name: Validate dependency lockfiles and exception policy
         run: python scripts/validate_dependency_locks.py --root .
 
+      - name: Validate lint policy and run static analysis
+        run: python scripts/validate_lint.py --root .
+      - name: Validate workflow step classification and documented sequence
+        run: python scripts/validate_workflow_classification.py --root .
+
       # O gate offline prova forma e vínculo, mas não pode resolver dependências. A resolução
       # real é o que demonstra que o lockfile é o fechamento do manifest: comparar o lockfile
       # regenerado reprova fechamento forjado e transitiva que um extra ativa e ficou de fora.

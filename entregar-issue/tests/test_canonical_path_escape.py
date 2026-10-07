@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_SHA = hashlib.sha256(b"canonical negative").hexdigest()
 sys.path.insert(0, str(ROOT / "scripts"))
-from specification import flags_for
+from specification import flags_for  # noqa: E402 - sys.path ajustado acima antes do import local
 
 
 def test_canonical_adapter_contract_is_classified_as_structural_canonical_path() -> None:
@@ -47,7 +47,7 @@ def test_handoff_blocks_structural_requirement_without_discriminant_closure() ->
             sys.executable,
             str(ROOT / "scripts" / "validate_handoff_readiness.py"),
             "--requirement-closure", str(closure),
-        ], text=True, stdout=subprocess.PIPE)
+        ], check=False, text=True, stdout=subprocess.PIPE)
         assert proc.returncode == 2
         assert "does not cover obligations" in proc.stdout
 
@@ -181,5 +181,5 @@ def test_handoff_accepts_canon_divergence_control_and_closed_escape() -> None:
             "--previous-inherited-controls", str(previous_inherited),
             "--previous-audit-escape-closure", str(previous_escape),
             "--previous-independent-rejection",
-        ], text=True, stdout=subprocess.PIPE)
+        ], check=False, text=True, stdout=subprocess.PIPE)
         assert proc.returncode == 0, proc.stdout

@@ -280,9 +280,8 @@ def main() -> int:
             continue
         semantic_by_key[key] = semantic
 
-        if key in {"standard_evidence", "requirement_attack_matrix", "risk_saturation", "inherited_controls"}:
-            if semantic.get("head_sha") != material_head:
-                errors.append(f"connector artifact {key} head_sha differs from material head")
+        if key in {"standard_evidence", "requirement_attack_matrix", "risk_saturation", "inherited_controls"} and semantic.get("head_sha") != material_head:
+            errors.append(f"connector artifact {key} head_sha differs from material head")
 
         if key == "standard_evidence":
             require_bool(semantic, "all_requirements_have_positive_evidence", key, errors)

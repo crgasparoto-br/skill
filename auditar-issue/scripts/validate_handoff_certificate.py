@@ -10,7 +10,6 @@ from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, load_json_artifact
 
-
 # Must stay equal to plan_execution.CODE_SUFFIXES; the auditor copy of this file has no planner to import.
 CODE_SUFFIXES = (
     '.py', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx', '.java', '.kt',

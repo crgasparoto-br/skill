@@ -1,6 +1,12 @@
 from __future__ import annotations
-import hashlib,json,subprocess,sys,tempfile
+
+import hashlib
+import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
+
 ROOT=Path(__file__).resolve().parents[1]; SCRIPT=ROOT/"scripts/validate_handoff_certificate.py"; CERT=".audit/entregar-issue/handoff-ready.json"
 def packet(root,m):
     arts={}
@@ -10,7 +16,7 @@ def packet(root,m):
 def run(c,h,p,paths):
     cmd=[sys.executable,str(SCRIPT),"--certificate",str(c),"--artifacts-dir",str(c.parent),"--head-sha",h,"--base-sha","b"*40,"--candidate-parent-sha",p,"--contract-version","2026-08-20.3"]
     for x in paths: cmd += ["--candidate-changed-path",x]
-    return subprocess.run(cmd,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    return subprocess.run(cmd,check=False, text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
 def test_parent_drift():
     with tempfile.TemporaryDirectory() as d:
         m="a"*40;q=run(packet(Path(d),m),"c"*40,"d"*40,[CERT]);assert q.returncode==2;assert "RECOVERY: post-write-refreeze" in q.stdout

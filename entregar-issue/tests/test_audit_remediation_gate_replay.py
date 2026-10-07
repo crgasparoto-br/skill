@@ -84,7 +84,7 @@ def run_case(replay_command: str) -> subprocess.CompletedProcess[str]:
         write(report, audit(old_head))
         remediation = base / "remediation.json"
         write(remediation, ledger(report, old_head, new_head, replay_command))
-        return subprocess.run([sys.executable, str(SCRIPT), "--ledger", str(remediation), "--audit-result", str(report), "--head-sha", new_head], capture_output=True, text=True)
+        return subprocess.run([sys.executable, str(SCRIPT), "--ledger", str(remediation), "--audit-result", str(report), "--head-sha", new_head], check=False, capture_output=True, text=True)
 
 
 def test_exact_failed_gate_replay_closes_remediation() -> None:

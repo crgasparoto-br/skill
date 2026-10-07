@@ -1,6 +1,11 @@
 from __future__ import annotations
-import json,subprocess,sys,tempfile
+
+import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
+
 ROOT=Path(__file__).resolve().parents[1]; SCRIPT=ROOT/"scripts/classify_handoff_recovery.py"; CERT=".audit/entregar-issue/handoff-ready.json"
 def cert(p,m): p.write_text(json.dumps({"identity":{"material_head_sha":m,"head_sha":m},"certificate_commit_policy":{"mode":"result-only-child","allowed_paths":[CERT]}})); return p
 def run(c,h,p,paths,b="current-target",auditor_scope=None,requires_refreeze=False):
@@ -8,7 +13,7 @@ def run(c,h,p,paths,b="current-target",auditor_scope=None,requires_refreeze=Fals
     if auditor_scope: cmd += ["--auditor-recovery-scope", auditor_scope]
     if requires_refreeze: cmd += ["--auditor-requires-refreeze"]
     for x in paths: cmd += ["--current-changed-path",x]
-    q=subprocess.run(cmd,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT); assert q.returncode==0,q.stdout; return json.loads(q.stdout)
+    q=subprocess.run(cmd,check=False, text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT); assert q.returncode==0,q.stdout; return json.loads(q.stdout)
 def test_terminal():
     with tempfile.TemporaryDirectory() as d:
         m="a"*40; c=cert(Path(d)/"c.json",m); assert run(c,"b"*40,m,[CERT])["recovery_scope"]=="terminal-handoff-valid"

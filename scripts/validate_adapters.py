@@ -10,10 +10,10 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from .catalog import ROOT, capability_names, load_catalog, load_capabilities
+    from .catalog import ROOT, capability_names, load_capabilities, load_catalog
     from .validate_versioning import parse_semver, validate_json_schema
 except ImportError:  # pragma: no cover - direct script execution
-    from catalog import ROOT, capability_names, load_catalog, load_capabilities
+    from catalog import ROOT, capability_names, load_capabilities, load_catalog
     from validate_versioning import parse_semver, validate_json_schema
 
 EXPECTED_ADAPTERS = {"generic", "openai", "claude", "gemini", "ide", "application"}
@@ -77,7 +77,7 @@ def validate_adapters(root: Path = ROOT) -> list[str]:
         catalog = load_catalog(root)
         capabilities = load_capabilities(root)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
-        return errors + [f"platform adapter prerequisites are invalid: {exc}"]
+        return [*errors, f"platform adapter prerequisites are invalid: {exc}"]
 
     if manifest.get("catalog_version") != catalog.get("catalog_version"):
         errors.append("platform adapter catalog_version differs from skills catalog")
@@ -86,7 +86,7 @@ def validate_adapters(root: Path = ROOT) -> list[str]:
     capability_ids = capability_names(root)
     adapters = manifest.get("adapters")
     if not isinstance(adapters, list) or not adapters:
-        return errors + ["platform adapters must be a non-empty list"]
+        return [*errors, "platform adapters must be a non-empty list"]
     actual_ids = {item.get("id") for item in adapters if isinstance(item, dict)}
     if actual_ids != EXPECTED_ADAPTERS:
         errors.append(f"platform adapter ids differ: expected={sorted(EXPECTED_ADAPTERS)} actual={sorted(actual_ids)}")
