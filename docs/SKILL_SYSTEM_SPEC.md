@@ -130,7 +130,7 @@ O harness é provider-agnostic. A CI valida os contratos e reproduz fixtures det
 ## 8.2 Higienização global
 
 A higiene do diff cobre a entrega; ela não mede a árvore. O perfil de higienização global existe para
-medir, sob demanda, quatro dívidas estruturais sobre o repositório inteiro — duplicação de corpo de
+medir, sob demanda, cinco dívidas estruturais sobre o repositório inteiro — duplicação de corpo de
 função, código morto em módulo e em símbolo, dependência declarada e nunca importada, e complexidade
 acima do teto — e transformá-las em trabalho rastreável.
 

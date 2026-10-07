@@ -910,9 +910,12 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
                 if depth == len(package) and not root_is_package:
                     continue
                 base = [*package[: len(package) - depth], *(node.module.split(".") if node.module else [])]
+                # Alvo do relativo já é absoluto a partir da raiz quando a subida consome o pacote: somar
+                # o pacote do importador ali manteria vivo um homônimo que ninguém importa.
+                target_package = base[: len(package) - depth] if base else []
                 resolve_import(imported, package, base)
                 for alias in node.names:
-                    resolve_import(imported, package, [*base, alias.name])
+                    resolve_import(imported, target_package, [*base, alias.name])
     return imported
 
 
@@ -1328,9 +1331,18 @@ def report_contract_errors(report: dict) -> list[str]:
             "contrato: biblioteca de schema ausente; o relatorio nao pode ser aprovado sem ser conferido"
         ]
     validator = Draft202012Validator(schema)
+    # O esquema aceita `1.0` como inteiro, e a comparação entre relatórios não pegaria o decimal: a
+    # mesma regra do gate precisa valer aqui, senão as duas funções não são o mesmo contrato.
+    try:
+        from validate_hygiene import float_errors
+    except ImportError:  # pragma: no cover - gate ausente no caminho de importacao
+        return ["contrato: validador de contrato indisponivel"]
     return [
-        f"contrato: {list(error.path)}: {error.message}"
-        for error in sorted(validator.iter_errors(report), key=lambda item: list(item.path))
+        *(
+            f"contrato: {list(error.path)}: {error.message}"
+            for error in sorted(validator.iter_errors(report), key=lambda item: list(item.path))
+        ),
+        *float_errors(report),
     ]
 
 
@@ -1507,7 +1519,11 @@ def write_target(path: Path, root: Path, label: str) -> Path:
     Relatório é evidência sobre a árvore: gravado dentro dela entra no corpus de citação, altera a medição
     seguinte e pode sobrescrever arquivo coberto. Evidência que muda o objeto medido não é evidência.
     """
-    target = path.resolve()
+    try:
+        target = path.resolve()
+    except OSError as error:
+        # Caminho especial, link em ciclo ou árvore sem permissão: recusa controlada, nunca exceção crua.
+        raise HygieneError(f"{label} nao pode ser resolvido: {error.strerror or error}") from error
     if target.is_relative_to(root):
         raise HygieneError(f"{label} dentro da arvore medida: use caminho fora de {root.name}")
     if target.exists() and not target.is_dir():
@@ -1543,6 +1559,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = (args.root or Path()).resolve()
     try:
+        for label, path in (("--report", args.report), ("--markdown", args.markdown)):
+            if path is not None and path.is_dir():
+                # O destino documentado desses dois artefatos é arquivo; diretório aqui viraria exceção
+                # não tratada e, com dois destinos, publicação parcial.
+                raise HygieneError(f"{label} precisa ser arquivo, e nao diretorio")
         if (
             args.report is not None
             and args.markdown is not None

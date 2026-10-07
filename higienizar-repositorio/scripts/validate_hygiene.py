@@ -79,8 +79,12 @@ EXTRA_CLASS_KEYS = {
 # Chaves de decisão por classe, montadas a partir da mesma tabela que o produtor exige: chave de outra
 # classe na classe errada é decisão declarada que ninguém mede, e passaria em silêncio.
 CLASS_DECISION_KEYS = {
-    **{name: (*keys, "state", "limits") for name, keys in REQUIRED_CLASS_KEYS.items()},
-    "complexity": (*REQUIRED_CLASS_KEYS["complexity"], "state", "limits", "baseline", "baseline_history"),
+    # Toda classe pode ser declarada como medida, e medir exige linha de base: as chaves da catraca não
+    # podem existir só na classe de complexidade, senão a mesma decisão seria recusada como desconhecida.
+    **{
+        name: (*keys, "state", "limits", "baseline", "baseline_history")
+        for name, keys in REQUIRED_CLASS_KEYS.items()
+    },
 }
 INT_KEYS = ("min_body_lines", "max_complexity", "baseline")
 BOOL_KEYS = ("exclude_declared_copies", "exclude_tests", "package_init_is_entry")

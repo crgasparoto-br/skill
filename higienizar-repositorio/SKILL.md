@@ -74,12 +74,12 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Citacao de nome solto resolve contra o escopo medido, e nao contra a arvore inteira: arquivo excluido nao torna ambigua a citacao de um nome que e unico no escopo.
 - A citacao exige que o sufixo declarado termine o nome: sufixo seguido de caractere que continua identificador, inclusive marca combinante, aponta para outro nome e nao mantem arquivo vivo.
 - Alvo direcionado que resolve para fora da raiz aparece em cobertura nao analisada, com o mesmo rotulo do percurso livre, em vez de abortar a varredura. Link quebrado e link em ciclo seguem a mesma regra, e alvo externo mantem o escopo vazio: conjunto vazio de alvos nao e ausencia de restricao.
-- O rotulo de caminho de fora da raiz e apenas o nome do arquivo: caminho absoluto no relatorio quebraria a comparacao entre copias equivalentes da arvore.
+- O rotulo de caminho de fora da raiz e apenas o nome do arquivo, e duas recusas externas de mesmo nome entram como uma unica entrada de cobertura: caminho absoluto no relatorio quebraria a comparacao entre copias equivalentes da arvore, e o limite do rotulo fica declarado em vez de silencioso.
 - O indice de citacao e o do escopo medido, e a autocitacao nao conta: nem arquivo excluido, nem link de corpus que sai da raiz, nem o proprio texto do arquivo mantem modulo vivo.
 - Estrutura invalida em formato declarado, como escalar em `project.optional-dependencies`, e recusa visivel, e nao uma dependencia por caractere.
 - O gerador de work items tambem recusa escrever dentro da arvore medida: artefato gravado no objeto medido pode apagar a divida que ele mesmo descreve.
 - Relatorio com problema de politica nao e publicado: a reprovacao acontece antes da gravacao, e nao depois de o arquivo existir.
-- O rotulo de caminho de fora da raiz e apenas o nome do arquivo: caminho absoluto no relatorio quebraria a comparacao entre copias equivalentes da arvore.
+- O rotulo de caminho de fora da raiz e apenas o nome do arquivo, e duas recusas externas de mesmo nome entram como uma unica entrada de cobertura: caminho absoluto no relatorio quebraria a comparacao entre copias equivalentes da arvore, e o limite do rotulo fica declarado em vez de silencioso.
 - O indice de citacao e o do escopo medido, e a autocitacao nao conta: nem arquivo excluido, nem link de corpus que sai da raiz, nem o proprio texto do arquivo mantem modulo vivo.
 - Estrutura invalida em formato declarado, como escalar em `project.optional-dependencies`, e recusa visivel, e nao uma dependencia por caractere.
 - O gerador de work items tambem recusa escrever dentro da arvore medida: artefato gravado no objeto medido pode apagar a divida que ele mesmo descreve.
@@ -94,7 +94,9 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Decisao declarada como booleana so aceita booleano, versao de politica exige o inteiro exato, e linha de base nao entra em classe controlada nem pela historia: politica malformada nao pode esconder achado nem servir de linha de base.
 - Varredura e gerador recusam dois artefatos no mesmo caminho, mesmo quando escritos de forma diferente, e saida reutilizada: JSON sobrescrito por Markdown, ou work item de execucao anterior, nao podem circular como evidencia atual.
 - Destino com mais de um link e recusado, porque escrita por link alcancaria a arvore medida sem sair dela, e relatorio com contagem decimal e recusado, porque o esquema aceita `1.0` como inteiro.
-- Toda classe declarada como medida exige linha de base declarada, e nao apenas a de complexidade: medir contra alvo nao declarado nao e medicao.
+- Toda classe declarada como medida exige linha de base declarada, e as chaves da catraca valem em toda classe: medir contra alvo nao declarado nao e medicao, e a mesma decisao nao pode ser recusada como chave desconhecida.
+- O import relativo que sobe alem do pacote do importador nao soma esse pacote ao alvo, porque somar manteria vivo um homonimo que ninguem importa.
+- O destino de `--report` e de `--markdown` e arquivo, e o de `--out-dir` e diretorio conferido pelo que existe de fato no sistema de arquivos, inclusive link quebrado: artefato nao nasce de excecao crua nem de publicacao parcial.
 - Caminho declarado precisa ser texto simples: NUL e quebra de linha nao sao caminho, e politica invalida reprova em vez de derrubar o validador.
 - O relatorio Markdown publica o escopo excluido, e nao so o JSON: artefato humano sem a exclusao induziria leitura de cobertura completa sobre escopo reduzido por declaracao.
 - A validacao nao deixa bytecode na arvore analisada: `__pycache__` de modulo importado e escrita dentro da raiz que a execucao afirma nao alterar.

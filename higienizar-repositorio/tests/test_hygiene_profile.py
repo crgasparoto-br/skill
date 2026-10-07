@@ -2711,3 +2711,86 @@ def test_generator_refuses_output_path_that_is_a_file(tmp_path: Path) -> None:
     )
     assert result.returncode == 2
     assert "nao e diretorio" in result.stderr
+
+
+def test_any_class_can_be_declared_as_measured() -> None:
+    """Achado bloqueante: a catraca exigia linha de base e as chaves só existiam em complexidade."""
+    for name in ("duplication", "dead-module", "dead-symbol", "unused-dependency", "complexity"):
+        policy = policy_variant()
+        policy["classes"][name].update(
+            state="reported",
+            baseline=0,
+            baseline_history=[
+                {"value": 0, "reason": "Medicao inicial declarada para a classe com motivo suficiente."}
+            ],
+        )
+        errors = validate_hygiene.policy_errors(policy)
+        assert not [error for error in errors if "chave de decisao conhecida" in error], (name, errors)
+        assert not [error for error in errors if "baseline" in error], (name, errors)
+        # E a mesma classe sem linha de base continua recusada.
+        policy["classes"][name].pop("baseline")
+        policy["classes"][name].pop("baseline_history")
+        assert any(
+            "baseline_history precisa declarar a historia" in error
+            for error in validate_hygiene.policy_errors(policy)
+        ), name
+
+
+def test_relative_import_beyond_package_keeps_homonym_dead(tmp_path: Path) -> None:
+    """Achado bloqueante: `from .. import x` mantinha vivo um homônimo do pacote do importador."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "__init__.py": "",
+            "orphan.py": "V = 1\n",
+            "pkg/consumer.py": "from .. import orphan\n",
+            "pkg/orphan.py": "V = 2\n",
+            "README.md": "`pkg/consumer.py`\n",
+        },
+        policy_variant(**{"classes.dead-module.package_init_is_entry": True}),
+    )
+    assert [finding["path"] for finding in findings_of(scan(tree), "dead-module")] == ["pkg/orphan.py"]
+
+
+def test_scan_refuses_directory_as_report_target(tmp_path: Path) -> None:
+    """Achado bloqueante: diretório em --report terminava em exceção não tratada."""
+    target = tmp_path / "diretorio"
+    target.mkdir()
+    for flag in ("--report", "--markdown"):
+        result = subprocess.run(
+            [sys.executable, str(SCRIPTS / "hygiene_scan.py"), "--root", str(REPO_ROOT), flag, str(target)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode != 0, flag
+        assert "precisa ser arquivo" in result.stderr, flag
+        assert "Traceback" not in result.stderr, flag
+
+
+def test_generator_refuses_broken_symlink_as_output(tmp_path: Path) -> None:
+    """Achado bloqueante: `exists()` segue link e o link quebrado terminava em exceção."""
+    link = tmp_path / "saida"
+    link.symlink_to(tmp_path / "ausente")
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(REPO_ROOT),
+            "--out-dir",
+            str(link),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "nao e diretorio" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def test_producer_contract_is_the_same_as_the_gate() -> None:
+    """Achado não bloqueante: o produtor não conferia o decimal que o gate confere."""
+    forged = {"schema_version": 1.0, "analyzed": 1.0}
+    assert any("nao decimal" in error for error in hygiene_scan.report_contract_errors(forged))

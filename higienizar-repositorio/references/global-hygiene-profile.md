@@ -16,7 +16,7 @@ Ler antes de interpretar um relatório de varredura, antes de declarar exceção
 - [Antipadrões](#antipadrões)
 
 ## Escopo do perfil
-O perfil mede quatro dívidas estruturais sobre a árvore inteira: duplicação, código morto, dependência sem uso e complexidade. Ele não mede estilo, formato, erro estático, cobertura de teste, acoplamento de arquitetura nem qualidade de interface. Nada disso é lacuna acidental: cada ausência tem ferramenta própria no repositório, e sobrepor instrumentos produz duas verdades concorrentes.
+O perfil mede cinco dívidas estruturais sobre a árvore inteira: duplicação, código morto, dependência sem uso e complexidade. Ele não mede estilo, formato, erro estático, cobertura de teste, acoplamento de arquitetura nem qualidade de interface. Nada disso é lacuna acidental: cada ausência tem ferramenta própria no repositório, e sobrepor instrumentos produz duas verdades concorrentes.
 
 A varredura é determinística e offline. Duas execuções sobre a mesma árvore com a mesma política produzem o mesmo relatório, byte a byte, porque não há carimbo de tempo, caminho absoluto nem dependência da ordem do sistema de arquivos. A ordem dos achados é a ordem ordenada da classe e do caminho.
 
