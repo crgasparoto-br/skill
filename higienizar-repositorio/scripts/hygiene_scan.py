@@ -714,28 +714,12 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
     return texts, refused
 
 
-def measured_scope_root(root: Path, paths: list[str] | None) -> Path:
-    """Raiz do escopo medido, que é a base do índice de nome solto.
-
-    Em modo direcionado, um homônimo fora do alvo tornaria ambígua uma citação que, dentro do alvo, é
-    única, e criaria achado que não existe na medição. Alvo fora da raiz não estreita o escopo: ele é
-    recusado antes, e estreitar por ele mediria outra árvore.
-    """
-    if not paths or len(paths) != 1:
-        return root
-    candidate = root / paths[0]
-    resolved_root = root.resolve()
-    if candidate.is_dir() and candidate.resolve().is_relative_to(resolved_root):
-        return candidate
-    return root
-
-
 def named_paths(
     texts: dict[str, str],
     root: Path,
     suffixes: set[str],
     policy: dict,
-    paths: list[str] | None = None,
+    measured: list[Path] | None = None,
 ) -> dict[str, set[str]]:
     """Caminhos citados por algum arquivo, resolvidos na raiz e no diretório de quem cita.
 
@@ -747,7 +731,10 @@ def named_paths(
     resolved_root = root.resolve()
     exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
     excluded_paths = set(declared_exclusions(policy))
-    walked, _ = walk_scope(measured_scope_root(root, paths), root, exclude_dirs)
+    # O índice de nome solto é o escopo medido: em modo direcionado, um homônimo fora do alvo tornaria
+    # ambígua uma citação que, dentro do alvo, é única, e criaria achado que não existe na medição. Com
+    # alvo-arquivo ou vários alvos, o escopo é o conjunto medido, e não uma raiz única.
+    walked = list(measured) if measured is not None else walk_scope(root, root, exclude_dirs)[0]
     known = {
         relative(path, root)
         for path in walked
@@ -944,7 +931,7 @@ def detect_dead_modules(
     policy: dict,
     modules: dict[str, ast.Module],
     texts: dict[str, str],
-    paths: list[str] | None = None,
+    measured: list[Path] | None = None,
 ) -> list[dict]:
     config = policy["classes"]["dead-module"]
     exclude_tests = bool(config.get("exclude_tests", False))
@@ -954,7 +941,7 @@ def detect_dead_modules(
         for entry in config.get("entry_points", [])
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
-    named = named_paths(texts, root, citation_suffixes(policy), policy, paths)
+    named = named_paths(texts, root, citation_suffixes(policy), policy, measured)
     imported = imported_modules(modules)
     findings: list[dict] = []
     for rel in sorted(modules):
@@ -1438,7 +1425,7 @@ def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tu
     not_analyzed.extend(refused_corpus)
     findings: list[dict] = []
     findings.extend(detect_duplication(root, policy, modules, texts))
-    findings.extend(detect_dead_modules(root, policy, modules, texts, paths))
+    findings.extend(detect_dead_modules(root, policy, modules, texts, files))
     findings.extend(detect_dead_symbols(root, policy, modules, texts))
     dependency_findings, refused_manifests = detect_unused_dependencies(root, policy, modules, paths)
     not_analyzed.extend(refused_manifests)
@@ -1594,19 +1581,16 @@ def main(argv: list[str] | None = None) -> int:
                 # O destino documentado desses dois artefatos é arquivo; diretório aqui viraria exceção
                 # não tratada e, com dois destinos, publicação parcial.
                 raise HygieneError(f"{label} precisa ser arquivo, e nao diretorio")
-        if (
-            args.report is not None
-            and args.markdown is not None
-            and args.report.resolve() == args.markdown.resolve()
-        ):
-            # Um artefato sobrescrevendo o outro deixaria o JSON perdido e o Markdown publicado como se
-            # fosse o relatório.
-            raise HygieneError("--report e --markdown precisam ser caminhos diferentes")
         targets = {
             label: write_target(path, root, label)
             for label, path in (("--report", args.report), ("--markdown", args.markdown))
             if path is not None
         }
+        if len(set(targets.values())) != len(targets):
+            # Um artefato sobrescrevendo o outro deixaria o JSON perdido e o Markdown publicado como se
+            # fosse o relatório. A comparação é entre destinos já resolvidos, e não entre os textos dos
+            # caminhos: `resolve()` é onde o ciclo de links é recusado.
+            raise HygieneError("--report e --markdown precisam ser caminhos diferentes")
         policy = load_policy(root, args.policy)
         # A varredura só produz relatório de política íntegra: medir com política incompleta seria medir
         # outra coisa e publicar evidência que o gate recusa.
@@ -1634,16 +1618,22 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- {problem}", file=sys.stderr)
         return 1
     payload = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
+    contents = {"--report": payload, "--markdown": render_markdown(report)}
+    written: list[Path] = []
     try:
         if args.report:
-            targets["--report"].write_text(payload, encoding="utf-8")
+            targets["--report"].write_text(contents["--report"], encoding="utf-8")
+            written.append(targets["--report"])
         else:
             sys.stdout.write(payload)
         if args.markdown:
-            targets["--markdown"].write_text(render_markdown(report), encoding="utf-8")
+            targets["--markdown"].write_text(contents["--markdown"], encoding="utf-8")
+            written.append(targets["--markdown"])
     except OSError as error:
-        # Falha de escrita não pode sair como exceção crua: o relatório é artefato, e artefato que não
-        # nasce por inteiro não pode parecer publicado.
+        # Falha de escrita não pode sair como exceção crua, e execução reprovada não pode deixar
+        # artefato para trás: metade do relatório no disco pareceria relatório publicado.
+        for path in written:
+            path.unlink(missing_ok=True)
         print(f"ERRO: falha ao gravar o relatorio: {error}", file=sys.stderr)
         return 1
     return 0

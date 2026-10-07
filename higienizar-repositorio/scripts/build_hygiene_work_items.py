@@ -313,7 +313,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.json or args.out_dir is None:
         sys.stdout.write(json.dumps(items, ensure_ascii=False, indent=2) + "\n")
         return 0
-    args.out_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        args.out_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        # Falha de criação da saída não pode sair como exceção crua: o diretório é artefato, e artefato
+        # que não nasce por inteiro não pode parecer publicado.
+        print(f"ERRO: falha ao criar {args.out_dir}: {error}", file=sys.stderr)
+        return 1
     for item in items:
         (args.out_dir / f"{item['id']}.json").write_text(
             json.dumps(item, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"

@@ -2572,8 +2572,11 @@ def test_negative_baseline_is_refused() -> None:
 
 def test_scan_refuses_two_artifacts_in_the_same_target(tmp_path: Path) -> None:
     """Achado não bloqueante: Markdown sobrescrevia o JSON no mesmo caminho."""
-    tree = make_tree(tmp_path, {"alpha.py": '"""Modulo sem simbolo."""\n', "README.md": "`alpha.py` usado\n"})
-    target = tmp_path / "artefato"
+    tree = make_tree(
+        tmp_path / "arvore", {"alpha.py": '"""Modulo sem simbolo."""\n', "README.md": "`alpha.py` usado\n"}
+    )
+    (tmp_path / "fora").mkdir()
+    target = tmp_path / "fora" / "artefato"
     result = subprocess.run(
         [
             sys.executable,
@@ -2635,8 +2638,8 @@ def test_report_with_decimal_numbers_is_refused(tmp_path: Path) -> None:
 def test_scan_refuses_equivalent_targets(tmp_path: Path) -> None:
     """Achado bloqueante: caminhos lexicalmente diferentes alcançavam o mesmo arquivo."""
     tree = make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
-    out = tmp_path / "saida"
-    out.mkdir()
+    out = tmp_path / "fora" / "saida"
+    out.mkdir(parents=True)
     result = subprocess.run(
         [
             sys.executable,
@@ -2872,3 +2875,102 @@ def test_target_with_parent_that_is_not_directory_is_refused(tmp_path: Path) -> 
         assert result.returncode != 0, flag
         assert "pai que nao e diretorio" in result.stderr, flag
         assert "Traceback" not in result.stderr, flag
+
+
+def test_citation_index_is_the_measured_scope_for_every_target_shape(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo-arquivo e múltiplos alvos ainda indexavam a árvore inteira."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/orphan.py": "V = 1\n",
+            "other/orphan.py": "V = 2\n",
+            "chosen/keep.py": '"""Modulo."""\n',
+            "README.md": "See orphan.py\n",
+        },
+        policy_variant(accepted=[], **{"scope.exclude_paths": []}),
+    )
+    policy = hygiene_scan.load_policy(tree)
+    report, _ = hygiene_scan.build_report(tree, policy, ["pkg/orphan.py"])
+    assert [entry["path"] for entry in findings_of(report, "dead-module")] == []
+    report, _ = hygiene_scan.build_report(tree, policy, ["pkg", "chosen"])
+    assert [entry["path"] for entry in findings_of(report, "dead-module")] == ["chosen/keep.py"]
+    # Sem alvo declarado o escopo é a árvore, e aí o homônimo é ambíguo de verdade.
+    report, _ = hygiene_scan.build_report(tree, policy)
+    assert sorted(entry["path"] for entry in findings_of(report, "dead-module")) == [
+        "chosen/keep.py",
+        "other/orphan.py",
+        "pkg/orphan.py",
+    ]
+
+
+def test_two_artifacts_with_cyclic_target_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: a comparação de destinos resolvia o caminho antes do tratamento."""
+    first = tmp_path / "fora" / "a"
+    second = tmp_path / "fora" / "b"
+    first.parent.mkdir()
+    first.symlink_to(second)
+    second.symlink_to(first)
+    tree = make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(first),
+            "--markdown",
+            str(tmp_path / "fora" / "out.md"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "nao pode ser resolvido" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def test_generator_refuses_output_that_cannot_be_created(tmp_path: Path) -> None:
+    """Achado bloqueante: criação da saída do gerador saía como exceção crua."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(REPO_ROOT),
+            "--out-dir",
+            "/proc/hygiene-work-items-inexistente",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 1
+    assert "falha ao criar" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def test_failed_publication_leaves_no_artifact(tmp_path: Path) -> None:
+    """Achado bloqueante: falha do segundo artefato deixava o primeiro publicado."""
+    tree = make_tree(tmp_path / "arvore", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    report_path = tmp_path / "fora" / "report.json"
+    report_path.parent.mkdir()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(report_path),
+            "--markdown",
+            "/proc/self/status",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 1
+    assert "falha ao gravar o relatorio" in result.stderr
+    assert not report_path.exists()

@@ -241,6 +241,11 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A décima oitava rodada de auditoria corrigiu o que as dezessete anteriores ainda não garantiam: o índice de citação de nome solto
+passou a ser o conjunto medido em qualquer forma de alvo, e não a árvore inteira quando o alvo é arquivo ou são vários alvos; a
+comparação entre `--report` e `--markdown` passou a usar destinos já resolvidos, e ciclo de links com dois destinos deixou de sair como
+exceção crua; a criação da saída do gerador passou a falhar de forma controlada; e a publicação passou a ser transacional, sem deixar
+artefato de execução reprovada no disco.
 A décima sétima rodada de auditoria corrigiu o que as dezesseis anteriores ainda não garantiam: escopo declarado fora do tipo
 passou a reprovar a política, em vez de derrubar o gate; a citação de nome solto passou a resolver contra o escopo medido, e não
 contra a árvore inteira; destino em ciclo de links passou a ser recusado com mensagem; e pai de destino que não é diretório passou a
