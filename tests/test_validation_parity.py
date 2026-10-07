@@ -45,6 +45,14 @@ def is_validation(command: str) -> bool:
     return command.startswith("python ") and any(marker in command for marker in VALIDATION_MARKERS)
 
 
+# Ações de infraestrutura que não provam estado do repositório: preparar o ambiente e publicar o
+# artefato de release. Qualquer uso novo precisa ser classificado aqui de propósito.
+ALLOWED_USES = (
+    "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+    "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+)
+
 NON_VALIDATION_STEPS = (
     # Produz o artefato de release; nao prova estado do repositorio, entao nao entra na comparacao.
     "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip",
@@ -117,8 +125,21 @@ def test_packaging_is_not_part_of_the_validation_sequence() -> None:
     )
 
 
+def workflow_uses(path: Path) -> list[str]:
+    """Ações externas executadas pelo workflow, na ordem em que aparecem."""
+    return [
+        match.group(1)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if (match := re.match(r"^\s*uses:\s*(\S+)", line))
+    ]
+
+
 def test_every_workflow_step_is_classified() -> None:
-    """Passo novo no workflow precisa ser classificado, para não sair da comparação em silêncio."""
+    """Todo passo do workflow, comando ou ação externa, precisa estar classificado.
+
+    Sem isso, um passo novo entraria no CI sem entrar na comparação com o que está
+    documentado, que é justamente o que este teste existe para impedir.
+    """
     unclassified = [
         command
         for command in workflow_run_commands(WORKFLOW)
@@ -126,6 +147,10 @@ def test_every_workflow_step_is_classified() -> None:
     ]
     assert unclassified == [], (
         "passos do workflow sem classificação de validação: " + " | ".join(unclassified)
+    )
+    unknown_uses = [used for used in workflow_uses(WORKFLOW) if used not in ALLOWED_USES]
+    assert unknown_uses == [], (
+        "ações do workflow sem classificação declarada: " + " | ".join(unknown_uses)
     )
 
 

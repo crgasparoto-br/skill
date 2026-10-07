@@ -490,7 +490,8 @@ def validate_lint(root: Path) -> list[str]:
     if executable is None:
         errors.append("ruff: nao instalado; instalar pelo lockfile antes de validar")
     catalog = catalog_of(executable, errors)
-    errors.extend(policy_errors(policy, catalog))
+    policy_problems = policy_errors(policy, catalog)
+    errors.extend(policy_problems)
     version = installed_version(executable, errors)
     declared = str(policy.get("tool", {}).get("version", ""))
     if version and declared and version != declared:
@@ -502,15 +503,21 @@ def validate_lint(root: Path) -> list[str]:
         errors.append("escopo: nenhum arquivo coberto encontrado; conjunto vazio nao pode ser aprovacao")
     suppression_errors(root, files, policy, errors)
 
-    violations = run_tool(
-        root,
-        executable,
-        str(policy.get("target_version", "py312")),
-        int((policy.get("line_length") or {}).get("value") or 0),
-        select,
-        ignore,
-        files,
-        errors,
+    # Politica quebrada nao executa a analise: a selecao pode ser invalida e a causa seria
+    # confundida com o sintoma que a ferramenta reportaria em cima dela.
+    violations = (
+        []
+        if policy_problems
+        else run_tool(
+            root,
+            executable,
+            str(policy.get("target_version", "py312")),
+            int((policy.get("line_length") or {}).get("value") or 0),
+            select,
+            ignore,
+            files,
+            errors,
+        )
     )
     for violation in violations:
         location = violation.get("location") or {}

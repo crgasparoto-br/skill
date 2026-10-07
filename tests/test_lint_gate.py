@@ -396,17 +396,22 @@ def test_entry_with_letters_of_another_family_is_rejected(tmp_path: Path) -> Non
 
 def test_empty_tool_output_is_a_controlled_failure(tmp_path: Path) -> None:
     """Saída vazia da ferramenta não pode virar aprovação."""
+    real = shutil.which("ruff")
+    assert real, "o gate exige a ferramenta instalada para este teste"
     fake = tmp_path / "bin"
     fake.mkdir()
     executable = fake / "ruff"
+    # Catalogo e versao vem da ferramenta real: a politica fica integra e o caso isola a
+    # saida vazia da analise, que e o comportamento em teste.
     executable.write_text(
         "#!/usr/bin/env python3\n"
+        "import subprocess\n"
         "import sys\n"
+        f"REAL = {real!r}\n"
         "arguments = sys.argv[1:]\n"
-        "if 'rule' in arguments:\n"
-        "    print('[{\"code\": \"F401\"}]')\n"
-        "elif '--version' in arguments:\n"
-        "    print('ruff 0.14.1')\n",
+        "if arguments and arguments[0] == 'check':\n"
+        "    sys.exit(0)\n"
+        "sys.exit(subprocess.run([REAL, *arguments]).returncode)\n",
         encoding="utf-8",
     )
     executable.chmod(0o755)
@@ -424,6 +429,20 @@ def test_empty_tool_output_is_a_controlled_failure(tmp_path: Path) -> None:
     assert completed.returncode == 1
     assert "saida da analise vazia" in completed.stderr
     assert "Traceback" not in completed.stderr
+
+
+def test_broken_policy_does_not_run_the_analysis(tmp_path: Path) -> None:
+    """Política quebrada é a causa: a análise não roda em cima de uma seleção inválida."""
+    policy = load_policy()
+    set_family(policy, "F", "selected", ["f"], [])
+    tree = make_tree(
+        tmp_path,
+        policy,
+        {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"},
+    )
+    errors = validate_lint(tree)
+    assert any("select invalido" in error for error in errors), errors
+    assert not any(error.startswith("ruff:") for error in errors), errors
 
 
 def test_broken_directory_symlink_is_rejected(tmp_path: Path) -> None:

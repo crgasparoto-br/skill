@@ -86,7 +86,9 @@ regras de segurança no estilo bandit, que se sobrepõem a `docs/SECURITY.md` e 
 ampla de exceção, que é o contrato fail-closed dos validadores; e complexidade, que não é sinal de correção aqui.
 ### Supressões
 Uma supressão só é aceita quando o código está na lista permitida da política e a própria diretiva traz a
-justificativa depois de ` - `. A leitura cobre as formas que a ferramenta reconhece: o marcador em qualquer caixa e a
+justificativa depois de ` - `. Uma política quebrada não executa a análise: a causa fica isolada do sintoma que a ferramenta
+reportaria em cima de uma seleção inválida, e a reprovação diz o que precisa ser corrigido.
+A leitura cobre as formas que a ferramenta reconhece: o marcador em qualquer caixa e a
 diretiva de arquivo com prefixo `ruff:` ou `flake8:`. Supressão de arquivo sem código é recusada, porque desliga a
 análise inteira sem deixar o alvo declarado, e diretiva que não suprime nada reprova. A leitura é feita sobre
 comentários reais, então a mesma sequência dentro de uma string não conta como supressão. A lista permitida existe
