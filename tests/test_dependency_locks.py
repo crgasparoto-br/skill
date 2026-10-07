@@ -1040,3 +1040,43 @@ def test_locked_index_ignores_non_regular_lockfiles(tmp_path: Path) -> None:
     (root / "skill").mkdir(parents=True)
     (root / "skill" / "requirements.lock.txt").symlink_to(root / "skill" / "sumiu.lock.txt")
     assert locked_index(root) == {}
+
+
+# ------------------------------------------- fechamento independente do ambiente
+
+
+def test_closure_ignores_environment_bound_fields() -> None:
+    """Contexto, artefato e digest são do ambiente; o fechamento é o que precisa ser do manifest."""
+    from scripts.lock_dependencies import closure_of
+
+    other = MINIMAL_LOCK.replace(
+        "# contexto: python 3.12.3 em linux x86_64", "# contexto: python 3.12.15 em linux x86_64"
+    )
+    other = other.replace("cryptography-50.0.2-py3-none-any.whl", "cryptography-50.0.2-cp312-cp312-manylinux.whl")
+    other = other.replace(DIGEST, "b" * 64)
+    assert closure_of(other) == closure_of(MINIMAL_LOCK)
+
+
+def test_closure_detects_a_different_closure() -> None:
+    from scripts.lock_dependencies import closure_of
+
+    assert closure_of(MINIMAL_LOCK.replace("cryptography==50.0.2", "cryptography==50.0.1")) != closure_of(MINIMAL_LOCK)
+    # A aresta `# via` faz parte do fechamento: acrescentá-la muda o conjunto resolvido.
+    with_via = MINIMAL_LOCK.replace(
+        "# arquivo: cryptography-50.0.2-py3-none-any.whl",
+        "# via cryptography\n# arquivo: cryptography-50.0.2-py3-none-any.whl",
+    )
+    assert closure_of(with_via) != closure_of(MINIMAL_LOCK)
+
+
+@pytest.mark.parametrize("target", ["manifest", "lockfile"])
+def test_invalid_utf8_is_reported_without_traceback(tmp_path: Path, target: str,
+                                                    capsys: pytest.CaptureFixture[str]) -> None:
+    """Conteúdo que não é UTF-8 reprova de forma controlada, sem traceback."""
+    root = minimal(tmp_path)
+    path = root / "skill" / ("requirements.txt" if target == "manifest" else "requirements.lock.txt")
+    path.write_bytes(b"cryptography>=50.0.1\n\xff\xfe\n")
+    assert main(["--root", str(root), "--quiet"]) == 1
+    captured = capsys.readouterr()
+    assert "UTF-8" in captured.err or "ilegivel" in captured.err
+    assert "Traceback" not in captured.err

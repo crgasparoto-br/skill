@@ -187,8 +187,14 @@ def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict
         return []
     seen.add(resolved)
 
+    try:
+        content = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        errors.append(f"{prefix}: {relative(path, root)}: manifest ilegivel ou fora de UTF-8")
+        return []
+
     found: list[tuple[str, str, str]] = []
-    for raw in path.read_text(encoding="utf-8").splitlines():
+    for raw in content.splitlines():
         line = raw.split("#", 1)[0].strip()
         if not line:
             continue
@@ -385,8 +391,11 @@ def validate_manifest(root: Path, manifest: Path) -> list[str]:
     if not confined(lock, root):
         return [f"{relative(lock, root)}: lockfile resolve para fora da raiz do repositorio"]
 
-    text = lock.read_text(encoding="utf-8")
     where = relative(lock, root)
+    try:
+        text = lock.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return [f"{where}: lockfile ilegivel ou fora de UTF-8"]
     source = SOURCE_RE.search(text)
     if not source:
         errors.append(f"{where}: cabecalho sem o manifest de origem")

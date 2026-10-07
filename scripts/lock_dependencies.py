@@ -32,8 +32,8 @@ from pathlib import Path
 
 LOCK_SUFFIX = ".lock.txt"
 NORMALIZE_RE = re.compile(r"[-_.]+")
-
-
+ENTRY_LINE_RE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==(\S+?)\s*\\?$")
+VIA_LINE_RE = re.compile(r"^#\s*via\s+(.+)$")
 def normalize(name: str) -> str:
     """Nome normalizado conforme PEP 503."""
     return NORMALIZE_RE.sub("-", name.strip().lower())
@@ -152,6 +152,39 @@ def lock_path(manifest: Path) -> Path:
     return manifest.with_name(manifest.stem + LOCK_SUFFIX)
 
 
+def context_line() -> str:
+    """Linha de contexto do lockfile para o ambiente que executa o gerador."""
+    return f"# contexto: python {platform.python_version()} em {platform.system().lower()} {platform.machine()}"
+
+
+def closure_of(text: str) -> tuple[dict[str, str], dict[str, frozenset[str]]]:
+    """Fechamento resolvido: nome, versão e arestas `# via`, sem o que é do ambiente.
+
+    O contexto de resolução, o nome do artefato escolhido e o digest são do ambiente que
+    resolveu, e por isso não entram nesta comparação: o que precisa ser o do manifest é o
+    conjunto de pacotes, as versões e as arestas de dependência que o manifest produz.
+    """
+    versions: dict[str, str] = {}
+    parents: dict[str, frozenset[str]] = {}
+    pending: frozenset[str] = frozenset()
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            via = VIA_LINE_RE.match(stripped)
+            if via:
+                pending = frozenset(
+                    normalize(part) for part in re.split(r"[,\s]+", via.group(1)) if part
+                )
+            continue
+        match = ENTRY_LINE_RE.match(stripped)
+        if match:
+            name = normalize(match.group(1))
+            versions[name] = match.group(2)
+            parents[name] = pending
+            pending = frozenset()
+    return versions, parents
+
+
 def manifests_for(root: Path, skill: str | None) -> list[Path]:
     # O ferramental do catálogo tem manifest na raiz, e os skills um nível abaixo: cobrir apenas
     # um dos dois deixaria manifest sem lockfile.
@@ -180,18 +213,34 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     drifted: list[str] = []
+    notes: list[str] = []
     for manifest in manifests:
         content = build_lock(manifest, root, resolve(manifest))
         target = lock_path(manifest)
         current = target.read_text(encoding="utf-8") if target.is_file() else ""
         if args.check:
-            if current != content:
-                drifted.append(target.relative_to(root).as_posix())
+            where = target.relative_to(root).as_posix()
+            if closure_of(current) != closure_of(content):
+                drifted.append(where)
+            elif current != content:
+                # O fechamento coincide e o restante difere: ou o contexto do lockfile é de outro
+                # ambiente, e então o artefato e o digest são verificados por
+                # `scripts/audit_dependencies.py` contra o artefato real, ou o contexto é deste
+                # ambiente, e o lockfile precisa ser idêntico ao que o gerador produz.
+                if context_line() in current:
+                    drifted.append(where)
+                else:
+                    notes.append(
+                        f"{where}: contexto de outro ambiente; fechamento conferido e artefato "
+                        "verificado pela auditoria de dependencias"
+                    )
             continue
         target.write_text(content, encoding="utf-8")
         print(f"escrito {target.relative_to(root).as_posix()}")
 
     if args.check:
+        for note in notes:
+            print(f"AVISO: {note}", file=sys.stderr)
         if drifted:
             for path in drifted:
                 print(f"lockfile dessincronizado: {path}", file=sys.stderr)
