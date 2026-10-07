@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.validate_lint import POLICY, catalog_of, validate_lint
+from scripts.validate_lint import POLICY, catalog_of, tool_path, validate_lint
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / POLICY
@@ -74,7 +74,7 @@ def test_repository_tree_passes_the_gate() -> None:
 
 def test_policy_covers_every_family_of_the_installed_tool() -> None:
     errors: list[str] = []
-    catalog = catalog_of(errors)
+    catalog = catalog_of(tool_path(), errors)
     if not catalog:
         pytest.skip(f"ruff indisponivel para listar o catalogo: {errors}")
     declared = {entry["prefix"] for entry in load_policy()["families"]}
@@ -423,4 +423,68 @@ def test_empty_tool_output_is_a_controlled_failure(tmp_path: Path) -> None:
     )
     assert completed.returncode == 1
     assert "saida da analise vazia" in completed.stderr
+    assert "Traceback" not in completed.stderr
+
+
+def test_broken_directory_symlink_is_rejected(tmp_path: Path) -> None:
+    """Link de diretório quebrado aparece como arquivo e não pode sair da análise em silêncio."""
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"})
+    (tree / "link").symlink_to(tmp_path / "inexistente", target_is_directory=True)
+    errors = validate_lint(tree)
+    assert any("link simbolico quebrado ou ciclico" in error for error in errors), errors
+
+
+def test_cyclic_symlink_is_rejected(tmp_path: Path) -> None:
+    """Ciclo de links não pode desaparecer do conjunto varrido."""
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"})
+    (tree / "a").symlink_to(tree / "b", target_is_directory=True)
+    (tree / "b").symlink_to(tree / "a", target_is_directory=True)
+    errors = validate_lint(tree)
+    assert any("link simbolico quebrado ou ciclico" in error for error in errors), errors
+
+
+def test_lowercase_entry_is_rejected_by_the_policy(tmp_path: Path) -> None:
+    """Entrada em caixa diferente reprova na política, antes de chegar à ferramenta."""
+    policy = load_policy()
+    set_family(policy, "F", "selected", ["f"], [])
+    tree = make_tree(tmp_path, policy, {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"})
+    errors = validate_lint(tree)
+    assert any("select invalido" in error for error in errors), errors
+
+
+def test_tool_that_disappears_before_the_analysis_is_rejected(tmp_path: Path) -> None:
+    """Executável que desaparece entre a versão e a análise não pode virar aprovação."""
+    real = shutil.which("ruff")
+    assert real, "o gate exige a ferramenta instalada para este teste"
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    executable = fake / "ruff"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import os\n"
+        "import subprocess\n"
+        "import sys\n"
+        f"REAL = {real!r}\n"
+        "arguments = sys.argv[1:]\n"
+        "if '--version' in arguments:\n"
+        "    print('ruff 0.14.1')\n"
+        "    os.remove(__file__)\n"
+        "    sys.exit(0)\n"
+        "sys.exit(subprocess.run([REAL, *arguments]).returncode)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    tree = make_tree(tmp_path / "tree", load_policy(), {"mod.py": "def total(values: list[int]) -> int:\n    return sum(values)\n"})
+    environment = dict(os.environ)
+    environment["PATH"] = f"{fake}:{environment.get('PATH', '')}"
+    completed = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "validate_lint.py"), "--root", str(tree)],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(ROOT),
+        env=environment,
+    )
+    assert completed.returncode == 1
+    assert "indisponivel no momento da analise" in completed.stderr
     assert "Traceback" not in completed.stderr

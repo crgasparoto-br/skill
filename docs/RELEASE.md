@@ -96,13 +96,16 @@ no mesmo commit.
 ### Escopo varrido
 O que o gate varre é declarado na política, não presumido pelo código: os sufixos cobertos (`.py` e `.pyi`) e os
 diretórios excluídos, que são controle de versão, cache de ferramenta ou saída de empacotamento gerada. Um arquivo
-coberto que seja link simbólico para fora da raiz, um diretório do escopo que seja link simbólico, um diretório
-ilegível, uma saída da ferramenta vazia ou em formato inesperado e um conjunto varrido sem nenhum arquivo coberto
-reprovam com causa explícita, em vez de reduzir o conjunto analisado em silêncio ou tratar o vazio como aprovação.
+coberto que seja link simbólico para fora da raiz, um diretório do escopo que seja link simbólico, um link quebrado
+ou em ciclo, um diretório ilegível, uma saída da ferramenta vazia ou em formato inesperado, a ausência do executável
+no momento da análise e um conjunto varrido sem nenhum arquivo coberto reprovam com causa explícita, em vez de
+reduzir o conjunto analisado em silêncio ou tratar o vazio como aprovação.
 ### Limite declarado
 O gate verifica presença e extensão do motivo declarado, não a veracidade dele: um motivo longo e enganoso passa.
 A honestidade do motivo depende da revisão independente da mudança, e é por isso que alterar a política é alteração
 revisável que precisa vir no mesmo commit do código que ela autoriza.
+Os diretórios excluídos são pulados por nome, então um link simbólico que use um desses nomes não é inspecionado: o
+que decide é o escopo declarado na política, e alterá-lo é a forma de mudar o conjunto varrido.
 
 ## Dependências e política de exceção
 

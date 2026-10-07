@@ -45,7 +45,13 @@ def is_validation(command: str) -> bool:
     return command.startswith("python ") and any(marker in command for marker in VALIDATION_MARKERS)
 
 
-def workflow_commands(path: Path) -> list[str]:
+NON_VALIDATION_STEPS = (
+    # Produz o artefato de release; nao prova estado do repositorio, entao nao entra na comparacao.
+    "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip",
+)
+
+
+def workflow_run_commands(path: Path) -> list[str]:
     commands: list[str] = []
     lines = path.read_text(encoding="utf-8").splitlines()
     index = 0
@@ -69,7 +75,11 @@ def workflow_commands(path: Path) -> list[str]:
             continue
         commands.append(value)
         index += 1
-    return [normalized for normalized in (normalize(command) for command in commands) if is_validation(normalized)]
+    return [normalize(command) for command in commands]
+
+
+def workflow_commands(path: Path) -> list[str]:
+    return [command for command in workflow_run_commands(path) if is_validation(command)]
 
 
 def markdown_commands(path: Path) -> list[str]:
@@ -104,6 +114,18 @@ def test_packaging_is_not_part_of_the_validation_sequence() -> None:
     """O empacotamento do skill é release: fica fora da sequência comparada de propósito."""
     assert not is_validation(
         "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip"
+    )
+
+
+def test_every_workflow_step_is_classified() -> None:
+    """Passo novo no workflow precisa ser classificado, para não sair da comparação em silêncio."""
+    unclassified = [
+        command
+        for command in workflow_run_commands(WORKFLOW)
+        if not is_validation(command) and command not in NON_VALIDATION_STEPS
+    ]
+    assert unclassified == [], (
+        "passos do workflow sem classificação de validação: " + " | ".join(unclassified)
     )
 
 

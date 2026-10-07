@@ -19,6 +19,7 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tokenize
@@ -99,17 +100,18 @@ def family_errors(
     """A familia precisa decidir sobre todas as suas regras, no nivel da regra."""
     errors: list[str] = []
     family_codes = {code for code, family in catalog.items() if family == prefix}
+    for label, raw_items in (("select", select), ("ignore", ignore)):
+        for raw in raw_items:
+            text = str(raw)
+            if text != text.upper() or not ENTRY_RE.fullmatch(text):
+                errors.append(f"politica: familia {prefix} declara {label} invalido: {raw!r}")
+                continue
+            if re.sub(r"[^A-Z]", "", text) != prefix:
+                errors.append(
+                    f"politica: familia {prefix} declara {label} {text}, que nao pertence a familia"
+                )
     entries = [str(item).upper() for item in select]
     ignored_entries = [str(item).upper() for item in ignore]
-    for label, items in (("select", entries), ("ignore", ignored_entries)):
-        for item in items:
-            if not ENTRY_RE.fullmatch(item):
-                errors.append(f"politica: familia {prefix} declara {label} invalido: {item!r}")
-                continue
-            if re.sub(r"[^A-Z]", "", item) != prefix:
-                errors.append(
-                    f"politica: familia {prefix} declara {label} {item}, que nao pertence a familia"
-                )
     if not family_codes:
         return errors
     selected = covered(family_codes, entries)
@@ -236,11 +238,18 @@ def selection_of(policy: dict) -> tuple[list[str], list[str]]:
     return select, ignore
 
 
-def catalog_of(errors: list[str]) -> dict[str, str]:
+def tool_path() -> str | None:
+    """Executavel resolvido uma vez, para que a analise use o mesmo que foi verificado."""
+    return shutil.which("ruff")
+
+
+def catalog_of(executable: str | None, errors: list[str]) -> dict[str, str]:
     """Codigo de regra para familia, segundo o catalogo da ferramenta instalada."""
+    if executable is None:
+        return {}
     try:
         completed = subprocess.run(
-            ["ruff", "rule", "--all", "--output-format", "json"],
+            [executable, "rule", "--all", "--output-format", "json"],
             capture_output=True,
             text=True,
             check=False,
@@ -274,10 +283,12 @@ def catalog_of(errors: list[str]) -> dict[str, str]:
     return catalog
 
 
-def installed_version(errors: list[str]) -> str | None:
+def installed_version(executable: str | None, errors: list[str]) -> str | None:
+    if executable is None:
+        return None
     try:
         completed = subprocess.run(
-            ["ruff", "--version"], capture_output=True, text=True, check=False
+            [executable, "--version"], capture_output=True, text=True, check=False
         )
     except FileNotFoundError:
         errors.append("ruff: nao instalado; instalar pelo lockfile antes de validar")
@@ -324,9 +335,19 @@ def python_files(root: Path, policy: dict, errors: list[str]) -> list[Path]:
             kept.append(name)
         dirnames[:] = kept
         for name in sorted(filenames):
+            path = Path(dirpath) / name
+            if path.is_symlink():
+                # Um link quebrado ou ciclico aparece como arquivo, nao como diretorio, e sumiria
+                # do conjunto sem aparecer se o filtro de sufixo viesse primeiro.
+                try:
+                    path.resolve(strict=True)
+                except (OSError, RuntimeError):
+                    errors.append(
+                        f"{relative(path, root)}: link simbolico quebrado ou ciclico no escopo"
+                    )
+                    continue
             if not name.endswith(extensions):
                 continue
-            path = Path(dirpath) / name
             if not confined(path, root):
                 errors.append(
                     f"{relative(path, root)}: arquivo coberto aponta para fora da raiz do repositorio"
@@ -393,6 +414,7 @@ def suppression_errors(root: Path, files: list[Path], policy: dict, errors: list
 
 def run_tool(
     root: Path,
+    executable: str | None,
     target_version: str,
     line_length: int,
     select: list[str],
@@ -401,10 +423,10 @@ def run_tool(
     errors: list[str],
 ) -> list[dict]:
     """Executa a ferramenta sem cache, exatamente com a decisao declarada na politica."""
-    if not files:
+    if not files or executable is None:
         return []
     command = [
-        "ruff", "check",
+        executable, "check",
         "--no-cache",
         "--quiet",
         "--target-version", target_version,
@@ -424,6 +446,7 @@ def run_tool(
             timeout=TOOL_TIMEOUT_SECONDS * 5,
         )
     except FileNotFoundError:
+        errors.append("ruff: executavel indisponivel no momento da analise; reinstalar pelo lockfile")
         return []
     except subprocess.TimeoutExpired:
         errors.append("ruff: tempo esgotado ao analisar o codigo")
@@ -463,9 +486,12 @@ def validate_lint(root: Path) -> list[str]:
     if policy is None:
         return errors
 
-    catalog = catalog_of(errors)
+    executable = tool_path()
+    if executable is None:
+        errors.append("ruff: nao instalado; instalar pelo lockfile antes de validar")
+    catalog = catalog_of(executable, errors)
     errors.extend(policy_errors(policy, catalog))
-    version = installed_version(errors)
+    version = installed_version(executable, errors)
     declared = str(policy.get("tool", {}).get("version", ""))
     if version and declared and version != declared:
         errors.append(f"ruff: versao instalada {version} diverge da declarada {declared}")
@@ -478,6 +504,7 @@ def validate_lint(root: Path) -> list[str]:
 
     violations = run_tool(
         root,
+        executable,
         str(policy.get("target_version", "py312")),
         int((policy.get("line_length") or {}).get("value") or 0),
         select,
