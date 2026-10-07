@@ -50,7 +50,7 @@ from scripts.lock_dependencies import LOCK_SUFFIX, normalize  # noqa: E402
 
 HASH_RE = re.compile(r"^--hash=sha256:([0-9a-f]{64})$")
 ARTIFACT_RE = re.compile(r"^#\s*arquivo:\s*(\S+)$")
-ENTRY_RE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._+!-]*)==([^\s\\,]+)$")
+ENTRY_RE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==([^\s\\,]+)$")
 VERSION_RE = re.compile(r"^[0-9][0-9A-Za-z.!+_-]*$")
 VIA_RE = re.compile(r"^#\s*via\s+(.+)$")
 SOURCE_RE = re.compile(r"^#\s*lockfile gerado de\s+(\S+)", re.MULTILINE)
@@ -241,10 +241,12 @@ def satisfies(version: str, specifier: str) -> bool:
                     raise ValueError(f"curinga com operador {operator}")
                 if "+" in prefix:
                     raise ValueError(f"curinga com versao local: {target}")
-                matches = compare(current, prefix) == 0 or (
-                    current.startswith(prefix + ".") and len(current) > len(prefix)
-                )
-                if (operator == "==") != matches:
+                # O curinga casa pelo segmento de release: comparar texto perderia
+                # `50.0.2a1` em `!=50.0.2.*`, que a PEP 440 exclui por ser do prefixo.
+                matches = matches_release_prefix(current, prefix)
+                if (operator == "==") and not matches:
+                    return False
+                if (operator == "!=") and matches:
                     return False
                 continue
             outcome = compare(current, target)
@@ -279,6 +281,15 @@ def satisfies(version: str, specifier: str) -> bool:
         return False
 
 
+def matches_release_prefix(version: str, prefix: str) -> bool:
+    """Curinga PEP 440: o release da versão começa pelo release do prefixo."""
+    epoch, release, _, _, _, _ = parse_version(version)
+    prefix_epoch, prefix_release, _, _, _, _ = parse_version(prefix)
+    if epoch != prefix_epoch:
+        return False
+    return len(release) >= len(prefix_release) and release[: len(prefix_release)] == prefix_release
+
+
 def artifact_matches(name: str, version: str, filename: str) -> bool:
     """O artefato declarado é uma distribuição do pacote fixado, na versão fixada."""
     if not filename.endswith(ARTIFACT_SUFFIXES):
@@ -299,9 +310,16 @@ def artifact_matches(name: str, version: str, filename: str) -> bool:
     if normalize(parts[0]) != name or parts[1] != version:
         return False
     if filename.endswith(".whl"):
-        # Uma wheel nomeia nome, versão e as etiquetas de Python, ABI e plataforma; sem as três
-        # etiquetas o nome não é distribuição publicável.
-        if len(parts) < 5 or not all(parts[-3:]):
+        # Uma wheel PEP 427 tem nome, versão, etiquetas de Python, ABI e plataforma e, quando
+        # existe, uma etiqueta de build que começa com dígito: um campo intermediário livre,
+        # como `-extra-`, não é uma distribuição publicável.
+        if len(parts) == 5:
+            tags = parts[2:]
+        elif len(parts) == 6 and parts[2][:1].isdigit():
+            tags = parts[3:]
+        else:
+            return False
+        if not all(tags):
             return False
     elif len(parts) != 2:
         return False
@@ -516,8 +534,9 @@ def parse_lock(text: str) -> tuple[dict[str, dict], list[str]]:
 def locked_index(root: Path) -> dict[str, set[str]]:
     """Pacote -> versões fixadas em algum lockfile do repositório."""
     index: dict[str, set[str]] = {}
-    for lock in root.glob(f"*/requirements*{LOCK_SUFFIX}"):
-        if not lock.is_file():
+    for lock in discover_lockfiles(root):
+        # Lockfile que resolve para fora da raiz não pode alimentar o índice da política.
+        if not confined(lock, root):
             continue
         entries, _ = parse_lock(lock.read_text(encoding="utf-8"))
         for name, entry in entries.items():
@@ -706,11 +725,27 @@ def discover_manifests(root: Path) -> list[Path]:
     )
 
 
+def discover_lockfiles(root: Path) -> list[Path]:
+    """Lockfiles esperados, inclusive symlink, para que nenhum passe despercebido."""
+    return sorted(
+        path
+        for path in root.glob(f"*/requirements*{LOCK_SUFFIX}")
+        if path.is_file() or path.is_symlink()
+    )
+
+
 def validate_dependency_locks(root: Path) -> list[str]:
     """Todos os erros de lockfile e de política, para o validador agregador."""
     errors: list[str] = []
-    for manifest in discover_manifests(root):
+    manifests = discover_manifests(root)
+    paired = {manifest.with_name(manifest.stem + LOCK_SUFFIX).resolve() for manifest in manifests}
+    for manifest in manifests:
         errors.extend(validate_manifest(root, manifest))
+    for lock in discover_lockfiles(root):
+        if not confined(lock, root):
+            errors.append(f"{relative(lock, root)}: lockfile resolve para fora da raiz do repositorio")
+        elif lock.resolve() not in paired:
+            errors.append(f"{relative(lock, root)}: lockfile sem manifest correspondente")
     policy_errors, _ = validate_policy(root, locked_index(root))
     return errors + policy_errors
 

@@ -858,3 +858,80 @@ def test_discovery_includes_symlinked_manifest(tmp_path: Path) -> None:
     (root / "skill").mkdir(parents=True)
     (root / "skill" / "requirements.txt").symlink_to(tmp_path / "sumiu.txt")
     assert [path.name for path in discover_manifests(root)] == ["requirements.txt"]
+
+
+# ------------------------------------------- oitava rodada de auditoria independente
+
+
+@pytest.mark.parametrize(("version", "specifier", "expected"), [
+    ("50.0.2a1", "!=50.0.2.*", False),
+    ("50.0.2a1", "==50.0.2.*", True),
+    ("50.0.2", "==50.0.2.*", True),
+    ("50.0.2.1", "==50.0.2.*", True),
+    ("50.0.2.post1", "==50.0.2.*", True),
+    ("50.0.3", "==50.0.2.*", False),
+    ("50.0.3", "!=50.0.2.*", True),
+])
+def test_wildcard_matches_the_release_prefix(version: str, specifier: str, expected: bool) -> None:
+    """Casar por texto perderia `50.0.2a1` em `!=50.0.2.*`, que a PEP 440 exclui."""
+    assert satisfies(version, specifier) is expected
+
+
+@pytest.mark.parametrize(("artifact", "expected"), [
+    ("cryptography-50.0.2-py3-none-any.whl", True),
+    ("cryptography-50.0.2-1abc-py3-none-any.whl", True),
+    ("cryptography-50.0.2-extra-py3-none-any.whl", False),
+    ("cryptography-50.0.2-fake.whl", False),
+    ("cryptography-50.0.2.tar.gz", True),
+])
+def test_wheel_grammar_fields(artifact: str, expected: bool) -> None:
+    """Campo intermediário livre não é distribuição publicável; etiqueta de build começa com dígito."""
+    from scripts.validate_dependency_locks import artifact_matches
+
+    assert artifact_matches("cryptography", "50.0.2", artifact) is expected
+
+
+def build_lock_only(tmp_path: Path, symlink_outside: bool) -> Path:
+    root = tmp_path / "repo"
+    (root / "skill").mkdir(parents=True)
+    (root / "config").mkdir()
+    (root / "config" / "dependency-policy.json").write_text(
+        json.dumps({"schema_version": 1, "exceptions": []}), encoding="utf-8"
+    )
+    lock = root / "skill" / "requirements.lock.txt"
+    if symlink_outside:
+        outside = tmp_path / "externo.lock.txt"
+        outside.write_text(MINIMAL_LOCK, encoding="utf-8")
+        lock.symlink_to(outside)
+    else:
+        lock.write_text(MINIMAL_LOCK, encoding="utf-8")
+    return root
+
+
+def test_orphan_external_lockfile_is_detected(tmp_path: Path,
+                                              capsys: pytest.CaptureFixture[str]) -> None:
+    """Lockfile externo não pode alimentar o índice da política nem passar despercebido."""
+    root = build_lock_only(tmp_path, symlink_outside=True)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "resolve para fora" in capsys.readouterr().err
+
+
+def test_orphan_internal_lockfile_is_detected(tmp_path: Path,
+                                              capsys: pytest.CaptureFixture[str]) -> None:
+    root = build_lock_only(tmp_path, symlink_outside=False)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "sem manifest correspondente" in capsys.readouterr().err
+
+
+def test_locked_index_ignores_lockfiles_outside_the_root(tmp_path: Path) -> None:
+    from scripts.validate_dependency_locks import locked_index
+
+    root = build_lock_only(tmp_path, symlink_outside=True)
+    assert locked_index(root) == {}
+
+
+@pytest.mark.parametrize("name", ["evil!", "evil+"])
+def test_invalid_package_name_in_lockfile_is_detected(tmp_path: Path, name: str) -> None:
+    """`!` e `+` não fazem parte da gramática de nome de distribuição."""
+    lock = MINIMAL_LOCK.replace("cryptography==", f"{name}==", 1)
+    assert run(minimal(tmp_path, lock=lock)) == 1
