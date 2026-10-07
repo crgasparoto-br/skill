@@ -38,7 +38,7 @@ A higiene que acompanha uma entrega olha o diff: arquivo tocado, consumidor dire
 - `unused-dependency`: requisito declarado em manifest e nunca importado no escopo do manifest, com ferramenta executada declarada na politica e comentario em linha descartado do nome.
 - `complexity`: complexidade ciclomatica do proprio corpo da funcao acima do teto declarado; funcao aninhada e medida por si e gestao de recurso com `with` nao conta como ramo.
 
-Cada classe declara na politica o que **nao** ve, e a politica declara o escopo de leitura: `scope.corpus_suffixes` lista os formatos de texto conferidos na busca por citacao, porque formato fora da lista produz falso positivo em classe `gated`. Tratar o relatorio como completo onde a classe declara limite e erro de leitura, nao de ferramenta.
+Cada classe declara na politica o que **nao** ve, e a politica declara o escopo de leitura: `scope.corpus_suffixes` lista os formatos de texto conferidos na busca por citacao, porque formato fora da lista produz falso positivo em classe `gated`. Excecao tambem e declarada, nunca escondida no codigo: `classes.dead-module.exclude_tests` diz se diretorio de teste fica fora da varredura de modulo, e `classes.dead-symbol.ignore_names` nomeia o que o proprio interpretador consome. Tratar o relatorio como completo onde a classe declara limite e erro de leitura, nao de ferramenta.
 
 ## Execucao
 1. Conferir a politica e o contrato: `python higienizar-repositorio/scripts/validate_hygiene.py --root .`.
@@ -46,14 +46,15 @@ Cada classe declara na politica o que **nao** ve, e a politica declara o escopo 
 3. Produzir os work items: `python higienizar-repositorio/scripts/build_hygiene_work_items.py --root . --report <arquivo.json> --out-dir <diretorio>`.
 4. Encaminhar os work items ao controlador de entrega, que abre a issue e define prioridade.
 
-Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O passo 1 e obrigatorio antes de qualquer leitura do relatorio.
+Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O modo direcionado restringe o conjunto analisado — arquivos, manifests e achados —, e a busca por citacao continua lendo a arvore inteira: citacao e propriedade da arvore, e restringi-la produziria falso positivo de simbolo morto. O passo 1 e obrigatorio antes de qualquer leitura do relatorio.
 
 ## Leitura do relatorio
 - `open` em classe `gated` e divida sem decisao: corrigir ou declarar em `accepted`, com justificativa escrita.
 - `accepted` e divida conhecida e aceita, com motivo registrado: continua sendo work item. A justificativa precisa ser texto de verdade — extensao minima, palavras e variedade —, porque preenchimento nao e justificativa; o merito e da revisao, a forma e do gate.
 - Classe `reported` nao aceita excecao item a item: a divida dela e agregada e a contagem precisa ser exatamente a linha de base declarada, nem acima (divida nova) nem abaixo (linha de base folgada).
 - A linha de base de classe `reported` vive numa historia declarada na politica: crescer exige entrada nova com motivo escrito, e reduzir e progresso e nao exige justificativa.
-- `excluded` e exclusao declarada com motivo, caminho relativo dentro da raiz e visivel no relatorio: escopo que encolhe sem aparecer no relatorio e indistinguivel de aprovacao, e o gate reprova.
+- `excluded` e exclusao declarada com motivo, caminho relativo canonico dentro da raiz e visivel no relatorio: escopo que encolhe sem aparecer no relatorio e indistinguivel de aprovacao, e o gate reprova. `scope.exclude_dirs` cobre a subarvore inteira, e a entrada pode ser caminho composto como `evals/fixtures`.
+- A leitura de texto para citacao fica contida na raiz: link que resolve para fora entra em `not_analyzed`, porque texto de fora nao pode apagar achado da arvore medida.
 - `not_analyzed` e buraco de cobertura, nunca limpeza: arquivo ilegivel, link quebrado, caminho que resolve para fora da raiz ou erro de sintaxe precisa ser corrigido ou declarado na politica. Permissao declarada sem arquivo correspondente tambem reprova.
 
 ## Contratos

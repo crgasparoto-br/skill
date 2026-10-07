@@ -892,3 +892,180 @@ def test_work_item_is_validated_against_its_contract(tmp_path: Path) -> None:
     )
     assert result.returncode == 2
     assert "work item nao atende ao contrato" in result.stderr
+
+
+def test_exclude_dirs_compound_path_covers_subtree(tmp_path: Path) -> None:
+    """Achado bloqueante: diretório excluído com caminho composto não saía do escopo."""
+    document = policy_variant(**{"scope.exclude_dirs": ["excluded/sub"]})
+    tree = make_tree(
+        tmp_path,
+        {
+            "excluded/sub/hidden.py": "def public_api(value):\n    return value\n",
+            "excluded/sub/notes.md": "public_api\n",
+            "alpha.py": "def public_api(value):\n    return value\n",
+            "README.md": "`alpha.py`\n",
+        },
+        document,
+    )
+    report = scan(tree)
+    assert findings_of(report, "dead-module") == []
+    assert report["analyzed"] == 1
+    # O texto excluído não conta como citação: `public_api` fica sem referência na árvore medida.
+    assert [finding["symbol"] for finding in findings_of(report, "dead-symbol")] == ["public_api"]
+
+
+def test_corpus_symlink_outside_root_is_reported(tmp_path: Path) -> None:
+    """Achado bloqueante: corpus com link para fora da raiz apagava achado da árvore."""
+    outside = tmp_path / "outside.md"
+    outside.write_text("public_api\n", encoding="utf-8")
+    tree = make_tree(tmp_path / "tree", {"alpha.py": "def public_api(value):\n    return value\n"})
+    (tree / "external.md").symlink_to(outside)
+    report = scan(tree)
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["external.md"]
+    assert [finding["symbol"] for finding in findings_of(report, "dead-symbol")] == ["public_api"]
+    assert any("nao analisado" in error for error in validate_hygiene.validate_hygiene(tree))
+
+
+def test_normalization_preserves_string_literal(tmp_path: Path) -> None:
+    """Achado bloqueante: normalização por texto alcançava o conteúdo de literal."""
+    policy = policy_variant(**{"classes.duplication.min_body_lines": 2})
+    body = 'def {name}(x):\n    total = "name=\'{literal}\'"\n    return total\n'
+    findings = findings_of(
+        scan(
+            make_tree(
+                tmp_path,
+                {
+                    "a.py": body.format(name="alpha", literal="foo"),
+                    "b.py": body.format(name="beta", literal="bar"),
+                },
+                policy,
+            )
+        ),
+        "duplication",
+    )
+    assert findings == []
+    same = findings_of(
+        scan(
+            make_tree(
+                tmp_path / "second",
+                {
+                    "a.py": body.format(name="alpha", literal="foo"),
+                    "b.py": body.format(name="beta", literal="foo"),
+                },
+                policy,
+            )
+        ),
+        "duplication",
+    )
+    assert len(same) == 2
+
+
+def test_complexity_ignores_default_and_decorator(tmp_path: Path) -> None:
+    """Achado bloqueante: default de parâmetro e decorator inflavam a complexidade do corpo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "alpha.py": (
+                "def decorated(flag=(1 if FLAG else 2)):\n"
+                "    return flag\n"
+                "\n"
+                "\n"
+                "@staticmethod\n"
+                "def other(value):\n"
+                "    return value\n"
+            ),
+        },
+        measured_policy(max_complexity=1),
+    )
+    assert findings_of(scan(tree), "complexity") == []
+
+
+def test_invalid_relative_import_keeps_module_dead(tmp_path: Path) -> None:
+    """Achado bloqueante: import relativo inválido mantinha módulo vivo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "consumer.py": "from . import orphan\n",
+            "orphan.py": "V = 1\n",
+            "README.md": "`consumer.py`\n",
+        },
+    )
+    assert [finding["path"] for finding in findings_of(scan(tree), "dead-module")] == ["orphan.py"]
+
+
+def test_dunder_symbol_needs_declaration(tmp_path: Path) -> None:
+    """Achado bloqueante: nome dunder era exceção escondida no código."""
+    tree = make_tree(tmp_path, {"alpha.py": "__version__ = \"1\"\n", "README.md": "`alpha.py`\n"})
+    assert [finding["symbol"] for finding in findings_of(scan(tree), "dead-symbol")] == ["__version__"]
+    declared = make_tree(
+        tmp_path / "second",
+        {"alpha.py": "__version__ = \"1\"\n", "README.md": "`alpha.py`\n"},
+        policy_variant(**{"classes.dead-symbol.ignore_names": ["__version__"]}),
+    )
+    assert findings_of(scan(declared), "dead-symbol") == []
+
+
+def test_dead_module_test_exclusion_follows_policy(tmp_path: Path) -> None:
+    """Achado bloqueante: exclusão de teste era fixa no código, sem declaração na política."""
+    files = {
+        "tests/orphan.py": "VALUE = 1\n",
+        "alpha.py": "def used(value):\n    return value\n",
+        "README.md": "`alpha.py`\n",
+    }
+    excluded = make_tree(tmp_path, files, policy_variant(**{"classes.dead-module.exclude_tests": True}))
+    assert findings_of(scan(excluded), "dead-module") == []
+    included = make_tree(
+        tmp_path / "second", files, policy_variant(**{"classes.dead-module.exclude_tests": False})
+    )
+    assert [finding["path"] for finding in findings_of(scan(included), "dead-module")] == ["tests/orphan.py"]
+
+
+def test_unused_dependency_respects_declared_scope(tmp_path: Path) -> None:
+    """Achado bloqueante: manifest em diretório excluído continuava sendo analisado."""
+    document = policy_variant(**{"scope.exclude_dirs": ["skip"]})
+    tree = make_tree(
+        tmp_path,
+        {
+            "skip/requirements.txt": "requests>=2\n",
+            "skip/a.py": "import requests\n",
+            "alpha.py": "def used(value):\n    return value\n",
+        },
+        document,
+    )
+    assert findings_of(scan(tree), "unused-dependency") == []
+    targeted = make_tree(
+        tmp_path / "second",
+        {"sub/requirements.txt": "requests>=2\n", "sub/a.py": "import requests\n", "alpha.py": "V = 1\n"},
+    )
+    report, _ = hygiene_scan.build_report(targeted, hygiene_scan.load_policy(targeted), ["alpha.py"])
+    assert findings_of(report, "unused-dependency") == []
+
+
+def test_corpus_suffixes_shape_is_validated() -> None:
+    """Achado não bloqueante: forma de corpus_suffixes só falhava durante a varredura."""
+    assert any(
+        "corpus_suffixes" in error
+        for error in validate_hygiene.policy_errors(policy_variant(**{"scope.corpus_suffixes": [1]}))
+    )
+    assert any(
+        "corpus_suffixes" in error
+        for error in validate_hygiene.policy_errors(policy_variant(**{"scope.corpus_suffixes": []}))
+    )
+    document = copy.deepcopy(BASE_POLICY)
+    document["scope"].pop("corpus_suffixes")
+    assert any("corpus_suffixes" in error for error in validate_hygiene.policy_errors(document))
+
+
+def test_exclusion_path_must_be_canonical() -> None:
+    """Achado não bloqueante: `./x.py` declarava exclusão que não acontecia."""
+    for declared in ("./orphan.py", "a//b.py", "a/./b.py"):
+        document = policy_variant(
+            **{
+                "scope.exclude_paths": [
+                    {"path": declared, "reason": "Exclusao declarada com motivo textual longo para teste."}
+                ]
+            }
+        )
+        assert any(
+            "caminho canonico" in error for error in validate_hygiene.policy_errors(document)
+        ), declared

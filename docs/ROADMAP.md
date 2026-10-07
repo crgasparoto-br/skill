@@ -241,6 +241,18 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A terceira rodada de auditoria corrigiu o que as duas anteriores ainda não garantiam: a exclusão de diretório
+passou a cobrir a subárvore inteira, inclusive quando a entrada é caminho composto como `evals/fixtures`, e
+passou a valer também para a busca por citação e para a classe de dependência sem uso; a leitura de texto para
+citação passou a ficar contida na raiz, de modo que link para fora entra como cobertura não analisada em vez de
+apagar achado da árvore medida; a normalização da duplicação passou a trocar o campo no nó, e não o texto do
+dump, porque a substituição anterior alcançava o conteúdo de string literal e acusava cópia entre corpos com
+constantes diferentes; a complexidade passou a medir só o corpo, sem ramo de default de parâmetro nem de
+decorator, e a lacuna de lambda ficou declarada; o import relativo além do pacote deixou de resolver por
+aproximação; a exclusão de nome dunder deixou de ser regra fixa no código e passou a ser declarada em
+`ignore_names`; a varredura de módulo passou a seguir `exclude_tests` declarado na política; manifest em
+diretório ou caminho excluído deixou de ser analisado, no escopo e no modo direcionado; e o caminho de exclusão
+passou a exigir forma canônica e a forma de `corpus_suffixes` passou a ser validada pelo gate.
 A segunda rodada de auditoria corrigiu o que o primeiro endurecimento ainda não garantia: a catraca passou a
 aceitar redução da linha de base sem justificativa e a exigir motivo apenas para crescimento, exclusão de
 caminho passou a ser caminho relativo confinado à raiz, diretório com sufixo coberto passou a entrar como

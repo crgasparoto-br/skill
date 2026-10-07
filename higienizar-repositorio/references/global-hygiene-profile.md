@@ -10,6 +10,7 @@ Ler antes de interpretar um relatório de varredura, antes de declarar exceção
 - [Linha de base e catraca](#linha-de-base-e-catraca)
 - [Cobertura e arquivo não analisado](#cobertura-e-arquivo-não-analisado)
 - [Work items](#work-items)
+- [Modo direcionado](#modo-direcionado)
 - [Fronteira com a higiene do diff](#fronteira-com-a-higiene-do-diff)
 - [Quando a varredura acusa a própria entrega](#quando-a-varredura-acusa-a-própria-entrega)
 - [Antipadrões](#antipadrões)
@@ -25,10 +26,10 @@ Precisão não é detalhe de implementação: é contrato. Uma classe que acusa 
 | Classe | Vê | Não vê |
 | --- | --- | --- |
 | `duplication` | Corpo de função normalizado por AST, idêntico entre funções, inclusive no mesmo arquivo, acima do tamanho mínimo | Duplicação entre linguagens, bloco interno de função, equivalência semântica entre corpos diferentes |
-| `dead-module` | Módulo sem importador e sem invocação declarada, com import absoluto resolvido pela raiz e pelo diretório de quem importa e import relativo resolvido pelo pacote | Referência montada em tempo de execução por nome fora de arquivo texto, plugin carregado por convenção de diretório |
-| `dead-symbol` | Função, classe e atribuição simples de nível de módulo sem nenhuma ocorrência do nome na árvore | Uso por `getattr`, por nome montado ou por registro dinâmico; atributo de classe, variável local e nome reexportado por import |
-| `unused-dependency` | Requisito declarado que nenhum módulo do escopo importa | Import indireto por caminho condicional, dependência de dependência |
-| `complexity` | Complexidade ciclomática do próprio corpo da função acima do teto | Complexidade cognitiva, tamanho de arquivo, acoplamento entre módulos, ramo de função aninhada |
+| `dead-module` | Módulo sem importador e sem invocação declarada, com import absoluto resolvido pela raiz e pelo diretório de quem importa e import relativo resolvido pelo pacote; diretório de teste fica fora quando a política declara `exclude_tests` | Referência montada em tempo de execução por nome fora de arquivo texto, plugin carregado por convenção de diretório |
+| `dead-symbol` | Função, classe e atribuição simples de nível de módulo sem nenhuma ocorrência do nome na árvore, contando os formatos de texto declarados em `scope.corpus_suffixes` | Uso por `getattr`, por nome montado ou por registro dinâmico; atributo de classe, variável local e nome reexportado por import; nome de protocolo declarado em `ignore_names` |
+| `unused-dependency` | Requisito declarado que nenhum módulo do escopo importa, em manifest dentro do escopo declarado | Import indireto por caminho condicional, dependência de dependência, manifest em diretório ou caminho excluído |
+| `complexity` | Complexidade ciclomática do próprio corpo da função acima do teto | Complexidade cognitiva, tamanho de arquivo, acoplamento entre módulos, ramo de função aninhada, ramo de default de parâmetro e de decorator, e lambda |
 
 Consequência prática: `dead-symbol` trata **qualquer** ocorrência do nome como referência, porque uma citação em documentação ou em literal de string já indica que alguém depende daquele nome. `dead-module` aceita citação em qualquer arquivo texto da árvore como invocação declarada, pela mesma razão.
 
@@ -40,7 +41,7 @@ Duas precisões valem para a normalização e para a medida, porque errar para m
 ## Contrato da política
 A política `config/hygiene-policy.json` é a única fonte de limiar, exceção e linha de base. Alterar limiar exige alterar a política, e a alteração fica visível na revisão.
 
-- `scope`: sufixos incluídos, diretórios excluídos e caminhos excluídos. Excluir diretório de teste ou de fixture é decisão declarada, não otimização.
+- `scope`: sufixos incluídos, diretórios excluídos e caminhos excluídos. Excluir diretório de teste ou de fixture é decisão declarada, não otimização. A entrada de diretório cobre a subárvore inteira e pode ser caminho composto (`evals/fixtures`), e a exclusão vale para todas as classes, inclusive a de dependência sem uso.
 - `scope.exclude_paths`: lista de objetos `{path, reason}`. Excluir um arquivo coberto exige motivo escrito e aparece no relatório em `excluded`; exclusão sem arquivo correspondente reprova, e escopo que não analisa nenhum arquivo reprova, porque nenhum dos dois é árvore limpa. O caminho precisa ser relativo e ficar dentro da raiz: exclusão que sai da árvore aparentaria excluir algo do repositório sem excluir nada.
 - `scope.corpus_suffixes`: formatos de texto conferidos na busca por citação de módulo e de símbolo. A lista fica na política porque formato fora dela não é visto, e limite de formato escondido no código produz falso positivo em classe `gated`.
 - `classes.<nome>.state`: `gated` ou `reported`.
@@ -49,6 +50,8 @@ A política `config/hygiene-policy.json` é a única fonte de limiar, exceção 
 - `classes.unused-dependency.import_name_map`: nome de distribuição para nome de import, quando diferem.
 - `classes.unused-dependency.tool_dependencies`: dependência executada como ferramenta, e não importada. `pytest`, `ruff` e `pip-audit` são desse tipo.
 - `classes.dead-module.entry_points`: módulo alcançado por convenção, e não por import ou citação.
+- `classes.dead-module.exclude_tests`: diretório de teste fora da varredura de módulo, porque teste é alcançado pelo executor e não por import do produto. A exclusão é declarada, e não fixa no código.
+- `classes.dead-symbol.ignore_names`: nome de protocolo consumido pelo próprio interpretador. Também declarado, pela mesma razão: exceção escondida no código não é auditável.
 - `classes.complexity.baseline_history`: história da linha de base, em lista de `{value, reason}`. Ver a seção de linha de base e catraca.
 
 ## Exceção aceita
@@ -80,7 +83,7 @@ A história é a forma verificável de catraca sem depender do histórico do Git
 ## Cobertura e arquivo não analisado
 Arquivo que o escopo inclui e a varredura não conseguiu analisar aparece em `not_analyzed`, com causa: erro de sintaxe, arquivo ilegível, link simbólico quebrado, caminho que não é arquivo regular, caminho que resolve para fora da raiz. O validador reprova enquanto o caminho não estiver corrigido ou declarado em `not_analyzed_allowed`, com justificativa — e reprova também no sentido inverso: permissão declarada que não corresponde a nenhum arquivo não analisado é exceção órfã.
 
-A validação é somente leitura sobre a árvore varrida, inclusive na conferência do contrato do relatório, que acontece em memória. Validar não escreve, não altera e não remove arquivo na raiz analisada, e por isso a varredura pode rodar em árvore somente leitura.
+A leitura de texto para citacao fica contida na raiz: link que resolve para fora da árvore entra em `not_analyzed`, porque texto de fora nao pode apagar achado da arvore medida. A validação é somente leitura sobre a árvore varrida, inclusive na conferência do contrato do relatório, que acontece em memória. Validar não escreve, não altera e não remove arquivo na raiz analisada, e por isso a varredura pode rodar em árvore somente leitura.
 
 A regra existe porque cobertura que encolhe em silêncio é indistinguível de aprovação. Um arquivo que sai do conjunto analisado sem aparecer no relatório faz o número melhorar sem que a árvore melhore.
 
@@ -89,6 +92,8 @@ A varredura produz um work item por classe com achado, não um por achado. A cla
 
 O corpo sai na forma canônica lida pelos extratores de requisito, com uma linha por item nas seções normativas. O artefato não abre issue: abrir issue é ação externa com efeito para terceiros, e a decisão de abrir, priorizar e executar é do ciclo de entrega.
 
+## Modo direcionado
+O modo direcionado restringe o conjunto analisado: arquivos, manifests e, portanto, os achados das cinco classes. A busca por citação continua lendo a árvore inteira, porque citação é propriedade da árvore: restringi-la ao alvo faria um nome citado fora do alvo parecer morto dentro dele, que é falso positivo em classe `gated`. O modo é para conferir um subsistema, e não para reduzir o custo de leitura.
 ## Fronteira com a higiene do diff
 `entregar-issue/references/hygiene.md` continua sendo a higiene da entrega: arquivo tocado, consumidor direto, símbolo substituído. Esta skill mede a árvore inteira, sob demanda, e não substitui nenhum gate do ciclo.
 

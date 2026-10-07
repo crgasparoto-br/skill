@@ -146,9 +146,11 @@ Invariantes:
 - classe medida contra linha de base não aceita exceção item a item, reprova tanto acima quanto abaixo
   da contagem declarada, e cresce apenas por entrada nova na história de linha de base, com motivo;
 - exceção órfã reprova nos dois sentidos: exceção sem achado e permissão de cobertura sem arquivo;
-- exclusão de caminho é declaração com motivo escrito, em caminho relativo dentro da raiz, e aparece no
-  relatório; formato de texto conferido na busca por citação é declarado na política; e arquivo que o escopo
-  inclui e a varredura não analisa precisa estar declarado, para que a cobertura não encolha em silêncio;
+- exclusão de caminho é declaração com motivo escrito, em caminho relativo canônico dentro da raiz, aparece
+  no relatório, e diretório excluído cobre a subárvore inteira, inclusive com caminho composto; formato de texto
+  conferido na busca por citação e exclusão por classe — teste e nome de protocolo — são declarados na política,
+  nunca fixos no código; a leitura de texto fica contida na raiz, e arquivo que o escopo inclui e a varredura não
+  analisa precisa estar declarado, para que a cobertura não encolha em silêncio;
 - a varredura é determinística e offline, o relatório é validado contra schema em memória, e a validação
   é somente leitura sobre a árvore varrida;
 - o perfil relata e propõe: não implementa correção, não abre issue e não tem autoridade de merge.

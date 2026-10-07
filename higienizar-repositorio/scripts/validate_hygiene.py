@@ -28,7 +28,7 @@ import argparse
 import hashlib
 import json
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 try:
     from .hygiene_scan import (
@@ -188,6 +188,11 @@ def _scope_errors(scope: object) -> list[str]:
             errors.append(f"politica: scope.{key} precisa ser lista de texto")
     if isinstance(scope.get("include_suffixes"), list) and not scope["include_suffixes"]:
         errors.append("politica: scope.include_suffixes nao pode ser vazio")
+    corpus = scope.get("corpus_suffixes")
+    if not isinstance(corpus, list) or not corpus:
+        errors.append("politica: scope.corpus_suffixes nao pode ser vazio")
+    elif any(not isinstance(suffix, str) or not suffix.startswith(".") for suffix in corpus):
+        errors.append("politica: scope.corpus_suffixes precisa ser lista de sufixos iniciados por ponto")
     exclusions = scope.get("exclude_paths")
     if not isinstance(exclusions, list):
         return [*errors, "politica: scope.exclude_paths precisa ser lista"]
@@ -203,6 +208,12 @@ def _scope_errors(scope: object) -> list[str]:
             # excluir algo do repositorio sem sair dele.
             errors.append(
                 f"politica: scope.exclude_paths[{index}].path precisa ser caminho relativo dentro da raiz"
+            )
+        elif PurePosixPath(declared_path).as_posix() != declared_path:
+            # `./x.py` e `a//b.py` apontam para o mesmo arquivo, mas nao casam com a comparacao do
+            # escopo: o relatorio declararia uma exclusao que nao aconteceu.
+            errors.append(
+                f"politica: scope.exclude_paths[{index}].path precisa ser caminho canonico, sem prefixo nem repeticao"
             )
         problem = reason_problem(entry.get("reason"))
         if problem is not None:

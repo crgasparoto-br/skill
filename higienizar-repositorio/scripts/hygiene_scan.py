@@ -36,11 +36,11 @@ import json
 import re
 import sys
 from collections import Counter, defaultdict
+from copy import deepcopy
 from pathlib import Path
 
 DEFAULT_POLICY = Path("config") / "hygiene-policy.json"
 SHARED_FILES = Path("config") / "shared-files.json"
-IDENTIFIER_FIELD_RE = re.compile(r"\b(?:name|id|arg)='[^']*'")
 IDENTIFIER_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 COMMENT_START_RE = re.compile(r"\s+#")
 CLASSES = ("duplication", "dead-module", "dead-symbol", "unused-dependency", "complexity")
@@ -48,6 +48,19 @@ CLASSES = ("duplication", "dead-module", "dead-symbol", "unused-dependency", "co
 
 class HygieneError(Exception):
     """Falha de leitura ou de política que impede a varredura de ser honesta."""
+
+
+def in_excluded_dir(rel: str, exclude_dirs: set[str]) -> bool:
+    """Diretório excluído cobre a subárvore inteira, e a entrada declarada pode ser caminho composto.
+
+    Comparar componente solto só funciona para nome simples: `evals/fixtures` na política não casaria
+    com nenhum componente do caminho, e a subárvore declarada fora do escopo continuaria sendo lida.
+    """
+    parts = Path(rel).parts
+    return any(
+        declared and parts[: len(Path(declared).parts)] == Path(declared).parts
+        for declared in exclude_dirs
+    )
 
 
 def scope_of(policy: dict) -> dict:
@@ -213,7 +226,7 @@ def scope_files(
         if not candidate.resolve().is_relative_to(root):
             refused.append({"path": rel, "reason": "o caminho resolve para fora da raiz do repositorio"})
             continue
-        if set(Path(rel).parts) & exclude_dirs or rel in excluded:
+        if in_excluded_dir(rel, exclude_dirs) or rel in excluded:
             continue
         files.append(candidate)
     return sorted(files, key=lambda item: relative(item, root)), refused, [
@@ -265,15 +278,29 @@ def own_scope_nodes(node: ast.AST) -> list[ast.AST]:
     return collected
 
 
-def cyclomatic_complexity(node: ast.AST) -> int:
+def own_body_nodes(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.AST]:
+    """Nós do corpo da própria função: sem decorator, sem default de parâmetro, sem corpo aninhado."""
+    collected: list[ast.AST] = []
+    stack = list(node.body)
+    while stack:
+        current = stack.pop()
+        collected.append(current)
+        if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+            continue
+        stack.extend(ast.iter_child_nodes(current))
+    return collected
+
+
+def cyclomatic_complexity(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
     """Complexidade ciclomática da própria função.
 
     Conta só os ramos do próprio corpo: função aninhada é medida por si, e somá-la aqui inflaria a
     função externa. `with` não entra, porque não cria caminho independente — tratá-lo como ramo
-    transformaria gestão de recurso em dívida inexistente.
+    transformaria gestão de recurso em dívida inexistente. Default de parâmetro e decorator também não
+    entram: eles são avaliados fora da função, e contá-los acusaria ramo que a função não tem.
     """
     score = 1
-    for child in own_scope_nodes(node):
+    for child in own_body_nodes(node):
         if isinstance(child, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.ExceptHandler)):
             score += 1
         elif isinstance(child, ast.BoolOp):
@@ -285,6 +312,44 @@ def cyclomatic_complexity(node: ast.AST) -> int:
         elif isinstance(child, ast.Match):
             score += len(child.cases)
     return score
+
+
+class IdentifierNeutralizer(ast.NodeTransformer):
+    """Troca identificador por marcador neutro, sem tocar em literal, operador nem nome de atributo.
+
+    Substituir por expressão sobre o texto do dump alcançaria também o conteúdo de string literal, e
+    dois corpos com constantes diferentes passariam por cópia. Trocar o campo no nó é preciso: só o
+    identificador muda.
+    """
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        node.id = "ID"
+        return node
+
+    def visit_arg(self, node: ast.arg) -> ast.AST:
+        node.arg = "ID"
+        return node
+
+    def visit_keyword(self, node: ast.keyword) -> ast.AST:
+        if node.arg:
+            node.arg = "ID"
+        self.generic_visit(node)
+        return node
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+        node.name = "ID"
+        self.generic_visit(node)
+        return node
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AST:
+        node.name = "ID"
+        self.generic_visit(node)
+        return node
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
+        node.name = "ID"
+        self.generic_visit(node)
+        return node
 
 
 def normalized_body(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
@@ -299,8 +364,9 @@ def normalized_body(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
     body = [statement for statement in node.body if not is_docstring(statement)]
     if not body:
         return None
-    dump = ast.dump(ast.Module(body=body, type_ignores=[]))
-    return IDENTIFIER_FIELD_RE.sub("ID='ID'", dump)
+    neutral = deepcopy(ast.Module(body=body, type_ignores=[]))
+    IdentifierNeutralizer().visit(neutral)
+    return ast.dump(neutral)
 
 
 def is_docstring(statement: ast.stmt) -> bool:
@@ -317,22 +383,33 @@ def finding_identity(class_name: str, parts: list[str]) -> str:
     return f"{class_name}:{digest}"
 
 
-def corpus_texts(root: Path, policy: dict) -> dict[str, str]:
-    """Texto de todos os arquivos analisáveis da árvore, para as regras de referência."""
+def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
+    """Texto dos arquivos analisáveis da árvore, para as regras de referência, e o que ficou fora.
+
+    Link que resolve para fora da raiz e arquivo ilegível são cobertura que não foi lida: entram no
+    relatório em vez de sumir, porque cobertura que encolhe em silêncio é indistinguível de aprovação,
+    e link externo é justamente por onde um texto de fora poderia apagar achado da árvore.
+    """
     exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
+    excluded_paths = set(declared_exclusions(policy))
     suffixes = corpus_suffixes(policy)
+    resolved_root = root.resolve()
     texts: dict[str, str] = {}
+    refused: list[dict] = []
     for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
         if not path.is_file() or path.suffix not in suffixes:
             continue
         rel = relative(path, root)
-        if set(Path(rel).parts) & exclude_dirs:
+        if in_excluded_dir(rel, exclude_dirs) or rel in excluded_paths:
+            continue
+        if not path.resolve().is_relative_to(resolved_root):
+            refused.append({"path": rel, "reason": "caminho de corpus que resolve para fora da raiz"})
             continue
         try:
             texts[rel] = read_text(path)
         except HygieneError:
-            continue
-    return texts
+            refused.append({"path": rel, "reason": "arquivo de corpus ilegivel"})
+    return texts, refused
 
 
 def named_paths(texts: dict[str, str], root: Path, pattern: re.Pattern[str]) -> set[str]:
@@ -438,7 +515,11 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
                 for alias in node.names:
                     resolve_import(imported, package, alias.name.split("."))
             elif isinstance(node, ast.ImportFrom):
-                depth = min(node.level - 1, len(package)) if node.level else 0
+                depth = node.level - 1
+                if depth > len(package) or (node.level == 1 and not package):
+                    # Import relativo além do pacote é inválido e não alcança módulo nenhum; resolver
+                    # por aproximação manteria vivo um módulo que ninguém importa.
+                    continue
                 base = [*package[: len(package) - depth], *(node.module.split(".") if node.module else [])]
                 resolve_import(imported, package, base)
                 for alias in node.names:
@@ -450,13 +531,16 @@ def detect_dead_modules(
     root: Path, policy: dict, modules: dict[str, ast.Module], texts: dict[str, str]
 ) -> list[dict]:
     config = policy["classes"]["dead-module"]
+    exclude_tests = bool(config.get("exclude_tests", False))
     declared_entries = {entry for entry in config.get("entry_points", []) if isinstance(entry, str)}
     named = named_paths(texts, root, citation_pattern(policy))
     imported = imported_modules(modules)
     findings: list[dict] = []
     for rel in sorted(modules):
         path = Path(rel)
-        if path.name == "__init__.py" or path.name.startswith("test_") or "tests" in path.parts:
+        if path.name == "__init__.py":
+            continue
+        if exclude_tests and (path.name.startswith("test_") or "tests" in path.parts):
             continue
         if rel in declared_entries or rel in named or path.name in named:
             continue
@@ -504,7 +588,7 @@ def detect_dead_symbols(
                     definitions[assigned].append(f"{rel}::{assigned}")
     findings: list[dict] = []
     for name, places in sorted(definitions.items()):
-        if name in ignore or name.startswith("__"):
+        if name in ignore:
             continue
         if counts.get(name, 0) > len(places):
             continue
@@ -523,18 +607,39 @@ def detect_dead_symbols(
     return findings
 
 
-def detect_unused_dependencies(root: Path, policy: dict, texts: dict[str, str]) -> list[dict]:
+def scoped_manifests(root: Path, policy: dict, paths: list[str] | None) -> list[Path]:
+    """Manifests dentro do escopo declarado: diretório excluído, caminho excluído e modo direcionado."""
+    exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
+    excluded_paths = set(declared_exclusions(policy))
+    targets = set(paths or [])
+    return sorted(
+        path
+        for path in root.rglob("requirements*.txt")
+        if not path.name.endswith(".lock.txt")
+        and not in_excluded_dir(relative(path, root), exclude_dirs)
+        and relative(path, root) not in excluded_paths
+        and (not targets or relative(path, root) in targets)
+    )
+
+
+def detect_unused_dependencies(
+    root: Path, policy: dict, texts: dict[str, str], paths: list[str] | None = None
+) -> list[dict]:
+    """Requisito declarado e nunca importado no escopo do manifest.
+
+    Manifest fora do escopo — em diretório excluído, em caminho excluído ou fora do modo direcionado —
+    não é analisado: a política de escopo vale para todas as classes, e ler manifest excluído produziria
+    achado de uma árvore que a varredura declara não estar medindo.
+    """
     config = policy["classes"]["unused-dependency"]
     mapping = {
         str(key).lower(): str(value)
         for key, value in (config.get("import_name_map") or {}).items()
     }
     tools = {str(name).lower() for name in config.get("tool_dependencies", [])}
-    manifests = sorted(
-        path
-        for path in root.rglob("requirements*.txt")
-        if not path.name.endswith(".lock.txt")
-    )
+    excluded_dirs = set(scope_of(policy).get("exclude_dirs") or [])
+    excluded_paths = set(declared_exclusions(policy))
+    manifests = scoped_manifests(root, policy, paths)
     findings: list[dict] = []
     for manifest in manifests:
         manifest_rel = relative(manifest, root)
@@ -543,6 +648,8 @@ def detect_unused_dependencies(root: Path, policy: dict, texts: dict[str, str]) 
         imported: set[str] = set()
         for rel in sorted(texts):
             if not rel.startswith(prefix) or not rel.endswith(".py"):
+                continue
+            if in_excluded_dir(rel, excluded_dirs) or rel in excluded_paths:
                 continue
             try:
                 tree = ast.parse(texts[rel])
@@ -675,15 +782,19 @@ def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tu
             not_analyzed.extend(problems)
             continue
         modules[relative(path, root)] = tree
-    texts = corpus_texts(root, policy)
+    texts, refused_corpus = corpus_texts(root, policy)
+    not_analyzed.extend(refused_corpus)
     findings: list[dict] = []
     findings.extend(detect_duplication(root, policy, modules, texts))
     findings.extend(detect_dead_modules(root, policy, modules, texts))
     findings.extend(detect_dead_symbols(root, policy, modules, texts))
-    findings.extend(detect_unused_dependencies(root, policy, texts))
+    findings.extend(detect_unused_dependencies(root, policy, texts, paths))
     findings.extend(detect_complexity(policy, modules))
     findings, problems = apply_policy_states(policy, findings)
     findings.sort(key=lambda item: (item["class"], item["location"]))
+    # Um caminho pode ser recusado por mais de uma leitura — escopo e corpus —, e o relatório precisa
+    # de uma entrada por caminho: duplicata de cobertura inflaria a contagem sem informar nada novo.
+    not_analyzed = list({entry["path"]: entry for entry in not_analyzed}.values())
     not_analyzed.sort(key=lambda item: item["path"])
     classes = []
     for name in CLASSES:

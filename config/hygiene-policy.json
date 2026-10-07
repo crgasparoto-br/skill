@@ -43,13 +43,16 @@
     "dead-module": {
       "state": "gated",
       "entry_points": [],
-      "limits": "Considera morto o módulo que nenhum outro módulo importa e que nenhuma invocação declarada alcança. Não vê referência montada em tempo de execução por nome de string fora de arquivo texto, nem plugin carregado por convenção de diretório."
+      "limits": "Não vê referência montada em tempo de execução por nome fora de arquivo texto, nem plugin carregado por convenção de diretório. A varredura de módulo não inclui diretório de teste, declarado em exclude_tests, porque módulo de teste é alcançado pelo executor e não por import do produto.",
+      "exclude_tests": true
     },
     "dead-symbol": {
       "state": "gated",
       "exclude_tests": true,
-      "ignore_names": [],
-      "limits": "Considera morto o símbolo de nível de módulo — função, classe e atribuição simples — cujo nome não aparece em nenhum lugar da árvore além da própria definição. Não vê uso por getattr, por nome montado ou por registro dinâmico, e por isso qualquer ocorrência do nome já conta como referência; atributo de classe, variável local e nome reexportado por import ficam fora do escopo."
+      "ignore_names": [
+        "__all__"
+      ],
+      "limits": "Não vê uso por getattr, por nome montado, por registro dinâmico do nome, nem ocorrência fora dos formatos de texto declarados em scope.corpus_suffixes. Nome de protocolo consumido pelo próprio interpretador é declarado em ignore_names, sem exceção escondida no código."
     },
     "unused-dependency": {
       "state": "gated",
@@ -62,13 +65,13 @@
         "pip-audit",
         "pytest"
       ],
-      "limits": "Cruza os manifests declarados com os imports efetivos. Não vê import feito dentro de try de dependência opcional por caminho indireto, e trata a dependência declarada como ferramenta executada pela lista declarada nesta política."
+      "limits": "Não vê import indireto por caminho condicional nem dependência de dependência, e não analisa manifest fora do escopo declarado: diretório excluído, caminho excluído ou caminho fora do modo direcionado."
     },
     "complexity": {
       "state": "reported",
       "max_complexity": 30,
       "baseline": 47,
-      "limits": "Mede complexidade ciclomática por função, contando ramos do próprio corpo: função aninhada é medida por si e gestão de recurso com with não é ramo. Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento. A classe é reportada com linha de base declarada em história: a contagem aberta precisa ser exatamente a linha de base atual, e crescer exige entrada nova na história com motivo escrito.",
+      "limits": "Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento entre módulos. Mede só o corpo da própria função: função aninhada é medida por si, ramo de default de parâmetro e de decorator não entra, with não conta como ramo e lambda não é medida.",
       "baseline_history": [
         {
           "value": 47,
@@ -79,11 +82,11 @@
   },
   "accepted": [
     {
-      "id": "duplication:b7e16a9b955acdef",
+      "id": "duplication:5ce8835a485bbb09",
       "reason": "Guarda de inferencia de terminal duplicada entre a skill de entrega e a de auditoria, empacotadas de forma independente; consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria, registrada como work item pela propria varredura."
     },
     {
-      "id": "duplication:5a8f5b683ebad425",
+      "id": "duplication:de836f7361bbe8aa",
       "reason": "Guarda de inferencia de terminal duplicada entre a skill de entrega e a de auditoria, empacotadas de forma independente; consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria, registrada como work item pela propria varredura."
     }
   ],
