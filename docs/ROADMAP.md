@@ -241,6 +241,10 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A décima terceira rodada de auditoria corrigiu o que as doze anteriores ainda não garantiam: o gerador de work items passou a
+conferir a política e a recusar relatório que não corresponde à árvore e à política atuais, inclusive quando recebido por `--report`;
+buraco de cobertura passou a reprovar antes de publicar; decisão declarada como booleana passou a exigir booleano; e história de
+linha de base passou a ser recusada em classe controlada, como a própria linha de base.
 A décima segunda rodada de auditoria corrigiu o que as onze anteriores ainda não garantiam: estrutura inválida de TOML, inclusive
 hierarquia de grupo do Poetry e chave não lida dentro do grupo, passou a ser recusa visível; import relativo na raiz de pacote passou
 a alcançar o irmão; o gerador de work items passou a reprovar política inválida e varredura com problema; caminho declarado com NUL

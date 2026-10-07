@@ -83,7 +83,7 @@ CLASS_DECISION_KEYS = {
     "complexity": (*REQUIRED_CLASS_KEYS["complexity"], "state", "limits", "baseline", "baseline_history"),
 }
 INT_KEYS = ("min_body_lines", "max_complexity", "baseline")
-BOOL_KEYS = ("exclude_declared_copies", "exclude_tests")
+BOOL_KEYS = ("exclude_declared_copies", "exclude_tests", "package_init_is_entry")
 LIST_KEYS = ("tool_dependencies", "manifest_patterns")
 DICT_KEYS = ("import_name_map",)
 
@@ -178,7 +178,9 @@ def _class_threshold_errors(name: str, entry: dict) -> list[str]:
             errors.append("politica: classes.complexity.max_complexity precisa ser >= 2")
         if entry.get("state") == "reported":
             errors.extend(_history_errors(name, entry))
-        elif "baseline" in entry:
+        elif "baseline" in entry or "baseline_history" in entry:
+            # Historia de linha de base é declaração de linha de base: aceitá-la em classe controlada
+            # deixaria a mesma decisão entrar por outra chave, sem que ninguém a medisse.
             errors.append("politica: classe gated nao pode declarar baseline")
     return errors
 

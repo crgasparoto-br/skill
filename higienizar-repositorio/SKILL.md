@@ -90,7 +90,8 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Citacao com `..` e recusada somente quando de fato sai da raiz: `sub/../x.py` cita `x.py` dentro da arvore, e descartar por conter `..` acusaria divida que nao existe.
 - Estrutura invalida de TOML e recusa visivel: `project`, `tool` ou `tool.poetry` escalar, hierarquia de grupo do Poetry invalida e chave nao lida dentro de grupo apontam para declaracao que a medicao nao le, e declaracao que desaparece da medicao e divida escondida.
 - Import relativo na raiz so alcanca irmao quando a propria raiz e pacote declarado, e import relativo alem do pacote nao alcanca modulo nenhum.
-- O gerador de work items reprova politica que o gate reprova e varredura com problema, antes de publicar: artefato gerado de politica invalida e evidencia que ninguem pode aceitar.
+- O gerador de work items reprova politica que o gate reprova, varredura com problema e relatorio que nao corresponde a arvore e a politica atuais, antes de publicar: artefato gerado de politica invalida, ou de relatorio de outra arvore, e evidencia que ninguem pode aceitar.
+- Decisao declarada como booleana so aceita booleano, e linha de base nao entra em classe controlada nem pela historia: politica malformada nao pode esconder achado nem servir de linha de base.
 - Caminho declarado precisa ser texto simples: NUL e quebra de linha nao sao caminho, e politica invalida reprova em vez de derrubar o validador.
 - O relatorio Markdown publica o escopo excluido, e nao so o JSON: artefato humano sem a exclusao induziria leitura de cobertura completa sobre escopo reduzido por declaracao.
 - A validacao nao deixa bytecode na arvore analisada: `__pycache__` de modulo importado e escrita dentro da raiz que a execucao afirma nao alterar.

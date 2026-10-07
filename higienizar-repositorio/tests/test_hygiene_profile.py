@@ -877,9 +877,8 @@ def test_inline_comment_with_tab_is_not_a_dependency(tmp_path: Path) -> None:
 
 
 def test_work_item_is_validated_against_its_contract(tmp_path: Path) -> None:
-    """Achado não bloqueante: relatório válido podia gerar work item inválido."""
+    """Relatório que não corresponde à árvore é recusado, e o contrato do work item segue conferido."""
     import subprocess
-
     report = scan(make_tree(tmp_path, {"orphan.py": "VALUE = 1\n", "README.md": "`VALUE`\n"}))
     entry = next(item for item in report["classes"] if item["name"] == "dead-module")
     entry["findings"].append(dict(entry["findings"][0]))
@@ -902,8 +901,15 @@ def test_work_item_is_validated_against_its_contract(tmp_path: Path) -> None:
         check=False,
     )
     assert result.returncode == 2
-    assert "work item nao atende ao contrato" in result.stderr
-
+    assert "nao corresponde a arvore e a politica atuais" in result.stderr
+    # O contrato do work item continua sendo conferido no caminho que monta o relatório: artefato
+    # inválido não sai, mesmo quando o relatório é o da própria árvore.
+    items = build_hygiene_work_items.build_work_items(
+        tmp_path,
+        scan(make_tree(tmp_path / "limpa", {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})),
+    )
+    broken = [dict(items[0], id="work-item:x")] if items else [{"id": "work-item:x"}]
+    assert build_hygiene_work_items.work_item_schema_errors(broken) != []
 
 def test_exclude_dirs_compound_path_covers_subtree(tmp_path: Path) -> None:
     """Achado bloqueante: diretório excluído com caminho composto não saía do escopo."""
@@ -2296,3 +2302,202 @@ def test_gated_class_with_zero_baseline_is_refused() -> None:
     policy = policy_variant(**{"classes.complexity.state": "gated", "classes.complexity.baseline": 0})
     errors = validate_hygiene.policy_errors(policy)
     assert any("classe gated nao pode declarar baseline" in error for error in errors)
+
+
+def test_work_item_generator_refuses_report_of_invalid_policy(tmp_path: Path) -> None:
+    """Achado bloqueante: `--report` era uma porta mais fraca que a varredura."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"alpha.py": '"""Modulo sem simbolo."""\n', "README.md": "`alpha.py` usado\n"},
+    )
+    report = tmp_path / "report.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(report),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    invalid = policy_variant(**{"classes.dead-symbol.ignore_names": "__all__"})
+    policy_dir = tree / "config"
+    policy_dir.mkdir(exist_ok=True)
+    (policy_dir / "hygiene-policy.json").write_text(
+        json.dumps(invalid, ensure_ascii=False), encoding="utf-8"
+    )
+    out_dir = tmp_path / "saida"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "build_hygiene_work_items.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(report),
+            "--out-dir",
+            str(out_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2, result.stdout
+    assert "politica invalida" in result.stderr
+    assert not out_dir.exists()
+
+
+def test_work_item_generator_refuses_scan_with_coverage_gap(tmp_path: Path) -> None:
+    """Achado bloqueante: buraco de cobertura era publicado como work item."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"alpha.py": '"""Modulo sem simbolo."""\n', "README.md": "`alpha.py` usado\n"},
+    )
+    (tree / "broken.py").symlink_to("missing.py")
+    out_dir = tmp_path / "saida"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "build_hygiene_work_items.py"),
+            "--root",
+            str(tree),
+            "--out-dir",
+            str(out_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2, result.stdout
+    assert "reprovado" in result.stderr
+    assert not out_dir.exists()
+
+
+def test_work_item_generator_publishes_clean_tree(tmp_path: Path) -> None:
+    """A recusa nova não pode impedir a publicação legítima."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"alpha.py": '"""Modulo sem simbolo."""\n', "README.md": "`alpha.py` usado\n"},
+    )
+    out_dir = tmp_path / "saida"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "build_hygiene_work_items.py"),
+            "--root",
+            str(tree),
+            "--out-dir",
+            str(out_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_entry_point_decision_requires_boolean() -> None:
+    """Achado bloqueante: `package_init_is_entry` aceitava texto e número como decisão booleana."""
+    for value in ("false", "true", 0, 1):
+        policy = policy_variant(**{"classes.dead-module.package_init_is_entry": value})
+        errors = validate_hygiene.policy_errors(policy)
+        assert any("package_init_is_entry precisa ser booleano" in error for error in errors), value
+    assert [
+        error
+        for error in validate_hygiene.policy_errors(
+            policy_variant(**{"classes.dead-module.package_init_is_entry": False})
+        )
+        if "package_init_is_entry" in error
+    ] == []
+
+
+def test_gated_class_cannot_declare_baseline_history() -> None:
+    """Achado bloqueante: história de linha de base escapava da regra de classe controlada."""
+    policy = policy_variant(**{"classes.complexity.state": "gated"})
+    policy["classes"]["complexity"].pop("baseline", None)
+    policy["classes"]["complexity"]["baseline_history"] = [
+        {"value": 0, "reason": "Historia declarada apesar de a classe estar controlada, com motivo."}
+    ]
+    errors = validate_hygiene.policy_errors(policy)
+    assert any("classe gated nao pode declarar baseline" in error for error in errors)
+
+
+def test_work_item_generator_refuses_report_from_another_tree(tmp_path: Path) -> None:
+    """Achado bloqueante: relatório de outra árvore virava work item por passar só no schema."""
+    clean = {"alpha.py": '"""Modulo sem simbolo."""\n', "README.md": "`alpha.py` usado\n"}
+    other = make_tree(tmp_path / "outra", clean)
+    report = tmp_path / "report.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(other),
+            "--report",
+            str(report),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    current = make_tree(
+        tmp_path / "atual",
+        {"alpha.py": clean["alpha.py"], "extra.py": '"""Outro modulo."""\n', "README.md": "`alpha.py` e `extra.py` usados\n"},
+    )
+    out_dir = tmp_path / "saida"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(current),
+            "--report",
+            str(report),
+            "--out-dir",
+            str(out_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2, result.stdout
+    assert "nao corresponde a arvore e a politica atuais" in result.stderr
+    assert not out_dir.exists()
+    # O relatório da própria árvore continua aceito: a recusa não pode impedir o uso legítimo.
+    own = tmp_path / "proprio.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(current),
+            "--report",
+            str(own),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(current),
+            "--report",
+            str(own),
+            "--out-dir",
+            str(out_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr

@@ -25,11 +25,11 @@ sys.dont_write_bytecode = True
 
 try:
     from .hygiene_scan import HygieneError, build_report, load_policy, write_target
-    from .validate_hygiene import policy_errors, schema_errors
+    from .validate_hygiene import coverage_errors, policy_errors, schema_errors
 except ImportError:  # pragma: no cover - execucao direta do script
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from hygiene_scan import HygieneError, build_report, load_policy, write_target
-    from validate_hygiene import policy_errors, schema_errors
+    from validate_hygiene import coverage_errors, policy_errors, schema_errors
 
 CLASS_TEXT = {
     "duplication": {
@@ -234,32 +234,43 @@ def main(argv: list[str] | None = None) -> int:
             # Work item é evidência sobre a árvore: gravado dentro dela entra no corpus de citação e pode
             # apagar a dívida que ele mesmo descreve, como já vale para o relatório.
             write_target(args.out_dir, root, "--out-dir")
+        # O contrato do relatório vem primeiro: relatório de outra ferramenta reprova antes de qualquer
+        # leitura de conteúdo, e sem depender da política da árvore.
+        report = None
         if args.report is not None:
             report = json.loads(args.report.read_text(encoding="utf-8"))
-            # Relatorio externo entra pela mesma porta: sem conferir o contrato, o work item
-            # carregaria a proveniencia de um arquivo que ninguem validou.
             problems = schema_errors(report)
             if problems:
                 print("ERRO: relatorio nao atende ao contrato:", file=sys.stderr)
                 for problem in problems[:5]:
                     print(f"- {problem}", file=sys.stderr)
                 return 2
-        else:
-            policy = load_policy(root)
-            # Work item é evidência sobre a árvore: publicá-lo a partir de política que o gate reprova
-            # ou de varredura com problema produziria artefato que ninguém pode aceitar.
-            errors = policy_errors(policy)
-            if errors:
-                print("ERRO: politica invalida:", file=sys.stderr)
-                for error in errors[:5]:
-                    print(f"- {error}", file=sys.stderr)
-                return 2
-            report, problems = build_report(root, policy)
-            if problems:
-                print("ERRO: varredura com problema:", file=sys.stderr)
-                for problem in problems[:5]:
-                    print(f"- {problem}", file=sys.stderr)
-                return 2
+        # Work item é evidência sobre a árvore: publicá-lo a partir de política que o gate reprova, de
+        # relatório que não corresponde à árvore e à política atuais, ou de varredura com buraco de
+        # cobertura produziria artefato que ninguém pode aceitar. O relatório externo entra pela mesma
+        # porta, e não por uma porta mais fraca.
+        policy = load_policy(root)
+        errors = policy_errors(policy)
+        if errors:
+            print("ERRO: politica invalida:", file=sys.stderr)
+            for error in errors[:5]:
+                print(f"- {error}", file=sys.stderr)
+            return 2
+        current, problems = build_report(root, policy)
+        if problems:
+            print("ERRO: varredura com problema:", file=sys.stderr)
+            for problem in problems[:5]:
+                print(f"- {problem}", file=sys.stderr)
+            return 2
+        if report is not None and report != current:
+            # Relatorio de outra arvore, de outra politica ou de outra execucao descreveria uma arvore
+            # que nao e a atual, e o work item publicaria divida que ja nao existe ou que nunca existiu.
+            print(
+                "ERRO: relatorio nao corresponde a arvore e a politica atuais; gere-o de novo",
+                file=sys.stderr,
+            )
+            return 2
+        report = current
     except (HygieneError, json.JSONDecodeError, OSError) as error:
         print(f"ERRO: {error}", file=sys.stderr)
         return 2
@@ -269,6 +280,14 @@ def main(argv: list[str] | None = None) -> int:
     problems = work_item_schema_errors(items)
     if problems:
         print("ERRO: work item nao atende ao contrato:", file=sys.stderr)
+        for problem in problems[:5]:
+            print(f"- {problem}", file=sys.stderr)
+        return 2
+    # Por ultimo, o relatorio precisa ser aceito pela politica e pela arvore atuais: relatorio antigo,
+    # de outra arvore ou com buraco de cobertura nao pode virar work item.
+    problems = coverage_errors(root, report, policy)
+    if problems:
+        print("ERRO: relatorio reprovado pela politica e pela arvore atuais:", file=sys.stderr)
         for problem in problems[:5]:
             print(f"- {problem}", file=sys.stderr)
         return 2
