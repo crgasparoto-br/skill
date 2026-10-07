@@ -221,6 +221,37 @@ def _scope_errors(scope: object) -> list[str]:
     return errors
 
 
+REQUIRED_CLASS_KEYS = {
+    "duplication": ("min_body_lines", "exclude_declared_copies", "exclude_tests"),
+    "dead-module": ("entry_points", "exclude_tests", "package_init_is_entry"),
+    "dead-symbol": ("exclude_tests", "ignore_names"),
+    "unused-dependency": ("import_name_map", "tool_dependencies"),
+    "complexity": ("max_complexity",),
+}
+
+
+def _declaration_errors(policy: dict) -> list[str]:
+    """Decisão de escopo e de exceção é declarada, nunca assumida por default no código.
+
+    Campo ausente vira default silencioso na varredura, e a política deixaria de ser a única fonte de
+    escopo e de exceção: excluir cópia declarada ou diretório de teste sem dizer isso na política é
+    cobertura falsa sem erro.
+    """
+    errors: list[str] = []
+    classes = policy.get("classes") if isinstance(policy.get("classes"), dict) else {}
+    for name, required in sorted(REQUIRED_CLASS_KEYS.items()):
+        config = classes.get(name)
+        if not isinstance(config, dict):
+            errors.append(f"politica: classes.{name} precisa ser objeto")
+            continue
+        missing = [key for key in required if key not in config]
+        if missing:
+            errors.append(
+                f"politica: classes.{name} precisa declarar {', '.join(sorted(missing))}"
+            )
+    return errors
+
+
 def _identity_errors(policy: dict) -> list[str]:
     errors: list[str] = []
     if policy.get("schema_version") != 1:
@@ -292,6 +323,7 @@ def policy_errors(policy: object) -> list[str]:
     errors.extend(f"politica: classe desconhecida: {name}" for name in sorted(declared - set(CLASSES)))
     for name in sorted(declared & set(CLASSES)):
         errors.extend(_class_errors(name, classes[name]))
+    errors.extend(_declaration_errors(policy))
     errors.extend(_declared_errors(policy))
     return errors
 

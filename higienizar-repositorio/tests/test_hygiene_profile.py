@@ -53,6 +53,8 @@ BASE_POLICY = {
         "dead-module": {
             "state": "gated",
             "entry_points": [],
+            "exclude_tests": True,
+            "package_init_is_entry": False,
             "limits": "Nao ve referencia montada em tempo de execucao por nome fora de arquivo texto.",
         },
         "dead-symbol": {
@@ -603,9 +605,16 @@ def test_duplication_keeps_operator_and_constant(tmp_path: Path) -> None:
     """Achado bloqueante: normalização apagava operador e literal, criando cópia inexistente."""
     plus = "def alpha(value):\n    total = value + 1\n    for item in range(3):\n        total += item\n    return total\n"
     minus = plus.replace("alpha", "beta").replace("+ 1", "- 1")
-    assert findings_of(scan(make_tree(tmp_path, {"a.py": plus, "b.py": minus})), "duplication") == []
+    policy = policy_variant(**{"classes.duplication.min_body_lines": 2})
+    assert (
+        findings_of(scan(make_tree(tmp_path, {"a.py": plus, "b.py": minus}, policy)), "duplication") == []
+    )
     identical = findings_of(
-        scan(make_tree(tmp_path / "same", {"a.py": plus, "b.py": plus.replace("alpha", "beta")})),
+        scan(
+            make_tree(
+                tmp_path / "same", {"a.py": plus, "b.py": plus.replace("alpha", "beta")}, policy
+            )
+        ),
         "duplication",
     )
     assert len(identical) == 2
@@ -1230,3 +1239,91 @@ def test_repeated_name_gets_distinct_identity(tmp_path: Path) -> None:
     assert not any(
         "identidade repetida" in error for error in validate_hygiene.validate_hygiene(duplicated)
     )
+
+
+def test_absolute_citation_is_not_an_invocation(tmp_path: Path) -> None:
+    """Achado bloqueante: caminho absoluto era tratado como citação local."""
+    tree = make_tree(tmp_path, {"orphan.py": "V = 1\n", "README.md": "Use /orphan.py\n"})
+    assert [finding["path"] for finding in findings_of(scan(tree), "dead-module")] == ["orphan.py"]
+    anchored = make_tree(
+        tmp_path / "second",
+        {
+            "skill/scripts/tool.py": "V = 1\n",
+            "skill/README.md": "Rodar `python <skill>/scripts/tool.py`\n",
+        },
+    )
+    assert findings_of(scan(anchored), "dead-module") == []
+
+
+def test_min_body_lines_counts_instructions_not_blank_lines(tmp_path: Path) -> None:
+    """Achado bloqueante: limiar contava intervalo físico e linha em branco inflava o corpo."""
+    policy = policy_variant(**{"classes.duplication.min_body_lines": 4})
+    body = (
+        "def {name}(x):\n"
+        "    y = x\n"
+        "\n"
+        "    # comentario 1\n"
+        "    # comentario 2\n"
+        "    # comentario 3\n"
+        "    return y\n"
+    )
+    findings = findings_of(
+        scan(
+            make_tree(
+                tmp_path, {"a.py": body.format(name="alpha"), "b.py": body.format(name="beta")}, policy
+            )
+        ),
+        "duplication",
+    )
+    assert findings == []
+
+
+def test_repeated_name_labels_follow_source_order(tmp_path: Path) -> None:
+    """Achado bloqueante: rótulo sem sufixo pertencia à definição visitada primeiro, não à primeira."""
+    source = "def f(x):\n    return x\n\n\ndef f(x):\n    return x\n"
+    tree = make_tree(tmp_path, {"a.py": source, "README.md": "`a.py`\n"})
+    module = hygiene_scan.ast.parse(source)
+    visited = [
+        node.lineno
+        for node in hygiene_scan.own_scope_nodes(module)
+        if isinstance(node, (hygiene_scan.ast.FunctionDef, hygiene_scan.ast.AsyncFunctionDef))
+    ]
+    # A travessia da árvore não devolve ordem de fonte: é por isso que o detector ordena por posição.
+    assert sorted(visited) == [1, 5]
+    report, _ = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree))
+    symbols = findings_of(report, "dead-symbol")
+    assert sorted(finding["location"] for finding in symbols) == ["a.py::f", "a.py::f#2"]
+    plain = next(finding for finding in symbols if finding["location"] == "a.py::f")
+    first = hygiene_scan.disambiguate([("a.py", "f"), ("a.py", "f")])[0]
+    assert plain["id"] == hygiene_scan.finding_identity("dead-symbol", ["a.py", "f"])
+    assert first == "a.py::f"
+
+
+def test_directed_target_forms_are_equivalent(tmp_path: Path) -> None:
+    """Achado bloqueante: `./sub` e `sub/` não alcançavam o manifest que `sub` alcança."""
+    tree = make_tree(tmp_path, {"sub/requirements.txt": "requests>=2\n", "sub/a.py": "import json\n"})
+    policy = hygiene_scan.load_policy(tree)
+    for target in ("sub", "./sub", "sub/"):
+        report, _ = hygiene_scan.build_report(tree, policy, [target])
+        assert [finding["symbol"] for finding in findings_of(report, "unused-dependency")] == [
+            "requests"
+        ], target
+
+
+def test_policy_must_declare_scope_decisions(tmp_path: Path) -> None:
+    """Achado bloqueante: campo de escopo omitido virava default escondido no código."""
+    for key_path in (
+        "classes.duplication.exclude_declared_copies",
+        "classes.duplication.exclude_tests",
+        "classes.dead-module.exclude_tests",
+        "classes.dead-module.package_init_is_entry",
+        "classes.dead-symbol.exclude_tests",
+        "classes.dead-symbol.ignore_names",
+        "classes.unused-dependency.tool_dependencies",
+        "classes.unused-dependency.import_name_map",
+    ):
+        document = copy.deepcopy(BASE_POLICY)
+        class_name, field = key_path.split(".")[1], key_path.split(".")[2]
+        document["classes"][class_name].pop(field)
+        errors = validate_hygiene.policy_errors(document)
+        assert any(field in error for error in errors), key_path

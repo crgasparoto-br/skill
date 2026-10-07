@@ -25,7 +25,7 @@ Precisão não é detalhe de implementação: é contrato. Uma classe que acusa 
 
 | Classe | Vê | Não vê |
 | --- | --- | --- |
-| `duplication` | Corpo de função normalizado por AST, idêntico entre funções, inclusive no mesmo arquivo, acima do tamanho mínimo | Duplicação entre linguagens, bloco interno de função, equivalência semântica entre corpos diferentes |
+| `duplication` | Corpo de função normalizado por AST, idêntico entre funções, inclusive no mesmo arquivo, acima do tamanho mínimo, contado em instruções do corpo | Duplicação entre linguagens, bloco interno de função, equivalência semântica entre corpos diferentes, corpo com menos instruções que o limiar |
 | `dead-module` | Módulo sem importador e sem invocação declarada, com import absoluto resolvido pela raiz e pelo diretório de quem importa e import relativo resolvido pelo pacote, sem alcançar além dele; citação resolvida por caminho, e nome solto só quando é único na árvore; diretório de teste fica fora quando a política declara `exclude_tests` e arquivo de pacote é ponto de entrada quando declara `package_init_is_entry` | Referência montada em tempo de execução por nome fora de arquivo texto, plugin carregado por convenção de diretório, citação que sai da raiz |
 | `dead-symbol` | Função, classe e atribuição simples de nível de módulo sem nenhuma ocorrência do nome na árvore, contando os formatos de texto declarados em `scope.corpus_suffixes` | Uso por `getattr`, por nome montado ou por registro dinâmico; atributo de classe, variável local e nome reexportado por import; nome de protocolo declarado em `ignore_names` |
 | `unused-dependency` | Requisito declarado que nenhum módulo do escopo importa, em manifest dentro do escopo declarado | Import indireto por caminho condicional, dependência de dependência, manifest em diretório ou caminho excluído |
@@ -53,6 +53,8 @@ A política `config/hygiene-policy.json` é a única fonte de limiar, exceção 
 - `classes.dead-module.entry_points`: módulo alcançado por convenção, e não por import ou citação.
 - `classes.dead-module.exclude_tests`: diretório de teste fora da varredura de módulo, porque teste é alcançado pelo executor e não por import do produto. A exclusão é declarada, e não fixa no código.
 - `classes.dead-module.package_init_is_entry`: arquivo de pacote como ponto de entrada, porque é alcançado pelo import de quem usa o pacote, e não por citação no repositório. Também declarado, pela mesma razão.
+- `classes.duplication.min_body_lines` conta instruções do corpo: instrução de várias linhas conta uma, e linha vazia, comentário, decorator, assinatura e literal de documentação não contam. O valor foi re-derivado quando a medida passou a contar instruções, para não encolher a classe em silêncio.
+- Toda chave de decisão é obrigatória na política: `exclude_declared_copies`, `exclude_tests`, `package_init_is_entry`, `ignore_names`, `entry_points`, `import_name_map` e `tool_dependencies` ausentes são erro de política, e não default silencioso do código.
 - `classes.dead-symbol.ignore_names`: nome de protocolo consumido pelo próprio interpretador. Também declarado, pela mesma razão: exceção escondida no código não é auditável.
 - `classes.complexity.baseline_history`: história da linha de base, em lista de `{value, reason}`. Ver a seção de linha de base e catraca.
 
@@ -95,7 +97,7 @@ A varredura produz um work item por classe com achado, não um por achado. A cla
 O corpo sai na forma canônica lida pelos extratores de requisito, com uma linha por item nas seções normativas. O artefato não abre issue: abrir issue é ação externa com efeito para terceiros, e a decisão de abrir, priorizar e executar é do ciclo de entrega.
 
 ## Modo direcionado
-O modo direcionado restringe o conjunto analisado: arquivos, manifests e, portanto, os achados das cinco classes. Alvo em diretório cobre a subárvore, e o manifest é lido do módulo analisado, não do corpus de citação: o corpus existe para citar, e não para decidir import. A busca por citação continua lendo a árvore inteira, porque citação é propriedade da árvore: restringi-la ao alvo faria um nome citado fora do alvo parecer morto dentro dele, que é falso positivo em classe `gated`. O modo é para conferir um subsistema, e não para reduzir o custo de leitura.
+O modo direcionado restringe o conjunto analisado: arquivos, manifests e, portanto, os achados das cinco classes. Alvo em diretório cobre a subárvore, e o manifest é lido do módulo analisado, não do corpus de citação: o corpus existe para citar, e não para decidir import. As formas `sub`, `./sub` e `sub/` são o mesmo alvo. A busca por citação continua lendo a árvore inteira, porque citação é propriedade da árvore: restringi-la ao alvo faria um nome citado fora do alvo parecer morto dentro dele, que é falso positivo em classe `gated`. O modo é para conferir um subsistema, e não para reduzir o custo de leitura.
 ## Fronteira com a higiene do diff
 `entregar-issue/references/hygiene.md` continua sendo a higiene da entrega: arquivo tocado, consumidor direto, símbolo substituído. Esta skill mede a árvore inteira, sob demanda, e não substitui nenhum gate do ciclo.
 

@@ -241,6 +241,13 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A quinta rodada de auditoria corrigiu o que as quatro anteriores ainda não garantiam: caminho absoluto deixou de ser
+tratado como citação local, e a barra inicial só é âncora quando o caminho vem depois de um marcador de lugar; o
+limiar de corpo passou a contar instruções, e não a distância física entre a primeira e a última, com o valor
+re-derivado de forma explícita para não encolher a classe em silêncio; o rótulo sem sufixo passou a pertencer à
+definição que aparece primeiro no texto, e não à que a travessia da árvore visitou primeiro; as formas `sub`,
+`./sub` e `sub/` passaram a ser o mesmo alvo do modo direcionado; e toda chave de decisão de escopo e de exceção
+passou a ser obrigatória na política, com erro declarado em vez de default silencioso no código.
 A quarta rodada de auditoria corrigiu o que as três anteriores ainda não garantiam: o import relativo deixou de
 alcançar além do pacote e só alcança a raiz quando a raiz é pacote declarado; a citação de arquivo passou a ser
 resolvida por caminho — raiz, diretório de quem cita e raiz da skill —, com âncora de marcador de lugar aceita,

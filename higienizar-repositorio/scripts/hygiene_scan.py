@@ -364,14 +364,13 @@ def body_statements(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.st
     return body
 
 
-def body_line_span(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
-    """Linhas de código do corpo: sem decorator, sem assinatura e sem literal de documentação."""
-    body = body_statements(node)
-    if not body:
-        return 0
-    first = body[0].lineno
-    last = body[-1].end_lineno or body[-1].lineno
-    return last - first + 1
+def body_code_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
+    """Linhas de código do corpo, contadas por instrução.
+
+    Instrução de várias linhas conta uma, e linha vazia ou comentário não conta: o limiar mede código, e
+    não a distância física entre a primeira e a última instrução, que linha em branco nenhuma infla.
+    """
+    return len(body_statements(node))
 
 
 def normalized_body(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
@@ -472,11 +471,15 @@ def named_paths(texts: dict[str, str], root: Path, pattern: re.Pattern[str]) -> 
     for rel, text in texts.items():
         directory = Path(rel).parent.as_posix()
         skill_root = Path(rel).parts[0] if len(Path(rel).parts) > 1 else ""
-        for token in pattern.findall(text):
-            cleaned = token.removeprefix("./")
-            # Citação ancorada em marcador de lugar (`<skill>/scripts/x.py`) chega aqui com a barra
-            # inicial, porque o padrão não casa o marcador: a barra é âncora, não caminho absoluto.
-            cleaned = cleaned.lstrip("/") if cleaned.startswith("/") else cleaned
+        for match in pattern.finditer(text):
+            cleaned = match.group(0).removeprefix("./")
+            if cleaned.startswith("/"):
+                # A barra inicial só é âncora quando o caminho vem logo depois de um marcador de lugar,
+                # como em `<skill>/scripts/x.py`: fora disso é caminho absoluto, que não é citação de
+                # arquivo da árvore e não pode manter módulo vivo.
+                if not match.start() or text[match.start() - 1] != ">":
+                    continue
+                cleaned = cleaned.lstrip("/")
             parts = Path(cleaned).parts
             # Citação que sai da raiz não é invocação declarada de arquivo da árvore.
             if not cleaned or ".." in parts:
@@ -515,18 +518,20 @@ def detect_duplication(
         if exclude_tests and (path.name.startswith("test_") or "tests" in path.parts):
             continue
         tree = modules[rel]
-        places: list[tuple[str, str]] = []
-        forms: list[str] = []
+        measured: list[tuple[int, int, str, str]] = []
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
-            if body_line_span(node) < minimum:
+            if body_code_lines(node) < minimum:
                 continue
             form = normalized_body(node)
             if form:
-                places.append((rel, node.name))
-                forms.append(form)
-        for label, form in zip(disambiguate(places), forms, strict=True):
+                measured.append((node.lineno, node.col_offset, node.name, form))
+        # Ordem de aparição é a do texto: a travessia da árvore não garante essa ordem, e o rótulo sem
+        # sufixo precisa pertencer à primeira definição, e não à que a travessia visitou primeiro.
+        measured.sort()
+        labels = disambiguate([(rel, name) for _, _, name, _ in measured])
+        for label, (_, _, _, form) in zip(labels, measured, strict=True):
             groups[form].append(label)
     findings: list[dict] = []
     for form, members in groups.items():
@@ -647,14 +652,18 @@ def detect_dead_symbols(
         parents = parent_map(tree)
         # Escopo do modulo inclui o que roda dentro de controle de fluxo: `if`, `try` e `with` no nivel
         # do modulo ligam nome no namespace do modulo, e ignorar isso deixaria simbolo morto invisivel.
-        entries: list[tuple[str, str, str]] = []
+        entries: list[tuple[int, int, str, str, str]] = []
         for node in own_scope_nodes(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                entries.append((node.name, rel, qualname(node, parents)))
+                entries.append((node.lineno, node.col_offset, node.name, rel, qualname(node, parents)))
             elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-                entries.extend((assigned, rel, assigned) for assigned in assigned_names(node))
-        labels = disambiguate([(entry_rel, place) for _, entry_rel, place in entries])
-        for (key, _, _), label in zip(entries, labels, strict=True):
+                entries.extend(
+                    (node.lineno, node.col_offset, assigned, rel, assigned)
+                    for assigned in assigned_names(node)
+                )
+        entries.sort()
+        labels = disambiguate([(entry_rel, place) for _, _, _, entry_rel, place in entries])
+        for (_, _, key, _, _), label in zip(entries, labels, strict=True):
             definitions[key].append(label)
     findings: list[dict] = []
     for name, places in sorted(definitions.items()):
@@ -677,11 +686,18 @@ def detect_dead_symbols(
     return findings
 
 
+def normalize_target(raw: str) -> str:
+    """Alvo do modo direcionado em forma canônica: sem prefixo `./` e sem barra final.
+
+    `sub`, `./sub` e `sub/` são o mesmo diretório, e comparar a string bruta faria o manifest da
+    subárvore desaparecer em duas das três formas.
+    """
+    return raw.strip().removeprefix("./").rstrip("/")
+
+
 def in_targets(rel: str, targets: set[str]) -> bool:
     """Alvo do modo direcionado cobre o caminho e a subárvore, como no conjunto analisado."""
-    return not targets or any(
-        rel == target or rel.startswith(target.rstrip("/") + "/") for target in targets
-    )
+    return not targets or any(rel == target or rel.startswith(target + "/") for target in targets)
 
 
 def scoped_manifests(
@@ -694,7 +710,7 @@ def scoped_manifests(
     """
     exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
     excluded_paths = set(declared_exclusions(policy))
-    targets = set(paths or [])
+    targets = {normalize_target(raw) for raw in (paths or []) if normalize_target(raw)}
     resolved_root = root.resolve()
     manifests: list[Path] = []
     refused: list[dict] = []
@@ -783,16 +799,17 @@ def detect_complexity(policy: dict, modules: dict[str, ast.Module]) -> list[dict
     for rel in sorted(modules):
         tree = modules[rel]
         parents = parent_map(tree)
-        measured: list[tuple[str, int]] = []
+        measured: list[tuple[int, int, str, int]] = []
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
             score = cyclomatic_complexity(node)
             if score <= limit:
                 continue
-            measured.append((qualname(node, parents), score))
-        labels = disambiguate([(rel, symbol) for symbol, _ in measured])
-        for label, (_, score) in zip(labels, measured, strict=True):
+            measured.append((node.lineno, node.col_offset, qualname(node, parents), score))
+        measured.sort()
+        labels = disambiguate([(rel, symbol) for _, _, symbol, _ in measured])
+        for label, (_, _, _, score) in zip(labels, measured, strict=True):
             symbol = label.split("::", 1)[1]
             findings.append(
                 {

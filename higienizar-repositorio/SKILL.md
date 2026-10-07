@@ -44,6 +44,8 @@ Cada classe declara na politica o que **nao** ve, e a politica declara o escopo 
 - Excecao e declarada, nunca escondida no codigo: `classes.dead-symbol.ignore_names` nomeia o que o proprio interpretador consome, `classes.dead-module.package_init_is_entry` declara o arquivo de pacote como ponto de entrada e `classes.dead-module.exclude_tests` declara o diretorio de teste fora da varredura.
 - Definicao repetida do mesmo nome no mesmo arquivo e Python legal: cada uma recebe rotulo proprio com ordem de aparicao.
 - A identidade do achado continua derivada de conteudo material, sem numero de linha: mover codigo nao muda achado nem excecao aceita.
+- Decisao de escopo e de excecao e declarada na politica: campo ausente nao vira default no codigo, porque isso tiraria da politica o papel de unica fonte de escopo.
+- Decisao de escopo e de excecao e declarada na politica: campo ausente nao vira default no codigo, porque isso tiraria da politica o papel de unica fonte de escopo.
 
 ## Execucao
 1. Conferir a politica e o contrato: `python higienizar-repositorio/scripts/validate_hygiene.py --root .`.
@@ -60,8 +62,8 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - A linha de base de classe `reported` vive numa historia declarada na politica: crescer exige entrada nova com motivo escrito, e reduzir e progresso e nao exige justificativa.
 - `excluded` e exclusao declarada com motivo, caminho relativo canonico dentro da raiz e visivel no relatorio: escopo que encolhe sem aparecer no relatorio e indistinguivel de aprovacao, e o gate reprova. `scope.exclude_dirs` cobre a subarvore inteira, e a entrada pode ser caminho composto como `evals/fixtures`.
 - A leitura de texto para citacao fica contida na raiz: link que resolve para fora entra em `not_analyzed`, porque texto de fora nao pode apagar achado da arvore medida. O mesmo vale para manifest que resolve para fora.
-- Citacao de arquivo e resolvida por caminho — na raiz, no diretorio de quem cita e na raiz da skill —, aceita a ancora de marcador de lugar como `<skill>/scripts/x.py`, ignora caminho que sai da raiz e so aceita nome solto quando ele e unico na arvore: nome ambiguo nao identifica invocacao de nenhum homonimo. O mesmo vale para manifest que resolve para fora.
 - Citacao de arquivo e resolvida por caminho — na raiz, no diretorio de quem cita e na raiz da skill —, aceita a ancora de marcador de lugar como `<skill>/scripts/x.py`, ignora caminho que sai da raiz e so aceita nome solto quando ele e unico na arvore: nome ambiguo nao identifica invocacao de nenhum homonimo.
+- Caminho absoluto nao e citacao de arquivo da arvore, e rotulo sem sufixo pertence a definicao que aparece primeiro no texto.
 - `not_analyzed` e buraco de cobertura, nunca limpeza: arquivo ilegivel, link quebrado, caminho que resolve para fora da raiz ou erro de sintaxe precisa ser corrigido ou declarado na politica. Permissao declarada sem arquivo correspondente tambem reprova.
 
 ## Contratos
