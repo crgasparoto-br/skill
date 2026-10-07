@@ -19,13 +19,17 @@ import json
 import sys
 from pathlib import Path
 
+# O gerador não escreve na árvore analisada, e bytecode de módulo importado é escrita: sem isto, a
+# própria execução deixaria `__pycache__` dentro da raiz que ele afirma não alterar.
+sys.dont_write_bytecode = True
+
 try:
     from .hygiene_scan import HygieneError, build_report, load_policy, write_target
-    from .validate_hygiene import schema_errors
+    from .validate_hygiene import policy_errors, schema_errors
 except ImportError:  # pragma: no cover - execucao direta do script
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from hygiene_scan import HygieneError, build_report, load_policy, write_target
-    from validate_hygiene import schema_errors
+    from validate_hygiene import policy_errors, schema_errors
 
 CLASS_TEXT = {
     "duplication": {
@@ -242,10 +246,20 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
         else:
             policy = load_policy(root)
+            # Work item é evidência sobre a árvore: publicá-lo a partir de política que o gate reprova
+            # ou de varredura com problema produziria artefato que ninguém pode aceitar.
+            errors = policy_errors(policy)
+            if errors:
+                print("ERRO: politica invalida:", file=sys.stderr)
+                for error in errors[:5]:
+                    print(f"- {error}", file=sys.stderr)
+                return 2
             report, problems = build_report(root, policy)
             if problems:
-                for problem in problems:
-                    print(f"AVISO: {problem}", file=sys.stderr)
+                print("ERRO: varredura com problema:", file=sys.stderr)
+                for problem in problems[:5]:
+                    print(f"- {problem}", file=sys.stderr)
+                return 2
     except (HygieneError, json.JSONDecodeError, OSError) as error:
         print(f"ERRO: {error}", file=sys.stderr)
         return 2

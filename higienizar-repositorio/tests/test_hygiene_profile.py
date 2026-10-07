@@ -2193,3 +2193,106 @@ def test_system_root_target_publishes_non_empty_label(tmp_path: Path) -> None:
     report, _ = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree), ["/"])
     assert [entry["path"] for entry in report["not_analyzed"]] == ["/"]
     assert hygiene_scan.report_contract_errors(report) == []
+
+
+def test_toml_structure_is_refused_instead_of_read_as_empty(tmp_path: Path) -> None:
+    """Achado bloqueante: estrutura TOML inválida desaparecia sem virar recusa visível."""
+    for index, content in enumerate(
+        (
+            '[tool.poetry.group.dev.metadata]\nrequests = "^2"\n',
+            'project = "bad"\n',
+            'tool = "bad"\n',
+        )
+    ):
+        tree = make_tree(
+            tmp_path / str(index),
+            {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n", "pyproject.toml": content},
+        )
+        report = scan(tree)
+        assert [entry["path"] for entry in report["not_analyzed"]] == ["pyproject.toml"], content
+        assert findings_of(report, "unused-dependency") == []
+
+
+def test_poetry_group_with_optional_is_still_read(tmp_path: Path) -> None:
+    """A recusa nova não pode acusar grupo válido do formato."""
+    content = (
+        '[tool.poetry.group.dev]\noptional = true\n'
+        '[tool.poetry.group.dev.dependencies]\nrequests = "^2"\n'
+    )
+    tree = make_tree(
+        tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n", "pyproject.toml": content}
+    )
+    report = scan(tree)
+    assert report["not_analyzed"] == []
+    assert [item["symbol"] for item in findings_of(report, "unused-dependency")] == ["requests"]
+
+
+def test_relative_import_at_package_root_reaches_sibling(tmp_path: Path) -> None:
+    """Achado bloqueante: `from . import x` na raiz de pacote era acusado como módulo morto."""
+    policy = policy_variant(**{"classes.dead-module.package_init_is_entry": True})
+    packed = make_tree(
+        tmp_path / "pacote",
+        {
+            "__init__.py": "",
+            "consumer.py": "from . import orphan\n",
+            "orphan.py": "def used(value):\n    return value\n",
+            "README.md": "`consumer.py` usado\n",
+        },
+        policy,
+    )
+    assert findings_of(scan(packed), "dead-module") == []
+    loose = make_tree(
+        tmp_path / "solto",
+        {
+            "consumer.py": "from . import orphan\n",
+            "orphan.py": "def used(value):\n    return value\n",
+            "README.md": "`consumer.py` usado\n",
+        },
+        policy,
+    )
+    assert [finding["location"] for finding in findings_of(scan(loose), "dead-module")] == ["orphan.py"]
+
+
+def test_work_item_generator_refuses_invalid_policy(tmp_path: Path) -> None:
+    """Achado bloqueante: o gerador publicava work item a partir de política que o gate reprova."""
+    policy = policy_variant(**{"classes.dead-symbol.ignore_names": "__all__"})
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"}, policy)
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "build_hygiene_work_items.py"),
+            "--root",
+            str(tree),
+            "--json",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2, result.stdout
+    assert "politica invalida" in result.stderr
+
+
+def test_declared_path_with_control_character_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: caminho com NUL passava a política e derrubava o validador."""
+    policy = policy_variant(
+        **{
+            "scope.exclude_paths": [
+                {
+                    "path": "bad\x00.py",
+                    "reason": "Exclusao com motivo suficientemente longo para teste controlado.",
+                }
+            ]
+        }
+    )
+    errors = validate_hygiene.policy_errors(policy)
+    assert any("nao pode conter NUL" in error for error in errors)
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"}, policy)
+    assert any("NUL" in error for error in validate_hygiene.validate_hygiene(tree))
+
+
+def test_gated_class_with_zero_baseline_is_refused() -> None:
+    """Achado não bloqueante: `baseline: 0` escapava da regra que proíbe linha de base em classe gated."""
+    policy = policy_variant(**{"classes.complexity.state": "gated", "classes.complexity.baseline": 0})
+    errors = validate_hygiene.policy_errors(policy)
+    assert any("classe gated nao pode declarar baseline" in error for error in errors)

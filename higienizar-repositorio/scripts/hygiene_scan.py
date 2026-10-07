@@ -40,6 +40,10 @@ from collections import Counter, defaultdict
 from copy import deepcopy
 from pathlib import Path
 
+# A varredura não escreve na árvore analisada, e bytecode de módulo importado é escrita: sem isto, a
+# própria execução deixaria `__pycache__` dentro da raiz que ela afirma não alterar.
+sys.dont_write_bytecode = True
+
 DEFAULT_POLICY = Path("config") / "hygiene-policy.json"
 SHARED_FILES = Path("config") / "shared-files.json"
 def identifier_tokens(text: str) -> list[str]:
@@ -899,7 +903,9 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
                 depth = node.level - 1
                 # Import relativo além do pacote é inválido e não alcança módulo nenhum; resolver por
                 # aproximação manteria vivo um módulo que ninguém importa.
-                if depth > len(package) or (node.level == 1 and not package):
+                if depth > len(package) or (node.level == 1 and not package and not root_is_package):
+                    # `from . import x` na raiz só alcança irmão quando a própria raiz é pacote
+                    # declarado; sem `__init__.py` na raiz o relativo não alcança módulo nenhum.
                     continue
                 if depth == len(package) and not root_is_package:
                     continue
@@ -1111,6 +1117,52 @@ def requirement_list(value: object, label: str) -> list[str]:
     return list(value)
 
 
+def toml_document_tables(document: dict) -> tuple[dict, dict]:
+    """Tabelas do documento TOML, com estrutura inválida recusada em vez de tratada como ausência.
+
+    Tabela inválida não é ausência: tratar `project` ou `tool` escalar como vazio faria a declaração de
+    dependência desaparecer da medição, que é a forma mais barata de esconder dependência não usada.
+    """
+    for key in ("project", "tool"):
+        if key in document and not isinstance(document[key], dict):
+            raise HygieneError(f"manifest toml invalido: {key} precisa ser tabela")
+    tool = document.get("tool") or {}
+    if "poetry" in tool and not isinstance(tool["poetry"], dict):
+        raise HygieneError("manifest toml invalido: tool.poetry precisa ser tabela")
+    return document.get("project") or {}, tool.get("poetry") or {}
+
+
+def poetry_dependency_tables(poetry: dict) -> list:
+    """Tabelas de dependência do Poetry, com hierarquia inválida recusada.
+
+    Chave não lida dentro do grupo esconderia dependência: `[tool.poetry.group.dev.metadata]` com
+    requisitos dentro é declaração válida para o formato e invisível para a medição.
+    """
+    tables = [poetry.get("dependencies"), poetry.get("dev-dependencies")]
+    groups = poetry.get("group")
+    if groups is not None and not isinstance(groups, dict):
+        raise HygieneError("manifest toml invalido: tool.poetry.group precisa ser tabela")
+    for name, group in (groups or {}).items():
+        if not isinstance(group, dict):
+            raise HygieneError(f"manifest toml invalido: tool.poetry.group.{name} precisa ser tabela")
+        unknown = sorted(set(group) - {"dependencies", "optional"})
+        if unknown:
+            raise HygieneError(
+                f"manifest toml invalido: tool.poetry.group.{name} tem chave nao lida ({unknown[0]})"
+            )
+        if "optional" in group and not isinstance(group["optional"], bool):
+            raise HygieneError(
+                f"manifest toml invalido: tool.poetry.group.{name}.optional precisa ser booleano"
+            )
+        table = group.get("dependencies")
+        if table is not None and not isinstance(table, dict):
+            raise HygieneError(
+                f"manifest toml invalido: tool.poetry.group.{name}.dependencies precisa ser tabela"
+            )
+        tables.append(table)
+    return tables
+
+
 def toml_requirements(text: str) -> list[str]:
     """Requisitos de `pyproject.toml`: padrão do empacotador e tabelas do Poetry.
 
@@ -1124,7 +1176,7 @@ def toml_requirements(text: str) -> list[str]:
         document = tomllib.loads(text)
     except tomllib.TOMLDecodeError as error:
         raise HygieneError(f"manifest toml invalido ({error.__class__.__name__})") from error
-    project = document.get("project") if isinstance(document.get("project"), dict) else {}
+    project, poetry = toml_document_tables(document)
     declared = list(requirement_list(project.get("dependencies"), "project.dependencies"))
     optional = project.get("optional-dependencies")
     if optional is not None and not isinstance(optional, dict):
@@ -1135,22 +1187,7 @@ def toml_requirements(text: str) -> list[str]:
     requirements = [
         line for line in declared if requirement_name(line).lower() != "python"
     ]
-    tool = document.get("tool") if isinstance(document.get("tool"), dict) else {}
-    poetry = tool.get("poetry") if isinstance(tool.get("poetry"), dict) else {}
-    tables = [poetry.get("dependencies"), poetry.get("dev-dependencies")]
-    groups = poetry.get("group")
-    if groups is not None and not isinstance(groups, dict):
-        raise HygieneError("manifest toml invalido: tool.poetry.group precisa ser tabela")
-    for name, group in (groups or {}).items():
-        if not isinstance(group, dict):
-            raise HygieneError(f"manifest toml invalido: tool.poetry.group.{name} precisa ser tabela")
-        table = group.get("dependencies")
-        if table is not None and not isinstance(table, dict):
-            raise HygieneError(
-                f"manifest toml invalido: tool.poetry.group.{name}.dependencies precisa ser tabela"
-            )
-        tables.append(table)
-    for table in tables:
+    for table in poetry_dependency_tables(poetry):
         if table is not None and not isinstance(table, dict):
             raise HygieneError("manifest toml invalido: tabela de dependencia do Poetry precisa ser tabela")
         if isinstance(table, dict):

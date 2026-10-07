@@ -88,7 +88,10 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Chave de decisao so vale na classe a que pertence, e chave com nome parecido e erro: decisao de outra classe, ou nome que parece decisao, mentiria sem que ninguem percebesse.
 - Supressor declarado com tipo errado reprova, em vez de ser ignorado: texto ou objeto no lugar da lista parece silenciar achado e nao silencia nada.
 - Citacao com `..` e recusada somente quando de fato sai da raiz: `sub/../x.py` cita `x.py` dentro da arvore, e descartar por conter `..` acusaria divida que nao existe.
-- Hierarquia invalida do Poetry, em `tool.poetry.group` e em `dependencies` de grupo, e recusa visivel: declaracao de dependencia que desaparece da medicao e divida escondida.
+- Estrutura invalida de TOML e recusa visivel: `project`, `tool` ou `tool.poetry` escalar, hierarquia de grupo do Poetry invalida e chave nao lida dentro de grupo apontam para declaracao que a medicao nao le, e declaracao que desaparece da medicao e divida escondida.
+- Import relativo na raiz so alcanca irmao quando a propria raiz e pacote declarado, e import relativo alem do pacote nao alcanca modulo nenhum.
+- O gerador de work items reprova politica que o gate reprova e varredura com problema, antes de publicar: artefato gerado de politica invalida e evidencia que ninguem pode aceitar.
+- Caminho declarado precisa ser texto simples: NUL e quebra de linha nao sao caminho, e politica invalida reprova em vez de derrubar o validador.
 - O relatorio Markdown publica o escopo excluido, e nao so o JSON: artefato humano sem a exclusao induziria leitura de cobertura completa sobre escopo reduzido por declaracao.
 - A validacao nao deixa bytecode na arvore analisada: `__pycache__` de modulo importado e escrita dentro da raiz que a execucao afirma nao alterar.
 - O relatorio nao pode ser gravado dentro da arvore medida: evidencia gravada no objeto medido entra no corpus de citacao, muda a medicao seguinte e pode sobrescrever arquivo coberto.

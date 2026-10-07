@@ -178,7 +178,7 @@ def _class_threshold_errors(name: str, entry: dict) -> list[str]:
             errors.append("politica: classes.complexity.max_complexity precisa ser >= 2")
         if entry.get("state") == "reported":
             errors.extend(_history_errors(name, entry))
-        elif entry.get("baseline"):
+        elif "baseline" in entry:
             errors.append("politica: classe gated nao pode declarar baseline")
     return errors
 
@@ -274,6 +274,18 @@ def _unknown_class_key_errors(name: str, entry: dict) -> list[str]:
     ]
 
 
+def _path_text_problem(value: str) -> str | None:
+    """Caminho declarado precisa ser texto simples.
+
+    NUL e quebra de linha não são caminho: `Path.resolve()` levanta exceção não controlada sobre eles, e
+    política inválida precisa reprovar, não derrubar o validador.
+    """
+    for character, label in (("\x00", "NUL"), ("\n", "quebra de linha"), ("\r", "retorno de carro")):
+        if character in value:
+            return f"nao pode conter {label}"
+    return None
+
+
 def _exclude_dir_errors(scope: dict) -> list[str]:
     """Diretório excluído precisa ser nome de diretório relativo dentro da raiz.
 
@@ -287,6 +299,10 @@ def _exclude_dir_errors(scope: dict) -> list[str]:
     for index, entry in enumerate(declared):
         if not isinstance(entry, str) or not entry:
             errors.append(f"politica: scope.exclude_dirs[{index}] precisa ser texto")
+            continue
+        problem = _path_text_problem(entry)
+        if problem is not None:
+            errors.append(f"politica: scope.exclude_dirs[{index}] {problem}")
             continue
         if entry in {".", ".."} or Path(entry).is_absolute():
             errors.append(
@@ -338,6 +354,10 @@ def _scope_errors(scope: object) -> list[str]:
         declared_path = entry.get("path")
         if not isinstance(declared_path, str) or not declared_path:
             errors.append(f"politica: scope.exclude_paths[{index}].path precisa ser texto")
+        elif _path_text_problem(declared_path) is not None:
+            errors.append(
+                f"politica: scope.exclude_paths[{index}].path {_path_text_problem(declared_path)}"
+            )
         elif Path(declared_path).is_absolute() or ".." in Path(declared_path).parts:
             # Exclusao que sai da raiz nao exclusao de caminho da arvore auditada: ela aparentaria
             # excluir algo do repositorio sem sair dele.
@@ -396,6 +416,10 @@ def _justified_error(index: int, entry: object, label: str) -> list[str]:
         return [f"politica: {label}[{index}].{field} precisa ser texto"]
     errors: list[str] = []
     if field == "path":
+        if any(character in value for character in ("\x00", "\n", "\r")):
+            # NUL e quebra de linha não são caminho: `Path.resolve()` levanta exceção não controlada, e
+            # política inválida precisa reprovar, não derrubar o validador.
+            return [f"politica: {label}[{index}].path precisa ser caminho de texto simples"]
         declared_path = Path(value)
         if declared_path.is_absolute() or ".." in declared_path.parts:
             # Caminho absoluto aqui permitiria declarar cobertura de fora da arvore, e o relatorio deixaria
@@ -498,7 +522,11 @@ def coverage_errors(root: Path, report: dict, policy: dict) -> list[str]:
         errors.append("cobertura: nenhum arquivo analisado; escopo vazio nao e arvore limpa")
     declared = declared_exclusions(policy)
     for path in sorted(declared):
-        candidate = (root / path).resolve()
+        try:
+            candidate = (root / path).resolve()
+        except (OSError, RuntimeError, ValueError):
+            errors.append(f"cobertura: caminho declarado nao pode ser resolvido ({path})")
+            continue
         if not candidate.is_relative_to(root.resolve()) or not candidate.is_file():
             errors.append(f"cobertura: exclusao declarada sem arquivo correspondente: {path}")
     reported_excluded = {

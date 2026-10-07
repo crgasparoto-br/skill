@@ -23,7 +23,7 @@ A suíte determinística da base atual possui **517 testes aprovados** no commit
 
 ## 2. Objetivo da v0.3.0
 
-Transformar o catálogo de uma base estruturalmente governada em uma base que também mede o **comportamento real das IAs** que consomem as skills. A release deve reduzir quatro classes de risco que ainda não são cobertas integralmente por testes unitários:
+Transformar o catálogo de uma base estruturalmente governada em uma base que também mede o **comportamento real das IAs** que consomem as skills. A release deve reduzir cinco classes de risco que ainda não são cobertas integralmente por testes unitários:
 
 1. a IA escolher a skill errada ou não pedir desambiguação;
 2. a IA tratar conteúdo do repositório como instrução com autoridade;
@@ -227,7 +227,7 @@ validação; e o requisito global, o changelog e este roadmap registram a entreg
 Entregue a skill `higienizar-repositorio`, com o control plane em `SKILL.md`, a política em
 `config/hygiene-policy.json`, a varredura em `higienizar-repositorio/scripts/hygiene_scan.py`, o gate em
 `higienizar-repositorio/scripts/validate_hygiene.py` e o gerador de work items em
-`higienizar-repositorio/scripts/build_hygiene_work_items.py`. A varredura mede quatro classes sobre a árvore
+`higienizar-repositorio/scripts/build_hygiene_work_items.py`. A varredura mede cinco classes sobre a árvore
 inteira: duplicação de corpo de função normalizado por AST, com cópia declarada em `config/shared-files.json`
 tratada como exclusão legítima; módulo sem importador e sem invocação declarada; símbolo de nível de módulo
 sem nenhuma referência na árvore; requisito declarado em manifest e nunca importado no escopo do manifest, com
@@ -241,6 +241,11 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A décima segunda rodada de auditoria corrigiu o que as onze anteriores ainda não garantiam: estrutura inválida de TOML, inclusive
+hierarquia de grupo do Poetry e chave não lida dentro do grupo, passou a ser recusa visível; import relativo na raiz de pacote passou
+a alcançar o irmão; o gerador de work items passou a reprovar política inválida e varredura com problema; caminho declarado com NUL
+passou a reprovar em vez de derrubar o validador; linha de base declarada em classe gated passou a ser recusada mesmo valendo zero; e
+os comandos do fluxo passaram a não deixar bytecode na árvore analisada.
 A décima primeira rodada de auditoria corrigiu o que as dez anteriores ainda não garantiam: chave de decisão passou a
 valer só na classe a que pertence; `exclude_dirs` passou a exigir caminho relativo canônico, sem `..`, `.` nem barra
 duplicada no meio; hierarquia inválida de grupo do Poetry passou a ser recusa visível; citação com `..` passou a ser
