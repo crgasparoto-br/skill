@@ -50,6 +50,39 @@ Cada adapter validado deve aparecer em `config/platform-adapters.json` e `config
 
 Ao remover uma versão, mantenha uma nota de migração e a última release que a suporta. Não apague o histórico do changelog para esconder uma quebra.
 
+## Análise estática do código
+O código Python do catálogo é verificado por um gate determinístico e offline, `scripts/validate_lint.py`, que executa
+o Ruff com a seleção derivada de `config/lint-policy.json` e reprova qualquer diagnóstico das regras aplicadas.
+```bash
+python scripts/validate_lint.py --root .
+```
+A política é a única fonte da seleção: toda família de regras do Ruff aparece exatamente uma vez como aplicada,
+aplicada em parte com a parte desligada declarada, ou dispensada com motivo escrito. Acrescentar uma família nova ao
+catalogo da ferramenta sem decidir sobre ela reprova o gate, e uma dispensa sem motivo escrito também, de modo que a
+cobertura não pode encolher em silêncio. A versão da ferramenta é fixada exatamente no manifest e no lockfile e
+declarada na política: subir de versão muda o catalogo de regras e exige decisão explícita, e a divergência entre a
+versão instalada e a declarada reprova.
+### O que cada verificação prova
+| Verificação | O que prova |
+| --- | --- |
+| Família do catalogo sem decisão | que nenhuma família de regras ficou desligada por omissão |
+| Família dispensada sem motivo escrito | que a dispensa é deliberada e revisável |
+| Versão instalada igual à declarada | que o resultado não depende de uma versão implícita da ferramenta |
+| Supressão em linha com código permitido e justificativa própria | que a supressão foi revisada no ponto em que aparece |
+| Supressão que não suprime nada | que uma diretiva morta não permanece no código |
+| Diagnóstico de regra aplicada | que a sujeira reprova a entrega em vez de depender de revisão manual |
+### O que fica fora, e por quê
+As famílias dispensadas e as partes desligadas das famílias parciais estão declaradas na própria política, cada uma
+com o motivo escrito. O recorte mais visível: formatação e largura de linha, porque o repositório escreve linhas
+longas de propósito; docstring por símbolo, porque a documentação normativa vive em `SKILL.md` e nas referências;
+regras de segurança no estilo bandit, que se sobrepõem a `docs/SECURITY.md` e à auditoria de dependências; captura
+ampla de exceção, que é o contrato fail-closed dos validadores; e complexidade, que não é sinal de correção aqui.
+### Supressões
+Uma supressão em linha (`noqa`) só é aceita quando o código está na lista permitida da política e a própria linha
+traz a justificativa depois de ` - `. A lista permitida existe para o caso em que o import precisa vir depois do
+ajuste de `sys.path`, situação em que o `noqa` é local e o motivo fica visível. Corrigir o diagnóstico é preferível a
+suprimi-lo, e uma supressão nova exige decisão de política no mesmo commit.
+
 ## Dependências e política de exceção
 
 Cada manifest de skill (`<skill>/requirements*.txt`) tem um lockfile irmão com o mesmo nome e sufixo `.lock.txt`, que

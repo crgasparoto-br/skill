@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Cheap preflight: reject a delivery packet that has not saturated requirements and risk families."""
 from __future__ import annotations
-import argparse, json, re
+
+import argparse
+import re
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
-
 from preflight_semantic_guards import conflicting_current_sha_claims
 
 CANONICAL = {
@@ -13,7 +14,7 @@ CANONICAL = {
     "temporal-consistency", "temporal-destination", "concurrency-atomicity",
     "idempotency", "rollback", "historical-immutability", "structural-contract", "documentation",
 }
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.I)
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 
 
 def load(path: Path) -> dict:

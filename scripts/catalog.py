@@ -60,7 +60,7 @@ def validate_capabilities(root: Path = ROOT) -> list[str]:
         errors.append("capability registry system must be skill-capabilities")
     capabilities = value.get("capabilities")
     if not isinstance(capabilities, dict) or not capabilities:
-        return errors + ["capability registry capabilities must be a non-empty object"]
+        return [*errors, "capability registry capabilities must be a non-empty object"]
     for name, item in capabilities.items():
         label = f"capability {name}"
         if not isinstance(name, str) or not re.fullmatch(r"^[a-z0-9]+(?:-[a-z0-9]+)*$", name):

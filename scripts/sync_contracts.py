@@ -4,17 +4,16 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 try:
     from .catalog import ROOT, catalog_skill_ids, load_catalog, validate_catalog
-    from .validate_contract_sync import CANONICAL_SKILL, load_object, load_shared_groups, sha256_file, validate_manifest_shape, validate_contract_sync
+    from .validate_contract_sync import CANONICAL_SKILL, load_shared_groups, sha256_file, validate_contract_sync
 except ImportError:  # pragma: no cover - direct script execution
     from catalog import ROOT, catalog_skill_ids, load_catalog, validate_catalog
-    from validate_contract_sync import CANONICAL_SKILL, load_object, load_shared_groups, sha256_file, validate_manifest_shape, validate_contract_sync
+    from validate_contract_sync import CANONICAL_SKILL, load_shared_groups, sha256_file, validate_contract_sync
 
 
 def canonical_manifest(root: Path) -> tuple[Path, dict[str, Any]]:

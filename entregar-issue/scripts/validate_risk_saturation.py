@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json
+
+import argparse
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
-
 from risk_inference import (
     CANONICAL_RISK_FAMILIES,
     required_canonical_families_from_closure,

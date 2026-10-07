@@ -21,7 +21,7 @@ ISSUE = """# Pedido
 
 
 def run(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run([sys.executable, *args], capture_output=True, text=True)
+    return subprocess.run([sys.executable, *args], check=False, capture_output=True, text=True)
 
 
 def build(tmp_path: Path) -> tuple[Path, Path]:

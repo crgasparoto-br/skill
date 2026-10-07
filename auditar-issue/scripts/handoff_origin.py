@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import hashlib
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def expected_issue_and_pull_request(

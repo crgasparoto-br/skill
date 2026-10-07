@@ -149,7 +149,7 @@ def validate_evals(root: Path) -> list[str]:
     try:
         validation = run_evaluations(root, validate_only=True)
     except HarnessError as exc:
-        return errors + [str(exc)]
+        return [*errors, str(exc)]
     if validation["summary"]["total"] < 1:
         errors.append("nenhum caso de avaliação validado")
 

@@ -92,7 +92,7 @@ def run(current_closure: Path, learning_path: Path, inherited: Path, head: str, 
         "--head-sha", head,
         "--previous-closure", str(previous_closure),
         "--previous-inherited-controls", str(previous_inherited),
-    ], text=True, stdout=subprocess.PIPE)
+    ], check=False, text=True, stdout=subprocess.PIPE)
 
 
 def test_reaudit_stops_before_full_audit_when_escape_is_incomplete() -> None:

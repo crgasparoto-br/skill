@@ -17,7 +17,7 @@ def write(path: Path, payload: dict) -> None:
 def run(learning: Path, closure: Path):
     return subprocess.run(
         [sys.executable, str(SCRIPT), "--learning-closure", str(learning), "--closure", str(closure)],
-        text=True,
+        check=False, text=True,
         stdout=subprocess.PIPE,
     )
 

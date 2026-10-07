@@ -3,21 +3,19 @@
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 import sys
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
 from handoff_origin import inherited_foreign_certificate_by_bytes
-
 from preflight_semantic_guards import validate_terminal_requirement_closure
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def run(args: list[str], errors: list[str]) -> None:
-    proc = subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc = subprocess.run(args, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if proc.returncode != 0:
         lines = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
         errors.extend(lines or [f"BLOCK: validator failed: {' '.join(args)}"])

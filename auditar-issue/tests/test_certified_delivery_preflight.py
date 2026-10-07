@@ -40,7 +40,7 @@ def run(*args: str):
     ]
     return subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "check_delivery_preflight.py"), *target_args, *args],
-        text=True, stdout=subprocess.PIPE,
+        check=False, text=True, stdout=subprocess.PIPE,
     )
 
 

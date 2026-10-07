@@ -7,7 +7,6 @@ import re
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
-
 from handoff_semantic_guards import conflicting_current_sha_claims
 from risk_inference import (
     required_canonical_families_from_closure,
@@ -16,11 +15,11 @@ from risk_inference import (
 
 CONTROL_TYPES = {"test", "gate", "scenario", "procedure"}
 RETIREMENT_DISPOSITIONS = {"superseded", "not-applicable"}
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.I)
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 GENERIC_PASS_RE = re.compile(
     r"^(?:ci|workflow|pipeline)\s+(?:is\s+)?(?:green|passed)|^no\s+(?:diff|change|regression)|"
     r"^(?:unchanged|same\s+as\s+before|not\s+touched|still\s+passes?)\.?$",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -300,9 +299,8 @@ def main() -> int:
         dimension = str(item.get("dimension") or "").strip()
         if any((family, surface, dimension)) and not all((family, surface, dimension)):
             errors.append(f"{label} risk binding must include risk_family, surface and dimension together")
-        if family and surface and dimension and matrix is not None:
-            if (family, surface, dimension) not in attack_dimensions:
-                errors.append(f"{label} risk binding is not executed in the current attack matrix")
+        if family and surface and dimension and matrix is not None and (family, surface, dimension) not in attack_dimensions:
+            errors.append(f"{label} risk binding is not executed in the current attack matrix")
 
     historical_controls: dict[str, dict] = {}
     for historical_name in a.historical_inherited_controls:

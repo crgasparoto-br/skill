@@ -51,7 +51,7 @@ def test_classifier_rejects_foreign_target_package() -> None:
             '--pull-request', '364',
             '--base-ref', 'develop',
             '--head-ref', 'feat/issue-363-professor-manual-ux',
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 3
         payload = json.loads(proc.stdout)
         assert payload['status'] == 'foreign-target'
@@ -92,7 +92,7 @@ def test_classifier_accepts_current_target_only_as_reuse_candidate() -> None:
             '--pull-request', '364',
             '--base-ref', 'develop',
             '--head-ref', 'feat/issue-363-professor-manual-ux',
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 0, proc.stdout
         payload = json.loads(proc.stdout)
         assert payload['status'] == 'current-target'
@@ -116,7 +116,7 @@ def test_partial_snapshot_requires_fresh_handoff() -> None:
             '--repository', 'owner/repo',
             '--work-item-kind', 'issue',
             '--work-item-number', '363',
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 3
         payload = json.loads(proc.stdout)
         assert payload['status'] == 'partial-current-target'
@@ -139,7 +139,7 @@ def test_init_context_records_foreign_target_and_forbids_reuse() -> None:
             '--branch', 'feat/issue-363-professor-manual-ux',
             '--pull-request', '364',
             '--out', str(out),
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 0, proc.stdout
         payload = json.loads(out.read_text(encoding='utf-8'))
         assert payload['artifact_reuse']['status'] == 'foreign-target'
@@ -181,7 +181,7 @@ def test_refresh_context_reclassifies_binding_when_pull_request_changes() -> Non
             '--base-ref', 'develop',
             '--branch', 'feature/current-target',
             '--out', str(context),
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert init.returncode == 0, init.stdout
         assert json.loads(context.read_text(encoding='utf-8'))['artifact_reuse']['status'] == 'current-target'
 
@@ -189,7 +189,7 @@ def test_refresh_context_reclassifies_binding_when_pull_request_changes() -> Non
             sys.executable, str(CONTROLLER), 'refresh-context',
             '--context', str(context),
             '--pull-request', '364',
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert refresh.returncode == 0, refresh.stdout
         payload = json.loads(context.read_text(encoding='utf-8'))
         assert payload['pull_request'] == 364
@@ -215,7 +215,7 @@ def test_refresh_context_reclassifies_after_foreign_package_is_rebuilt() -> None
             '--branch', 'feat/current-target',
             '--pull-request', '364',
             '--out', str(context),
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert init.returncode == 0, init.stdout
         assert json.loads(context.read_text(encoding='utf-8'))['artifact_reuse']['status'] == 'foreign-target'
 
@@ -241,7 +241,7 @@ def test_refresh_context_reclassifies_after_foreign_package_is_rebuilt() -> None
         refresh = subprocess.run([
             sys.executable, str(CONTROLLER), 'refresh-context',
             '--context', str(context),
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert refresh.returncode == 0, refresh.stdout
         payload = json.loads(context.read_text(encoding='utf-8'))
         assert payload['artifact_reuse']['status'] == 'current-target'
@@ -252,7 +252,7 @@ def test_refresh_context_reclassifies_after_foreign_package_is_rebuilt() -> None
 def _git(repo: Path, *args: str) -> str:
     proc = subprocess.run(
         ['git', '-C', str(repo), *args],
-        text=True,
+        check=False, text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -312,7 +312,7 @@ def test_classifier_marks_byte_identical_foreign_base_artifacts_as_inherited_his
             '--head-ref', 'feature/current-delivery',
             '--repository-path', str(repo),
             '--base-sha', base_sha,
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 3, proc.stdout
         payload = json.loads(proc.stdout)
         assert payload['status'] == 'inherited-base-artifact'
@@ -347,7 +347,7 @@ def test_classifier_does_not_call_head_modified_foreign_certificate_inherited() 
             '--head-ref', 'feature/current-delivery',
             '--repository-path', str(repo),
             '--base-sha', base_sha,
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 3, proc.stdout
         payload = json.loads(proc.stdout)
         assert payload['status'] == 'foreign-target'
@@ -392,7 +392,7 @@ def test_classifier_supports_connector_materialized_base_comparison() -> None:
             '--pull-request', '22',
             '--base-ref', 'develop',
             '--head-ref', 'feature/current',
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 3, proc.stdout
         payload = json.loads(proc.stdout)
         assert payload['status'] == 'inherited-base-artifact'
@@ -419,7 +419,7 @@ def test_controller_init_context_propagates_exact_base_origin_classification() -
             '--head-sha', head_sha,
             '--base-sha', base_sha,
             '--out', str(context),
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 0, proc.stdout
         payload = json.loads(context.read_text(encoding='utf-8'))
         assert payload['artifact_reuse']['status'] == 'inherited-base-artifact'

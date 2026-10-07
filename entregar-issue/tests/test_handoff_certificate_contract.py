@@ -24,7 +24,7 @@ def sha(path: Path) -> str:
 
 
 def run(script: str, *args: str):
-    return subprocess.run([sys.executable, str(ROOT / "scripts" / script), *args], text=True, stdout=subprocess.PIPE)
+    return subprocess.run([sys.executable, str(ROOT / "scripts" / script), *args], check=False, text=True, stdout=subprocess.PIPE)
 
 
 def build_valid_delivery(base: Path) -> dict[str, Path]:

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json
+
+import argparse
+import json
 from pathlib import Path
+
 VERSION = "2026-08-20.3"
 
 def main() -> int:

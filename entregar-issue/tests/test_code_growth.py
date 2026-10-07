@@ -50,7 +50,7 @@ class Candidate:
             path = self.tmp / "justifications.json"
             path.write_text(json.dumps(justifications), encoding="utf-8")
             cmd += ["--justifications", str(path)]
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
         report = json.loads(out.read_text(encoding="utf-8")) if out.is_file() and proc.returncode in (0, 2) and "invalid" not in proc.stdout else None
         return proc, report
 
@@ -150,7 +150,7 @@ def test_report_is_accepted_by_auditor_preflight_check(candidate):
     head = candidate.commit({"src/service.py": lines(10)})
     candidate.check(base, head)
     auditor = ROOT.parent / "auditar-issue" / "scripts" / "check_code_growth_evidence.py"
-    proc = subprocess.run([sys.executable, str(auditor), "--report", str(candidate.tmp / "code-growth.json"), "--head-sha", head], capture_output=True, text=True)
+    proc = subprocess.run([sys.executable, str(auditor), "--report", str(candidate.tmp / "code-growth.json"), "--head-sha", head], check=False, capture_output=True, text=True)
     assert proc.returncode == 0, proc.stdout
 
 

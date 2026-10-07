@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-SHA_RE = re.compile(r"^[0-9a-f]{40,64}$", re.I)
+SHA_RE = re.compile(r"^[0-9a-f]{40,64}$", re.IGNORECASE)
 
 
 def main() -> int:

@@ -16,7 +16,7 @@ def run_manifest(value: dict):
         path.write_text(json.dumps(value), encoding="utf-8")
         proc = subprocess.run(
             [sys.executable, str(SCRIPT), "--manifest", str(path)],
-            text=True,
+            check=False, text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )

@@ -35,7 +35,7 @@ def _certified(tmp_path: Path, binding_status: str = "current-target", current: 
         "published_handoff_head_sha": handoff,
         "current_head_sha": handoff,
     })
-    proc = subprocess.run([
+    return subprocess.run([
         sys.executable, str(SCRIPT),
         "--audit-transport", "certified-handoff",
         "--ci-state", "success",
@@ -46,8 +46,7 @@ def _certified(tmp_path: Path, binding_status: str = "current-target", current: 
         "--current-head-sha", observed_current,
         "--target-binding", str(binding),
         "--terminal-handoff-proof", str(proof),
-    ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    return proc
+    ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
 def test_certified_completion_accepts_current_target_and_terminal_proof(tmp_path: Path) -> None:
@@ -81,7 +80,7 @@ def test_native_completion_requires_exact_material_head() -> None:
         "--material-head-sha", material,
         "--current-head-sha", material,
         "--terminal-native-audit-ready", "READY",
-    ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     assert proc.returncode == 0, proc.stdout
 
 
@@ -94,6 +93,6 @@ def test_native_completion_rejects_head_drift() -> None:
         "--material-head-sha", "a" * 40,
         "--current-head-sha", "b" * 40,
         "--terminal-native-audit-ready", "READY",
-    ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     assert proc.returncode == 2
     assert "current_head_sha == material_head_sha" in proc.stdout

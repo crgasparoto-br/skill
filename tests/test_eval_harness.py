@@ -213,7 +213,7 @@ def test_cleanup_attempts_sigkill_when_sigterm_group_is_already_gone(monkeypatch
             raise ProcessLookupError
 
     monkeypatch.setattr(eval_harness.os, "killpg", fake_killpg)
-    eval_harness._terminate_process_group(FakeProcess())
+    eval_harness._terminate_process_group(FakeProcess())  # noqa: SLF001 - teste cobre funcao interna do modulo por decisao declarada de cobertura
     assert calls == [eval_harness.signal.SIGTERM, eval_harness.signal.SIGKILL]
 
 
@@ -308,7 +308,7 @@ def test_expected_result_name_must_be_regular_file(tmp_path: Path) -> None:
 
 def test_expected_result_symlink_is_rejected(tmp_path: Path) -> None:
     source = ROOT / "evals" / "fixtures" / "results" / f"{CASE_ID}.json"
-    os.symlink(source, tmp_path / f"{CASE_ID}.json")
+    (tmp_path / f"{CASE_ID}.json").symlink_to(source)
     with pytest.raises(ValueError, match="arquivos regulares"):
         run_evaluations(ROOT, results_dir=tmp_path)
 

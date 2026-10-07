@@ -125,8 +125,7 @@ def normalize(line: str) -> str:
     value = re.sub(r"^\d+[.)]\s+", "", value)
     value = re.sub(r"^- \[[ xX]\]\s+", "", value)
     value = value.strip("| ")
-    value = re.sub(r"\s+", " ", value)
-    return value
+    return re.sub(r"\s+", " ", value)
 
 
 def flags_for(text: str) -> list[str]:
@@ -157,7 +156,7 @@ def flags_for(text: str) -> list[str]:
 
 
 def candidate_key(source_id: str, line: int, text: str) -> str:
-    return sha256_bytes(f"{source_id}\n{line}\n{text}".encode("utf-8"))
+    return sha256_bytes(f"{source_id}\n{line}\n{text}".encode())
 
 
 def load_snapshot(snapshot_path: Path, errors: list[str]) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
@@ -177,23 +176,23 @@ def load_snapshot(snapshot_path: Path, errors: list[str]) -> tuple[dict[str, Any
         errors.append("specification snapshot must contain sources")
         return snapshot, {}
     by_id: dict[str, dict[str, Any]] = {}
-    for index, source in enumerate(sources):
-        if not isinstance(source, dict):
+    for index, raw_source in enumerate(sources):
+        if not isinstance(raw_source, dict):
             errors.append(f"specification source {index} is invalid")
             continue
-        sid = str(source.get("id") or "").strip()
+        sid = str(raw_source.get("id") or "").strip()
         if not sid or sid in by_id:
             errors.append(f"specification source id missing or duplicate: {sid}")
             continue
-        rel = str(source.get("path") or "")
+        rel = str(raw_source.get("path") or "")
         path = Path(rel)
         if not path.is_absolute():
             path = (snapshot_path.parent / path).resolve()
         if not path.is_file():
             errors.append(f"specification source file missing: {sid}")
-        elif source.get("sha256") != sha256_file(path):
+        elif raw_source.get("sha256") != sha256_file(path):
             errors.append(f"specification source hash mismatch: {sid}")
-        source = dict(source)
+        source = dict(raw_source)
         source["resolved_path"] = str(path)
         by_id[sid] = source
     primary = str(snapshot.get("primary_source_id") or "")
@@ -270,10 +269,9 @@ def _doc_path(path: str) -> bool:
 def detect_scope_reduction_matches(repo: Path, base_ref: str, head_sha: str) -> list[dict[str, Any]]:
     proc = subprocess.run(
         ["git", "diff", "--no-color", "--unified=0", f"{base_ref}...{head_sha}", "--"],
-        cwd=repo,
+        check=False, cwd=repo,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
     )
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.strip() or "git diff failed")

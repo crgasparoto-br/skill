@@ -30,8 +30,8 @@ def main() -> int:
         report = json.loads(args.report.read_text(encoding="utf-8"))
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker()).validate(report)
-        started = datetime.fromisoformat(report["started_at"].replace("Z", "+00:00"))
-        finished = datetime.fromisoformat(report["finished_at"].replace("Z", "+00:00"))
+        started = datetime.fromisoformat(report["started_at"])
+        finished = datetime.fromisoformat(report["finished_at"])
         if finished < started:
             raise ValueError("finished_at precedes started_at")
 

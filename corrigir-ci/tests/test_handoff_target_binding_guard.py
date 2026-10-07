@@ -1,9 +1,9 @@
-from pathlib import Path
 import json
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BINDING = ROOT / "scripts" / "validate_handoff_target_binding.py"
@@ -33,7 +33,7 @@ class HandoffTargetBindingGuardTest(unittest.TestCase):
             path.write_text(json.dumps(cert), encoding="utf-8")
             proc = subprocess.run(
                 [sys.executable, str(script), "--certificate", str(path), *args],
-                text=True,
+                check=False, text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )

@@ -5,11 +5,10 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import jsonschema
-
 from audit_signature import report_semantic_errors, sign_report
 
 
@@ -52,7 +51,7 @@ def main() -> int:
             private_key_path.read_bytes(),
             password_value.encode("utf-8") if password_value else None,
             args.key_id,
-            datetime.now(timezone.utc).isoformat(),
+            datetime.now(UTC).isoformat(),
         )
         schema_path = Path(__file__).resolve().parents[1] / "schemas" / "external-audit.schema.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))

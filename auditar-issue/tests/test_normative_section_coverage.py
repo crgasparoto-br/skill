@@ -39,7 +39,7 @@ def run(snapshot: Path, closure: Path):
             "--specification-snapshot", str(snapshot),
             "--requirement-closure", str(closure),
         ],
-        text=True,
+        check=False, text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )

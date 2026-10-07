@@ -403,6 +403,23 @@
         "file:.github/workflows/validate.yml",
         "file:.github/workflows/dependency-audit.yml"
       ]
+    },
+    {
+      "id": "SKSYS-027",
+      "title": "Static analysis is real, declared and impossible to weaken silently",
+      "status": "validated",
+      "summary": "Python code in the catalogue is checked by a deterministic, offline gate that runs Ruff with a selection derived from a versioned policy and fails on any diagnostic of an applied rule; every rule family in the installed tool catalogue appears exactly once in the policy as applied, partially applied with the disabled part declared, or dismissed with a written reason, so a family added by a tool upgrade or a dismissal without a reason fails the gate and coverage cannot shrink silently; dismissed and partial entries carry a reason of substantive length and applied entries carry none; the tool version is pinned in the manifest and the lockfile and declared in the policy, and a divergence between installed and declared version fails instead of passing; the gate runs with the declared language target and line length, without cache and without network; inline suppression is accepted only when the code is in the allowed list and the same line carries its own justification after the separator, comments are read from real comment tokens so a directive inside a string is not a suppression, and a directive that suppresses nothing fails; the repository tree passes clean, and the aggregate validator, the CI sequence, the README and AGENTS.md run the gate in the same position.",
+      "implementationRefs": [
+        "file:config/lint-policy.json",
+        "file:scripts/validate_lint.py",
+        "file:requirements.txt",
+        "file:requirements.lock.txt",
+        "file:docs/RELEASE.md"
+      ],
+      "validationRefs": [
+        "file:tests/test_lint_gate.py",
+        "file:.github/workflows/validate.yml"
+      ]
     }
   ],
   "system_version": "2026-09-29.5"

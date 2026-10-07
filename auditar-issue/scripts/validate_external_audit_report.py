@@ -8,7 +8,6 @@ from datetime import datetime
 from pathlib import Path
 
 import jsonschema
-
 from audit_signature import report_semantic_errors, verify_report
 
 
@@ -27,8 +26,8 @@ def main() -> int:
         registry_schema = json.loads((schema_dir / "trusted-auditors.schema.json").read_text(encoding="utf-8"))
         jsonschema.Draft202012Validator(report_schema).validate(report)
         jsonschema.Draft202012Validator(registry_schema).validate(registry)
-        datetime.fromisoformat(str(report["issued_at"]).replace("Z", "+00:00"))
-        datetime.fromisoformat(str(report["signature"]["signed_at"]).replace("Z", "+00:00"))
+        datetime.fromisoformat(str(report["issued_at"]))
+        datetime.fromisoformat(str(report["signature"]["signed_at"]))
     except Exception as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1

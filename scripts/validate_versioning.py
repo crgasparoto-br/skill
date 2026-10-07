@@ -94,7 +94,7 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         compatibility = load_json(compatibility_path)
         catalog = load_catalog(root)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
-        return errors + [f"versioning manifest is invalid: {exc}"]
+        return [*errors, f"versioning manifest is invalid: {exc}"]
 
     if compatibility.get("release_version") != release_version:
         errors.append("compatibility release_version differs from VERSION")

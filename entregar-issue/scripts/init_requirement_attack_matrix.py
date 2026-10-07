@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
-
 from risk_inference import (
     coverage_requirement_ids_from_closure,
     derive_families_from_obligation,

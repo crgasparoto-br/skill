@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from jsonschema import Draft202012Validator
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def validate_against_schema(data: Any, schema_path: Path, label: str, errors: list[str]) -> None:

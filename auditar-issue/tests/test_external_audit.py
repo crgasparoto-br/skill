@@ -22,7 +22,7 @@ class ExternalAuditTests(unittest.TestCase):
             subprocess.run([
                 sys.executable, str(ROOT / "scripts/generate_auditor_keypair.py"),
                 "--private-out", str(private_key), "--public-out", str(public_key),
-            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=True, capture_output=True, text=True)
             public_pem = public_key.read_text(encoding="utf-8")
             registry.write_text(json.dumps({
                 "schema_version": 1,
@@ -65,11 +65,11 @@ class ExternalAuditTests(unittest.TestCase):
             subprocess.run([
                 sys.executable, str(ROOT / "scripts/sign_external_audit_report.py"),
                 str(report), "--private-key", str(private_key), "--key-id", "auditor-1",
-            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=True, capture_output=True, text=True)
             valid = subprocess.run([
                 sys.executable, str(ROOT / "scripts/validate_external_audit_report.py"),
                 str(report), "--trusted-auditors", str(registry),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=False, capture_output=True, text=True)
             self.assertEqual(0, valid.returncode, valid.stderr)
 
             duplicate_registry = root / "duplicate-trusted-auditors.json"
@@ -79,7 +79,7 @@ class ExternalAuditTests(unittest.TestCase):
             duplicate = subprocess.run([
                 sys.executable, str(ROOT / "scripts/validate_external_audit_report.py"),
                 str(report), "--trusted-auditors", str(duplicate_registry),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=False, capture_output=True, text=True)
             self.assertEqual(1, duplicate.returncode)
             self.assertIn("unique", duplicate.stderr.lower())
 
@@ -89,7 +89,7 @@ class ExternalAuditTests(unittest.TestCase):
             invalid = subprocess.run([
                 sys.executable, str(ROOT / "scripts/validate_external_audit_report.py"),
                 str(report), "--trusted-auditors", str(registry),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=False, capture_output=True, text=True)
             self.assertEqual(1, invalid.returncode)
             self.assertIn("signature", invalid.stderr.lower())
 
@@ -103,7 +103,7 @@ class ExternalAuditTests(unittest.TestCase):
             subprocess.run([
                 sys.executable, str(ROOT / "scripts/generate_auditor_keypair.py"),
                 "--private-out", str(private_key), "--public-out", str(public_key),
-            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=True, capture_output=True, text=True)
             subprocess.run([
                 sys.executable, str(ROOT / "scripts/init_external_audit_report.py"),
                 "--repository", "owner/repo", "--issue", "7", "--base-ref", "main",
@@ -136,7 +136,7 @@ class ExternalAuditTests(unittest.TestCase):
             same_context = subprocess.run([
                 sys.executable, str(ROOT / "scripts/sign_external_audit_report.py"),
                 str(report), "--private-key", str(private_key), "--key-id", "auditor-1",
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=False, capture_output=True, text=True)
             self.assertEqual(2, same_context.returncode)
             self.assertIn("audit context", same_context.stderr.lower())
 
@@ -159,7 +159,7 @@ class ExternalAuditTests(unittest.TestCase):
             with_finding = subprocess.run([
                 sys.executable, str(ROOT / "scripts/sign_external_audit_report.py"),
                 str(report), "--private-key", str(private_key), "--key-id", "auditor-1",
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=False, capture_output=True, text=True)
             self.assertEqual(2, with_finding.returncode)
             self.assertIn("approved report", with_finding.stderr.lower())
 
@@ -172,7 +172,7 @@ class ExternalAuditTests(unittest.TestCase):
             subprocess.run([
                 sys.executable, str(ROOT / "scripts/generate_auditor_keypair.py"),
                 "--private-out", str(private_key), "--public-out", str(public_key),
-            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=True, capture_output=True, text=True)
             subprocess.run([
                 sys.executable, str(ROOT / "scripts/init_external_audit_report.py"),
                 "--repository", "owner/repo", "--issue", "7", "--base-ref", "main",
@@ -216,7 +216,7 @@ class ExternalAuditTests(unittest.TestCase):
             rejected = subprocess.run([
                 sys.executable, str(ROOT / "scripts/sign_external_audit_report.py"),
                 str(report), "--private-key", str(private_key), "--key-id", "auditor-1",
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=False, capture_output=True, text=True)
             self.assertEqual(2, rejected.returncode)
             self.assertIn("audit escapes", rejected.stderr.lower())
 
@@ -225,7 +225,7 @@ class ExternalAuditTests(unittest.TestCase):
             accepted = subprocess.run([
                 sys.executable, str(ROOT / "scripts/sign_external_audit_report.py"),
                 str(report), "--private-key", str(private_key), "--key-id", "auditor-1",
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            ], check=False, capture_output=True, text=True)
             self.assertEqual(0, accepted.returncode, accepted.stderr)
 
 

@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 CANONICAL_RISK_FAMILIES = {
     "authorization", "tenant-isolation", "public-boundary", "reference-liveness",
@@ -28,13 +31,13 @@ FLAG_FAMILIES = {
 
 EVIDENCE_EFFECT_SCOPE_RE = re.compile(
     r"\b(relacionad\w*\s+(?:a|as)\s+evid[eê]ncias?|opera[cç][oõ]es?\s+afetad\w*|somente\s+(?:as\s+)?opera[cç][oõ]es?|escopo\s+(?:aprovad\w*|revisad\w*|autorizad\w*)|efeitos?\s+(?:autorizad\w*|permitid\w*)|affected operations|related to (?:the )?evidence|approved scope|authorized effects?)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 IDEMPOTENCY_RE = re.compile(
     r"\b(idempot\w*|retry|retries|callback\w*|webhook\w*|reprocess\w*|same[- ]key|mesma\s+chave|"
     r"n[aã]o\s+duplic\w*|sem\s+duplic\w*|duplicat\w*|duplicad\w*|repetir\s+exatamente|segunda\s+libera[cç][aã]o)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 QUANTITATIVE_RE = re.compile(
@@ -42,14 +45,14 @@ QUANTITATIVE_RE = re.compile(
     r"dura[cç][aã]o|duration|tempo\s+m[eé]dio|average\s+time|custos?|costs?|contagem|count|counts|"
     r"quantidade|quantity|cardinalidade|cardinality|m[eé]dia\s+m[oó]vel|moving\s+average|"
     r"proje[cç][aã]o|projection|percentual|percentage|ratio|taxa|rate)\b|\b\d+(?:[.,]\d+)?\s*%)",
-    re.I,
+    re.IGNORECASE,
 )
 
 TEMPORAL_COVERAGE_RE = re.compile(
     r"\b(cobertura|coverage|qualidade\s+(?:dos\s+)?dados|data\s+quality|dispon[ií]vel|available(?:from|to)?|"
     r"janela|window|reten[cç][aã]o|retention|truncad\w*|truncat\w*|"
     r"hist[oó]rico\s+dispon[ií]vel|available\s+history)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 # A bare word such as "complete" can be a product code or an ordinary adjective.
@@ -57,26 +60,26 @@ TEMPORAL_COVERAGE_RE = re.compile(
 REPORTING_COVERAGE_LABEL_RE = re.compile(
     r"\b(cobertura|coverage|qualidade\s+(?:dos\s+)?dados|data\s+quality|availablefrom|availableto|"
     r"available\s+from|available\s+to|janela\s+dispon[ií]vel|available\s+history)\b",
-    re.I,
+    re.IGNORECASE,
 )
 REPORTING_CONTEXT_RE = re.compile(
     r"\b(relat[oó]ri\w*|report\w*|cobertura|coverage|available|dispon[ií]vel|janela|window|reten[cç][aã]o|retention|hist[oó]ric\w*)\b",
-    re.I,
+    re.IGNORECASE,
 )
-COVERAGE_STATE_RE = re.compile(r"\b(complete|completed|completo|completa|partial|parcial)\b", re.I)
+COVERAGE_STATE_RE = re.compile(r"\b(complete|completed|completo|completa|partial|parcial)\b", re.IGNORECASE)
 
 AUTHENTICATED_SESSION_RE = re.compile(
     r"\b(sess[aã]o\s+autenticad\w*|authenticated\s+session|usu[aá]rio\s+autenticad\w*|authenticated\s+user)\b",
-    re.I,
+    re.IGNORECASE,
 )
 TARGET_BINDING_RE = re.compile(
     r"\b(contractid|contract\s*id|contrato\s+alvo|target\s+contract|tenant\s+alvo|target\s+tenant)\b",
-    re.I,
+    re.IGNORECASE,
 )
 BODY_TARGET_OVERRIDE_RE = re.compile(
     r"\b(body|request|payload|cliente|client)\b.*\b(n[aã]o\s+pode|cannot|must\s+not|sobrescrev\w*|override|escolh\w*|choose)\b.*\b(alvo|target|contractid|contract\s*id|tenant)\b|"
     r"\b(alvo|target|contractid|contract\s*id|tenant)\b.*\b(n[aã]o\s+pode|cannot|must\s+not|sobrescrev\w*|override)\b.*\b(body|request|payload|cliente|client)\b",
-    re.I,
+    re.IGNORECASE,
 )
 TENANT_SCOPE_ISOLATION_RE = re.compile(
     r"(?:\b(?:tenant(?:s)?|perfil(?:es)?(?:\s+financeir[oa]s?)?|profile(?:s)?|organization(?:s)?|"
@@ -89,29 +92,29 @@ TENANT_SCOPE_ISOLATION_RE = re.compile(
     r"organiza[cç][aã](?:o|oes|ões)|workspace(?:s)?)\b|"
     r"\b(?:cross[- ]tenant|outro\s+tenant|another\s+tenant|different\s+tenant|"
     r"tenant[- ]scoped|profile[- ]scoped|organization[- ]scoped)\b)",
-    re.I | re.S,
+    re.IGNORECASE | re.DOTALL,
 )
 CANONICAL_SOURCE_RE = re.compile(
     r"\b(fonte\s+[uú]nica|fonte\s+can[oô]nica|cat[aá]logo\s+can[oô]nic\w*|defini[cç][aã]o\s+can[oô]nic\w*|"
     r"mesma\s+fonte\s+l[oó]gica|n[aã]o\s+manter\s+(?:uma\s+)?segunda\s+lista|single[- ]source\s+of\s+truth|"
     r"canonical\s+(?:source|catalog|definition)|same\s+logical\s+source|shared\s+canonical\s+source)\b",
-    re.I,
+    re.IGNORECASE,
 )
 TEST_COVERAGE_LEAD_RE = re.compile(
     r"\b(?:testes?|tests?)\s+(?:cobrem|cobre|devem\s+cobrir|deve\s+cobrir|cover|covers|must\s+cover)\b",
-    re.I,
+    re.IGNORECASE,
 )
 RETENTION_CONTEXT_RE = re.compile(
     r"\b(retenc[cç][aã]o|retention|retid[oa]s?|retained|permanece(?:m)?|remain(?:s|ed)?|"
     r"\d+\s*(?:mes(?:es)?|months?|anos?|years?))\b",
-    re.I,
+    re.IGNORECASE,
 )
 RETENTION_TIER_PATTERNS = {
-    "detail": re.compile(r"\b(eventos?\s+detalhad\w*|detailed\s+(?:usage\s+)?events?|event\s+detail)\b", re.I),
-    "hourly": re.compile(r"\b(agrega[cç][aã]o(?:es|ões)?\s+hor[aá]ri\w*|hourly\s+aggregates?)\b", re.I),
-    "daily": re.compile(r"\b(agrega[cç][aã]o(?:es|ões)?\s+di[aá]ri\w*|daily\s+aggregates?)\b", re.I),
-    "monthly": re.compile(r"\b(agrega[cç][aã]o(?:es|ões)?\s+mensal\w*|agrega[cç][aã]o(?:es|ões)?\s+mensais|monthly\s+aggregates?)\b", re.I),
-    "yearly": re.compile(r"\b(agrega[cç][aã]o(?:es|ões)?\s+anual\w*|yearly\s+aggregates?|annual\s+aggregates?)\b", re.I),
+    "detail": re.compile(r"\b(eventos?\s+detalhad\w*|detailed\s+(?:usage\s+)?events?|event\s+detail)\b", re.IGNORECASE),
+    "hourly": re.compile(r"\b(agrega[cç][aã]o(?:es|ões)?\s+hor[aá]ri\w*|hourly\s+aggregates?)\b", re.IGNORECASE),
+    "daily": re.compile(r"\b(agrega[cç][aã]o(?:es|ões)?\s+di[aá]ri\w*|daily\s+aggregates?)\b", re.IGNORECASE),
+    "monthly": re.compile(r"\b(agrega[cç][aã]o(?:es|ões)?\s+mensal\w*|agrega[cç][aã]o(?:es|ões)?\s+mensais|monthly\s+aggregates?)\b", re.IGNORECASE),
+    "yearly": re.compile(r"\b(agrega[cç][aã]o(?:es|ões)?\s+anual\w*|yearly\s+aggregates?|annual\s+aggregates?)\b", re.IGNORECASE),
 }
 RETENTION_TIER_GRANULARITY = {
     "detail": "instant",
@@ -122,114 +125,114 @@ RETENTION_TIER_GRANULARITY = {
 }
 
 TEXT_FAMILIES = (
-    (re.compile(r"\b(permiss[aã]o|autoriz\w*|entitlement|perfil|authenticated|autenticad\w*)\b", re.I), "authorization"),
+    (re.compile(r"\b(permiss[aã]o|autoriz\w*|entitlement|perfil|authenticated|autenticad\w*)\b", re.IGNORECASE), "authorization"),
     (EVIDENCE_EFFECT_SCOPE_RE, "authorization"),
     (TENANT_SCOPE_ISOLATION_RE, "tenant-isolation"),
-    (re.compile(r"\b(n[aã]o revelar|n[aã]o enumera|404 gen[eé]ric|payload p[uú]blico|fronteira p[uú]blica)\b", re.I), "public-boundary"),
+    (re.compile(r"\b(n[aã]o revelar|n[aã]o enumera|404 gen[eé]ric|payload p[uú]blico|fronteira p[uú]blica)\b", re.IGNORECASE), "public-boundary"),
     (IDEMPOTENCY_RE, "idempotency"),
     (re.compile(
         r"\b(concorr[eê]ncia|serializ|for update|lock)\b|"
         r"\b(opera[cç][oõ]es?|requisi[cç][oõ]es?|requests?|writes?|updates?|transa[cç][oõ]es?)\s+concorrentes?\b|"
         r"\bconcorrentes?\s+(opera[cç][oõ]es?|requisi[cç][oõ]es?|requests?|writes?|updates?|transa[cç][oõ]es?)\b",
-        re.I,
+        re.IGNORECASE,
     ), "concurrency-atomicity"),
-    (re.compile(r"\b(rollback|estado parcial|transa[cç][aã]o)\b", re.I), "rollback"),
-    (re.compile(r"\b(hist[oó]ric|imut[aá]vel|nova revis[aã]o|vers[aã]o anterior)\b", re.I), "historical-immutability"),
-    (re.compile(r"\b(documenta[cç][aã]o|readme|adr|runbook)\b", re.I), "documentation"),
-    (re.compile(r"\b(futuro|passad[oa]|semana|per[ií]odo|vig[eê]ncia|data alvo|workoutdate|weekstartdate)\b", re.I), "temporal-destination"),
+    (re.compile(r"\b(rollback|estado parcial|transa[cç][aã]o)\b", re.IGNORECASE), "rollback"),
+    (re.compile(r"\b(hist[oó]ric|imut[aá]vel|nova revis[aã]o|vers[aã]o anterior)\b", re.IGNORECASE), "historical-immutability"),
+    (re.compile(r"\b(documenta[cç][aã]o|readme|adr|runbook)\b", re.IGNORECASE), "documentation"),
+    (re.compile(r"\b(futuro|passad[oa]|semana|per[ií]odo|vig[eê]ncia|data alvo|workoutdate|weekstartdate)\b", re.IGNORECASE), "temporal-destination"),
     (TEMPORAL_COVERAGE_RE, "temporal-consistency"),
-    (re.compile(r"\b(continua(?:m)? (?:v[aá]lid|acess[ií]vel)|revalid\w*|no momento d[aeo]|ap[oó]s aprova[cç][aã]o|antes de liberar|refer[eê]ncias? obrigat[oó]rias?)\b", re.I), "reference-liveness"),
-    (re.compile(r"\b(lat[eê]ncia|p50|p90|p95|percentil|total_ms|db_ms|context_ms|llm_ms|persist_ms|throughput|benchmark|caminho cr[ií]tico|critical path|opera[cç][oõ]es? n[aã]o essenciais|lazy loading|redu[cç][aã]o de i/o)\b", re.I), "structural-contract"),
+    (re.compile(r"\b(continua(?:m)? (?:v[aá]lid|acess[ií]vel)|revalid\w*|no momento d[aeo]|ap[oó]s aprova[cç][aã]o|antes de liberar|refer[eê]ncias? obrigat[oó]rias?)\b", re.IGNORECASE), "reference-liveness"),
+    (re.compile(r"\b(lat[eê]ncia|p50|p90|p95|percentil|total_ms|db_ms|context_ms|llm_ms|persist_ms|throughput|benchmark|caminho cr[ií]tico|critical path|opera[cç][oõ]es? n[aã]o essenciais|lazy loading|redu[cç][aã]o de i/o)\b", re.IGNORECASE), "structural-contract"),
 )
 
 PERFORMANCE_STAGE_RE = re.compile(
     r"\b(db_ms|context_ms|llm_ms|persist_ms|instrumenta[cç][aã]o|tempo gasto em banco|montagem de contexto|tempo de persist[eê]ncia|m[eé]tricas? por etapa|stage metrics?)\b",
-    re.I,
+    re.IGNORECASE,
 )
 PERFORMANCE_NECESSITY_RE = re.compile(
     r"\b(lat[eê]ncia|p50|p90|p95|percentil|caminho cr[ií]tico|critical path|opera[cç][oõ]es? n[aã]o essenciais|trabalho desnecess[aá]rio|lazy loading|redu[cç][aã]o de i/o)\b",
-    re.I,
+    re.IGNORECASE,
 )
 PERFORMANCE_BENCHMARK_RE = re.compile(
     r"\b(benchmark|before/after|antes/depois|baseline|candidate|candidato|mesmo caminho produtivo|same productive path|production path|caminho produtivo|entrypoint produtivo|production entrypoint)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 IDENTITY_FIELD_PATTERNS = {
-    "plan": re.compile(r"\b(plan(?:code)?|plano)\b", re.I),
-    "product": re.compile(r"\b(product(?:code)?|produto)\b", re.I),
-    "version": re.compile(r"\b(version(?:code)?|vers[aã]o)\b", re.I),
-    "subscription": re.compile(r"\b(subscription(?:id)?|assinatura)\b", re.I),
-    "billing-cycle": re.compile(r"\b(billing\s*cycle|billingcycle|ciclo\s+de\s+cobran[cç]a|ciclo)\b", re.I),
-    "beneficiary": re.compile(r"\b(beneficiar\w*|beneficiary)\b", re.I),
-    "sponsor": re.compile(r"\b(sponsor|patrocinador\w*)\b", re.I),
-    "patient": re.compile(r"\b(patient|paciente)\b", re.I),
-    "tenant": re.compile(r"\b(tenant|organization|organiza[cç][aã]o)\b", re.I),
+    "plan": re.compile(r"\b(plan(?:code)?|plano)\b", re.IGNORECASE),
+    "product": re.compile(r"\b(product(?:code)?|produto)\b", re.IGNORECASE),
+    "version": re.compile(r"\b(version(?:code)?|vers[aã]o)\b", re.IGNORECASE),
+    "subscription": re.compile(r"\b(subscription(?:id)?|assinatura)\b", re.IGNORECASE),
+    "billing-cycle": re.compile(r"\b(billing\s*cycle|billingcycle|ciclo\s+de\s+cobran[cç]a|ciclo)\b", re.IGNORECASE),
+    "beneficiary": re.compile(r"\b(beneficiar\w*|beneficiary)\b", re.IGNORECASE),
+    "sponsor": re.compile(r"\b(sponsor|patrocinador\w*)\b", re.IGNORECASE),
+    "patient": re.compile(r"\b(patient|paciente)\b", re.IGNORECASE),
+    "tenant": re.compile(r"\b(tenant|organization|organiza[cç][aã]o)\b", re.IGNORECASE),
 }
 
 SEMANTIC_IDENTITY_DIVERGENCE_RE = re.compile(
     r"\b(distinct|different|divergent|mismatch|deliberat\w*|valores?\s+distint\w*|diferent\w*|divergent\w*|deliberadamente)\b",
-    re.I,
+    re.IGNORECASE,
 )
 SEMANTIC_IDENTITY_PERSISTENCE_RE = re.compile(
     r"\b(persist\w*|repository|reposit[oó]rio|payload|field|campo|argument|argumento|writer|produtor|producer|entrypoint|adaptador|adapter|mapping|mapeamento|ledger|store|storage)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 SEMANTIC_DIMENSION_RE = re.compile(
     r"\b(currency|currencies|moeda|moedas|unit|units|unidade|unidades|locale|timezone|fuso|scope|escopo|tenant)\b",
-    re.I,
+    re.IGNORECASE,
 )
 SINGLE_SOURCE_RE = re.compile(
     r"\b(must_be_single_source|single[- ]source(?: of truth)?|fonte\s+[uú]nica|fonte\s+can[oô]nica|"
     r"cat[aá]logo\s+can[oô]nic\w*|defini[cç][aã]o\s+can[oô]nic\w*|mesma\s+fonte\s+l[oó]gica|"
     r"n[aã]o\s+manter\s+(?:uma\s+)?segunda\s+lista|canonical\s+(?:source|catalog|definition))\b",
-    re.I,
+    re.IGNORECASE,
 )
 SEMANTIC_SOURCE_DERIVATION_RE = re.compile(
     r"\b(deve\s+vir|devem\s+vir|must\s+come|must\s+originate|comes?\s+from|derive\w*\s+from|"
     r"derivad\w*\s+de|fonte\s+do\s+c[aá]lculo|source\s+of\s+(?:the\s+)?calculation|"
     r"formatter|label|r[oó]tulo|default|presentation|apresenta[cç][aã]o)\b",
-    re.I,
+    re.IGNORECASE,
 )
 SEMANTIC_NO_MIX_RE = re.compile(
     r"\b(n[aã]o\s+(?:somar|misturar|combinar|coalescer|reinterpretar)\w*|"
     r"cannot\s+(?:sum|mix|combine|coalesce|reinterpret)|must\s+not\s+(?:sum|mix|combine|coalesce)|"
     r"sem\s+convers[aã]o\s+expl[ií]cita|without\s+explicit\s+conversion|cross[- ]currency|mixed[- ]currency)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 FUTURE_CHARGE_RE = re.compile(
     r"\b(cobran[cç]a\s+futura|cobran[cç]a\s+por\s+consumo|future\s+charg\w*|overage|excedente|"
     r"cr[eé]ditos?|pacote\s+adicional|mudan[cç]a\s+autom[aá]tica\s+de\s+plano)\b",
-    re.I,
+    re.IGNORECASE,
 )
 AUTHORIZATION_EXPLICIT_RE = re.compile(
     r"\b(autoriz\w*|approval|aprova[cç][aã]o|administrator|administrador\w*)\b",
-    re.I,
+    re.IGNORECASE,
 )
 HISTORICAL_ATTRIBUTION_RE = re.compile(
     r"\b(mudan[cç]a\s+(?:posterior|futura)\s+de\s+plano|later\s+plan\s+change|"
     r"n[aã]o\s+reatribu\w*|does\s+not\s+reattribut\w*|atribui[cç][aã]o\s+hist[oó]ric\w*|historical\s+attribution)\b",
-    re.I,
+    re.IGNORECASE,
 )
 ECONOMIC_COMPETENCE_RE = re.compile(
     r"\b(compet[eê]ncia|reconhec\w*\s+receita|receita\s+reconhecid\w*|apropria[cç][aã]o|"
     r"per[ií]odo\s+de\s+presta[cç][aã]o|service\s+period|recogniz\w*\s+revenue|prorat\w*)\b",
-    re.I,
+    re.IGNORECASE,
 )
 TEMPORARY_LIMITATION_RE = re.compile(
     r"\b(limita[cç][aã]o\s+tempor[aá]ria|temporary\s+limitation|prote[cç][aã]o\s+emergencial|emergency\s+protection)\b",
-    re.I,
+    re.IGNORECASE,
 )
 LIMITATION_LIFECYCLE_RE = re.compile(
     r"\b(extens[aã]o\s+adicional|additional\s+extension|segundo\s+administrador|second\s+administrator|"
     r"reverter\s+imediatamente|revert\s+immediately|data\s+autom[aá]tica\s+de\s+t[eé]rmino|automatic\s+end\s+date)\b",
-    re.I,
+    re.IGNORECASE,
 )
 ROLLBACK_EFFECT_RE = re.compile(
     r"\b(rollback|desativa[cç][aã]o|revog\w*|revert\w*|reverter|revers[ií]vel|reversible)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -288,7 +291,7 @@ def required_test_cases_from_texts(source_texts: Iterable[str]) -> list[str]:
         if not tail:
             continue
         # Normalize the final conjunction into the same delimiter used by comma lists.
-        tail = re.sub(r"\s+(?:e|and)\s+(?=[^,;]+$)", ", ", tail, flags=re.I)
+        tail = re.sub(r"\s+(?:e|and)\s+(?=[^,;]+$)", ", ", tail, flags=re.IGNORECASE)
         for part in re.split(r"[,;]", tail):
             case = re.sub(r"\s+", " ", part).strip(" .")
             if len(case) < 3:

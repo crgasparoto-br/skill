@@ -15,7 +15,7 @@ from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
 
-SHA40 = re.compile(r"^[0-9a-f]{40}$", re.I)
+SHA40 = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 CERT_PATH = ".audit/entregar-issue/handoff-ready.json"
 SUBJECT_KEYS = (
     "repository",

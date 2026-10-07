@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from runtime_graph import build_runtime_context
+from runtime_graph import build_runtime_context  # noqa: E402 - sys.path ajustado acima antes do import local
 
 
 class RuntimeGraphTests(unittest.TestCase):
@@ -23,7 +23,7 @@ class RuntimeGraphTests(unittest.TestCase):
             (repo / "src/services/order.ts").write_text('import { save } from "@/lib/store"; export const run = save;', encoding="utf-8")
             (repo / "src/lib/store.ts").write_text('export const save = () => true;', encoding="utf-8")
             (repo / "src/pages/api.ts").write_text('import { run } from "@/services/order"; export default run;', encoding="utf-8")
-            files, edges, unresolved, coverage = build_runtime_context(repo, ["src/services/order.ts"])
+            files, _edges, unresolved, coverage = build_runtime_context(repo, ["src/services/order.ts"])
             paths = {item["path"] for item in files}
             self.assertIn("src/lib/store.ts", paths)
             self.assertIn("src/pages/api.ts", paths)
@@ -178,7 +178,7 @@ class RuntimeGraphTests(unittest.TestCase):
             (repo / "app/service.py").write_text("from app.store import save\n", encoding="utf-8")
             result = subprocess.run(
                 [sys.executable, str(ROOT / "scripts" / "map_runtime_consumers.py"), "--repo", str(repo), "--changed", "app/store.py"],
-                capture_output=True, text=True,
+                check=False, capture_output=True, text=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             report = json.loads(result.stdout)
@@ -193,7 +193,7 @@ class RuntimeGraphTests(unittest.TestCase):
             (repo / "pkg/a.py").write_text("from .missing import value\n", encoding="utf-8")
             result = subprocess.run(
                 [sys.executable, str(ROOT / "scripts" / "map_runtime_consumers.py"), "--repo", str(repo), "--changed", "pkg/a.py"],
-                capture_output=True, text=True,
+                check=False, capture_output=True, text=True,
             )
             self.assertEqual(result.returncode, 1)
             self.assertFalse(json.loads(result.stdout)["coverage"]["complete"])

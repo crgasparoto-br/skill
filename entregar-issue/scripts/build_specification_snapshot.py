@@ -5,7 +5,7 @@ import argparse
 import json
 import re
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from specification import TEXTUAL_KINDS, sha256_file
@@ -53,7 +53,7 @@ def main() -> int:
         parsed = [parse_source(value, False) for value in args.source]
         parsed += [parse_source(value, True) for value in args.binary_source]
     except ValueError as exc:
-        raise SystemExit(str(exc))
+        raise SystemExit(str(exc)) from exc
     if not parsed:
         raise SystemExit("at least one specification source is required")
 
@@ -68,7 +68,7 @@ def main() -> int:
             try:
                 text = source_path.read_text(encoding="utf-8")
             except Exception as exc:
-                raise SystemExit(f"textual source must be UTF-8: {source_path}: {exc}")
+                raise SystemExit(f"textual source must be UTF-8: {source_path}: {exc}") from exc
             target.write_text(text, encoding="utf-8")
             line_count = len(text.splitlines())
         else:
@@ -100,7 +100,7 @@ def main() -> int:
         "schema_version": 1,
         "repository": args.repository,
         "issue": args.issue,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "primary_source_id": args.primary_source_id,
         "sources": sources,
     }

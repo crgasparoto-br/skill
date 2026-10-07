@@ -61,7 +61,7 @@ def build_entry(public_key_path: Path, key_id: str, name: str, repositories: lis
     pem = normalize_pem(raw)
     try:
         key = serialization.load_pem_public_key(pem.encode("utf-8"))
-    except Exception as exc:  # noqa: BLE001 - a malformed key must produce a clear refusal
+    except Exception as exc:  # captura ampla: chave malformada precisa produzir recusa clara, nao traceback
         return None, f"chave pública inválida: {exc}"
     if not isinstance(key, Ed25519PublicKey):
         return None, "a chave pública precisa ser Ed25519"

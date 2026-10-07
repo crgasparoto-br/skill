@@ -2,14 +2,12 @@
 from __future__ import annotations
 
 import argparse
-import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
-from audit_artifact_io import load_json_artifact
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from audit_artifact_io import load_json_artifact
 from risk_inference import (
     CANONICAL_RISK_FAMILIES,
     SEMANTIC_IDENTITY_DIVERGENCE_RE,
@@ -17,12 +15,14 @@ from risk_inference import (
     coverage_requirement_ids_from_closure,
     derive_families_from_obligation,
     derive_families_from_text,
-    derive_surfaces as derive_source_surfaces,
     identity_fields,
     required_test_cases_from_texts,
     requires_benchmark_path_fidelity,
     requires_quantitative_evidence,
     retention_tiers_from_closure,
+)
+from risk_inference import (
+    derive_surfaces as derive_source_surfaces,
 )
 
 HIGH_RISK = {
@@ -32,80 +32,80 @@ HIGH_RISK = {
 }
 CONTROL_TYPES = {"test", "gate", "scenario", "procedure"}
 EVIDENCE_KINDS = {"behavioral", "structural", "quantitative", "documentation"}
-SHA_RE = re.compile(r"^[0-9a-f]{40,64}$", re.I)
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.I)
+SHA_RE = re.compile(r"^[0-9a-f]{40,64}$", re.IGNORECASE)
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 SURFACE_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
 
 
 GENERIC_TEXT_PATTERNS = (
-    re.compile(r"^wrong shortcut keeps (?:the )?happy path\.?$", re.I),
-    re.compile(r"^silent contract break\.?$", re.I),
-    re.compile(r"^run (?:the )?exact[- ]head control\.?$", re.I),
-    re.compile(r"^contract holds\.?$", re.I),
-    re.compile(r"^observed pass(?:ed)?\.?$", re.I),
-    re.compile(r"^(?:the )?test pass(?:es|ed)?\.?$", re.I),
-    re.compile(r"^works? as expected\.?$", re.I),
-    re.compile(r"^material surface\.?$", re.I),
-    re.compile(r"^exact[- ]head evidence passed\.?$", re.I),
+    re.compile(r"^wrong shortcut keeps (?:the )?happy path\.?$", re.IGNORECASE),
+    re.compile(r"^silent contract break\.?$", re.IGNORECASE),
+    re.compile(r"^run (?:the )?exact[- ]head control\.?$", re.IGNORECASE),
+    re.compile(r"^contract holds\.?$", re.IGNORECASE),
+    re.compile(r"^observed pass(?:ed)?\.?$", re.IGNORECASE),
+    re.compile(r"^(?:the )?test pass(?:es|ed)?\.?$", re.IGNORECASE),
+    re.compile(r"^works? as expected\.?$", re.IGNORECASE),
+    re.compile(r"^material surface\.?$", re.IGNORECASE),
+    re.compile(r"^exact[- ]head evidence passed\.?$", re.IGNORECASE),
 )
 
 PERFORMANCE_STAGE_RE = re.compile(
     r"\b(db_ms|context_ms|llm_ms|persist_ms|instrumenta[cç][aã]o|tempo gasto em banco|montagem de contexto|tempo de persist[eê]ncia|m[eé]tricas? por etapa|stage metrics?)\b",
-    re.I,
+    re.IGNORECASE,
 )
 PERFORMANCE_NECESSITY_RE = re.compile(
     r"\b(lat[eê]ncia|p50|p90|p95|percentil|caminho cr[ií]tico|critical path|opera[cç][oõ]es? n[aã]o essenciais|trabalho desnecess[aá]rio|lazy loading|redu[cç][aã]o de i/o)\b",
-    re.I,
+    re.IGNORECASE,
 )
 EVIDENCE_EFFECT_SCOPE_RE = re.compile(
     r"\b(relacionad\w*\s+(?:a|as)\s+evid[eê]ncias?|opera[cç][oõ]es?\s+afetad\w*|somente\s+(?:as\s+)?opera[cç][oõ]es?|escopo\s+(?:aprovad\w*|revisad\w*|autorizad\w*)|efeitos?\s+(?:autorizad\w*|permitid\w*)|affected operations|related to (?:the )?evidence|approved scope|authorized effects?)\b",
-    re.I,
+    re.IGNORECASE,
 )
 EXCEPTION_BRANCH_RE = re.compile(
     r"\b(emerg[eê]nc\w*|emergency|exce[cç][aã]o|exception|override|bypass|fallback|break[- ]glass)\b",
-    re.I,
+    re.IGNORECASE,
 )
-EVIDENCE_TERM_RE = re.compile(r"\b(evid[eê]nc\w*|review\w*|revis\w*|approval|approv\w*|aprova\w*|authorized scope|escopo autoriz\w*)\b", re.I)
-EFFECT_TERM_RE = re.compile(r"\b(effect\w*|efeito\w*|opera[cç][aã]o|operations?|action|a[cç][aã]o|restriction|limita[cç][aã]o|mutation|muta[cç][aã]o|resource|recurso)\b", re.I)
-MISMATCH_TERM_RE = re.compile(r"\b(unrelated|nao relacionad\w*|fora do escopo|different|divergent|mismatch|nao autorizad\w*|not authorized|rejeit\w*|reject\w*)\b", re.I)
+EVIDENCE_TERM_RE = re.compile(r"\b(evid[eê]nc\w*|review\w*|revis\w*|approval|approv\w*|aprova\w*|authorized scope|escopo autoriz\w*)\b", re.IGNORECASE)
+EFFECT_TERM_RE = re.compile(r"\b(effect\w*|efeito\w*|opera[cç][aã]o|operations?|action|a[cç][aã]o|restriction|limita[cç][aã]o|mutation|muta[cç][aã]o|resource|recurso)\b", re.IGNORECASE)
+MISMATCH_TERM_RE = re.compile(r"\b(unrelated|nao relacionad\w*|fora do escopo|different|divergent|mismatch|nao autorizad\w*|not authorized|rejeit\w*|reject\w*)\b", re.IGNORECASE)
 
 RELATIONAL_DIVERGENCE_RE = re.compile(
     r"\b(incompat\w*|mismatch|different|distinct|divergent|conflict\w*|inconsisten\w*|"
     r"valores?\s+(?:diferent\w*|distint\w*|incompat\w*)|dimens(?:ion|a[oã])\s+(?:diferent\w*|incompat\w*))\b",
-    re.I,
+    re.IGNORECASE,
 )
 RELATIONAL_WRITE_BOUNDARY_RE = re.compile(
     r"\b(create|update|mutation|mutat\w*|write|writer|persist\w*|producer|produtor|entrypoint|"
     r"repository|reposit[oó]rio|domain\s+boundary|fronteira\s+de\s+dom[ií]nio|canonical\s+(?:write|path)|caminho\s+can[oô]nico)\b",
-    re.I,
+    re.IGNORECASE,
 )
 RELATIONAL_LINK_RE = re.compile(
     r"\b(linked|related|reference|refer[eê]ncia|parent|child|source|destination|origem|destino|owner|"
     r"record|registro|entity|entidade|foreign\s+key|rela[cç][aã]o|v[ií]nculo)\b",
-    re.I,
+    re.IGNORECASE,
 )
 RELATIONAL_OUTCOME_RE = re.compile(
     r"\b(reject\w*|rejeit\w*|fail[- ]closed|no\s+write|sem\s+(?:escrita|muta[cç][aã]o)|"
     r"explicit\s+conversion|convers[aã]o\s+expl[ií]cita|transform\w*|read\s*back|releitura|aggregate|agreg\w*|"
     r"consumer|consumidor|downstream|calculation|c[aá]lculo|projection|proje[cç][aã]o)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 TENANT_SCOPE_TERM_RE = re.compile(
     r"\b(tenant(?:s)?|perfil(?:es)?(?:\s+financeir[oa]s?)?|profile(?:s)?|organization(?:s)?|"
     r"organiza[cç][aã](?:o|oes|ões)|workspace(?:s)?)\b",
-    re.I,
+    re.IGNORECASE,
 )
 TENANT_DIVERGENCE_RE = re.compile(
     r"\b(outro|outra|another|different|distinct|divergent|cross[- ]tenant|segundo|segunda|two|dois|duas|"
     r"deliberat\w*|diferent\w*|distint\w*)\b",
-    re.I,
+    re.IGNORECASE,
 )
 TENANT_ISOLATION_OUTCOME_RE = re.compile(
     r"\b(isolad\w*|isolat\w*|segregad\w*|segregat\w*|sem\s+vazamento|n[aã]o\s+vaz\w*|"
     r"no\s+(?:data\s+)?leak\w*|exclu\w*|exclude\w*|omit\w*|reject\w*|rejeit\w*|"
     r"zero\s+(?:foreign|cross[- ]tenant|out[- ]of[- ]scope)|fora\s+do\s+escopo)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 PERFORMANCE_SURFACE_KEYWORDS = {
@@ -168,7 +168,7 @@ def load(path: Path) -> dict:
     try:
         value = load_json_artifact(path)
     except Exception as exc:
-        raise SystemExit(f"invalid JSON {path}: {exc}")
+        raise SystemExit(f"invalid JSON {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise SystemExit(f"expected JSON object: {path}")
     return value
@@ -682,7 +682,7 @@ def parse_aware_datetime(value: object, label: str, errors: list[str]) -> dateti
         errors.append(f"{label} is missing")
         return None
     try:
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(raw)
     except ValueError:
         errors.append(f"{label} is not an ISO datetime")
         return None
@@ -705,8 +705,8 @@ def normalize_coverage_boundary(value: datetime, granularity: str, tz: ZoneInfo)
     elif granularity == "year":
         normalized = local.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
-        return value.astimezone(timezone.utc)
-    return normalized.astimezone(timezone.utc)
+        return value.astimezone(UTC)
+    return normalized.astimezone(UTC)
 
 
 def validate_coverage_boundary_probe(
@@ -743,11 +743,11 @@ def validate_coverage_boundary_probe(
     assert cutoff is not None and requested is not None and purge is not None and query is not None and reported is not None
 
     normalized = normalize_coverage_boundary(cutoff, granularity, tz)
-    purge_utc = purge.astimezone(timezone.utc)
-    query_utc = query.astimezone(timezone.utc)
-    reported_utc = reported.astimezone(timezone.utc)
-    requested_utc = requested.astimezone(timezone.utc)
-    cutoff_utc = cutoff.astimezone(timezone.utc)
+    purge_utc = purge.astimezone(UTC)
+    query_utc = query.astimezone(UTC)
+    reported_utc = reported.astimezone(UTC)
+    requested_utc = requested.astimezone(UTC)
+    cutoff_utc = cutoff.astimezone(UTC)
 
     if purge_utc != normalized:
         errors.append(f"{label} coverage tier {tier} purge_boundary differs from normalized retention boundary")
@@ -1169,13 +1169,12 @@ def main() -> int:
         item = by_id[rid]
         expected_obligation_ids = obligations_by_requirement.get(rid, set())
         declared_obligation_ids = {str(value) for value in item.get("obligation_ids") or []}
-        if len(expected_obligation_ids) > 1 or "obligation_ids" in item:
-            if declared_obligation_ids != expected_obligation_ids:
-                errors.append(
-                    f"requirement {rid} obligation_ids differ from requirement closure; "
-                    f"missing={sorted(expected_obligation_ids-declared_obligation_ids)}, "
-                    f"extra={sorted(declared_obligation_ids-expected_obligation_ids)}"
-                )
+        if (len(expected_obligation_ids) > 1 or "obligation_ids" in item) and declared_obligation_ids != expected_obligation_ids:
+            errors.append(
+                f"requirement {rid} obligation_ids differ from requirement closure; "
+                f"missing={sorted(expected_obligation_ids-declared_obligation_ids)}, "
+                f"extra={sorted(declared_obligation_ids-expected_obligation_ids)}"
+            )
         wrong = str(item.get("plausible_wrong_implementation") or "").strip()
         if len(wrong) < 20:
             errors.append(f"requirement {rid} lacks plausible wrong implementation")

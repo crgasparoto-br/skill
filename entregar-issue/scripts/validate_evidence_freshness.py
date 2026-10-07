@@ -2,15 +2,14 @@
 from __future__ import annotations
 
 import argparse
-import json
 import posixpath
 import re
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
 
-SHA_RE = re.compile(r"^[0-9a-f]{40,64}$", re.I)
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.I)
+SHA_RE = re.compile(r"^[0-9a-f]{40,64}$", re.IGNORECASE)
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 KINDS = {"behavioral", "structural", "quantitative", "documentation"}
 POLICIES = {"exact-material-head", "reusable"}
 
@@ -19,7 +18,7 @@ def load(path: Path) -> dict:
     try:
         value = load_json_artifact(path)
     except Exception as exc:
-        raise SystemExit(f"invalid JSON {path}: {exc}")
+        raise SystemExit(f"invalid JSON {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise SystemExit(f"expected JSON object: {path}")
     return value

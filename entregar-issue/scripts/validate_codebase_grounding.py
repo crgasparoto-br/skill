@@ -13,15 +13,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from schema_validation import validate_against_schema
 from plan_execution import CODE_SUFFIXES, is_generated_path, is_test_path
+from schema_validation import validate_against_schema
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = ROOT / "schemas" / "codebase-grounding.schema.json"
 
 
 def git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True)
+    return subprocess.run(["git", "-C", str(repo), *args], check=False, capture_output=True, text=True)
 
 
 def read_at(repo: Path, sha: str, path: str) -> str | None:

@@ -42,7 +42,7 @@ import argparse
 import json
 import re
 import sys
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from packaging.markers import InvalidMarker, Marker, UndefinedEnvironmentName, default_environment
@@ -61,7 +61,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from scripts.lock_dependencies import LOCK_SUFFIX  # noqa: E402
+from scripts.lock_dependencies import LOCK_SUFFIX  # noqa: E402 - sys.path ajustado acima antes do import local
 
 HASH_RE = re.compile(r"^--hash=sha256:([0-9a-f]{64})$")
 ARTIFACT_RE = re.compile(r"^#\s*arquivo:\s*(\S+)$")
@@ -198,7 +198,7 @@ def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict
         line = raw.split("#", 1)[0].strip()
         if not line:
             continue
-        if line.startswith("-r") or line.startswith("--requirement"):
+        if line.startswith(("-r", "--requirement")):
             target = re.sub(r"^(--requirement|-r)[=\s]+", "", line).strip()
             if not target:
                 errors.append(f"{prefix}: {relative(path, root)}: inclusao sem destino")
@@ -465,9 +465,9 @@ def validate_policy(root: Path, locked: dict[str, set[str]]) -> tuple[list[str],
         errors.append(f"{POLICY_RELATIVE}: schema_version esperado 1, encontrado {data.get('schema_version')!r}")
     exceptions = data.get("exceptions")
     if not isinstance(exceptions, list):
-        return errors + [f"{POLICY_RELATIVE}: exceptions precisa ser lista"], warnings
+        return [*errors, f"{POLICY_RELATIVE}: exceptions precisa ser lista"], warnings
 
-    today = date.today().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     seen: set[str] = set()
     for index, item in enumerate(exceptions):
         where = f"{POLICY_RELATIVE} excecao {index}"

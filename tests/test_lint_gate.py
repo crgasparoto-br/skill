@@ -1,0 +1,216 @@
+"""Regressao do gate de lint: politica completa, discriminacao, supressao declarada e fail-closed.
+
+Os testes usam a politica real do repositorio e arvores temporarias, de modo que a decisao de
+politica nao possa afrouxar sem que um teste mude de resultado.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import socket
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+from scripts.validate_lint import POLICY, catalog_of, validate_lint
+
+ROOT = Path(__file__).resolve().parents[1]
+POLICY_PATH = ROOT / POLICY
+CLEAN_MODULE = "def total(values: list[int]) -> int:\n    return sum(values)\n"
+UNUSED_IMPORT_MODULE = "import json\n\n\ndef total(values: list[int]) -> int:\n    return sum(values)\n"
+
+
+def load_policy() -> dict:
+    return json.loads(POLICY_PATH.read_text(encoding="utf-8"))
+
+
+def make_tree(tmp_path: Path, policy: dict, sources: dict[str, str]) -> Path:
+    (tmp_path / "config").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "config" / "lint-policy.json").write_text(
+        json.dumps(policy, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    for name, content in sources.items():
+        target = tmp_path / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+    return tmp_path
+
+
+def dismiss(policy: dict, prefix: str, reason: str = "dispensa declarada de teste com motivo escrito suficiente") -> None:
+    for entry in policy["families"]:
+        if entry["prefix"] == prefix:
+            entry["state"] = "dismissed"
+            entry["select"] = []
+            entry["ignore"] = []
+            entry["reason"] = reason
+            return
+    raise AssertionError(f"familia {prefix} ausente na politica")
+
+
+def test_repository_tree_passes_the_gate() -> None:
+    assert validate_lint(ROOT) == []
+
+
+def test_policy_covers_every_family_of_the_installed_tool() -> None:
+    errors: list[str] = []
+    catalog = catalog_of(errors)
+    if not catalog:
+        pytest.skip(f"ruff indisponivel para listar o catalogo: {errors}")
+    declared = {entry["prefix"] for entry in load_policy()["families"]}
+    assert catalog == declared
+
+
+def test_clean_module_is_approved(tmp_path: Path) -> None:
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": CLEAN_MODULE})
+    assert validate_lint(tree) == []
+
+
+def test_unused_import_is_reported(tmp_path: Path) -> None:
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": UNUSED_IMPORT_MODULE})
+    errors = validate_lint(tree)
+    assert any("F401" in error for error in errors), errors
+
+
+def test_dismissing_a_family_changes_the_verdict(tmp_path: Path) -> None:
+    """Discriminacao: a mesma violacao deixa de ser reportada quando a familia e dispensada."""
+    policy = load_policy()
+    failing = make_tree(tmp_path / "estrito", policy, {"mod.py": UNUSED_IMPORT_MODULE})
+    assert any("F401" in error for error in validate_lint(failing))
+
+    lenient = load_policy()
+    dismiss(lenient, "F")
+    passing = make_tree(tmp_path / "dispensado", lenient, {"mod.py": UNUSED_IMPORT_MODULE})
+    assert validate_lint(passing) == []
+
+
+def test_dismissed_family_without_reason_is_rejected(tmp_path: Path) -> None:
+    policy = load_policy()
+    dismiss(policy, "F", reason="curto")
+    tree = make_tree(tmp_path, policy, {"mod.py": CLEAN_MODULE})
+    errors = validate_lint(tree)
+    assert any("motivo" in error for error in errors), errors
+
+
+def test_family_missing_from_the_policy_is_rejected(tmp_path: Path) -> None:
+    policy = load_policy()
+    policy["families"] = [entry for entry in policy["families"] if entry["prefix"] != "F"]
+    tree = make_tree(tmp_path, policy, {"mod.py": CLEAN_MODULE})
+    errors = validate_lint(tree)
+    assert any("sem decisao" in error for error in errors), errors
+
+
+def test_declared_version_must_match_the_installed_tool(tmp_path: Path) -> None:
+    policy = load_policy()
+    policy["tool"]["version"] = "0.0.1"
+    tree = make_tree(tmp_path, policy, {"mod.py": CLEAN_MODULE})
+    errors = validate_lint(tree)
+    assert any("diverge da declarada" in error for error in errors), errors
+
+
+def test_undeclared_suppression_is_rejected(tmp_path: Path) -> None:
+    source = "import json  # noqa: F401 - import mantido de proposito para o teste\n"
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": source})
+    errors = validate_lint(tree)
+    assert any("fora da lista permitida" in error for error in errors), errors
+
+
+def test_suppression_without_justification_is_rejected(tmp_path: Path) -> None:
+    policy = load_policy()
+    policy["allowed_suppressions"].append({"code": "F401", "reason": "supressao declarada apenas para o teste de justificativa inline"})
+    source = "import json  # noqa: F401\n"
+    tree = make_tree(tmp_path, policy, {"mod.py": source})
+    errors = validate_lint(tree)
+    assert any("sem justificativa" in error for error in errors), errors
+
+
+def test_missing_tool_fails_closed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": CLEAN_MODULE})
+    monkeypatch.setenv("PATH", "")
+    errors = validate_lint(tree)
+    assert any("nao instalado" in error for error in errors), errors
+
+
+def test_gate_runs_without_network(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def refuse(*args: object, **kwargs: object) -> None:
+        raise AssertionError("o gate nao pode abrir rede")
+
+    monkeypatch.setattr(socket, "socket", refuse)
+    monkeypatch.setattr(socket, "create_connection", refuse)
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": CLEAN_MODULE})
+    assert validate_lint(tree) == []
+
+
+def test_gate_does_not_leave_a_cache(tmp_path: Path) -> None:
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": CLEAN_MODULE})
+    assert validate_lint(tree) == []
+    assert not (tree / ".ruff_cache").exists()
+
+
+def test_line_length_comes_from_the_policy(tmp_path: Path) -> None:
+    """Import longo nao pode ser rewrapped: o limite de linha e o declarado na politica."""
+    source = (
+        "from collections import OrderedDict\n\n\n"
+        "def make() -> OrderedDict[str, str]:\n"
+        f"    return OrderedDict([(\"chave\", {('\"' + 'x' * 150 + '\"')})])\n"
+    )
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": source})
+    assert validate_lint(tree) == []
+
+
+def test_cli_reports_failure_with_non_zero_exit(tmp_path: Path) -> None:
+    tree = make_tree(tmp_path, load_policy(), {"mod.py": UNUSED_IMPORT_MODULE})
+    completed = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "validate_lint.py"), "--root", str(tree)],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(ROOT),
+    )
+    assert completed.returncode == 1
+    assert "F401" in completed.stderr
+
+
+def test_policy_declares_the_pinned_tool_version() -> None:
+    lock = (ROOT / "requirements.lock.txt").read_text(encoding="utf-8")
+    version = load_policy()["tool"]["version"]
+    assert f"ruff=={version}" in lock
+
+
+def test_policy_artifacts_are_registered_in_the_aggregate_validator() -> None:
+    text = (ROOT / "scripts" / "validate_repository.py").read_text(encoding="utf-8")
+    assert '"config/lint-policy.json"' in text
+    assert '"scripts/validate_lint.py"' in text
+    assert "validate_lint(ROOT)" in text
+
+
+def test_validation_sequence_runs_the_gate_everywhere() -> None:
+    command = "python scripts/validate_lint.py --root ."
+    for name in ("README.md", "AGENTS.md", ".github/workflows/validate.yml"):
+        assert command in (ROOT / name).read_text(encoding="utf-8"), name
+
+
+@pytest.mark.parametrize("state", ["selected", "partial", "dismissed"])
+def test_states_are_only_the_declared_ones(state: str) -> None:
+    states = {entry["state"] for entry in load_policy()["families"]}
+    assert states <= {"selected", "partial", "dismissed"}
+    assert state in states
+
+
+def test_repository_has_no_untracked_ruff_cache() -> None:
+    assert not (ROOT / ".ruff_cache").exists()
+
+
+def test_tool_is_available_for_the_gate() -> None:
+    executable = shutil.which("ruff")
+    if executable is None:  # pragma: no cover - ambiente sem a ferramenta
+        pytest.skip("ruff indisponivel neste ambiente")
+    completed = subprocess.run([executable, "--version"], capture_output=True, text=True, check=False)
+    assert load_policy()["tool"]["version"] in completed.stdout
+
+
+def test_environment_can_locate_python_for_the_gate() -> None:
+    assert os.environ.get("PATH")

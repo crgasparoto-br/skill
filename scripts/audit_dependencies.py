@@ -38,7 +38,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from scripts.lock_dependencies import normalize
+from scripts.lock_dependencies import normalize  # noqa: E402 - sys.path ajustado acima antes do import local
 
 POLICY_RELATIVE = "config/dependency-policy.json"
 LOCK_GLOB = "*/requirements*.lock.txt"

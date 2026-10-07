@@ -17,7 +17,7 @@ def test_controller_defaults_to_observe_only_single_publish():
     assert "commit vazio" in policy
 
 def test_completed_failure_is_actionable_without_remote_rerun():
-    skill = (ROOT / "SKILL.md").read_text(encoding="utf-8").lower()
+    (ROOT / "SKILL.md").read_text(encoding="utf-8").lower()
     text = POLICY.read_text(encoding="utf-8").lower()
     assert "completed/failure" in text
     assert "actionable-delivery" in text

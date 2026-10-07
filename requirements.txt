@@ -5,3 +5,8 @@
 # referencia das PEPs 440, 508 e 427. Declarar aqui mantem a autoridade explicita, em vez de
 # depender de dependencia transitiva, e faz o proprio gate cobrir o ferramental que o executa.
 packaging>=26.3
+
+# O gate de analise estatica executa o Ruff e a versao e fixada exatamente porque o catalogo de
+# regras muda entre versoes: subir de versao acrescenta familias que exigem decisao explicita na
+# politica, e a divergencia entre a versao instalada e a declarada reprova o gate.
+ruff==0.14.1

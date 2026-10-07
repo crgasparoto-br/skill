@@ -25,7 +25,7 @@ LIMIT_KEYS = ("new_file_soft_limit", "new_file_hard_limit", "legacy_growth_allow
 
 
 def git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True)
+    return subprocess.run(["git", "-C", str(repo), *args], check=False, capture_output=True, text=True)
 
 
 def line_count(repo: Path, sha: str, path: str) -> int | None:
