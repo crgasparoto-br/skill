@@ -111,7 +111,7 @@ def normalize(text: str) -> str:
     return "\n".join(kept)
 
 
-FENCE_RE = re.compile(r"^\s{0,3}(```|~~~)")
+FENCE_RE = re.compile(r"^( {0,3})(`{3,}|~{3,})(.*)$")
 INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
 HTML_TAG_RE = re.compile(r"<[A-Za-z/!?][^\s>]*>?")
 # Controles, separadores que o Markdown não reconhece como fim de linha e controles de
@@ -120,6 +120,34 @@ CONTROL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\u0085\u2028\u202
 # Escape de Markdown: um deles antes de uma crase faz a crase deixar de ser delimitador.
 ESCAPE_RE = re.compile(r"\\[!-/:-@\[-`{-~]")
 HIDDEN = "\u0000"
+
+
+def fence_opening(line: str) -> tuple[str, int] | None:
+    """Cerca de abertura conforme o CommonMark: até três espaços, três ou mais iguais.
+
+    Cerca de crase não aceita crase na informação; cerca de til aceita.
+    """
+    match = FENCE_RE.match(line)
+    if not match:
+        return None
+    body, info = match.group(2), match.group(3)
+    if body[0] == "`" and "`" in info:
+        return None
+    return body[0], len(body)
+
+
+def fence_closes(line: str, character: str, length: int) -> bool:
+    """Fechamento exige o mesmo caractere, comprimento maior ou igual e sem informação.
+
+    A oitava rodada de auditoria explorou exatamente esta regra: tratar
+    "```not-a-closer" como fechamento encerrava a cerca na checagem enquanto o
+    renderizador mantinha a seção dentro do bloco de código.
+    """
+    match = FENCE_RE.match(line)
+    if not match:
+        return False
+    body, info = match.group(2), match.group(3)
+    return body[0] == character and len(body) >= length and not info.strip()
 
 
 def md_lines(text: str) -> list[str]:
@@ -148,19 +176,10 @@ def non_markdown_errors(text: str) -> list[str]:
 
 def markdown_only(text: str) -> str:
     """Remover o que já está em contexto inerte declarado: cerca, comentário e código inline."""
-    kept: list[str] = []
-    fence: str | None = None
-    for line in md_lines(text):
-        stripped = line.strip()
-        if fence is not None:
-            if stripped.startswith(fence):
-                fence = None
-            continue
-        if FENCE_RE.match(line):
-            fence = stripped[:3]
-            continue
-        kept.append(line)
-    without_comments = re.sub(r"<!--.*?-->", "", "\n".join(kept), flags=re.DOTALL)
+    lines = md_lines(text)
+    mask = hidden_mask(text)
+    kept = "\n".join(line for line, hidden in zip(lines, mask) if not hidden)
+    without_comments = re.sub(r"<!--.*?-->", "", kept, flags=re.DOTALL)
     return INLINE_CODE_RE.sub("``", without_comments)
 
 
@@ -190,25 +209,25 @@ def hidden_mask(text: str) -> list[bool]:
     passa a ser parte da checagem, não do recorte.
     """
     mask: list[bool] = []
-    fence: str | None = None
+    fence: tuple[str, int] | None = None
     comment = False
     for line in md_lines(text):
-        stripped = line.strip()
         mask.append(fence is not None or comment)
         if comment:
-            if "-->" in stripped:
+            if "-->" in line:
                 comment = False
             continue
         if fence is not None:
-            if stripped.startswith(fence):
+            if fence_closes(line, *fence):
                 fence = None
             continue
-        if "<!--" in stripped:
-            remainder = stripped.split("<!--", 1)[1]
+        if "<!--" in line:
+            remainder = line.split("<!--", 1)[1]
             comment = "-->" not in remainder
             continue
-        if FENCE_RE.match(line):
-            fence = stripped[:3]
+        opened = fence_opening(line)
+        if opened:
+            fence = opened
             mask[-1] = True
     return mask
 
@@ -372,6 +391,34 @@ def test_fenced_body_is_detected() -> None:
     section = registry_section(text)
     mutated = replace_section(text, "\n".join(["```markdown", section, "```"]))
     assert policy_errors(mutated)
+
+
+@pytest.mark.parametrize(
+    ("opening", "closer"),
+    [
+        ("```markdown", "```not-a-closer"),
+        ("~~~markdown", "~~~not-a-closer"),
+        ("````markdown", "```"),
+        ("```markdown", "   ```   extra"),
+        ("~~~markdown", "```"),
+        ("```markdown", "````not-a-closer"),
+    ],
+)
+def test_false_fence_terminator_is_detected(opening: str, closer: str) -> None:
+    """Fechamento inválido não encerra a cerca: a seção continua dentro do bloco de código."""
+    text = declared_reference()
+    section = registry_section(text)
+    mutated = replace_section(text, f"{opening}\n{closer}\n{section}\n```")
+    assert policy_errors(mutated), (opening, closer)
+
+
+@pytest.mark.parametrize("closer", ["```", "````", "~~~"])
+def test_well_formed_fence_before_the_section_does_not_change_the_result(closer: str) -> None:
+    """Cerca bem fechada antes da seção é Markdown válido e não deve reprovar."""
+    text = declared_reference()
+    character = closer[0]
+    mutated = text.replace(SECTION_OPENING, f"{character * 3}exemplo\nconteudo\n{closer}\n\n{SECTION_OPENING}", 1)
+    assert policy_errors(mutated) == [], closer
 
 
 def test_outer_fence_around_the_whole_region_is_detected() -> None:
