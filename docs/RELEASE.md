@@ -5,10 +5,12 @@
 | Superfície | Exemplo | Finalidade |
 | --- | --- | --- |
 | `VERSION` | `0.2.0` | Versão pública SemVer do conjunto de skills e adaptadores. |
-| `config/skills-catalog.json.catalog_version` | `2026-09-29.5` | Snapshot temporal do catálogo e da governança interna. |
-| `config/skill-system-requirements.json.system_version` | `2026-09-29.5` | Versão das invariantes globais do sistema. |
+| `config/skills-catalog.json.catalog_version` | `2026-10-07.1` | Snapshot temporal do catálogo e da governança interna. |
+| `config/skill-system-requirements.json.system_version` | `2026-10-07.1` | Versão das invariantes globais do sistema. |
 | `contracts/version.json.contract_version` | `2026-08-20.3` | Linhagem interna legada dos contratos já consumidos pelas skills. |
 | `config/compatibility.json.contract_policy.public_contract_version` | `1.0.0` | Versão pública SemVer do contrato de composição. |
+
+A skill `higienizar-repositorio` foi declarada com `min_release` `0.2.0` porque a release pública corrente é a `0.2.0` e o manifesto de compatibilidade não aceita declarar release futura. O passo de release da v0.3.0 deve elevar esse campo para `0.3.0` no mesmo commit que atualiza `VERSION`, e a divergência é verificada por `scripts/validate_versioning.py`.
 
 A versão pública é a referência para consumidores externos. A linhagem interna não deve ser alterada silenciosamente: durante a transição, uma entrada explícita em `config/compatibility.json` mapeia cada versão pública para a linhagem interna suportada.
 

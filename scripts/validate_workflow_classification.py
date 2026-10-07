@@ -58,6 +58,7 @@ VALIDATION_SCRIPTS = (
     "scripts/validate_reference_indexes.py",
     "scripts/validate_dependency_locks.py",
     "scripts/validate_lint.py",
+    "higienizar-repositorio/scripts/validate_hygiene.py",
     "scripts/validate_workflow_classification.py",
     "scripts/lock_dependencies.py",
     "entregar-issue/scripts/validate_skill_genericity.py",

@@ -10,36 +10,51 @@
         "documentacao-repositorio/schemas/subskill-result.schema.json",
         "entregar-issue/schemas/subskill-result.schema.json",
         "fluxos-conversacionais/schemas/subskill-result.schema.json",
+        "higienizar-repositorio/schemas/subskill-result.schema.json",
         "revisar-issue/schemas/subskill-result.schema.json"
       ]
     },
     {
       "canonical": "entregar-issue/schemas/audit-remediation.schema.json",
-      "copies": ["auditar-issue/schemas/audit-remediation.schema.json"]
+      "copies": [
+        "auditar-issue/schemas/audit-remediation.schema.json"
+      ]
     },
     {
       "canonical": "entregar-issue/scripts/audit_artifact_io.py",
-      "copies": ["auditar-issue/scripts/audit_artifact_io.py"]
+      "copies": [
+        "auditar-issue/scripts/audit_artifact_io.py"
+      ]
     },
     {
       "canonical": "entregar-issue/scripts/classify_audit_transport.py",
-      "copies": ["auditar-issue/scripts/classify_audit_transport.py"]
+      "copies": [
+        "auditar-issue/scripts/classify_audit_transport.py"
+      ]
     },
     {
       "canonical": "entregar-issue/scripts/validate_audit_remediation.py",
-      "copies": ["auditar-issue/scripts/validate_audit_remediation.py"]
+      "copies": [
+        "auditar-issue/scripts/validate_audit_remediation.py"
+      ]
     },
     {
       "canonical": "entregar-issue/scripts/validate_handoff_certificate.py",
-      "copies": ["auditar-issue/scripts/validate_handoff_certificate.py"]
+      "copies": [
+        "auditar-issue/scripts/validate_handoff_certificate.py"
+      ]
     },
     {
       "canonical": "entregar-issue/scripts/validate_learning_closure.py",
-      "copies": ["auditar-issue/scripts/validate_learning_closure.py"]
+      "copies": [
+        "auditar-issue/scripts/validate_learning_closure.py"
+      ]
     },
     {
       "canonical": "entregar-issue/tests/test_audit_remediation_gate_replay.py",
-      "copies": ["auditar-issue/tests/test_audit_remediation_gate_replay.py"]
+      "copies": [
+        "auditar-issue/tests/test_audit_remediation_gate_replay.py"
+      ]
     },
     {
       "canonical": "documentacao-repositorio/tests/test_delivery_contract.py",

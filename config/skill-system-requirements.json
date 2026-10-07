@@ -421,7 +421,29 @@
         "file:tests/test_lint_gate.py",
         "file:.github/workflows/validate.yml"
       ]
+    },
+    {
+      "id": "SKSYS-028",
+      "title": "Global hygiene is measured on the whole tree, on demand, with declared precision",
+      "status": "validated",
+      "summary": "A skill propria mede quatro dividas estruturais sobre a arvore inteira, sob demanda, sem implementar correcao, sem abrir issue e sem autoridade de merge: duplicacao de corpo de funcao normalizado por AST, modulo sem importador e sem invocacao declarada, simbolo de nivel de modulo sem nenhuma referencia na arvore, requisito declarado em manifest e nunca importado no escopo do manifest, e complexidade ciclomatica por funcao acima do teto. Cada classe declara o que nao ve, porque classe que reivindica completude produz confianca falsa. A politica e a unica fonte de limiar, excecao e linha de base: classe gated nao pode ter achado aberto sem excecao com justificativa escrita, classe reported mede contra linha de base declarada e reprova tanto acima quanto abaixo dela, excecao orfa reprova, identidade de achado e derivada do conteudo e nao do numero de linha, e arquivo nao analisado precisa estar declarado para que a cobertura nao encolha em silencio. A varredura e deterministica e offline, com relatorio validado por schema, e o gerador de work items emite a forma canonica de issue sem abrir issue. O gate faz parte da sequencia obrigatoria, na mesma posicao no CI, no README e no AGENTS.md, e a arvore entregue passa limpa depois de corrigir o codigo morto e a dependencia sem uso que a propria varredura encontrou.",
+      "implementationRefs": [
+        "file:higienizar-repositorio/SKILL.md",
+        "file:config/hygiene-policy.json",
+        "file:higienizar-repositorio/scripts/hygiene_scan.py",
+        "file:higienizar-repositorio/scripts/validate_hygiene.py",
+        "file:higienizar-repositorio/scripts/build_hygiene_work_items.py",
+        "file:higienizar-repositorio/schemas/hygiene-report.schema.json",
+        "file:higienizar-repositorio/schemas/hygiene-work-item.schema.json",
+        "file:higienizar-repositorio/references/global-hygiene-profile.md",
+        "file:docs/RELEASE.md",
+        "file:docs/ROADMAP.md"
+      ],
+      "validationRefs": [
+        "file:higienizar-repositorio/tests/test_hygiene_profile.py",
+        "file:.github/workflows/validate.yml"
+      ]
     }
   ],
-  "system_version": "2026-09-29.5"
+  "system_version": "2026-10-07.1"
 }

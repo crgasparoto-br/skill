@@ -127,6 +127,25 @@ O runner deve distinguir `PASS`, `FAIL`, `NOT_RUN` e `INVALID`. Runtime ausente,
 
 O harness é provider-agnostic. A CI valida os contratos e reproduz fixtures determinísticos; qualquer adapter de modelo deve declarar provider, modelo, adapter e métricas observadas. Avaliações comportamentais complementam, mas não substituem, a validação determinística de fatos críticos.
 
+## 8.2 Higienização global
+
+A higiene do diff cobre a entrega; ela não mede a árvore. O perfil de higienização global existe para
+medir, sob demanda, quatro dívidas estruturais sobre o repositório inteiro — duplicação de corpo de
+função, código morto em módulo e em símbolo, dependência declarada e nunca importada, e complexidade
+acima do teto — e transformá-las em trabalho rastreável.
+
+Invariantes:
+
+- cada classe declara o que **não** vê, porque classe que reivindica completude produz confiança falsa;
+- a política é a única fonte de limiar, exceção e linha de base, e nenhum limiar vive no código;
+- achado aberto em classe controlada exige correção ou exceção declarada com justificativa escrita;
+- a identidade de um achado é derivada do conteúdo, e não do número de linha;
+- classe medida contra linha de base reprova tanto acima quanto abaixo dela, e exceção órfã reprova;
+- arquivo que o escopo inclui e a varredura não analisa precisa estar declarado, para que a cobertura
+  não encolha em silêncio;
+- a varredura é determinística e offline, e o relatório é validado contra schema;
+- o perfil relata e propõe: não implementa correção, não abre issue e não tem autoridade de merge.
+
 ## 9. Modelo de requisitos
 
 `config/skill-system-requirements.json` registra requisitos globais com IDs estáveis, estado, referências de implementação e referências de validação. Alterações que introduzam uma nova invariante global devem preferir estender esse registro e os contratos existentes antes de duplicar regras em múltiplos `SKILL.md`.

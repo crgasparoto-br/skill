@@ -46,6 +46,7 @@ Os IDs abaixo são estáveis para issues, commits, avaliações e notas de relea
 | `V030-006` | Release e regressão comportamental | P1 | `planned` | Integrar avaliações informativas ao CI, registrar resultados e publicar `v0.3.0` reproduzível. |
 | `V030-007` | Genericidade de assets permanentes | P1 | `implemented` | Rejeitar acoplamento concreto a issue, host, caminho e identificador de domínio, e executar o validador sobre o catálogo. |
 | `V030-009` | Análise estática real do código | P1 | `implemented` | Aplicar famílias de regras com política declarada, reprovar sujeira, import morto e supressão não declarada, e manter a cobertura de regras impossível de encolher em silêncio. |
+| `V030-010` | Perfil de higienização global | P2 | `implemented` | Medir dívida estrutural da árvore inteira sob demanda, com precisão declarada por classe, exceção justificada e linha de base que só diminui. |
 | `V030-008` | Governança do registro de auditores confiáveis | P2 | `implemented` | Declarar custódia, separação entre produtor e aprovador, rotação, revogação e limitação de operador único, e tornar a entrada de registro verificável. |
 
 ## 4. Entregas detalhadas
@@ -222,6 +223,33 @@ metacaractere de shell e no máximo um redirecionamento simples — e compara
 a sequência de validação entre CI, README e AGENTS, incluindo a conferência do fechamento dos lockfiles e o replay do
 relatório de avaliações; o CI acrescenta apenas o empacotamento do skill, que é release e não
 validação; e o requisito global, o changelog e este roadmap registram a entrega.
+### V030-010 — Perfil de higienização global
+Entregue a skill `higienizar-repositorio`, com o control plane em `SKILL.md`, a política em
+`config/hygiene-policy.json`, a varredura em `higienizar-repositorio/scripts/hygiene_scan.py`, o gate em
+`higienizar-repositorio/scripts/validate_hygiene.py` e o gerador de work items em
+`higienizar-repositorio/scripts/build_hygiene_work_items.py`. A varredura mede quatro classes sobre a árvore
+inteira: duplicação de corpo de função normalizado por AST, com cópia declarada em `config/shared-files.json`
+tratada como exclusão legítima; módulo sem importador e sem invocação declarada; símbolo de nível de módulo
+sem nenhuma referência na árvore; requisito declarado em manifest e nunca importado no escopo do manifest, com
+ferramenta executada e mapa de nome de import declarados; e complexidade ciclomática por função acima do teto.
+Cada classe declara o que não vê, porque classe que reivindica completude produz confiança falsa. A política é
+a única fonte de limiar, exceção e linha de base: achado aberto em classe controlada exige exceção com
+justificativa escrita, classe medida contra linha de base reprova acima e abaixo dela, exceção órfã reprova, e
+arquivo não analisado precisa estar declarado para que a cobertura não encolha em silêncio. A varredura é
+determinística e offline, o relatório é validado contra schema, e o gerador de work items emite a forma
+canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilidade, no manifesto de capacidades,
+no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
+varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
+retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+Critério de aceite: `python3 higienizar-repositorio/scripts/validate_hygiene.py --root .` aprova a árvore
+entregue com a política declarada; o gate reprova achado aberto sem exceção, contagem fora da linha de base,
+exceção órfã, arquivo não analisado não declarado, política com classe ausente, classe desconhecida, estado
+inválido, limiar incoerente e justificativa curta, e a varredura acusa cada classe no fixture que a reproduz,
+sem acusar árvore limpa; a suíte completa continua aprovada; a sequência de validação é idêntica em CI,
+`README.md` e `AGENTS.md`, com o gate na mesma posição, verificado por
+`scripts/validate_workflow_classification.py`; o requisito global, o changelog e este roadmap registram a
+entrega.
+
 ## 5. Sequência de implementação
 
 ### Fase A — fundação e segurança
@@ -270,6 +298,7 @@ A release será considerada pronta somente quando todos os critérios abaixo for
 - [x] o registro de auditores confiáveis tem custódia, separação entre produtor e aprovador e limitação de operador único declaradas, com a entrada verificável por script;
 - [x] assets permanentes rejeitam acoplamento concreto a issue, host, caminho ou identificador de domínio, e o validador é executado sobre o catálogo;
 - [ ] a decisão do contrato `transitional` possui inventário, migração e compatibilidade testada;
+- [x] a dívida estrutural da árvore inteira é medida por perfil próprio, com precisão declarada por classe, exceção justificada, linha de base que só diminui e cobertura que não encolhe em silêncio, verificado pelo gate de higienização;
 - [ ] a suíte determinística e os validadores do catálogo continuam verdes;
 - [ ] uma auditoria independente aprova o commit final;
 - [ ] `VERSION`, `CHANGELOG.md`, compatibilidade, tag e GitHub Release apontam para o mesmo commit.

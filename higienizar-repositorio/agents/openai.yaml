@@ -1,0 +1,15 @@
+interface:
+  display_name: Higienização Global do Repositório
+  short_description: Mede dívida estrutural da árvore inteira e produz work items rastreáveis.
+  default_prompt: Use @higienizar-repositorio para varrer a árvore inteira em busca de duplicação,
+    código morto, dependência sem uso e complexidade. Produza o relatório determinístico e os work
+    items na forma canônica; não implemente correção, não abra issue e não mergeie.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: false

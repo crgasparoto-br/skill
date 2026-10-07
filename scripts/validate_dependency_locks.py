@@ -77,16 +77,6 @@ POLICY_RELATIVE = "config/dependency-policy.json"
 # --------------------------------------------------------------------------- versões
 
 
-def parse_version(text: str) -> Version:
-    """Analisar a versão pela implementação de referência da PEP 440."""
-    return Version(text)
-
-
-def version_key(text: str) -> Version:
-    """Compatibilidade com quem só precisa da ordem de versão."""
-    return Version(text)
-
-
 def compare(left: str, right: str) -> int:
     """Comparar duas versões e devolver -1, 0 ou 1."""
     left_version, right_version = Version(left), Version(right)

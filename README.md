@@ -17,6 +17,7 @@ As instruções centrais estão em Markdown e seguem um formato independente de 
 | [`documentacao-repositorio`](./documentacao-repositorio/) | Governar fontes canônicas e manter documentação de repositórios verificável e atualizada. | Repositório, mudança de comportamento ou documentação. |
 | [`entregar-issue`](./entregar-issue/) | Conduzir a entrega ponta a ponta de uma issue com plano, implementação, gates, CI e handoff. | Issue, PR, branch ou pendência de software. |
 | [`fluxos-conversacionais`](./fluxos-conversacionais/) | Especificar e verificar fluxos persistentes, assíncronos ou conversacionais com estado e idempotência. | Fluxo com continuidade, callback, evento, retry ou estado. |
+| [`higienizar-repositorio`](./higienizar-repositorio/) | Varrer o repositorio inteiro sob demanda em busca de duplicacao, codigo morto, dependencia sem uso e complexidade, produzindo relatorio deterministico e work items na forma canonica de issue. | Repositorio no head corrente e a politica de higiene declarada. |
 | [`revisar-issue`](./revisar-issue/) | Tornar issues claras, testáveis e reconciliadas com a documentação canônica. | Issue específica ou lote de issues. |
 <!-- END GENERATED: skill-catalog -->
 
@@ -95,6 +96,7 @@ O catálogo possui uma camada global de governança acima das regras específica
 - [`config/issue-templates.json`](./config/issue-templates.json) é a declaração única das seções normativas que os extratores de requisito leem no corpo da issue, aplicada em [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/) e validada por [`scripts/validate_issue_templates.py`](./scripts/validate_issue_templates.py).
 - [`config/dependency-policy.json`](./config/dependency-policy.json) declara a política de exceção de vulnerabilidade, exigindo pacote e versão fixada, validada por [`scripts/validate_dependency_locks.py`](./scripts/validate_dependency_locks.py); os lockfiles por skill fixam versão, artefato e hash, e [`scripts/audit_dependencies.py`](./scripts/audit_dependencies.py) confere a integridade do digest contra o artefato e consulta o banco externo no workflow [`.github/workflows/dependency-audit.yml`](./.github/workflows/dependency-audit.yml), fora da sequência obrigatória.
 
+- [`config/hygiene-policy.json`](./config/hygiene-policy.json) declara as classes da varredura global de higiene, seus limiares, seus limites de precisão, as exceções com justificativa escrita e a linha de base de cada classe, e [`higienizar-repositorio/scripts/validate_hygiene.py`](./higienizar-repositorio/scripts/validate_hygiene.py) reprova achado aberto sem exceção, contagem fora da linha de base, exceção órfã e cobertura encolhida em silêncio.
 - [`config/lint-policy.json`](./config/lint-policy.json) decide cada família de regras do Ruff, aplicada, aplicada em parte com a parte desligada declarada ou dispensada com motivo escrito, e [`scripts/validate_lint.py`](./scripts/validate_lint.py) executa a análise com essa seleção, reprovando diagnóstico, política incompleta, versão divergente e supressão não declarada.
 As regras globais usam `UNKNOWN` como estado material de evidência insuficiente. Ausência de informação não deve ser convertida em sucesso, `false`, zero ou `not-applicable`. Aprovação interna, auditoria independente, readiness de release e enforcement de merge são fatos distintos.
 
@@ -136,6 +138,7 @@ python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
 python scripts/validate_reference_indexes.py --root .
 python scripts/validate_dependency_locks.py --root .
 python scripts/validate_lint.py --root .
+python higienizar-repositorio/scripts/validate_hygiene.py --root .
 python scripts/validate_workflow_classification.py --root .
 python scripts/lock_dependencies.py --root . --check  # resolucao real: exige rede
 python -m pytest -q

@@ -51,11 +51,13 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 - gate de validação do harness integrado ao validador global e ao CI;
 - vinculação exata entre caso, adapter e resultado, atestação estrutural, verificação de relatórios e replay sem arquivos extras.
 - matriz V030-002 com 22 casos adversariais versionados para seleção, autoridade, capacidades, evidências, contexto insuficiente, leitura progressiva, read-only e contratos incompatíveis;
-- pares `sibling_case_id` recíprocos, controles de ações proibidas e evidências obrigatórias, com replay determinístico de cada regressão.
+- pares `sibling_case_id` recíprocos, controles de ações proibidas e evidências obrigatórias, com replay determinístico de cada regressão;
+- perfil de higienização global ([`higienizar-repositorio/SKILL.md`](./higienizar-repositorio/SKILL.md)) com política declarada em [`config/hygiene-policy.json`](./config/hygiene-policy.json): a varredura mede, sob demanda e offline, duplicação de corpo de função normalizado por AST com cópia declarada tratada como exclusão legítima, módulo sem importador e sem invocação declarada, símbolo de nível de módulo sem referência na árvore, requisito declarado em manifest e nunca importado no escopo do manifest e complexidade acima do teto, com cada classe declarando o que não vê porque classe que reivindica completude produz confiança falsa; o gate reprova achado aberto em classe controlada sem exceção justificada, contagem que não é exatamente a linha de base declarada — acima é dívida nova e abaixo é linha de base folgada —, exceção órfã, arquivo não analisado não declarado, política com classe ausente, desconhecida, estado inválido, limiar incoerente ou justificativa curta, e varredura não determinística; o gerador de work items emite a forma canônica de issue sem abrir issue, porque abrir issue é ação externa e a decisão é do ciclo de entrega; a árvore foi corrigida do que a própria varredura encontrou — código morto em módulo e em símbolo removido, dependência declarada e nunca importada retirada com lockfile regenerado e a função nova da entrega refatorada em vez de absorvida pela linha de base ([`higienizar-repositorio/tests/test_hygiene_profile.py`](./higienizar-repositorio/tests/test_hygiene_profile.py));
+- a skill `higienizar-repositorio` entra no catálogo, na compatibilidade, no manifesto de capacidades, no contrato de composição e na allowlist de runtime do controlador, com o gate na sequência obrigatória na mesma posição em CI, `README.md` e `AGENTS.md` ([`config/skills-catalog.json`](./config/skills-catalog.json)).
 
 ### Compatibility
 
-Esta alteração está planejada para a `v0.3.0` e ainda não altera a tag pública `v0.2.0`. O snapshot interno do sistema avança para `2026-09-29.5`; o contrato público continua `1.0.0` e a linhagem interna continua `2026-08-20.3`.
+Esta alteração está planejada para a `v0.3.0` e ainda não altera a tag pública `v0.2.0`. O snapshot interno do sistema avança para `2026-10-07.1`; o contrato público continua `1.0.0` e a linhagem interna continua `2026-08-20.3`.
 
 ## [0.2.0] — 2026-09-29
 
