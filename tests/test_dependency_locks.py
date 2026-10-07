@@ -446,3 +446,106 @@ def test_audit_reports_unknown_when_the_tool_is_absent(tmp_path: Path, monkeypat
 
 def test_audit_reports_unknown_without_lockfiles(tmp_path: Path) -> None:
     assert audit_dependencies.main(["--root", str(tmp_path)]) == 2
+
+
+# ------------------------------------------- segunda rodada de auditoria independente
+
+
+MINIMAL_LOCK = (
+    HEADER
+    + "\n# arquivo: cryptography-50.0.2-py3-none-any.whl\n"
+    + f"cryptography==50.0.2 \\\n    --hash=sha256:{DIGEST}\n"
+)
+EMPTY_LOCK = HEADER + "\n"
+NO_EXCEPTIONS = json.dumps({"schema_version": 1, "exceptions": []})
+
+
+def minimal(tmp_path: Path, manifest: str = "cryptography>=50.0.1\n", lock: str = MINIMAL_LOCK) -> Path:
+    return build_repo(tmp_path, manifest=manifest, lock=lock, policy=NO_EXCEPTIONS)
+
+
+def test_missing_include_is_detected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Manifest que não pode ser lido não pode ser considerado coberto."""
+    root = minimal(tmp_path, manifest="-r nao-existe.txt\n", lock=EMPTY_LOCK)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "inclusao ausente" in capsys.readouterr().err
+
+
+def test_cyclic_include_is_detected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    root = minimal(tmp_path, manifest="-r requirements.txt\n", lock=EMPTY_LOCK)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "inclusao ciclica" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("artifact", [
+    "cryptography-50.0.2",
+    "cryptography-50.0.2.txt",
+    "cryptography-50.0.2.exe",
+])
+def test_artifact_without_a_distribution_suffix_is_detected(tmp_path: Path, artifact: str) -> None:
+    """Sem sufixo de distribuição, a anotação não nomeia um artefato verificável."""
+    lock = MINIMAL_LOCK.replace("cryptography-50.0.2-py3-none-any.whl", artifact)
+    assert run(minimal(tmp_path, lock=lock)) == 1
+
+
+def test_false_marker_does_not_require_the_package(tmp_path: Path) -> None:
+    """Marcador falso no contexto registrado torna a ausência legítima."""
+    manifest = 'cryptography>=50.0.1; python_version < "3.0"\n'
+    assert run(minimal(tmp_path, manifest=manifest, lock=EMPTY_LOCK)) == 0
+
+
+def test_true_marker_requires_the_package(tmp_path: Path) -> None:
+    manifest = 'cryptography>=50.0.1; python_version >= "3.10"\n'
+    assert run(minimal(tmp_path, manifest=manifest, lock=EMPTY_LOCK)) == 1
+    assert run(minimal(tmp_path, manifest=manifest, lock=MINIMAL_LOCK)) == 0
+
+
+def test_marker_without_recorded_context_is_detected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    lock = MINIMAL_LOCK.replace("# contexto: python 3.12.3 em linux x86_64\n", "")
+    root = minimal(tmp_path, manifest='cryptography>=50.0.1; python_version >= "3.10"\n', lock=lock)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "marcador sem contexto" in capsys.readouterr().err
+
+
+def test_unevaluable_marker_is_detected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Marcador que o gate não avalia reprova em vez de ser ignorado."""
+    root = minimal(tmp_path, manifest='cryptography>=50.0.1; coisa == "x"\n', lock=MINIMAL_LOCK)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "marcador nao avaliado" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(("version", "specifier", "expected"), [
+    ("1.0+abc", "==1.0+def", False),
+    ("1.0+abc", "==1.0+abc", True),
+    ("1.0+abc", "==1.0", True),
+    ("1.0.0", "garbage", False),
+    ("1.0.0", ">=1.0.0 garbage", False),
+    ("1.0.0", ">=1.0.0,", False),
+    ("1.0.0", ">=1.0.0, <2", True),
+    ("1!2.0", ">=2.0", True),
+    ("2.0.0rc1", "<2.0.0", True),
+    ("2.0.0rc1", ">=2.0.0", False),
+])
+def test_strict_specifier_and_local_version(version: str, specifier: str, expected: bool) -> None:
+    assert satisfies(version, specifier) is expected
+
+
+def test_version_with_unknown_suffix_is_detected(tmp_path: Path) -> None:
+    """`1.0.0foo` não é PEP 440 e não pode passar como 1.0.0."""
+    lock = MINIMAL_LOCK.replace("cryptography==50.0.2", "cryptography==50.0.2foo")
+    assert run(minimal(tmp_path, lock=lock)) == 1
+
+
+def test_marker_environment_uses_the_recorded_context() -> None:
+    from scripts.validate_dependency_locks import evaluate_marker, marker_environment
+
+    environment = marker_environment(("3.12.3", "linux", "x86_64"))
+    assert evaluate_marker('python_version >= "3.12"', environment) is True
+    assert evaluate_marker('python_version < "3.0"', environment) is False
+    assert evaluate_marker('sys_platform == "linux" and platform_system != "Windows"', environment) is True
+    # O gate não aproxima: qualquer átomo que ele não saiba avaliar reprova, mesmo que o
+    # atalho lógico o tornasse irrelevante.
+    with pytest.raises(ValueError):
+        evaluate_marker('coisa == "x"', environment)
+    with pytest.raises(ValueError):
+        evaluate_marker('python_version >= "3.10" or coisa == "x"', environment)

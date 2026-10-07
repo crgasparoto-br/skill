@@ -116,8 +116,10 @@ declarado, entrada sem hash, entrada sem artefato ou com artefato incompatível,
 e exceção de política sem justificativa, sem data, sem pacote, sem versão ou apontando resolução inexistente. A
 integridade do digest, conferida contra o artefato, e a consulta ao banco de vulnerabilidade ficam em
 `.github/workflows/dependency-audit.yml`, com gatilho agendado e manual, e reportam `UNKNOWN` quando não conseguem
-verificar, em vez de tratar ausência de verificação como verificação de ausência. O passo 1 continua sendo decisão do
-proprietário, e os passos 3 e 6 dependem de configuração do repositório no GitHub e de decidir a matriz de versões.
+verificar, em vez de tratar ausência de verificação como verificação de ausência. O lockfile é resolvido em um contexto registrado no próprio cabeçalho, e outra versão de Python escolhe outra
+distribuição, com outro digest: adotar matriz de versões, passo 6, exigiria um lockfile por versão de Python, e essa
+é a decisão que o passo 6 precisa enfrentar. O passo 1 continua sendo decisão do proprietário, e o passo 3 depende de
+configuração do repositório no GitHub.
 
 A licença é uma decisão do proprietário e deve ser registrada em uma alteração própria ou em um commit claramente identificável. A habilitação de uma ferramenta planejada só ocorre depois que seu workflow realmente executa e possui tratamento documentado para falhas.
 

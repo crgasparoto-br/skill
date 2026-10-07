@@ -390,7 +390,7 @@
       "id": "SKSYS-026",
       "title": "Dependency resolution is reproducible and exceptions are declared",
       "status": "validated",
-      "summary": "Every skill manifest has a sibling lockfile pinning exact versions, the chosen artifact and sha256 hashes of the transitive closure; an offline deterministic validator rejects drift, pinned versions that do not satisfy the declared specifier, missing hashes, missing or mismatched artifact declarations, open ranges, orphan annotations and malformed policy exceptions that do not name an existing locked resolution; and the advisory lookup and the digest verification against the real artifact run outside the required sequence and report UNKNOWN instead of success when they cannot verify.",
+      "summary": "Every skill manifest has a sibling lockfile pinning exact versions, the chosen artifact and sha256 hashes of the transitive closure; an offline deterministic validator rejects drift, unresolvable includes, pinned versions that do not satisfy the declared specifier, versions or specifiers it cannot parse completely, missing hashes, missing or mismatched artifact declarations, unevaluable environment markers and malformed policy exceptions that do not name an existing locked resolution; the advisory lookup and the digest verification against the real artifact run outside the required sequence and report UNKNOWN instead of success when they cannot verify.",
       "implementationRefs": [
         "file:config/dependency-policy.json",
         "file:scripts/validate_dependency_locks.py",
