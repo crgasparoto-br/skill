@@ -117,7 +117,7 @@ A separação operacional principal é:
 Esta é a mesma sequência executada pelo workflow [`.github/workflows/validate.yml`](./.github/workflows/validate.yml):
 
 ```bash
-python -m pip install --require-hashes -r entregar-issue/requirements-dev.lock.txt -r auditar-issue/requirements-dev.lock.txt
+python -m pip install --require-hashes -r requirements.lock.txt -r entregar-issue/requirements-dev.lock.txt -r auditar-issue/requirements-dev.lock.txt
 python scripts/validate_repository.py
 python scripts/validate_catalog.py --root .
 python scripts/sync_contracts.py --check --root .

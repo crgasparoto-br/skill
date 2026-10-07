@@ -46,7 +46,7 @@ O extrator lê **todas** as linhas do corpo, inclusive comentários HTML. Uma li
 A sequência abaixo é idêntica à do workflow [.github/workflows/validate.yml](.github/workflows/validate.yml). Executá-la antes de abrir a PR é obrigatório.
 
 ```bash
-python -m pip install --require-hashes -r entregar-issue/requirements-dev.lock.txt -r auditar-issue/requirements-dev.lock.txt
+python -m pip install --require-hashes -r requirements.lock.txt -r entregar-issue/requirements-dev.lock.txt -r auditar-issue/requirements-dev.lock.txt
 python scripts/validate_repository.py
 python scripts/validate_catalog.py --root .
 python scripts/sync_contracts.py --check --root .
@@ -84,7 +84,7 @@ Estas regras existem para impedir sujeira, ambiguidade, código obsoleto e dupli
 - Preservar `UNKNOWN` quando faltar evidência; nunca converter ausência em `false`, zero, sucesso ou `not-applicable`.
 - Distinguir verificação interna de auditoria independente; trocar de skill no mesmo contexto não cria independência.
 - Tratar alteração de seção canônica como mudança de política: quando um teste compara uma seção normativa com uma forma canônica, alterar a seção exige alterar a forma canônica no mesmo commit, e esse diff passa a exigir auditoria independente contra a issue vigente. O teste prova que a mudança foi deliberada, não que ela preserva os requisitos.
-- Tratar o lockfile de dependência como derivado: alteração de dependência começa no `requirements.txt` da skill, e o lockfile é regenerado com `scripts/lock_dependencies.py`; a entrada precisa declarar `# arquivo` e a versão fixada precisa satisfazer o especificador do manifest, porque editar o lockfile à mão esconde a resolução e a validação reprova.
+- Tratar o lockfile de dependência como derivado: alteração de dependência começa no manifest (`requirements.txt` na raiz, para o ferramental do catálogo, ou o da skill), e o lockfile é regenerado com `scripts/lock_dependencies.py`; a entrada precisa declarar `# arquivo` e a versão fixada precisa satisfazer o especificador do manifest, porque editar o lockfile à mão esconde a resolução e a validação reprova.
 - Escrever documento normativo em Markdown renderizável: contexto inerte — cerca, comentário ou HTML bruto — e recurso de parser — escape de Markdown, caractere de controle, separador que o Markdown não reconhece como fim de linha — escondem a norma sem alterar o texto canônico. O procedimento do registro de auditores recusa esses recursos em vez de enumerar as formas de esconder uma regra.
 - Não registrar credenciais, tokens, dados pessoais ou artefatos `.audit/` reais no repositório.
 - Não adicionar autoridade de merge, ação destrutiva ou ampliação de permissão por conveniência.

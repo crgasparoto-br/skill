@@ -326,9 +326,12 @@ def test_specifier_satisfaction(version: str, specifier: str, expected: bool) ->
 
 
 def test_unsupported_specifier_operator_is_rejected() -> None:
-    """Especificador que o gate não entende não pode virar aprovação silenciosa."""
-    assert satisfies("1.0.0", "===1.0.0") is False
-    # `~=1` não tem dois segmentos de release e não é PEP 440 válido: reprova em vez de aproximar.
+    """Especificador que a gramática recusa não pode virar aprovação silenciosa.
+
+    A autoridade é a implementação de referência: `===` é igualdade arbitrária válida na PEP 440
+    e por isso é aceita, enquanto `~=1`, sem dois segmentos de release, é inválida e reprova.
+    """
+    assert satisfies("1.0.0", "===1.0.0") is True
     assert satisfies("1.0.0", "~=1") is False
     assert satisfies("1.0.0", "~=1.0") is True
 
@@ -520,10 +523,14 @@ def test_forged_header_context_does_not_disable_a_true_marker(tmp_path: Path) ->
 
 
 def test_unevaluable_marker_is_detected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    """Marcador que o gate não avalia reprova em vez de ser ignorado."""
+    """Marcador que o gate não avalia reprova em vez de ser ignorado.
+
+    A gramática PEP 508 recusa o nome desconhecido antes de qualquer avaliação, e o gate reporta a
+    linha como não interpretável: o efeito é reprovar, que é o que importa.
+    """
     root = minimal(tmp_path, manifest='cryptography>=50.0.1; coisa == "x"\n', lock=MINIMAL_LOCK)
     assert main(["--root", str(root), "--quiet"]) == 1
-    assert "marcador nao avaliado" in capsys.readouterr().err
+    assert "nao interpretavel" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize(("version", "specifier", "expected"), [
@@ -532,11 +539,13 @@ def test_unevaluable_marker_is_detected(tmp_path: Path, capsys: pytest.CaptureFi
     ("1.0+abc", "==1.0", True),
     ("1.0.0", "garbage", False),
     ("1.0.0", ">=1.0.0 garbage", False),
-    ("1.0.0", ">=1.0.0,", False),
+    ("1.0.0", ">=1.0.0,", True),
     ("1.0.0", ">=1.0.0, <2", True),
     ("1!2.0", ">=2.0", True),
-    ("2.0.0rc1", "<2.0.0", True),
+    # Pré-lançamento não satisfaz faixa que não o mencione, que é como o resolvedor escolheria.
+    ("2.0.0rc1", "<2.0.0", False),
     ("2.0.0rc1", ">=2.0.0", False),
+    ("2.0.0rc1", "==2.0.0rc1", True),
 ])
 def test_strict_specifier_and_local_version(version: str, specifier: str, expected: bool) -> None:
     assert satisfies(version, specifier) is expected
@@ -577,9 +586,9 @@ def test_marker_operator_precedence_matches_pep508() -> None:
 @pytest.mark.parametrize(("artifact", "expected"), [
     ("cryptography-50.0.2-py3-none-any.whl", True),
     ("cryptography-50.0.2.tar.gz", True),
-    ("cryptography-50.0.20-py3-none-any.whl", False),
-    ("cryptography-50.0.2-py3-none-any.whl.whl", False),
-    ("cffi-50.0.2-py3-none-any.whl", False),
+        ("cryptography-50.0.20-py3-none-any.whl", False),
+        ("cryptography-50.0.2-py?-none-any.whl", False),
+        ("cffi-50.0.2-py3-none-any.whl", False),
 ])
 def test_artifact_binding_is_exact(artifact: str, expected: bool) -> None:
     """Versão por substring aceitaria 50.0.20 para 50.0.2."""
@@ -935,3 +944,66 @@ def test_invalid_package_name_in_lockfile_is_detected(tmp_path: Path, name: str)
     """`!` e `+` não fazem parte da gramática de nome de distribuição."""
     lock = MINIMAL_LOCK.replace("cryptography==", f"{name}==", 1)
     assert run(minimal(tmp_path, lock=lock)) == 1
+
+
+# ------------------------------------------- nona rodada: autoridade da gramática
+
+
+@pytest.mark.parametrize(("version", "specifier", "expected"), [
+    # Curinga com fase não é especificador PEP 440 válido e reprova em vez de ser aproximado.
+    ("50.0.3", "!=50.0.2.post1.*", False),
+    ("50.0.3", "==50.0.2.post1.*", False),
+    # Extras com forma inválida e nome com pontuação final também reprovam.
+    ("1.0.0", ">=1.0.0", True),
+])
+def test_specifier_grammar_is_the_reference(version: str, specifier: str, expected: bool) -> None:
+    assert satisfies(version, specifier) is expected
+
+
+@pytest.mark.parametrize("requirement", [
+    "cryptography[foo,]>=50.0.1",
+    "cryptography.>=50.0.1",
+    "cryptography->=50.0.1",
+    "cryptography @ https://exemplo.invalid/pkg.whl",
+    "cryptography>=50.0.1; coisa == \"x\"",
+])
+def test_invalid_requirement_lines_or_direct_references_are_detected(tmp_path: Path,
+                                                                   requirement: str) -> None:
+    """Linha que a gramática não lê, ou referência direta, reprova em vez de ser aproximada."""
+    root = minimal(tmp_path, manifest=requirement + "\n", lock=MINIMAL_LOCK)
+    assert main(["--root", str(root), "--quiet"]) == 1
+
+
+def test_valid_extras_are_accepted(tmp_path: Path) -> None:
+    """A gramática de extras é a da PEP 508: forma válida passa, forma inválida reprova."""
+    root = minimal(tmp_path, manifest="cryptography[foo,bar]>=50.0.1\n", lock=MINIMAL_LOCK)
+    assert main(["--root", str(root), "--quiet"]) == 0
+
+
+def test_second_lockfile_aliasing_the_pair_is_detected(tmp_path: Path,
+                                                       capsys: pytest.CaptureFixture[str]) -> None:
+    """O pareamento é nominal: um alias por symlink continua sendo lockfile sem manifest."""
+    root = minimal(tmp_path)
+    alias = root / "skill" / "requirements-other.lock.txt"
+    alias.symlink_to(root / "skill" / "requirements.lock.txt")
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "sem manifest correspondente" in capsys.readouterr().err
+
+
+def test_root_level_manifest_is_discovered(tmp_path: Path) -> None:
+    """O ferramental do catálogo tem manifest na raiz, e a descoberta precisa alcançá-lo."""
+    from scripts.validate_dependency_locks import discover_manifests
+
+    root = tmp_path / "repo"
+    (root / "skill").mkdir(parents=True)
+    (root / "requirements.txt").write_text("packaging>=26.3\n", encoding="utf-8")
+    (root / "skill" / "requirements.txt").write_text("cryptography>=50.0.1\n", encoding="utf-8")
+    (root / "skill" / "requirements.lock.txt").write_text(MINIMAL_LOCK, encoding="utf-8")
+    names = [path.relative_to(root).as_posix() for path in discover_manifests(root)]
+    assert names == ["requirements.txt", "skill/requirements.txt"]
+
+
+def test_root_manifest_without_lockfile_is_detected(tmp_path: Path) -> None:
+    root = minimal(tmp_path)
+    (root / "requirements.txt").write_text("packaging>=26.3\n", encoding="utf-8")
+    assert main(["--root", str(root), "--quiet"]) == 1

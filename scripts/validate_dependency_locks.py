@@ -5,27 +5,32 @@ O validador responde a três perguntas, todas offline e sem instalar nada:
 
 1. o lockfile representa o manifest? Cada requisito declarado precisa aparecer com versão
    fixada que **satisfaz o especificador declarado**; um requisito cujo marcador de ambiente é
-   falso no contexto registrado não é exigido, e um marcador que o gate não consegue avaliar
-   reprova em vez de ser ignorado; inclusão `-r` que não resolve reprova, porque um manifest
-   que não pode ser lido não pode ser considerado coberto; e a cadeia `# via` de cada entrada
-   transitiva precisa alcançar um pacote declarado;
+   falso no interpretador que executa o gate não é exigido, e um marcador que o gate não
+   consegue avaliar reprova em vez de ser ignorado; inclusão `-r` que não resolve, não é
+   manifest ou sai da raiz reprova, porque manifest que não pode ser lido não pode ser
+   considerado coberto; e a cadeia `# via` de cada entrada transitiva precisa alcançar um
+   pacote declarado;
 2. cada entrada nomeia o artefato? O digest precisa referir-se a uma distribuição concreta, e
-   por isso a entrada declara `# arquivo: <distribuição>`, cujo prefixo normalizado precisa
-   corresponder ao nome, cujo texto precisa conter a versão e cujo sufixo precisa ser de
-   distribuição. Sem isso, um hash sintaticamente válido e arbitrário passaria, e o lockfile
-   teria a aparência de garantia sem garantia;
+   por isso a entrada declara `# arquivo: <distribuição>`, cujo nome e versão precisam ser
+   exatamente os fixados. Sem isso, um hash sintaticamente válido e arbitrário passaria, e o
+   lockfile teria a aparência de garantia sem garantia;
 3. a política de exceção aponta algo que existe? Cada exceção precisa nomear pacote e versão
    presentes em algum lockfile, e a data de revisão precisa estar na forma `YYYY-MM-DD`.
 
-Versão e especificador são analisados por completo: forma que o gate não entende levanta erro e
-reprova, em vez de ser aproximada. O contexto registrado no cabeçalho é o ambiente em que o
-lockfile foi resolvido, e é contra ele que os marcadores são avaliados.
+Gramática de versão, especificador, requisito, marcador e nome de distribuição é interpretada
+pelo `packaging`, que é a implementação de referência das PEPs 440, 508 e 427: forma que ele
+recusa reprova em vez de ser aproximada. O gate é offline e determinístico, e o `packaging` é
+declarado como dependência de desenvolvimento justamente por ser a autoridade dessa gramática.
+
+O cabeçalho registra o contexto de resolução como documentação, e não como autoridade: o
+marcador é avaliado contra o interpretador que executa o gate, porque um comentário editável
+como autoridade permitiria declarar contexto falso para omitir uma dependência real.
 
 A integridade do digest não é verificável sem o artefato, e o gate offline não a afirma: ele
-verifica forma, vínculo entre nome, versão, artefato e digest, e a satisfação do
-especificador. A verificação do digest contra o artefato real acontece onde o artefato pode ser
-obtido, em `scripts/audit_dependencies.py` e no workflow de auditoria, que reprovam quando não
-conseguem verificar.
+verifica forma, vínculo entre nome, versão, artefato e digest, e a satisfação do especificador.
+A verificação do digest contra o artefato real acontece onde o artefato pode ser obtido, em
+`scripts/audit_dependencies.py` e no workflow de auditoria, que reprovam quando não conseguem
+verificar.
 
 É aviso, e não reprovação, a exceção cuja data de revisão venceu: data vencida é decisão de
 pessoa e não defeito de arquivo.
@@ -35,295 +40,105 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import platform
 import re
 import sys
 from datetime import date
 from pathlib import Path
 
+from packaging.markers import InvalidMarker, Marker, UndefinedEnvironmentName, default_environment
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.utils import (
+    InvalidSdistFilename,
+    InvalidWheelFilename,
+    canonicalize_name,
+    parse_sdist_filename,
+    parse_wheel_filename,
+)
+from packaging.version import InvalidVersion, Version
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from scripts.lock_dependencies import LOCK_SUFFIX, normalize  # noqa: E402
+from scripts.lock_dependencies import LOCK_SUFFIX  # noqa: E402
 
 HASH_RE = re.compile(r"^--hash=sha256:([0-9a-f]{64})$")
 ARTIFACT_RE = re.compile(r"^#\s*arquivo:\s*(\S+)$")
-ENTRY_RE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==([^\s\\,]+)$")
-VERSION_RE = re.compile(r"^[0-9][0-9A-Za-z.!+_-]*$")
 VIA_RE = re.compile(r"^#\s*via\s+(.+)$")
 SOURCE_RE = re.compile(r"^#\s*lockfile gerado de\s+(\S+)", re.MULTILINE)
 REGENERATE_RE = re.compile(r"^#\s*regenerar:\s*(\S.*)$", re.MULTILINE)
 CONTEXT_RE = re.compile(r"^#\s*contexto:\s*python\s+(\S+)\s+em\s+(\S+)\s*(\S*)\s*$", re.MULTILINE)
 REVIEW_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-SPECIFIER_TOKEN_RE = re.compile(r"^(===|==|!=|~=|<=|>=|<|>)\s*([^\s,]+)")
-VERSION_TOKEN_RE = re.compile(r"\.?(a|b|c|rc|alpha|beta|pre|preview|post|dev)([0-9]*)")
-LOCAL_RE = re.compile(r"^[0-9a-z]+(?:[._-][0-9a-z]+)*$")
-REQUIREMENT_RE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)(\[[^\]]*\])?\s*([^;\s].*?)?\s*$")
-MARKER_ATOM_RE = re.compile(
-    r'^(python_version|python_full_version|sys_platform|platform_system|os_name|platform_machine|implementation_name)'
-    r'\s*(==|!=|<=|>=|<|>|in|not in)\s*"([^"]*)"$'
-)
-UNSUPPORTED_OPERATORS = {"==="}
 MIN_JUSTIFICATION = 20
 POLICY_RELATIVE = "config/dependency-policy.json"
-ARTIFACT_SUFFIXES = (".whl", ".tar.gz", ".zip", ".tar.bz2", ".tgz")
-VERSION_NAMES = {"python_version", "python_full_version"}
 
 
 # --------------------------------------------------------------------------- versões
 
 
-def parse_version(text: str) -> tuple:
-    """Analisar a versão por completo; forma não reconhecida levanta `ValueError`.
-
-    Devolve época, release, fase de pré/pós/dev e o segmento local, que precisa ser preservado
-    porque `1.0+abc` e `1.0+def` não são a mesma versão.
-    """
-    value = text.strip().lower()
-    if not value:
-        raise ValueError(text)
-    epoch = 0
-    if "!" in value:
-        head, value = value.split("!", 1)
-        if not head.isdigit():
-            raise ValueError(text)
-        epoch = int(head)
-    local: tuple[str, ...] = ()
-    if "+" in value:
-        value, local_text = value.split("+", 1)
-        if not LOCAL_RE.match(local_text):
-            raise ValueError(text)
-        local = tuple(re.split(r"[._-]", local_text))
-    match = re.match(r"^([0-9]+(?:\.[0-9]+)*)(.*)$", value)
-    if not match:
-        raise ValueError(text)
-    release = tuple(int(part) for part in match.group(1).split("."))
-    suffix = match.group(2)
-    pre: tuple[int, int] | None = None
-    post: int | None = None
-    dev: int | None = None
-    position = 0
-    rank = 0
-    kinds: set[str] = set()
-    while position < len(suffix):
-        token = VERSION_TOKEN_RE.match(suffix, position)
-        if not token:
-            raise ValueError(text)
-        label, number = token.group(1), token.group(2)
-        count = int(number) if number else 0
-        if label in {"a", "alpha"}:
-            kind, value = "pre", (0, count)
-        elif label in {"b", "beta"}:
-            kind, value = "pre", (1, count)
-        elif label in {"c", "rc", "pre", "preview"}:
-            kind, value = "pre", (2, count)
-        elif label == "post":
-            kind, value = "post", count
-        else:
-            kind, value = "dev", count
-        # A PEP 440 admite no máximo um sufixo de cada tipo, na ordem pré, pós e dev:
-        # `50.0.2post1a1` não é versão válida e não pode passar como se fosse.
-        order = {"pre": 1, "post": 2, "dev": 3}[kind]
-        if order < rank or kind in kinds:
-            raise ValueError(text)
-        rank = order
-        kinds.add(kind)
-        if kind == "pre":
-            pre = value
-        elif kind == "post":
-            post = value
-        else:
-            dev = value
-        position = token.end()
-    # Pré, pós e dev são eixos independentes: o dev torna a versão anterior à mesma versão
-    # sem dev, e colapsar os três em uma única fase faria `50.0.2post1.dev1` ser igual a
-    # `50.0.2post1`.
-    if pre is not None:
-        pre_key = (1, pre[0], pre[1])
-    elif post is None and dev is not None:
-        pre_key = (0, 0, 0)
-    else:
-        pre_key = (2, 0, 0)
-    post_key = (1, post) if post is not None else (0, 0)
-    dev_key = (0, dev) if dev is not None else (1, 0)
-    return (epoch, release, pre_key, post_key, dev_key, local)
+def parse_version(text: str) -> Version:
+    """Analisar a versão pela implementação de referência da PEP 440."""
+    return Version(text)
 
 
-def version_key(text: str) -> tuple:
-    """Compatibilidade com quem só precisa da ordem de release."""
-    epoch, release, pre_key, post_key, dev_key, _ = parse_version(text)
-    return (epoch, release, pre_key, post_key, dev_key)
-
-
-def compare_local(left: tuple[str, ...], right: tuple[str, ...]) -> int:
-    """Comparar segmentos locais: segmento numérico é maior que segmento alfabético."""
-    for index in range(max(len(left), len(right))):
-        current = left[index] if index < len(left) else None
-        other = right[index] if index < len(right) else None
-        if current == other:
-            continue
-        if current is None:
-            return -1
-        if other is None:
-            return 1
-        current_numeric, other_numeric = current.isdigit(), other.isdigit()
-        if current_numeric and other_numeric:
-            return -1 if int(current) < int(other) else 1
-        if current_numeric != other_numeric:
-            return 1 if current_numeric else -1
-        return -1 if current < other else 1
-    return 0
+def version_key(text: str) -> Version:
+    """Compatibilidade com quem só precisa da ordem de versão."""
+    return Version(text)
 
 
 def compare(left: str, right: str) -> int:
-    """Comparar duas versões.
-
-    O release é preenchido com zeros, como a PEP 440 exige, e o segmento local só é comparado
-    quando os dois lados o declaram: `1.0+abc` e `1.0` são iguais para faixa, e `1.0+abc` e
-    `1.0+def` não são iguais entre si.
-    """
-    left_epoch, left_release, left_phase, left_post, left_dev, left_local = parse_version(left)
-    right_epoch, right_release, right_phase, right_post, right_dev, right_local = parse_version(right)
-    if left_epoch != right_epoch:
-        return -1 if left_epoch < right_epoch else 1
-    width = max(len(left_release), len(right_release))
-    left_padded = left_release + (0,) * (width - len(left_release))
-    right_padded = right_release + (0,) * (width - len(right_release))
-    if left_padded != right_padded:
-        return -1 if left_padded < right_padded else 1
-    if (left_phase, left_post, left_dev) != (right_phase, right_post, right_dev):
-        return -1 if (left_phase, left_post, left_dev) < (right_phase, right_post, right_dev) else 1
-    if left_local and right_local:
-        return compare_local(left_local, right_local)
-    return 0
-
-
-def parse_specifier(text: str) -> list[tuple[str, str]]:
-    """Consumir o especificador por inteiro; sobra ou forma desconhecida levanta erro."""
-    remaining = text.strip()
-    parsed: list[tuple[str, str]] = []
-    while remaining:
-        match = SPECIFIER_TOKEN_RE.match(remaining)
-        if not match:
-            raise ValueError(text)
-        parsed.append((match.group(1), match.group(2)))
-        remaining = remaining[match.end():].lstrip()
-        if remaining.startswith(","):
-            remaining = remaining[1:].lstrip()
-            if not remaining:
-                raise ValueError(text)
-        elif remaining:
-            raise ValueError(text)
-    if not parsed:
-        raise ValueError(text)
-    return parsed
+    """Comparar duas versões e devolver -1, 0 ou 1."""
+    left_version, right_version = Version(left), Version(right)
+    if left_version == right_version:
+        return 0
+    return -1 if left_version < right_version else 1
 
 
 def satisfies(version: str, specifier: str) -> bool:
-    """Versão satisfaz o especificador declarado, incluindo `~=` e curinga de release.
+    """A versão satisfaz o especificador declarado, na semântica do resolvedor.
 
-    Qualquer forma que o gate não entenda devolve `False`, porque aproximar especificador
-    desconhecido seria aprovar sem verificar.
+    Especificador que o `packaging` recuse reprova, porque aproximar forma desconhecida seria
+    aprovar sem verificar, e pré-lançamento não satisfaz faixa que não o mencione, que é o
+    comportamento pelo qual o próprio resolvedor escolheria a versão.
     """
     try:
-        current = version
-        for operator, target in parse_specifier(specifier):
-            if operator in UNSUPPORTED_OPERATORS:
-                raise ValueError(f"operador nao suportado: {operator}")
-            # A PEP 440 não permite versão local em comparador ordenado nem com curinga.
-            if "+" in target and operator not in {"==", "!="}:
-                raise ValueError(f"versao local em operador ordenado: {target}")
-            if target.endswith(".*"):
-                prefix = target[:-2]
-                if operator not in {"==", "!="}:
-                    raise ValueError(f"curinga com operador {operator}")
-                if "+" in prefix:
-                    raise ValueError(f"curinga com versao local: {target}")
-                # O curinga casa pelo segmento de release: comparar texto perderia
-                # `50.0.2a1` em `!=50.0.2.*`, que a PEP 440 exclui por ser do prefixo.
-                matches = matches_release_prefix(current, prefix)
-                if (operator == "==") and not matches:
-                    return False
-                if (operator == "!=") and matches:
-                    return False
-                continue
-            outcome = compare(current, target)
-            target_local = parse_version(target)[5]
-            current_local = parse_version(current)[5]
-            # A PEP 440 só ignora o segmento local quando o alvo não declara um: com alvo
-            # local, `==` exige o mesmo local e `!=` exige local diferente.
-            if operator == "==" and (outcome != 0 or (target_local and current_local != target_local)):
-                return False
-            if operator == "!=" and outcome == 0 and (not target_local or current_local == target_local):
-                return False
-            if operator == ">" and outcome <= 0:
-                return False
-            if operator == ">=" and outcome < 0:
-                return False
-            if operator == "<" and outcome >= 0:
-                return False
-            if operator == "<=" and outcome > 0:
-                return False
-            if operator == "~=":
-                if outcome < 0:
-                    return False
-                release = version_key(target)[1]
-                if len(release) < 2:
-                    return False
-                ceiling = list(release[:-1])
-                ceiling[-1] += 1
-                if compare(current, ".".join(str(part) for part in ceiling)) >= 0:
-                    return False
-        return True
-    except ValueError:
+        return SpecifierSet(specifier).contains(version)
+    except (InvalidSpecifier, InvalidVersion, ValueError):
         return False
-
-
-def matches_release_prefix(version: str, prefix: str) -> bool:
-    """Curinga PEP 440: o release da versão começa pelo release do prefixo."""
-    epoch, release, _, _, _, _ = parse_version(version)
-    prefix_epoch, prefix_release, _, _, _, _ = parse_version(prefix)
-    if epoch != prefix_epoch:
-        return False
-    return len(release) >= len(prefix_release) and release[: len(prefix_release)] == prefix_release
 
 
 def artifact_matches(name: str, version: str, filename: str) -> bool:
-    """O artefato declarado é uma distribuição do pacote fixado, na versão fixada."""
-    if not filename.endswith(ARTIFACT_SUFFIXES):
-        return False
-    stem = filename
-    for suffix in ARTIFACT_SUFFIXES:
-        if stem.endswith(suffix):
-            stem = stem[: -len(suffix)]
-            break
-    # Sufixo repetido (`pacote-1.0.0-py3-none-any.whl.whl`) não é uma distribuição publicada.
-    if any(stem.endswith(suffix) for suffix in ARTIFACT_SUFFIXES):
-        return False
-    # A distribuição nomeia o pacote e a versão em campos separados: comparar por substring
-    # aceitaria `cryptography-50.0.20` para a versão 50.0.2.
-    parts = stem.split("-")
-    if len(parts) < 2:
-        return False
-    if normalize(parts[0]) != name or parts[1] != version:
-        return False
-    if filename.endswith(".whl"):
-        # Uma wheel PEP 427 tem nome, versão, etiquetas de Python, ABI e plataforma e, quando
-        # existe, uma etiqueta de build que começa com dígito: um campo intermediário livre,
-        # como `-extra-`, não é uma distribuição publicável.
-        if len(parts) == 5:
-            tags = parts[2:]
-        elif len(parts) == 6 and parts[2][:1].isdigit():
-            tags = parts[3:]
+    """O artefato declarado é a distribuição fixada, pela gramática PEP 427 e da sdist.
+
+    `parse_wheel_filename` e `parse_sdist_filename` verificam nome escapado, quantidade de
+    campos e etiquetas, o que reprova `...-extra-py3-none-any.whl`, `...-fake.whl` e etiqueta
+    com caractere inválido.
+    """
+    try:
+        if filename.endswith(".whl"):
+            artifact_name, artifact_version, *_ = parse_wheel_filename(filename)
         else:
-            return False
-        if not all(tags):
-            return False
-    elif len(parts) != 2:
+            artifact_name, artifact_version = parse_sdist_filename(filename)
+    except (InvalidWheelFilename, InvalidSdistFilename, ValueError):
         return False
-    return True
+    if canonicalize_name(artifact_name) != canonicalize_name(name):
+        return False
+    return str(artifact_version) == version
+
+
+def exact_pin(token: str) -> tuple[str, str] | None:
+    """Nome canônico e versão de uma entrada `nome==versão`, validados pelo `packaging`."""
+    try:
+        requirement = Requirement(token)
+        if requirement.url or requirement.marker or len(requirement.specifier) != 1:
+            return None
+        specifier = next(iter(requirement.specifier))
+        if specifier.operator != "==" or "*" in specifier.version:
+            return None
+    except (InvalidRequirement, InvalidSpecifier, ValueError):
+        return None
+    return canonicalize_name(requirement.name), specifier.version
 
 
 # --------------------------------------------------------------------------- marcadores
@@ -333,80 +148,35 @@ def marker_environment() -> dict[str, str]:
     """Ambiente efetivo do gate, contra o qual o marcador é avaliado.
 
     A autoridade é o interpretador que executa a validação, e não o cabeçalho do lockfile: o
-    cabeçalho é um comentário editável, e usá-lo como autoridade permitiria declarar um
-    contexto falso para desativar um marcador verdadeiro e omitir uma dependência.
+    cabeçalho é um comentário editável, e usá-lo como autoridade permitiria declarar um contexto
+    falso para desativar um marcador verdadeiro e omitir uma dependência real.
     """
-    version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    return {
-        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
-        "python_full_version": version,
-        "sys_platform": sys.platform,
-        "platform_system": platform.system(),
-        "os_name": os.name,
-        "platform_machine": platform.machine(),
-        "implementation_name": sys.implementation.name,
-    }
+    return dict(default_environment())
 
 
 def evaluate_marker(marker: str, environment: dict[str, str]) -> bool:
-    """Avaliar marcador simples de `and`/`or`; o que não é avaliável levanta `ValueError`."""
-    text = marker.strip()
-    if not text:
-        return True
-    # `and` liga mais forte que `or`: avaliar da esquerda para a direita inverteria o
-    # resultado de expressões mistas e faria o gate exigir ou dispensar o pacote errado.
-    groups: list[list[str]] = []
-    for group in re.split(r"\s+or\s+", text):
-        atoms = [atom.strip() for atom in re.split(r"\s+and\s+", group)]
-        # A gramática é validada por inteiro antes de qualquer atalho lógico: um átomo que o
-        # gate não entende precisa reprovar mesmo quando o resultado já estaria decidido, senão
-        # uma dependência poderia ser escondida atrás de expressão que o gate não avalia.
-        for atom in atoms:
-            match = MARKER_ATOM_RE.match(atom)
-            if not match or match.group(1) not in environment:
-                raise ValueError(atom)
-        groups.append(atoms)
-    for atoms in groups:
-        if all(evaluate_marker_atom(atom, environment) for atom in atoms):
-            return True
-    return False
+    """Avaliar o marcador com a gramática e a precedência da PEP 508.
 
-
-def evaluate_marker_atom(atom: str, environment: dict[str, str]) -> bool:
-    match = MARKER_ATOM_RE.match(atom.strip())
-    if not match:
-        raise ValueError(atom)
-    name, operator, expected = match.groups()
-    actual = environment.get(name)
-    if actual is None:
-        raise ValueError(name)
-    if operator == "in":
-        return actual in expected
-    if operator == "not in":
-        return actual not in expected
-    if name in VERSION_NAMES:
-        outcome = compare(actual, expected)
-        equal = outcome == 0
-    else:
-        outcome = -1 if actual < expected else (0 if actual == expected else 1)
-        equal = outcome == 0
-    if operator == "==":
-        return equal
-    if operator == "!=":
-        return not equal
-    return {"<": outcome < 0, "<=": outcome <= 0, ">": outcome > 0, ">=": outcome >= 0}[operator]
+    O marcador é construído por inteiro antes de qualquer avaliação, e por isso um nome que não
+    existe na PEP 508 reprova mesmo quando o resultado lógico já estaria decidido.
+    """
+    try:
+        return Marker(marker).evaluate(environment)
+    except (InvalidMarker, UndefinedEnvironmentName, KeyError, ValueError) as error:
+        raise ValueError(marker) from error
 
 
 # --------------------------------------------------------------------------- manifests
 
 
-def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict[str, str] | None,
+def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict[str, str],
                       errors: list[str], prefix: str) -> list[tuple[str, str, str]]:
-    """Requisitos declarados: nome normalizado, especificador e marcador.
+    """Requisitos declarados: nome canônico, especificador e marcador.
 
-    Segue `-r` recursivamente, porque o lock de desenvolvimento precisa cobrir a união, e uma
-    inclusão que não resolve é erro: um manifest que não pode ser lido não pode ser considerado
-    coberto.
+    A linha é interpretada pelo `packaging`, que é a gramática PEP 508: linha que ele recusa
+    reprova, porque texto que não pode ser lido não pode ser considerado coberto. Referência
+    direta por URL também reprova, porque não se fixa por nome e versão. A inclusão `-r` é
+    seguida recursivamente, e precisa permanecer sob a raiz do repositório.
     """
     resolved = path.resolve()
     if resolved in seen:
@@ -416,6 +186,7 @@ def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict
         errors.append(f"{prefix}: {relative(path, root)}: inclusao ausente ou ilegivel")
         return []
     seen.add(resolved)
+
     found: list[tuple[str, str, str]] = []
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.split("#", 1)[0].strip()
@@ -430,29 +201,33 @@ def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict
             if candidate.is_absolute():
                 errors.append(f"{prefix}: {relative(path, root)}: inclusao absoluta fora da raiz: {target}")
                 continue
-            resolved = (path.parent / candidate).resolve()
-            if not resolved.is_relative_to(root):
+            included = (path.parent / candidate).resolve()
+            if not included.is_relative_to(root):
                 errors.append(f"{prefix}: {relative(path, root)}: inclusao fora da raiz do repositorio: {target}")
                 continue
-            found.extend(read_requirements(resolved, root, seen, environment, errors, prefix))
+            found.extend(read_requirements(included, root, seen, environment, errors, prefix))
             continue
         if line.startswith("-"):
             errors.append(f"{prefix}: {relative(path, root)}: opcao nao suportada pelo gate: {line[:40]}")
             continue
-        requirement, _, marker = line.partition(";")
-        name_match = REQUIREMENT_RE.match(requirement.strip())
-        if not name_match:
+        try:
+            requirement = Requirement(line)
+        except InvalidRequirement:
             errors.append(f"{prefix}: {relative(path, root)}: linha de requisito nao interpretavel: {line[:60]}")
             continue
-        if marker.strip():
+        if requirement.url:
+            errors.append(f"{prefix}: {relative(path, root)}: referencia direta nao suportada pelo gate: {line[:60]}")
+            continue
+        marker = str(requirement.marker) if requirement.marker is not None else ""
+        if marker:
             try:
                 applies = evaluate_marker(marker, environment)
             except ValueError:
-                errors.append(f"{prefix}: {relative(path, root)}: marcador nao avaliado pelo gate: {marker.strip()}")
+                errors.append(f"{prefix}: {relative(path, root)}: marcador nao avaliado pelo gate: {marker}")
                 continue
             if not applies:
                 continue
-        found.append((normalize(name_match.group(1)), (name_match.group(3) or "").strip(), marker.strip()))
+        found.append((canonicalize_name(requirement.name), str(requirement.specifier), marker))
     return found
 
 
@@ -472,7 +247,7 @@ def parse_lock(text: str) -> tuple[dict[str, dict], list[str]]:
         if stripped.startswith("#"):
             via = VIA_RE.match(stripped)
             if via:
-                pending_via = {normalize(part) for part in re.split(r"[,\s]+", via.group(1)) if part}
+                pending_via = {canonicalize_name(part) for part in re.split(r"[,\s]+", via.group(1)) if part}
             artifact = ARTIFACT_RE.match(stripped)
             if artifact:
                 if pending_artifact is not None:
@@ -502,23 +277,16 @@ def parse_lock(text: str) -> tuple[dict[str, dict], list[str]]:
                 errors.append(f"linha {number}: conteudo extra na entrada: {token[:40]}")
                 continue
             seen_entry = True
-            match = ENTRY_RE.match(token)
-            if not match:
+            pinned = exact_pin(token)
+            if pinned is None:
                 errors.append(f"linha {number}: entrada sem versao exata: {token[:60]}")
                 current = None
                 continue
-            name = normalize(match.group(1))
-            if not VERSION_RE.match(match.group(2)):
-                errors.append(f"linha {number}: versao nao exata: {match.group(2)}")
-            else:
-                try:
-                    parse_version(match.group(2))
-                except ValueError:
-                    errors.append(f"linha {number}: versao fora da forma PEP 440: {match.group(2)}")
+            name, version = pinned
             if name in entries:
                 errors.append(f"linha {number}: entrada duplicada: {name}")
             entries[name] = {
-                "version": match.group(2),
+                "version": version,
                 "hashes": [],
                 "via": set(pending_via),
                 "artifact": pending_artifact,
@@ -531,8 +299,28 @@ def parse_lock(text: str) -> tuple[dict[str, dict], list[str]]:
     return entries, errors
 
 
+def discover_lockfiles(root: Path) -> list[Path]:
+    """Lockfiles esperados, inclusive symlink, para que nenhum passe despercebido."""
+    return _discover(root, f"requirements*{LOCK_SUFFIX}")
+
+
+def _discover(root: Path, pattern: str) -> list[Path]:
+    """Manifest e lockfile do ferramental na raiz e dos skills um nível abaixo.
+
+    Pattern: a descoberta de um único nível deixaria de fora o ferramental do catálogo, cujo
+    manifest vive na raiz.
+    """
+    found = {
+        path
+        for candidate in (pattern, f"*/{pattern}")
+        for path in root.glob(candidate)
+        if path.is_file() or path.is_symlink()
+    }
+    return sorted(found)
+
+
 def locked_index(root: Path) -> dict[str, set[str]]:
-    """Pacote -> versões fixadas em algum lockfile do repositório."""
+    """Pacote -> versões fixadas em lockfile confinado à raiz."""
     index: dict[str, set[str]] = {}
     for lock in discover_lockfiles(root):
         # Lockfile que resolve para fora da raiz não pode alimentar o índice da política.
@@ -600,15 +388,13 @@ def validate_manifest(root: Path, manifest: Path) -> list[str]:
         errors.append(f"{where}: cabecalho aponta {source.group(1)}, esperado {relative(manifest, root)}")
     if not REGENERATE_RE.search(text):
         errors.append(f"{where}: cabecalho sem o comando de regeneracao")
-
     if not CONTEXT_RE.search(text):
         errors.append(f"{where}: cabecalho sem o contexto de resolucao")
-    environment = marker_environment()
 
     entries, parse_errors = parse_lock(text)
     errors.extend(f"{where}: {error}" for error in parse_errors)
 
-    requirements = read_requirements(manifest, root, set(), environment, errors, where)
+    requirements = read_requirements(manifest, root, set(), marker_environment(), errors, where)
     declared = {name for name, _, _ in requirements}
     for name in sorted(declared - set(entries)):
         errors.append(f"{where}: declarado em {relative(manifest, root)} e ausente do lockfile: {name}")
@@ -684,7 +470,7 @@ def validate_policy(root: Path, locked: dict[str, set[str]]) -> tuple[list[str],
         if len(str(item.get("justification", "")).strip()) < MIN_JUSTIFICATION:
             errors.append(f"{where}: justificativa com menos de {MIN_JUSTIFICATION} caracteres")
 
-        package = normalize(str(item.get("package", "")))
+        package = canonicalize_name(str(item.get("package", "")))
         version = str(item.get("version", "")).strip()
         if not package:
             errors.append(f"{where}: sem pacote")
@@ -714,37 +500,31 @@ def validate_policy(root: Path, locked: dict[str, set[str]]) -> tuple[list[str],
 
 
 def discover_manifests(root: Path) -> list[Path]:
-    """Manifests de dependência: `requirements*.txt`, excluindo os próprios lockfiles."""
-    return sorted(
-        path
-        for path in root.glob("*/requirements*.txt")
-        # Symlink pendente e symlink para diretório não são arquivos regulares, mas continuam
-        # sendo manifest esperado: omiti-los faria uma mudança de manifest deixar de ser
-        # verificada sem erro.
-        if (path.is_file() or path.is_symlink()) and not path.name.endswith(LOCK_SUFFIX)
-    )
+    """Manifests de dependência: `requirements*.txt`, excluindo os próprios lockfiles.
 
-
-def discover_lockfiles(root: Path) -> list[Path]:
-    """Lockfiles esperados, inclusive symlink, para que nenhum passe despercebido."""
-    return sorted(
+    Symlink pendente e symlink para diretório continuam sendo manifest esperado: omiti-los faria
+    uma mudança de manifest deixar de ser verificada sem erro.
+    """
+    return [
         path
-        for path in root.glob(f"*/requirements*{LOCK_SUFFIX}")
-        if path.is_file() or path.is_symlink()
-    )
+        for path in _discover(root, "requirements*.txt")
+        if not path.name.endswith(LOCK_SUFFIX)
+    ]
 
 
 def validate_dependency_locks(root: Path) -> list[str]:
     """Todos os erros de lockfile e de política, para o validador agregador."""
     errors: list[str] = []
     manifests = discover_manifests(root)
-    paired = {manifest.with_name(manifest.stem + LOCK_SUFFIX).resolve() for manifest in manifests}
+    # O pareamento é nominal, e não por caminho resolvido: um segundo lockfile que seja symlink
+    # para o par existente continuaria sendo um lockfile sem manifest correspondente.
+    paired = {manifest.with_name(manifest.stem + LOCK_SUFFIX) for manifest in manifests}
     for manifest in manifests:
         errors.extend(validate_manifest(root, manifest))
     for lock in discover_lockfiles(root):
         if not confined(lock, root):
             errors.append(f"{relative(lock, root)}: lockfile resolve para fora da raiz do repositorio")
-        elif lock.resolve() not in paired:
+        elif lock not in paired:
             errors.append(f"{relative(lock, root)}: lockfile sem manifest correspondente")
     policy_errors, _ = validate_policy(root, locked_index(root))
     return errors + policy_errors

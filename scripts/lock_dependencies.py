@@ -153,11 +153,16 @@ def lock_path(manifest: Path) -> Path:
 
 
 def manifests_for(root: Path, skill: str | None) -> list[Path]:
-    pattern = f"{skill}/requirements*.txt" if skill else "*/requirements*.txt"
+    # O ferramental do catálogo tem manifest na raiz, e os skills um nível abaixo: cobrir apenas
+    # um dos dois deixaria manifest sem lockfile.
+    patterns = (f"{skill}/requirements*.txt",) if skill else ("requirements*.txt", "*/requirements*.txt")
     return sorted(
-        path
-        for path in root.glob(pattern)
-        if path.is_file() and not path.name.endswith(LOCK_SUFFIX)
+        {
+            path
+            for pattern in patterns
+            for path in root.glob(pattern)
+            if path.is_file() and not path.name.endswith(LOCK_SUFFIX)
+        }
     )
 
 
