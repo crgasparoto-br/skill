@@ -152,8 +152,10 @@ def family_errors(
 def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
     """Integridade da politica: catalogo coberto, regras decididas, motivos e supressoes."""
     errors: list[str] = []
-    if policy.get("schema_version") != 1:
-        errors.append("politica: schema_version precisa ser 1")
+    schema_version = policy.get("schema_version")
+    if isinstance(schema_version, bool) or schema_version != 1:
+        # Em Python `True == 1`: sem excluir booleano, `schema_version: true` passaria como versao.
+        errors.append("politica: schema_version precisa ser o inteiro 1")
 
     tool = policy.get("tool")
     if not isinstance(tool, dict) or tool.get("name") != "ruff":
@@ -169,8 +171,12 @@ def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
         # Forma bruta invalida reprova aqui: consultar campo de um escalar trocaria a causa por um
         # traceback, que e exatamente o que a interrupcao da validacao existe para evitar.
         errors.append("politica: line_length precisa ser objeto")
-    elif not isinstance(line_length.get("value"), int) or line_length["value"] <= 0:
-        errors.append("politica: line_length.value precisa ser inteiro positivo")
+    elif (
+        isinstance(line_length.get("value"), bool)
+        or not isinstance(line_length.get("value"), int)
+        or line_length["value"] <= 0
+    ):
+        errors.append("politica: line_length.value precisa ser inteiro positivo, nao booleano")
     else:
         reason = line_length.get("reason")
         if not isinstance(reason, str) or len(reason.strip()) < MINIMUM_REASON_CHARS:
@@ -196,7 +202,7 @@ def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
             errors.append(f"politica: familia {prefix} declarada mais de uma vez")
         seen.add(prefix)
         state = entry.get("state")
-        if state not in REQUIRED_STATES:
+        if not isinstance(state, str) or state not in REQUIRED_STATES:
             errors.append(f"politica: familia {prefix} com estado invalido: {state!r}")
             continue
         select = entry.get("select")

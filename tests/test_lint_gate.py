@@ -534,6 +534,18 @@ def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -
     def list_line_length(policy: dict) -> None:
         policy["line_length"] = [100]
 
+    def boolean_schema(policy: dict) -> None:
+        policy["schema_version"] = True
+
+    def boolean_line_length(policy: dict) -> None:
+        policy["line_length"]["value"] = True
+
+    def dict_state(policy: dict) -> None:
+        policy["families"][0]["state"] = {}
+
+    def list_state(policy: dict) -> None:
+        policy["families"][0]["state"] = []
+
     shapes = {
         "families-ausente": drop_families,
         "families-nulo": null_families,
@@ -542,6 +554,10 @@ def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -
         "supressoes-nulas": null_suppressions,
         "line-length-escalar": scalar_line_length,
         "line-length-lista": list_line_length,
+        "schema-version-booleano": boolean_schema,
+        "line-length-booleano": boolean_line_length,
+        "estado-dicionario": dict_state,
+        "estado-lista": list_state,
     }
     for label, mutate in shapes.items():
         policy = load_policy()

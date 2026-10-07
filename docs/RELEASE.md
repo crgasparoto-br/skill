@@ -105,6 +105,10 @@ coberto que seja link simbólico para fora da raiz, um diretório do escopo que 
 ou em ciclo, um diretório ilegível, uma saída da ferramenta vazia ou em formato inesperado, a ausência do executável
 no momento da análise e um conjunto varrido sem nenhum arquivo coberto reprovam com causa explícita, em vez de
 reduzir o conjunto analisado em silêncio ou tratar o vazio como aprovação.
+### Forma bruta da política
+Booleano não é inteiro: `schema_version: true` e `line_length.value: true` reprovam, porque em Python
+`True == 1` e a coerção aceitaria uma forma que ninguém declarou. O estado de família precisa ser texto, e uma
+forma que não pode sequer ser comparada, como dicionário ou lista, reprova em vez de estourar.
 ### Limite declarado
 O gate verifica presença e extensão do motivo declarado, não a veracidade dele: um motivo longo e enganoso passa.
 A honestidade do motivo depende da revisão independente da mudança, e é por isso que alterar a política é alteração
@@ -187,7 +191,8 @@ A sequência obrigatória instala as dependências de teste do próprio lockfile
 A sequência documentada é comparada com a do workflow pelo teste de paridade, que lê os passos com um parser de YAML
 e é fail-closed na forma do documento: exige um único documento, recusa chave duplicada no mesmo mapeamento, exige
 `jobs` objeto não vazio, cada job objeto, `steps` lista não vazia e cada passo objeto com `run` ou `uses` — e não os
-dois —, com valor textual. Assim, uma forma alternativa de escrever o mesmo passo ativo, ou uma forma estrutural
+dois —, com valor textual. Chave repetida é recusada pelo valor construído, então `true` e `True`, `01` e `1`, `null`
+e `~` contam como a mesma chave, e chave que não pode ser comparada reprova em vez de estourar. Assim, uma forma alternativa de escrever o mesmo passo ativo, ou uma forma estrutural
 inválida que o parser aceitaria, não passa sem classificação.
 A consulta ao banco de vulnerabilidade e a verificação de integridade são do workflow
 [`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml), com gatilho agendado, manual e em

@@ -61,54 +61,46 @@ def is_validation(command: str) -> bool:
     return command.startswith("python ") and any(marker in command for marker in VALIDATION_MARKERS)
 
 
-def mapping_nodes(node: yaml.Node) -> list[yaml.MappingNode]:
-    """Todos os mapeamentos de um documento, incluindo os aninhados."""
-    found: list[yaml.MappingNode] = []
-    if isinstance(node, yaml.MappingNode):
-        found.append(node)
-        for key, value in node.value:
-            found.extend(mapping_nodes(key))
-            found.extend(mapping_nodes(value))
-    elif isinstance(node, yaml.SequenceNode):
-        for item in node.value:
-            found.extend(mapping_nodes(item))
-    return found
+class StrictLoader(yaml.SafeLoader):
+    """Carregador que constrói cada chave e recusa duplicata, inclusive com grafia diferente.
 
+    O carregador padrão sobrescreve a chave repetida em silêncio, e comparar o texto da chave
+    deixaria passar `true` e `True`, `yes` e `true`, `01` e `1`, `null` e `~`, que são o mesmo
+    valor depois de construídos. Chave que não pode ser comparada, como uma sequência, também
+    reprova em vez de estourar exceção.
+    """
 
-def duplicate_key_problems(text: str) -> list[str]:
-    """Chave duplicada no mesmo mapeamento: o carregador padrão sobrescreve em silêncio."""
-    problems: list[str] = []
-    try:
-        documents = list(yaml.compose_all(text))
-    except yaml.YAMLError:
-        return []
-    for document in documents:
-        if document is None:
-            continue
-        for mapping in mapping_nodes(document):
-            seen: set[tuple] = set()
-            for key_node, _ in mapping.value:
-                identity = (getattr(key_node, "tag", None), getattr(key_node, "value", None))
-                if identity in seen:
-                    problems.append(f"workflow: chave duplicada no mapeamento: {identity[1]!r}")
-                seen.add(identity)
-    return problems
+    def construct_mapping(self, node: yaml.MappingNode, deep: bool = False) -> dict:
+        self.flatten_mapping(node)
+        mapping: dict = {}
+        for key_node, value_node in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            try:
+                duplicated = key in mapping
+            except TypeError as error:
+                raise yaml.constructor.ConstructorError(
+                    None, None, f"chave nao comparavel: {key!r}", key_node.start_mark
+                ) from error
+            if duplicated:
+                raise yaml.constructor.ConstructorError(
+                    None, None, f"chave duplicada no mapeamento: {key!r}", key_node.start_mark
+                )
+            mapping[key] = self.construct_object(value_node, deep=deep)
+        return mapping
 
 
 def load_workflow(path: Path) -> tuple[object, list[str]]:
     """Documento do workflow e problemas de forma; não levanta exceção."""
     text = path.read_text(encoding="utf-8")
-    problems = duplicate_key_problems(text)
     try:
-        documents = list(yaml.safe_load_all(text))
+        documents = list(yaml.load_all(text, Loader=StrictLoader))
     except yaml.YAMLError as error:
-        return None, [*problems, f"workflow: YAML invalido ({type(error).__name__})"]
+        return None, [f"workflow: YAML invalido ({type(error).__name__})"]
     if len(documents) != 1:
         return None, [
-            *problems,
-            f"workflow: precisa de um unico documento YAML, encontrado {len(documents)}",
+            f"workflow: precisa de um unico documento YAML, encontrado {len(documents)}"
         ]
-    return documents[0], problems
+    return documents[0], []
 
 
 def workflow_steps(path: Path) -> list[dict]:
@@ -276,12 +268,26 @@ jobs:
         "passo nulo": "      - null\n",
         "run e uses no mesmo passo": "      - name: escondido\n        run: echo escondido\n        uses: actions/cache@1111111111111111111111111111111111111111\n",
         "chave run duplicada": "      - name: escondido\n        run: echo escondido\n        run: python scripts/validate_docs.py --root .\n",
+        "chave nao comparavel": "      - name: escondido\n        run: echo escondido\n        ? [a, b]\n        : x\n",
     }
     for label, snippet in hidden.items():
         path = tmp_path / "workflow.yml"
         path.write_text(template + snippet, encoding="utf-8")
         problems = classification_problems(path)
         assert problems, f"{label} passou sem ser classificada"
+    semantic = {
+        "duplicata true e True": template.replace("on: [push]\n", "on: [push]\ntrue: a\nTrue: b\n"),
+        "duplicata yes e true": template.replace("on: [push]\n", "on: [push]\nyes: a\ntrue: b\n"),
+        "duplicata 01 e 1": template.replace("on: [push]\n", "on: [push]\n01: a\n1: b\n"),
+        "duplicata null e til": template.replace("on: [push]\n", "on: [push]\nnull: a\n~: b\n"),
+        "duplicata com tag explicita": template.replace(
+            "on: [push]\n", "on: [push]\ntrue: a\n!!bool TRUE: b\n"
+        ),
+    }
+    for label, content in semantic.items():
+        path = tmp_path / "workflow.yml"
+        path.write_text(content, encoding="utf-8")
+        assert classification_problems(path), f"{label} passou sem ser classificada"
     structure = {
         "steps nao e lista": template.replace("    steps:\n", "    steps: nenhum\n"),
         "job nao e objeto": "name: teste\non: [push]\njobs:\n  validacao: quebrado\n",

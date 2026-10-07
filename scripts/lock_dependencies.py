@@ -208,9 +208,14 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     root = Path(args.root).resolve()
-    if args.manifest:
+    if args.manifest is not None:
         # O cabeçalho do lockfile manda regenerar por manifest: selecionar um caminho fora da raiz
         # deixaria o gerador escrever onde não deve, então o caminho é confinado antes de tudo.
+        if not args.manifest.strip():
+            # Valor vazio é entrada declarada e inválida, não ausência de seleção: tratar como
+            # ausência escolheria todos os manifests sem que ninguém tenha pedido.
+            print("manifest vazio: informe um caminho relativo a raiz", file=sys.stderr)
+            return 1
         if Path(args.manifest).is_absolute():
             print(f"manifest precisa ser caminho relativo a raiz: {args.manifest}", file=sys.stderr)
             return 1
