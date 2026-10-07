@@ -40,7 +40,7 @@ Os IDs abaixo são estáveis para issues, commits, avaliações e notas de relea
 | --- | --- | --- | --- | --- |
 | `V030-001` | Harness de avaliações comportamentais | P0 | `implemented` | Executar casos versionados com resultado reproduzível, métricas e limites de custo/contexto. |
 | `V030-002` | Casos adversariais e regressões de comportamento | P0 | `implemented` | Cobrir seleção, prompt injection, contexto insuficiente, capacidades ausentes e evidência não executada. |
-| `V030-003` | Segurança e cadeia de suprimentos | P1 | `planned` | Escolher licença e ativar secret scanning, dependency review e auditoria de dependências. |
+| `V030-003` | Segurança e cadeia de suprimentos | P1 | `planned` | Lockfile por skill e política de exceção entregues; licença, secret scanning, dependency review e matriz de Python permanecem abertos. |
 | `V030-004` | Índices e economia de contexto | P1 | `implemented` | Tornar referências longas navegáveis e rejeitar documentação sem instrução de carregamento seletivo. |
 | `V030-005` | Decisão sobre contrato `transitional` | P1 | `planned` | Publicar decisão de migração, compatibilidade, depreciação e eventual evolução SemVer. |
 | `V030-006` | Release e regressão comportamental | P1 | `planned` | Integrar avaliações informativas ao CI, registrar resultados e publicar `v0.3.0` reproduzível. |
@@ -108,6 +108,18 @@ Fechar as lacunas de manutenção restantes:
 5. definir a política para exceções, vulnerabilidades sem correção e atualizações incompatíveis;
 6. decidir se haverá matriz de versões Python além de 3.11 e, caso haja, testá-la no CI;
 7. manter actions pinadas por SHA completo e validar o pin em cada atualização.
+
+Os passos 4 e 5 foram **entregues em 2026-10-06**: os quatro manifests de skill têm lockfile irmão com versão exata,
+artefato nomeado e hash sha256 do fechamento transitivo, gerado por `scripts/lock_dependencies.py` e verificado offline
+por `scripts/validate_dependency_locks.py`, que reprova lockfile dessincronizado, versão fixada fora do especificador
+declarado, entrada sem hash, entrada sem artefato ou com artefato incompatível, anotação `# via` órfã, entrada duplicada
+e exceção de política sem justificativa, sem data, sem pacote, sem versão ou apontando resolução inexistente. A
+integridade do digest, conferida contra o artefato, e a consulta ao banco de vulnerabilidade ficam em
+`.github/workflows/dependency-audit.yml`, com gatilho agendado e manual, e reportam `UNKNOWN` quando não conseguem
+verificar, em vez de tratar ausência de verificação como verificação de ausência. O lockfile é resolvido em um contexto registrado no próprio cabeçalho, e outra versão de Python escolhe outra
+distribuição, com outro digest: adotar matriz de versões, passo 6, exigiria um lockfile por versão de Python, e essa
+é a decisão que o passo 6 precisa enfrentar. O passo 1 continua sendo decisão do proprietário, e o passo 3 depende de
+configuração do repositório no GitHub.
 
 A licença é uma decisão do proprietário e deve ser registrada em uma alteração própria ou em um commit claramente identificável. A habilitação de uma ferramenta planejada só ocorre depois que seu workflow realmente executa e possui tratamento documentado para falhas.
 

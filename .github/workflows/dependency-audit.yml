@@ -1,0 +1,56 @@
+name: Dependency audit
+
+# A checagem de vulnerabilidade depende de banco externo e por isso fica em workflow
+# separado: ela complementa a sequencia obrigatoria de `validate.yml` e nunca a substitui.
+# Indisponibilidade do banco e reportada como UNKNOWN e reprova o job, porque ausencia de
+# verificacao nao e verificacao de ausencia.
+#
+# A integridade do digest e do artefato so pode ser conferida com o artefato em maos, e por
+# isso tambem vive aqui: o gate offline prova que a entrada nomeia a distribuicao e que o
+# especificador declarado e satisfeito, mas nao afirma integridade que nao pode verificar.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+  pull_request:
+    paths:
+      - "requirements*.txt"
+      - "requirements*.lock.txt"
+      - "**/requirements*.txt"
+      - "**/requirements*.lock.txt"
+      - "config/dependency-policy.json"
+      - "scripts/validate_dependency_locks.py"
+      - "scripts/audit_dependencies.py"
+      - ".github/workflows/dependency-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # O gate interpreta gramática PEP 440, 508 e 427 pelo `packaging`, que é dependência
+      # declarada: instalá-la do próprio lockfile com verificação de digest mantém o gate sem
+      # tocar a rede, e sem ela o gate reprova em vez de aprovar por omissão.
+      - name: Instalar o ferramental do catalogo a partir do lockfile
+        run: python -m pip install --require-hashes -r requirements.lock.txt
+
+      - name: Validar lockfiles e politica de excecao
+        run: python scripts/validate_dependency_locks.py --root .
+
+      - name: Validar fechamento resolvido dos lockfiles
+        run: python scripts/lock_dependencies.py --root . --check
+
+      - name: Instalar pip-audit
+        run: python -m pip install --quiet pip-audit
+
+      - name: Auditar vulnerabilidades nos lockfiles
+        run: python scripts/audit_dependencies.py --root .

@@ -385,6 +385,24 @@
       "validationRefs": [
         "file:tests/test_auditor_registry_policy.py"
       ]
+    },
+    {
+      "id": "SKSYS-026",
+      "title": "Dependency resolution is reproducible and exceptions are declared",
+      "status": "validated",
+      "summary": "Every manifest in the repository, including the catalogue tooling manifest at the root, has a sibling lockfile pinning exact versions, the chosen artifact and sha256 hashes of the transitive closure; an offline deterministic validator rejects manifest, lockfile or policy paths that resolve outside the repository root, manifests that are not regular files, lockfiles not paired nominally with a manifest and orphan lockfiles outside the root, drift, unresolvable, non-manifest or out-of-root includes, manifest options it does not implement, lockfile options other than --hash, uninterpretable requirement lines and direct URL references, pinned versions that do not satisfy the declared specifier, missing hashes, artifact declarations whose name, version or distribution grammar do not match the locked resolution, unevaluable environment markers and malformed policy exceptions that do not name an existing locked resolution; version, specifier, requirement, marker and distribution grammar is interpreted by packaging, declared at the root and installed from the root lockfile, so a form the reference implementation of PEPs 440, 508 and 427 refuses fails instead of being approximated, markers are evaluated against the interpreter running the gate rather than the editable context comment, the required sequence also re-resolves the closure and fails when the lockfile is not the closure of its manifest, comparing packages, versions and dependency edges independently of the resolving environment, and the advisory lookup and the digest verification against the real artifact run outside the required sequence and report UNKNOWN instead of success when they cannot verify.",
+      "implementationRefs": [
+        "file:config/dependency-policy.json",
+        "file:scripts/validate_dependency_locks.py",
+        "file:scripts/lock_dependencies.py",
+        "file:scripts/audit_dependencies.py",
+        "file:docs/RELEASE.md"
+      ],
+      "validationRefs": [
+        "file:tests/test_dependency_locks.py",
+        "file:.github/workflows/validate.yml",
+        "file:.github/workflows/dependency-audit.yml"
+      ]
     }
   ],
   "system_version": "2026-09-29.5"

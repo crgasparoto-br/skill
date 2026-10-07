@@ -1,0 +1,8 @@
+# lockfile gerado de requirements.txt
+# contexto: python 3.12.3 em linux x86_64
+# regenerar: python scripts/lock_dependencies.py --manifest requirements.txt
+# nao editar a mao: alterar o manifest e regenerar
+
+# arquivo: packaging-26.3-py3-none-any.whl
+packaging==26.3 \
+    --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c

@@ -49,3 +49,81 @@ Cada adapter validado deve aparecer em `config/platform-adapters.json` e `config
 | `application` | `0.2.0` | `supported` |
 
 Ao remover uma versão, mantenha uma nota de migração e a última release que a suporta. Não apague o histórico do changelog para esconder uma quebra.
+
+## Dependências e política de exceção
+
+Cada manifest de skill (`<skill>/requirements*.txt`) tem um lockfile irmão com o mesmo nome e sufixo `.lock.txt`, que
+fixa versão exata, o artefato escolhido e o hash sha256 de cada distribuição do fechamento transitivo. O lockfile é
+derivado, nunca fonte de verdade: alteração de dependência começa no manifest e o lockfile é regenerado.
+
+```bash
+python scripts/lock_dependencies.py --manifest entregar-issue/requirements.txt
+python scripts/validate_dependency_locks.py --root .
+```
+
+Cada entrada declara `# via <pais>` quando é transitiva e `# arquivo: <distribuição>` antes da própria linha, para que
+o digest tenha um artefato nomeado a que se referir. O cabeçalho registra o manifest de origem, o contexto de
+resolução e o comando de regeneração. Como o hash corresponde à distribuição escolhida naquele contexto, regenerar em
+outra plataforma pode alterar o hash sem alterar a versão; a regeneração é uma alteração revisável, e o validador
+reprova entrada sem hash ou sem artefato justamente para que a mudança apareça.
+
+### O que cada verificação prova
+
+| Verificação | Onde roda | O que prova |
+| --- | --- | --- |
+| Forma e vínculo | `scripts/validate_dependency_locks.py`, obrigatório e offline | Cada manifest do repositório, inclusive o do ferramental na raiz, tem lockfile irmão. Manifest, lockfile e política precisam resolver para dentro da raiz do repositório, o manifest precisa ser arquivo regular, todo lockfile precisa ser pareado **nominalmente** com um manifest e nenhum lockfile órfão alimenta o índice da política. Cada requisito declarado aparece com versão que **satisfaz o especificador declarado**; a cadeia `# via` alcança pacote declarado; o lockfile aceita somente `--hash` como opção e uma anotação de artefato por entrada; cada entrada nomeia artefato cujo nome e versão são exatamente os fixados. Gramática de versão, especificador, requisito, marcador e nome de distribuição é interpretada pelo `packaging`, declarado em `requirements.txt` e instalado pelo lockfile da raiz: forma que a implementação de referência das PEPs 440, 508 e 427 recusa **reprova em vez de ser aproximada**, o que cobre especificador com fase em curinga, extras com forma inválida, nome de projeto com pontuação final, exigência direta por URL, etiqueta de wheel inválida e marcador com nome fora da norma A resolução real é verificada na sequência obrigatória por `scripts/lock_dependencies.py --check`, que regenera o lockfile e compara o **fechamento resolvido** — pacotes, versões e arestas de dependência. Contexto, nome do artefato e digest são do ambiente que resolveu e, quando o contexto é de outro ambiente, a comparação os ignora e a integridade fica com `scripts/audit_dependencies.py`, que confere o digest contra o artefato real. É o que reprova fechamento forjado e transitiva que um extra ativa e ficou de fora: é o que reprova fechamento forjado e transitiva que um extra ativa e ficou de fora, coisas que o gate offline não pode resolver por não tocar a rede |
+| Integridade do digest | `scripts/audit_dependencies.py`, fora da sequência obrigatória | O digest corresponde ao artefato, conferido por `pip download --no-deps --require-hashes`; um hash arbitrário com formato válido só é detectável com o artefato em mãos |
+| Vulnerabilidade | `scripts/audit_dependencies.py` | Nenhum aviso do banco de vulnerabilidade ficou fora da política |
+
+O gate offline não afirma integridade que não pode verificar: ele prova o vínculo entre nome, versão, artefato e
+digest, e a satisfação do especificador. Um digest fabricado passa pelo gate offline e reprova na verificação de
+integridade, que é onde o artefato está disponível.
+
+### Vínculo de contexto
+
+O lockfile é resolvido em um contexto — versão de Python, plataforma e arquitetura — e registra esse contexto no
+cabeçalho. O digest pertence à distribuição escolhida naquele contexto, e por isso outra versão de Python pode
+escolher outro arquivo, com outro digest, e reprovar a instalação por divergência de hash. Esse é o comportamento
+pretendido: a divergência aparece em vez de passar silenciosamente. A sequência obrigatória usa Python 3.12, a mesma
+versão registrada nos lockfiles, e adotar uma matriz de versões exigiria um lockfile por versão.
+
+Manifest e lockfile precisam ser arquivo regular, e o que a regra exclui é o caminho que não leva a um arquivo legível: symlink pendente, diretório e caminho fora da raiz. Symlink interno para arquivo versionado continua válido, porque o conteúdo verificado é o do arquivo alcançado e permanece sob a raiz.
+
+O `packaging` é a autoridade de gramática, e é por isso que `requirements.txt` na raiz declara essa dependência: a alternativa seria aproximar as normas à mão, e aproximação de norma é onde a ambiguidade entra.
+
+A garantia de confinamento é sobre o caminho resolvido: symlink que escape reprova, e um hard link para arquivo fora
+da raiz permanece sob o caminho resolvido, o que é uma limitação conhecida da verificação, não uma afirmação de
+proveniência por inode.
+
+O cabeçalho é documentação, não autoridade: marcador de ambiente é avaliado contra o interpretador que executa o gate,
+e não contra o contexto declarado no comentário. Um comentário editável como autoridade permitiria declarar um
+contexto falso para tornar falso um marcador verdadeiro e omitir uma dependência real. A gramática do marcador é
+validada por inteiro antes de qualquer atalho lógico, e versão e especificador precisam ser PEP 440 válidos por
+completo: forma que o gate não reconhece reprova em vez de ser aproximada.
+
+### Política de exceção
+
+Vulnerabilidade sem correção disponível só pode ser tolerada com exceção declarada em
+[`config/dependency-policy.json`](../config/dependency-policy.json), com identificador, **pacote**, **versão fixada**,
+justificativa e data de revisão. A versão é obrigatória porque tolerar um pacote sem dizer qual versão permitiria
+encobrir qualquer versão futura.
+
+Reprova: exceção sem justificativa, sem data, sem pacote, sem versão, com identificador repetido, apontando pacote ou
+versão ausentes dos lockfiles, com data fora da forma `YYYY-MM-DD`; e exceção cujo identificador não aparece em nenhum
+achado do banco, porque ela toleraria algo que o banco não reporta.
+
+Não reprova, e é reportado como aviso: exceção com data de revisão vencida, porque data vencida é decisão de pessoa e
+não defeito de arquivo.
+
+A auditoria exige que a exceção case identificador **e** pacote **e** versão do achado: só o identificador permitiria
+encobrir outra dependência.
+
+### Workflow
+
+A sequência obrigatória instala as dependências de teste do próprio lockfile com `--require-hashes`, de modo que o ambiente que executa o gate é o ambiente registrado.
+
+A consulta ao banco de vulnerabilidade e a verificação de integridade são do workflow
+[`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml), com gatilho agendado, manual e em
+pull request que toca manifest, lockfile ou política. Ele nunca faz parte da sequência obrigatória: quando o banco, o
+artefato ou a ferramenta não estão disponíveis, o resultado é `UNKNOWN` e reprova aquele job, porque ausência de
+verificação não é verificação de ausência.
