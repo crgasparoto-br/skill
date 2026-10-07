@@ -245,9 +245,13 @@ def satisfies(version: str, specifier: str) -> bool:
                     return False
                 continue
             outcome = compare(current, target)
-            if operator == "==" and outcome != 0:
+            target_local = parse_version(target)[3]
+            current_local = parse_version(current)[3]
+            # A PEP 440 só ignora o segmento local quando o alvo não declara um: com alvo
+            # local, `==` exige o mesmo local e `!=` exige local diferente.
+            if operator == "==" and (outcome != 0 or (target_local and current_local != target_local)):
                 return False
-            if operator == "!=" and outcome == 0:
+            if operator == "!=" and outcome == 0 and (not target_local or current_local == target_local):
                 return False
             if operator == ">" and outcome <= 0:
                 return False
@@ -394,7 +398,15 @@ def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict
             if not target:
                 errors.append(f"{prefix}: {relative(path, root)}: inclusao sem destino")
                 continue
-            found.extend(read_requirements((path.parent / target).resolve(), root, seen, environment, errors, prefix))
+            candidate = Path(target)
+            if candidate.is_absolute():
+                errors.append(f"{prefix}: {relative(path, root)}: inclusao absoluta fora da raiz: {target}")
+                continue
+            resolved = (path.parent / candidate).resolve()
+            if not resolved.is_relative_to(root):
+                errors.append(f"{prefix}: {relative(path, root)}: inclusao fora da raiz do repositorio: {target}")
+                continue
+            found.extend(read_requirements(resolved, root, seen, environment, errors, prefix))
             continue
         if line.startswith("-"):
             errors.append(f"{prefix}: {relative(path, root)}: opcao nao suportada pelo gate: {line[:40]}")
@@ -435,6 +447,8 @@ def parse_lock(text: str) -> tuple[dict[str, dict], list[str]]:
                 pending_via = {normalize(part) for part in re.split(r"[,\s]+", via.group(1)) if part}
             artifact = ARTIFACT_RE.match(stripped)
             if artifact:
+                if pending_artifact is not None:
+                    errors.append(f"linha {number}: anotacao '# arquivo' repetida antes da mesma entrada")
                 pending_artifact = artifact.group(1)
             continue
         if not stripped:
@@ -452,6 +466,9 @@ def parse_lock(text: str) -> tuple[dict[str, dict], list[str]]:
                     entries[current]["hashes"].append(match.group(1))
                 continue
             if token.startswith("--"):
+                # O lockfile só declara `--hash`: qualquer outra opção seria ignorada em
+                # silêncio, e gramática permissiva é gramática que não verifica.
+                errors.append(f"linha {number}: opcao nao suportada no lockfile: {token[:40]}")
                 continue
             if seen_entry:
                 errors.append(f"linha {number}: conteudo extra na entrada: {token[:40]}")

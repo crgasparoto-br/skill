@@ -673,3 +673,59 @@ def test_pep440_invalid_suffix_order_is_detected(tmp_path: Path, version: str) -
 def test_local_version_is_not_allowed_in_ordered_specifier(version: str, specifier: str,
                                                             expected: bool) -> None:
     assert satisfies(version, specifier) is expected
+
+
+# ------------------------------------------- quinta rodada de auditoria independente
+
+
+@pytest.mark.parametrize(("version", "specifier", "expected"), [
+    ("50.0.2", "==50.0.2+abc", False),
+    ("50.0.2+abc", "==50.0.2+abc", True),
+    ("50.0.2+abc", "==50.0.2", True),
+    ("50.0.2", "!=50.0.2+abc", True),
+    ("50.0.2+abc", "!=50.0.2+abc", False),
+    ("50.0.2+abc", "==50.0.*", True),
+])
+def test_local_target_in_equality(version: str, specifier: str, expected: bool) -> None:
+    """Com alvo local, a igualdade exige o mesmo local; sem alvo local, ele é ignorado."""
+    assert satisfies(version, specifier) is expected
+
+
+def test_manifest_requiring_local_version_rejects_a_lock_without_it(tmp_path: Path) -> None:
+    manifest = "cryptography==50.0.2+abc\n"
+    assert run(minimal(tmp_path, manifest=manifest, lock=MINIMAL_LOCK)) == 1
+
+
+def test_absolute_include_outside_the_root_is_detected(tmp_path: Path,
+                                                      capsys: pytest.CaptureFixture[str]) -> None:
+    """Inclusão fora da raiz permitiria controlar o conjunto coberto por arquivo não versionado."""
+    outside = tmp_path / "externo.txt"
+    outside.write_text("", encoding="utf-8")
+    root = minimal(tmp_path / "repo", manifest=f"--requirement {outside}\n", lock=EMPTY_LOCK)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "inclusao absoluta" in capsys.readouterr().err
+
+
+def test_relative_include_leaving_the_root_is_detected(tmp_path: Path,
+                                                       capsys: pytest.CaptureFixture[str]) -> None:
+    (tmp_path / "externo.txt").write_text("", encoding="utf-8")
+    # `repo/skill/../../externo.txt` resolve para fora de `repo`.
+    root = minimal(tmp_path / "repo", manifest="-r ../../externo.txt\n", lock=EMPTY_LOCK)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "fora da raiz" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("option", ["    --trusted-host exemplo.invalid", "    --index-url https://exemplo.invalid"])
+def test_unsupported_option_in_lockfile_is_detected(tmp_path: Path, option: str) -> None:
+    """O lockfile só declara `--hash`: outra opção seria ignorada em silêncio."""
+    lock = MINIMAL_LOCK + option + "\n"
+    assert run(minimal(tmp_path, lock=lock)) == 1
+
+
+def test_repeated_artifact_annotation_is_detected(tmp_path: Path) -> None:
+    lock = EMPTY_LOCK + (
+        "# arquivo: errado-1.0.0.whl\n"
+        "# arquivo: cryptography-50.0.2-py3-none-any.whl\n"
+        f"cryptography==50.0.2 \\\n    --hash=sha256:{DIGEST}\n"
+    )
+    assert run(minimal(tmp_path, lock=lock)) == 1
