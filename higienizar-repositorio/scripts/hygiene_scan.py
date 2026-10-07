@@ -1535,6 +1535,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = (args.root or Path()).resolve()
     try:
+        if args.report is not None and args.markdown is not None and args.report == args.markdown:
+            # Um artefato sobrescrevendo o outro deixaria o JSON perdido e o Markdown publicado como se
+            # fosse o relatório.
+            raise HygieneError("--report e --markdown precisam ser caminhos diferentes")
         targets = {
             label: write_target(path, root, label)
             for label, path in (("--report", args.report), ("--markdown", args.markdown))

@@ -109,7 +109,9 @@ O manifest é lido pelo formato declarado: `requirements*.txt` declara um requis
 A política declara decisão por classe, e chave de outra classe não é aceita: a lista de chaves conhecidas de cada classe é a mesma tabela que exige as chaves, para que declarar e medir não divirjam. Supressor com tipo errado reprova, e diretório excluído exige caminho relativo canônico, sem `.`, `..`, barra duplicada nem barra final: forma não canônica exclui outro diretório, e escopo reduzido por declaração precisa ser visível no relatório JSON e no Markdown.
 
 
-O relatório é evidência sobre a árvore e por isso não pode ser gravado dentro dela: um relatório na árvore medida entra no corpus de citação, muda a medição seguinte e pode sobrescrever arquivo coberto. O mesmo vale para o diretório de work items, pela mesma razão. O gerador de work items entra pela mesma porta e vai além: confere a política, recusa varredura com buraco de cobertura e recusa relatório que não corresponde à árvore e à política atuais, inclusive quando recebido por `--report`, porque work item derivado de relatório de outra árvore descreveria dívida que já não existe.
+O relatório é evidência sobre a árvore e por isso não pode ser gravado dentro dela: um relatório na árvore medida entra no corpus de citação, muda a medição seguinte e pode sobrescrever arquivo coberto. O mesmo vale para o diretório de work items, pela mesma razão. A versão da política é o inteiro exato declarado, e não um valor que apenas se compara a ele: `1.0` é igual a `1` em Python e não é a versão declarada.
+
+O gerador de work items entra pela mesma porta e vai além: confere a política, recusa varredura com buraco de cobertura e recusa relatório que não corresponde à árvore e à política atuais, inclusive quando recebido por `--report`, porque work item derivado de relatório de outra árvore descreveria dívida que já não existe.
 
 Pela mesma razão, o comando da varredura confere a política antes de medir, recusa o que o gate recusa e só publica o relatório depois de a política passar: artefato gravado antes da reprovação circularia como evidência de uma medição que a política não sustenta.
 

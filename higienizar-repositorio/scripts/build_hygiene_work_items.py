@@ -234,6 +234,14 @@ def main(argv: list[str] | None = None) -> int:
             # Work item é evidência sobre a árvore: gravado dentro dela entra no corpus de citação e pode
             # apagar a dívida que ele mesmo descreve, como já vale para o relatório.
             write_target(args.out_dir, root, "--out-dir")
+            if args.out_dir.is_dir() and any(args.out_dir.iterdir()):
+                # Reutilizar o diretório conservaria work item de execução anterior, e dívida já
+                # corrigida continuaria publicada como se fosse atual.
+                print(
+                    f"ERRO: {args.out_dir} ja tem conteudo; use diretorio novo para nao conservar work item obsoleto",
+                    file=sys.stderr,
+                )
+                return 2
         # O contrato do relatório vem primeiro: relatório de outra ferramenta reprova antes de qualquer
         # leitura de conteúdo, e sem depender da política da árvore.
         report = None
@@ -269,6 +277,12 @@ def main(argv: list[str] | None = None) -> int:
                 "ERRO: relatorio nao corresponde a arvore e a politica atuais; gere-o de novo",
                 file=sys.stderr,
             )
+            return 2
+        problems = schema_errors(current)
+        if problems:
+            print("ERRO: relatorio reconstruido nao atende ao contrato:", file=sys.stderr)
+            for problem in problems[:5]:
+                print(f"- {problem}", file=sys.stderr)
             return 2
         report = current
     except (HygieneError, json.JSONDecodeError, OSError) as error:

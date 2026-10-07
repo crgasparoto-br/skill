@@ -149,6 +149,11 @@ def _history_errors(name: str, entry: dict) -> list[str]:
         if not isinstance(value, int) or isinstance(value, bool):
             errors.append(f"politica: classes.{name}.baseline_history[{index}].value precisa ser inteiro")
             continue
+        if value < 0:
+            # Contagem negativa não é contagem: a linha de base negativa faria o gate medir contra um
+            # alvo impossível e o produtor publicar evidência que o gate recusa.
+            errors.append(f"politica: classes.{name}.baseline_history[{index}].value nao pode ser negativo")
+            continue
         # Crescer divida exige motivo escrito; reduzir e progresso e pode ser declarado sem justificar,
         # mas motivo presente precisa ter forma, para que o campo nao vire lugar de preenchimento.
         if value > (previous if previous is not None else value) or item.get("reason") is not None:
@@ -172,6 +177,9 @@ def _class_threshold_errors(name: str, entry: dict) -> list[str]:
     minimum = entry.get("min_body_lines")
     if name == "duplication" and isinstance(minimum, int) and minimum < 2:
         errors.append("politica: classes.duplication.min_body_lines precisa ser >= 2")
+    baseline = entry.get("baseline")
+    if isinstance(baseline, int) and not isinstance(baseline, bool) and baseline < 0:
+        errors.append("politica: classes.complexity.baseline nao pode ser negativo")
     ceiling = entry.get("max_complexity")
     if name == "complexity":
         if isinstance(ceiling, int) and ceiling < 2:
@@ -398,7 +406,10 @@ def _declaration_errors(policy: dict) -> list[str]:
 
 def _identity_errors(policy: dict) -> list[str]:
     errors: list[str] = []
-    if policy.get("schema_version") != 1:
+    version = policy.get("schema_version")
+    if not isinstance(version, int) or isinstance(version, bool) or version != 1:
+        # `1.0 == 1` em Python: aceitar float deixaria uma política fora do contrato passar como se
+        # fosse a versão declarada, e a política é a única fonte de decisão.
         errors.append("politica: schema_version precisa ser o inteiro 1")
     if policy.get("system") != "hygiene-policy":
         errors.append("politica: system precisa ser 'hygiene-policy'")

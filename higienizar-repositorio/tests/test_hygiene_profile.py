@@ -2501,3 +2501,116 @@ def test_work_item_generator_refuses_report_from_another_tree(tmp_path: Path) ->
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_policy_version_requires_exact_integer() -> None:
+    """Achado bloqueante: `1.0` é igual a `1` em Python e passava como versão da política."""
+    for value in (1.0, "1", True, None):
+        policy = policy_variant(schema_version=value)
+        errors = validate_hygiene.policy_errors(policy)
+        assert any("schema_version precisa ser o inteiro 1" in error for error in errors), value
+    assert [
+        error
+        for error in validate_hygiene.policy_errors(policy_variant(schema_version=1))
+        if "schema_version" in error
+    ] == []
+
+
+def test_scan_and_generator_refuse_float_policy_version(tmp_path: Path) -> None:
+    """A versão fora do contrato não pode produzir relatório nem work item."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"alpha.py": '"""Modulo sem simbolo."""\n', "README.md": "`alpha.py` usado\n"},
+        policy_variant(schema_version=1.0),
+    )
+    report = tmp_path / "report.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(report),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert not report.exists()
+    out_dir = tmp_path / "saida"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(tree),
+            "--out-dir",
+            str(out_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "politica invalida" in result.stderr
+    assert not out_dir.exists()
+
+
+def test_negative_baseline_is_refused() -> None:
+    """Achado não bloqueante: linha de base negativa era aceita pela política e publicada."""
+    policy = policy_variant()
+    policy["classes"]["complexity"]["baseline"] = -1
+    policy["classes"]["complexity"]["baseline_history"] = [
+        {"value": -1, "reason": "Historia negativa declarada com motivo suficiente."}
+    ]
+    errors = validate_hygiene.policy_errors(policy)
+    assert any("baseline nao pode ser negativo" in error for error in errors)
+    assert any("nao pode ser negativo" in error for error in errors if "baseline_history" in error)
+
+
+def test_scan_refuses_two_artifacts_in_the_same_target(tmp_path: Path) -> None:
+    """Achado não bloqueante: Markdown sobrescrevia o JSON no mesmo caminho."""
+    tree = make_tree(tmp_path, {"alpha.py": '"""Modulo sem simbolo."""\n', "README.md": "`alpha.py` usado\n"})
+    target = tmp_path / "artefato"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(target),
+            "--markdown",
+            str(target),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "caminhos diferentes" in result.stderr
+    assert not target.exists()
+
+
+def test_generator_refuses_reused_output_directory(tmp_path: Path) -> None:
+    """Achado não bloqueante: saída reutilizada conservava work item obsoleto."""
+    out_dir = tmp_path / "saida"
+    out_dir.mkdir()
+    (out_dir / "work-item:antigo.json").write_text("{}", encoding="utf-8")
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(REPO_ROOT),
+            "--out-dir",
+            str(out_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "ja tem conteudo" in result.stderr
