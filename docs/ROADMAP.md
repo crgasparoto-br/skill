@@ -241,6 +241,15 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A sexta rodada de auditoria corrigiu o que as cinco anteriores ainda não garantiam: a âncora de marcador de lugar
+passou a exigir `<...>` fechado imediatamente antes do caminho, e não qualquer `>`; identificador capturado por
+padrão estrutural, como `case int(left)`, passou a ser apagado na normalização, enquanto nome de argumento nomeado
+deixou de ser, porque `make(left=x)` e `make(right=x)` são chamadas diferentes; o rótulo de definição repetida passou
+a ser calculado sobre todas as definições do arquivo, inclusive as que ficam abaixo do limiar, o que elimina rótulo
+repetido entre definições distintas; a varredura isolada passou a reprovar política sem chave de decisão declarada,
+em vez de cair em default implícito; manifest ilegível e alvo direcionado que não existe passaram a entrar em
+cobertura não analisada; raiz relativa deixou de estourar na função pública; e o contrato do relatório passou a
+exigir justificativa quando o achado está aceito.
 A quinta rodada de auditoria corrigiu o que as quatro anteriores ainda não garantiam: caminho absoluto deixou de ser
 tratado como citação local, e a barra inicial só é âncora quando o caminho vem depois de um marcador de lugar; o
 limiar de corpo passou a contar instruções, e não a distância física entre a primeira e a última, com o valor

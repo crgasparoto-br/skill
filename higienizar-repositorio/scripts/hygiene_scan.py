@@ -81,6 +81,12 @@ def corpus_suffixes(policy: dict) -> set[str]:
     return {str(suffix) for suffix in declared}
 
 
+# Marcador de lugar fechado imediatamente antes do caminho, como `<skill>/scripts/x.py`. Um `>` solto,
+# como em `echo >/orphan.py`, nao e ancora: tratar qualquer `>` como ancora deixaria caminho absoluto
+# manter modulo vivo.
+PLACEHOLDER_ANCHOR_RE = re.compile(r"<[^<>]*>$")
+
+
 def citation_pattern(policy: dict) -> re.Pattern[str]:
     """Expressão que reconhece citação de caminho, montada dos sufixos declarados."""
     suffixes = {*corpus_suffixes(policy), *(scope_of(policy).get("include_suffixes") or [])}
@@ -113,6 +119,29 @@ def read_text(path: Path) -> str:
         raise HygieneError(f"arquivo ilegivel: {path} ({error.strerror or error.__class__.__name__})") from error
 
 
+# Chave de decisão obrigatória por classe: o validador e a varredura leem a mesma tabela, para que a
+# varredura isolada não caia em default silencioso que o gate rejeitaria.
+REQUIRED_CLASS_KEYS = {
+    "duplication": ("min_body_lines", "exclude_declared_copies", "exclude_tests"),
+    "dead-module": ("entry_points", "exclude_tests", "package_init_is_entry"),
+    "dead-symbol": ("exclude_tests", "ignore_names"),
+    "unused-dependency": ("import_name_map", "tool_dependencies"),
+    "complexity": ("max_complexity",),
+}
+
+
+def missing_class_keys(policy: dict) -> list[str]:
+    """Chaves de decisão ausentes, por classe, na ordem em que precisam ser declaradas."""
+    classes = policy.get("classes") if isinstance(policy.get("classes"), dict) else {}
+    missing: list[str] = []
+    for name, required in sorted(REQUIRED_CLASS_KEYS.items()):
+        config = classes.get(name) if isinstance(classes.get(name), dict) else {}
+        missing.extend(
+            f"classes.{name}.{key}" for key in required if key not in config
+        )
+    return missing
+
+
 def load_policy(root: Path, policy_path: Path | None = None) -> dict:
     """Política de higiene; a ausência é erro, porque o padrão precisa ser declarado."""
     path = policy_path if policy_path is not None else root / DEFAULT_POLICY
@@ -124,6 +153,13 @@ def load_policy(root: Path, policy_path: Path | None = None) -> dict:
         raise HygieneError(f"politica de higiene invalida: {error.msg}") from error
     if not isinstance(policy, dict):
         raise HygieneError("politica de higiene precisa ser objeto")
+    missing = missing_class_keys(policy)
+    if missing:
+        # A varredura isolada precisa reprovar a política incompleta: aceitar aqui mediria a árvore com
+        # semântica que a própria política não declarou.
+        raise HygieneError(
+            "politica: classes sem chave de decisao declarada: " + ", ".join(sorted(missing))
+        )
     return policy
 
 
@@ -185,6 +221,7 @@ def scope_files(
     exclude_dirs = set(scope.get("exclude_dirs") or [])
     excluded = declared_exclusions(policy)
     candidates: list[Path] = []
+    missing: list[dict] = []
     if paths:
         for raw in paths:
             candidate = (root / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
@@ -194,10 +231,14 @@ def scope_files(
                 candidates.extend(candidate.rglob("*"))
             elif candidate.is_file():
                 candidates.append(candidate)
+            else:
+                # Alvo que não existe não é escopo vazio: sem a recusa, um erro de digitação produziria
+                # relatório limpo com modo direcionado, que é indistinguível de uma árvore sem achado.
+                missing.append({"path": raw, "reason": "alvo direcionado que nao existe"})
     else:
         candidates.extend(root.rglob("*"))
     files: list[Path] = []
-    refused: list[dict] = []
+    refused: list[dict] = list(missing)
     for candidate in candidates:
         rel = safe_relative(candidate, root)
         if in_excluded_dir(rel, exclude_dirs) or rel in excluded:
@@ -331,8 +372,23 @@ class IdentifierNeutralizer(ast.NodeTransformer):
         return node
 
     def visit_keyword(self, node: ast.keyword) -> ast.AST:
-        if node.arg:
-            node.arg = "ID"
+        # `make(left=x)` e `make(right=x)` são chamadas diferentes: nome de argumento faz parte da
+        # interface da chamada e seleciona parâmetro distinto, e não é nome local que se possa apagar.
+        self.generic_visit(node)
+        return node
+    def visit_MatchAs(self, node: ast.MatchAs) -> ast.AST:
+        if node.name:
+            node.name = "ID"
+        self.generic_visit(node)
+        return node
+    def visit_MatchStar(self, node: ast.MatchStar) -> ast.AST:
+        if node.name:
+            node.name = "ID"
+        self.generic_visit(node)
+        return node
+    def visit_MatchMapping(self, node: ast.MatchMapping) -> ast.AST:
+        if node.rest:
+            node.rest = "ID"
         self.generic_visit(node)
         return node
 
@@ -477,7 +533,7 @@ def named_paths(texts: dict[str, str], root: Path, pattern: re.Pattern[str]) -> 
                 # A barra inicial só é âncora quando o caminho vem logo depois de um marcador de lugar,
                 # como em `<skill>/scripts/x.py`: fora disso é caminho absoluto, que não é citação de
                 # arquivo da árvore e não pode manter módulo vivo.
-                if not match.start() or text[match.start() - 1] != ">":
+                if not PLACEHOLDER_ANCHOR_RE.search(text[: match.start()]):
                     continue
                 cleaned = cleaned.lstrip("/")
             parts = Path(cleaned).parts
@@ -518,21 +574,31 @@ def detect_duplication(
         if exclude_tests and (path.name.startswith("test_") or "tests" in path.parts):
             continue
         tree = modules[rel]
+        every: list[tuple[int, int, str]] = []
         measured: list[tuple[int, int, str, str]] = []
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
+            every.append((node.lineno, node.col_offset, node.name))
             if body_code_lines(node) < minimum:
                 continue
             form = normalized_body(node)
             if form:
                 measured.append((node.lineno, node.col_offset, node.name, form))
         # Ordem de aparição é a do texto: a travessia da árvore não garante essa ordem, e o rótulo sem
-        # sufixo precisa pertencer à primeira definição, e não à que a travessia visitou primeiro.
+        # sufixo pertence à primeira definição do arquivo, mesmo que ela fique abaixo do limiar: numerar
+        # só o que passou pelo limiar daria a mesma localização a duas definições diferentes.
+        every.sort()
         measured.sort()
-        labels = disambiguate([(rel, name) for _, _, name, _ in measured])
-        for label, (_, _, _, form) in zip(labels, measured, strict=True):
-            groups[form].append(label)
+        labels = dict(
+            zip(
+                [(line, column, name) for line, column, name in every],
+                disambiguate([(rel, name) for _, _, name in every]),
+                strict=True,
+            )
+        )
+        for line, column, name, form in measured:
+            groups[form].append(labels[(line, column, name)])
     findings: list[dict] = []
     for form, members in groups.items():
         if len(members) < 2:
@@ -758,7 +824,13 @@ def detect_unused_dependencies(
                 elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
                     imported.add(node.module.split(".")[0])
         try:
-            lines = read_text(manifest).splitlines()
+            try:
+                lines = read_text(manifest).splitlines()
+            except HygieneError as error:
+                # Manifest é entrada da classe: falha de leitura não pode sair do relatório só porque o
+                # sufixo dele não está no corpus de citação.
+                refused.append({"path": relative(manifest, root), "reason": str(error)})
+                continue
         except HygieneError:
             continue
         for raw in lines:
@@ -799,17 +871,30 @@ def detect_complexity(policy: dict, modules: dict[str, ast.Module]) -> list[dict
     for rel in sorted(modules):
         tree = modules[rel]
         parents = parent_map(tree)
+        every: list[tuple[int, int, str]] = []
         measured: list[tuple[int, int, str, int]] = []
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
+            symbol_of_node = qualname(node, parents)
+            every.append((node.lineno, node.col_offset, symbol_of_node))
             score = cyclomatic_complexity(node)
             if score <= limit:
                 continue
-            measured.append((node.lineno, node.col_offset, qualname(node, parents), score))
+            measured.append((node.lineno, node.col_offset, symbol_of_node, score))
+        every.sort()
         measured.sort()
-        labels = disambiguate([(rel, symbol) for _, _, symbol, _ in measured])
-        for label, (_, _, _, score) in zip(labels, measured, strict=True):
+        labels = dict(
+            zip(
+                every,
+                disambiguate([(rel, symbol) for _, _, symbol in every]),
+                strict=True,
+            )
+        )
+        for label, (_, _, _, score) in [
+            (labels[(line, column, symbol)], (line, column, symbol, score))
+            for line, column, symbol, score in measured
+        ]:
             symbol = label.split("::", 1)[1]
             findings.append(
                 {
@@ -875,6 +960,7 @@ def apply_policy_states(policy: dict, findings: list[dict]) -> tuple[list[dict],
 
 def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tuple[dict, list[str]]:
     """Relatório completo da varredura e problemas estruturais encontrados no caminho."""
+    root = Path(root).resolve()
     files, refused, excluded = scope_files(root, policy, paths)
     modules: dict[str, ast.Module] = {}
     not_analyzed: list[dict] = list(refused)

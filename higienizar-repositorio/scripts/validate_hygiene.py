@@ -38,6 +38,7 @@ try:
         build_report,
         declared_exclusions,
         load_policy,
+        missing_class_keys,
     )
 except ImportError:  # pragma: no cover - execucao direta do script
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -49,6 +50,7 @@ except ImportError:  # pragma: no cover - execucao direta do script
         build_report,
         declared_exclusions,
         load_policy,
+        missing_class_keys,
     )
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
@@ -221,15 +223,6 @@ def _scope_errors(scope: object) -> list[str]:
     return errors
 
 
-REQUIRED_CLASS_KEYS = {
-    "duplication": ("min_body_lines", "exclude_declared_copies", "exclude_tests"),
-    "dead-module": ("entry_points", "exclude_tests", "package_init_is_entry"),
-    "dead-symbol": ("exclude_tests", "ignore_names"),
-    "unused-dependency": ("import_name_map", "tool_dependencies"),
-    "complexity": ("max_complexity",),
-}
-
-
 def _declaration_errors(policy: dict) -> list[str]:
     """Decisão de escopo e de exceção é declarada, nunca assumida por default no código.
 
@@ -239,16 +232,12 @@ def _declaration_errors(policy: dict) -> list[str]:
     """
     errors: list[str] = []
     classes = policy.get("classes") if isinstance(policy.get("classes"), dict) else {}
-    for name, required in sorted(REQUIRED_CLASS_KEYS.items()):
-        config = classes.get(name)
-        if not isinstance(config, dict):
+    for name in sorted(CLASSES):
+        if not isinstance(classes.get(name), dict):
             errors.append(f"politica: classes.{name} precisa ser objeto")
-            continue
-        missing = [key for key in required if key not in config]
-        if missing:
-            errors.append(
-                f"politica: classes.{name} precisa declarar {', '.join(sorted(missing))}"
-            )
+    missing = missing_class_keys(policy)
+    if missing:
+        errors.append("politica: classes sem chave de decisao declarada: " + ", ".join(missing))
     return errors
 
 

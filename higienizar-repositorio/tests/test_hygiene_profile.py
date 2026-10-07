@@ -1327,3 +1327,155 @@ def test_policy_must_declare_scope_decisions(tmp_path: Path) -> None:
         document["classes"][class_name].pop(field)
         errors = validate_hygiene.policy_errors(document)
         assert any(field in error for error in errors), key_path
+
+
+def test_placeholder_anchor_requires_a_real_marker(tmp_path: Path) -> None:
+    """Achado bloqueante: qualquer `>` era aceito como âncora de marcador de lugar."""
+    loose = make_tree(
+        tmp_path, {"orphan.py": "V = 1\n", "README.md": "Use x>/orphan.py\n"}
+    )
+    assert [finding["path"] for finding in findings_of(scan(loose), "dead-module")] == ["orphan.py"]
+    real = make_tree(
+        tmp_path / "second",
+        {
+            "skill/scripts/tool.py": "V = 1\n",
+            "skill/README.md": "Rodar `python <skill>/scripts/tool.py`\n",
+        },
+    )
+    assert findings_of(scan(real), "dead-module") == []
+
+
+def test_pattern_capture_identifier_is_neutralized(tmp_path: Path) -> None:
+    """Achado bloqueante: identificador capturado por padrão estrutural não era apagado."""
+    body = (
+        "def {name}(value):\n"
+        "    match value:\n"
+        "        case int({capture}):\n"
+        "            result = {capture}\n"
+        "        case _:\n"
+        "            result = 0\n"
+        "    a = result + 1\n"
+        "    b = a + 1\n"
+        "    c = b + 1\n"
+        "    d = c + 1\n"
+        "    return d\n"
+    )
+    findings = findings_of(
+        scan(
+            make_tree(
+                tmp_path,
+                {
+                    "a.py": body.format(name="alpha", capture="left"),
+                    "b.py": body.format(name="beta", capture="right"),
+                },
+                policy_variant(**{"classes.duplication.min_body_lines": 6}),
+            )
+        ),
+        "duplication",
+    )
+    assert sorted(finding["location"] for finding in findings) == ["a.py::alpha", "b.py::beta"]
+
+
+def test_keyword_argument_name_is_material(tmp_path: Path) -> None:
+    """Achado bloqueante: nome de argumento nomeado era apagado como se fosse nome local."""
+    body = (
+        "def {name}(value):\n"
+        "    total = make({argument}=value)\n"
+        "    a = total + 1\n"
+        "    b = a + 1\n"
+        "    c = b + 1\n"
+        "    d = c + 1\n"
+        "    return d\n"
+    )
+    findings = findings_of(
+        scan(
+            make_tree(
+                tmp_path,
+                {
+                    "a.py": body.format(name="alpha", argument="left"),
+                    "b.py": body.format(name="beta", argument="right"),
+                },
+                policy_variant(**{"classes.duplication.min_body_lines": 6}),
+            )
+        ),
+        "duplication",
+    )
+    assert findings == []
+
+
+def test_label_covers_definitions_below_the_threshold(tmp_path: Path) -> None:
+    """Achado bloqueante: numerar só o conjunto medido dava o mesmo rótulo a duas definições."""
+    policy = policy_variant(**{"classes.duplication.min_body_lines": 2})
+    tree = make_tree(
+        tmp_path,
+        {
+            "a.py": "def f(x):\n    return x\n\n\ndef f(x):\n    total = x + 2\n    return total\n",
+            "b.py": "def g(y):\n    total = y + 2\n    return total\n",
+        },
+        policy,
+    )
+    report, _ = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree))
+    assert sorted(finding["location"] for finding in findings_of(report, "duplication")) == [
+        "a.py::f#2",
+        "b.py::g",
+    ]
+    assert [finding["location"] for finding in findings_of(scan(tree, policy), "duplication")] == [
+        "a.py::f#2",
+        "b.py::g",
+    ]
+
+
+def test_scanner_rejects_policy_without_decision_key(tmp_path: Path) -> None:
+    """Achado bloqueante: a varredura isolada aceitava chave ausente com default silencioso."""
+    policy = policy_variant()
+    policy["classes"]["dead-module"].pop("exclude_tests")
+    tree = make_tree(tmp_path, {"tests/orphan.py": "V = 1\n", "alpha.py": "V = 1\n"}, policy)
+    try:
+        hygiene_scan.load_policy(tree)
+    except hygiene_scan.HygieneError as error:
+        assert "exclude_tests" in str(error)
+    else:
+        raise AssertionError("politica sem chave de decisao foi aceita pela varredura")
+    assert any("exclude_tests" in item for item in validate_hygiene.policy_errors(policy))
+
+
+def test_unreadable_manifest_is_reported(tmp_path: Path) -> None:
+    """Achado bloqueante: manifest ilegível desaparecia sem entrar em cobertura não analisada."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "alpha.py": "def used(x):\n    return x\n",
+            "README.md": "`alpha.py` `used`\n",
+            "requirements.txt": "requests>=2\n",
+        },
+    )
+    manifest = tree / "requirements.txt"
+    manifest.chmod(0o000)
+    try:
+        report = scan(tree)
+    finally:
+        manifest.chmod(0o600)
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["requirements.txt"]
+    assert findings_of(report, "unused-dependency") == []
+
+
+def test_missing_target_is_reported(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo inexistente produzia relatório limpo com código 0."""
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n"})
+    document = hygiene_scan.load_policy(tree)
+    report, _ = hygiene_scan.build_report(tree, document, ["does-not-exist"])
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["does-not-exist"]
+    assert report["analyzed"] == 0
+    assert report["mode"] == "targeted"
+
+
+def test_report_schema_requires_justification_when_accepted() -> None:
+    """Achado não bloqueante: relatório externo aceitava estado sem justificativa."""
+    schema = json.loads(
+        (SKILL_ROOT / "schemas" / "hygiene-report.schema.json").read_text(encoding="utf-8")
+    )
+    item = schema["properties"]["classes"]["items"]["properties"]["findings"]["items"]
+    conditional = item.get("allOf")
+    assert conditional, "schema precisa exigir justificativa no estado aceito"
+    assert conditional[0]["then"]["required"] == ["justification"]
+    assert conditional[0]["if"]["properties"]["state"]["const"] == "accepted"
