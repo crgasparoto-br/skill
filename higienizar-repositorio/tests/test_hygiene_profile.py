@@ -1530,9 +1530,8 @@ def test_report_is_identical_between_equivalent_roots(tmp_path: Path) -> None:
     report_first = scan(first)
     report_second = scan(second)
     assert json.dumps(report_first, sort_keys=True) == json.dumps(report_second, sort_keys=True)
-    reason = report_first["not_analyzed"][0]["reason"]
-    assert "requirements.txt" in reason
-    assert str(tmp_path) not in reason
+    assert [entry["path"] for entry in report_first["not_analyzed"]] == ["requirements.txt"]
+    assert str(tmp_path) not in json.dumps(report_first)
 
 
 def test_unicode_identifier_and_path_are_analyzed(tmp_path: Path) -> None:
@@ -1947,3 +1946,154 @@ def test_cli_honours_policy_argument(tmp_path: Path) -> None:
     report = json.loads(output.read_text(encoding="utf-8"))
     complexity = next(entry for entry in report["classes"] if entry["name"] == "complexity")
     assert complexity["open"] == 0
+
+
+def test_external_target_does_not_reenable_free_walk(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo externo fazia o conjunto vazio significar percurso livre de manifest."""
+    tree = make_tree(
+        tmp_path,
+        {"alpha.py": "import json\n", "README.md": "`alpha.py`\n", "requirements.txt": "requests>=2\n"},
+    )
+    outside = tmp_path.parent / f"{tmp_path.name}-outside"
+    outside.mkdir()
+    (outside / "outside.py").write_text("V = 1\n", encoding="utf-8")
+    for target in (str(outside / "outside.py"), str(outside)):
+        report, _ = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree), [target])
+        assert report["analyzed"] == 0
+        assert findings_of(report, "unused-dependency") == []
+        assert len(report["not_analyzed"]) == 1
+
+
+def test_corpus_symlink_outside_root_does_not_make_citation_ambiguous(tmp_path: Path) -> None:
+    """Achado bloqueante: link de corpus que sai da raiz contava como homônimo medido."""
+    tree = make_tree(tmp_path, {"pkg/orphan.py": "import json\n", "README.md": "See orphan.py\n"})
+    outside = tmp_path.parent / f"{tmp_path.name}-outside.py"
+    outside.write_text("V = 1\n", encoding="utf-8")
+    (tree / "orphan.py").symlink_to(outside)
+    assert findings_of(scan(tree), "dead-module") == []
+
+
+def test_self_citation_does_not_keep_module_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: o próprio arquivo mantinha o módulo vivo por autocitação."""
+    tree = make_tree(tmp_path, {"orphan.py": '"orphan.py"\nVALUE = 1\n', "README.md": "texto\n"})
+    assert [finding["location"] for finding in findings_of(scan(tree), "dead-module")] == ["orphan.py"]
+
+
+def test_broken_and_looped_links_match_between_modes(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo direcionado rotulava link quebrado de outro modo, e ciclo abortava."""
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"})
+    (tree / "alias.py").symlink_to("missing.py")
+    (tree / "loop.py").symlink_to("loop.py")
+    document = hygiene_scan.load_policy(tree)
+    free, _ = hygiene_scan.build_report(tree, document)
+    targeted, _ = hygiene_scan.build_report(tree, document, ["alias.py", "loop.py"])
+    assert [entry["path"] for entry in free["not_analyzed"]] == ["alias.py", "loop.py"]
+    assert [entry["path"] for entry in targeted["not_analyzed"]] == ["alias.py", "loop.py"]
+
+
+def test_absolute_external_target_is_deterministic(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo externo absoluto publicava caminho absoluto e quebrava o determinismo."""
+    files = {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"}
+    first = make_tree(tmp_path / "a", files)
+    second = make_tree(tmp_path / "b", files)
+    outside = tmp_path.parent / f"{tmp_path.name}-outside"
+    outside.mkdir()
+    (outside / "outside.py").write_text("V = 1\n", encoding="utf-8")
+    report_first, _ = hygiene_scan.build_report(first, hygiene_scan.load_policy(first), [str(outside)])
+    report_second, _ = hygiene_scan.build_report(second, hygiene_scan.load_policy(second), [str(outside)])
+    assert json.dumps(report_first, sort_keys=True) == json.dumps(report_second, sort_keys=True)
+    assert str(tmp_path) not in json.dumps(report_first)
+
+
+def test_optional_dependencies_structure_is_validated(tmp_path: Path) -> None:
+    """Achado bloqueante: escalar em `optional-dependencies` virava uma dependência por caractere."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "a.py": "import json\n",
+            "README.md": "`a.py`\n",
+            "pyproject.toml": (
+                "[project]\n"
+                'name = "exemplo"\n'
+                "[project.optional-dependencies]\n"
+                'dev = "requests"\n'
+            ),
+        },
+    )
+    report = scan(tree)
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["pyproject.toml"]
+    assert findings_of(report, "unused-dependency") == []
+
+
+def test_work_item_generator_refuses_output_inside_measured_tree(tmp_path: Path) -> None:
+    """Achado bloqueante: work item gravado na árvore medida apagava a dívida que descreve."""
+    tree = make_tree(tmp_path, {"orphan.py": '"orphan.py"\nVALUE = 1\n', "README.md": "texto\n"})
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "build_hygiene_work_items.py"),
+            "--root",
+            str(tree),
+            "--out-dir",
+            str(tree / "work-items"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode != 0
+    assert not (tree / "work-items").exists()
+
+
+def test_scan_command_does_not_publish_report_with_policy_problem(tmp_path: Path) -> None:
+    """Achado não bloqueante: relatório era gravado antes de a política ser reprovada."""
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"})
+    document = json.loads((tree / "config" / "hygiene-policy.json").read_text(encoding="utf-8"))
+    document["accepted"] = [
+        {
+            "id": "dead-symbol:0000000000000000",
+            "reason": "excecao declarada sem achado correspondente na arvore auditada",
+        }
+    ]
+    (tree / "config" / "hygiene-policy.json").write_text(json.dumps(document), encoding="utf-8")
+    output = tmp_path.parent / f"{tmp_path.name}-report.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 1
+    assert not output.exists()
+
+
+def test_exclude_dirs_requires_relative_directory() -> None:
+    """Achado não bloqueante: `exclude_dirs` com `.` esvaziava o escopo por declaração."""
+    for value in (["."], [".."], ["/vendor"], ["./vendor"], ["vendor/"]):
+        policy = policy_variant(**{"scope.exclude_dirs": value})
+        assert any("exclude_dirs" in error for error in validate_hygiene.policy_errors(policy)), value
+    allowed = policy_variant(**{"scope.exclude_dirs": ["vendor", "node_modules/cache"]})
+    assert [error for error in validate_hygiene.policy_errors(allowed) if "exclude_dirs" in error] == []
+
+
+def test_unknown_class_key_is_rejected() -> None:
+    """Chave com nome parecido dentro da classe era ignorada em silêncio."""
+    policy = policy_variant()
+    policy["classes"]["dead-symbol"]["accepted"] = [{"id": "x", "reason": "y"}]
+    errors = validate_hygiene.policy_errors(policy)
+    assert any("nao e chave de decisao conhecida" in error for error in errors)
+    assert validate_hygiene.policy_errors(policy_variant()) == []
+
+
+def test_report_exposes_declared_excluded_dirs(tmp_path: Path) -> None:
+    """Achado não bloqueante: diretório excluído não aparecia no relatório."""
+    policy = policy_variant(**{"scope.exclude_dirs": ["vendor", ".git", "__pycache__"]})
+    tree = make_tree(tmp_path, {"a.py": "V = 1\n", "README.md": "`a.py`\n"}, policy)
+    assert scan(tree)["excluded_dirs"] == [".git", "__pycache__", "vendor"]

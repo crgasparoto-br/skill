@@ -20,11 +20,11 @@ import sys
 from pathlib import Path
 
 try:
-    from .hygiene_scan import HygieneError, build_report, load_policy
+    from .hygiene_scan import HygieneError, build_report, load_policy, write_target
     from .validate_hygiene import schema_errors
 except ImportError:  # pragma: no cover - execucao direta do script
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from hygiene_scan import HygieneError, build_report, load_policy
+    from hygiene_scan import HygieneError, build_report, load_policy, write_target
     from validate_hygiene import schema_errors
 
 CLASS_TEXT = {
@@ -226,6 +226,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = (args.root or Path()).resolve()
     try:
+        if args.out_dir is not None:
+            # Work item é evidência sobre a árvore: gravado dentro dela entra no corpus de citação e pode
+            # apagar a dívida que ele mesmo descreve, como já vale para o relatório.
+            write_target(args.out_dir, root, "--out-dir")
         if args.report is not None:
             report = json.loads(args.report.read_text(encoding="utf-8"))
             # Relatorio externo entra pela mesma porta: sem conferir o contrato, o work item

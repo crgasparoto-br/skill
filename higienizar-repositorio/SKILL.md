@@ -69,15 +69,23 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Percorrer a arvore e trabalho da varredura, e nao de `rglob`: diretorio ilegivel e link para diretorio aparecem como cobertura nao analisada, em vez de sumirem.
 - Motivo de cobertura nao carrega caminho absoluto: duas copias identicas da mesma arvore precisam produzir o mesmo relatorio, e caminho de fora da raiz declarado em `not_analyzed_allowed` reprova.
 - Supressor declarativo, em `entry_points` e em `ignore_names`, declara nome e motivo escritos: lista de texto solto esconderia nome arbitrario sem auditabilidade.
-- O conjunto de manifestos e declarado na politica, em `manifest_patterns`: conjunto fixo no codigo seria escopo escondido, e `pyproject.toml` e lido pelo formato, nao como lista de linhas. Formato sem leitura declarada entra em cobertura nao analisada, e arquivo de trava e reconhecido por convencao de nome em qualquer padrao declarado.
+- O conjunto de manifestos e declarado na politica, em `manifest_patterns`: conjunto fixo no codigo seria escopo escondido, e `pyproject.toml` e lido pelo formato, nao como lista de linhas. Formato sem leitura declarada entra em cobertura nao analisada, estrutura invalida dentro de formato declarado tambem e recusa visivel, e arquivo de trava e reconhecido por convencao de nome em qualquer padrao declarado.
 - `python` fica fora da contagem de dependencia nos dois formatos: e versao exigida do interpretador, e nao distribuicao importavel.
 - Citacao de nome solto resolve contra o escopo medido, e nao contra a arvore inteira: arquivo excluido nao torna ambigua a citacao de um nome que e unico no escopo.
 - A citacao exige que o sufixo declarado termine o nome: sufixo seguido de caractere que continua identificador, inclusive marca combinante, aponta para outro nome e nao mantem arquivo vivo.
-- Alvo direcionado que resolve para fora da raiz aparece em cobertura nao analisada, com o mesmo rotulo do percurso livre, em vez de abortar a varredura. Formato sem leitura declarada entra em cobertura nao analisada, e arquivo de trava e reconhecido por convencao de nome em qualquer padrao declarado.
-- `python` fica fora da contagem de dependencia nos dois formatos: e versao exigida do interpretador, e nao distribuicao importavel.
-- Citacao de nome solto resolve contra o escopo medido, e nao contra a arvore inteira: arquivo excluido nao torna ambigua a citacao de um nome que e unico no escopo.
-- A citacao exige que o sufixo declarado termine o nome: sufixo seguido de caractere que continua identificador, inclusive marca combinante, aponta para outro nome e nao mantem arquivo vivo.
-- Alvo direcionado que resolve para fora da raiz aparece em cobertura nao analisada, com o mesmo rotulo do percurso livre, em vez de abortar a varredura.
+- Alvo direcionado que resolve para fora da raiz aparece em cobertura nao analisada, com o mesmo rotulo do percurso livre, em vez de abortar a varredura. Link quebrado e link em ciclo seguem a mesma regra, e alvo externo mantem o escopo vazio: conjunto vazio de alvos nao e ausencia de restricao.
+- O rotulo de caminho de fora da raiz e apenas o nome do arquivo: caminho absoluto no relatorio quebraria a comparacao entre copias equivalentes da arvore.
+- O indice de citacao e o do escopo medido, e a autocitacao nao conta: nem arquivo excluido, nem link de corpus que sai da raiz, nem o proprio texto do arquivo mantem modulo vivo.
+- Estrutura invalida em formato declarado, como escalar em `project.optional-dependencies`, e recusa visivel, e nao uma dependencia por caractere.
+- O gerador de work items tambem recusa escrever dentro da arvore medida: artefato gravado no objeto medido pode apagar a divida que ele mesmo descreve.
+- Relatorio com problema de politica nao e publicado: a reprovacao acontece antes da gravacao, e nao depois de o arquivo existir.
+- `exclude_dirs` exige diretorio relativo canonico dentro da raiz, e chave desconhecida dentro de uma classe e erro: `.` esvaziaria o escopo por declaracao, e chave com nome parecido mentiria sem que ninguem percebesse. Link quebrado e link em ciclo seguem a mesma regra, e alvo externo mantem o escopo vazio: conjunto vazio de alvos nao e ausencia de restricao.
+- O rotulo de caminho de fora da raiz e apenas o nome do arquivo: caminho absoluto no relatorio quebraria a comparacao entre copias equivalentes da arvore.
+- O indice de citacao e o do escopo medido, e a autocitacao nao conta: nem arquivo excluido, nem link de corpus que sai da raiz, nem o proprio texto do arquivo mantem modulo vivo.
+- Estrutura invalida em formato declarado, como escalar em `project.optional-dependencies`, e recusa visivel, e nao uma dependencia por caractere.
+- O gerador de work items tambem recusa escrever dentro da arvore medida: artefato gravado no objeto medido pode apagar a divida que ele mesmo descreve.
+- Relatorio com problema de politica nao e publicado: a reprovacao acontece antes da gravacao, e nao depois de o arquivo existir.
+- `exclude_dirs` exige diretorio relativo canonico dentro da raiz, e chave desconhecida dentro de uma classe e erro: `.` esvaziaria o escopo por declaracao, e chave com nome parecido mentiria sem que ninguem percebesse.
 - O relatorio nao pode ser gravado dentro da arvore medida: evidencia gravada no objeto medido entra no corpus de citacao, muda a medicao seguinte e pode sobrescrever arquivo coberto.
 - O comando da varredura reprova politica que o gate reprova, antes de medir: medir com politica invalida publicaria evidencia que ninguem pode aceitar.
 - O modo direcionado usa a raiz do repositorio para rotular cobertura, e nao o alvo: dois alvos com o mesmo diretorio recusado ficariam indistinguiveis, e alvo inexistente publica caminho relativo canonico.

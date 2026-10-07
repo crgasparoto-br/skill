@@ -13,6 +13,7 @@
     "mode",
     "analyzed",
     "excluded",
+    "excluded_dirs",
     "not_analyzed",
     "classes",
     "summary"
@@ -41,6 +42,14 @@
     "analyzed": {
       "type": "integer",
       "minimum": 0
+    },
+    "excluded_dirs": {
+      "type": "array",
+      "description": "Diretórios excluídos por declaração na política, para que o escopo varrido não encolha em silêncio.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "not_analyzed": {
       "type": "array",

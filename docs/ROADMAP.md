@@ -241,6 +241,14 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A décima rodada de auditoria corrigiu o que as nove anteriores ainda não garantiam: alvo direcionado que escapa da raiz
+passou a deixar o escopo vazio, em vez de reabrir o percurso livre de manifest; o índice de citação passou a ser o do
+escopo medido, sem link de corpus que sai da raiz e sem autocitação; link quebrado e link em ciclo passaram a receber o
+mesmo rótulo nos dois modos, e caminho de fora da raiz passou a ser publicado só pelo nome; estrutura inválida dentro de
+formato declarado passou a ser recusa visível; o gerador de work items passou a recusar destino dentro da árvore medida;
+o relatório passou a ser publicado só depois de a política passar; `exclude_dirs` passou a exigir diretório relativo
+canônico; chave desconhecida dentro de classe passou a ser erro; e o relatório passou a publicar os diretórios excluídos
+declarados.
 A nona rodada de auditoria corrigiu o que as oito anteriores ainda não garantiam: a citação de nome solto passou a
 resolver contra o escopo medido, para que arquivo excluído não torne ambígua a citação de um nome único; a âncora da
 citação passou a exigir que o sufixo termine o nome, inclusive contra marca combinante; `python` passou a ficar fora da

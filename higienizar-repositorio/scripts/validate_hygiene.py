@@ -67,6 +67,15 @@ EXTRA_CLASS_KEYS = {
     "complexity": ("max_complexity",),
     "unused-dependency": ("manifest_patterns",),
 }
+# Chaves específicas validadas por nome, e não por tipo: entram aqui para que a lista de chaves
+# conhecidas de cada classe seja uma só, usada tanto pela exigência quanto pela recusa de chave
+# desconhecida, e para que a lista não divirja do que a validação de fato lê.
+NAMED_CLASS_KEYS = {
+    "duplication": ("exclude_declared_copies",),
+    "dead-module": ("entry_points", "package_init_is_entry"),
+    "dead-symbol": ("ignore_names",),
+    "complexity": ("baseline_history",),
+}
 INT_KEYS = ("min_body_lines", "max_complexity", "baseline")
 BOOL_KEYS = ("exclude_declared_copies", "exclude_tests")
 LIST_KEYS = ("tool_dependencies", "manifest_patterns")
@@ -237,7 +246,60 @@ def _class_errors(name: str, entry: object) -> list[str]:
     errors.extend(_class_threshold_errors(name, entry))
     errors.extend(_suppressor_errors(name, entry))
     errors.extend(_manifest_pattern_errors(name, entry))
+    errors.extend(_unknown_class_key_errors(name, entry))
     return errors
+
+
+def _unknown_class_key_errors(name: str, entry: dict) -> list[str]:
+    """Chave desconhecida dentro da classe é erro, e não anotação ignorada.
+
+    Chave escrita com nome parecido, como `accepted` dentro da classe, seria lida como decisão declarada
+    por quem escreve e ignorada por quem mede: a política mentiria sem que ninguém percebesse.
+    """
+    allowed = {
+        *COMMON_CLASS_KEYS,
+        *EXTRA_CLASS_KEYS.get(name, ()),
+        *NAMED_CLASS_KEYS.get(name, ()),
+        *INT_KEYS,
+        *BOOL_KEYS,
+        *LIST_KEYS,
+        *DICT_KEYS,
+    }
+    return [
+        f"politica: classes.{name}.{key} nao e chave de decisao conhecida"
+        for key in sorted(set(entry) - allowed)
+    ]
+
+
+def _exclude_dir_errors(scope: dict) -> list[str]:
+    """Diretório excluído precisa ser nome de diretório relativo dentro da raiz.
+
+    `.` e caminho absoluto esvaziariam o conjunto analisado por declaração, e escopo vazio declarado
+    como se fosse medição é a forma mais barata de esconder dívida.
+    """
+    declared = scope.get("exclude_dirs")
+    if not isinstance(declared, list):
+        return []
+    errors: list[str] = []
+    for index, entry in enumerate(declared):
+        if not isinstance(entry, str) or not entry:
+            errors.append(f"politica: scope.exclude_dirs[{index}] precisa ser texto")
+            continue
+        if entry in {".", ".."} or Path(entry).is_absolute():
+            errors.append(
+                f"politica: scope.exclude_dirs[{index}] precisa ser diretorio relativo dentro da raiz"
+            )
+        elif entry.startswith("./") or entry.endswith("/"):
+            errors.append(
+                f"politica: scope.exclude_dirs[{index}] precisa ser diretorio canonico, sem `./` "
+                "nem barra final"
+            )
+    return errors
+
+
+def _scope_errors_with_dirs(scope: dict) -> list[str]:
+    """Erros de escopo, incluindo a forma declarada de diretório excluído."""
+    return [*_scope_errors(scope), *_exclude_dir_errors(scope)]
 
 
 def _scope_errors(scope: object) -> list[str]:
@@ -378,7 +440,7 @@ def policy_errors(policy: object) -> list[str]:
     if not isinstance(policy, dict):
         return ["politica precisa ser objeto"]
     errors = _identity_errors(policy)
-    errors.extend(_scope_errors(policy.get("scope")))
+    errors.extend(_scope_errors_with_dirs(policy.get("scope")))
     classes = policy.get("classes")
     if not isinstance(classes, dict):
         return [*errors, "politica: classes precisa ser objeto"]

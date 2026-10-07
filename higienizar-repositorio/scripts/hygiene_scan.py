@@ -243,11 +243,15 @@ def relative(path: Path, root: Path) -> str:
 
 
 def safe_relative(path: Path, root: Path) -> str:
-    """Caminho relativo à raiz quando possível; fora dela, o caminho absoluto como está."""
+    """Caminho relativo à raiz; fora dela, apenas o nome do arquivo.
+
+    Caminho absoluto no relatório faria duas cópias equivalentes da mesma árvore produzirem relatórios
+    diferentes, e o relatório é a evidência que precisa ser comparável entre cópias.
+    """
     try:
         return relative(path, root)
     except ValueError:
-        return path.as_posix()
+        return path.name
 
 
 def declared_exclusions(policy: dict) -> dict[str, str]:
@@ -303,15 +307,24 @@ def walk_scope(start: Path, root: Path, skip: set[str]) -> tuple[list[Path], lis
     return found, refused
 
 
-def normalized_targets(root: Path, paths: list[str] | None) -> set[str]:
-    """Alvos do modo direcionado em forma canônica relativa à raiz.
+def normalized_targets(root: Path, paths: list[str] | None) -> set[str] | None:
+    """Alvos do modo direcionado em forma canônica relativa à raiz; `None` quando não há restrição.
 
     Alvo absoluto dentro da raiz e `.` precisam virar o mesmo caminho relativo que o resto do relatório
-    usa, senão a subárvore seria analisada e o manifest dela ficaria de fora.
+    usa, senão a subárvore seria analisada e o manifest dela ficaria de fora. Conjunto vazio e conjunto
+    sem restrição são coisas diferentes: alvo que escapa deixa o escopo vazio, e não a árvore inteira.
     """
+    if not paths:
+        # Ausência de alvo é ausência de restrição; conjunto vazio significa escopo vazio.
+        return None
     targets: set[str] = set()
-    for raw in paths or []:
-        candidate = (root / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
+    for raw in paths:
+        try:
+            candidate = (root / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
+        except (OSError, RuntimeError):
+            # Link quebrado ou em ciclo não resolve: a recusa já está no conjunto analisado, e aqui o
+            # alvo simplesmente não restringe manifest nenhum.
+            continue
         if not candidate.is_relative_to(root):
             # Alvo que escapa já é recusa visível no conjunto analisado; aqui ele simplesmente não
             # alcança manifest nenhum, porque não há manifest dentro de caminho fora da raiz.
@@ -320,7 +333,7 @@ def normalized_targets(root: Path, paths: list[str] | None) -> set[str]:
         if not rel or rel == ".":
             # `.` e a propria raiz: cobre a arvore inteira, e comparar com "." deixaria o manifest da
             # subarvore de fora enquanto os arquivos eram analisados.
-            return set()
+            return None
         targets.add(rel)
     return targets
 
@@ -343,13 +356,34 @@ def scope_files(
     if paths:
         for raw in sorted(paths):
             literal = root / raw if not Path(raw).is_absolute() else Path(raw)
-            candidate = literal.resolve()
+            if literal.is_symlink() and not literal.exists():
+                # Link quebrado ou em ciclo: o percurso livre recusa pelo caminho literal, e o modo
+                # direcionado precisa do mesmo rótulo, em vez de seguir para um alvo que não existe.
+                missing.append(
+                    {
+                        "path": safe_relative(literal, root),
+                        "reason": "link simbolico quebrado: o alvo nao existe",
+                    }
+                )
+                continue
+            try:
+                candidate = literal.resolve()
+            except (OSError, RuntimeError):
+                # Ciclo de link não resolve, e abortar deixaria a varredura sem relatório nenhum: a
+                # recusa visível é o que mantém o conjunto analisado honesto.
+                missing.append(
+                    {
+                        "path": safe_relative(literal, root),
+                        "reason": "link simbolico em ciclo: o alvo nao resolve",
+                    }
+                )
+                continue
             if not candidate.is_relative_to(root):
                 # Alvo que resolve para fora é cobertura não analisada, e não erro fatal: o sweep já
                 # recusa o mesmo link, e abortar no modo direcionado seria contrato diferente por modo.
                 missing.append(
                     {
-                        "path": safe_relative(literal, root) or literal.name,
+                        "path": safe_relative(literal, root),
                         "reason": "alvo direcionado que resolve para fora da raiz",
                     }
                 )
@@ -367,7 +401,7 @@ def scope_files(
                 # depender de onde a árvore está no disco.
                 missing.append(
                     {
-                        "path": safe_relative(candidate, root) or raw.strip(),
+                        "path": safe_relative(literal, root),
                         "reason": "alvo direcionado que nao existe",
                     }
                 )
@@ -675,14 +709,17 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
     return texts, refused
 
 
-def named_paths(texts: dict[str, str], root: Path, suffixes: set[str], policy: dict) -> set[str]:
+def named_paths(
+    texts: dict[str, str], root: Path, suffixes: set[str], policy: dict
+) -> dict[str, set[str]]:
     """Caminhos citados por algum arquivo, resolvidos na raiz e no diretório de quem cita.
 
     A citação pode vir como caminho a partir da raiz (`scripts/x.py`), como caminho a partir do
     diretório do arquivo que cita (`scripts/x.py` dentro de uma skill) ou como nome solto. As três
     formas contam, porque todas são invocação declarada para quem lê a instrução.
     """
-    named: set[str] = set()
+    named: dict[str, set[str]] = defaultdict(set)
+    resolved_root = root.resolve()
     exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
     excluded_paths = set(declared_exclusions(policy))
     walked, _ = walk_scope(root, root, exclude_dirs)
@@ -690,6 +727,7 @@ def named_paths(texts: dict[str, str], root: Path, suffixes: set[str], policy: d
         relative(path, root)
         for path in walked
         if path.is_file()
+        and path.resolve().is_relative_to(resolved_root)
         and not in_excluded_dir(relative(path, root), exclude_dirs)
         and relative(path, root) not in excluded_paths
     }
@@ -724,7 +762,8 @@ def named_paths(texts: dict[str, str], root: Path, suffixes: set[str], policy: d
                 homonyms = by_name.get(cleaned, [])
                 if len(homonyms) == 1:
                     matched = {homonyms[0]}
-            named.update(matched)
+            for item in matched:
+                named[item].add(rel)
     return named
 
 
@@ -879,7 +918,9 @@ def detect_dead_modules(
             continue
         if exclude_tests and (path.name.startswith("test_") or "tests" in path.parts):
             continue
-        if rel in declared_entries or rel in named:
+        # Autocitação não é invocação: o arquivo que cita a si próprio continua sem importador e sem
+        # invocação declarada por outro arquivo, que é a definição da classe.
+        if rel in declared_entries or named.get(rel, set()) - {rel}:
             continue
         dotted = rel[:-3].replace("/", ".")
         # `import pkg` e `import pkg.sub` alcançam `pkg/__init__.py`: importar subpacote executa o módulo
@@ -962,9 +1003,15 @@ def detect_dead_symbols(
     return findings
 
 
-def in_targets(rel: str, targets: set[str]) -> bool:
-    """Alvo do modo direcionado cobre o caminho e a subárvore, como no conjunto analisado."""
-    return not targets or any(rel == target or rel.startswith(target + "/") for target in targets)
+def in_targets(rel: str, targets: set[str] | None) -> bool:
+    """Alvo do modo direcionado cobre o caminho e a subárvore; `None` significa sem restrição.
+
+    Conjunto vazio não é ausência de restrição: quando todo alvo escapa da raiz, o escopo é vazio, e
+    tratar isso como percurso livre analisaria manifest que o alvo direcionado exclui.
+    """
+    if targets is None:
+        return True
+    return any(rel == target or rel.startswith(target + "/") for target in targets)
 
 
 def scoped_manifests(
@@ -1039,6 +1086,19 @@ def manifest_requirements(path: Path, text: str) -> list[str]:
     raise HygieneError(f"manifest de formato sem leitura declarada: {path.name}")
 
 
+def requirement_list(value: object, label: str) -> list[str]:
+    """Lista de requisitos do PEP 621, exigindo lista de texto.
+
+    Estrutura fora disso é manifest inválido: iterar string escalar produziria uma dependência por
+    caractere, que é achado inventado da classe.
+    """
+    if value is None:
+        return []
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise HygieneError(f"manifest toml invalido: {label} precisa ser lista de texto")
+    return list(value)
+
+
 def toml_requirements(text: str) -> list[str]:
     """Requisitos de `pyproject.toml`: padrão do empacotador e tabelas do Poetry.
 
@@ -1052,13 +1112,13 @@ def toml_requirements(text: str) -> list[str]:
         document = tomllib.loads(text)
     except tomllib.TOMLDecodeError as error:
         raise HygieneError(f"manifest toml invalido ({error.__class__.__name__})") from error
-    declared: list[str] = []
     project = document.get("project") if isinstance(document.get("project"), dict) else {}
-    declared.extend(str(item) for item in project.get("dependencies") or [] if isinstance(item, str))
+    declared = list(requirement_list(project.get("dependencies"), "project.dependencies"))
     optional = project.get("optional-dependencies")
-    if isinstance(optional, dict):
-        for value in optional.values():
-            declared.extend(str(item) for item in value or [] if isinstance(item, str))
+    if optional is not None and not isinstance(optional, dict):
+        raise HygieneError("manifest toml invalido: project.optional-dependencies precisa ser tabela")
+    for group, value in (optional or {}).items():
+        declared.extend(requirement_list(value, f"project.optional-dependencies.{group}"))
     # `python` vale para as duas formas: é a versão exigida do interpretador, e não distribuição.
     requirements = [
         line for line in declared if requirement_name(line).lower() != "python"
@@ -1072,6 +1132,8 @@ def toml_requirements(text: str) -> list[str]:
             group.get("dependencies") for group in groups.values() if isinstance(group, dict)
         )
     for table in tables:
+        if table is not None and not isinstance(table, dict):
+            raise HygieneError("manifest toml invalido: tabela de dependencia do Poetry precisa ser tabela")
         if isinstance(table, dict):
             requirements.extend(str(key) for key in table if str(key).lower() != "python")
     return requirements
@@ -1314,6 +1376,9 @@ def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tu
                 "findings": members,
             }
         )
+    excluded_dirs = sorted(
+        str(item) for item in (scope_of(policy).get("exclude_dirs") or []) if isinstance(item, str)
+    )
     report = {
         "schema_version": 1,
         "system": "hygiene-report",
@@ -1322,6 +1387,7 @@ def build_report(root: Path, policy: dict, paths: list[str] | None = None) -> tu
         "mode": "targeted" if paths else "sweep",
         "analyzed": len(modules),
         "excluded": excluded,
+        "excluded_dirs": excluded_dirs,
         "not_analyzed": not_analyzed,
         "classes": classes,
         "summary": {
@@ -1428,6 +1494,13 @@ def main(argv: list[str] | None = None) -> int:
         for problem in contract:
             print(f"- {problem}", file=sys.stderr)
         return 1
+    if problems:
+        # Relatório de política com problema não é publicado: artefato gravado antes da reprovação
+        # circularia como evidência de uma medição que a política não sustenta.
+        print("Problemas na politica:", file=sys.stderr)
+        for problem in problems:
+            print(f"- {problem}", file=sys.stderr)
+        return 1
     payload = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
     if args.report:
         targets["--report"].write_text(payload, encoding="utf-8")
@@ -1435,11 +1508,6 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write(payload)
     if args.markdown:
         targets["--markdown"].write_text(render_markdown(report), encoding="utf-8")
-    if problems:
-        print("Problemas na politica:", file=sys.stderr)
-        for problem in problems:
-            print(f"- {problem}", file=sys.stderr)
-        return 1
     return 0
 
 
