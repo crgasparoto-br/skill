@@ -111,7 +111,8 @@ Booleano e fração não são inteiros: `schema_version: true`, `schema_version:
 ninguém declarou. O que a política exige é o inteiro exato. Os campos `tool.install` e `tool.invocation` também são verificados, e não
 apenas declarados, e por forma exata: a instalação precisa ser o pip pelo lockfile com `--require-hashes`, com
 caminho relativo dentro da raiz, e a invocação precisa ser a ferramenta declarada com seu subcomando. `description`
-precisa ser texto não vazio. Procura textual deixaria passar `echo pip install ... && outra coisa`. O estado de família precisa ser texto, e uma
+precisa ser texto não vazio, e cada `-r` da instalação precisa ser um lockfile relativo, sem `..` e sem caminho
+absoluto. Procura textual deixaria passar `echo pip install ... && outra coisa`. O estado de família precisa ser texto, e uma
 forma que não pode sequer ser comparada, como dicionário ou lista, reprova em vez de estourar.
 ### Limite declarado
 O gate verifica presença e extensão do motivo declarado, não a veracidade dele: um motivo longo e enganoso passa.
@@ -197,13 +198,13 @@ e é fail-closed na forma do documento: exige um único documento, recusa chave 
 `jobs` objeto não vazio, cada job objeto, `steps` lista não vazia e cada passo objeto com `run` ou `uses` — e não os
 dois —, com valor textual. Chave repetida é recusada pelo valor construído, então `true` e `True`, `01` e `1`, `null`
 e `~` contam como a mesma chave, e chave que não pode ser comparada reprova em vez de estourar. Cada linha de
-`run` precisa ser uma invocação simples, conferida por gramática e não por procura textual: a linha é tokenizada, o
-alvo tem de ser um script do repositório ou um dos módulos declarados (`pip`, `pytest`), cada argumento tem de ser
-texto sem metacaractere de shell, e o único rabo aceito é um redirecionamento simples de saída, com ou sem `2>&1`.
-Composição (`&&`, `||`, `;`, `|`, `&`), substituição (`$()`, crase), redirecionamento extra, aspas não balanceadas,
-`python -c`, `python -m` de módulo não declarado, alvo fora da raiz e invólucros como `eval`, `env`, `sudo`, `time`,
-`nohup`, `xargs` e `sh -c` reprovam, porque encadear outro comando dentro de um comando aprovado esconderia o que
-executa. Essa classificação é executada por `scripts/validate_workflow_classification.py`, que está na sequência
+`run` é conferido em duas partes, e nenhuma delas é procura textual. A linha inteira precisa casar com a gramática
+declarada: `python` seguido de um alvo e de argumentos sem metacaractere de shell, com no máximo um redirecionamento
+simples de saída, com ou sem `2>&1`. Composição (`&&`, `||`, `;`, `|`, `&`), substituição (`$()`, crase), aspas,
+escape, descritor de arquivo (`2>`, `1>`, `10>`), redirecionamento extra, `python -c` e invólucros (`eval`, `env`,
+`sudo`, `time`, `nohup`, `xargs`, `sh -c`) não casam. Além disso, o alvo precisa estar declarado: um script de
+validação que existe como arquivo regular sob a raiz, ou um dos módulos declarados (`pip`, `pytest`). Assim um
+marcador escrito em um argumento não promove um script arbitrário, e um nome parecido sem arquivo não passa. Essa classificação é executada por `scripts/validate_workflow_classification.py`, que está na sequência
 obrigatória e também confere a paridade entre CI, README e AGENTS, e não apenas por um teste. Assim, uma forma alternativa de escrever o mesmo passo ativo, ou uma forma estrutural
 inválida que o parser aceitaria, não passa sem classificação.
 A consulta ao banco de vulnerabilidade e a verificação de integridade são do workflow

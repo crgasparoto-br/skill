@@ -45,28 +45,32 @@ jobs:
 
 
 def workflow_with(tmp_path: Path, snippet: str) -> Path:
-    path = tmp_path / "workflow.yml"
+    """Workflow em uma árvore temporária que contém o script alvo do template."""
+    tree = tmp_path / "repo"
+    (tree / "scripts").mkdir(parents=True, exist_ok=True)
+    (tree / "scripts" / "validate_docs.py").write_text("print('ok')\n", encoding="utf-8")
+    path = tree / "workflow.yml"
     path.write_text(TEMPLATE + snippet, encoding="utf-8")
     return path
 
 
 def test_local_validation_sequence_matches_the_ci_workflow() -> None:
     """A sequência documentada é a executada, e o validador é quem confere isso na sequência."""
-    ci = workflow_commands(ROOT / WORKFLOW)
+    ci = workflow_commands(ROOT / WORKFLOW, ROOT)
     assert ci, "o workflow não declara nenhum comando de validação"
     for document in ("README.md", "AGENTS.md"):
-        assert markdown_commands(ROOT / document) == ci, f"{document} diverge do CI"
+        assert markdown_commands(ROOT / document, ROOT) == ci, f"{document} diverge do CI"
 
 
 def test_closure_check_is_part_of_the_compared_sequence() -> None:
     """A conferência do fechamento dos lockfiles é validação e não pode sair da comparação."""
-    assert is_validation("python scripts/lock_dependencies.py --root . --check")
+    assert is_validation("python scripts/lock_dependencies.py --root . --check", ROOT)
 
 
 def test_packaging_is_not_part_of_the_validation_sequence() -> None:
     """O empacotamento do skill é release: fica fora da sequência comparada de propósito."""
     assert not is_validation(
-        "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip"
+        "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip", ROOT
     )
     assert (
         "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip"
@@ -84,6 +88,8 @@ def test_validator_accepts_the_repository_and_rejects_a_divergent_sequence(tmp_p
     assert validate_workflow_classification(ROOT) == []
     tree = tmp_path / "repo"
     (tree / ".github" / "workflows").mkdir(parents=True)
+    (tree / "scripts").mkdir(parents=True)
+    (tree / "scripts" / "validate_docs.py").write_text("print('ok')\n", encoding="utf-8")
     (tree / ".github" / "workflows" / "validate.yml").write_text(TEMPLATE, encoding="utf-8")
     for document in ("README.md", "AGENTS.md"):
         (tree / document).write_text("```bash\npython scripts/validate_docs.py --root .\n```\n", encoding="utf-8")
@@ -111,6 +117,15 @@ def test_validator_accepts_the_repository_and_rejects_a_divergent_sequence(tmp_p
         "python scripts/validate_docs.py --root . > /tmp/a > /tmp/b",
         "python scripts/validate_docs.py --root . > /tmp/a<<<escondido",
         "python scripts/validate_docs.py --root . > /tmp/a && python scripts/escondido.py",
+        "python scripts/validate_docs.py --root . 2> /tmp/erro",
+        "python scripts/validate_docs.py --root . 1> /tmp/saida",
+        "python scripts/validate_docs.py --root . 10>/tmp/saida",
+        "python scripts/validate_docs.py --root . >> /tmp/saida",
+        "python scripts/validate_docs.py --root . < /tmp/entrada",
+        "python scripts/validate_docs.py --root . &> /tmp/saida",
+        "python scripts/validate_docs.py --root . '&&'",
+        "python scripts/validate_docs.py --root . \\; /tmp/escondido",
+        "python scripts/evil.py# scripts/validate_docs.py",
         "python -c __import__('pathlib').Path('/tmp/x').write_text('a') scripts/validate_docs.py",
         "python -m escondido scripts/validate_docs.py",
         "python ../../escondido.py --root .",
@@ -144,6 +159,23 @@ def test_composite_commands_are_not_classifiable(command: str) -> None:
 def test_declared_invocations_are_accepted(command: str) -> None:
     """As formas que o repositório usa continuam aceitas, inclusive redirecionamento de saída."""
     assert command_problems(command) == [], command
+    assert is_validation(command, ROOT), command
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "python scripts/escondido.py --marcador scripts/validate_docs.py",
+        "python scripts/escondido.py --marcador=scripts/validate_docs.py",
+        "python scripts/escondido.py -m pytest",
+        "python scripts/validate_docs.py.py --root .",
+        "python scripts/validate_inexistente.py --root .",
+        "python /tmp/validate_docs.py --root .",
+    ],
+)
+def test_marker_in_argument_or_forged_target_is_not_validation(command: str) -> None:
+    """O alvo declarado decide a classificação: marcador em argumento não promove um script."""
+    assert not is_validation(command, ROOT), command
 
 
 def test_yaml_forms_cannot_hide_an_unclassified_step(tmp_path: Path) -> None:

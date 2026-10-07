@@ -217,7 +217,8 @@ observável; a sequência de validação é idêntica em CI, `README.md` e `AGEN
 verificado por `scripts/validate_workflow_classification.py`, que está na sequência obrigatória, lê os passos do
 workflow com um parser de YAML em vez de expressões regulares sobre o texto, exige que todo passo, comando ou ação
 externa esteja classificado como validação ou declarado como não validação, classifica cada linha de `run` por
-gramática — alvo declarado, argumentos sem metacaractere de shell e no máximo um redirecionamento simples — e compara
+gramática e pelo alvo declarado — script de validação que existe sob a raiz ou módulo declarado, argumentos sem
+metacaractere de shell e no máximo um redirecionamento simples — e compara
 a sequência de validação entre CI, README e AGENTS, incluindo a conferência do fechamento dos lockfiles e o replay do
 relatório de avaliações; o CI acrescenta apenas o empacotamento do skill, que é release e não
 validação; e o requisito global, o changelog e este roadmap registram a entrega.
