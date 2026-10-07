@@ -1830,3 +1830,120 @@ def test_vcs_requirement_uses_egg_fragment(tmp_path: Path) -> None:
         },
     )
     assert findings_of(scan(tree), "unused-dependency") == []
+
+
+def test_excluded_file_does_not_make_citation_ambiguous(tmp_path: Path) -> None:
+    """Achado bloqueante: arquivo excluído tornava ambígua a citação de nome solto."""
+    files = {
+        "pkg/orphan.py": "import json\n",
+        "vendor/orphan.py": "import json\n",
+        "README.md": "See orphan.py\n",
+    }
+    # Sem exclusão declarada o nome solto é ambíguo, e os dois homônimos ficam mortos.
+    ambiguous = sorted(
+        finding["location"] for finding in findings_of(scan(make_tree(tmp_path, files)), "dead-module")
+    )
+    assert ambiguous == ["pkg/orphan.py", "vendor/orphan.py"]
+    # Com `vendor` excluído, o nome solto cita o único homônimo do escopo medido.
+    declared = make_tree(
+        tmp_path / "declared",
+        files,
+        policy_variant(**{"scope.exclude_dirs": ["vendor", ".git", "__pycache__"]}),
+    )
+    assert findings_of(scan(declared), "dead-module") == []
+
+
+def test_combining_mark_after_suffix_is_not_a_citation(tmp_path: Path) -> None:
+    """Achado bloqueante: `foo.py` seguido de marca combinante mantinha o módulo vivo."""
+    tree = make_tree(tmp_path, {"foo.py": "V = 1\n", "README.md": "foo.py\u0301\n"})
+    assert [finding["location"] for finding in findings_of(scan(tree), "dead-module")] == ["foo.py"]
+    cited = make_tree(tmp_path / "cited", {"foo.py": "V = 1\n", "README.md": "`foo.py`\n"})
+    assert findings_of(scan(cited), "dead-module") == []
+
+
+def test_pep621_python_requirement_is_not_counted(tmp_path: Path) -> None:
+    """Achado bloqueante: `python` em `project.dependencies` era contado como dependência sem uso."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "a.py": "import json\n",
+            "README.md": "`a.py`\n",
+            "pyproject.toml": (
+                "[project]\n"
+                'name = "exemplo"\n'
+                'dependencies = ["python>=3.11", "requests>=2"]\n'
+            ),
+        },
+    )
+    assert [finding["symbol"] for finding in findings_of(scan(tree), "unused-dependency")] == [
+        "requests"
+    ]
+
+
+def test_unsupported_manifest_format_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: formato sem leitura declarada era interpretado como lista de linhas."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "a.py": "import json\n",
+            "README.md": "`a.py`\n",
+            "setup.cfg": "[options]\ninstall_requires =\n    requests>=2\n",
+        },
+        policy_variant(**{"classes.unused-dependency.manifest_patterns": ["setup.cfg"]}),
+    )
+    report = scan(tree)
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["setup.cfg"]
+    assert findings_of(report, "unused-dependency") == []
+
+
+def test_lockfile_by_convention_is_not_a_manifest(tmp_path: Path) -> None:
+    """Achado bloqueante: trava só era ignorada pelo sufixo `.lock.txt`."""
+    tree = make_tree(
+        tmp_path,
+        {"a.py": "import json\n", "README.md": "`a.py`\n", "poetry.lock": 'requests = "2"\n'},
+        policy_variant(**{"classes.unused-dependency.manifest_patterns": ["*.lock"]}),
+    )
+    assert findings_of(scan(tree), "unused-dependency") == []
+
+
+def test_target_that_escapes_is_reported_in_coverage(tmp_path: Path) -> None:
+    """Achado não bloqueante: alvo que resolve para fora abortava em vez de aparecer na cobertura."""
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"})
+    outside = tmp_path.parent / f"{tmp_path.name}-outside.py"
+    outside.write_text("V = 1\n", encoding="utf-8")
+    (tree / "escape.py").symlink_to(outside)
+    document = hygiene_scan.load_policy(tree)
+    targeted, _ = hygiene_scan.build_report(tree, document, ["escape.py"])
+    sweep, _ = hygiene_scan.build_report(tree, document)
+    assert [entry["path"] for entry in targeted["not_analyzed"]] == ["escape.py"]
+    assert [entry["path"] for entry in sweep["not_analyzed"]] == ["escape.py"]
+
+
+def test_cli_honours_policy_argument(tmp_path: Path) -> None:
+    """Achado não bloqueante: `--policy` era aceito e ignorado."""
+    body = "def f():\n" + "".join(f"    if x{index}:\n        pass\n" for index in range(40)) + "    return 1\n"
+    tree = make_tree(tmp_path, {"alpha.py": body, "README.md": "`alpha.py`\n"})
+    external = tmp_path.parent / f"{tmp_path.name}-policy.json"
+    document = json.loads((tree / "config" / "hygiene-policy.json").read_text(encoding="utf-8"))
+    document["classes"]["complexity"]["max_complexity"] = 99
+    external.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+    output = tmp_path.parent / f"{tmp_path.name}-report.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--policy",
+            str(external),
+            "--report",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0
+    report = json.loads(output.read_text(encoding="utf-8"))
+    complexity = next(entry for entry in report["classes"] if entry["name"] == "complexity")
+    assert complexity["open"] == 0

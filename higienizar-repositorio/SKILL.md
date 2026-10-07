@@ -69,7 +69,15 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Percorrer a arvore e trabalho da varredura, e nao de `rglob`: diretorio ilegivel e link para diretorio aparecem como cobertura nao analisada, em vez de sumirem.
 - Motivo de cobertura nao carrega caminho absoluto: duas copias identicas da mesma arvore precisam produzir o mesmo relatorio, e caminho de fora da raiz declarado em `not_analyzed_allowed` reprova.
 - Supressor declarativo, em `entry_points` e em `ignore_names`, declara nome e motivo escritos: lista de texto solto esconderia nome arbitrario sem auditabilidade.
-- O conjunto de manifestos e declarado na politica, em `manifest_patterns`: conjunto fixo no codigo seria escopo escondido, e `pyproject.toml` e lido pelo formato, nao como lista de linhas.
+- O conjunto de manifestos e declarado na politica, em `manifest_patterns`: conjunto fixo no codigo seria escopo escondido, e `pyproject.toml` e lido pelo formato, nao como lista de linhas. Formato sem leitura declarada entra em cobertura nao analisada, e arquivo de trava e reconhecido por convencao de nome em qualquer padrao declarado.
+- `python` fica fora da contagem de dependencia nos dois formatos: e versao exigida do interpretador, e nao distribuicao importavel.
+- Citacao de nome solto resolve contra o escopo medido, e nao contra a arvore inteira: arquivo excluido nao torna ambigua a citacao de um nome que e unico no escopo.
+- A citacao exige que o sufixo declarado termine o nome: sufixo seguido de caractere que continua identificador, inclusive marca combinante, aponta para outro nome e nao mantem arquivo vivo.
+- Alvo direcionado que resolve para fora da raiz aparece em cobertura nao analisada, com o mesmo rotulo do percurso livre, em vez de abortar a varredura. Formato sem leitura declarada entra em cobertura nao analisada, e arquivo de trava e reconhecido por convencao de nome em qualquer padrao declarado.
+- `python` fica fora da contagem de dependencia nos dois formatos: e versao exigida do interpretador, e nao distribuicao importavel.
+- Citacao de nome solto resolve contra o escopo medido, e nao contra a arvore inteira: arquivo excluido nao torna ambigua a citacao de um nome que e unico no escopo.
+- A citacao exige que o sufixo declarado termine o nome: sufixo seguido de caractere que continua identificador, inclusive marca combinante, aponta para outro nome e nao mantem arquivo vivo.
+- Alvo direcionado que resolve para fora da raiz aparece em cobertura nao analisada, com o mesmo rotulo do percurso livre, em vez de abortar a varredura.
 - O relatorio nao pode ser gravado dentro da arvore medida: evidencia gravada no objeto medido entra no corpus de citacao, muda a medicao seguinte e pode sobrescrever arquivo coberto.
 - O comando da varredura reprova politica que o gate reprova, antes de medir: medir com politica invalida publicaria evidencia que ninguem pode aceitar.
 - O modo direcionado usa a raiz do repositorio para rotular cobertura, e nao o alvo: dois alvos com o mesmo diretorio recusado ficariam indistinguiveis, e alvo inexistente publica caminho relativo canonico.

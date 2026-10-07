@@ -133,8 +133,9 @@ def citation_paths(text: str, suffixes: set[str]) -> list[tuple[str, int]]:
     found: list[tuple[str, int]] = []
     for match in pattern.finditer(text):
         end = match.end()
-        if end < len(text) and (text[end].isalnum() or text[end] in {"_", "."}):
-            # `x.pyc` e `x.py.bak` não citam `x.py`: sufixo declarado seguido de continuação é outro nome.
+        if end < len(text) and (text[end] == "." or f"a{text[end]}".isidentifier()):
+            # `x.pyc`, `x.py.bak` e `x.py` seguido de marca combinante não citam `x.py`: o sufixo
+            # declarado seguido de caractere que continua identificador pertence a outro nome.
             continue
         start = end
         while start > 0 and text[start - 1] not in PATH_STOP_CHARS:
@@ -312,7 +313,9 @@ def normalized_targets(root: Path, paths: list[str] | None) -> set[str]:
     for raw in paths or []:
         candidate = (root / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
         if not candidate.is_relative_to(root):
-            raise HygieneError(f"caminho fora da raiz: {raw}")
+            # Alvo que escapa já é recusa visível no conjunto analisado; aqui ele simplesmente não
+            # alcança manifest nenhum, porque não há manifest dentro de caminho fora da raiz.
+            continue
         rel = safe_relative(candidate, root)
         if not rel or rel == ".":
             # `.` e a propria raiz: cobre a arvore inteira, e comparar com "." deixaria o manifest da
@@ -339,9 +342,18 @@ def scope_files(
     missing: list[dict] = []
     if paths:
         for raw in sorted(paths):
-            candidate = (root / raw).resolve() if not Path(raw).is_absolute() else Path(raw).resolve()
+            literal = root / raw if not Path(raw).is_absolute() else Path(raw)
+            candidate = literal.resolve()
             if not candidate.is_relative_to(root):
-                raise HygieneError(f"caminho fora da raiz: {raw}")
+                # Alvo que resolve para fora é cobertura não analisada, e não erro fatal: o sweep já
+                # recusa o mesmo link, e abortar no modo direcionado seria contrato diferente por modo.
+                missing.append(
+                    {
+                        "path": safe_relative(literal, root) or literal.name,
+                        "reason": "alvo direcionado que resolve para fora da raiz",
+                    }
+                )
+                continue
             if candidate.is_dir():
                 walked, refusals = walk_scope(candidate, root, exclude_dirs)
                 candidates.extend(walked)
@@ -663,7 +675,7 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
     return texts, refused
 
 
-def named_paths(texts: dict[str, str], root: Path, suffixes: set[str]) -> set[str]:
+def named_paths(texts: dict[str, str], root: Path, suffixes: set[str], policy: dict) -> set[str]:
     """Caminhos citados por algum arquivo, resolvidos na raiz e no diretório de quem cita.
 
     A citação pode vir como caminho a partir da raiz (`scripts/x.py`), como caminho a partir do
@@ -671,7 +683,16 @@ def named_paths(texts: dict[str, str], root: Path, suffixes: set[str]) -> set[st
     formas contam, porque todas são invocação declarada para quem lê a instrução.
     """
     named: set[str] = set()
-    known = {relative(path, root) for path in root.rglob("*") if path.is_file()}
+    exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
+    excluded_paths = set(declared_exclusions(policy))
+    walked, _ = walk_scope(root, root, exclude_dirs)
+    known = {
+        relative(path, root)
+        for path in walked
+        if path.is_file()
+        and not in_excluded_dir(relative(path, root), exclude_dirs)
+        and relative(path, root) not in excluded_paths
+    }
     by_name: dict[str, list[str]] = defaultdict(list)
     for rel in sorted(known):
         by_name[Path(rel).name].append(rel)
@@ -849,7 +870,7 @@ def detect_dead_modules(
         for entry in config.get("entry_points", [])
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
-    named = named_paths(texts, root, citation_suffixes(policy))
+    named = named_paths(texts, root, citation_suffixes(policy), policy)
     imported = imported_modules(modules)
     findings: list[dict] = []
     for rel in sorted(modules):
@@ -968,7 +989,7 @@ def scoped_manifests(
     for path in sorted(walked, key=lambda item: item.as_posix()):
         if not any(fnmatch.fnmatch(path.name, pattern) for pattern in patterns):
             continue
-        if path.name.endswith(".lock.txt"):
+        if is_lockfile(path.name):
             # Arquivo de trava é gerado do próprio manifest: ler os dois contaria a mesma dependência duas
             # vezes e acusaria achado de arquivo que a política não trata como declaração de dependência.
             continue
@@ -988,6 +1009,15 @@ def scoped_manifests(
     return manifests, refused
 
 
+def is_lockfile(name: str) -> bool:
+    """Nome de arquivo de trava, por convenção: `.lock` no fim ou `.lock.` no meio do nome.
+
+    A trava é gerada do manifest, e não declaração de dependência: lê-la como manifest primário contaria
+    a mesma dependência duas vezes e faria a classe acusar arquivo gerado.
+    """
+    return name.endswith(".lock") or ".lock." in name
+
+
 def manifest_requirements(path: Path, text: str) -> list[str]:
     """Requisitos declarados em um manifest, pelo formato do arquivo.
 
@@ -996,11 +1026,17 @@ def manifest_requirements(path: Path, text: str) -> list[str]:
     """
     if path.suffix == ".toml":
         return toml_requirements(text)
-    return [
-        cleaned
-        for cleaned in (COMMENT_START_RE.split(raw, maxsplit=1)[0].strip() for raw in text.splitlines())
-        if cleaned and not cleaned.startswith(("-", "#"))
-    ]
+    if path.suffix == ".txt":
+        return [
+            cleaned
+            for cleaned in (
+                COMMENT_START_RE.split(raw, maxsplit=1)[0].strip() for raw in text.splitlines()
+            )
+            if cleaned and not cleaned.startswith(("-", "#"))
+        ]
+    # Formato sem leitura declarada é recusa visível: interpretar INI, JSON ou YAML como lista de linhas
+    # inventaria dependência que o manifest não declara.
+    raise HygieneError(f"manifest de formato sem leitura declarada: {path.name}")
 
 
 def toml_requirements(text: str) -> list[str]:
@@ -1016,15 +1052,17 @@ def toml_requirements(text: str) -> list[str]:
         document = tomllib.loads(text)
     except tomllib.TOMLDecodeError as error:
         raise HygieneError(f"manifest toml invalido ({error.__class__.__name__})") from error
-    requirements: list[str] = []
+    declared: list[str] = []
     project = document.get("project") if isinstance(document.get("project"), dict) else {}
-    requirements.extend(
-        str(item) for item in project.get("dependencies") or [] if isinstance(item, str)
-    )
+    declared.extend(str(item) for item in project.get("dependencies") or [] if isinstance(item, str))
     optional = project.get("optional-dependencies")
     if isinstance(optional, dict):
         for value in optional.values():
-            requirements.extend(str(item) for item in value or [] if isinstance(item, str))
+            declared.extend(str(item) for item in value or [] if isinstance(item, str))
+    # `python` vale para as duas formas: é a versão exigida do interpretador, e não distribuição.
+    requirements = [
+        line for line in declared if requirement_name(line).lower() != "python"
+    ]
     tool = document.get("tool") if isinstance(document.get("tool"), dict) else {}
     poetry = tool.get("poetry") if isinstance(tool.get("poetry"), dict) else {}
     tables = [poetry.get("dependencies"), poetry.get("dev-dependencies")]
@@ -1371,7 +1409,7 @@ def main(argv: list[str] | None = None) -> int:
             for label, path in (("--report", args.report), ("--markdown", args.markdown))
             if path is not None
         }
-        policy = load_policy(root)
+        policy = load_policy(root, args.policy)
         # A varredura só produz relatório de política íntegra: medir com política incompleta seria medir
         # outra coisa e publicar evidência que o gate recusa.
         contract = policy_contract_errors(policy)

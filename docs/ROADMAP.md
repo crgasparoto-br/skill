@@ -241,6 +241,12 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A nona rodada de auditoria corrigiu o que as oito anteriores ainda não garantiam: a citação de nome solto passou a
+resolver contra o escopo medido, para que arquivo excluído não torne ambígua a citação de um nome único; a âncora da
+citação passou a exigir que o sufixo termine o nome, inclusive contra marca combinante; `python` passou a ficar fora da
+contagem também nas listas do PEP 621; formato sem leitura declarada passou a entrar em cobertura não analisada, e
+arquivo de trava passou a ser reconhecido por convenção de nome; alvo direcionado que resolve para fora da raiz passou a
+aparecer em cobertura, em vez de abortar; e a opção `--policy` passou a ser respeitada.
 A oitava rodada de auditoria corrigiu o que as sete anteriores ainda não garantiam: o modo direcionado passou a
 rotular a cobertura a partir da raiz do repositório e a usar caminho relativo canônico no alvo inexistente; o corpus de
 citação passou a ser percorrido pela própria varredura, para que diretório recusado apareça também no modo direcionado
