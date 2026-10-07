@@ -105,6 +105,8 @@ def parse_version(text: str) -> tuple:
     post: int | None = None
     dev: int | None = None
     position = 0
+    rank = 0
+    kinds: set[str] = set()
     while position < len(suffix):
         token = VERSION_TOKEN_RE.match(suffix, position)
         if not token:
@@ -112,15 +114,28 @@ def parse_version(text: str) -> tuple:
         label, number = token.group(1), token.group(2)
         count = int(number) if number else 0
         if label in {"a", "alpha"}:
-            pre = (0, count)
+            kind, value = "pre", (0, count)
         elif label in {"b", "beta"}:
-            pre = (1, count)
+            kind, value = "pre", (1, count)
         elif label in {"c", "rc", "pre", "preview"}:
-            pre = (2, count)
+            kind, value = "pre", (2, count)
         elif label == "post":
-            post = count
+            kind, value = "post", count
         else:
-            dev = count
+            kind, value = "dev", count
+        # A PEP 440 admite no máximo um sufixo de cada tipo, na ordem pré, pós e dev:
+        # `50.0.2post1a1` não é versão válida e não pode passar como se fosse.
+        order = {"pre": 1, "post": 2, "dev": 3}[kind]
+        if order < rank or kind in kinds:
+            raise ValueError(text)
+        rank = order
+        kinds.add(kind)
+        if kind == "pre":
+            pre = value
+        elif kind == "post":
+            post = value
+        else:
+            dev = value
         position = token.end()
     if dev is not None and pre is None and post is None:
         phase = (0, dev, 0)
@@ -214,10 +229,15 @@ def satisfies(version: str, specifier: str) -> bool:
         for operator, target in parse_specifier(specifier):
             if operator in UNSUPPORTED_OPERATORS:
                 raise ValueError(f"operador nao suportado: {operator}")
+            # A PEP 440 não permite versão local em comparador ordenado nem com curinga.
+            if "+" in target and operator not in {"==", "!="}:
+                raise ValueError(f"versao local em operador ordenado: {target}")
             if target.endswith(".*"):
                 prefix = target[:-2]
                 if operator not in {"==", "!="}:
                     raise ValueError(f"curinga com operador {operator}")
+                if "+" in prefix:
+                    raise ValueError(f"curinga com versao local: {target}")
                 matches = compare(current, prefix) == 0 or (
                     current.startswith(prefix + ".") and len(current) > len(prefix)
                 )
@@ -303,8 +323,18 @@ def evaluate_marker(marker: str, environment: dict[str, str]) -> bool:
         return True
     # `and` liga mais forte que `or`: avaliar da esquerda para a direita inverteria o
     # resultado de expressões mistas e faria o gate exigir ou dispensar o pacote errado.
+    groups: list[list[str]] = []
     for group in re.split(r"\s+or\s+", text):
-        atoms = re.split(r"\s+and\s+", group)
+        atoms = [atom.strip() for atom in re.split(r"\s+and\s+", group)]
+        # A gramática é validada por inteiro antes de qualquer atalho lógico: um átomo que o
+        # gate não entende precisa reprovar mesmo quando o resultado já estaria decidido, senão
+        # uma dependência poderia ser escondida atrás de expressão que o gate não avalia.
+        for atom in atoms:
+            match = MARKER_ATOM_RE.match(atom)
+            if not match or match.group(1) not in environment:
+                raise ValueError(atom)
+        groups.append(atoms)
+    for atoms in groups:
         if all(evaluate_marker_atom(atom, environment) for atom in atoms):
             return True
     return False
@@ -365,8 +395,6 @@ def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict
                 errors.append(f"{prefix}: {relative(path, root)}: inclusao sem destino")
                 continue
             found.extend(read_requirements((path.parent / target).resolve(), root, seen, environment, errors, prefix))
-            continue
-        if line.startswith("--"):
             continue
         if line.startswith("-"):
             errors.append(f"{prefix}: {relative(path, root)}: opcao nao suportada pelo gate: {line[:40]}")

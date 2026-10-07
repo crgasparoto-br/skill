@@ -607,3 +607,69 @@ def test_uninterpretable_requirement_line_is_detected(tmp_path: Path,
 def test_unsupported_short_option_is_detected(tmp_path: Path) -> None:
     root = minimal(tmp_path, manifest="-Z algo\n", lock=EMPTY_LOCK)
     assert run(root) == 1
+
+
+# ------------------------------------------- quarta rodada de auditoria independente
+
+
+@pytest.mark.parametrize("marker", [
+    'python_version < "3.0" and coisa == "x"',
+    'python_version >= "3.0" or coisa == "x"',
+    'coisa == "x" and python_version >= "3.0"',
+])
+def test_marker_grammar_is_validated_before_any_short_circuit(marker: str) -> None:
+    """Átomo desconhecido não pode ser escondido atrás do resultado já decidido.
+
+    Sem isso, um marcador que o gate afirma não entender dispensaria a dependência.
+    """
+    from scripts.validate_dependency_locks import evaluate_marker, marker_environment
+
+    with pytest.raises(ValueError):
+        evaluate_marker(marker, marker_environment())
+
+
+def test_marker_hidden_by_short_circuit_cannot_drop_a_package(tmp_path: Path) -> None:
+    manifest = 'cryptography>=50.0.1; python_version < "3.0" and coisa == "x"\n'
+    assert run(minimal(tmp_path, manifest=manifest, lock=EMPTY_LOCK)) == 1
+
+
+@pytest.mark.parametrize("option", [
+    "--constraint constraints.txt",
+    "--index-url https://exemplo.invalid/simple",
+    "--extra-index-url https://exemplo.invalid/simple",
+])
+def test_unsupported_long_option_is_detected(tmp_path: Path, option: str) -> None:
+    """Opção ignorada em silêncio poderia esconder resolução que o manifest não representa."""
+    manifest = f"{option}\ncryptography>=50.0.1\n"
+    assert run(minimal(tmp_path, manifest=manifest, lock=MINIMAL_LOCK)) == 1
+
+
+def test_unsupported_long_option_inside_an_include_is_detected(tmp_path: Path) -> None:
+    root = minimal(tmp_path, manifest="-r extra.txt\n", lock=EMPTY_LOCK)
+    (root / "skill" / "extra.txt").write_text(
+        "--index-url https://exemplo.invalid/simple\n", encoding="utf-8"
+    )
+    assert run(root) == 1
+
+
+@pytest.mark.parametrize("version", [
+    "50.0.2post1a1",
+    "1.0dev1post1",
+    "1.0a1b1",
+])
+def test_pep440_invalid_suffix_order_is_detected(tmp_path: Path, version: str) -> None:
+    """A PEP 440 admite um sufixo de cada tipo, na ordem pré, pós e dev."""
+    lock = MINIMAL_LOCK.replace("cryptography==50.0.2", f"cryptography=={version}")
+    assert run(minimal(tmp_path, lock=lock)) == 1
+
+
+@pytest.mark.parametrize(("version", "specifier", "expected"), [
+    ("50.0.2", ">=50.0.1+abc", False),
+    ("50.0.2", "==50.0+abc", False),
+    ("50.0+abc", "==50.0+abc", True),
+    ("50.0+abc", "==50.0", True),
+    ("50.0.2", "==50.0.2+abc.*", False),
+])
+def test_local_version_is_not_allowed_in_ordered_specifier(version: str, specifier: str,
+                                                            expected: bool) -> None:
+    assert satisfies(version, specifier) is expected
