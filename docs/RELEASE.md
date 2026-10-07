@@ -71,7 +71,7 @@ reprova entrada sem hash ou sem artefato justamente para que a mudança apareça
 
 | Verificação | Onde roda | O que prova |
 | --- | --- | --- |
-| Forma e vínculo | `scripts/validate_dependency_locks.py`, obrigatório e offline | O manifest tem lockfile; cada requisito declarado aparece com versão que **satisfaz o especificador declarado**; inclusão `-r` que não resolve reprova; requisito com marcador falso no contexto registrado não é exigido, e marcador que o gate não avalia reprova; a cadeia `# via` alcança pacote declarado; cada entrada nomeia artefato com sufixo de distribuição, compatível com nome e versão; cada exceção nomeia pacote e versão existentes |
+| Forma e vínculo | `scripts/validate_dependency_locks.py`, obrigatório e offline | O manifest tem lockfile; cada requisito declarado aparece com versão que **satisfaz o especificador declarado**; inclusão `-r` que não resolve ou não é manifest reprova, e linha de requisito que o gate não interpreta reprova em vez de ser descartada; requisito com marcador falso não é exigido, avaliado contra o interpretador que executa o gate, e marcador que o gate não avalia reprova; a cadeia `# via` alcança pacote declarado; cada entrada nomeia artefato com sufixo de distribuição e campos de nome e versão exatamente iguais aos fixados; cada exceção nomeia pacote e versão existentes |
 | Integridade do digest | `scripts/audit_dependencies.py`, fora da sequência obrigatória | O digest corresponde ao artefato, conferido por `pip download --no-deps --require-hashes`; um hash arbitrário com formato válido só é detectável com o artefato em mãos |
 | Vulnerabilidade | `scripts/audit_dependencies.py` | Nenhum aviso do banco de vulnerabilidade ficou fora da política |
 
@@ -86,6 +86,10 @@ cabeçalho. O digest pertence à distribuição escolhida naquele contexto, e po
 escolher outro arquivo, com outro digest, e reprovar a instalação por divergência de hash. Esse é o comportamento
 pretendido: a divergência aparece em vez de passar silenciosamente. A sequência obrigatória usa Python 3.12, a mesma
 versão registrada nos lockfiles, e adotar uma matriz de versões exigiria um lockfile por versão.
+
+O cabeçalho é documentação, não autoridade: marcador de ambiente é avaliado contra o interpretador que executa o gate,
+e não contra o contexto declarado no comentário. Um comentário editável como autoridade permitiria declarar um
+contexto falso para tornar falso um marcador verdadeiro e omitir uma dependência real.
 
 ### Política de exceção
 

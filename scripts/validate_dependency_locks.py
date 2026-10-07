@@ -35,6 +35,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import platform
 import re
 import sys
 from datetime import date
@@ -58,6 +60,7 @@ REVIEW_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SPECIFIER_TOKEN_RE = re.compile(r"^(===|==|!=|~=|<=|>=|<|>)\s*([^\s,]+)")
 VERSION_TOKEN_RE = re.compile(r"\.?(a|b|c|rc|alpha|beta|pre|preview|post|dev)([0-9]*)")
 LOCAL_RE = re.compile(r"^[0-9a-z]+(?:[._-][0-9a-z]+)*$")
+REQUIREMENT_RE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)(\[[^\]]*\])?\s*([^;\s].*?)?\s*$")
 MARKER_ATOM_RE = re.compile(
     r'^(python_version|python_full_version|sys_platform|platform_system|os_name|platform_machine|implementation_name)'
     r'\s*(==|!=|<=|>=|<|>|in|not in)\s*"([^"]*)"$'
@@ -258,27 +261,38 @@ def artifact_matches(name: str, version: str, filename: str) -> bool:
         if stem.endswith(suffix):
             stem = stem[: -len(suffix)]
             break
-    head = re.split(r"-\d", stem, maxsplit=1)[0]
-    if normalize(head) != name:
+    # Sufixo repetido (`pacote-1.0.0-py3-none-any.whl.whl`) não é uma distribuição publicada.
+    if any(stem.endswith(suffix) for suffix in ARTIFACT_SUFFIXES):
         return False
-    return version in stem
+    # A distribuição nomeia o pacote e a versão em campos separados: comparar por substring
+    # aceitaria `cryptography-50.0.20` para a versão 50.0.2.
+    parts = stem.split("-")
+    if len(parts) < 2:
+        return False
+    if normalize(parts[0]) != name:
+        return False
+    return parts[1] == version
 
 
 # --------------------------------------------------------------------------- marcadores
 
 
-def marker_environment(context: tuple[str, str, str]) -> dict[str, str]:
-    """Ambiente declarado no cabeçalho do lockfile, contra o qual o marcador é avaliado."""
-    python_version, platform, machine = context
-    parts = python_version.split(".")
+def marker_environment() -> dict[str, str]:
+    """Ambiente efetivo do gate, contra o qual o marcador é avaliado.
+
+    A autoridade é o interpretador que executa a validação, e não o cabeçalho do lockfile: o
+    cabeçalho é um comentário editável, e usá-lo como autoridade permitiria declarar um
+    contexto falso para desativar um marcador verdadeiro e omitir uma dependência.
+    """
+    version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     return {
-        "python_version": ".".join(parts[:2]),
-        "python_full_version": python_version,
-        "sys_platform": platform,
-        "platform_system": {"linux": "Linux", "darwin": "Darwin", "win32": "Windows"}.get(platform, "Unknown"),
-        "os_name": "nt" if platform == "win32" else "posix",
-        "platform_machine": machine,
-        "implementation_name": "cpython",
+        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
+        "python_full_version": version,
+        "sys_platform": sys.platform,
+        "platform_system": platform.system(),
+        "os_name": os.name,
+        "platform_machine": platform.machine(),
+        "implementation_name": sys.implementation.name,
     }
 
 
@@ -287,20 +301,13 @@ def evaluate_marker(marker: str, environment: dict[str, str]) -> bool:
     text = marker.strip()
     if not text:
         return True
-    tokens = re.split(r"\s+(and|or)\s+", text)
-    values: list[bool] = []
-    operators: list[str] = []
-    for index, token in enumerate(tokens):
-        if index % 2:
-            if token not in {"and", "or"}:
-                raise ValueError(text)
-            operators.append(token)
-        else:
-            values.append(evaluate_marker_atom(token, environment))
-    result = values[0]
-    for operator, value in zip(operators, values[1:]):
-        result = (result and value) if operator == "and" else (result or value)
-    return result
+    # `and` liga mais forte que `or`: avaliar da esquerda para a direita inverteria o
+    # resultado de expressões mistas e faria o gate exigir ou dispensar o pacote errado.
+    for group in re.split(r"\s+or\s+", text):
+        atoms = re.split(r"\s+and\s+", group)
+        if all(evaluate_marker_atom(atom, environment) for atom in atoms):
+            return True
+    return False
 
 
 def evaluate_marker_atom(atom: str, environment: dict[str, str]) -> bool:
@@ -359,13 +366,17 @@ def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict
                 continue
             found.extend(read_requirements((path.parent / target).resolve(), root, seen, environment, errors, prefix))
             continue
+        if line.startswith("--"):
+            continue
         if line.startswith("-"):
+            errors.append(f"{prefix}: {relative(path, root)}: opcao nao suportada pelo gate: {line[:40]}")
             continue
         requirement, _, marker = line.partition(";")
+        name_match = REQUIREMENT_RE.match(requirement.strip())
+        if not name_match:
+            errors.append(f"{prefix}: {relative(path, root)}: linha de requisito nao interpretavel: {line[:60]}")
+            continue
         if marker.strip():
-            if environment is None:
-                errors.append(f"{prefix}: {relative(path, root)}: marcador sem contexto registrado no lockfile: {marker.strip()}")
-                continue
             try:
                 applies = evaluate_marker(marker, environment)
             except ValueError:
@@ -373,12 +384,7 @@ def read_requirements(path: Path, root: Path, seen: set[Path], environment: dict
                 continue
             if not applies:
                 continue
-        name_match = re.match(r"^([A-Za-z0-9][A-Za-z0-9._-]*)", requirement.strip())
-        if not name_match:
-            continue
-        remainder = requirement.strip()[name_match.end():]
-        remainder = re.sub(r"^\[[^\]]*\]", "", remainder)
-        found.append((normalize(name_match.group(1)), remainder.strip(), marker.strip()))
+        found.append((normalize(name_match.group(1)), (name_match.group(3) or "").strip(), marker.strip()))
     return found
 
 
@@ -502,8 +508,9 @@ def validate_manifest(root: Path, manifest: Path) -> list[str]:
     if not REGENERATE_RE.search(text):
         errors.append(f"{where}: cabecalho sem o comando de regeneracao")
 
-    context = CONTEXT_RE.search(text)
-    environment = marker_environment(context.groups()) if context else None
+    if not CONTEXT_RE.search(text):
+        errors.append(f"{where}: cabecalho sem o contexto de resolucao")
+    environment = marker_environment()
 
     entries, parse_errors = parse_lock(text)
     errors.extend(f"{where}: {error}" for error in parse_errors)

@@ -500,11 +500,23 @@ def test_true_marker_requires_the_package(tmp_path: Path) -> None:
     assert run(minimal(tmp_path, manifest=manifest, lock=MINIMAL_LOCK)) == 0
 
 
-def test_marker_without_recorded_context_is_detected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_header_without_resolution_context_is_detected(tmp_path: Path,
+                                                       capsys: pytest.CaptureFixture[str]) -> None:
     lock = MINIMAL_LOCK.replace("# contexto: python 3.12.3 em linux x86_64\n", "")
-    root = minimal(tmp_path, manifest='cryptography>=50.0.1; python_version >= "3.10"\n', lock=lock)
+    root = minimal(tmp_path, lock=lock)
     assert main(["--root", str(root), "--quiet"]) == 1
-    assert "marcador sem contexto" in capsys.readouterr().err
+    assert "sem o contexto de resolucao" in capsys.readouterr().err
+
+
+def test_forged_header_context_does_not_disable_a_true_marker(tmp_path: Path) -> None:
+    """O cabeçalho é comentário editável e não pode ser a autoridade do marcador.
+
+    Declarar um contexto falso para tornar o marcador falso omitiria uma dependência real, e
+    por isso o marcador é avaliado contra o interpretador que executa o gate.
+    """
+    lock = EMPTY_LOCK.replace("python 3.12.3 em linux x86_64", "python 2.7.0 em win32 x86_64")
+    manifest = 'cryptography>=50.0.1; python_version >= "3.10"\n'
+    assert run(minimal(tmp_path, manifest=manifest, lock=lock)) == 1
 
 
 def test_unevaluable_marker_is_detected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -536,16 +548,62 @@ def test_version_with_unknown_suffix_is_detected(tmp_path: Path) -> None:
     assert run(minimal(tmp_path, lock=lock)) == 1
 
 
-def test_marker_environment_uses_the_recorded_context() -> None:
+def test_marker_environment_is_the_running_interpreter() -> None:
+    import sys
+
+    from scripts.validate_dependency_locks import marker_environment
+
+    environment = marker_environment()
+    assert environment["python_version"] == f"{sys.version_info.major}.{sys.version_info.minor}"
+    assert environment["python_full_version"].startswith(environment["python_version"])
+    assert environment["sys_platform"] == sys.platform
+    assert environment["implementation_name"] == sys.implementation.name
+
+
+def test_marker_operator_precedence_matches_pep508() -> None:
+    """`and` liga mais forte que `or`: da esquerda para a direita inverteria o resultado."""
     from scripts.validate_dependency_locks import evaluate_marker, marker_environment
 
-    environment = marker_environment(("3.12.3", "linux", "x86_64"))
-    assert evaluate_marker('python_version >= "3.12"', environment) is True
-    assert evaluate_marker('python_version < "3.0"', environment) is False
-    assert evaluate_marker('sys_platform == "linux" and platform_system != "Windows"', environment) is True
-    # O gate não aproxima: qualquer átomo que ele não saiba avaliar reprova, mesmo que o
-    # atalho lógico o tornasse irrelevante.
+    environment = marker_environment()
+    assert evaluate_marker('python_version >= "3.0" or python_version >= "3.0" and sys_platform == "nope"',
+                           environment) is True
+    assert evaluate_marker('python_version < "3.0" and sys_platform == "linux"', environment) is False
+    assert evaluate_marker('python_version < "3.0" or sys_platform == "linux"', environment) is True
+    # O gate não aproxima: qualquer átomo que ele não saiba avaliar reprova.
     with pytest.raises(ValueError):
         evaluate_marker('coisa == "x"', environment)
-    with pytest.raises(ValueError):
-        evaluate_marker('python_version >= "3.10" or coisa == "x"', environment)
+
+
+@pytest.mark.parametrize(("artifact", "expected"), [
+    ("cryptography-50.0.2-py3-none-any.whl", True),
+    ("cryptography-50.0.2.tar.gz", True),
+    ("cryptography-50.0.20-py3-none-any.whl", False),
+    ("cryptography-50.0.2-py3-none-any.whl.whl", False),
+    ("cffi-50.0.2-py3-none-any.whl", False),
+])
+def test_artifact_binding_is_exact(artifact: str, expected: bool) -> None:
+    """Versão por substring aceitaria 50.0.20 para 50.0.2."""
+    from scripts.validate_dependency_locks import artifact_matches
+
+    assert artifact_matches("cryptography", "50.0.2", artifact) is expected
+
+
+def test_include_of_an_existing_non_manifest_is_detected(tmp_path: Path,
+                                                         capsys: pytest.CaptureFixture[str]) -> None:
+    root = minimal(tmp_path, manifest="-r not-manifest.json\n", lock=EMPTY_LOCK)
+    (root / "skill" / "not-manifest.json").write_text('{"not": "requirements"}', encoding="utf-8")
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "nao interpretavel" in capsys.readouterr().err
+
+
+def test_uninterpretable_requirement_line_is_detected(tmp_path: Path,
+                                                      capsys: pytest.CaptureFixture[str]) -> None:
+    """Linha descartada em silêncio poderia esconder dependência ou aceitar manifest inválido."""
+    root = minimal(tmp_path, manifest="@not-a-requirement\n", lock=EMPTY_LOCK)
+    assert main(["--root", str(root), "--quiet"]) == 1
+    assert "nao interpretavel" in capsys.readouterr().err
+
+
+def test_unsupported_short_option_is_detected(tmp_path: Path) -> None:
+    root = minimal(tmp_path, manifest="-Z algo\n", lock=EMPTY_LOCK)
+    assert run(root) == 1
