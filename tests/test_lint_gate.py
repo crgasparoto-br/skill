@@ -528,12 +528,20 @@ def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -
     def null_suppressions(policy: dict) -> None:
         policy["allowed_suppressions"] = None
 
+    def scalar_line_length(policy: dict) -> None:
+        policy["line_length"] = "100"
+
+    def list_line_length(policy: dict) -> None:
+        policy["line_length"] = [100]
+
     shapes = {
         "families-ausente": drop_families,
         "families-nulo": null_families,
         "entrada-nao-objeto": entry_not_object,
         "select-nulo": null_select,
         "supressoes-nulas": null_suppressions,
+        "line-length-escalar": scalar_line_length,
+        "line-length-lista": list_line_length,
     }
     for label, mutate in shapes.items():
         policy = load_policy()

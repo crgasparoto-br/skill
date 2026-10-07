@@ -61,17 +61,69 @@ def is_validation(command: str) -> bool:
     return command.startswith("python ") and any(marker in command for marker in VALIDATION_MARKERS)
 
 
+def mapping_nodes(node: yaml.Node) -> list[yaml.MappingNode]:
+    """Todos os mapeamentos de um documento, incluindo os aninhados."""
+    found: list[yaml.MappingNode] = []
+    if isinstance(node, yaml.MappingNode):
+        found.append(node)
+        for key, value in node.value:
+            found.extend(mapping_nodes(key))
+            found.extend(mapping_nodes(value))
+    elif isinstance(node, yaml.SequenceNode):
+        for item in node.value:
+            found.extend(mapping_nodes(item))
+    return found
+
+
+def duplicate_key_problems(text: str) -> list[str]:
+    """Chave duplicada no mesmo mapeamento: o carregador padrão sobrescreve em silêncio."""
+    problems: list[str] = []
+    try:
+        documents = list(yaml.compose_all(text))
+    except yaml.YAMLError:
+        return []
+    for document in documents:
+        if document is None:
+            continue
+        for mapping in mapping_nodes(document):
+            seen: set[tuple] = set()
+            for key_node, _ in mapping.value:
+                identity = (getattr(key_node, "tag", None), getattr(key_node, "value", None))
+                if identity in seen:
+                    problems.append(f"workflow: chave duplicada no mapeamento: {identity[1]!r}")
+                seen.add(identity)
+    return problems
+
+
+def load_workflow(path: Path) -> tuple[object, list[str]]:
+    """Documento do workflow e problemas de forma; não levanta exceção."""
+    text = path.read_text(encoding="utf-8")
+    problems = duplicate_key_problems(text)
+    try:
+        documents = list(yaml.safe_load_all(text))
+    except yaml.YAMLError as error:
+        return None, [*problems, f"workflow: YAML invalido ({type(error).__name__})"]
+    if len(documents) != 1:
+        return None, [
+            *problems,
+            f"workflow: precisa de um unico documento YAML, encontrado {len(documents)}",
+        ]
+    return documents[0], problems
+
+
 def workflow_steps(path: Path) -> list[dict]:
     """Passos reais dos jobs, materializados pelo parser de YAML."""
-    document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    jobs = document.get("jobs") or {}
-    steps: list[dict] = []
+    document, _ = load_workflow(path)
+    if not isinstance(document, dict):
+        return []
+    jobs = document.get("jobs")
     if not isinstance(jobs, dict):
-        return steps
+        return []
+    steps: list[dict] = []
     for job in jobs.values():
         if not isinstance(job, dict):
             continue
-        declared = job.get("steps") or []
+        declared = job.get("steps")
         if not isinstance(declared, list):
             continue
         steps.extend(step for step in declared if isinstance(step, dict))
@@ -85,7 +137,9 @@ def workflow_run_commands(path: Path) -> list[str]:
         text = step.get("run")
         if not isinstance(text, str):
             continue
-        commands.extend(command for command in (normalize(line) for line in text.splitlines()) if command)
+        commands.extend(
+            command for command in (normalize(line) for line in text.splitlines()) if command
+        )
     return commands
 
 
@@ -93,32 +147,56 @@ def workflow_commands(path: Path) -> list[str]:
     return [command for command in workflow_run_commands(path) if is_validation(command)]
 
 
-def classification_problems(path: Path) -> list[str]:
-    """Passos do workflow que não estão classificados como validação nem declarados como não."""
+def step_problems(job_name: str, index: int, step: object) -> list[str]:
+    """Classificação de um passo: comando de validação declarado ou ação permitida."""
+    where = f"{job_name} passo {index}"
+    if not isinstance(step, dict):
+        return [f"{where}: passo precisa ser objeto"]
+    name = str(step.get("name") or where)
+    has_run = "run" in step
+    has_uses = "uses" in step
+    if has_run and has_uses:
+        return [f"{name}: passo com run e uses ao mesmo tempo"]
+    if has_uses:
+        used = step.get("uses")
+        if not isinstance(used, str):
+            return [f"{name}: uses precisa ser texto"]
+        if used not in ALLOWED_USES:
+            return [f"{name}: ação sem classificação declarada ({used})"]
+        return []
+    if not has_run:
+        return [f"{name}: passo sem run e sem uses"]
+    text = step.get("run")
+    if not isinstance(text, str) or not text.strip():
+        return [f"{name}: passo de comando vazio"]
     problems: list[str] = []
-    for step in workflow_steps(path):
-        name = str(step.get("name", "<sem nome>"))
-        if "run" in step and "uses" in step:
-            problems.append(f"{name}: passo com run e uses ao mesmo tempo")
+    for line in text.splitlines():
+        command = normalize(line)
+        if not command:
             continue
-        if "uses" in step:
-            used = str(step.get("uses"))
-            if used not in ALLOWED_USES:
-                problems.append(f"{name}: ação sem classificação declarada ({used})")
+        if not is_validation(command) and command not in NON_VALIDATION_STEPS:
+            problems.append(f"{name}: comando sem classificação de validação ({command})")
+    return problems
+
+
+def classification_problems(path: Path) -> list[str]:
+    """Forma do documento e classificação de cada passo; nada aqui levanta exceção."""
+    document, problems = load_workflow(path)
+    if not isinstance(document, dict):
+        return [*problems, "workflow: documento precisa ser objeto"]
+    jobs = document.get("jobs")
+    if not isinstance(jobs, dict) or not jobs:
+        return [*problems, "workflow: jobs precisa ser objeto nao vazio"]
+    for job_name, job in jobs.items():
+        if not isinstance(job, dict):
+            problems.append(f"{job_name}: job precisa ser objeto")
             continue
-        if "run" not in step:
-            problems.append(f"{name}: passo sem run e sem uses")
+        steps = job.get("steps")
+        if not isinstance(steps, list) or not steps:
+            problems.append(f"{job_name}: steps precisa ser lista nao vazia")
             continue
-        text = step.get("run")
-        if not isinstance(text, str) or not text.strip():
-            problems.append(f"{name}: passo de comando vazio")
-            continue
-        for line in text.splitlines():
-            command = normalize(line)
-            if not command:
-                continue
-            if not is_validation(command) and command not in NON_VALIDATION_STEPS:
-                problems.append(f"{name}: comando sem classificação de validação ({command})")
+        for index, step in enumerate(steps, start=1):
+            problems.extend(step_problems(str(job_name), index, step))
     return problems
 
 
@@ -174,7 +252,7 @@ def test_every_workflow_step_is_classified() -> None:
 
 
 def test_yaml_forms_cannot_hide_an_unclassified_step(tmp_path: Path) -> None:
-    """Formas YAML equivalentes não podem esconder um passo ativo do classificador."""
+    """Formas YAML equivalentes e formas estruturais inválidas não podem esconder um passo ativo."""
     template = """name: teste
 on: [push]
 jobs:
@@ -193,12 +271,28 @@ jobs:
         "mapeamento em fluxo com run": "      - {name: escondido, run: echo escondido}\n",
         "bloco de run vazio": "      - name: escondido\n        run: |\n",
         "bloco dobrado vazio": "      - name: escondido\n        run: >\n",
+        "run em lista": "      - name: escondido\n        run: [echo, escondido]\n",
+        "uses nao escalar": "      - name: escondido\n        uses: [actions/cache@1111111111111111111111111111111111111111]\n",
+        "passo nulo": "      - null\n",
+        "run e uses no mesmo passo": "      - name: escondido\n        run: echo escondido\n        uses: actions/cache@1111111111111111111111111111111111111111\n",
+        "chave run duplicada": "      - name: escondido\n        run: echo escondido\n        run: python scripts/validate_docs.py --root .\n",
     }
     for label, snippet in hidden.items():
         path = tmp_path / "workflow.yml"
         path.write_text(template + snippet, encoding="utf-8")
         problems = classification_problems(path)
         assert problems, f"{label} passou sem ser classificada"
+    structure = {
+        "steps nao e lista": template.replace("    steps:\n", "    steps: nenhum\n"),
+        "job nao e objeto": "name: teste\non: [push]\njobs:\n  validacao: quebrado\n",
+        "documento multiplo": template + "---\nname: outro\n",
+        "documento escalar": "apenas texto\n",
+        "jobs ausente": "name: teste\non: [push]\n",
+    }
+    for label, content in structure.items():
+        path = tmp_path / "workflow.yml"
+        path.write_text(content, encoding="utf-8")
+        assert classification_problems(path), f"{label} passou sem ser classificada"
     path = tmp_path / "limpo.yml"
     path.write_text(template, encoding="utf-8")
     assert classification_problems(path) == []

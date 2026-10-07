@@ -1106,4 +1106,20 @@ def test_manifest_selector_refuses_a_path_outside_the_root(tmp_path: Path) -> No
     )
     assert completed.returncode == 1
     assert "fora da raiz" in completed.stderr
+    absolute = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "lock_dependencies.py"),
+            "--root",
+            str(tree),
+            "--manifest",
+            str(tree / "requirements.txt"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=str(REPO_ROOT),
+    )
+    assert absolute.returncode == 1
+    assert "relativo a raiz" in absolute.stderr
 

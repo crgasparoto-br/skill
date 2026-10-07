@@ -89,7 +89,8 @@ Uma supressão só é aceita quando o código está na lista permitida da polít
 justificativa depois de ` - `. Uma política quebrada interrompe a validação ali: seleção, arquivos, supressões e análise
 dependem de uma política íntegra, então nada derivado dela é consultado e a reprovação traz a causa em vez do sintoma
 que a ferramenta reportaria em cima de uma seleção inválida. Forma bruta inválida, como `families` ausente ou nulo,
-entrada de família que não é objeto e `select` que não é lista, reprova pelo mesmo caminho, sem traceback.
+entrada de família que não é objeto, `select` que não é lista e `line_length` que não é objeto reprovam pelo mesmo
+caminho, sem traceback.
 A leitura cobre as formas que a ferramenta reconhece: o marcador em qualquer caixa e a
 diretiva de arquivo com prefixo `ruff:` ou `flake8:`. Supressão de arquivo sem código é recusada, porque desliga a
 análise inteira sem deixar o alvo declarado, e diretiva que não suprime nada reprova. A leitura é feita sobre
@@ -183,6 +184,11 @@ encobrir outra dependência.
 
 A sequência obrigatória instala as dependências de teste do próprio lockfile com `--require-hashes`, de modo que o ambiente que executa o gate é o ambiente registrado.
 
+A sequência documentada é comparada com a do workflow pelo teste de paridade, que lê os passos com um parser de YAML
+e é fail-closed na forma do documento: exige um único documento, recusa chave duplicada no mesmo mapeamento, exige
+`jobs` objeto não vazio, cada job objeto, `steps` lista não vazia e cada passo objeto com `run` ou `uses` — e não os
+dois —, com valor textual. Assim, uma forma alternativa de escrever o mesmo passo ativo, ou uma forma estrutural
+inválida que o parser aceitaria, não passa sem classificação.
 A consulta ao banco de vulnerabilidade e a verificação de integridade são do workflow
 [`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml), com gatilho agendado, manual e em
 pull request que toca manifest, lockfile ou política. Ele nunca faz parte da sequência obrigatória: quando o banco, o

@@ -164,8 +164,12 @@ def policy_errors(policy: dict, catalog: dict[str, str]) -> list[str]:
     if not re.fullmatch(r"py3\d{2}", str(policy.get("target_version", ""))):
         errors.append("politica: target_version precisa ser alvo explicito, como py312")
 
-    line_length = policy.get("line_length") or {}
-    if not isinstance(line_length.get("value"), int) or line_length["value"] <= 0:
+    line_length = policy.get("line_length")
+    if not isinstance(line_length, dict):
+        # Forma bruta invalida reprova aqui: consultar campo de um escalar trocaria a causa por um
+        # traceback, que e exatamente o que a interrupcao da validacao existe para evitar.
+        errors.append("politica: line_length precisa ser objeto")
+    elif not isinstance(line_length.get("value"), int) or line_length["value"] <= 0:
         errors.append("politica: line_length.value precisa ser inteiro positivo")
     else:
         reason = line_length.get("reason")

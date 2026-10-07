@@ -211,6 +211,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.manifest:
         # O cabeçalho do lockfile manda regenerar por manifest: selecionar um caminho fora da raiz
         # deixaria o gerador escrever onde não deve, então o caminho é confinado antes de tudo.
+        if Path(args.manifest).is_absolute():
+            print(f"manifest precisa ser caminho relativo a raiz: {args.manifest}", file=sys.stderr)
+            return 1
         candidate = (root / args.manifest).resolve()
         if not candidate.is_file() or (candidate != root and root not in candidate.parents):
             print(f"manifest fora da raiz ou inexistente: {args.manifest}", file=sys.stderr)
