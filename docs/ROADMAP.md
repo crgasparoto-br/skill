@@ -241,6 +241,14 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A oitava rodada de auditoria corrigiu o que as sete anteriores ainda não garantiam: o modo direcionado passou a
+rotular a cobertura a partir da raiz do repositório e a usar caminho relativo canônico no alvo inexistente; o corpus de
+citação passou a ser percorrido pela própria varredura, para que diretório recusado apareça também no modo direcionado
+a arquivo; identificador e caminho citado passaram a seguir a gramática de Python em vez de classe de caractere;
+`import pkg.sub` passou a manter `pkg/__init__.py` vivo; o conjunto de manifestos passou a ser declarado na política e
+`pyproject.toml` passou a ser lido pelo formato; o relatório passou a ser recusado dentro da árvore medida; o comando da
+varredura passou a reprovar política que o gate reprova; apelido de exceção, nome global e apelido de import passaram a
+ser apagados na normalização; e requisito de VCS passou a usar o nome do fragmento `egg`.
 A sétima rodada de auditoria corrigiu o que as seis anteriores ainda não garantiam: a varredura passou a percorrer a
 árvore por conta própria, e diretório ilegível e link de diretório passaram a aparecer como cobertura não analisada em
 vez de sumirem do relatório; o motivo de cobertura passou a ser escrito com caminho relativo, o que torna o relatório

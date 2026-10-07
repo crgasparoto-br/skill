@@ -62,10 +62,14 @@ MIN_REASON_WORDS = 6
 MIN_DISTINCT_CHARS = 12
 CLASS_STATES = ("gated", "reported")
 COMMON_CLASS_KEYS = ("state", "limits")
-EXTRA_CLASS_KEYS = {"duplication": ("min_body_lines",), "complexity": ("max_complexity",)}
+EXTRA_CLASS_KEYS = {
+    "duplication": ("min_body_lines",),
+    "complexity": ("max_complexity",),
+    "unused-dependency": ("manifest_patterns",),
+}
 INT_KEYS = ("min_body_lines", "max_complexity", "baseline")
 BOOL_KEYS = ("exclude_declared_copies", "exclude_tests")
-LIST_KEYS = ("tool_dependencies",)
+LIST_KEYS = ("tool_dependencies", "manifest_patterns")
 DICT_KEYS = ("import_name_map",)
 
 
@@ -167,6 +171,30 @@ def _class_threshold_errors(name: str, entry: dict) -> list[str]:
 SUPPRESSOR_KEYS = ("entry_points", "ignore_names")
 
 
+def _manifest_pattern_errors(name: str, entry: dict) -> list[str]:
+    """Escopo de manifest declarado: vazio não mede nada e caminho é escopo parcial disfarçado.
+
+    Conjunto de manifestos no código seria escopo escondido, e escopo vazio faria a classe parecer
+    aprovada sem ter lido declaração nenhuma. O padrão casa com o nome do arquivo, em qualquer
+    diretório: padrão com separador de caminho mediria um diretório só, sem dizer isso.
+    """
+    patterns = entry.get("manifest_patterns")
+    if not isinstance(patterns, list):
+        return []
+    errors: list[str] = []
+    if not patterns:
+        errors.append(f"politica: classes.{name}.manifest_patterns nao pode ser vazio")
+    for index, pattern in enumerate(patterns):
+        if not isinstance(pattern, str) or not pattern:
+            errors.append(f"politica: classes.{name}.manifest_patterns[{index}] precisa ser texto")
+        elif "/" in pattern:
+            errors.append(
+                f"politica: classes.{name}.manifest_patterns[{index}] precisa ser padrao de nome de "
+                "arquivo, sem separador de caminho"
+            )
+    return errors
+
+
 def _suppressor_errors(name: str, entry: dict) -> list[str]:
     """Supressor declarativo precisa dizer o que silencia e por quê.
 
@@ -208,6 +236,7 @@ def _class_errors(name: str, entry: object) -> list[str]:
     errors.extend(_typed_errors(entry, name, DICT_KEYS, dict, "mapeamento de texto para texto"))
     errors.extend(_class_threshold_errors(name, entry))
     errors.extend(_suppressor_errors(name, entry))
+    errors.extend(_manifest_pattern_errors(name, entry))
     return errors
 
 

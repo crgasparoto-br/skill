@@ -68,6 +68,7 @@ BASE_POLICY = {
             "state": "gated",
             "import_name_map": {"pyyaml": "yaml"},
             "tool_dependencies": ["pytest"],
+            "manifest_patterns": ["requirements*.txt", "pyproject.toml"],
             "limits": "Nao ve import indireto por caminho condicional nem dependencia transitiva.",
         },
         "complexity": {
@@ -1634,3 +1635,198 @@ def test_policy_rejects_absolute_coverage_path_and_bare_suppressor() -> None:
         }
     )
     assert [error for error in validate_hygiene.policy_errors(declared) if "ignore_names" in error] == []
+
+
+def test_targeted_walk_reports_refusals_relative_to_root(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo direcionado perdia a raiz e fundia recusas de subárvores distintas."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "sub1/a.py": "V = 1\n",
+            "sub2/a.py": "V = 1\n",
+            "README.md": "`sub1/a.py` `sub2/a.py`\n",
+        },
+    )
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (tree / "sub1" / "vendor").symlink_to(outside)
+    (tree / "sub2" / "vendor").symlink_to(outside)
+    report, _ = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree), ["sub1", "sub2"])
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["sub1/vendor", "sub2/vendor"]
+
+
+def test_missing_target_uses_canonical_relative_path(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo inexistente publicava o caminho informado, inclusive absoluto."""
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"})
+    report, _ = hygiene_scan.build_report(
+        tree, hygiene_scan.load_policy(tree), [str(tree / "missing.py")]
+    )
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["missing.py"]
+
+
+def test_corpus_walk_reports_refused_directory_in_file_mode(tmp_path: Path) -> None:
+    """Achado bloqueante: modo direcionado a arquivo omitia diretório recusado do corpus."""
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"})
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (tree / "vendor").symlink_to(outside)
+    document = hygiene_scan.load_policy(tree)
+    sweep, _ = hygiene_scan.build_report(tree, document)
+    targeted, _ = hygiene_scan.build_report(tree, document, ["alpha.py"])
+    assert [entry["path"] for entry in sweep["not_analyzed"]] == ["vendor"]
+    assert [entry["path"] for entry in targeted["not_analyzed"]] == ["vendor"]
+
+
+def test_unicode_identifier_outside_basic_plane_is_analyzed(tmp_path: Path) -> None:
+    """Achado bloqueante: identificador Unicode aceito por `ast` não era reconhecido no texto."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "\u1885.py": "def \u1885(x):\n    return \u1885(x) if x else 1\n",
+            "README.md": "Use \u1885.py\n",
+        },
+    )
+    report = scan(tree)
+    assert findings_of(report, "dead-symbol") == []
+    assert findings_of(report, "dead-module") == []
+
+
+def test_submodule_import_keeps_package_init_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: `import pkg.sub` não mantinha `pkg/__init__.py` vivo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "VALUE = 1\n",
+            "pkg/sub.py": "VALUE = 2\n",
+            "consumer.py": "import pkg.sub\n",
+            "README.md": "`consumer.py`\n",
+        },
+        policy_variant(**{"classes.dead-module.package_init_is_entry": False}),
+    )
+    assert findings_of(scan(tree), "dead-module") == []
+
+
+def test_pyproject_manifest_is_analyzed(tmp_path: Path) -> None:
+    """Achado bloqueante: escopo de manifest fixo no código deixava `pyproject.toml` sem análise."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "a.py": "import json\n",
+            "README.md": "`a.py`\n",
+            "pyproject.toml": (
+                "[project]\n"
+                'name = "exemplo"\n'
+                'dependencies = ["requests>=2"]\n'
+                "\n"
+                "[tool.poetry.dependencies]\n"
+                'python = "^3.11"\n'
+                'flask = "^3"\n'
+            ),
+        },
+    )
+    assert sorted(finding["symbol"] for finding in findings_of(scan(tree), "unused-dependency")) == [
+        "flask",
+        "requests",
+    ]
+
+
+def test_manifest_patterns_key_is_required() -> None:
+    """Achado bloqueante: escopo de manifest precisa ser declarado, e não assumido no código."""
+    policy = policy_variant()
+    del policy["classes"]["unused-dependency"]["manifest_patterns"]
+    errors = validate_hygiene.policy_errors(policy)
+    assert any("manifest_patterns ausente" in error for error in errors)
+
+    empty = policy_variant(**{"classes.unused-dependency.manifest_patterns": []})
+    assert any("nao pode ser vazio" in error for error in validate_hygiene.policy_errors(empty))
+
+    path_pattern = policy_variant(**{"classes.unused-dependency.manifest_patterns": ["sub/req.txt"]})
+    assert any(
+        "sem separador de caminho" in error for error in validate_hygiene.policy_errors(path_pattern)
+    )
+
+
+def test_scan_command_refuses_report_inside_measured_tree(tmp_path: Path) -> None:
+    """Achado bloqueante: relatório dentro da árvore alterava a medição e sobrescrevia arquivo."""
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"})
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(tree / "alpha.py"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode != 0
+    assert (tree / "alpha.py").read_text(encoding="utf-8") == "V = 1\n"
+
+
+def test_scan_command_rejects_policy_with_invalid_suppressor(tmp_path: Path) -> None:
+    """Achado não bloqueante: a CLI isolada aceitava política que o gate reprova."""
+    tree = make_tree(tmp_path, {"alpha.py": "V = 1\n", "README.md": "`alpha.py`\n"})
+    document = json.loads((tree / "config" / "hygiene-policy.json").read_text(encoding="utf-8"))
+    document["classes"]["dead-symbol"]["ignore_names"] = ["__all__"]
+    (tree / "config" / "hygiene-policy.json").write_text(json.dumps(document), encoding="utf-8")
+    output = tmp_path.parent / f"{tmp_path.name}-report.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 1
+    assert not output.exists()
+
+
+def test_exception_alias_does_not_hide_duplication(tmp_path: Path) -> None:
+    """Achado não bloqueante: apelido de exceção não era apagado na normalização."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "a.py": (
+                "def f():\n"
+                "    try:\n"
+                "        return 1\n"
+                "    except ValueError as first:\n"
+                "        return 2\n"
+            ),
+            "b.py": (
+                "def g():\n"
+                "    try:\n"
+                "        return 1\n"
+                "    except ValueError as other:\n"
+                "        return 2\n"
+            ),
+            "README.md": "`a.py` `b.py`\n",
+        },
+        policy_variant(**{"classes.duplication.min_body_lines": 1}),
+    )
+    assert sorted(finding["location"] for finding in findings_of(scan(tree), "duplication")) == [
+        "a.py::f",
+        "b.py::g",
+    ]
+
+
+def test_vcs_requirement_uses_egg_fragment(tmp_path: Path) -> None:
+    """Achado não bloqueante: requisito de VCS virava nome truncado e acusava dependência importada."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "a.py": "import requests\n",
+            "README.md": "`a.py`\n",
+            "requirements.txt": "git+https://example.invalid/repo.git#egg=requests\n",
+        },
+    )
+    assert findings_of(scan(tree), "unused-dependency") == []

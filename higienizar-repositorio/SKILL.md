@@ -69,6 +69,11 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Percorrer a arvore e trabalho da varredura, e nao de `rglob`: diretorio ilegivel e link para diretorio aparecem como cobertura nao analisada, em vez de sumirem.
 - Motivo de cobertura nao carrega caminho absoluto: duas copias identicas da mesma arvore precisam produzir o mesmo relatorio, e caminho de fora da raiz declarado em `not_analyzed_allowed` reprova.
 - Supressor declarativo, em `entry_points` e em `ignore_names`, declara nome e motivo escritos: lista de texto solto esconderia nome arbitrario sem auditabilidade.
+- O conjunto de manifestos e declarado na politica, em `manifest_patterns`: conjunto fixo no codigo seria escopo escondido, e `pyproject.toml` e lido pelo formato, nao como lista de linhas.
+- O relatorio nao pode ser gravado dentro da arvore medida: evidencia gravada no objeto medido entra no corpus de citacao, muda a medicao seguinte e pode sobrescrever arquivo coberto.
+- O comando da varredura reprova politica que o gate reprova, antes de medir: medir com politica invalida publicaria evidencia que ninguem pode aceitar.
+- O modo direcionado usa a raiz do repositorio para rotular cobertura, e nao o alvo: dois alvos com o mesmo diretorio recusado ficariam indistinguiveis, e alvo inexistente publica caminho relativo canonico.
+- Identificador e caminho citado seguem a gramatica de Python, e nao classe de caractere: marca combinante e simbolo fora do plano basico contam como nome, e o arquivo nao e acusado de morto com a citacao no texto.
 - `not_analyzed` e buraco de cobertura, nunca limpeza: arquivo ilegivel, diretorio ilegivel, link quebrado, link de diretorio, manifest ilegivel, alvo direcionado que nao existe, caminho que resolve para fora da raiz ou erro de sintaxe precisa ser corrigido ou declarado na politica. Permissao declarada sem arquivo correspondente tambem reprova.
 
 ## Contratos

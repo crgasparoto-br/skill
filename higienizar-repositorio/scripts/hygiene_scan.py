@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import fnmatch
 import hashlib
 import json
 import re
@@ -41,9 +42,27 @@ from pathlib import Path
 
 DEFAULT_POLICY = Path("config") / "hygiene-policy.json"
 SHARED_FILES = Path("config") / "shared-files.json"
-# `\w` cobre identificador Unicode, que `ast` e `str.isidentifier()` aceitam: padrão ASCII acusaria
-# símbolo morto em código correto e bloquearia classe controlada.
-IDENTIFIER_TOKEN_RE = re.compile(r"[^\W\d]\w*")
+def identifier_tokens(text: str) -> list[str]:
+    """Identificadores do texto, pela gramática de identificador de Python.
+
+    Classe de caractere não cobre a gramática: marca combinante e símbolo aceito por `str.isidentifier()`
+    ficam de fora, e a contagem textual acusaria símbolo morto em código que se referencia. A regra é a
+    do próprio interpretador, aplicada caractere a caractere, com o custo de uma passada por arquivo.
+    """
+    tokens: list[str] = []
+    current = ""
+    for character in text:
+        if current and f"{current}{character}".isidentifier():
+            current += character
+            continue
+        if current:
+            tokens.append(current)
+            current = ""
+        if character == "_" or character.isidentifier():
+            current = character
+    if current:
+        tokens.append(current)
+    return tokens
 COMMENT_START_RE = re.compile(r"\s+#")
 CLASSES = ("duplication", "dead-module", "dead-symbol", "unused-dependency", "complexity")
 
@@ -89,13 +108,41 @@ def corpus_suffixes(policy: dict) -> set[str]:
 PLACEHOLDER_ANCHOR_RE = re.compile(r"<[^<>]*>$")
 
 
-def citation_pattern(policy: dict) -> re.Pattern[str]:
-    """Expressão que reconhece citação de caminho, montada dos sufixos declarados."""
+# Caractere que não pode fazer parte de nome de arquivo: a coleta para trás para aqui. Deliberadamente
+# curto, porque nome Unicode, inclusive com marca combinante, precisa ser recolhido como qualquer outro.
+PATH_STOP_CHARS = frozenset(" \t\n\r\"'`()[]{}<>,;:=|*?")
+
+
+def citation_suffixes(policy: dict) -> set[str]:
+    """Sufixos que ancoram citação de caminho: os do corpus e os das classes cobertas."""
     suffixes = {*corpus_suffixes(policy), *(scope_of(policy).get("include_suffixes") or [])}
-    names = sorted(
-        {re.escape(str(suffix).lstrip(".")) for suffix in suffixes if str(suffix).startswith(".")}
-    )
-    return re.compile(rf"[\w./-]+\.(?:{'|'.join(names)})\b")
+    return {str(suffix) for suffix in suffixes if str(suffix).startswith(".")}
+
+
+def citation_paths(text: str, suffixes: set[str]) -> list[tuple[str, int]]:
+    """Caminhos citados no texto, com a posição do início de cada um.
+
+    O sufixo declarado ancora o fim do caminho e o início é recolhido para trás até um caractere que não
+    pode fazer parte de nome de arquivo. Montar isso como classe de caractere deixaria de fora nome
+    Unicode com marca combinante, e o arquivo seria acusado de morto com a citação presente no texto.
+    """
+    endings = sorted(suffixes, key=len, reverse=True)
+    if not endings:
+        return []
+    pattern = re.compile("|".join(re.escape(suffix) for suffix in endings))
+    found: list[tuple[str, int]] = []
+    for match in pattern.finditer(text):
+        end = match.end()
+        if end < len(text) and (text[end].isalnum() or text[end] in {"_", "."}):
+            # `x.pyc` e `x.py.bak` não citam `x.py`: sufixo declarado seguido de continuação é outro nome.
+            continue
+        start = end
+        while start > 0 and text[start - 1] not in PATH_STOP_CHARS:
+            start -= 1
+        candidate = text[start:end]
+        if len(candidate) > len(match.group(0)):
+            found.append((candidate, start))
+    return found
 
 
 def identifier_counts(texts: dict[str, str]) -> Counter[str]:
@@ -106,7 +153,7 @@ def identifier_counts(texts: dict[str, str]) -> Counter[str]:
     """
     counts: Counter[str] = Counter()
     for text in texts.values():
-        counts.update(IDENTIFIER_TOKEN_RE.findall(text))
+        counts.update(identifier_tokens(text))
     return counts
 
 
@@ -130,7 +177,7 @@ REQUIRED_CLASS_KEYS = {
     "duplication": ("min_body_lines", "exclude_declared_copies", "exclude_tests"),
     "dead-module": ("entry_points", "exclude_tests", "package_init_is_entry"),
     "dead-symbol": ("exclude_tests", "ignore_names"),
-    "unused-dependency": ("import_name_map", "tool_dependencies"),
+    "unused-dependency": ("import_name_map", "tool_dependencies", "manifest_patterns"),
     "complexity": ("max_complexity",),
 }
 
@@ -212,16 +259,18 @@ def declared_exclusions(policy: dict) -> dict[str, str]:
     return declared
 
 
-def walk_scope(root: Path, skip: set[str]) -> tuple[list[Path], list[dict]]:
-    """Todos os caminhos sob a raiz, e o que não pôde ser percorrido.
+def walk_scope(start: Path, root: Path, skip: set[str]) -> tuple[list[Path], list[dict]]:
+    """Todos os caminhos sob `start`, e o que não pôde ser percorrido.
 
     `rglob` não desce diretório sem permissão de leitura e não avisa, e não segue link para diretório: a
     varredura mediria menos do que o escopo inclui e ainda assim declararia cobertura completa. Diretório
     excluído por declaração não é percorrido nem recusado, porque a exclusão já está no relatório.
+    A recusa é sempre relativa a `root`: no modo direcionado o início é o alvo, e dois alvos com o mesmo
+    nome de diretório recusado ficariam indistinguíveis se o caminho fosse relativo ao alvo.
     """
     found: list[Path] = []
     refused: list[dict] = []
-    pending = [root]
+    pending = [start]
     while pending:
         current = pending.pop()
         try:
@@ -294,17 +343,24 @@ def scope_files(
             if not candidate.is_relative_to(root):
                 raise HygieneError(f"caminho fora da raiz: {raw}")
             if candidate.is_dir():
-                walked, refusals = walk_scope(candidate, exclude_dirs)
+                walked, refusals = walk_scope(candidate, root, exclude_dirs)
                 candidates.extend(walked)
                 missing.extend(refusals)
             elif candidate.is_file():
                 candidates.append(candidate)
             else:
                 # Alvo que não existe não é escopo vazio: sem a recusa, um erro de digitação produziria
-                # relatório limpo com modo direcionado, que é indistinguível de uma árvore sem achado.
-                missing.append({"path": raw, "reason": "alvo direcionado que nao existe"})
+                # relatório limpo com modo direcionado, que é indistinguível de uma árvore sem achado. O
+                # caminho é o canônico relativo, porque publicar o caminho informado faria o relatório
+                # depender de onde a árvore está no disco.
+                missing.append(
+                    {
+                        "path": safe_relative(candidate, root) or raw.strip(),
+                        "reason": "alvo direcionado que nao existe",
+                    }
+                )
     else:
-        walked, refusals = walk_scope(root, exclude_dirs)
+        walked, refusals = walk_scope(root, root, exclude_dirs)
         candidates.extend(walked)
         missing.extend(refusals)
     files: list[Path] = []
@@ -446,6 +502,29 @@ class IdentifierNeutralizer(ast.NodeTransformer):
         # interface da chamada e seleciona parâmetro distinto, e não é nome local que se possa apagar.
         self.generic_visit(node)
         return node
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> ast.AST:
+        # `except Error as first` e `except Error as second` diferem só no nome local da exceção.
+        if node.name:
+            node.name = "ID"
+        self.generic_visit(node)
+        return node
+    def visit_Global(self, node: ast.Global) -> ast.AST:
+        node.names = ["ID"] * len(node.names)
+        return node
+    def visit_Nonlocal(self, node: ast.Nonlocal) -> ast.AST:
+        node.names = ["ID"] * len(node.names)
+        return node
+    def visit_Import(self, node: ast.Import) -> ast.AST:
+        # Só o apelido é nome local; o módulo importado é semântica da chamada e permanece.
+        for alias in node.names:
+            if alias.asname:
+                alias.asname = "ID"
+        return node
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> ast.AST:
+        for alias in node.names:
+            if alias.asname:
+                alias.asname = "ID"
+        return node
     def visit_MatchAs(self, node: ast.MatchAs) -> ast.AST:
         if node.name:
             node.name = "ID"
@@ -559,7 +638,9 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
     resolved_root = root.resolve()
     texts: dict[str, str] = {}
     refused: list[dict] = []
-    for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
+    walked, refusals = walk_scope(root, root, exclude_dirs)
+    refused.extend(refusals)
+    for path in sorted(walked, key=lambda item: item.as_posix()):
         rel = relative(path, root)
         if in_excluded_dir(rel, exclude_dirs) or rel in excluded_paths:
             continue
@@ -582,7 +663,7 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
     return texts, refused
 
 
-def named_paths(texts: dict[str, str], root: Path, pattern: re.Pattern[str]) -> set[str]:
+def named_paths(texts: dict[str, str], root: Path, suffixes: set[str]) -> set[str]:
     """Caminhos citados por algum arquivo, resolvidos na raiz e no diretório de quem cita.
 
     A citação pode vir como caminho a partir da raiz (`scripts/x.py`), como caminho a partir do
@@ -597,13 +678,13 @@ def named_paths(texts: dict[str, str], root: Path, pattern: re.Pattern[str]) -> 
     for rel, text in texts.items():
         directory = Path(rel).parent.as_posix()
         skill_root = Path(rel).parts[0] if len(Path(rel).parts) > 1 else ""
-        for match in pattern.finditer(text):
-            cleaned = match.group(0).removeprefix("./")
+        for cited, start in citation_paths(text, suffixes):
+            cleaned = cited.removeprefix("./")
             if cleaned.startswith("/"):
                 # A barra inicial só é âncora quando o caminho vem logo depois de um marcador de lugar,
                 # como em `<skill>/scripts/x.py`: fora disso é caminho absoluto, que não é citação de
                 # arquivo da árvore e não pode manter módulo vivo.
-                if not PLACEHOLDER_ANCHOR_RE.search(text[: match.start()]):
+                if not PLACEHOLDER_ANCHOR_RE.search(text[:start]):
                     continue
                 cleaned = cleaned.lstrip("/")
             parts = Path(cleaned).parts
@@ -712,6 +793,12 @@ def requirement_name(line: str) -> str:
     try:
         return Requirement(line).name
     except InvalidRequirement:
+        # Requisito de VCS, como `git+https://example.invalid/repo.git#egg=requests`, não é PEP 508 e declara o nome
+        # no fragmento: sem o fragmento o corte textual devolveria a URL truncada e a dependência
+        # importada viraria achado falso.
+        fragment = re.search(r"[#&]egg=([A-Za-z0-9._-]+)", line)
+        if fragment:
+            return fragment.group(1)
         return re.split(r"[<>=!~\[;@]", line, maxsplit=1)[0].strip()
 
 
@@ -762,7 +849,7 @@ def detect_dead_modules(
         for entry in config.get("entry_points", [])
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
-    named = named_paths(texts, root, citation_pattern(policy))
+    named = named_paths(texts, root, citation_suffixes(policy))
     imported = imported_modules(modules)
     findings: list[dict] = []
     for rel in sorted(modules):
@@ -774,9 +861,13 @@ def detect_dead_modules(
         if rel in declared_entries or rel in named:
             continue
         dotted = rel[:-3].replace("/", ".")
-        # `import pkg` alcança `pkg/__init__.py`: o módulo do pacote é o próprio nome importado, e
-        # comparar só `pkg.__init__` acusaria módulo morto em pacote Python normal.
-        if dotted in imported or (dotted.endswith(".__init__") and dotted[:-9] in imported):
+        # `import pkg` e `import pkg.sub` alcançam `pkg/__init__.py`: importar subpacote executa o módulo
+        # de inicialização do pacote, e comparar só `pkg.__init__` acusaria módulo morto em pacote normal.
+        package = dotted[:-9] if dotted.endswith(".__init__") else None
+        if dotted in imported or (
+            package is not None
+            and any(name == package or name.startswith(f"{package}.") for name in imported)
+        ):
             continue
         findings.append(
             {
@@ -860,26 +951,92 @@ def scoped_manifests(
 ) -> tuple[list[Path], list[dict]]:
     """Manifests no escopo declarado, e o que ficou fora por resolver para fora da raiz.
 
-    Manifest é lido do disco: link que resolve para fora da árvore entraria como declaração de fora e
-    faria o resultado depender de arquivo que a varredura não mede.
+    Os padrões de nome vêm da política: conjunto fixo no código seria escopo escondido, e manifest que a
+    política não declara medido é o mesmo problema na direção oposta. Manifest é lido do disco: link que
+    resolve para fora da árvore entraria como declaração de fora e faria o resultado depender de arquivo
+    que a varredura não mede.
     """
     exclude_dirs = set(scope_of(policy).get("exclude_dirs") or [])
     excluded_paths = set(declared_exclusions(policy))
     targets = normalized_targets(root.resolve(), paths)
     resolved_root = root.resolve()
+    patterns = [str(item) for item in policy["classes"]["unused-dependency"]["manifest_patterns"]]
     manifests: list[Path] = []
     refused: list[dict] = []
-    for path in sorted(root.rglob("requirements*.txt")):
+    walked, walk_refusals = walk_scope(root, root, exclude_dirs)
+    refused.extend(walk_refusals)
+    for path in sorted(walked, key=lambda item: item.as_posix()):
+        if not any(fnmatch.fnmatch(path.name, pattern) for pattern in patterns):
+            continue
         if path.name.endswith(".lock.txt"):
+            # Arquivo de trava é gerado do próprio manifest: ler os dois contaria a mesma dependência duas
+            # vezes e acusaria achado de arquivo que a política não trata como declaração de dependência.
             continue
         rel = relative(path, root)
         if in_excluded_dir(rel, exclude_dirs) or rel in excluded_paths or not in_targets(rel, targets):
             continue
+        if path.is_symlink() and not path.is_file():
+            refused.append({"path": rel, "reason": "manifest que e link quebrado"})
+            continue
         if not path.resolve().is_relative_to(resolved_root):
             refused.append({"path": rel, "reason": "manifest que resolve para fora da raiz"})
             continue
+        if not path.is_file():
+            refused.append({"path": rel, "reason": "manifest que nao e arquivo regular"})
+            continue
         manifests.append(path)
     return manifests, refused
+
+
+def manifest_requirements(path: Path, text: str) -> list[str]:
+    """Requisitos declarados em um manifest, pelo formato do arquivo.
+
+    Formato sem leitura declarada é recusado, e não lido como texto de requisito: interpretar arquivo de
+    outro formato como lista de linhas produziria achado inventado.
+    """
+    if path.suffix == ".toml":
+        return toml_requirements(text)
+    return [
+        cleaned
+        for cleaned in (COMMENT_START_RE.split(raw, maxsplit=1)[0].strip() for raw in text.splitlines())
+        if cleaned and not cleaned.startswith(("-", "#"))
+    ]
+
+
+def toml_requirements(text: str) -> list[str]:
+    """Requisitos de `pyproject.toml`: padrão do empacotador e tabelas do Poetry.
+
+    `python` fica de fora porque é a versão exigida do interpretador, e não distribuição importável.
+    """
+    try:
+        import tomllib
+    except ImportError as error:  # pragma: no cover - versao sem tomllib
+        raise HygieneError("manifest toml sem leitura suportada nesta versao") from error
+    try:
+        document = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as error:
+        raise HygieneError(f"manifest toml invalido ({error.__class__.__name__})") from error
+    requirements: list[str] = []
+    project = document.get("project") if isinstance(document.get("project"), dict) else {}
+    requirements.extend(
+        str(item) for item in project.get("dependencies") or [] if isinstance(item, str)
+    )
+    optional = project.get("optional-dependencies")
+    if isinstance(optional, dict):
+        for value in optional.values():
+            requirements.extend(str(item) for item in value or [] if isinstance(item, str))
+    tool = document.get("tool") if isinstance(document.get("tool"), dict) else {}
+    poetry = tool.get("poetry") if isinstance(tool.get("poetry"), dict) else {}
+    tables = [poetry.get("dependencies"), poetry.get("dev-dependencies")]
+    groups = poetry.get("group")
+    if isinstance(groups, dict):
+        tables.extend(
+            group.get("dependencies") for group in groups.values() if isinstance(group, dict)
+        )
+    for table in tables:
+        if isinstance(table, dict):
+            requirements.extend(str(key) for key in table if str(key).lower() != "python")
+    return requirements
 
 
 def detect_unused_dependencies(
@@ -913,19 +1070,13 @@ def detect_unused_dependencies(
                 elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
                     imported.add(node.module.split(".")[0])
         try:
-            try:
-                lines = read_text(manifest, relative(manifest, root)).splitlines()
-            except HygieneError as error:
-                # Manifest é entrada da classe: falha de leitura não pode sair do relatório só porque o
-                # sufixo dele não está no corpus de citação.
-                refused.append({"path": relative(manifest, root), "reason": str(error)})
-                continue
-        except HygieneError:
+            lines = manifest_requirements(manifest, read_text(manifest, manifest_rel))
+        except HygieneError as error:
+            # Manifest é entrada da classe: falha de leitura não pode sair do relatório só porque o
+            # sufixo dele não está no corpus de citação.
+            refused.append({"path": manifest_rel, "reason": str(error)})
             continue
-        for raw in lines:
-            line = COMMENT_START_RE.split(raw, maxsplit=1)[0].strip()
-            if not line or line.startswith(("#", "-")):
-                continue
+        for line in lines:
             name = requirement_name(line)
             if not name:
                 continue
@@ -1181,6 +1332,30 @@ def render_markdown(report: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def write_target(path: Path, root: Path, label: str) -> Path:
+    """Destino de escrita do relatório, recusado dentro da árvore medida.
+
+    Relatório é evidência sobre a árvore: gravado dentro dela entra no corpus de citação, altera a medição
+    seguinte e pode sobrescrever arquivo coberto. Evidência que muda o objeto medido não é evidência.
+    """
+    target = path.resolve()
+    if target.is_relative_to(root):
+        raise HygieneError(f"{label} dentro da arvore medida: use caminho fora de {root.name}")
+    return target
+
+
+def policy_contract_errors(policy: dict) -> list[str]:
+    """Forma da política conferida pelo mesmo validador do gate, sem duplicar a regra aqui.
+
+    A importação é tardia porque o gate importa este módulo, e importá-lo no topo fecharia o ciclo.
+    """
+    try:
+        from validate_hygiene import policy_errors
+    except ImportError:  # pragma: no cover - gate ausente no caminho de importacao
+        return ["politica: validador de politica indisponivel"]
+    return list(policy_errors(policy))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Varredura global de higiene do repositorio")
     parser.add_argument("--root", type=Path, default=None)
@@ -1191,7 +1366,20 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = (args.root or Path()).resolve()
     try:
-        policy = load_policy(root, args.policy)
+        targets = {
+            label: write_target(path, root, label)
+            for label, path in (("--report", args.report), ("--markdown", args.markdown))
+            if path is not None
+        }
+        policy = load_policy(root)
+        # A varredura só produz relatório de política íntegra: medir com política incompleta seria medir
+        # outra coisa e publicar evidência que o gate recusa.
+        contract = policy_contract_errors(policy)
+        if contract:
+            print("Politica invalida:", file=sys.stderr)
+            for problem in sorted(set(contract)):
+                print(f"- {problem}", file=sys.stderr)
+            return 1
         report, problems = build_report(root, policy, args.paths)
     except HygieneError as error:
         print(f"ERRO: {error}", file=sys.stderr)
@@ -1204,11 +1392,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     payload = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
     if args.report:
-        args.report.write_text(payload, encoding="utf-8")
+        targets["--report"].write_text(payload, encoding="utf-8")
     else:
         sys.stdout.write(payload)
     if args.markdown:
-        args.markdown.write_text(render_markdown(report), encoding="utf-8")
+        targets["--markdown"].write_text(render_markdown(report), encoding="utf-8")
     if problems:
         print("Problemas na politica:", file=sys.stderr)
         for problem in problems:

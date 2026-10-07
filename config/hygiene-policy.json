@@ -69,7 +69,11 @@
         "pip-audit",
         "pytest"
       ],
-      "limits": "Não vê import indireto por caminho condicional nem dependência de dependência, e não analisa manifest fora do escopo declarado: diretório excluído, caminho excluído ou caminho fora do modo direcionado."
+      "limits": "Não vê dependência usada por nome montado, por `importlib`, por plugin nem por extra opcional que não seja declarado. Lê os formatos de manifest declarados em manifest_patterns: lista de requisitos por linha e pyproject.toml, com project.dependencies, project.optional-dependencies e as tabelas do Poetry; setup.cfg, setup.py, requirements.in e arquivo de trava não são lidos, e manifest de outro formato não é interpretado como lista de linhas. Requisito de VCS usa o nome do fragmento egg quando existe. Import conta no escopo do diretório do manifest: dependência usada só fora dele é acusada, porque o manifest declara o ambiente daquele diretório.",
+      "manifest_patterns": [
+        "requirements*.txt",
+        "pyproject.toml"
+      ]
     },
     "complexity": {
       "state": "reported",
