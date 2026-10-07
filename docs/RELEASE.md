@@ -111,8 +111,8 @@ Booleano e fração não são inteiros: `schema_version: true`, `schema_version:
 ninguém declarou. O que a política exige é o inteiro exato. Os campos `tool.install` e `tool.invocation` também são verificados, e não
 apenas declarados, e por forma exata: a instalação precisa ser o pip pelo lockfile com `--require-hashes`, com
 caminho relativo dentro da raiz, e a invocação precisa ser a ferramenta declarada com seu subcomando. `description`
-precisa ser texto não vazio, e cada `-r` da instalação precisa ser um lockfile relativo, sem `..` e sem caminho
-absoluto. Procura textual deixaria passar `echo pip install ... && outra coisa`. O estado de família precisa ser texto, e uma
+precisa ser texto não vazio, e a instalação precisa ter um único `-r`, com lockfile relativo, sem `..`, sem caminho
+absoluto e sem lockfile extra ou repetido. Procura textual deixaria passar `echo pip install ... && outra coisa`. O estado de família precisa ser texto, e uma
 forma que não pode sequer ser comparada, como dicionário ou lista, reprova em vez de estourar.
 ### Limite declarado
 O gate verifica presença e extensão do motivo declarado, não a veracidade dele: um motivo longo e enganoso passa.
@@ -203,8 +203,15 @@ declarada: `python` seguido de um alvo e de argumentos sem metacaractere de shel
 simples de saída, com ou sem `2>&1`. Composição (`&&`, `||`, `;`, `|`, `&`), substituição (`$()`, crase), aspas,
 escape, descritor de arquivo (`2>`, `1>`, `10>`), redirecionamento extra, `python -c` e invólucros (`eval`, `env`,
 `sudo`, `time`, `nohup`, `xargs`, `sh -c`) não casam. Além disso, o alvo precisa estar declarado: um script de
-validação que existe como arquivo regular sob a raiz, ou um dos módulos declarados (`pip`, `pytest`). Assim um
-marcador escrito em um argumento não promove um script arbitrário, e um nome parecido sem arquivo não passa. Essa classificação é executada por `scripts/validate_workflow_classification.py`, que está na sequência
+validação declarado um a um, que existe como arquivo regular sob a raiz e não passa por link simbólico, ou um dos
+módulos declarados (`pip`, `pytest`). Assim um marcador escrito em um argumento não promove um script arbitrário, um
+nome parecido sem arquivo não passa, um `validate_algo.py` recém-criado não entra na sequência por conta própria e um
+link com nome declarado não vale pelo conteúdo que ele aponta.
+
+Duas limitações são declaradas, e não achados: o destino do redirecionamento é conferido como texto de comando, sem
+confinamento de caminho, porque a sequência grava o relatório de avaliações em `/tmp`; e a autenticação de um comando
+de módulo recai sobre o alvo declarado (`pip`, `pytest`), não sobre cada argumento, de modo que mudar argumentos de um
+passo já declarado aparece na revisão da mudança, e não como reprovação do gate. Essa classificação é executada por `scripts/validate_workflow_classification.py`, que está na sequência
 obrigatória e também confere a paridade entre CI, README e AGENTS, e não apenas por um teste. Assim, uma forma alternativa de escrever o mesmo passo ativo, ou uma forma estrutural
 inválida que o parser aceitaria, não passa sem classificação.
 A consulta ao banco de vulnerabilidade e a verificação de integridade são do workflow

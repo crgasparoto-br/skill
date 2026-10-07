@@ -206,7 +206,7 @@ política, com reprovação por divergência; supressão em linha ou de arquivo 
 justificativa na própria diretiva, e diretiva de arquivo sem código é recusada; o escopo varrido é declarado na
 política, e arquivo coberto fora da raiz, diretório ilegível e saída inesperada da ferramenta reprovam em vez de
 reduzir o conjunto analisado em silêncio; e o gate roda sem rede e sem cache. A árvore foi corrigida até
-passar limpo em 216 arquivos: import morto, variável não usada, nome de laço reatribuído, exceção sem encadeamento,
+passar limpo sobre toda a árvore Python coberta: import morto, variável não usada, nome de laço reatribuído, exceção sem encadeamento,
 caminho via `os`, fuso ambíguo, alias de flag de expressão regular, `subprocess` sem `check`, ordenação de import,
 `stdout`/`stderr` explícitos e compreensões desnecessárias.
 Critério de aceite: `python3 scripts/validate_lint.py --root .` aprova a árvore entregue; reprova arquivo novo que

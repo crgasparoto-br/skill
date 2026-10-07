@@ -35,8 +35,10 @@ MINIMUM_REASON_CHARS = 40
 MINIMUM_JUSTIFICATION_CHARS = 8
 # Instalação declarada: o pip pelo lockfile, com verificação de hash, e nada além disso. A forma é
 # exata porque procura textual deixaria passar `echo pip install ... && outra coisa`.
+# Um único `-r`, relativo: repetir ou acrescentar lockfiles deixaria a instalação declarada apontar
+# para conteúdo que ninguém autorizou.
 INSTALL_RE = re.compile(
-    r"python3? -m pip install --require-hashes(?: -r [A-Za-z0-9_][A-Za-z0-9_./-]*\.lock\.txt)+"
+    r"python3? -m pip install --require-hashes -r [A-Za-z0-9_][A-Za-z0-9_./-]*\.lock\.txt"
 )
 INVOCATION_RE = re.compile(r"[a-z][a-z0-9-]* [a-z][a-z0-9-]*")
 ENTRY_RE = re.compile(r"[A-Z]+\d*")

@@ -38,16 +38,30 @@ import yaml
 WORKFLOW = Path(".github") / "workflows" / "validate.yml"
 DOCUMENTED = (Path("README.md"), Path("AGENTS.md"))
 SHELL_FENCES = {"```bash", "```sh", "```shell"}
-# Scripts de validação declarados pelo nome. `scripts/validate_*.py` também vale, mas sempre com o
-# arquivo existindo sob a raiz, porque o nome sozinho seria só um marcador.
+# Scripts de validação declarados, um a um. O nome não basta: um padrão `scripts/validate_*.py`
+# promoveria qualquer arquivo que alguém criasse com esse nome, e o conteúdo não é verificável pelo
+# caminho. Acrescentar um passo de validação é ato deliberado, então a declaração é explícita aqui.
 VALIDATION_SCRIPTS = (
+    "scripts/validate_repository.py",
+    "scripts/validate_catalog.py",
+    "scripts/validate_contract_sync.py",
     "scripts/sync_contracts.py",
+    "scripts/validate_docs.py",
     "scripts/build_catalog_docs.py",
-    "scripts/lock_dependencies.py",
+    "scripts/validate_versioning.py",
+    "scripts/validate_adapters.py",
+    "scripts/validate_evals.py",
     "evals/run_evals.py",
+    "scripts/validate_reachability.py",
+    "scripts/validate_issue_templates.py",
+    "scripts/validate_context_budget.py",
+    "scripts/validate_reference_indexes.py",
+    "scripts/validate_dependency_locks.py",
+    "scripts/validate_lint.py",
+    "scripts/validate_workflow_classification.py",
+    "scripts/lock_dependencies.py",
     "entregar-issue/scripts/validate_skill_genericity.py",
 )
-VALIDATION_SCRIPT_RE = re.compile(r"scripts/validate_[a-z0-9_]+\.py")
 # Ações de infraestrutura que não provam estado do repositório: preparar o ambiente e publicar o
 # artefato de release. Qualquer uso novo precisa ser classificado aqui de propósito.
 ALLOWED_USES = (
@@ -92,15 +106,20 @@ def target_of(command: str) -> tuple[str, str] | None:
 
 
 def is_declared_script(target: str, root: Path | None) -> bool:
-    """Script de validação declarado, existindo como arquivo regular sob a raiz."""
-    if ".." in target or target.startswith("/"):
-        return False
-    if target not in VALIDATION_SCRIPTS and not VALIDATION_SCRIPT_RE.fullmatch(target):
+    """Script de validação declarado, existindo como arquivo regular sob a raiz.
+
+    O caminho precisa estar declarado, ser relativo, não passar por link simbólico e resolver para
+    um arquivo regular dentro da raiz: link simbólico com nome declarado apontaria para outro
+    conteúdo, então reprova em vez de ser seguido.
+    """
+    if ".." in target or target.startswith("/") or target not in VALIDATION_SCRIPTS:
         return False
     if root is None:
         return True
     candidate = root / target
-    return candidate.is_file() and root.resolve() in candidate.resolve().parents
+    if candidate.is_symlink() or not candidate.is_file():
+        return False
+    return root.resolve() in candidate.resolve().parents
 
 
 def is_validation(command: str, root: Path | None = None) -> bool:

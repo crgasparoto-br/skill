@@ -564,6 +564,17 @@ def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -
             "echo pip install --require-hashes -r requirements.lock.txt && /tmp/escondido"
         )
 
+    def duplicated_install(policy: dict) -> None:
+        policy["tool"]["install"] = (
+            "python -m pip install --require-hashes -r requirements.lock.txt "
+            "-r requirements.lock.txt"
+        )
+
+    def extra_install(policy: dict) -> None:
+        policy["tool"]["install"] = (
+            "python -m pip install --require-hashes -r requirements.lock.txt -r outro.lock.txt"
+        )
+
     def outside_install(policy: dict) -> None:
         policy["tool"]["install"] = (
             "python -m pip install --require-hashes -r ../fora/requirements.lock.txt"
@@ -603,6 +614,8 @@ def test_structurally_invalid_policy_fails_with_only_the_cause(tmp_path: Path) -
         "estado-lista": list_state,
         "install-forjado": forged_install,
         "install-fora-da-raiz": outside_install,
+        "install-repetido": duplicated_install,
+        "install-com-lockfile-extra": extra_install,
         "invocacao-forjada": forged_invocation,
         "invocacao-sem-subcomando": single_token_invocation,
         "descricao-nula": null_description,

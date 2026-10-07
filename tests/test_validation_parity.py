@@ -22,6 +22,7 @@ import yaml
 from scripts.validate_workflow_classification import (
     ALLOWED_USES,
     NON_VALIDATION_STEPS,
+    VALIDATION_SCRIPTS,
     WORKFLOW,
     classification_problems,
     command_problems,
@@ -176,6 +177,27 @@ def test_declared_invocations_are_accepted(command: str) -> None:
 def test_marker_in_argument_or_forged_target_is_not_validation(command: str) -> None:
     """O alvo declarado decide a classificação: marcador em argumento não promove um script."""
     assert not is_validation(command, ROOT), command
+
+
+def test_only_declared_scripts_are_validation(tmp_path: Path) -> None:
+    """Nome parecido, link simbólico e arquivo não declarado não viram validação."""
+    tree = tmp_path / "repo"
+    (tree / "scripts").mkdir(parents=True)
+    (tree / "scripts" / "validate_docs.py").write_text("print('ok')\n", encoding="utf-8")
+    (tree / "scripts" / "validate_escondido.py").write_text(
+        "import os\n", encoding="utf-8"
+    )
+    (tree / "scripts" / "validate_link.py").symlink_to(tree / "scripts" / "validate_docs.py")
+    assert is_validation("python scripts/validate_docs.py --root .", tree)
+    assert not is_validation("python scripts/validate_escondido.py --root .", tree)
+    assert not is_validation("python scripts/validate_link.py --root .", tree)
+
+
+def test_every_validator_in_the_tree_is_declared() -> None:
+    """Todo `scripts/validate_*.py` do repositório precisa estar declarado, ou a declaração envelhece."""
+    declared = {Path(script).name for script in VALIDATION_SCRIPTS}
+    present = {path.name for path in (ROOT / "scripts").glob("validate_*.py")}
+    assert present <= declared, sorted(present - declared)
 
 
 def test_yaml_forms_cannot_hide_an_unclassified_step(tmp_path: Path) -> None:
