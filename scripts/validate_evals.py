@@ -72,144 +72,63 @@ def selection_case_errors(case: dict[str, Any]) -> list[str]:
     return []
 
 
-FORBIDDEN_MODULE_CALLS = frozenset(
-    {"globals", "locals", "vars", "exec", "eval", "compile", "__import__", "setattr", "delattr"}
-)
+CANONICAL_NAMES = ("__all__", "__version__")
 
 
-def _called_names(tree: ast.Module) -> set[str]:
-    """Nomes chamados diretamente no modulo, que poderiam alterar o namespace auditado."""
-    names: set[str] = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            names.add(node.func.id)
-    return names
+def canonical_shim_problems(tree: ast.Module) -> list[str]:
+    """O modulo auditado precisa ser apenas o envelope canonico de exportacao da versao.
 
-
-def _indirect_write(tree: ast.Module) -> str:
-    """Alvo de escrita que nao e nome simples, como atributo, subscrito ou cadeia.
-
-    Escrever em `sys.modules[__name__].__version__` ou em `globals()["__version__"]` muda o valor
-    efetivo sem que o inventario de nomes veja uma ligacao nova.
+    A leitura e fechada por lista permitida: fora de um docstring inicial, da atribuicao de
+    `__all__` e da atribuicao de `__version__`, qualquer instrucao reprova. Nao existe, portanto,
+    forma aceita de religar os nomes por alias, `__dict__`, `globals`, `exec`, decorador,
+    metaclasse, import dinamico, compreensao ou qualquer outro efeito.
     """
-    for node in ast.walk(tree):
-        targets: list[ast.AST] = []
-        if isinstance(node, ast.Assign):
-            targets = list(node.targets)
-        elif isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.NamedExpr)):
-            targets = [node.target]
-        elif isinstance(node, ast.Delete):
-            targets = list(node.targets)
-        for target in targets:
-            inner = target.value if isinstance(target, ast.Starred) else target
-            if isinstance(inner, (ast.Attribute, ast.Subscript)):
-                return ast.unparse(inner)
-    return ""
-
-
-def _mutated_names(tree: ast.Module) -> list[str]:
-    """Nomes auditados usados como base de atributo, como em `__all__.append(...)`."""
-    names = []
-    for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Attribute)
-            and isinstance(node.value, ast.Name)
-            and node.value.id in {"__all__", "__version__"}
-            and node.value.id not in names
-        ):
-            names.append(node.value.id)
-    return names
-
-
-def _bound_names(target: ast.AST) -> list[str]:
-    """Nomes ligados por um alvo de atribuicao, em qualquer forma de desempacotamento."""
-    if isinstance(target, ast.Name):
-        return [target.id]
-    if isinstance(target, (ast.Tuple, ast.List)):
-        names: list[str] = []
-        for element in target.elts:
-            names.extend(_bound_names(element))
-        return names
-    if isinstance(target, ast.Starred):
-        return _bound_names(target.value)
-    return []
-
-
-def _binds(node: ast.AST) -> list[str]:
-    """Nomes que um no pode definir ou remover, cobrindo atribuicao, laco, contexto e import."""
-    if isinstance(node, ast.Assign):
-        names: list[str] = []
-        for target in node.targets:
-            names.extend(_bound_names(target))
-        return names
-    if isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.NamedExpr)):
-        return _bound_names(node.target)
-    if isinstance(node, (ast.For, ast.AsyncFor, ast.comprehension)):
-        return _bound_names(node.target)
-    if isinstance(node, (ast.With, ast.AsyncWith)):
-        names = []
-        for item in node.items:
-            if item.optional_vars is not None:
-                names.extend(_bound_names(item.optional_vars))
-        return names
-    if isinstance(node, (ast.Global, ast.Nonlocal)):
-        return list(node.names)
-    if isinstance(node, ast.Delete):
-        names = []
-        for target in node.targets:
-            names.extend(_bound_names(target))
-        return names
-    if isinstance(node, (ast.Import, ast.ImportFrom)):
-        return [alias.asname or alias.name.split(".")[0] for alias in node.names]
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-        return [node.name]
-    if isinstance(node, ast.arg):
-        return [node.arg]
-    if isinstance(node, ast.ExceptHandler):
-        return [node.name] if node.name else []
-    if isinstance(node, ast.MatchAs):
-        return [node.name] if node.name else []
-    if isinstance(node, ast.MatchStar):
-        return [node.name] if node.name else []
-    if isinstance(node, ast.MatchMapping):
-        return [node.rest] if node.rest else []
-    if isinstance(node, ast.TypeAlias):
-        return [node.name.id]
-    return []
-
-
-def package_structure_problems(tree: ast.Module) -> list[str]:
-    """Recusa escrita indireta e formas dinamicas que poderiam religar a versao auditada.
-
-    Chamada de `globals`, `exec` e equivalentes, importacao coringa, escrita em subscrito ou
-    atributo, e uso de `__all__`/`__version__` como base de atributo mudam o namespace sem que o
-    inventario de nomes veja uma ligacao nova.
-    """
-    forbidden = sorted(set(FORBIDDEN_MODULE_CALLS) & _called_names(tree))
-    if forbidden:
-        return [f"evals/__init__.py chama {', '.join(forbidden)}, o que permite religar a versao"]
-    if any(
-        isinstance(node, ast.ImportFrom) and any(alias.name == "*" for alias in node.names)
-        for node in ast.walk(tree)
+    body = list(tree.body)
+    if (
+        body
+        and isinstance(body[0], ast.Expr)
+        and isinstance(body[0].value, ast.Constant)
+        and isinstance(body[0].value.value, str)
     ):
-        return ["evals/__init__.py usa importacao coringa, que pode reexportar outro __version__"]
-    indirect = _indirect_write(tree)
-    if indirect:
-        return [f"evals/__init__.py escreve fora de nome simples: {indirect}"]
-    mutated = _mutated_names(tree)
-    if mutated:
-        return [f"evals/__init__.py manipula {', '.join(mutated)} por atributo ou chamada"]
+        body = body[1:]
+    found: dict[str, ast.Assign] = {}
+    for node in body:
+        simples = (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+        )
+        if not simples:
+            return ["evals/__init__.py contem instrucao fora do envelope canonico de versao"]
+        name = node.targets[0].id
+        if name not in CANONICAL_NAMES:
+            return [f"evals/__init__.py atribui `{name}` fora do envelope canonico de versao"]
+        if name in found:
+            return [f"evals/__init__.py liga `{name}` mais de uma vez"]
+        found[name] = node
+    ausentes = [name for name in CANONICAL_NAMES if name not in found]
+    if ausentes:
+        return ["evals/__init__.py nao declara " + " nem ".join(f"`{name}`" for name in ausentes)]
+    version = found["__version__"].value
+    if not (isinstance(version, ast.Constant) and isinstance(version.value, str)):
+        return ["evals/__init__.py atribui __version__ fora de texto literal"]
+    exportado = found["__all__"].value
+    if not isinstance(exportado, ast.List) or not all(
+        isinstance(element, ast.Constant) and isinstance(element.value, str)
+        for element in exportado.elts
+    ):
+        return ["evals/__init__.py declara __all__ fora de lista de textos"]
+    names = [element.value for element in exportado.elts]
+    if "__version__" not in names:
+        return [f"evals/__init__.py exporta {names!r}, sem __version__"]
     return []
 
 
 def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
     """A versao exportada pelo pacote de avaliacoes precisa ser a mesma do manifesto do harness.
 
-    A leitura e estatica, sem importar o pacote, e exige a forma canonica: exatamente uma ligacao
-    de `__version__`, no nivel de modulo, com texto literal, e `__version__` presente em `__all__`.
-    Qualquer outra ligacao — anotada, aumentada, dentro de condicional, de laco, de contexto,
-    desempacotada, em `global`/`nonlocal`, em `del` ou por import — reprova, porque mudaria o valor
-    efetivo em tempo de import e a comparacao com o manifesto perderia sentido.
+    A leitura e estatica, sem importar o pacote, e exige o envelope canonico de duas atribuicoes,
+    de modo que o valor efetivo so possa vir do texto literal declarado.
     """
     path = root / "evals" / "__init__.py"
     try:
@@ -217,52 +136,17 @@ def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
     except (OSError, UnicodeDecodeError, SyntaxError) as exc:
         return [f"evals/__init__.py ilegivel: {exc}"]
 
-    structural = package_structure_problems(tree)
-    if structural:
-        return structural
+    problems = canonical_shim_problems(tree)
+    if problems:
+        return problems
 
-    version_nodes = [node for node in ast.walk(tree) if "__version__" in _binds(node)]
-    if not version_nodes:
-        return ["evals/__init__.py nao declara __version__ com texto literal"]
-    if len(version_nodes) > 1:
-        return ["evals/__init__.py liga __version__ mais de uma vez"]
-    node = version_nodes[0]
-    simple = (
-        isinstance(node, ast.Assign)
-        and node in tree.body
-        and len(node.targets) == 1
+    declared = next(
+        node.value.value
+        for node in tree.body
+        if isinstance(node, ast.Assign)
         and isinstance(node.targets[0], ast.Name)
+        and node.targets[0].id == "__version__"
     )
-    if not simple:
-        return ["evals/__init__.py liga __version__ fora de atribuicao simples no nivel de modulo"]
-    value = node.value
-    if not (isinstance(value, ast.Constant) and isinstance(value.value, str)):
-        return ["evals/__init__.py atribui __version__ fora de texto literal"]
-
-    all_nodes = [candidate for candidate in ast.walk(tree) if "__all__" in _binds(candidate)]
-    if not all_nodes:
-        return ["evals/__init__.py nao declara __all__"]
-    if len(all_nodes) > 1:
-        return ["evals/__init__.py liga __all__ mais de uma vez"]
-    declared_all = all_nodes[0]
-    simple_all = (
-        isinstance(declared_all, ast.Assign)
-        and declared_all in tree.body
-        and len(declared_all.targets) == 1
-        and isinstance(declared_all.targets[0], ast.Name)
-    )
-    if not simple_all:
-        return ["evals/__init__.py liga __all__ fora de atribuicao simples no nivel de modulo"]
-    exported = declared_all.value
-    if not isinstance(exported, ast.List) or not all(
-        isinstance(element, ast.Constant) and isinstance(element.value, str) for element in exported.elts
-    ):
-        return ["evals/__init__.py declara __all__ fora de lista de textos"]
-    names = [element.value for element in exported.elts]
-    if "__version__" not in names:
-        return [f"evals/__init__.py exporta {names!r}, sem __version__"]
-
-    declared = value.value
     expected = manifest.get("harness_version")
     if declared != expected:
         return [f"evals/__init__.py declara {declared!r} e o manifesto declara {expected!r}"]
