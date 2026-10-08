@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json
+
+import argparse
+import json
 from pathlib import Path
+
 
 def main() -> int:
     p=argparse.ArgumentParser(); p.add_argument('--report',required=True); p.add_argument('--head-sha',required=True); a=p.parse_args()

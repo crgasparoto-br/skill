@@ -2,6 +2,23 @@
 
 Estes portões transformam riscos que escapam de checklists nominais em inventários e cenários executados.
 
+## Quando ler este arquivo
+
+Ler quando o perfil de execução for `critical` e os sinais dos portões F20 a F34 estiverem presentes.
+
+## Índice
+
+- [F20 — Indistinguibilidade pública](#f20--indistinguibilidade-pública)
+- [F21 — Atomicidade da decisão de negócio](#f21--atomicidade-da-decisão-de-negócio)
+- [F22 — Invariantes relacionais e dados legados](#f22--invariantes-relacionais-e-dados-legados)
+- [F23 — Vigência, revisão e invalidação](#f23--vigência-revisão-e-invalidação)
+- [F24 — Revisão e transição visíveis completas](#f24--revisão-e-transição-visíveis-completas)
+- [F15 — Documento vinculado ao candidato final](#f15--documento-vinculado-ao-candidato-final)
+- [F25 — Fechamento produtor–contrato–consumidor](#f25--fechamento-produtorcontratoconsumidor)
+- [F26 — Consistência da fonte canônica entre superfícies](#f26--consistência-da-fonte-canônica-entre-superfícies)
+- [F27 — Ausência de contratos documentais concorrentes](#f27--ausência-de-contratos-documentais-concorrentes)
+- [F34 — entrada nao confiavel](#f34--entrada-nao-confiavel)
+
 ## F20 — Indistinguibilidade pública
 
 Aplicar quando houver autorização ou privacidade. Inventariar em `public_boundaries` cada endpoint público ou de escopo não confiável, os estados secretos comparados e o ponto em que rate limit/autenticação/guards executam.

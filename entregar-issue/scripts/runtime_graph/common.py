@@ -7,7 +7,10 @@ import re
 import xml.etree.ElementTree as ET
 from collections import defaultdict, deque
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 SUPPORTED_SOURCE_EXTENSIONS = {
     ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
@@ -128,7 +131,7 @@ def _js_imports(text: str) -> list[str]:
 def _config_candidate(base: Path, value: str) -> Path | None:
     raw = value.strip()
     candidates: list[Path] = []
-    if raw.startswith(".") or raw.startswith("/"):
+    if raw.startswith((".", "/")):
         candidate = (base / raw).resolve() if not raw.startswith("/") else Path(raw)
         candidates.extend([candidate, candidate.with_suffix(".json") if not candidate.suffix else candidate])
     else:
@@ -186,7 +189,7 @@ def _script_aliases(repo: Path) -> tuple[list[tuple[str, list[str], Path]], list
         r"find\s*:\s*[\"'](?P<key>[^\"']+)[\"'][^}]*?replacement\s*:\s*"
         r"(?:(?:path\.)?resolve\(\s*__dirname\s*,\s*[\"'](?P<resolved>[^\"']+)[\"']\s*\)|"
         r"[\"'](?P<plain>[^\"']+)[\"'])",
-        re.S,
+        re.DOTALL,
     )
     for config_path in repo.rglob("*"):
         if config_path.name not in config_names or any(part in IGNORED_DIRS for part in config_path.parts):
@@ -290,9 +293,8 @@ def _ts_configs(repo: Path) -> tuple[list[tuple[str, list[str], Path]], list[Pat
             if not isinstance(paths, dict):
                 errors.append(f"compilerOptions.paths must be an object in {config_path}")
                 continue
-            for pattern, targets in paths.items():
-                if isinstance(targets, str):
-                    targets = [targets]
+            for pattern, raw_targets in paths.items():
+                targets = [raw_targets] if isinstance(raw_targets, str) else raw_targets
                 if isinstance(pattern, str) and isinstance(targets, list) and all(
                     isinstance(item, str) for item in targets
                 ):
@@ -453,10 +455,7 @@ def _python_module_index(repo: Path, virtual: dict[str, str]) -> tuple[dict[str,
             parts = list(relative.parts)
             if not parts:
                 continue
-            if parts[-1] == "__init__.py":
-                module_parts = parts[:-1]
-            else:
-                module_parts = parts[:-1] + [PurePosixPath(parts[-1]).stem]
+            module_parts = parts[:-1] if parts[-1] == "__init__.py" else [*parts[:-1], PurePosixPath(parts[-1]).stem]
             if module_parts:
                 index.setdefault(".".join(module_parts), rel)
     top_level = {module.split(".", 1)[0] for module in index}
@@ -662,7 +661,7 @@ def build_runtime_context(
     virtual_files = set(virtual)
     aliases, base_urls, js_config_errors = _ts_configs(repo)
     workspaces, workspace_errors = _workspace_packages(repo)
-    js_config_errors = sorted(set([*js_config_errors, *workspace_errors]))
+    js_config_errors = sorted({*js_config_errors, *workspace_errors})
     py_index, py_roots = _python_module_index(repo, virtual)
     go_module = _go_module(repo)
     jvm_classes, jvm_packages, jvm_roots = _jvm_index(repo, virtual)

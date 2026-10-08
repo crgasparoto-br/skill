@@ -53,7 +53,7 @@ def _run(current: Path, candidate: Path, *, current_head: str = OLD_HEAD, curren
         cmd += ["--current-changed-path", path]
     for path in candidate_paths if candidate_paths is not None else [CERT_PATH, AUDIT_PATH]:
         cmd += ["--candidate-changed-path", path]
-    return subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return subprocess.run(cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
 def test_safe_sibling_result_only_recovery_preserves_original_pr() -> None:

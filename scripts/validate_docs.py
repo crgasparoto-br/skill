@@ -34,16 +34,16 @@ def local_link_errors(root: Path) -> list[str]:
                 continue
             if in_fence:
                 continue
-            for target in LINK_RE.findall(line):
-                target = target.strip().strip("<>")
+            for raw_target in LINK_RE.findall(line):
+                target = raw_target.strip().strip("<>")
                 if not target or target.startswith(("#", "http://", "https://", "mailto:")):
                     continue
-                target = target.split("#", 1)[0].split("?", 1)[0].strip()
-                if not target:
+                link = target.split("#", 1)[0].split("?", 1)[0].strip()
+                if not link:
                     continue
-                candidate = (path.parent / target).resolve()
+                candidate = (path.parent / link).resolve()
                 if not candidate.exists():
-                    errors.append(f"{path.relative_to(root).as_posix()}:{line_no}: broken local link {target}")
+                    errors.append(f"{path.relative_to(root).as_posix()}:{line_no}: broken local link {link}")
     return errors
 
 

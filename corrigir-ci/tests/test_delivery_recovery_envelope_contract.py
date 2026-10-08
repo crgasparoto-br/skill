@@ -1,5 +1,8 @@
-import json, subprocess, sys
+import json
+import subprocess
+import sys
 from pathlib import Path
+
 ROOT=Path(__file__).resolve().parents[1]
 
 def envelope():
@@ -7,19 +10,19 @@ def envelope():
 
 def test_recovery_envelope_requires_finalize_phase(tmp_path):
  p=tmp_path/'e.json';p.write_text(json.dumps(envelope()))
- r=subprocess.run([sys.executable,str(ROOT/'scripts/validate_delivery_recovery_envelope.py'),'--input',str(p)],capture_output=True,text=True)
+ r=subprocess.run([sys.executable,str(ROOT/'scripts/validate_delivery_recovery_envelope.py'),'--input',str(p)],check=False, capture_output=True,text=True)
  assert r.returncode==0,r.stdout+r.stderr
  assert 'finalize-after-ci' in r.stdout
 
 def test_recovery_envelope_rejects_recursive_open_owner(tmp_path):
  v=envelope();v['ci_owner_closed']=False
  p=tmp_path/'e.json';p.write_text(json.dumps(v))
- r=subprocess.run([sys.executable,str(ROOT/'scripts/validate_delivery_recovery_envelope.py'),'--input',str(p)],capture_output=True,text=True)
+ r=subprocess.run([sys.executable,str(ROOT/'scripts/validate_delivery_recovery_envelope.py'),'--input',str(p)],check=False, capture_output=True,text=True)
  assert r.returncode!=0
 
 def _script_accepts(tmp_path, value):
  p=tmp_path/'e.json';p.write_text(json.dumps(value))
- return subprocess.run([sys.executable,str(ROOT/'scripts/validate_delivery_recovery_envelope.py'),'--input',str(p)],capture_output=True,text=True).returncode==0
+ return subprocess.run([sys.executable,str(ROOT/'scripts/validate_delivery_recovery_envelope.py'),'--input',str(p)],check=False, capture_output=True,text=True).returncode==0
 
 def test_validator_and_schema_agree(tmp_path):
  from jsonschema import Draft202012Validator

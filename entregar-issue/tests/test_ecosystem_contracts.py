@@ -20,7 +20,7 @@ class EcosystemContractTests(unittest.TestCase):
             "validate-contracts",
             "--skills-root",
             str(PUBLIC_ROOT),
-        ], capture_output=True, text=True)
+        ], check=False, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_reused_result_requires_verifiable_source(self):

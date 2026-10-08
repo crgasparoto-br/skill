@@ -76,7 +76,7 @@ def run(candidate: dict, report: dict | None = None, head: str | None = None):
     return subprocess.run(
         [sys.executable, str(SCRIPT), "--repo", str(candidate["repo"]), "--report", str(path),
          "--base-sha", candidate["base"], "--head-sha", head or candidate["head"]],
-        capture_output=True, text=True,
+        check=False, capture_output=True, text=True,
     )
 
 

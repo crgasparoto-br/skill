@@ -28,7 +28,7 @@ def run(previous: dict, current: dict):
         b = base / "current.json"
         a.write_text(json.dumps(previous), encoding="utf-8")
         b.write_text(json.dumps(current), encoding="utf-8")
-        return subprocess.run([sys.executable, str(SCRIPT), "--previous-audit", str(a), "--current-audit", str(b)], capture_output=True, text=True)
+        return subprocess.run([sys.executable, str(SCRIPT), "--previous-audit", str(a), "--current-audit", str(b)], check=False, capture_output=True, text=True)
 
 
 def test_same_open_finding_reuses_rejection_id() -> None:

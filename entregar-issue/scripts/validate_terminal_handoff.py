@@ -209,7 +209,7 @@ def main() -> int:
         cmd.extend(["--candidate-changed-path", path])
     if args.contract_version:
         cmd.extend(["--contract-version", args.contract_version])
-    proc = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc = subprocess.run(cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if proc.returncode != 0:
         print(proc.stdout.strip() or "BLOCK: handoff certificate validation failed")
         return 2
@@ -230,7 +230,7 @@ def main() -> int:
             "--closure", str(current_escape),
             "--previous-closure", str(Path(args.material_parent_audit_escape_closure).resolve()),
             "--require-previous",
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if proc.returncode != 0:
             print(proc.stdout.strip() or "BLOCK: result-only child audit escape lineage regressed from material parent")
             return 2
@@ -252,7 +252,7 @@ def main() -> int:
             inherited_cmd.extend(["--attack-matrix", str(current_attack)])
         if current_closure.is_file():
             inherited_cmd.extend(["--requirement-closure", str(current_closure)])
-        proc = subprocess.run(inherited_cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.run(inherited_cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if proc.returncode != 0:
             print(proc.stdout.strip() or "BLOCK: result-only child inherited control lineage regressed from material parent")
             return 2
@@ -290,7 +290,7 @@ def main() -> int:
         provenance = artifacts.get("evidence_provenance")
         if isinstance(provenance, dict) and provenance.get("name"):
             readiness.extend(["--evidence-provenance", str(artifact_path("evidence_provenance"))])
-        proc = subprocess.run(readiness, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.run(readiness, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if proc.returncode != 0:
             print(proc.stdout.strip() or "BLOCK: published re-audit handoff semantic validation failed")
             return 2

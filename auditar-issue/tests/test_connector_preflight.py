@@ -29,7 +29,7 @@ def run(cert: Path, manifest: Path):
     return subprocess.run(
         [sys.executable, str(SCRIPT), "--certificate", str(cert), "--connector-manifest", str(manifest),
          "--contract-version", "2026-08-20.3"],
-        text=True, stdout=subprocess.PIPE,
+        check=False, text=True, stdout=subprocess.PIPE,
     )
 
 

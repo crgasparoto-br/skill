@@ -1,5 +1,10 @@
 from __future__ import annotations
-import json, subprocess, sys, tempfile, unittest
+
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -7,8 +12,8 @@ CLI = ROOT / "scripts/controller_cli.py"
 
 class ControllerContextTests(unittest.TestCase):
     def test_telemetry_does_not_invalidate_semantic_revision(self):
-        with tempfile.TemporaryDirectory() as temp:
-            temp = Path(temp)
+        with tempfile.TemporaryDirectory() as raw_temp:
+            temp = Path(raw_temp)
             out = temp / "controller-context.json"
             subprocess.run([sys.executable, str(CLI), "init-context", "--repository", "owner/repo", "--repository-path", str(temp), "--issue", "1", "--base-ref", "main", "--branch", "issue-1", "--out", str(out)], check=True)
             initial = json.loads(out.read_text())
@@ -40,8 +45,8 @@ class ControllerContextTests(unittest.TestCase):
             self.assertEqual(payload["controller_revision"], 3)
 
     def test_identity_observation_does_not_increment_revision(self):
-        with tempfile.TemporaryDirectory() as temp:
-            temp = Path(temp)
+        with tempfile.TemporaryDirectory() as raw_temp:
+            temp = Path(raw_temp)
             out = temp / "controller-context.json"
             subprocess.run([
                 sys.executable, str(CLI), "init-context",
@@ -71,8 +76,8 @@ class ControllerContextTests(unittest.TestCase):
             self.assertEqual(observed["identity"]["observed_at"], "2026-08-05T12:00:00Z")
 
     def test_refresh_can_batch_metrics_without_semantic_revision(self):
-        with tempfile.TemporaryDirectory() as temp:
-            temp = Path(temp)
+        with tempfile.TemporaryDirectory() as raw_temp:
+            temp = Path(raw_temp)
             out = temp / "controller-context.json"
             subprocess.run([
                 sys.executable, str(CLI), "init-context",

@@ -54,7 +54,7 @@ def test_pr_number_never_substitutes_for_issue_number_in_target_binding() -> Non
             "--pull-request", "632",
             "--base-ref", "main",
             "--head-ref", "feat/598-financial-invariants",
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 0, proc.stdout
         payload = json.loads(proc.stdout)
         assert payload["status"] == "current-target"
@@ -80,7 +80,7 @@ def test_controller_preserves_issue_number_and_immutable_work_item_start_sha_for
             "--branch", "feat/598-financial-invariants",
             "--head-sha", start_sha,
             "--out", str(context),
-        ], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert proc.returncode == 0, proc.stdout
         payload = json.loads(context.read_text(encoding="utf-8"))
         assert payload["issue"] == 598

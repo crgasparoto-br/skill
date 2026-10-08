@@ -1,5 +1,26 @@
 # Fechamento semântico de requisitos
 
+## Quando ler este arquivo
+
+Ler quando for construir ou reabrir o fechamento de requisitos, incluindo flags, disposições e portões terminais.
+
+## Índice
+
+- [Objetivo](#objetivo)
+- [Artefato obrigatório](#artefato-obrigatório)
+- [Flags de fechamento](#flags-de-fechamento)
+- [Disposições](#disposições)
+- [Inventário fechado de domínio](#inventário-fechado-de-domínio)
+- [Cobertura de cenarios explicitamente exigidos](#cobertura-de-cenarios-explicitamente-exigidos)
+- [Asserção observável e efeito semântico](#asserção-observável-e-efeito-semântico)
+- [Cobertura das fontes](#cobertura-das-fontes)
+- [Revisão de redução de escopo](#revisão-de-redução-de-escopo)
+- [Passagem C — auditor sombra](#passagem-c--auditor-sombra)
+- [Fechamento de contratos transitivos de runtime](#fechamento-de-contratos-transitivos-de-runtime)
+- [Aprendizado de escapes](#aprendizado-de-escapes)
+- [Fechamentos adicionais obrigatórios](#fechamentos-adicionais-obrigatórios)
+- [Fechamento de entrada nao confiavel](#fechamento-de-entrada-nao-confiavel)
+
 ## Objetivo
 
 Impedir que a implementação satisfaça apenas o substantivo principal, perca qualificadores, reduza verbos ou escolha a própria lista de requisitos. O contrato é derivado do snapshot canônico, não da PR, do código ou do resumo da implementação.

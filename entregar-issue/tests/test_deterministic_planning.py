@@ -1,9 +1,9 @@
 from __future__ import annotations
+
 import contextlib
 import importlib.util
 import io
 import json
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -33,7 +33,7 @@ def load_script(name: str, path: Path):
 
 CONTROLLER = load_script("delivery_controller_cli", CONTROLLER_SCRIPTS / "controller_cli.py")
 PLANNER = load_script("delivery_plan_execution", DELIVERY_SCRIPTS / "plan_execution.py")
-from planning_contract_runtime import CATALOG_SKILLS  # noqa: E402
+from planning_contract_runtime import CATALOG_SKILLS  # noqa: E402 - sys.path ajustado acima antes do import local
 
 
 def invoke_main(module, args: list[str]) -> None:
@@ -260,7 +260,7 @@ class PlanningTests(unittest.TestCase):
             empty = temp / "empty.json"
             empty.write_text("[]")
             first_path = temp / "first.json"
-            first = self.run_plan(context, empty, first_path)
+            self.run_plan(context, empty, first_path)
 
             observed = temp / "observed.json"
             observed.write_text(json.dumps(["src/service.py"]))

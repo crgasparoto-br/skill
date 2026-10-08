@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "system": "hygiene-policy",
+  "description": "Política da varredura global de higiene. A política é a única fonte dos limiares, do escopo, das exclusões, das exceções e da linha de base: nenhum limiar vive no código, sufixo de texto conferido na busca por citação é declarado, exclusão de caminho exige motivo escrito, é caminho relativo dentro da raiz e aparece no relatório, exceção sem justificativa escrita reprova, e classe medida contra linha de base não aceita exceção item a item — toda medição entra na história declarada com motivo registrado, inclusive a redução. Cada classe declara o que não vê, porque uma classe que reivindica completude produz confiança falsa.",
+  "scope": {
+    "include_suffixes": [
+      ".py"
+    ],
+    "exclude_dirs": [
+      ".git",
+      ".ruff_cache",
+      ".pytest_cache",
+      "__pycache__",
+      "node_modules",
+      "dist",
+      "build",
+      "evals/fixtures"
+    ],
+    "exclude_paths": [],
+    "corpus_suffixes": [
+      ".md",
+      ".rst",
+      ".adoc",
+      ".py",
+      ".json",
+      ".yaml",
+      ".yml",
+      ".sh",
+      ".txt",
+      ".toml",
+      ".cfg",
+      ".ini"
+    ]
+  },
+  "classes": {
+    "duplication": {
+      "state": "gated",
+      "min_body_lines": 6,
+      "exclude_declared_copies": true,
+      "exclude_tests": true,
+      "limits": "Não vê cópia com identificador e constante diferentes, nem cópia entre repositórios, e não compara arquivo que shared-files.json declara compartilhado. Corpo abaixo de min_body_lines não entra, e o limiar conta instruções do corpo: instrução de várias linhas conta uma, e linha vazia, comentário, decorator, assinatura e literal de documentação não contam. O valor foi re-derivado quando a medida passou a contar instruções em vez de linhas físicas, para não encolher a classe em silêncio. Arquivo de teste fica fora quando exclude_tests é declarado."
+    },
+    "dead-module": {
+      "state": "gated",
+      "entry_points": [],
+      "limits": "Não vê referência montada em tempo de execução por nome fora de arquivo texto, nem plugin carregado por convenção de diretório. Diretório de teste fica fora quando exclude_tests é declarado, e arquivo de pacote é ponto de entrada quando package_init_is_entry é declarado: teste é alcançado pelo executor e pacote é alcançado pelo import de quem usa o pacote, não por citação no próprio repositório. Não resolve semântica dinâmica: `__all__` reatribuído ou montado em execução faz o wildcard contar como alcançado, import condicional conta como alcançado, e a ordem de ligação só bloqueia quando a ligação precede qualquer import do `__init__`. `__all__` montado fora do próprio módulo, por função chamada ou por outro módulo, fica fora da precisão declarada.",
+      "exclude_tests": true,
+      "package_init_is_entry": true
+    },
+    "dead-symbol": {
+      "state": "gated",
+      "exclude_tests": true,
+      "ignore_names": [
+        {
+          "name": "__all__",
+          "reason": "nome de protocolo consumido pelo proprio interpretador, e nao simbolo declarado no codigo"
+        }
+      ],
+      "limits": "Não vê uso por getattr, por nome montado, por registro dinâmico do nome, nem ocorrência fora dos formatos de texto declarados em scope.corpus_suffixes. Nome de protocolo consumido pelo próprio interpretador é declarado em ignore_names, sem exceção escondida no código. Citação é resolvida por caminho, na raiz e no diretório de quem cita: citação que sai da raiz não conta, e nome solto não alcança homônimo em outro diretório."
+    },
+    "unused-dependency": {
+      "state": "gated",
+      "import_name_map": {
+        "pyyaml": "yaml",
+        "pip-audit": "pip_audit"
+      },
+      "tool_dependencies": [
+        "ruff",
+        "pip-audit",
+        "pytest"
+      ],
+      "limits": "Não vê dependência usada por nome montado, por `importlib`, por plugin nem por extra opcional que não seja declarado. Lê os formatos de manifest declarados em manifest_patterns: lista de requisitos por linha e pyproject.toml, com project.dependencies, project.optional-dependencies e as tabelas do Poetry; setup.cfg, setup.py, requirements.in e arquivo de trava não são lidos, e manifest de outro formato não é interpretado como lista de linhas. Requisito de VCS usa o nome do fragmento egg quando existe. Import conta no escopo do diretório do manifest: dependência usada só fora dele é acusada, porque o manifest declara o ambiente daquele diretório.",
+      "manifest_patterns": [
+        "requirements*.txt",
+        "pyproject.toml"
+      ]
+    },
+    "complexity": {
+      "state": "reported",
+      "max_complexity": 30,
+      "baseline": 49,
+      "limits": "Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento entre módulos. Mede só o corpo da própria função: função aninhada é medida por si, ramo de default de parâmetro e de decorator não entra, with não conta como ramo e lambda não é medida.",
+      "baseline_history": [
+        {
+          "value": 47,
+          "reason": "Medicao inicial da arvore na entrada do perfil: divida estrutural de complexidade pre-existente, medida de uma vez para que a classe seja reportada em vez de declarada item a item."
+        },
+        {
+          "value": 48,
+          "reason": "O gate e o harness de avaliacoes passaram a validar forma de argumento, raiz e retorno antes de usar os valores, o que acrescenta um ramo de decisao."
+        },
+        {
+          "value": 49,
+          "reason": "A leitura de fixture e de resultado passou a converter falha de sistema de arquivos em erro controlado do harness."
+        }
+      ]
+    }
+  },
+  "accepted": [
+    {
+      "id": "duplication:b604061355f0370d",
+      "reason": "Normalizacao de texto duplicada entre a skill de entrega (entregar-issue/scripts/specification.py) e a de auditoria (auditar-issue/scripts/check_normative_section_coverage.py). As duas skills sao empacotadas de forma independente e cada uma roda sozinha no proprio diretorio, e consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria: enquanto a decisao nao for tomada, a duplicacao fica registrada e aceita com este motivo, em vez de escondida. Retomar quando o modulo compartilhado for criado, quando a excecao sai da politica."
+    },
+    {
+      "id": "duplication:201392f2ad21b55b",
+      "reason": "Normalizacao de texto duplicada entre a skill de entrega (entregar-issue/scripts/specification.py) e a de auditoria (auditar-issue/scripts/check_normative_section_coverage.py). As duas skills sao empacotadas de forma independente e cada uma roda sozinha no proprio diretorio, e consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria: enquanto a decisao nao for tomada, a duplicacao fica registrada e aceita com este motivo, em vez de escondida. Retomar quando o modulo compartilhado for criado, quando a excecao sai da politica."
+    }
+  ],
+  "not_analyzed_allowed": []
+}

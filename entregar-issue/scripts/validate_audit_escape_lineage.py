@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
-
 from handoff_semantic_guards import conflicting_current_sha_claims
 
 

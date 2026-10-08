@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
-
+from handoff_semantic_guards import validate_terminal_requirement_closure
 from schema_validation import validate_against_schema
 from specification import extract_candidates, sha256_file
-from handoff_semantic_guards import validate_terminal_requirement_closure
 
 
 def load(path: Path) -> dict:

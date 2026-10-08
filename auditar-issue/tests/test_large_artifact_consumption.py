@@ -9,8 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from audit_artifact_io import artifact_metadata, pack_json_artifact
-from test_certified_delivery_preflight import BASE, HEAD, MERGE, run, write_packet
+from audit_artifact_io import artifact_metadata, pack_json_artifact  # noqa: E402 - sys.path ajustado acima antes do import local
+from test_certified_delivery_preflight import BASE, HEAD, MERGE, run, write_packet  # noqa: E402 - sys.path ajustado acima antes do import local
 
 
 def test_auditor_preflight_consumes_sharded_delivery_artifacts() -> None:

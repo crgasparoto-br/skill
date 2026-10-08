@@ -7,7 +7,7 @@ import hashlib
 import json
 import uuid
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +20,7 @@ IDENTITY_PATCH_FIELDS = MATERIAL_IDENTITY_FIELDS | {"captured_at", "observed_at"
 
 
 def now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def load(path: Path) -> dict[str, Any]:
@@ -111,7 +111,7 @@ def init_context(args: argparse.Namespace) -> int:
         "baseline": {},
         "source_manifest": {},
         "artifact_reuse": artifact_reuse,
-        "metrics": {name: 0 for name in METRIC_NAMES},
+        "metrics": dict.fromkeys(METRIC_NAMES, 0),
         "created_at": timestamp,
         "updated_at": timestamp,
     }

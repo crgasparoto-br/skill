@@ -2,6 +2,23 @@
 
 > **Escopo:** este protocolo aplica-se somente quando `audit_transport=certified-handoff`. Para repositorios com contrato canonico confiavel `native-github-audit`, usar `references/native-github-audit-contract.md` e nao publicar `.audit/entregar-issue`.
 
+## Quando ler este arquivo
+
+Ler quando houver PR aberta, publicação, CI ou coleta remota com `audit_transport=certified-handoff`.
+
+## Índice
+
+- [Regra central](#regra-central)
+- [Vinculo com o alvo antes do fechamento](#vinculo-com-o-alvo-antes-do-fechamento)
+- [Pre-publicacao e preservacao da PR](#pre-publicacao-e-preservacao-da-pr)
+- [Antes de qualquer handoff independente](#antes-de-qualquer-handoff-independente)
+- [Barreira universal pos-escrita](#barreira-universal-pos-escrita)
+- [Precedencia da decisao de recovery](#precedencia-da-decisao-de-recovery)
+- [Post-write refreeze](#post-write-refreeze)
+- [Connector-only](#connector-only)
+- [Pacote stale](#pacote-stale)
+- [Latch contra escrita posterior ao handoff](#latch-contra-escrita-posterior-ao-handoff)
+
 ## Regra central
 
 O `material_head_sha` e a identidade certificada. `handoff-ready.json` certifica esse material head e e publicado em um filho direto `result-only-child`; o commit de resultados nao redefine a identidade material.

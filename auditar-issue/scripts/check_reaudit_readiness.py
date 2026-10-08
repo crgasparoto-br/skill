@@ -8,10 +8,9 @@ import re
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
-
 from preflight_semantic_guards import conflicting_current_sha_claims
 
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.I)
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 RETIREMENT_DISPOSITIONS = {"superseded", "not-applicable"}
 REJECTION_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 

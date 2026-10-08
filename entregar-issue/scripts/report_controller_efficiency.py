@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Report controller efficiency KPIs from telemetry and the deterministic execution plan."""
 from __future__ import annotations
-import argparse, json
+
+import argparse
+import json
 from pathlib import Path
 from typing import Any
+
 from controller_contract_runtime import validate_controller_context
 
 

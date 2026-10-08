@@ -9,25 +9,48 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# O comando agregado não escreve na árvore analisada, e bytecode de módulo importado é escrita: sem
+# isto, a própria execução deixaria `__pycache__` dentro da raiz que ele afirma não alterar.
+sys.dont_write_bytecode = True
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "higienizar-repositorio" / "scripts"))
+
 try:
     from catalog import catalog_skill_ids, load_catalog, validate_catalog
-    from validate_contract_sync import validate_contract_sync
-    from validate_docs import validate_docs
-    from validate_versioning import validate_versioning
     from validate_adapters import validate_adapters
+    from validate_context_budget import validate_context_budget
+    from validate_contract_sync import validate_contract_sync
+    from validate_dependency_locks import validate_dependency_locks
+    from validate_docs import validate_docs
     from validate_evals import validate_evals
+    from validate_hygiene import validate_hygiene
+    from validate_issue_templates import validate_issue_templates
+    from validate_lint import validate_lint
     from validate_reachability import validate_reachability
+    from validate_reference_indexes import validate_reference_indexes
+    from validate_release_handoff import validate_release_handoff
+    from validate_versioning import validate_versioning
+    from validate_workflow_classification import validate_workflow_classification
 except ImportError:  # pragma: no cover - package import fallback
+    from validate_hygiene import validate_hygiene  # skill fora do pacote raiz
+
     from .catalog import catalog_skill_ids, load_catalog, validate_catalog
-    from .validate_contract_sync import validate_contract_sync
-    from .validate_docs import validate_docs
-    from .validate_versioning import validate_versioning
     from .validate_adapters import validate_adapters
+    from .validate_context_budget import validate_context_budget
+    from .validate_contract_sync import validate_contract_sync
+    from .validate_dependency_locks import validate_dependency_locks
+    from .validate_docs import validate_docs
     from .validate_evals import validate_evals
+    from .validate_issue_templates import validate_issue_templates
+    from .validate_lint import validate_lint
     from .validate_reachability import validate_reachability
+    from .validate_reference_indexes import validate_reference_indexes
+    from .validate_release_handoff import validate_release_handoff
+    from .validate_versioning import validate_versioning
+    from .validate_workflow_classification import validate_workflow_classification
 
 ROOT = Path(__file__).resolve().parents[1]
-SYSTEM_VERSION = "2026-09-29.5"
+SYSTEM_VERSION = "2026-10-08.1"
 GLOBAL_FILES = {
     "docs/SKILL_SYSTEM_SPEC.md",
     "docs/SECURITY.md",
@@ -57,6 +80,39 @@ GLOBAL_FILES = {
     "evals/fixtures/manifest.json",
     "scripts/validate_evals.py",
     ".github/skill-system-capabilities.json",
+    "AGENTS.md",
+    "config/issue-templates.json",
+    "scripts/validate_issue_templates.py",
+    "config/dependency-policy.json",
+    "scripts/validate_dependency_locks.py",
+    "scripts/lock_dependencies.py",
+    "scripts/audit_dependencies.py",
+    "requirements.txt",
+    "requirements.lock.txt",
+    ".github/ISSUE_TEMPLATE/feature.md",
+    ".github/ISSUE_TEMPLATE/bug.md",
+    ".github/ISSUE_TEMPLATE/epic.md",
+    ".github/ISSUE_TEMPLATE/config.yml",
+    "config/context-budget.json",
+    "config/reference-index.json",
+    "scripts/validate_context_budget.py",
+    "scripts/validate_reference_indexes.py",
+    ".github/workflows/dependency-audit.yml",
+    "config/lint-policy.json",
+    "scripts/validate_lint.py",
+    "config/release-handoff.json",
+    "scripts/release_handoff.py",
+    "scripts/validate_release_handoff.py",
+    "scripts/validate_workflow_classification.py",
+    "config/hygiene-policy.json",
+    "higienizar-repositorio/SKILL.md",
+    "higienizar-repositorio/scripts/hygiene_scan.py",
+    "higienizar-repositorio/scripts/validate_hygiene.py",
+    "higienizar-repositorio/scripts/build_hygiene_work_items.py",
+    "higienizar-repositorio/schemas/hygiene-report.schema.json",
+    "higienizar-repositorio/schemas/hygiene-work-item.schema.json",
+    "higienizar-repositorio/references/global-hygiene-profile.md",
+    "higienizar-repositorio/tests/test_hygiene_profile.py",
 }
 REQUIRED_CAPABILITIES = {
     "canonical_controller": "entregar-issue",
@@ -328,6 +384,16 @@ def main() -> int:
     errors.extend(f"adapters: {error}" for error in validate_adapters(ROOT))
     errors.extend(f"avaliações: {error}" for error in validate_evals(ROOT))
     errors.extend(f"alcançabilidade: {error}" for error in validate_reachability(ROOT))
+    errors.extend(f"formato de issue: {error}" for error in validate_issue_templates(ROOT))
+    errors.extend(f"orçamento de contexto: {error}" for error in validate_context_budget(ROOT))
+    errors.extend(f"índice de referência: {error}" for error in validate_reference_indexes(ROOT))
+    errors.extend(f"dependências: {error}" for error in validate_dependency_locks(ROOT))
+    errors.extend(f"lint: {error}" for error in validate_lint(ROOT))
+    errors.extend(f"handoff de release: {error}" for error in validate_release_handoff(ROOT))
+    errors.extend(f"higiene: {error}" for error in validate_hygiene(ROOT))
+    errors.extend(
+        f"classificação de workflow: {error}" for error in validate_workflow_classification(ROOT)
+    )
 
     if errors:
         print("Validação falhou:")

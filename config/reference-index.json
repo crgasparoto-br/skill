@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "system": "reference-index",
+  "description": "Navegabilidade das referências. Uma referência longa precisa declarar quando deve ser lida e expor um índice com âncoras que resolvem, para que o carregamento progressivo seja seletivo em vez de integral. O limiar é medido em bytes, e não em linhas, pela mesma razão do orçamento de contexto: o que o carregamento paga é tamanho, não contagem de linhas. O limite de tamanho pertence a config/context-budget.json e não é reavaliado aqui.",
+  "index_threshold_bytes": 8000,
+  "exclusions": {}
+}

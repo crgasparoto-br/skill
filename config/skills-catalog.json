@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "system": "skill-catalog",
-  "catalog_version": "2026-09-29.5",
+  "catalog_version": "2026-10-08.1",
   "skills": [
     {
       "id": "auditar-issue",
@@ -10,7 +10,11 @@
       "purpose": "audit",
       "summary": "Auditar uma entrega em leitura, reconstruindo evidências e preservando a independência do parecer.",
       "input": "Entrega congelada, identidade remota e SHA.",
-      "modes": ["independent", "pre-audit", "controller-adversarial"],
+      "modes": [
+        "independent",
+        "pre-audit",
+        "controller-adversarial"
+      ],
       "read_only": true,
       "write_owner": "auditar-issue",
       "contract_version": "2026-08-20.3",
@@ -26,7 +30,11 @@
         "corrigir o código",
         "corrigir a CI"
       ],
-      "required_capabilities": ["repository-read", "immutable-identity", "evidence-execution"]
+      "required_capabilities": [
+        "repository-read",
+        "immutable-identity",
+        "evidence-execution"
+      ]
     },
     {
       "id": "corrigir-ci",
@@ -35,7 +43,9 @@
       "purpose": "ci-remediation",
       "summary": "Diagnosticar e remediar falhas de CI até um estado terminal verificável, sem fazer merge.",
       "input": "Falha ou estado pendente de CI.",
-      "modes": ["ci-remediation-loop"],
+      "modes": [
+        "ci-remediation-loop"
+      ],
       "read_only": false,
       "write_owner": "corrigir-ci",
       "contract_version": "2026-08-20.3",
@@ -50,7 +60,12 @@
         "fazer merge automaticamente",
         "auditar independentemente"
       ],
-      "required_capabilities": ["repository-read", "repository-write", "ci-read", "test-execution"]
+      "required_capabilities": [
+        "repository-read",
+        "repository-write",
+        "ci-read",
+        "test-execution"
+      ]
     },
     {
       "id": "design-interface",
@@ -59,7 +74,12 @@
       "purpose": "interface",
       "summary": "Projetar, implementar e validar interfaces com acessibilidade, responsividade e consistência visual.",
       "input": "Interface, fluxo visual ou mudança de UX.",
-      "modes": ["implementation", "internal-verification", "independent-audit", "guidance"],
+      "modes": [
+        "implementation",
+        "internal-verification",
+        "independent-audit",
+        "guidance"
+      ],
       "read_only": false,
       "write_owner": "assigned-scope",
       "contract_version": "2026-08-20.3",
@@ -74,7 +94,12 @@
         "mudança somente interna",
         "corrigir a CI"
       ],
-      "required_capabilities": ["repository-read", "repository-write", "visual-validation", "test-execution"]
+      "required_capabilities": [
+        "repository-read",
+        "repository-write",
+        "visual-validation",
+        "test-execution"
+      ]
     },
     {
       "id": "documentacao-repositorio",
@@ -83,7 +108,13 @@
       "purpose": "documentation",
       "summary": "Governar fontes canônicas e manter documentação de repositórios verificável e atualizada.",
       "input": "Repositório, mudança de comportamento ou documentação.",
-      "modes": ["specification", "implementation", "internal-verification", "independent-audit", "guidance"],
+      "modes": [
+        "specification",
+        "implementation",
+        "internal-verification",
+        "independent-audit",
+        "guidance"
+      ],
       "read_only": false,
       "write_owner": "assigned-scope",
       "contract_version": "2026-08-20.3",
@@ -98,7 +129,11 @@
         "implementar o código",
         "fazer merge"
       ],
-      "required_capabilities": ["repository-read", "repository-write", "test-execution"]
+      "required_capabilities": [
+        "repository-read",
+        "repository-write",
+        "test-execution"
+      ]
     },
     {
       "id": "entregar-issue",
@@ -107,7 +142,9 @@
       "purpose": "delivery",
       "summary": "Conduzir a entrega ponta a ponta de uma issue com plano, implementação, gates, CI e handoff.",
       "input": "Issue, PR, branch ou pendência de software.",
-      "modes": ["direct-delivery"],
+      "modes": [
+        "direct-delivery"
+      ],
       "read_only": false,
       "write_owner": "controller",
       "contract_version": "2026-08-20.3",
@@ -123,7 +160,13 @@
         "somente revisar a especificação",
         "somente corrigir a CI"
       ],
-      "required_capabilities": ["repository-read", "repository-write", "test-execution", "ci-read", "immutable-identity"]
+      "required_capabilities": [
+        "repository-read",
+        "repository-write",
+        "test-execution",
+        "ci-read",
+        "immutable-identity"
+      ]
     },
     {
       "id": "fluxos-conversacionais",
@@ -132,7 +175,13 @@
       "purpose": "conversation-flow",
       "summary": "Especificar e verificar fluxos persistentes, assíncronos ou conversacionais com estado e idempotência.",
       "input": "Fluxo com continuidade, callback, evento, retry ou estado.",
-      "modes": ["specification", "implementation", "internal-verification", "independent-audit", "guidance"],
+      "modes": [
+        "specification",
+        "implementation",
+        "internal-verification",
+        "independent-audit",
+        "guidance"
+      ],
       "read_only": false,
       "write_owner": "assigned-scope",
       "contract_version": "2026-08-20.3",
@@ -147,7 +196,44 @@
         "operação totalmente síncrona",
         "mudança sem continuidade de estado"
       ],
-      "required_capabilities": ["repository-read", "repository-write", "test-execution", "immutable-identity"]
+      "required_capabilities": [
+        "repository-read",
+        "repository-write",
+        "test-execution",
+        "immutable-identity"
+      ]
+    },
+    {
+      "id": "higienizar-repositorio",
+      "path": "higienizar-repositorio",
+      "status": "validated",
+      "purpose": "global-hygiene",
+      "summary": "Varrer o repositorio inteiro sob demanda em busca de duplicacao, codigo morto, dependencia sem uso e complexidade, produzindo relatorio deterministico e work items na forma canonica de issue.",
+      "input": "Repositorio no head corrente e a politica de higiene declarada.",
+      "modes": [
+        "sweep",
+        "targeted"
+      ],
+      "read_only": true,
+      "write_owner": "higienizar-repositorio",
+      "contract_version": "2026-08-20.3",
+      "positive_triggers": [
+        "higienizar o repositorio inteiro",
+        "varrer codigo morto e duplicacao",
+        "medir divida tecnica estrutural",
+        "levantar dependencia declarada e sem uso",
+        "auditar o estado de higienizacao do repositorio"
+      ],
+      "negative_triggers": [
+        "somente entregar uma issue",
+        "somente auditar uma entrega",
+        "somente corrigir a CI",
+        "somente revisar a especificacao"
+      ],
+      "required_capabilities": [
+        "repository-read",
+        "evidence-execution"
+      ]
     },
     {
       "id": "revisar-issue",
@@ -156,7 +242,11 @@
       "purpose": "specification-review",
       "summary": "Tornar issues claras, testáveis e reconciliadas com a documentação canônica.",
       "input": "Issue específica ou lote de issues.",
-      "modes": ["standalone-review", "standalone-batch-review", "orchestrated-readiness-remediation"],
+      "modes": [
+        "standalone-review",
+        "standalone-batch-review",
+        "orchestrated-readiness-remediation"
+      ],
       "read_only": false,
       "write_owner": "assigned-scope",
       "contract_version": "2026-08-20.3",
@@ -171,7 +261,11 @@
         "implementar o código",
         "auditar a entrega congelada"
       ],
-      "required_capabilities": ["repository-read", "issue-read", "test-execution"]
+      "required_capabilities": [
+        "repository-read",
+        "issue-read",
+        "test-execution"
+      ]
     }
   ]
 }

@@ -31,9 +31,7 @@ def is_packaged_file(path: Path, skill_dir: Path) -> bool:
     relative = path.relative_to(skill_dir)
     if any(part in EXCLUDED_PATH_PARTS for part in relative.parts):
         return False
-    if path.suffix in EXCLUDED_SUFFIXES:
-        return False
-    return True
+    return path.suffix not in EXCLUDED_SUFFIXES
 
 
 def referenced_scripts(skill_dir: Path) -> set[str]:

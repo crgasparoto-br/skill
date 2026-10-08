@@ -3,7 +3,6 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-
 DELIVERY = Path(__file__).resolve().parents[1]
 SKILLS_ROOT = DELIVERY.parent
 CI = SKILLS_ROOT / "corrigir-ci"

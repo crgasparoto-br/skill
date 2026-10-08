@@ -2,6 +2,32 @@
 
 Aplicar os itens pertinentes e registrar `não aplicável` somente quando houver justificativa clara.
 
+## Quando ler este arquivo
+
+Ler em auditoria `independent` ampla, como roteiro de cobertura; item não aplicável exige justificativa registrada.
+
+## Índice
+
+- [Independência e versão](#independência-e-versão)
+- [Requisitos e escopo](#requisitos-e-escopo)
+- [Fluxo funcional](#fluxo-funcional)
+- [Frontend](#frontend)
+- [Auditoria especializada de interface](#auditoria-especializada-de-interface)
+- [Backend e regras de negócio](#backend-e-regras-de-negócio)
+- [Contratos transitivos de runtime](#contratos-transitivos-de-runtime)
+- [Banco de dados](#banco-de-dados)
+- [Segurança e permissões](#segurança-e-permissões)
+- [Integrações](#integrações)
+- [Testes e qualidade](#testes-e-qualidade)
+- [Regressões e compatibilidade](#regressões-e-compatibilidade)
+- [Documentação](#documentação)
+- [Sinais de implementação incompleta](#sinais-de-implementação-incompleta)
+- [Passagem adversarial](#passagem-adversarial)
+- [Enforcement controller v3](#enforcement-controller-v3)
+- [Parsers, decoders e adaptadores de entrada](#parsers-decoders-e-adaptadores-de-entrada)
+- [Transicao de estado documental](#transicao-de-estado-documental)
+- [Entrada não confiável — prevenção de gaps recorrentes](#entrada-não-confiável--prevenção-de-gaps-recorrentes)
+
 ## Independência e versão
 
 - a execução foi classificada como auditoria independente ou pré-auditoria;

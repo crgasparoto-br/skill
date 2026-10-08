@@ -4,7 +4,7 @@ Coleção de skills reutilizáveis para assistentes de IA que trabalham com issu
 
 As instruções centrais estão em Markdown e seguem um formato independente de provedor. Os arquivos `agents/openai.yaml` são adaptadores opcionais para produtos compatíveis; uma IA que não reconheça esse formato pode usar diretamente cada `SKILL.md` e carregar as referências necessárias sob demanda.
 
-**Release atual:** [`0.2.0`](./VERSION) · **catálogo:** `2026-09-29.5` · **compatibilidade:** [`config/compatibility.json`](./config/compatibility.json). Para integração reproduzível, prefira uma tag `v<version>` ou um SHA imutável; `main` representa desenvolvimento contínuo.
+**Release do catálogo:** [`0.3.0`](./VERSION) · **catálogo:** `2026-10-08.1` · **compatibilidade:** [`config/compatibility.json`](./config/compatibility.json). Para integração reproduzível, prefira uma tag `v<version>` ou um SHA imutável; `develop` é a base de desenvolvimento e só é promovida a `main` em release.
 
 ## Catálogo
 
@@ -17,6 +17,7 @@ As instruções centrais estão em Markdown e seguem um formato independente de 
 | [`documentacao-repositorio`](./documentacao-repositorio/) | Governar fontes canônicas e manter documentação de repositórios verificável e atualizada. | Repositório, mudança de comportamento ou documentação. |
 | [`entregar-issue`](./entregar-issue/) | Conduzir a entrega ponta a ponta de uma issue com plano, implementação, gates, CI e handoff. | Issue, PR, branch ou pendência de software. |
 | [`fluxos-conversacionais`](./fluxos-conversacionais/) | Especificar e verificar fluxos persistentes, assíncronos ou conversacionais com estado e idempotência. | Fluxo com continuidade, callback, evento, retry ou estado. |
+| [`higienizar-repositorio`](./higienizar-repositorio/) | Varrer o repositorio inteiro sob demanda em busca de duplicacao, codigo morto, dependencia sem uso e complexidade, produzindo relatorio deterministico e work items na forma canonica de issue. | Repositorio no head corrente e a politica de higiene declarada. |
 | [`revisar-issue`](./revisar-issue/) | Tornar issues claras, testáveis e reconciliadas com a documentação canônica. | Issue específica ou lote de issues. |
 <!-- END GENERATED: skill-catalog -->
 
@@ -91,7 +92,13 @@ O catálogo possui uma camada global de governança acima das regras específica
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) formaliza o escopo, as prioridades e os critérios de aceite da v0.3.0;
 - [`.github/skill-system-capabilities.json`](./.github/skill-system-capabilities.json) declara as capacidades globais efetivamente habilitadas;
 - [`docs/SECURITY.md`](./docs/SECURITY.md) define limites de escrita, independência, merge, credenciais e efeitos destrutivos.
+- [`AGENTS.md`](./AGENTS.md) é a instrução normativa para agentes de IA que trabalham neste repositório: hierarquia de fontes, fluxo de branches, forma canônica da issue, validação local e regras de higiene;
+- [`config/issue-templates.json`](./config/issue-templates.json) é a declaração única das seções normativas que os extratores de requisito leem no corpo da issue, aplicada em [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/) e validada por [`scripts/validate_issue_templates.py`](./scripts/validate_issue_templates.py).
+- [`config/dependency-policy.json`](./config/dependency-policy.json) declara a política de exceção de vulnerabilidade, exigindo pacote e versão fixada, validada por [`scripts/validate_dependency_locks.py`](./scripts/validate_dependency_locks.py); os lockfiles por skill fixam versão, artefato e hash, e [`scripts/audit_dependencies.py`](./scripts/audit_dependencies.py) confere a integridade do digest contra o artefato e consulta o banco externo no workflow [`.github/workflows/dependency-audit.yml`](./.github/workflows/dependency-audit.yml), fora da sequência obrigatória.
 
+- [`config/release-handoff.json`](./config/release-handoff.json) declara a evidência exigida para promover `develop` a `main`, com motivo por item, e [`scripts/release_handoff.py`](./scripts/release_handoff.py) reúne e verifica essa evidência — sem merge, sem tag e sem publicação — enquanto [`scripts/validate_release_handoff.py`](./scripts/validate_release_handoff.py) confere a política, o comportamento e a ausência de autoridade de merge.
+- [`config/hygiene-policy.json`](./config/hygiene-policy.json) declara as classes da varredura global de higiene, seus limiares, seus limites de precisão, as exceções com justificativa escrita e a linha de base de cada classe, e [`higienizar-repositorio/scripts/validate_hygiene.py`](./higienizar-repositorio/scripts/validate_hygiene.py) reprova achado aberto sem exceção, contagem fora da linha de base, exceção órfã e cobertura encolhida em silêncio.
+- [`config/lint-policy.json`](./config/lint-policy.json) decide cada família de regras do Ruff, aplicada, aplicada em parte com a parte desligada declarada ou dispensada com motivo escrito, e [`scripts/validate_lint.py`](./scripts/validate_lint.py) executa a análise com essa seleção, reprovando diagnóstico, política incompleta, versão divergente e supressão não declarada.
 As regras globais usam `UNKNOWN` como estado material de evidência insuficiente. Ausência de informação não deve ser convertida em sucesso, `false`, zero ou `not-applicable`. Aprovação interna, auditoria independente, readiness de release e enforcement de merge são fatos distintos.
 
 A memória da conversa pode ajudar na continuidade, mas o estado necessário à correção deve ser reconstruível a partir do repositório, GitHub e artefatos explicitamente versionados.
@@ -114,7 +121,7 @@ A separação operacional principal é:
 Esta é a mesma sequência executada pelo workflow [`.github/workflows/validate.yml`](./.github/workflows/validate.yml):
 
 ```bash
-python -m pip install -r entregar-issue/requirements-dev.txt -r auditar-issue/requirements-dev.txt
+python -m pip install --require-hashes -r requirements.lock.txt -r entregar-issue/requirements-dev.lock.txt -r auditar-issue/requirements-dev.lock.txt
 python scripts/validate_repository.py
 python scripts/validate_catalog.py --root .
 python scripts/sync_contracts.py --check --root .
@@ -123,7 +130,19 @@ python scripts/build_catalog_docs.py --check --root .
 python scripts/validate_versioning.py --root .
 python scripts/validate_adapters.py --root .
 python scripts/validate_evals.py --root .
+python evals/run_evals.py --root . --results-dir evals/fixtures/results --report /tmp/eval-report.json
+python evals/run_evals.py --root . --verify-report /tmp/eval-report.json
 python scripts/validate_reachability.py --root .
+python scripts/validate_issue_templates.py --root .
+python scripts/validate_context_budget.py --root .
+python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
+python scripts/validate_reference_indexes.py --root .
+python scripts/validate_dependency_locks.py --root .
+python scripts/validate_lint.py --root .
+python higienizar-repositorio/scripts/validate_hygiene.py --root .
+python scripts/validate_release_handoff.py --root .
+python scripts/validate_workflow_classification.py --root .
+python scripts/lock_dependencies.py --root . --check  # resolucao real: exige rede
 python -m pytest -q
 ```
 

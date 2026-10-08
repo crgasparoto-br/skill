@@ -72,7 +72,7 @@ def test_reused_subskill_result_checks_source_hash(tmp_path):
     result.write_text(json.dumps(payload))
     valid = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "validate_subskill_result.py"), str(result)],
-        capture_output=True,
+        check=False, capture_output=True,
         text=True,
     )
     assert valid.returncode == 0, valid.stdout + valid.stderr
@@ -81,7 +81,7 @@ def test_reused_subskill_result_checks_source_hash(tmp_path):
     result.write_text(json.dumps(payload))
     invalid = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "validate_subskill_result.py"), str(result)],
-        capture_output=True,
+        check=False, capture_output=True,
         text=True,
     )
     assert invalid.returncode != 0
@@ -108,7 +108,7 @@ def test_noop_status_requires_skip_reason_and_contract_mismatch_is_supported(tmp
     result.write_text(json.dumps(payload))
     invalid = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "validate_subskill_result.py"), str(result)],
-        capture_output=True,
+        check=False, capture_output=True,
         text=True,
     )
     assert invalid.returncode != 0
@@ -118,7 +118,7 @@ def test_noop_status_requires_skip_reason_and_contract_mismatch_is_supported(tmp
     result.write_text(json.dumps(payload))
     valid = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "validate_subskill_result.py"), str(result)],
-        capture_output=True,
+        check=False, capture_output=True,
         text=True,
     )
     assert valid.returncode == 0, valid.stdout + valid.stderr
@@ -142,7 +142,7 @@ def test_new_results_must_declare_fingerprint_and_reuse_state(tmp_path):
     result.write_text(json.dumps(payload))
     completed = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "validate_subskill_result.py"), str(result)],
-        capture_output=True,
+        check=False, capture_output=True,
         text=True,
     )
     assert completed.returncode != 0

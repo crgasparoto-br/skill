@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Como consumir as skills em outro projeto
+    url: https://github.com/crgasparoto-br/skill/blob/main/docs/using-with-ai.md
+    about: Integração por plataforma, seleção de skill e referências relativas.
+  - name: Política de segurança e autoridade
+    url: https://github.com/crgasparoto-br/skill/blob/main/docs/SECURITY.md
+    about: Limites de escrita, independência, credenciais e semântica UNKNOWN.

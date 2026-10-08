@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-selection-006",
+  "outcome": "PASS",
+  "selected_skill": "auditar-issue",
+  "loaded_references": [],
+  "actions": [],
+  "evidence": [
+    "selection-shortlist",
+    "selection-decision"
+  ],
+  "response_text": "PASS: auditar-issue. Os gatilhos diretos 'auditar uma issue' e 'parecer independente' têm a maior pontuação explicável e não há empate material; nenhuma skill foi executada.",
+  "metrics": {
+    "external_calls": 0,
+    "duration_ms": 1,
+    "context_chars": 1200
+  },
+  "runtime": {
+    "status": "available",
+    "provider": "fixture",
+    "model": null,
+    "adapter": "generic",
+    "trust": "fixture",
+    "attestation": null,
+    "provenance": "versioned-deterministic-baseline"
+  },
+  "selection": {
+    "candidates": [
+      {
+        "skill": "auditar-issue",
+        "score": 14,
+        "rationale": "gatilhos diretos 'auditar uma issue' e 'parecer independente' na maior pontuação explicável"
+      }
+    ],
+    "disambiguation_required": false,
+    "reason": "maior pontuação explicável; sem empate material"
+  }
+}

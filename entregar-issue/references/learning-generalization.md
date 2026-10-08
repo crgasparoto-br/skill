@@ -58,4 +58,6 @@ Fixtures permanentes devem usar nomes sinteticos como `canonical_adapter`, `spec
 
 ## Fechamento
 
-Executar `scripts/validate_learning_closure.py` para validar o evento. Quando houver promocao de Skill, executar tambem `scripts/validate_skill_genericity.py` e a suite da Skill/ecossistema antes de novo handoff.
+Executar `scripts/validate_learning_closure.py` para validar o evento. Quando houver promocao de Skill, executar tambem `scripts/validate_skill_genericity.py --skill-root .` e a suite da Skill/ecossistema antes de novo handoff.
+
+O validador aplica cinco regras bloqueantes sobre asset permanente: teste numerado por issue, regra historica derivada de issue, caminho absoluto de host, identificador concreto em prosa Markdown e host externo concreto. Identificador dentro de trecho ou bloco de codigo e exemplo delimitado e nao bloqueia; dominio reservado de exemplo e o mecanismo correto para host ilustrativo. A regra de caminho cobre raiz POSIX de home/mount e raiz de usuario Windows, e nao uma letra de unidade solta, que nao pode ser distinguida de sequencia de escape em texto arbitrario.

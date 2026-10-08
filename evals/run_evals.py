@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import copy
 import hashlib
 import json
@@ -15,11 +16,12 @@ import subprocess
 import sys
 import tempfile
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
+
 MAX_PROVIDER_OUTPUT_BYTES = 1_000_000
 FIXTURE_PROVENANCE = "versioned-deterministic-baseline"
 
@@ -43,7 +45,7 @@ def sha256_bytes(value: bytes) -> str:
 def load_json(path: Path, label: str) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, RecursionError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise HarnessError(f"{label} inválido: {exc}") from exc
     if not isinstance(value, dict):
         raise HarnessError(f"{label} deve conter um objeto JSON")
@@ -238,22 +240,14 @@ def evaluate_result(
 
 
 def _terminate_process_group(process: subprocess.Popen[bytes]) -> None:
-    try:
+    with contextlib.suppress(ProcessLookupError):
         os.killpg(process.pid, signal.SIGTERM)
-    except ProcessLookupError:
-        pass
-    try:
+    with contextlib.suppress(subprocess.TimeoutExpired):
         process.wait(timeout=0.25)
-    except subprocess.TimeoutExpired:
-        pass
-    try:
+    with contextlib.suppress(ProcessLookupError):
         os.killpg(process.pid, signal.SIGKILL)
-    except ProcessLookupError:
-        pass
-    try:
+    with contextlib.suppress(subprocess.TimeoutExpired):
         process.wait(timeout=1)
-    except subprocess.TimeoutExpired:
-        pass
 
 
 def invoke_provider(command: str, case: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None, int]:
@@ -331,7 +325,7 @@ def invoke_provider(command: str, case: dict[str, Any]) -> tuple[dict[str, Any] 
         return None, f"provider falhou: {detail}", elapsed_ms
     try:
         result = json.loads(bytes(stdout).decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except (ValueError, RecursionError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return None, f"provider-result-invalid: JSON inválido: {exc}", elapsed_ms
     if not isinstance(result, dict):
         return None, "provider-result-invalid: saída deve ser um objeto JSON", elapsed_ms
@@ -368,7 +362,7 @@ def report_for(harness_version: str, mode: str, cases: list[tuple[Path, dict[str
         "release_versions": release_versions,
         "run_id": run_id,
         "inputs": inputs,
-        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "content_sha256": "",
         "cases": records,
         "summary": summary,
@@ -400,6 +394,9 @@ def _validate_report_consistency(report: dict[str, Any], schema: dict[str, Any])
         "not_run": sum(record["status"] == "NOT_RUN" for record in records),
         "invalid": sum(record["status"] == "INVALID" for record in records),
     }
+    for campo, valor in report["summary"].items():
+        if type(valor) is not int:
+            errors.append(f"summary {campo} precisa ser inteiro exato")
     if report["summary"] != expected_summary:
         errors.append("summary não corresponde aos status dos casos")
     case_ids = [record["case_id"] for record in records]
@@ -430,7 +427,10 @@ def validate_fixture_manifest(root: Path, results_dir: Path, expected_result_nam
         result_path = results_dir / name
         if not result_path.is_file() or result_path.is_symlink():
             raise HarnessError(f"fixture manifest aponta para resultado ausente ou não regular: {name}")
-        observed_sha = sha256_bytes(result_path.read_bytes())
+        try:
+            observed_sha = sha256_bytes(result_path.read_bytes())
+        except OSError as exc:
+            raise HarnessError(f"fixture nao pode ser lido: {name}: {exc}") from exc
         if observed_sha != expected_sha:
             raise HarnessError(f"hash do fixture diverge do manifesto: {name}")
 
@@ -492,8 +492,12 @@ def run_evaluations(
             if result_path.is_symlink():
                 raise HarnessError(f"resultado esperado não pode ser symlink: {result_path.name}")
             if result_path.is_file():
+                try:
+                    conteudo = result_path.read_bytes()
+                except OSError as exc:
+                    raise HarnessError(f"resultado nao pode ser lido: {result_path.name}: {exc}") from exc
                 result, error = load_result(result_path, result_schema)
-                inputs.append({"case_id": case["case_id"], "result_sha256": sha256_bytes(result_path.read_bytes())})
+                inputs.append({"case_id": case["case_id"], "result_sha256": sha256_bytes(conteudo)})
             else:
                 error = f"runtime não produziu resultado: {result_path.name}"
                 inputs.append({"case_id": case["case_id"], "result_sha256": None})
@@ -509,7 +513,7 @@ def run_evaluations(
             if result_errors:
                 records.append(_record(case, "INVALID", result.get("outcome"), *result_errors))
                 continue
-        elif error and (error.startswith("resultado ") or error.startswith("provider-result-invalid:")):
+        elif error and (error.startswith(("resultado ", "provider-result-invalid:"))):
             records.append(_record(case, "INVALID", None, error))
             continue
         records.append(evaluate_result(case, result, reason=error, source_mode=source_mode))
@@ -526,21 +530,53 @@ def _write_report(report: dict[str, Any], path: Path) -> None:
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+class ParserError(Exception):
+    """Erro de linha de comando que precisa reprovar com status 1."""
+
+
+class Parser(argparse.ArgumentParser):
+    """Interpretador de argumentos que reporta erro como falha controlada do harness."""
+
+    def error(self, message: str) -> None:
+        raise ParserError(message)
+
+
+def _resolve_root(value: str | None) -> Path:
+    """Resolve a raiz auditada recusando valor vazio, inacessivel ou em ciclo de links."""
+    if value is not None and not value.strip():
+        raise HarnessError("argumento --root vazio")
+    raiz = Path(value) if value is not None else Path(__file__).resolve().parents[1]
+    try:
+        return raiz.resolve()
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise HarnessError(f"raiz inacessivel: {exc}") from exc
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser = Parser(description=__doc__)
+    parser.add_argument("--root", default=None)
     parser.add_argument("--results-dir", type=Path)
     parser.add_argument("--provider-command")
     parser.add_argument("--provider-id", default="untrusted-command")
     parser.add_argument("--report", type=Path)
     parser.add_argument("--verify-report", type=Path)
     parser.add_argument("--validate-only", action="store_true")
-    args = parser.parse_args(argv)
-    root = args.root.resolve()
+    try:
+        args = parser.parse_args(argv)
+        root = _resolve_root(args.root)
+        if args.results_dir is not None and not args.results_dir.is_dir():
+            raise HarnessError("--results-dir precisa apontar para um diretorio")
+    except (ParserError, HarnessError, OSError, RuntimeError, ValueError) as exc:
+        print(f"EVAL_HARNESS_ERROR: {exc}", file=sys.stderr)
+        return 1
 
     if args.verify_report:
         report_path = args.verify_report if args.verify_report.is_absolute() else root / args.verify_report
-        errors = verify_report(root, report_path)
+        try:
+            errors = verify_report(root, report_path)
+        except (HarnessError, OSError, RuntimeError, ValueError, RecursionError) as exc:
+            print(f"REPORT_INVALID: {exc}", file=sys.stderr)
+            return 1
         if errors:
             print("REPORT_INVALID: " + "; ".join(errors), file=sys.stderr)
             return 1
@@ -555,13 +591,17 @@ def main(argv: list[str] | None = None) -> int:
             provider_id=args.provider_id,
             validate_only=args.validate_only,
         )
-    except HarnessError as exc:
+    except (HarnessError, OSError, RuntimeError, ValueError, RecursionError) as exc:
         print(f"EVAL_HARNESS_ERROR: {exc}", file=sys.stderr)
         return 1
 
     if args.report:
         report_path = args.report if args.report.is_absolute() else root / args.report
-        _write_report(report, report_path)
+        try:
+            _write_report(report, report_path)
+        except (OSError, ValueError) as exc:
+            print(f"EVAL_HARNESS_ERROR: destino de relatorio invalido: {exc}", file=sys.stderr)
+            return 1
     print(json.dumps(report, ensure_ascii=False, indent=2))
     if args.validate_only:
         return 0

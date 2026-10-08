@@ -15,7 +15,7 @@ EVIDENCE_SHA = hashlib.sha256(b"evidence").hexdigest()
 def run(script: str, *args: str):
     return subprocess.run(
         [sys.executable, str(ROOT / "scripts" / script), *args],
-        text=True,
+        check=False, text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )

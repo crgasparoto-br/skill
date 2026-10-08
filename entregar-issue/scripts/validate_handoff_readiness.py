@@ -17,14 +17,14 @@ def load(path: Path) -> dict:
     try:
         value = load_json_artifact(path)
     except Exception as exc:
-        raise SystemExit(f"invalid JSON {path}: {exc}")
+        raise SystemExit(f"invalid JSON {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise SystemExit(f"expected JSON object: {path}")
     return value
 
 
 def run_validator(args: list[str], errors: list[str]) -> None:
-    proc = subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc = subprocess.run(args, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if proc.returncode == 0:
         return
     lines = [line.strip() for line in proc.stdout.splitlines() if line.strip()]

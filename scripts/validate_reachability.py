@@ -40,8 +40,8 @@ def _operational_files(skill_dir: Path) -> set[Path]:
 
 def _resolve_names(text: str, current: Path, skill_dir: Path, by_name: dict[str, set[Path]]) -> set[Path]:
     found: set[Path] = set()
-    for token in NAME_RE.findall(text):
-        token = token.strip("./") if token.startswith("./") else token
+    for raw_token in NAME_RE.findall(text):
+        token = raw_token.strip("./") if raw_token.startswith("./") else raw_token
         for base in (current.parent, skill_dir):
             candidate = (base / token).resolve()
             if candidate.is_file():

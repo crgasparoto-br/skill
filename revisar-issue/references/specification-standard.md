@@ -1,12 +1,17 @@
 # Padrão de especificação de issue
 
+## Quando ler este arquivo
+
+Ler quando for avaliar prontidão ou forma de uma issue antes de ela entrar no fluxo.
+
 ## Índice
 
-1. Modelo adaptável
-2. Critérios de aceite
-3. Considerações de testes
-4. Checklist de qualidade
-5. Avaliação de prontidão
+- [1. Modelo adaptável](#1-modelo-adaptável)
+- [2. Critérios de aceite](#2-critérios-de-aceite)
+- [3. Considerações de testes](#3-considerações-de-testes)
+- [4. Checklist de qualidade](#4-checklist-de-qualidade)
+- [5. Avaliação de prontidão](#5-avaliação-de-prontidão)
+- [Privacidade, autorização e fronteira pública](#privacidade-autorização-e-fronteira-pública)
 
 ## 1. Modelo adaptável
 

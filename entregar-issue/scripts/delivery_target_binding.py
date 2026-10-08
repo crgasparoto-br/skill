@@ -37,8 +37,7 @@ def _git_blob(repository_path: Path, base_sha: str, repo_relative_path: str) -> 
     """Read one path exactly as stored at base_sha without mutating the checkout."""
     proc = subprocess.run(
         ['git', '-C', str(repository_path), 'show', f'{base_sha}:{repo_relative_path}'],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=False,
     )
     if proc.returncode != 0:

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "case_id": "V030-002-selection-008",
+  "category": "selection",
+  "locale": "pt-BR",
+  "release_version": "0.3.0",
+  "adapter": "generic",
+  "task": {
+    "user_prompt": "antes de entrar no fluxo, a issue precisa ser revisada",
+    "context_summary": "Segundo fraseado reordenado, com outro skill alvo implícito."
+  },
+  "context": {
+    "available_capabilities": [
+      "repository-read",
+      "repository-write",
+      "immutable-identity",
+      "evidence-execution",
+      "ci-read",
+      "test-execution",
+      "issue-read"
+    ],
+    "available_references": [
+      "config/skills-catalog.json",
+      "scripts/select_skill.py"
+    ],
+    "source_files": [
+      "config/skills-catalog.json",
+      "scripts/select_skill.py"
+    ]
+  },
+  "expected": {
+    "outcome": "UNKNOWN",
+    "selected_skill": null,
+    "loaded_references": [],
+    "required_evidence": [
+      "selection-no-trigger-match"
+    ],
+    "forbidden_actions": [
+      "skill-execution",
+      "repository-write"
+    ],
+    "response_minimum": {
+      "min_chars": 32,
+      "required_markers": [
+        "UNKNOWN",
+        "nenhum gatilho"
+      ]
+    }
+  },
+  "budgets": {
+    "max_external_calls": 0,
+    "max_duration_ms": 2000,
+    "max_context_chars": 5000
+  },
+  "sibling_case_id": "V030-002-selection-007",
+  "notes": "Confirma que a abstenção por fraseado reordenado não é específica de uma única frase."
+}

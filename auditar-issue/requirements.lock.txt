@@ -1,0 +1,39 @@
+# lockfile gerado de auditar-issue/requirements.txt
+# contexto: python 3.12.3 em linux x86_64
+# regenerar: python scripts/lock_dependencies.py --manifest auditar-issue/requirements.txt
+# nao editar a mao: alterar o manifest e regenerar
+
+# via jsonschema, referencing
+# arquivo: attrs-26.1.0-py3-none-any.whl
+attrs==26.1.0 \
+    --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309
+# via cryptography
+# arquivo: cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+cffi==2.1.1 \
+    --hash=sha256:c1453022f490d2459a11819d83ad1d586e9ff65a12ac3e705ffebd46d3685dcf
+# arquivo: cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl
+cryptography==50.0.2 \
+    --hash=sha256:9dab55f57c74c3cad24c323bacbbd04be4705ba6eb0d92e920b1fc4837ed5079
+# arquivo: jsonschema-4.26.0-py3-none-any.whl
+jsonschema==4.26.0 \
+    --hash=sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce
+# via jsonschema
+# arquivo: jsonschema_specifications-2025.9.1-py3-none-any.whl
+jsonschema-specifications==2025.9.1 \
+    --hash=sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe
+# via cffi
+# arquivo: pycparser-3.1-py3-none-any.whl
+pycparser==3.1 \
+    --hash=sha256:f09d358c840bd147b79e55f2bc494f18ea869dc897f5852a8f5766b74f787882
+# via jsonschema, jsonschema-specifications
+# arquivo: referencing-0.37.0-py3-none-any.whl
+referencing==0.37.0 \
+    --hash=sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231
+# via jsonschema, referencing
+# arquivo: rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+rpds-py==2026.9.1 \
+    --hash=sha256:addeda51556dac7c1a2f14cda62db8b621cd12afba3091d03a96c72932387eab
+# via cryptography, referencing
+# arquivo: typing_extensions-4.16.0-py3-none-any.whl
+typing-extensions==4.16.0 \
+    --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8

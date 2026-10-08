@@ -52,7 +52,7 @@ def run_guard(
     ]
     for path in changed_paths:
         cmd.extend(["--current-changed-path", path])
-    return subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return subprocess.run(cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
 def test_accepts_direct_result_only_child_for_ci_fixed_material_head() -> None:

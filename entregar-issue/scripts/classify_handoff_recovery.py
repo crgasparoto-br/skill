@@ -15,7 +15,7 @@ from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
 
-SHA40 = re.compile(r"^[0-9a-f]{40}$", re.I)
+SHA40 = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 CERT_PATH = ".audit/entregar-issue/handoff-ready.json"
 
 
@@ -136,15 +136,14 @@ def main() -> int:
             auditor_scope=auditor_scope,
             auditor_requires_refreeze=auditor_requires_refreeze,
         )
-    if auditor_requires_refreeze or auditor_scope == "post-write-refreeze":
-        if local_scope != "fresh-handoff-required":
-            return emit(
-                "post-write-refreeze",
-                "auditor-recovery-floor:post-write-refreeze",
-                material,
-                auditor_scope=auditor_scope,
-                auditor_requires_refreeze=auditor_requires_refreeze,
-            )
+    if (auditor_requires_refreeze or auditor_scope == "post-write-refreeze") and local_scope != "fresh-handoff-required":
+        return emit(
+            "post-write-refreeze",
+            "auditor-recovery-floor:post-write-refreeze",
+            material,
+            auditor_scope=auditor_scope,
+            auditor_requires_refreeze=auditor_requires_refreeze,
+        )
 
     return emit(
         local_scope,

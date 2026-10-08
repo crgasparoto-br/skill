@@ -1,5 +1,24 @@
 # Eficiencia de execucao
 
+## Quando ler este arquivo
+
+Ler sempre: define a regra central de custo, os orçamentos de conclusão e de espera remota e a barreira terminal de handoff.
+
+## Índice
+
+- [Regra central](#regra-central)
+- [Custos proibidos](#custos-proibidos)
+- [Fingerprints](#fingerprints)
+- [Validacao](#validacao)
+- [Delegacao](#delegacao)
+- [Orcamento de conclusao](#orcamento-de-conclusao)
+- [Orcamento de espera remota](#orcamento-de-espera-remota)
+- [Publicacao atomica](#publicacao-atomica)
+- [Fast path de auditoria](#fast-path-de-auditoria)
+- [Estabilidade do head](#estabilidade-do-head)
+- [Orcamento de churn de PR](#orcamento-de-churn-de-pr)
+- [Barreira terminal de handoff](#barreira-terminal-de-handoff)
+
 ## Regra central
 
 Usar um unico controlador, plano e estado. Implementacao, documentacao por delta, higiene, gates e remediacao sao etapas internas de `entregar-issue`, nao chamadas de Skills.

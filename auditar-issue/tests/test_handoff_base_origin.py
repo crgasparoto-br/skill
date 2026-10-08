@@ -29,7 +29,7 @@ def run(candidate: Path, base_cert: Path | None):
     ]
     if base_cert is not None:
         cmd.extend(["--base-certificate", str(base_cert)])
-    return subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return subprocess.run(cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
 def foreign_certificate() -> dict:

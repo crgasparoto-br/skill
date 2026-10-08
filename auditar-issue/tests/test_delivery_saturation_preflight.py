@@ -16,7 +16,7 @@ CANONICAL = [
 
 
 def run(*args: str):
-    return subprocess.run([sys.executable, str(ROOT / "scripts" / "check_delivery_saturation.py"), *args], text=True, stdout=subprocess.PIPE)
+    return subprocess.run([sys.executable, str(ROOT / "scripts" / "check_delivery_saturation.py"), *args], check=False, text=True, stdout=subprocess.PIPE)
 
 
 def test_preflight_rejects_unsaturated_material_family() -> None:
@@ -24,7 +24,7 @@ def test_preflight_rejects_unsaturated_material_family() -> None:
         base=Path(tmp)
         matrix=base/"matrix.json"; risk=base/"risk.json"; inherited=base/"inherited.json"
         matrix.write_text(json.dumps({"head_sha":HEAD,"requirements":[{"requirement_id":"REQ-1","plausible_wrong_implementation":"Accept a past target because the date parses as ISO.","positive_control":{"status":"passed","head_sha":HEAD},"negative_controls":[{"status":"passed","head_sha":HEAD}],"regression_controls":[{"status":"passed","head_sha":HEAD}]}],"uncovered_requirements":[]}),encoding="utf-8")
-        risk.write_text(json.dumps({"head_sha":HEAD,"families":[{"family":f,"applicable":f=="temporal-destination","status":"pending" if f=="temporal-destination" else "not-applicable","control_ids":[] if f=="temporal-destination" else []} for f in CANONICAL],"material_families_missing_controls":[]}),encoding="utf-8")
+        risk.write_text(json.dumps({"head_sha":HEAD,"families":[{"family":f,"applicable":f=="temporal-destination","status":"pending" if f=="temporal-destination" else "not-applicable","control_ids":[]} for f in CANONICAL],"material_families_missing_controls":[]}),encoding="utf-8")
         inherited.write_text(json.dumps({"head_sha":HEAD,"controls":[],"unresolved_controls":[]}),encoding="utf-8")
         proc=run("--attack-matrix",str(matrix),"--risk-saturation",str(risk),"--inherited-controls",str(inherited),"--head-sha",HEAD)
         assert proc.returncode==2

@@ -1,4 +1,7 @@
 # Governação do catálogo e contratos compartilhados
+# Enquanto houver um único proprietário, a separação entre produtor e aprovador do
+# registro de auditores é regra de contrato, não garantia estrutural: ver docs/SECURITY.md.
+# Distribuir `config/`, `schemas/`, `scripts/` e `.github/` assim que houver uma segunda pessoa.
 * @crgasparoto-br
 config/ @crgasparoto-br
 schemas/ @crgasparoto-br

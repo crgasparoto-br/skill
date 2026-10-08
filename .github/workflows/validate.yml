@@ -19,14 +19,20 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          # O lockfile é vinculado ao contexto em que foi resolvido: outra versão de Python
+          # escolhe outra distribuição, com outro digest, e a instalação reprova. Manter a
+          # mesma versão é o que faz o gate rodar no ambiente registrado.
+          python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            auditar-issue/requirements-dev.txt
-            entregar-issue/requirements-dev.txt
+            requirements.lock.txt
+            auditar-issue/requirements-dev.lock.txt
+            entregar-issue/requirements-dev.lock.txt
 
-      - name: Install test dependencies
-        run: python -m pip install -r entregar-issue/requirements-dev.txt -r auditar-issue/requirements-dev.txt
+      # A instalação usa o lockfile com `--require-hashes`: o ambiente que executa o gate é o
+      # ambiente registrado, e uma distribuição que não corresponde ao digest reprova aqui.
+      - name: Install test dependencies from lockfiles
+        run: python -m pip install --require-hashes -r requirements.lock.txt -r entregar-issue/requirements-dev.lock.txt -r auditar-issue/requirements-dev.lock.txt
 
       - name: Validate catalog
         run: python scripts/validate_repository.py
@@ -52,8 +58,45 @@ jobs:
       - name: Validate behavioral evaluation harness
         run: python scripts/validate_evals.py --root .
 
+      - name: Replay behavioral evaluations and verify the report
+        run: |
+          python evals/run_evals.py --root . --results-dir evals/fixtures/results --report /tmp/eval-report.json > /tmp/eval-report-stdout.json
+          python evals/run_evals.py --root . --verify-report /tmp/eval-report.json
+
       - name: Validate operational file reachability
         run: python scripts/validate_reachability.py --root .
+
+      - name: Validate canonical issue templates
+        run: python scripts/validate_issue_templates.py --root .
+
+      - name: Validate context budget of control planes and references
+        run: python scripts/validate_context_budget.py --root .
+
+      - name: Validate genericity of permanent skill assets
+        run: python entregar-issue/scripts/validate_skill_genericity.py --skill-root .
+
+      - name: Validate navigability of skill references
+        run: python scripts/validate_reference_indexes.py --root .
+
+      - name: Validate dependency lockfiles and exception policy
+        run: python scripts/validate_dependency_locks.py --root .
+
+      - name: Validate lint policy and run static analysis
+        run: python scripts/validate_lint.py --root .
+
+      - name: Validate global hygiene policy and run the tree sweep
+        run: python higienizar-repositorio/scripts/validate_hygiene.py --root .
+
+      - name: Validate the release handoff contract
+        run: python scripts/validate_release_handoff.py --root .
+      - name: Validate workflow step classification and documented sequence
+        run: python scripts/validate_workflow_classification.py --root .
+
+      # O gate offline prova forma e vínculo, mas não pode resolver dependências. A resolução
+      # real é o que demonstra que o lockfile é o fechamento do manifest: comparar o lockfile
+      # regenerado reprova fechamento forjado e transitiva que um extra ativa e ficou de fora.
+      - name: Validate that lockfiles match the resolved closure
+        run: python scripts/lock_dependencies.py --root . --check
 
       - name: Run skill tests
         run: python -m pytest -q

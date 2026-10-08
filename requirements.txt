@@ -1,0 +1,15 @@
+# Dependencias do ferramental do catalogo.
+#
+# O gate scripts/validate_dependency_locks.py interpreta gramatica de versao, especificador,
+# requisito, marcador e nome de distribuicao pelo `packaging`, que e a implementacao de
+# referencia das PEPs 440, 508 e 427. Declarar aqui mantem a autoridade explicita, em vez de
+# depender de dependencia transitiva, e faz o proprio gate cobrir o ferramental que o executa.
+packaging>=26.3
+# O gate de analise estatica executa o Ruff e a versao e fixada exatamente porque o catalogo de
+# regras muda entre versoes: subir de versao acrescenta familias que exigem decisao explicita na
+# politica, e a divergencia entre a versao instalada e a declarada reprova o gate.
+ruff==0.14.1
+# O teste de paridade da sequencia documentada le os passos do workflow com um parser de YAML, e
+# nao com expressoes regulares sobre o texto: chave entre aspas, espaco antes dos dois-pontos,
+# mapeamento em fluxo e bloco vazio sao formas validas do mesmo passo ativo.
+PyYAML>=6.0.3
