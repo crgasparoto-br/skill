@@ -13,13 +13,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import stat
 import sys
 import unicodedata
 from pathlib import Path
 
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 POLICY_RELATIVE = "config/release-handoff.json"
-IGNORED_CATEGORIES = frozenset({"Cc", "Cf", "Zl", "Zp", "Zs"})
+MEANINGFUL_CATEGORIES = frozenset({"L", "N"})
 REQUIRED_IDS = frozenset(
     {"issues-delivered", "develop-sha", "gates", "independent-audit", "divergence"}
 )
@@ -27,15 +28,17 @@ SCHEMA_VERSION = 1
 
 
 def significant(text: object) -> str:
-    """Conteudo significativo: descarta espaco e caracteres de controle e de formato.
+    """Conteudo significativo: so letra e numero contam como evidencia.
 
-    `str.strip()` nao remove ZERO WIDTH SPACE nem outros controles de formato, que passariam como
-    evidencia valida. Aqui, espaco (`Zs`/`Zl`/`Zp`) e controle/formato (`Cc`/`Cf`) deixam de contar.
+    Listar o que descartar sempre deixa uma categoria invisivel de fora: espaco e controle nao bastavam,
+    porque marcas combinantes como `U+034F` tambem sao invisiveis. Por isso a regra e positiva: o texto
+    significativo e aquele formado por letras e numeros, e nada mais conta como evidencia.
     """
     if not isinstance(text, str):
         return ""
-    kept = "".join(character for character in text if unicodedata.category(character) not in IGNORED_CATEGORIES)
-    return kept.strip()
+    return "".join(
+        character for character in text if unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES
+    ).strip()
 
 
 def exact_version(value: object, expected: int) -> bool:
@@ -125,6 +128,9 @@ def policy_shape_errors(policy: dict) -> list[str]:
     approved = verdicts.get("audit_approved") if isinstance(verdicts, dict) else None
     if not isinstance(approved, list) or not approved:
         errors.append("a politica nao declara `verdicts.audit_approved`")
+        return errors
+    if not all(isinstance(item, str) and significant(item) for item in approved):
+        errors.append("a politica declara parecer invalido em `verdicts.audit_approved`")
     return errors
 
 
@@ -134,6 +140,18 @@ def policy_items(policy: dict, key: str) -> list[dict]:
     if not isinstance(items, list):
         raise SystemExit(f"ERRO: a politica nao declara a lista `{key}`")
     return [item for item in items if isinstance(item, dict) and isinstance(item.get("id"), str)]
+
+
+def declared_text(evidence: dict, item_id: str) -> str:
+    """Valor declarado sem normalizacao de conteudo: espaco interno precisa chegar a validacao.
+
+    Aplicar a regra de conteudo significativo aqui apagaria o espaco interno de um commit informado, e
+    um valor de 41 caracteres passaria a parecer hexadecimal de 40.
+    """
+    entry = evidence.get("items")
+    entry = entry.get(item_id) if isinstance(entry, dict) else None
+    value = entry.get("value") if isinstance(entry, dict) else None
+    return value.strip() if isinstance(value, str) else ""
 
 
 def evidence_value(evidence: dict, item_id: str) -> tuple[str, str]:
@@ -253,11 +271,30 @@ def refuse_symlink(path: Path, label: str) -> None:
         raise SystemExit(f"ERRO: {label} passa por link simbolico: {linked}")
 
 
+def write_report(path: Path, text: str, label: str) -> None:
+    """Escreve o relatorio de forma que o destino pedido seja o unico arquivo alterado.
+
+    Duas brechas ficam fechadas: um destino que seja hard link de outro arquivo (`st_nlink` maior que um)
+    levaria a escrita para o alvo compartilhado, e conferir o caminho e depois escrever deixaria a janela
+    em que um link e criado entre a conferencia e a abertura. Por isso a conferencia vem antes e a escrita
+    passa por arquivo temporario seguido de substituicao atomica, que troca o proprio link pelo arquivo.
+    """
+    refuse_symlink(path, label)
+    if path.exists():
+        status = path.stat()
+        if not stat.S_ISREG(status.st_mode) or status.st_nlink > 1:
+            raise SystemExit(f"ERRO: {label} nao e um arquivo regular exclusivo: {path}")
+    temporary = path.with_name(f"{path.name}.parcial")
+    temporary.write_text(text, encoding="utf-8")
+    temporary.replace(path)
+
+
 def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
     """Commits de `develop` e `main`: argumento tem precedencia sobre a evidencia."""
-    develop = significant(arguments.develop) or evidence_value(evidence, "develop-sha")[0]
-    declared_main = significant(evidence.get("main"))
-    main = significant(arguments.main) or declared_main
+    develop = arguments.develop.strip() or declared_text(evidence, "develop-sha")
+    declared_main = evidence.get("main")
+    declared_main = declared_main.strip() if isinstance(declared_main, str) else ""
+    main = arguments.main.strip() or declared_main
     return {"develop": develop or "", "main": main or ""}
 
 
@@ -290,15 +327,11 @@ def main(argv: list[str] | None = None) -> int:
     report = build_report(policy, evidence, shas)
     markdown = markdown_report(report)
     if arguments.report:
-        refuse_symlink(arguments.report, "o relatorio Markdown")
-        arguments.report.write_text(markdown, encoding="utf-8")
+        write_report(arguments.report, markdown, "o relatorio Markdown")
     else:
         sys.stdout.write(markdown)
     if arguments.json_report:
-        refuse_symlink(arguments.json_report, "o relatorio JSON")
-        arguments.json_report.write_text(
-            json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
+        write_report(arguments.json_report, json.dumps(report, ensure_ascii=False, indent=2) + "\n", "o relatorio JSON")
     if report["ready"]:
         print("Handoff OK: evidencia obrigatoria completa e verificada.")
         return 0

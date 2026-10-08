@@ -26,7 +26,7 @@ FORBIDDEN_COMMANDS = (
     "git merge",
     "git commit",
 )
-ALLOWED_IMPORTS = frozenset({"__future__", "argparse", "json", "re", "sys", "unicodedata", "pathlib", "typing"})
+ALLOWED_IMPORTS = frozenset({"__future__", "argparse", "json", "re", "stat", "sys", "unicodedata", "pathlib", "typing"})
 FORBIDDEN_PRIMITIVES = frozenset(
     {
         "__builtins__",
@@ -222,8 +222,9 @@ def dynamic_errors(tree: ast.Module) -> list[str]:
         if isinstance(node, ast.Name) and node.id in FORBIDDEN_PRIMITIVES:
             used.add(node.id)
         elif isinstance(node, ast.Attribute):
-            # Atributo dunder e a via de introspeccao que permite alcancar `__globals__` e afins.
-            if node.attr in FORBIDDEN_PRIMITIVES or node.attr.startswith("__"):
+            # Atributo reservado e a via de introspeccao: `__globals__` alcanca builtins e
+            # `_getframe` alcanca o quadro de execucao, que tambem entrega as builtins.
+            if node.attr in FORBIDDEN_PRIMITIVES or node.attr.startswith("_"):
                 used.add(node.attr)
         elif isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value in FORBIDDEN_PRIMITIVES:
             used.add(node.value)

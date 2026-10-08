@@ -6,9 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from scripts.release_handoff import build_report, load_json, markdown_report
+from scripts.release_handoff import build_report, load_json, markdown_report, significant
 from scripts.release_handoff import main as contract_main
-from scripts.release_handoff import significant
 from scripts.validate_release_handoff import policy_errors, script_errors, validate_release_handoff
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -324,3 +323,66 @@ def test_empty_policy_is_rejected_by_the_contract_alone(tmp_path: Path) -> None:
     path = tmp_path / "evidence.json"
     path.write_text(json.dumps({"schema_version": 1, "main": MAIN, "items": {}}), encoding="utf-8")
     assert contract_main(["--root", str(tmp_path), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN]) == 1
+
+
+@pytest.mark.parametrize("character", ["\u034f", "\u0301", "\u200b", "\u00a0", "\t", " "])
+def test_combining_and_invisible_characters_are_not_evidence(character: str) -> None:
+    """Achado bloqueante B3 residual: marca combinante tambem e invisivel e nao e evidencia."""
+    assert significant(character) == ""
+    document = evidence()
+    document["items"]["issues-delivered"] = {"value": character, "source": character}
+    assert report_for(document)["ready"] is False
+
+
+@pytest.mark.parametrize("separator", [" ", "\t", "\n"])
+def test_sha_with_internal_separator_is_rejected(separator: str) -> None:
+    """Regressao: normalizar o commit apagaria o separador interno e o faria parecer valido."""
+    broken = "a" * 20 + separator + "a" * 20
+    assert significant(broken) == "a" * 40
+    report = report_for(evidence(), develop=broken)
+    assert report["ready"] is False
+    assert any("develop" in problem for problem in report["problems"])
+
+
+def test_hard_linked_report_destination_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante B4: destino com mais de um link levaria a escrita para outro arquivo."""
+    (tmp_path / "outside").mkdir()
+    (tmp_path / "reports").mkdir()
+    victim = tmp_path / "outside/victim.md"
+    victim.write_text("intacto", encoding="utf-8")
+    destination = tmp_path / "reports/handoff.md"
+    destination.hardlink_to(victim)
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(
+            ["--root", str(ROOT), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", MAIN,
+             "--report", str(destination)]
+        )
+    assert victim.read_text(encoding="utf-8") == "intacto"
+
+
+def test_non_textual_audit_verdict_is_rejected_by_the_contract_alone(tmp_path: Path) -> None:
+    """Gap: parecer nao textual na politica precisa ser recusado pelo contrato sozinho."""
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "config").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    policy = json.loads(json.dumps(POLICY))
+    policy["verdicts"]["audit_approved"] = ["approved", 1, None, {}]
+    (tmp_path / "config/release-handoff.json").write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(evidence()), encoding="utf-8")
+    assert contract_main(["--root", str(tmp_path), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN]) == 1
+
+
+def test_reserved_attribute_introspection_is_rejected(tmp_path: Path) -> None:
+    """Achado adicional: `sys._getframe` tambem entrega as builtins."""
+    original = (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8")
+    snippet = '_runner = sys._getframe().f_builtins["_" + "_import__"]("sub" + "process")'
+    injected = original.replace("def parse_arguments(", f"{snippet}\n\n\ndef parse_arguments(", 1)
+    assert injected != original
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(injected, encoding="utf-8")
+    assert script_errors(tmp_path)
