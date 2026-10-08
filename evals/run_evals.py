@@ -427,7 +427,10 @@ def validate_fixture_manifest(root: Path, results_dir: Path, expected_result_nam
         result_path = results_dir / name
         if not result_path.is_file() or result_path.is_symlink():
             raise HarnessError(f"fixture manifest aponta para resultado ausente ou não regular: {name}")
-        observed_sha = sha256_bytes(result_path.read_bytes())
+        try:
+            observed_sha = sha256_bytes(result_path.read_bytes())
+        except OSError as exc:
+            raise HarnessError(f"fixture nao pode ser lido: {name}: {exc}") from exc
         if observed_sha != expected_sha:
             raise HarnessError(f"hash do fixture diverge do manifesto: {name}")
 
@@ -489,8 +492,12 @@ def run_evaluations(
             if result_path.is_symlink():
                 raise HarnessError(f"resultado esperado não pode ser symlink: {result_path.name}")
             if result_path.is_file():
+                try:
+                    conteudo = result_path.read_bytes()
+                except OSError as exc:
+                    raise HarnessError(f"resultado nao pode ser lido: {result_path.name}: {exc}") from exc
                 result, error = load_result(result_path, result_schema)
-                inputs.append({"case_id": case["case_id"], "result_sha256": sha256_bytes(result_path.read_bytes())})
+                inputs.append({"case_id": case["case_id"], "result_sha256": sha256_bytes(conteudo)})
             else:
                 error = f"runtime não produziu resultado: {result_path.name}"
                 inputs.append({"case_id": case["case_id"], "result_sha256": None})
@@ -523,21 +530,53 @@ def _write_report(report: dict[str, Any], path: Path) -> None:
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+class ParserError(Exception):
+    """Erro de linha de comando que precisa reprovar com status 1."""
+
+
+class Parser(argparse.ArgumentParser):
+    """Interpretador de argumentos que reporta erro como falha controlada do harness."""
+
+    def error(self, message: str) -> None:
+        raise ParserError(message)
+
+
+def _resolve_root(value: str | None) -> Path:
+    """Resolve a raiz auditada recusando valor vazio, inacessivel ou em ciclo de links."""
+    if value is not None and not value.strip():
+        raise HarnessError("argumento --root vazio")
+    raiz = Path(value) if value is not None else Path(__file__).resolve().parents[1]
+    try:
+        return raiz.resolve()
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise HarnessError(f"raiz inacessivel: {exc}") from exc
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser = Parser(description=__doc__)
+    parser.add_argument("--root", default=None)
     parser.add_argument("--results-dir", type=Path)
     parser.add_argument("--provider-command")
     parser.add_argument("--provider-id", default="untrusted-command")
     parser.add_argument("--report", type=Path)
     parser.add_argument("--verify-report", type=Path)
     parser.add_argument("--validate-only", action="store_true")
-    args = parser.parse_args(argv)
-    root = args.root.resolve()
+    try:
+        args = parser.parse_args(argv)
+        root = _resolve_root(args.root)
+        if args.results_dir is not None and not args.results_dir.is_dir():
+            raise HarnessError("--results-dir precisa apontar para um diretorio")
+    except (ParserError, HarnessError, OSError, RuntimeError, ValueError) as exc:
+        print(f"EVAL_HARNESS_ERROR: {exc}", file=sys.stderr)
+        return 1
 
     if args.verify_report:
         report_path = args.verify_report if args.verify_report.is_absolute() else root / args.verify_report
-        errors = verify_report(root, report_path)
+        try:
+            errors = verify_report(root, report_path)
+        except (HarnessError, OSError, RuntimeError, ValueError, RecursionError) as exc:
+            print(f"REPORT_INVALID: {exc}", file=sys.stderr)
+            return 1
         if errors:
             print("REPORT_INVALID: " + "; ".join(errors), file=sys.stderr)
             return 1
@@ -552,13 +591,17 @@ def main(argv: list[str] | None = None) -> int:
             provider_id=args.provider_id,
             validate_only=args.validate_only,
         )
-    except HarnessError as exc:
+    except (HarnessError, OSError, RuntimeError, ValueError, RecursionError) as exc:
         print(f"EVAL_HARNESS_ERROR: {exc}", file=sys.stderr)
         return 1
 
     if args.report:
         report_path = args.report if args.report.is_absolute() else root / args.report
-        _write_report(report, report_path)
+        try:
+            _write_report(report, report_path)
+        except (OSError, ValueError) as exc:
+            print(f"EVAL_HARNESS_ERROR: destino de relatorio invalido: {exc}", file=sys.stderr)
+            return 1
     print(json.dumps(report, ensure_ascii=False, indent=2))
     if args.validate_only:
         return 0

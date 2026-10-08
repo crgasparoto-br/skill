@@ -45,8 +45,10 @@ def selection_case_errors(case: dict[str, Any]) -> list[str]:
     Accepting only the tie shape made positive selection inexpressible, so the
     matrix could never demonstrate that the router picks the right skill.
     """
-    case_id = case["case_id"]
-    expected = case["expected"]
+    case_id = case.get("case_id")
+    expected = case.get("expected")
+    if not isinstance(expected, dict):
+        return [f"{case_id} precisa declarar expected como objeto"]
     selection = expected.get("selection")
     outcome = expected["outcome"]
     selected = expected["selected_skill"]
@@ -254,7 +256,10 @@ def validate_v030_002_matrix(root: Path, harness: Any = None) -> list[str]:
             errors.append(f"{case_id} and {sibling_id} must share the same category")
         if sibling.get("task", {}).get("user_prompt") == case.get("task", {}).get("user_prompt"):
             errors.append(f"{case_id} and {sibling_id} must vary the user prompt")
-        expected = case["expected"]
+        expected = case.get("expected")
+        if not isinstance(expected, dict):
+            errors.append(f"{case_id} precisa declarar expected como objeto")
+            continue
         if not expected["required_evidence"]:
             errors.append(f"{case_id} must declare required evidence")
         if not expected["forbidden_actions"]:

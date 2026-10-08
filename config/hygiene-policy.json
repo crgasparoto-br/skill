@@ -78,12 +78,20 @@
     "complexity": {
       "state": "reported",
       "max_complexity": 30,
-      "baseline": 47,
+      "baseline": 49,
       "limits": "Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento entre módulos. Mede só o corpo da própria função: função aninhada é medida por si, ramo de default de parâmetro e de decorator não entra, with não conta como ramo e lambda não é medida.",
       "baseline_history": [
         {
           "value": 47,
           "reason": "Medicao inicial da arvore na entrada do perfil: divida estrutural de complexidade pre-existente, medida de uma vez para que a classe seja reportada em vez de declarada item a item."
+        },
+        {
+          "value": 48,
+          "reason": "O gate e o harness de avaliacoes passaram a validar forma de argumento, raiz e retorno antes de usar os valores, o que acrescenta um ramo de decisao."
+        },
+        {
+          "value": 49,
+          "reason": "A leitura de fixture e de resultado passou a converter falha de sistema de arquivos em erro controlado do harness."
         }
       ]
     }
