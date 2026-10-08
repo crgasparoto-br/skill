@@ -497,3 +497,42 @@ def test_broken_harness_import_is_reported_readably(tmp_path: Path, excecao: str
     assert resultado.returncode == 1
     assert "nao pode ser importado" in resultado.stdout
     assert "Traceback" not in resultado.stderr
+
+
+@pytest.mark.parametrize(
+    "injecao",
+    [
+        'import evals\nevals.__version__ = "9.9.9"\n',
+        'import evals\nevals.__all__ = ["pwned"]\n',
+    ],
+)
+def test_sibling_module_mutation_is_rejected(tmp_path: Path, injecao: str) -> None:
+    """Envelope estatico nao basta: alteracao efetiva feita por modulo irmao precisa reprovar."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    alvo = copia / "evals" / "run_evals.py"
+    texto = alvo.read_text(encoding="utf-8")
+    alvo.write_text(
+        texto.replace("from __future__ import annotations\n", "from __future__ import annotations\n" + injecao, 1),
+        encoding="utf-8",
+    )
+    resultado = subprocess.run(
+        [sys.executable, "scripts/validate_evals.py", "--root", "."],
+        cwd=copia,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert resultado.returncode == 1
+    assert "tempo de execucao" in resultado.stdout
+
+
+@pytest.mark.parametrize(
+    "corpo",
+    [
+        '__all__ = ["__version__", "__version__"]\n__version__ = "0.3.0"\n',
+        '__all__ = ["__version__", ""]\n__version__ = "0.3.0"\n',
+    ],
+)
+def test_harness_all_with_repetition_or_empty_name_is_rejected(tmp_path: Path, corpo: str) -> None:
+    root = _package(tmp_path, corpo)
+    assert harness_version_errors(root, {"harness_version": "0.3.0"})
