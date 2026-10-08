@@ -7,7 +7,8 @@ from pathlib import Path
 import pytest
 
 from scripts.release_handoff import build_report, load_json, markdown_report
-from scripts.validate_release_handoff import policy_errors, script_errors
+from scripts.release_handoff import main as contract_main
+from scripts.validate_release_handoff import policy_errors, script_errors, validate_release_handoff
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = json.loads((ROOT / "config/release-handoff.json").read_text(encoding="utf-8"))
@@ -196,3 +197,67 @@ def test_dynamic_import_in_contract_is_rejected(tmp_path: Path) -> None:
 def test_contract_imports_stay_in_the_allowed_list() -> None:
     """O contrato entregue so importa o que a lista permitida declara."""
     assert script_errors(ROOT) == []
+
+
+@pytest.mark.parametrize("snippet", [
+    'acquired = getattr(__builtins__, "__import__")("subprocess")',
+    'pathlib.os.system("id")',
+    'import importlib',
+    'mod = __import__("subprocess")',
+    'mod = sys.modules["subprocess"]',
+    'name = "subprocess"',
+    'eval("1")',
+    'handle = open("x")',
+])
+def test_indirect_authority_is_rejected(tmp_path: Path, snippet: str) -> None:
+    """Achado bloqueante B2-R: autoridade indireta tambem precisa ser recusada."""
+    original = (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8")
+    injected = original.replace("def parse_arguments(", f"{snippet}\n\n\ndef parse_arguments(", 1)
+    assert injected != original
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(injected, encoding="utf-8")
+    assert script_errors(tmp_path), f"forma indireta aceita: {snippet}"
+
+
+def test_whitespace_only_evidence_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante B3: espaco em branco nao e evidencia nem origem."""
+    document = evidence()
+    for key in ("issues-delivered", "gates", "divergence"):
+        document["items"][key] = {"value": " ", "source": " "}
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+    code = contract_main(["--root", str(ROOT), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN])
+    assert code == 1
+
+
+def test_contract_and_policy_must_not_be_symlinks(tmp_path: Path) -> None:
+    """Achado bloqueante B4: contrato e politica precisam ser arquivos regulares confinados."""
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "config").mkdir()
+    (tmp_path / "outside").mkdir()
+    (tmp_path / "outside/policy.json").write_text(
+        (ROOT / "config/release-handoff.json").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (tmp_path / "outside/contract.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (tmp_path / "config/release-handoff.json").symlink_to(tmp_path / "outside/policy.json")
+    (tmp_path / "scripts/release_handoff.py").symlink_to(tmp_path / "outside/contract.py")
+    errors = validate_release_handoff(tmp_path)
+    assert any("link simbolico" in error for error in errors)
+
+
+def test_contract_rejects_invalid_policy_on_its_own(tmp_path: Path) -> None:
+    """Ressalva: rodar o contrato sozinho tambem precisa recusar politica invalida."""
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "config").mkdir()
+    invalid = json.loads(json.dumps(POLICY))
+    invalid["policy_version"] = True
+    (tmp_path / "config/release-handoff.json").write_text(json.dumps(invalid, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence()), encoding="utf-8")
+    code = contract_main(["--root", str(tmp_path), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", MAIN])
+    assert code == 1

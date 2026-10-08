@@ -26,6 +26,15 @@ def exact_version(value: object, expected: int) -> bool:
     return isinstance(value, int) and not isinstance(value, bool) and value == expected
 
 
+def confined_regular_file(root: Path, path: Path, label: str) -> None:
+    """Recusa arquivo que nao seja regular ou que resolva para fora da raiz auditada."""
+    resolved = path.resolve()
+    if path.is_symlink() or not resolved.is_file():
+        raise SystemExit(f"ERRO: {label} nao e um arquivo regular: {path}")
+    if not resolved.is_relative_to(root.resolve()):
+        raise SystemExit(f"ERRO: {label} resolve para fora da raiz auditada: {resolved}")
+
+
 def load_json(path: Path) -> dict:
     """Le um JSON de objeto, falhando fechado quando o arquivo falta ou nao e um objeto."""
     try:
@@ -35,6 +44,42 @@ def load_json(path: Path) -> dict:
     if not isinstance(document, dict):
         raise SystemExit(f"ERRO: {path} nao contem um objeto JSON")
     return document
+
+
+def policy_shape_errors(policy: dict) -> list[str]:
+    """A politica precisa declarar versao exata, ausencia de autoridade e identificadores unicos.
+
+    Sem isto, rodar o contrato sozinho aceitaria politica com versao de tipo errado, autoridade de merge
+    declarada ou identificador repetido, e o veredito dependeria de qual porta de entrada foi usada.
+    """
+    errors = []
+    if not exact_version(policy.get("policy_version"), SCHEMA_VERSION):
+        errors.append("a politica nao declara `policy_version` como o inteiro 1")
+    authority = policy.get("authority")
+    if not isinstance(authority, dict):
+        errors.append("a politica nao declara o bloco `authority`")
+    else:
+        errors.extend(
+            f"a politica precisa declarar `authority.{key}` como falso"
+            for key in ("merges", "tags", "publishes")
+            if authority.get(key) is not False
+        )
+    if not isinstance(policy.get("required"), list) or not isinstance(policy.get("optional"), list):
+        errors.append("a politica precisa declarar `required` e `optional` como listas")
+        return errors
+    identifiers = [
+        item.get("id")
+        for key in ("required", "optional")
+        for item in policy[key]
+        if isinstance(item, dict)
+    ]
+    if len(identifiers) != len(set(identifiers)):
+        errors.append("a politica repete identificador entre itens obrigatorios e opcionais")
+    verdicts = policy.get("verdicts")
+    approved = verdicts.get("audit_approved") if isinstance(verdicts, dict) else None
+    if not isinstance(approved, list) or not approved:
+        errors.append("a politica nao declara `verdicts.audit_approved`")
+    return errors
 
 
 def policy_items(policy: dict, key: str) -> list[dict]:
@@ -53,7 +98,10 @@ def evidence_value(evidence: dict, item_id: str) -> tuple[str, str]:
         return "", ""
     value = entry.get("value")
     source = entry.get("source")
-    return (value if isinstance(value, str) else ""), (source if isinstance(source, str) else "")
+    # Espaco em branco nao e evidencia: o valor e a origem precisam ter conteudo significativo.
+    value = value.strip() if isinstance(value, str) else ""
+    source = source.strip() if isinstance(source, str) else ""
+    return value, source
 
 
 def check_required(policy: dict, evidence: dict, shas: dict[str, str]) -> list[dict]:
@@ -154,10 +202,18 @@ def markdown_report(report: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def refuse_symlink(path: Path, label: str) -> None:
+    """Recusa escrever por cima de link simbolico, para nao alterar alvo fora do destino pedido."""
+    if path.is_symlink():
+        raise SystemExit(f"ERRO: {label} aponta para um link simbolico: {path}")
+
+
 def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
     """Commits de `develop` e `main`: argumento tem precedencia sobre a evidencia."""
-    develop = arguments.develop or evidence_value(evidence, "develop-sha")[0]
-    main = arguments.main or (evidence.get("main") if isinstance(evidence.get("main"), str) else "")
+    develop = arguments.develop.strip() or evidence_value(evidence, "develop-sha")[0]
+    declared_main = evidence.get("main")
+    declared_main = declared_main.strip() if isinstance(declared_main, str) else ""
+    main = arguments.main.strip() or declared_main
     return {"develop": develop or "", "main": main or ""}
 
 
@@ -176,16 +232,26 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """Verifica o handoff e devolve 0 quando pronto, 1 quando falta evidencia."""
     arguments = parse_arguments(argv)
-    policy = load_json(arguments.root / POLICY_RELATIVE)
+    policy_path = arguments.root / POLICY_RELATIVE
+    confined_regular_file(arguments.root, policy_path, "a politica do handoff")
+    policy = load_json(policy_path)
+    shape_errors = policy_shape_errors(policy)
+    if shape_errors:
+        for error in shape_errors:
+            print(f"ERRO: {error}")
+        print("Handoff reprovado: a politica do handoff e invalida.")
+        return 1
     evidence = load_json(arguments.evidence)
     shas = read_shas(arguments, evidence)
     report = build_report(policy, evidence, shas)
     markdown = markdown_report(report)
     if arguments.report:
+        refuse_symlink(arguments.report, "o relatorio Markdown")
         arguments.report.write_text(markdown, encoding="utf-8")
     else:
         sys.stdout.write(markdown)
     if arguments.json_report:
+        refuse_symlink(arguments.json_report, "o relatorio JSON")
         arguments.json_report.write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )

@@ -27,7 +27,28 @@ FORBIDDEN_COMMANDS = (
     "git commit",
 )
 ALLOWED_IMPORTS = frozenset({"__future__", "argparse", "json", "re", "sys", "pathlib", "typing"})
-FORBIDDEN_PRIMITIVES = frozenset({"__import__", "eval", "exec", "compile", "importlib", "subprocess"})
+FORBIDDEN_PRIMITIVES = frozenset(
+    {
+        "__builtins__",
+        "__import__",
+        "check_output",
+        "eval",
+        "exec",
+        "getattr",
+        "globals",
+        "importlib",
+        "locals",
+        "modules",
+        "open",
+        "os",
+        "popen",
+        "setattr",
+        "spawn",
+        "subprocess",
+        "system",
+        "vars",
+    }
+)
 REQUIRED_IDS = frozenset(
     {"issues-delivered", "develop-sha", "gates", "independent-audit", "divergence"}
 )
@@ -51,6 +72,16 @@ def load_object(path: Path) -> dict:
     if not isinstance(document, dict):
         raise SystemExit(f"ERRO: {path} nao contem um objeto JSON")
     return document
+
+
+def confined_errors(root: Path, path: Path, label: str) -> list[str]:
+    """Arquivo do contrato precisa ser regular e estar dentro da raiz auditada."""
+    if path.is_symlink():
+        return [f"`{label}` e um link simbolico, e nao um arquivo regular"]
+    resolved = path.resolve()
+    if not resolved.is_relative_to(root.resolve()):
+        return [f"`{label}` resolve para fora da raiz auditada: {resolved}"]
+    return []
 
 
 def policy_errors(policy: dict) -> list[str]:
@@ -141,10 +172,11 @@ def script_errors(root: Path) -> list[str]:
     `importlib.import_module("subprocess")` passaria pelas duas primeiras.
     """
     path = root / SCRIPT_RELATIVE
-    if not path.is_file():
-        return [f"o contrato de handoff nao existe: {SCRIPT_RELATIVE}"]
+    errors = confined_errors(root, path, SCRIPT_RELATIVE)
+    if errors or not path.is_file():
+        return errors or [f"o contrato de handoff nao existe: {SCRIPT_RELATIVE}"]
     text = path.read_text(encoding="utf-8")
-    errors = [
+    errors += [
         f"o contrato de handoff menciona comando proibido: `{command}`"
         for command in FORBIDDEN_COMMANDS
         if command in text
@@ -173,18 +205,23 @@ def import_errors(tree: ast.Module) -> list[str]:
 
 
 def dynamic_errors(tree: ast.Module) -> list[str]:
-    """Primitivas que permitem importar ou executar codigo em tempo de execucao sao proibidas."""
-    used = {
-        node.id
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Name) and node.id in FORBIDDEN_PRIMITIVES
-    }
-    used |= {
-        node.func.id
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
-        and node.func.id in FORBIDDEN_PRIMITIVES
-    }
+    """Primitivas de importacao e execucao dinamica sao proibidas em qualquer forma que aparecam.
+
+    Cobrir apenas `ast.Name` deixa passar acesso indireto, como
+    `getattr(__builtins__, "__import__")("subprocess")` ou `pathlib.os.system(...)`. Por isso o nome
+    proibido tambem e recusado como atributo acessado e como texto exato no codigo: sem primitiva
+    alguma, o contrato nao adquire autoridade de execucao, mesmo que tente.
+    """
+    used: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id in FORBIDDEN_PRIMITIVES:
+            used.add(node.id)
+        elif isinstance(node, ast.Attribute) and node.attr in FORBIDDEN_PRIMITIVES:
+            used.add(node.attr)
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value in FORBIDDEN_PRIMITIVES:
+            used.add(node.value)
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_PRIMITIVES:
+            used.add(node.func.id)
     return [
         f"o contrato de handoff usa `{name}`, que permite adquirir autoridade em execucao"
         for name in sorted(used)
@@ -267,15 +304,16 @@ def validate_release_handoff(root: Path) -> list[str]:
     completa e reprovar cada falta.
     """
     path = root / POLICY_RELATIVE
-    if not path.is_file():
-        return [f"a politica do handoff nao existe: {POLICY_RELATIVE}"]
+    errors = confined_errors(root, path, POLICY_RELATIVE)
+    if errors or not path.is_file():
+        return errors or [f"a politica do handoff nao existe: {POLICY_RELATIVE}"]
     try:
         policy = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         return [f"nao foi possivel ler {POLICY_RELATIVE}: {error}"]
     if not isinstance(policy, dict):
         return [f"{POLICY_RELATIVE} nao contem um objeto JSON"]
-    return policy_errors(policy) + script_errors(root) + behaviour_errors(root)
+    return errors + policy_errors(policy) + script_errors(root) + behaviour_errors(root)
 
 
 def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
