@@ -5,29 +5,24 @@ from __future__ import annotations
 
 import argparse
 import ast
+import json
 import sys
 from pathlib import Path
 from typing import Any
 
-try:
-    from evals.run_evals import (
-        HarnessError,
-        discover_cases,
-        load_json,
-        load_schema,
-        run_evaluations,
-        schema_errors,
-    )
-except ModuleNotFoundError:  # pragma: no cover - script execution path
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    from evals.run_evals import (
-        HarnessError,
-        discover_cases,
-        load_json,
-        load_schema,
-        run_evaluations,
-        schema_errors,
-    )
+
+def harness_module():
+    """Importa o harness sob validacao apenas quando a execucao e realmente necessaria.
+
+    A versao exportada pelo pacote e conferida por leitura estatica antes desta importacao:
+    importar o pacote auditado primeiro executaria codigo do repositorio sob verificacao.
+    """
+    try:
+        from evals import run_evals
+    except ModuleNotFoundError:  # pragma: no cover - caminho de execucao por script
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from evals import run_evals
+    return run_evals
 
 
 REQUIRED_V030_002_CATEGORIES = {
@@ -117,6 +112,18 @@ def _binds(node: ast.AST) -> list[str]:
         return names
     if isinstance(node, (ast.Import, ast.ImportFrom)):
         return [alias.asname or alias.name.split(".")[0] for alias in node.names]
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return [node.name]
+    if isinstance(node, ast.arg):
+        return [node.arg]
+    if isinstance(node, ast.ExceptHandler):
+        return [node.name] if node.name else []
+    if isinstance(node, ast.MatchAs):
+        return [node.name] if node.name else []
+    if isinstance(node, ast.MatchStar):
+        return [node.name] if node.name else []
+    if isinstance(node, ast.MatchMapping):
+        return [node.rest] if node.rest else []
     return []
 
 
@@ -159,7 +166,13 @@ def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
     if len(all_nodes) > 1:
         return ["evals/__init__.py liga __all__ mais de uma vez"]
     declared_all = all_nodes[0]
-    if not isinstance(declared_all, ast.Assign) or declared_all not in tree.body:
+    simple_all = (
+        isinstance(declared_all, ast.Assign)
+        and declared_all in tree.body
+        and len(declared_all.targets) == 1
+        and isinstance(declared_all.targets[0], ast.Name)
+    )
+    if not simple_all:
         return ["evals/__init__.py liga __all__ fora de atribuicao simples no nivel de modulo"]
     exported = declared_all.value
     if not isinstance(exported, ast.List) or not all(
@@ -177,12 +190,15 @@ def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
     return []
 
 
-def validate_v030_002_matrix(root: Path) -> list[str]:
+def validate_v030_002_matrix(root: Path, harness: Any = None) -> list[str]:
     """Require stable adversarial coverage instead of accepting case files alone."""
+    harness = harness or harness_module()
     try:
-        cases = [case for _, case in discover_cases(root) if str(case["case_id"]).startswith("V030-002-")]
-    except HarnessError as exc:
-        return [str(exc)]
+        cases = [
+            case for _, case in harness.discover_cases(root) if str(case["case_id"]).startswith("V030-002-")
+        ]
+    except Exception as exc:  # o harness auditado pode falhar de qualquer forma
+        return [f"harness de avaliacoes indisponivel: {exc}"]
 
     errors: list[str] = []
     by_id = {case["case_id"]: case for case in cases}
@@ -234,31 +250,51 @@ def validate_v030_002_matrix(root: Path) -> list[str]:
 
 
 def validate_evals(root: Path) -> list[str]:
+    """Valida o harness de avaliacoes com a checagem estatica antes de qualquer execucao.
+
+    A paridade da versao exportada e conferida por leitura da arvore sintatica, sem importar o
+    pacote auditado. Somente depois disso o harness e importado e exercitado, e uma falha de
+    importacao vira reprovacao legivel em vez de traceback.
+    """
+    manifest_path = root / "evals" / "manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return [f"evals/manifest.json ilegivel: {exc}"]
+
+    version_errors = harness_version_errors(root, manifest)
+    if version_errors:
+        return version_errors
+
+    try:
+        harness = harness_module()
+    except Exception as exc:  # o pacote auditado pode falhar ao importar
+        return [f"evals nao pode ser importado: {exc}"]
+
     errors: list[str] = []
     try:
-        manifest = load_json(root / "evals" / "manifest.json", "evals/manifest.json")
-        errors.extend(schema_errors(manifest, load_schema(root, "eval-manifest.schema.json")))
+        schema = harness.load_schema(root, "eval-manifest.schema.json")
+        errors.extend(harness.schema_errors(manifest, schema))
         for key in ("runner", "validator", "case_schema", "result_schema", "report_schema"):
             target = root / manifest.get(key, "__missing__")
             if not target.is_file():
                 errors.append(f"manifest target ausente: {manifest.get(key)!r}")
-    except HarnessError as exc:
+    except harness.HarnessError as exc:
         errors.append(str(exc))
         return errors
 
-    errors.extend(harness_version_errors(root, manifest))
-    errors.extend(validate_v030_002_matrix(root))
+    errors.extend(validate_v030_002_matrix(root, harness))
     try:
-        validation = run_evaluations(root, validate_only=True)
-    except HarnessError as exc:
+        validation = harness.run_evaluations(root, validate_only=True)
+    except harness.HarnessError as exc:
         return [*errors, str(exc)]
     if validation["summary"]["total"] < 1:
         errors.append("nenhum caso de avaliação validado")
 
     fixture_dir = root / "evals" / "fixtures" / "results"
     try:
-        replay = run_evaluations(root, results_dir=fixture_dir)
-    except HarnessError as exc:
+        replay = harness.run_evaluations(root, results_dir=fixture_dir)
+    except harness.HarnessError as exc:
         errors.append(str(exc))
         return errors
     if replay["summary"]["failed"] or replay["summary"]["invalid"]:
