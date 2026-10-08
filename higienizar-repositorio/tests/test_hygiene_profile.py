@@ -4038,3 +4038,31 @@ def test_binding_before_reexport_blocks_submodule(tmp_path: Path) -> None:
         },
     )
     assert "pkg/target.py" in [item["path"] for item in findings_of(scan(tree), "dead-module")]
+
+
+def test_static_all_still_respects_direct_shadow(tmp_path: Path) -> None:
+    """Achado bloqueante: com `__all__` estático, a sombra direta continua bloqueando o submódulo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": '__all__ = ["target"]\ntarget = 1\n',
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import *\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" in [item["path"] for item in findings_of(scan(tree), "dead-module")]
+
+
+def test_all_with_non_literal_item_is_dynamic(tmp_path: Path) -> None:
+    """Achado bloqueante: `__all__` com item não literal é montagem dinâmica."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": 'name = "target"\n__all__ = [name]\n',
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import *\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" not in [item["path"] for item in findings_of(scan(tree), "dead-module")]

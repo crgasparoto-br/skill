@@ -1114,11 +1114,11 @@ def declared_all(tree: ast.Module) -> set[str] | None:
         declarations += 1
         value = node.value
         if isinstance(value, (ast.List, ast.Tuple, ast.Set)):
-            names = {
-                element.value
-                for element in value.elts
-                if isinstance(element, ast.Constant) and isinstance(element.value, str)
-            }
+            literals = [element for element in value.elts if isinstance(element, ast.Constant)]
+            texts = [element for element in literals if isinstance(element.value, str)]
+            # Lista com item não literal é montagem dinâmica: o conteúdo real só existe em execução.
+            dynamic = len(literals) != len(value.elts) or len(texts) != len(literals)
+            names = None if dynamic else {element.value for element in texts}
         elif value is not None:
             # Declaração única que não é literal é montagem dinâmica: o conteúdo é desconhecido.
             names = None
@@ -1211,11 +1211,21 @@ def submodule_reachable(
     return bool(first_import) and binding > first_import
 
 
-def wildcard_names(prefix: list[str], dotted: dict[str, ast.Module]) -> list[str]:
-    """Nomes alcançados por `from prefix import *`, pelo `__all__` declarado no pacote.
+def submodule_names(prefix: list[str], dotted: dict[str, ast.Module]) -> list[str]:
+    """Todos os módulos do pacote, usados quando o `__all__` é dinâmico."""
+    name = ".".join(prefix)
+    marker = f"{name}." if name else ""
+    return sorted(
+        candidate[len(marker):] for candidate in dotted if candidate.startswith(marker) and candidate != name
+    )
+
+
+def wildcard_names(prefix: list[str], dotted: dict[str, ast.Module]) -> list[str] | None:
+    """Nomes alcançados por `from prefix import *`, ou `None` quando o `__all__` é dinâmico.
 
     Sem `__all__`, o wildcard não importa submódulo que o `__init__` não importe, e por isso a lista é
-    vazia em vez de conservadora.
+    vazia. Com `__all__` resolvido, valem os nomes declarados. Com `__all__` dinâmico, a lista é
+    desconhecida: o chamador mantém vivos todos os módulos do pacote, sem aplicar a sombra direta.
     """
     name = ".".join(prefix)
     tree = dotted.get(name)
@@ -1224,10 +1234,7 @@ def wildcard_names(prefix: list[str], dotted: dict[str, ast.Module]) -> list[str
     declared = declared_all(tree)
     if declared is not None:
         return sorted(declared)
-    marker = f"{name}." if name else ""
-    return sorted(
-        candidate[len(marker):] for candidate in dotted if candidate.startswith(marker) and candidate != name
-    )
+    return None
 
 
 def register_from_aliases(
@@ -1241,10 +1248,16 @@ def register_from_aliases(
     for alias in node.names:
         for prefix in prefixes:
             if alias.name == "*":
-                # Wildcard conservador: quando o `__all__` é dinâmico, o contrato promete que nenhum
-                # submódulo do pacote é acusado, e por isso a sombra direta não estreita a lista.
-                for name in wildcard_names(prefix, dotted):
-                    resolve_import(local, [], [*prefix, name], dotted, packages)
+                declared = wildcard_names(prefix, dotted)
+                if declared is None:
+                    # `__all__` dinâmico: sem saber a lista, nenhum módulo do pacote pode ser acusado, e a
+                    # sombra direta não estreita a lista conservadora.
+                    for name in submodule_names(prefix, dotted):
+                        resolve_import(local, [], [*prefix, name], dotted, packages)
+                    continue
+                for name in declared:
+                    if submodule_reachable(prefix, name, dotted, packages):
+                        resolve_import(local, [], [*prefix, name], dotted, packages)
                 continue
             if submodule_reachable(prefix, alias.name, dotted, packages):
                 resolve_import(local, [], [*prefix, alias.name], dotted, packages)
