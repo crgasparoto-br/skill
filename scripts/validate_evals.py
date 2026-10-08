@@ -128,6 +128,24 @@ def canonical_shim_problems(tree: ast.Module) -> list[str]:
     return []
 
 
+SUMMARY_FIELDS = ("total", "passed", "failed", "invalid", "not_run")
+
+
+def summary_errors(result: Any, label: str) -> list[str]:
+    """Valida a forma do resumo do harness antes de indexar as contagens.
+
+    Um harness que devolva algo diferente de um dicionario com contagens inteiras precisa
+    reprovar de forma legivel, e nao provocar erro de indexacao.
+    """
+    summary = result.get("summary") if isinstance(result, dict) else None
+    if not isinstance(summary, dict):
+        return [f"{label} nao devolveu um resumo legivel"]
+    faltando = [campo for campo in SUMMARY_FIELDS if not isinstance(summary.get(campo), int)]
+    if faltando:
+        return [f"{label} devolveu resumo sem contagem inteira em {', '.join(faltando)}"]
+    return []
+
+
 def effective_export_problems(module: Any, manifest: dict[str, Any], root: Path) -> list[str]:
     """Confere a exportacao efetiva do pacote, que um modulo irmao pode ter alterado.
 
@@ -263,6 +281,8 @@ def validate_evals(root: Path) -> list[str]:
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return [f"evals/manifest.json ilegivel: {exc}"]
 
+    if not isinstance(manifest, dict):
+        return ["evals/manifest.json precisa ser um objeto JSON"]
     version_errors = harness_version_errors(root, manifest)
     if version_errors:
         return version_errors
@@ -299,6 +319,9 @@ def validate_evals(root: Path) -> list[str]:
         validation = harness.run_evaluations(root, validate_only=True)
     except BaseException as exc:  # o harness auditado pode falhar de qualquer forma
         return [*errors, str(exc)]
+    problemas = summary_errors(validation, "a validacao dos casos")
+    if problemas:
+        return [*errors, *problemas]
     if validation["summary"]["total"] < 1:
         errors.append("nenhum caso de avaliação validado")
 
@@ -308,6 +331,9 @@ def validate_evals(root: Path) -> list[str]:
     except BaseException as exc:  # o harness auditado pode falhar de qualquer forma
         errors.append(str(exc))
         return errors
+    problemas = summary_errors(replay, "o replay das fixtures")
+    if problemas:
+        return [*errors, *problemas]
     if replay["summary"]["failed"] or replay["summary"]["invalid"]:
         errors.append("fixture replay contém falhas ou resultados inválidos")
     if replay["summary"]["not_run"]:

@@ -607,3 +607,45 @@ def test_foreign_package_outside_root_is_rejected(tmp_path: Path) -> None:
     )
     assert resultado.returncode == 1
     assert "fora da raiz auditada" in resultado.stdout
+
+
+@pytest.mark.parametrize("manifesto", ["[]", "null", '"0.3.0"'])
+def test_non_object_manifest_is_reported_readably(tmp_path: Path, manifesto: str) -> None:
+    """Manifesto JSON valido mas que nao e objeto precisa reprovar sem traceback."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    (copia / "evals" / "manifest.json").write_text(manifesto + "\n", encoding="utf-8")
+    resultado = subprocess.run(
+        [sys.executable, "scripts/validate_evals.py", "--root", "."],
+        cwd=copia,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "objeto JSON" in resultado.stdout
+
+
+@pytest.mark.parametrize(
+    "retorno",
+    [
+        "def run_evaluations(*args, **kwargs):\n    return {}\n",
+        "def run_evaluations(*args, **kwargs):\n    return {'summary': {}}\n",
+        "def run_evaluations(*args, **kwargs):\n    return None\n",
+    ],
+)
+def test_malformed_runner_result_is_reported_readably(tmp_path: Path, retorno: str) -> None:
+    """Resumo ausente ou sem contagem inteira precisa reprovar sem erro de indexacao."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    with (copia / "evals" / "run_evals.py").open("a", encoding="utf-8") as arquivo:
+        arquivo.write("\n\n" + retorno)
+    resultado = subprocess.run(
+        [sys.executable, "scripts/validate_evals.py", "--root", "."],
+        cwd=copia,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "resumo" in resultado.stdout
