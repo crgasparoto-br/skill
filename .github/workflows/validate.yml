@@ -87,6 +87,8 @@ jobs:
       - name: Validate global hygiene policy and run the tree sweep
         run: python higienizar-repositorio/scripts/validate_hygiene.py --root .
 
+      - name: Validate the release handoff contract
+        run: python scripts/validate_release_handoff.py --root .
       - name: Validate workflow step classification and documented sequence
         run: python scripts/validate_workflow_classification.py --root .
 

@@ -443,6 +443,25 @@
         "file:higienizar-repositorio/tests/test_hygiene_profile.py",
         "file:.github/workflows/validate.yml"
       ]
+    },
+    {
+      "id": "SKSYS-029",
+      "summary": "O handoff de release e verificavel e executavel: a politica declara a evidencia exigida com motivo, o contrato reprova evidencia ausente, identificador desconhecido, commit invalido, `develop` igual a `main` e auditoria nao aprovada, e o contrato nao tem autoridade de merge, tag ou publicacao.",
+      "verifier": "scripts/validate_release_handoff.py",
+      "title": "Contrato de handoff de release verificável e sem autoridade de merge",
+      "validationRefs": [
+        "scripts/validate_release_handoff.py",
+        "scripts/release_handoff.py",
+        "config/release-handoff.json",
+        "tests/test_release_handoff.py"
+      ],
+      "status": "validated",
+      "implementationRefs": [
+        "config/release-handoff.json",
+        "scripts/release_handoff.py",
+        "scripts/validate_release_handoff.py",
+        "tests/test_release_handoff.py"
+      ]
     }
   ],
   "system_version": "2026-10-07.1"

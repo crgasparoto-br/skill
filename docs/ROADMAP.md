@@ -46,6 +46,7 @@ Os IDs abaixo são estáveis para issues, commits, avaliações e notas de relea
 | `V030-006` | Release e regressão comportamental | P1 | `planned` | Integrar avaliações informativas ao CI, registrar resultados e publicar `v0.3.0` reproduzível. |
 | `V030-007` | Genericidade de assets permanentes | P1 | `implemented` | Rejeitar acoplamento concreto a issue, host, caminho e identificador de domínio, e executar o validador sobre o catálogo. |
 | `V030-009` | Análise estática real do código | P1 | `implemented` | Aplicar famílias de regras com política declarada, reprovar sujeira, import morto e supressão não declarada, e manter a cobertura de regras impossível de encolher em silêncio. |
+| `V030-011` | Contrato de handoff de release | P2 | `implemented` | Reunir e verificar a evidência de promoção de `develop` a `main` sem conceder autoridade de merge, reprovando evidência ausente, commit inválido, ausência de divergência e auditoria não aprovada. |
 | `V030-010` | Perfil de higienização global | P2 | `implemented` | Medir dívida estrutural da árvore inteira sob demanda, com precisão declarada por classe, exceção justificada e linha de base que só cresce com entrada nova e motivo escrito na história declarada. |
 | `V030-008` | Governança do registro de auditores confiáveis | P2 | `implemented` | Declarar custódia, separação entre produtor e aprovador, rotação, revogação e limitação de operador único, e tornar a entrada de registro verificável. |
 
