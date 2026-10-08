@@ -32,7 +32,7 @@ class ReportOrderContractTests(unittest.TestCase):
         self.assertIn("bloco de conclusao em destaque", text)
         self.assertIn("> **Conclusao:**", text)
         self.assertIn("> **Motivo determinante:**", text)
-        self.assertIn("divergencia entre eles e defeito do proprio parecer", text)
+        self.assertIn("divergencia entre eles e defeito do parecer", text)
 
     def test_internal_approval_never_releases(self):
         text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
