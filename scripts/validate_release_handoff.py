@@ -164,11 +164,10 @@ def cross_section_errors(policy: dict) -> list[str]:
 
 def missing_required_errors(policy: dict) -> list[str]:
     """A evidencia exigida pelo contrato precisa estar declarada na politica."""
-    declared = {
-        item.get("id")
-        for item in policy.get("required", [])
-        if isinstance(item, dict)
-    }
+    required = policy.get("required")
+    if not isinstance(required, list):
+        return []
+    declared = {item.get("id") for item in required if isinstance(item, dict)}
     return [f"a politica nao declara o item obrigatorio `{item}`" for item in sorted(REQUIRED_IDS - declared)]
 
 
@@ -342,12 +341,19 @@ def validate_release_handoff(root: Path) -> list[str]:
     return errors + policy_errors(policy) + script_errors(root) + behaviour_errors(root)
 
 
+def root_path(value: str) -> Path:
+    """Raiz do repositorio: valor vazio nao pode virar o diretorio atual em silencio."""
+    if not value:
+        raise argparse.ArgumentTypeError("a raiz nao pode ser vazia")
+    return Path(value)
+
+
 def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     """Argumentos do validador, sem abreviacao e sem opcao repetida."""
     parser = argparse.ArgumentParser(
         description="Valida a politica do handoff de release.", allow_abbrev=False
     )
-    parser.add_argument("--root", type=Path, default=Path(), help="Raiz do repositorio.")
+    parser.add_argument("--root", type=root_path, default=Path(), help="Raiz do repositorio.")
     arguments = list(sys.argv[1:] if argv is None else argv)
     seen = set()
     for token in arguments:

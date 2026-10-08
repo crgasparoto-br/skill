@@ -188,6 +188,15 @@ def policy_items(policy: dict, key: str) -> list[dict]:
     return [item for item in items if isinstance(item, dict) and isinstance(item.get("id"), str)]
 
 
+def encodable(text: str) -> bool:
+    """Texto que nao pode ser codificado em UTF-8, como surrogate isolado, nao serve como evidencia."""
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
 def visible_problem(text: str) -> str:
     """Descreve por que o texto nao serve como evidencia, ou devolve vazio quando serve.
 
@@ -200,6 +209,8 @@ def visible_problem(text: str) -> str:
 
     if not text:
         return "esta vazio"
+    if not encodable(text):
+        return "tem caractere nao codificavel em UTF-8"
     if any(character in BLANK_CHARACTERS for character in text):
         return "contem preenchedor"
     if any(unicodedata.category(character)[0] not in DECLARED_CATEGORIES for character in text):
@@ -446,6 +457,13 @@ def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
     return {"develop": develop or "", "main": main or ""}
 
 
+def root_path(value: str) -> Path:
+    """Raiz do repositorio: valor vazio nao pode virar o diretorio atual em silencio."""
+    if not value:
+        raise argparse.ArgumentTypeError("a raiz nao pode ser vazia")
+    return Path(value)
+
+
 def reject_repeated_options(argv: list[str]) -> None:
     """Recusa opcao repetida: sem isto a ultima ocorrencia venceria em silencio."""
     seen = set()
@@ -463,10 +481,10 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Verifica a evidencia do handoff de release.", allow_abbrev=False
     )
-    parser.add_argument("--root", type=Path, default=Path(), help="Raiz do repositorio.")
+    parser.add_argument("--root", type=root_path, default=Path(), help="Raiz do repositorio.")
     parser.add_argument("--evidence", type=Path, required=True, help="Arquivo de evidencia declarada.")
-    parser.add_argument("--develop", default="", help="Commit de `develop` a promover.")
-    parser.add_argument("--main", default="", help="Commit atual de `main`.")
+    parser.add_argument("--develop", default=None, help="Commit de `develop` a promover.")
+    parser.add_argument("--main", default=None, help="Commit atual de `main`.")
     parser.add_argument("--report", type=Path, help="Caminho do relatorio Markdown.")
     parser.add_argument("--json-report", type=Path, help="Caminho do relatorio JSON.")
     arguments = list(sys.argv[1:] if argv is None else argv)
@@ -499,11 +517,11 @@ def main(argv: list[str] | None = None) -> int:
     if arguments.report:
         write_report(arguments.root, arguments.report, arguments.evidence, markdown, "o relatorio Markdown")
     else:
-        sys.stdout.write(markdown)
+        sys.stdout.write(markdown.encode("utf-8", "backslashreplace").decode("utf-8"))
     if arguments.json_report:
         write_report(
             arguments.root, arguments.json_report, arguments.evidence,
-            json.dumps(report, ensure_ascii=False, indent=2) + "\n", "o relatorio JSON",
+            json.dumps(report, ensure_ascii=True, indent=2) + "\n", "o relatorio JSON",
         )
     if report["ready"]:
         print("Handoff OK: evidencia obrigatoria completa e verificada.")
