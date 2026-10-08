@@ -44,7 +44,14 @@ auditoria independente não consta como aprovada. A política em `config/release
 obrigatório com o motivo pelo qual ele existe.
 
 O contrato **não** tem autoridade de merge, de tag ou de publicação: ele reúne e verifica evidência, e promover a
-release continua sendo ato de quem opera o repositório. A execução da sequência de validação também não é
+release continua sendo ato de quem opera o repositório.
+
+A prova de ausência de autoridade é semântica sobre o texto do contrato: importação fora da lista permitida é
+recusada, nome proibido é recusado como variável, como atributo — inclusive dunder, a via de introspecção — e como
+texto exato. O limite é declarado: quem tem permissão de escrita no contrato tem igual permissão no gate, então o
+contrato protege contra aquisição **acidental** de autoridade num commit revisado, e não contra autor com escrita
+no repositório, que poderia alterar as duas peças. Por isso a revisão de código continua sendo o controle de
+último recurso, e o contrato apenas a torna verificável. A execução da sequência de validação também não é
 terceirizada ao contrato: ele consome o resultado da sequência como evidência declarada, com a origem registrada
 no relatório.
 

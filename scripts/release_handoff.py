@@ -14,11 +14,28 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 POLICY_RELATIVE = "config/release-handoff.json"
+IGNORED_CATEGORIES = frozenset({"Cc", "Cf", "Zl", "Zp", "Zs"})
+REQUIRED_IDS = frozenset(
+    {"issues-delivered", "develop-sha", "gates", "independent-audit", "divergence"}
+)
 SCHEMA_VERSION = 1
+
+
+def significant(text: object) -> str:
+    """Conteudo significativo: descarta espaco e caracteres de controle e de formato.
+
+    `str.strip()` nao remove ZERO WIDTH SPACE nem outros controles de formato, que passariam como
+    evidencia valida. Aqui, espaco (`Zs`/`Zl`/`Zp`) e controle/formato (`Cc`/`Cf`) deixam de contar.
+    """
+    if not isinstance(text, str):
+        return ""
+    kept = "".join(character for character in text if unicodedata.category(character) not in IGNORED_CATEGORIES)
+    return kept.strip()
 
 
 def exact_version(value: object, expected: int) -> bool:
@@ -26,10 +43,25 @@ def exact_version(value: object, expected: int) -> bool:
     return isinstance(value, int) and not isinstance(value, bool) and value == expected
 
 
+def symlinked_component(path: Path) -> Path | None:
+    """Primeiro componente do caminho que e link simbolico, ou nada quando nenhum e.
+
+    Verificar apenas o caminho final deixaria passar `config -> ../../fora/config`, em que o arquivo
+    final e regular mas o diretorio que o contem nao pertence a arvore auditada.
+    """
+    for component in [*reversed(path.parents), path]:
+        if component.is_symlink():
+            return component
+    return None
+
+
 def confined_regular_file(root: Path, path: Path, label: str) -> None:
-    """Recusa arquivo que nao seja regular ou que resolva para fora da raiz auditada."""
+    """Recusa arquivo que nao seja regular, que tenha componente simbolico ou que saia da raiz."""
+    linked = symlinked_component(path)
+    if linked is not None:
+        raise SystemExit(f"ERRO: {label} passa por link simbolico: {linked}")
     resolved = path.resolve()
-    if path.is_symlink() or not resolved.is_file():
+    if not resolved.is_file():
         raise SystemExit(f"ERRO: {label} nao e um arquivo regular: {path}")
     if not resolved.is_relative_to(root.resolve()):
         raise SystemExit(f"ERRO: {label} resolve para fora da raiz auditada: {resolved}")
@@ -67,14 +99,28 @@ def policy_shape_errors(policy: dict) -> list[str]:
     if not isinstance(policy.get("required"), list) or not isinstance(policy.get("optional"), list):
         errors.append("a politica precisa declarar `required` e `optional` como listas")
         return errors
-    identifiers = [
-        item.get("id")
-        for key in ("required", "optional")
-        for item in policy[key]
-        if isinstance(item, dict)
-    ]
+    identifiers = []
+    for key in ("required", "optional"):
+        for item in policy[key]:
+            if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not item["id"].strip():
+                errors.append(f"a politica declara item sem identificador textual em `{key}`")
+                continue
+            for field in ("description", "reason"):
+                declared = significant(item.get(field))
+                if not declared:
+                    errors.append(f"a politica declara item `{item['id']}` sem `{field}`")
+            identifiers.append(item["id"])
     if len(identifiers) != len(set(identifiers)):
         errors.append("a politica repete identificador entre itens obrigatorios e opcionais")
+    declared_required = {
+        item["id"]
+        for item in policy["required"]
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    errors.extend(
+        f"a politica nao declara o item obrigatorio `{item}`"
+        for item in sorted(REQUIRED_IDS - declared_required)
+    )
     verdicts = policy.get("verdicts")
     approved = verdicts.get("audit_approved") if isinstance(verdicts, dict) else None
     if not isinstance(approved, list) or not approved:
@@ -98,10 +144,8 @@ def evidence_value(evidence: dict, item_id: str) -> tuple[str, str]:
         return "", ""
     value = entry.get("value")
     source = entry.get("source")
-    # Espaco em branco nao e evidencia: o valor e a origem precisam ter conteudo significativo.
-    value = value.strip() if isinstance(value, str) else ""
-    source = source.strip() if isinstance(source, str) else ""
-    return value, source
+    # Espaco e caractere de controle nao sao evidencia: o valor e a origem precisam ter conteudo.
+    return significant(value), significant(source)
 
 
 def check_required(policy: dict, evidence: dict, shas: dict[str, str]) -> list[dict]:
@@ -203,17 +247,17 @@ def markdown_report(report: dict) -> str:
 
 
 def refuse_symlink(path: Path, label: str) -> None:
-    """Recusa escrever por cima de link simbolico, para nao alterar alvo fora do destino pedido."""
-    if path.is_symlink():
-        raise SystemExit(f"ERRO: {label} aponta para um link simbolico: {path}")
+    """Recusa escrever quando o destino ou qualquer diretorio que o contem e link simbolico."""
+    linked = symlinked_component(path)
+    if linked is not None:
+        raise SystemExit(f"ERRO: {label} passa por link simbolico: {linked}")
 
 
 def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
     """Commits de `develop` e `main`: argumento tem precedencia sobre a evidencia."""
-    develop = arguments.develop.strip() or evidence_value(evidence, "develop-sha")[0]
-    declared_main = evidence.get("main")
-    declared_main = declared_main.strip() if isinstance(declared_main, str) else ""
-    main = arguments.main.strip() or declared_main
+    develop = significant(arguments.develop) or evidence_value(evidence, "develop-sha")[0]
+    declared_main = significant(evidence.get("main"))
+    main = significant(arguments.main) or declared_main
     return {"develop": develop or "", "main": main or ""}
 
 

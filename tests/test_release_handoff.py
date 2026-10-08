@@ -8,6 +8,7 @@ import pytest
 
 from scripts.release_handoff import build_report, load_json, markdown_report
 from scripts.release_handoff import main as contract_main
+from scripts.release_handoff import significant
 from scripts.validate_release_handoff import policy_errors, script_errors, validate_release_handoff
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -261,3 +262,65 @@ def test_contract_rejects_invalid_policy_on_its_own(tmp_path: Path) -> None:
     evidence_path.write_text(json.dumps(evidence()), encoding="utf-8")
     code = contract_main(["--root", str(tmp_path), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", MAIN])
     assert code == 1
+
+
+@pytest.mark.parametrize("character", ["\u200b", "\u200e", "\ufeff", "\u00a0", "\t", "\n", " "])
+def test_invisible_character_is_not_evidence(character: str) -> None:
+    """Achado bloqueante B3 residual: caractere de formato ou controle nao e evidencia."""
+    assert significant(character) == ""
+    document = evidence()
+    document["items"]["issues-delivered"] = {"value": character, "source": character}
+    assert report_for(document)["ready"] is False
+
+
+@pytest.mark.parametrize("snippet", [
+    'Path.__init__.__globals__["o"+"s"].__dict__["s"+"ystem"]("id")',
+    'value = self.__class__',
+    'value = object.__subclasses__()',
+    'value = getattr(__builtins__, "__import__")',
+])
+def test_dunder_introspection_is_rejected(tmp_path: Path, snippet: str) -> None:
+    """Achado bloqueante B2-R residual: introspeccao por dunder precisa ser recusada."""
+    original = (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8")
+    injected = original.replace("def parse_arguments(", f"{snippet}\n\n\ndef parse_arguments(", 1)
+    assert injected != original
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(injected, encoding="utf-8")
+    assert script_errors(tmp_path), f"introspeccao aceita: {snippet}"
+
+
+def test_symlinked_parent_directory_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante B4 residual: componente-pai simbolico tambem precisa ser recusado."""
+    (tmp_path / "real/config").mkdir(parents=True)
+    (tmp_path / "real/scripts").mkdir(parents=True)
+    (tmp_path / "real/config/release-handoff.json").write_text(
+        (ROOT / "config/release-handoff.json").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (tmp_path / "real/scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (tmp_path / "config").symlink_to(tmp_path / "real/config")
+    (tmp_path / "scripts").symlink_to(tmp_path / "real/scripts")
+    assert any("link simbolico" in error for error in validate_release_handoff(tmp_path))
+
+
+def test_empty_policy_is_rejected_by_the_contract_alone(tmp_path: Path) -> None:
+    """Achado novo: politica sem a evidencia obrigatoria nao passa no contrato sozinho."""
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "config").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (tmp_path / "config/release-handoff.json").write_text(
+        json.dumps({
+            "policy_version": 1,
+            "authority": {"merges": False, "tags": False, "publishes": False},
+            "required": [],
+            "optional": [],
+            "verdicts": {"audit_approved": ["approved"]},
+        }),
+        encoding="utf-8",
+    )
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps({"schema_version": 1, "main": MAIN, "items": {}}), encoding="utf-8")
+    assert contract_main(["--root", str(tmp_path), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN]) == 1

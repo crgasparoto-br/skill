@@ -26,7 +26,7 @@ FORBIDDEN_COMMANDS = (
     "git merge",
     "git commit",
 )
-ALLOWED_IMPORTS = frozenset({"__future__", "argparse", "json", "re", "sys", "pathlib", "typing"})
+ALLOWED_IMPORTS = frozenset({"__future__", "argparse", "json", "re", "sys", "unicodedata", "pathlib", "typing"})
 FORBIDDEN_PRIMITIVES = frozenset(
     {
         "__builtins__",
@@ -75,9 +75,14 @@ def load_object(path: Path) -> dict:
 
 
 def confined_errors(root: Path, path: Path, label: str) -> list[str]:
-    """Arquivo do contrato precisa ser regular e estar dentro da raiz auditada."""
-    if path.is_symlink():
-        return [f"`{label}` e um link simbolico, e nao um arquivo regular"]
+    """Arquivo do contrato precisa ser regular, sem componente simbolico e dentro da raiz auditada.
+
+    O caminho final regular nao basta: `config -> ../../fora/config` mantem o arquivo final regular e
+    leva a inspecao para fora da arvore do commit auditado, inclusive entre a leitura e a execucao.
+    """
+    for component in [*reversed(path.parents), path]:
+        if component.is_symlink():
+            return [f"`{label}` passa por link simbolico: {component}"]
     resolved = path.resolve()
     if not resolved.is_relative_to(root.resolve()):
         return [f"`{label}` resolve para fora da raiz auditada: {resolved}"]
@@ -216,8 +221,10 @@ def dynamic_errors(tree: ast.Module) -> list[str]:
     for node in ast.walk(tree):
         if isinstance(node, ast.Name) and node.id in FORBIDDEN_PRIMITIVES:
             used.add(node.id)
-        elif isinstance(node, ast.Attribute) and node.attr in FORBIDDEN_PRIMITIVES:
-            used.add(node.attr)
+        elif isinstance(node, ast.Attribute):
+            # Atributo dunder e a via de introspeccao que permite alcancar `__globals__` e afins.
+            if node.attr in FORBIDDEN_PRIMITIVES or node.attr.startswith("__"):
+                used.add(node.attr)
         elif isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value in FORBIDDEN_PRIMITIVES:
             used.add(node.value)
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_PRIMITIVES:
