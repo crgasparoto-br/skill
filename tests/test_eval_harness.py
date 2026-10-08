@@ -703,3 +703,38 @@ def test_missing_root_is_reported_readably(tmp_path: Path) -> None:
     resultado = _executa(["--root", str(tmp_path / "inexistente")])
     assert resultado.returncode == 1
     assert "Traceback" not in resultado.stderr
+
+
+def test_extreme_integer_manifest_is_reported_readably(tmp_path: Path) -> None:
+    """Numero JSON fora do limite de digitos precisa reprovar de forma legivel."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    (copia / "evals" / "manifest.json").write_text("9" * 5000 + "\n", encoding="utf-8")
+    resultado = _executa(["--root", "."], cwd=copia)
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "ilegivel" in resultado.stdout
+
+
+def test_float_schema_version_is_rejected(tmp_path: Path) -> None:
+    """schema_version precisa ser inteiro exato, e nao equivalente numerico."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    manifesto = json.loads((copia / "evals" / "manifest.json").read_text(encoding="utf-8"))
+    manifesto["schema_version"] = 1.0
+    (copia / "evals" / "manifest.json").write_text(json.dumps(manifesto), encoding="utf-8")
+    resultado = _executa(["--root", "."], cwd=copia)
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "inteiro exato" in resultado.stdout
+
+
+def test_case_without_category_is_reported_readably(tmp_path: Path) -> None:
+    """Caso descoberto sem categoria precisa reprovar de forma legivel."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    with (copia / "evals" / "run_evals.py").open("a", encoding="utf-8") as arquivo:
+        arquivo.write(
+            '\n\ndef discover_cases(root):\n    return [(root / "x.json", {"case_id": "V030-002-x"})]\n'
+        )
+    resultado = _executa(["--root", "."], cwd=copia)
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "sem categoria" in resultado.stdout or "indisponivel" in resultado.stdout

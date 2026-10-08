@@ -214,13 +214,20 @@ def validate_v030_002_matrix(root: Path, harness: Any = None) -> list[str]:
     harness = harness or harness_module()
     try:
         cases = [
-            case for _, case in harness.discover_cases(root) if str(case["case_id"]).startswith("V030-002-")
+            case
+            for _, case in harness.discover_cases(root)
+            if isinstance(case, dict) and str(case.get("case_id", "")).startswith("V030-002-")
         ]
     except BaseException as exc:  # o harness auditado pode falhar de qualquer forma
         return [f"harness de avaliacoes indisponivel: {exc}"]
 
     errors: list[str] = []
-    by_id = {case["case_id"]: case for case in cases}
+    sem_categoria = sorted(
+        str(case.get("case_id", "<sem id>")) for case in cases if not isinstance(case.get("category"), str)
+    )
+    if sem_categoria:
+        return [f"casos V030-002 sem categoria legivel: {', '.join(sem_categoria)}"]
+    by_id = {str(case["case_id"]): case for case in cases}
     categories = {case["category"] for case in cases}
     missing_categories = sorted(REQUIRED_V030_002_CATEGORIES - categories)
     if missing_categories:
@@ -278,7 +285,7 @@ def validate_evals(root: Path) -> list[str]:
     manifest_path = root / "evals" / "manifest.json"
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return [f"evals/manifest.json ilegivel: {exc}"]
 
     if not isinstance(manifest, dict):
@@ -306,6 +313,8 @@ def validate_evals(root: Path) -> list[str]:
     try:
         schema = harness.load_schema(root, "eval-manifest.schema.json")
         errors.extend(harness.schema_errors(manifest, schema))
+        if type(manifest.get("schema_version")) is not int:
+            errors.append("manifest schema_version precisa ser inteiro exato")
         for key in ("runner", "validator", "case_schema", "result_schema", "report_schema"):
             target = root / manifest.get(key, "__missing__")
             if not target.is_file():
