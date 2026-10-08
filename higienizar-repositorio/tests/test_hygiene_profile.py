@@ -3693,3 +3693,76 @@ def test_normal_package_import_keeps_submodule_alive(tmp_path: Path) -> None:
     )
     dead = [item["path"] for item in findings_of(scan(tree), "dead-module")]
     assert "pkg/sub/target.py" not in dead
+
+
+def test_absolute_from_import_respects_shadowing(tmp_path: Path) -> None:
+    """Achado bloqueante: o ramo absoluto não conferia alcance, e o submódulo ficava vivo sem importador."""
+    cases = (
+        (
+            {"pkg/__init__.py": "target = 1\n", "pkg/target.py": "VALUE = 2\n", "consumer.py": "from pkg import target\n"},
+            "pkg/target.py",
+        ),
+        (
+            {
+                "pkg/__init__.py": "",
+                "pkg/sub.py": "target = 1\n",
+                "pkg/sub/target.py": "VALUE = 2\n",
+                "pkg/consumer.py": "from pkg.sub import target\n",
+            },
+            "pkg/sub/target.py",
+        ),
+    )
+    for index, (files, expected) in enumerate(cases):
+        tree = make_tree(tmp_path / f"caso{index}", {**files, "README.md": "sem invocacao\n"})
+        assert expected in [item["path"] for item in findings_of(scan(tree), "dead-module")]
+
+
+def test_attribute_bound_in_compound_statement_shadows_submodule(tmp_path: Path) -> None:
+    """Achado bloqueante: `if`/`try` no `__init__` também ligam atributo que sombreia o submódulo."""
+    for index, body in enumerate(
+        ("if True:\n    target = 1\n", "try:\n    target = 1\nexcept Exception:\n    target = 2\n")
+    ):
+        tree = make_tree(
+            tmp_path / f"corpo{index}",
+            {
+                "pkg/__init__.py": "",
+                "pkg/consumer.py": "from .sub import target\n",
+                "pkg/sub/__init__.py": body,
+                "pkg/sub/target.py": "VALUE = 2\n",
+                "README.md": "sem invocacao\n",
+            },
+        )
+        assert "pkg/sub/target.py" in [
+            item["path"] for item in findings_of(scan(tree), "dead-module")
+        ]
+
+
+def test_root_package_init_shadows_submodule(tmp_path: Path) -> None:
+    """Achado bloqueante: `from . import target` na raiz não consultava o `__init__` da raiz."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "__init__.py": "target = 1\n",
+            "target.py": "VALUE = 2\n",
+            "consumer.py": "from . import target as alias\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "target.py" in [item["path"] for item in findings_of(scan(tree), "dead-module")]
+
+
+def test_name_bound_inside_function_does_not_shadow_submodule(tmp_path: Path) -> None:
+    """Regressão do próprio endurecimento: nome local de função não é atributo do módulo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "",
+            "pkg/consumer.py": "from .sub import target\n",
+            "pkg/sub/__init__.py": "def f():\n    target = 1\n",
+            "pkg/sub/target.py": "VALUE = 2\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/sub/target.py" not in [
+        item["path"] for item in findings_of(scan(tree), "dead-module")
+    ]

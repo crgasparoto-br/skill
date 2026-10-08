@@ -1008,24 +1008,37 @@ def requirement_name(line: str) -> str:
         return re.split(r"[<>=!~\[;@]", line, maxsplit=1)[0].strip()
 
 
+def bound_name(node: ast.AST) -> set[str]:
+    """Nomes que um comando liga no nível do módulo."""
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return {node.name}
+    if isinstance(node, ast.Assign):
+        return {target.id for target in node.targets if isinstance(target, ast.Name)}
+    if isinstance(node, (ast.AnnAssign, ast.AugAssign)) and isinstance(node.target, ast.Name):
+        return {node.target.id}
+    if isinstance(node, ast.Import):
+        return {alias.asname or alias.name.split(".")[0] for alias in node.names}
+    if isinstance(node, ast.ImportFrom):
+        return {alias.asname or alias.name for alias in node.names}
+    return set()
+
+
 def module_level_names(tree: ast.Module) -> set[str]:
-    """Nomes ligados no nível do módulo: atribuição, `def`, `class` e import.
+    """Nomes ligados no nível do módulo, inclusive dentro de `if`, `try`, `for` e `with`.
 
     `from pkg.sub import target` alcança o atributo `target` quando o `__init__` de `pkg.sub` o define, e
     não o submódulo `pkg/sub/target.py`. Sem esta leitura, o submódulo ficaria vivo sem importador.
+    Nome ligado dentro de função não é atributo do módulo, e por isso o percurso para no corpo de `def`,
+    `lambda` e `class`: contar esses nomes esconderia submódulo que é importado de verdade.
     """
     names: set[str] = set()
-    for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            names.add(node.name)
-        elif isinstance(node, ast.Assign):
-            names.update(target.id for target in node.targets if isinstance(target, ast.Name))
-        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-            names.add(node.target.id)
-        elif isinstance(node, ast.Import):
-            names.update(alias.asname or alias.name.split(".")[0] for alias in node.names)
-        elif isinstance(node, ast.ImportFrom):
-            names.update(alias.asname or alias.name for alias in node.names)
+    stack: list[ast.AST] = list(tree.body)
+    while stack:
+        node = stack.pop()
+        names |= bound_name(node)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            continue
+        stack.extend(ast.iter_child_nodes(node))
     return names
 
 
@@ -1039,22 +1052,36 @@ def submodule_reachable(
 
     Duas situações tornam o submódulo inalcançável, e as duas são invisíveis para quem só olha o caminho
     pontilhado: `base` pode resolver para módulo simples, e nesse caso `name` é atributo dele; e o
-    `__init__` do pacote pode definir `name`, e nesse caso o atributo tem precedência.
+    `__init__` do pacote pode definir `name`, e nesse caso o atributo tem precedência. `base` vazio é o
+    pacote da raiz, e o `__init__` dela é consultado do mesmo modo.
     """
-    if not base:
-        return True
     path = ".".join(base)
     if path in dotted and path not in packages:
         return False
-    # O `__init__` do pacote está registrado sob o próprio nome do pacote.
+    # O `__init__` do pacote está registrado sob o próprio nome do pacote, e o da raiz sob o nome vazio.
     init = dotted.get(path)
     return not (init is not None and name in module_level_names(init))
 
 
 def module_dotted(rel: str) -> str:
     """Caminho pontilhado do módulo, com `__init__` reduzido ao nome do pacote."""
-    dotted = rel[:-3].replace("/", ".")
-    return dotted.removesuffix(".__init__")
+    if rel == "__init__.py":
+        return ""
+    return rel[:-3].replace("/", ".").removesuffix(".__init__")
+
+
+def register_from_aliases(
+    local: set[str],
+    prefixes: list[list[str]],
+    node: ast.ImportFrom,
+    dotted: dict[str, ast.Module],
+    packages: set[str],
+) -> None:
+    """Registra os nomes importados por `from ... import ...`, só quando alcançam submódulo de verdade."""
+    for alias in node.names:
+        for prefix in prefixes:
+            if submodule_reachable(prefix, alias.name, dotted, packages):
+                resolve_import(local, [], [*prefix, alias.name])
 
 
 def imported_modules(modules: dict[str, ast.Module]) -> dict[str, set[str]]:
@@ -1094,9 +1121,7 @@ def imported_modules(modules: dict[str, ast.Module]) -> dict[str, set[str]]:
                 base = list(node.module.split(".")) if node.module else []
                 resolve_import(local, [], base)
                 resolve_import(local, package, base)
-                for alias in node.names:
-                    resolve_import(local, [], [*base, alias.name])
-                    resolve_import(local, package, [*base, alias.name])
+                register_from_aliases(local, [base, [*package, *base]], node, dotted, packages)
             elif isinstance(node, ast.ImportFrom):
                 depth = node.level - 1
                 # Import relativo além do pacote é inválido e não alcança módulo nenhum; resolver por
@@ -1112,9 +1137,7 @@ def imported_modules(modules: dict[str, ast.Module]) -> dict[str, set[str]]:
                 # manteria vivo um homônimo que ninguém importa, como `pkg.pkg` para `from . import x` em
                 # `pkg/consumer.py`.
                 resolve_import(local, [], base)
-                for alias in node.names:
-                    if submodule_reachable(base, alias.name, dotted, packages):
-                        resolve_import(local, [], [*base, alias.name])
+                register_from_aliases(local, [base], node, dotted, packages)
         # A autoaresta sai do conjunto do próprio módulo, e não do conjunto global: outro módulo que
         # importe este continua contando como importador.
         local.discard(own)
@@ -1155,10 +1178,10 @@ def detect_dead_modules(
         # invocação declarada por outro arquivo, que é a definição da classe.
         if rel in declared_entries or named.get(rel, set()) - {rel}:
             continue
-        dotted = rel[:-3].replace("/", ".")
+        dotted = module_dotted(rel)
         # `import pkg` e `import pkg.sub` alcançam `pkg/__init__.py`: importar subpacote executa o módulo
         # de inicialização do pacote, e comparar só `pkg.__init__` acusaria módulo morto em pacote normal.
-        package = dotted.removesuffix(".__init__") if dotted.endswith(".__init__") else None
+        package = dotted if rel.endswith("__init__.py") else None
         others = imported_by_others(per_module, package if package is not None else dotted)
         if dotted in others or (
             package is not None
