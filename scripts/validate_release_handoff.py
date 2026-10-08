@@ -27,6 +27,7 @@ FORBIDDEN_COMMANDS = (
     "git merge",
     "git commit",
 )
+CONTRACT_TIMEOUT_SECONDS = 120
 ALLOWED_IMPORTS = frozenset({"__future__", "argparse", "json", "re", "stat", "sys", "unicodedata", "pathlib", "typing"})
 FORBIDDEN_PRIMITIVES = frozenset(
     {
@@ -69,10 +70,20 @@ SHA_MAIN = "b" * 40
 
 
 def load_object(path: Path) -> dict:
-    """Le um JSON de objeto, falhando fechado."""
+    """Le um JSON de objeto, falhando fechado.
+
+    O tratamento cobre tambem texto nao codificavel, inteiro acima do limite de conversao e aninhamento
+    profundo, que o decodificador levanta como `UnicodeEncodeError`, `ValueError` e `RecursionError`.
+    """
     try:
         document = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+    except (
+        OSError,
+        UnicodeDecodeError,
+        UnicodeEncodeError,
+        ValueError,
+        RecursionError,
+    ) as error:
         raise SystemExit(f"ERRO: nao foi possivel ler {path}: {error}") from error
     if not isinstance(document, dict):
         raise SystemExit(f"ERRO: {path} nao contem um objeto JSON")
@@ -86,10 +97,18 @@ def confined_errors(root: Path, path: Path, label: str) -> list[str]:
     leva a inspecao para fora da arvore do commit auditado, inclusive entre a leitura e a execucao.
     """
     for component in [*reversed(path.parents), path]:
-        if component.is_symlink():
+        try:
+            linked = component.is_symlink()
+        except (OSError, UnicodeEncodeError, ValueError) as error:
+            return [f"`{label}` nao pode ser inspecionado: {error}"]
+        if linked:
             return [f"`{label}` passa por link simbolico: {component}"]
-    resolved = path.resolve()
-    if not resolved.is_relative_to(root.resolve()):
+    try:
+        resolved = path.resolve()
+        inside = resolved.is_relative_to(root.resolve())
+    except (OSError, RuntimeError, UnicodeEncodeError, ValueError) as error:
+        return [f"`{label}` nao pode ser resolvido: {error}"]
+    if not inside:
         return [f"`{label}` resolve para fora da raiz auditada: {resolved}"]
     return []
 
@@ -295,29 +314,39 @@ def synthetic_evidence(verdict: str, develop: str, main: str) -> dict:
 
 
 def run_contract(root: Path, evidence: dict, develop: str, main: str) -> tuple[int, str]:
-    """Executa o contrato sobre uma evidencia e devolve codigo de saida e saida padrao."""
+    """Executa o contrato sobre uma evidencia e devolve codigo de saida e saida observada.
+
+    A execucao tem prazo e captura as duas saidas: um contrato que nao termina nao pode travar o gate, e
+    a causa de uma recusa costuma ser escrita na saida de erro, que antes era descartada.
+    """
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "evidence.json"
         path.write_text(json.dumps(evidence, ensure_ascii=False), encoding="utf-8")
         # O comando usa o interpretador atual e o caminho do proprio repositorio, sem entrada de usuario.
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(root / SCRIPT_RELATIVE),
-                "--root",
-                str(root),
-                "--evidence",
-                str(path),
-                "--develop",
-                develop,
-                "--main",
-                main,
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    return result.returncode, result.stdout
+        try:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(root / SCRIPT_RELATIVE),
+                    "--root",
+                    str(root),
+                    "--evidence",
+                    str(path),
+                    "--develop",
+                    develop,
+                    "--main",
+                    main,
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=CONTRACT_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            return 1, f"o contrato excedeu {CONTRACT_TIMEOUT_SECONDS}s e foi interrompido"
+        except (OSError, ValueError, UnicodeError) as error:
+            return 1, f"o contrato nao pode ser executado: {error}"
+    return result.returncode, "\n".join(part for part in (result.stdout, result.stderr) if part)
 
 
 def behaviour_errors(root: Path) -> list[str]:
@@ -360,11 +389,16 @@ def validate_release_handoff(root: Path) -> list[str]:
         return errors or [f"a politica do handoff nao existe: {POLICY_RELATIVE}"]
     try:
         policy = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+    except (OSError, UnicodeDecodeError, UnicodeEncodeError, ValueError, RecursionError) as error:
         return [f"nao foi possivel ler {POLICY_RELATIVE}: {error}"]
     if not isinstance(policy, dict):
         return [f"{POLICY_RELATIVE} nao contem um objeto JSON"]
-    return errors + policy_errors(policy) + script_errors(root) + behaviour_errors(root)
+    static_errors = errors + policy_errors(policy) + script_errors(root)
+    if static_errors:
+        # Sem esta parada, o gate executaria o contrato mesmo depois de reprova-lo estaticamente: com um
+        # contrato que nao e arquivo regular, a execucao ficaria bloqueada e a recusa nunca apareceria.
+        return static_errors
+    return behaviour_errors(root)
 
 
 def root_path(value: str) -> Path:
@@ -374,6 +408,13 @@ def root_path(value: str) -> Path:
     return Path(value)
 
 
+def reject_unencodable(arguments: list[str]) -> None:
+    """Recusa argumento com texto nao codificavel antes que o analisador tente imprimi-lo."""
+    for token in arguments:
+        if not encodable(token):
+            raise SystemExit("ERRO: o validador recebeu argumento com texto nao codificavel em UTF-8")
+
+
 def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     """Argumentos do validador, sem abreviacao e sem opcao repetida."""
     parser = argparse.ArgumentParser(
@@ -381,6 +422,7 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--root", type=root_path, default=Path(), help="Raiz do repositorio.")
     arguments = list(sys.argv[1:] if argv is None else argv)
+    reject_unencodable(arguments)
     seen = set()
     for token in arguments:
         name = token.split("=", 1)[0]
@@ -392,7 +434,22 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Valida politica e garantias do contrato, devolvendo 0 quando tudo passa."""
+    """Valida politica e garantias do contrato, devolvendo 0 quando tudo passa.
+
+    A validacao inteira fica sob uma rede de ultimo recurso: falha nao prevista vira reprovacao declarada,
+    porque o gate nunca deve terminar em excecao nao tratada.
+    """
+    try:
+        return verify(argv)
+    except SystemExit:
+        raise
+    except (OSError, UnicodeError, ValueError, RecursionError, TypeError, KeyError) as error:
+        print(safe_text(f"ERRO: falha inesperada na validacao do handoff: {error}"))
+        return 1
+
+
+def verify(argv: list[str] | None = None) -> int:
+    """Corpo da validacao do handoff."""
     arguments = parse_arguments(argv)
     try:
         root = arguments.root.resolve()

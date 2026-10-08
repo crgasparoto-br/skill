@@ -76,6 +76,43 @@ def exact_version(value: object, expected: int) -> bool:
     return isinstance(value, int) and not isinstance(value, bool) and value == expected
 
 
+def safe_text(text: str) -> str:
+    """Texto pronto para a saida padrao: caractere nao codificavel vira escape visivel."""
+    return text.encode("utf-8", "backslashreplace").decode("utf-8")
+
+
+def filesystem_problem(path: Path, label: str) -> str:
+    """Primeiro impedimento de sistema de arquivos ao inspecionar um caminho, ou vazio.
+
+    Toda sondagem passa por aqui porque sondar tambem falha: nome de componente maior que o limite do
+    sistema, diretorio sem permissao de travessia e texto nao codificavel derrubam `stat`, `exists` e
+    `is_symlink`. Sem isto, a recusa prometida vira excecao nao tratada no meio da verificacao.
+    """
+    try:
+        status = path.lstat()
+    except (OSError, UnicodeEncodeError, ValueError) as error:
+        return f"{label} nao pode ser inspecionado: {error}"
+    if stat.S_ISLNK(status.st_mode):
+        return f"{label} e um link simbolico"
+    if not stat.S_ISREG(status.st_mode):
+        return f"{label} nao e um arquivo regular"
+    return ""
+
+
+def destination_status(path: Path, label: str):
+    """Estado do destino de escrita: ausente devolve nada; inacessivel recusa.
+
+    Sondar o destino tambem pode falhar, e um nome maior que o limite do sistema nao pode virar excecao
+    nao tratada. Ausencia e um estado legitimo, porque o relatorio pode ser criado do zero.
+    """
+    try:
+        return path.lstat()
+    except FileNotFoundError:
+        return None
+    except (OSError, UnicodeEncodeError, ValueError) as error:
+        raise SystemExit(f"ERRO: {label} nao pode ser inspecionado: {error}") from error
+
+
 def symlinked_component(path: Path) -> Path | None:
     """Primeiro componente do caminho que e link simbolico, ou nada quando nenhum e.
 
@@ -83,7 +120,11 @@ def symlinked_component(path: Path) -> Path | None:
     final e regular mas o diretorio que o contem nao pertence a arvore auditada.
     """
     for component in [*reversed(path.parents), path]:
-        if component.is_symlink():
+        try:
+            linked = component.is_symlink()
+        except (OSError, UnicodeEncodeError, ValueError):
+            return component
+        if linked:
             return component
     return None
 
@@ -93,9 +134,10 @@ def confined_regular_file(root: Path, path: Path, label: str) -> None:
     linked = symlinked_component(path)
     if linked is not None:
         raise SystemExit(f"ERRO: {label} passa por link simbolico: {linked}")
+    problem = filesystem_problem(path, label)
+    if problem:
+        raise SystemExit(f"ERRO: {problem}")
     resolved = resolved_path(path, label)
-    if not resolved.is_file():
-        raise SystemExit(f"ERRO: {label} nao e um arquivo regular: {path}")
     if not resolved.is_relative_to(resolved_path(root, label)):
         raise SystemExit(f"ERRO: {label} resolve para fora da raiz auditada: {resolved}")
 
@@ -110,13 +152,28 @@ def reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict:
     return result
 
 
-def load_json(path: Path) -> dict:
-    """Le um JSON de objeto, falhando fechado quando o arquivo falta ou nao e um objeto."""
+def load_json(path: Path, label: str = "o arquivo informado") -> dict:
+    """Le um JSON de objeto, falhando fechado quando o arquivo falta, nao e regular ou nao e objeto.
+
+    O arquivo precisa ser regular antes da leitura: abrir uma FIFO espera por um escritor que pode nunca
+    existir, e a verificacao ficaria bloqueada em vez de recusar a entrada. O tratamento de leitura cobre
+    tambem texto nao codificavel, inteiro acima do limite de conversao e aninhamento profundo, que o
+    decodificador levanta como `UnicodeEncodeError`, `ValueError` e `RecursionError`.
+    """
+    problem = filesystem_problem(path, label)
+    if problem:
+        raise SystemExit(f"ERRO: {problem}")
     try:
         document = json.loads(
             path.read_text(encoding="utf-8"), object_pairs_hook=reject_duplicate_keys
         )
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+    except (
+        OSError,
+        UnicodeDecodeError,
+        UnicodeEncodeError,
+        ValueError,
+        RecursionError,
+    ) as error:
         raise SystemExit(f"ERRO: nao foi possivel ler {path}: {error}") from error
     if not isinstance(document, dict):
         raise SystemExit(f"ERRO: {path} nao contem um objeto JSON")
@@ -426,6 +483,18 @@ def refuse_protected(root: Path, path: Path, evidence: Path, label: str) -> None
         raise SystemExit(f"ERRO: {label} sobrescreveria um artefato do handoff: {resolved}")
 
 
+def discard_temporary(path: Path) -> None:
+    """Remove o temporario depois de uma falha de escrita; ausencia ja e o estado desejado.
+
+    A remocao nao pode substituir a causa original da falha, entao a indisponibilidade do proprio
+    temporario apenas encerra a limpeza.
+    """
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        return
+
+
 def write_report(root: Path, path: Path, evidence: Path, text: str, label: str) -> None:
     """Escreve o relatorio de forma que o destino pedido seja o unico arquivo alterado.
 
@@ -435,25 +504,28 @@ def write_report(root: Path, path: Path, evidence: Path, text: str, label: str) 
     passa por arquivo temporario seguido de substituicao atomica, que troca o proprio link pelo arquivo.
     """
     refuse_protected(root, path, evidence, label)
+    status = destination_status(path, label)
     if not path.is_absolute():
         raise SystemExit(f"ERRO: {label} precisa de caminho absoluto: {path}")
     if not resolved_path(path, label).is_relative_to(resolved_path(root, label)):
         raise SystemExit(f"ERRO: {label} precisa ficar dentro da raiz auditada: {path}")
     refuse_symlink(path, label)
-    if not path.parent.is_dir():
+    try:
+        parent_is_directory = path.parent.is_dir()
+    except (OSError, UnicodeEncodeError, ValueError) as error:
+        raise SystemExit(f"ERRO: {label} nao pode ser inspecionado: {error}") from error
+    if not parent_is_directory:
         raise SystemExit(f"ERRO: {label} nao tem diretorio de destino: {path.parent}")
-    if path.exists():
-        status = path.stat()
-        if not stat.S_ISREG(status.st_mode) or status.st_nlink > 1:
-            raise SystemExit(f"ERRO: {label} nao e um arquivo regular exclusivo: {path}")
+    if status is not None and (not stat.S_ISREG(status.st_mode) or status.st_nlink > 1):
+        raise SystemExit(f"ERRO: {label} nao e um arquivo regular exclusivo: {path}")
     temporary = path.with_name(f"{path.name}.parcial")
-    if temporary.exists() or temporary.is_symlink():
+    if destination_status(temporary, f"o temporario de {label}") is not None:
         raise SystemExit(f"ERRO: {label} usa um caminho temporario ja ocupado: {temporary}")
     try:
         temporary.write_text(text.encode("utf-8", "backslashreplace").decode("utf-8"), encoding="utf-8")
         temporary.replace(path)
-    except (OSError, UnicodeEncodeError) as error:
-        temporary.unlink(missing_ok=True)
+    except (OSError, UnicodeEncodeError, ValueError) as error:
+        discard_temporary(temporary)
         raise SystemExit(f"ERRO: nao foi possivel escrever {label}: {error}") from error
 
 
@@ -503,6 +575,17 @@ def reject_repeated_options(argv: list[str]) -> None:
         seen.add(name)
 
 
+def reject_unencodable(arguments: list[str], label: str) -> None:
+    """Recusa argumento com texto nao codificavel antes que o analisador tente imprimi-lo.
+
+    O `argparse` ecoa o argumento invalido na mensagem de erro; com um surrogate isolado, a impressao
+    levanta `UnicodeEncodeError` onde se esperava a recusa. Conferir antes fecha essa porta.
+    """
+    for token in arguments:
+        if not encodable(token):
+            raise SystemExit(f"ERRO: {label} recebeu argumento com texto nao codificavel em UTF-8")
+
+
 def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     """Argumentos do contrato de handoff, sem abreviacao e sem opcao repetida."""
     parser = argparse.ArgumentParser(
@@ -515,12 +598,28 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--report", type=Path, help="Caminho do relatorio Markdown.")
     parser.add_argument("--json-report", type=Path, help="Caminho do relatorio JSON.")
     arguments = list(sys.argv[1:] if argv is None else argv)
+    reject_unencodable(arguments, "o contrato de handoff")
     reject_repeated_options(arguments)
     return parser.parse_args(arguments)
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Verifica o handoff e devolve 0 quando pronto, 1 quando falta evidencia."""
+    """Verifica o handoff e devolve 0 quando pronto, 1 quando falta evidencia.
+
+    A verificacao inteira fica sob uma rede de ultimo recurso: qualquer falha nao prevista vira recusa
+    declarada com codigo 1, porque um contrato de governanca nunca deve terminar em excecao nao tratada.
+    """
+    try:
+        return verify(argv)
+    except SystemExit:
+        raise
+    except (OSError, UnicodeError, ValueError, RecursionError, TypeError, KeyError) as error:
+        print(safe_text(f"ERRO: falha inesperada na verificacao do handoff: {error}"))
+        return 1
+
+
+def verify(argv: list[str] | None = None) -> int:
+    """Corpo da verificacao do handoff."""
     arguments = parse_arguments(argv)
     policy_path = arguments.root / POLICY_RELATIVE
     confined_regular_file(arguments.root, policy_path, "a politica do handoff")
@@ -531,7 +630,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERRO: {error}")
         print("Handoff reprovado: a politica do handoff e invalida.")
         return 1
-    evidence = load_json(arguments.evidence)
+    evidence = load_json(arguments.evidence, "a evidencia do handoff")
     shas = read_shas(arguments, evidence)
     report = build_report(policy, evidence, shas)
     markdown = markdown_report(report)

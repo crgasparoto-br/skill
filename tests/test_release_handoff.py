@@ -881,3 +881,127 @@ def test_plain_space_inside_declared_text_is_accepted() -> None:
 def test_exotic_spaces_and_invisibles_are_not_declared_text(character: str) -> None:
     """Ressalva: aceitar o espaco comum nao pode abrir a familia inteira de separadores."""
     assert visible_problem(f"a{character}b") != ""
+
+
+def test_evidence_path_with_surrogate_is_refused_before_reading() -> None:
+    """Achado bloqueante: caminho de evidencia nao codificavel nao pode derrubar o contrato."""
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evidence", "\ud800"])
+
+
+def test_evidence_path_with_null_byte_is_refused() -> None:
+    """Achado bloqueante: caminho com byte nulo precisa ser recusado, nao levantar `ValueError`."""
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evidence", "\x00"])
+
+
+def test_oversized_integer_in_evidence_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: inteiro acima do limite de conversao nao pode escapar do tratamento."""
+    path = tmp_path / "huge.json"
+    path.write_text('{"schema_version":' + "1" * 5000 + "}", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evidence", str(path)])
+
+
+def test_deeply_nested_evidence_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: aninhamento profundo precisa virar recusa, nao `RecursionError`."""
+    path = tmp_path / "deep.json"
+    path.write_text('{"extra":' + "[" * 10000 + "0" + "]" * 10000 + "}", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evidence", str(path)])
+
+
+@pytest.mark.parametrize(
+    "content",
+    ['{"policy_version":' + "1" * 5000 + "}", '{"extra":' + "[" * 10000 + "0" + "]" * 10000 + "}"],
+    ids=["inteiro-enorme", "aninhamento-profundo"],
+)
+def test_broken_policy_does_not_crash_the_gate(tmp_path: Path, content: str) -> None:
+    """Achado bloqueante: politica ilegivel pelo decodificador precisa reprovar sem traceback."""
+    (tmp_path / "config").mkdir()
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (tmp_path / "config/release-handoff.json").write_text(content, encoding="utf-8")
+    assert gate_main(["--root", str(tmp_path)]) == 1
+
+
+def test_gate_root_with_overlong_component_is_refused() -> None:
+    """Achado bloqueante: componente acima do limite do sistema precisa reprovar sem traceback."""
+    assert gate_main(["--root", "/tmp/" + "x" * 256]) == 1
+
+
+def test_report_with_overlong_name_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: temporario cujo nome excede o limite precisa reprovar sem traceback."""
+    (tmp_path / "config").mkdir()
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (tmp_path / "config/release-handoff.json").write_text(
+        (ROOT / "config/release-handoff.json").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(
+            ["--root", str(tmp_path), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN,
+             "--report", str(tmp_path / ("y" * 250))]
+        )
+
+
+def test_report_under_unreadable_parent_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: diretorio sem permissao de travessia precisa reprovar sem traceback."""
+    blocked = tmp_path / "sem-permissao"
+    blocked.mkdir()
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(evidence()), encoding="utf-8")
+    blocked.chmod(0)
+    try:
+        with pytest.raises(SystemExit):
+            contract_main(
+                ["--root", str(ROOT), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN,
+                 "--report", str(blocked / "relatorio.md")]
+            )
+        with pytest.raises(SystemExit):
+            contract_main(["--root", str(ROOT), "--evidence", str(blocked / "e.json")])
+    finally:
+        blocked.chmod(0o755)
+
+
+def test_fifo_evidence_is_refused_without_blocking(tmp_path: Path) -> None:
+    """Achado bloqueante: evidencia que nao e arquivo regular precisa ser recusada, nao aguardada."""
+    fifo = tmp_path / "evidence.fifo"
+    os.mkfifo(fifo)
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evidence", str(fifo)])
+
+
+def test_gate_refuses_non_regular_contract_without_running_it(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+    """Achado bloqueante: reprovado o contrato estaticamente, o gate nao pode executa-lo."""
+    (tmp_path / "config").mkdir()
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "config/release-handoff.json").write_text(
+        (ROOT / "config/release-handoff.json").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    os.mkfifo(tmp_path / "scripts/release_handoff.py")
+    assert gate_main(["--root", str(tmp_path)]) == 1
+    assert "contrato" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "entry,argv",
+    [
+        ("contrato", ["--evidence", "x", "--unknown", "\ud800"]),
+        ("gate", ["--unknown", "\ud800"]),
+    ],
+    ids=["contrato", "gate"],
+)
+def test_unencodable_argument_is_refused_before_argparse_prints(
+    entry: str, argv: list[str], capsys: pytest.CaptureFixture
+) -> None:
+    """Achado bloqueante: o analisador ecoa o argumento; texto nao codificavel precisa ser recusado antes."""
+    chosen = contract_main if entry == "contrato" else gate_main
+    with pytest.raises(SystemExit):
+        chosen(argv)
