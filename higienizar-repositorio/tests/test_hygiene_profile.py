@@ -3766,3 +3766,64 @@ def test_name_bound_inside_function_does_not_shadow_submodule(tmp_path: Path) ->
     assert "pkg/sub/target.py" not in [
         item["path"] for item in findings_of(scan(tree), "dead-module")
     ]
+
+
+def test_for_and_with_targets_shadow_submodule(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo de `for` e de `with` liga nome do módulo e sombreia o submódulo."""
+    bodies = ("for target in [1]:\n    pass\n", "with open(__file__) as target:\n    pass\n")
+    for index, body in enumerate(bodies):
+        tree = make_tree(
+            tmp_path / f"corpo{index}",
+            {
+                "pkg/__init__.py": body,
+                "pkg/target.py": "VALUE = 1\n",
+                "consumer.py": "from pkg import target\n",
+                "README.md": "sem invocacao\n",
+            },
+        )
+        assert "pkg/target.py" in [
+            item["path"] for item in findings_of(scan(tree), "dead-module")
+        ]
+
+
+def test_reexport_in_init_keeps_submodule_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: `from . import target` no `__init__` executa o submódulo, e não o sombreia."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "from . import target\n",
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import target\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" not in [
+        item["path"] for item in findings_of(scan(tree), "dead-module")
+    ]
+
+
+def test_wildcard_import_follows_declared_all(tmp_path: Path) -> None:
+    """Achado bloqueante: `from pkg import *` alcança o que o `__all__` declara, e só isso."""
+    with_all = make_tree(
+        tmp_path / "com_all",
+        {
+            "pkg/__init__.py": '__all__ = ["target"]\n',
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import *\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    dead = [item["path"] for item in findings_of(scan(with_all), "dead-module")]
+    assert "pkg/target.py" not in dead
+    without_all = make_tree(
+        tmp_path / "sem_all",
+        {
+            "pkg/__init__.py": "",
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import *\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" in [
+        item["path"] for item in findings_of(scan(without_all), "dead-module")
+    ]

@@ -1008,14 +1008,51 @@ def requirement_name(line: str) -> str:
         return re.split(r"[<>=!~\[;@]", line, maxsplit=1)[0].strip()
 
 
+def bound_targets(target: ast.AST) -> set[str]:
+    """Nomes ligados por um alvo de atribuição, inclusive desempacotamento e alvo de `for`/`with`."""
+    if isinstance(target, ast.Name):
+        return {target.id}
+    if isinstance(target, ast.Starred):
+        return bound_targets(target.value)
+    if isinstance(target, (ast.Tuple, ast.List)):
+        return {name for element in target.elts for name in bound_targets(element)}
+    return set()
+
+
+def module_level_nodes(tree: ast.Module) -> list[ast.AST]:
+    """Nós no nível do módulo, dentro de comando composto e fora de corpo de função.
+
+    Nome ligado dentro de função não é atributo do módulo, e por isso o percurso para no corpo de `def`,
+    `lambda` e `class`: contar esses nomes esconderia submódulo que é importado de verdade.
+    """
+    nodes: list[ast.AST] = []
+    stack: list[ast.AST] = list(tree.body)
+    while stack:
+        node = stack.pop()
+        nodes.append(node)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            continue
+        stack.extend(ast.iter_child_nodes(node))
+    return nodes
+
+
 def bound_name(node: ast.AST) -> set[str]:
     """Nomes que um comando liga no nível do módulo."""
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
         return {node.name}
+    if isinstance(node, (ast.For, ast.AsyncFor)):
+        return bound_targets(node.target)
+    if isinstance(node, (ast.With, ast.AsyncWith)):
+        return {
+            name
+            for item in node.items
+            if item.optional_vars is not None
+            for name in bound_targets(item.optional_vars)
+        }
     if isinstance(node, ast.Assign):
-        return {target.id for target in node.targets if isinstance(target, ast.Name)}
-    if isinstance(node, (ast.AnnAssign, ast.AugAssign)) and isinstance(node.target, ast.Name):
-        return {node.target.id}
+        return {name for target in node.targets for name in bound_targets(target)}
+    if isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.NamedExpr)):
+        return bound_targets(node.target)
     if isinstance(node, ast.Import):
         return {alias.asname or alias.name.split(".")[0] for alias in node.names}
     if isinstance(node, ast.ImportFrom):
@@ -1027,19 +1064,53 @@ def module_level_names(tree: ast.Module) -> set[str]:
     """Nomes ligados no nível do módulo, inclusive dentro de `if`, `try`, `for` e `with`.
 
     `from pkg.sub import target` alcança o atributo `target` quando o `__init__` de `pkg.sub` o define, e
-    não o submódulo `pkg/sub/target.py`. Sem esta leitura, o submódulo ficaria vivo sem importador.
-    Nome ligado dentro de função não é atributo do módulo, e por isso o percurso para no corpo de `def`,
-    `lambda` e `class`: contar esses nomes esconderia submódulo que é importado de verdade.
+    não o submódulo `pkg/sub/target.py`. Sem esta leitura, o submódulo ficaria vivo sem importador. O
+    alvo de `for` e de `with` liga nome do mesmo modo que a atribuição simples.
     """
     names: set[str] = set()
-    stack: list[ast.AST] = list(tree.body)
-    while stack:
-        node = stack.pop()
+    for node in module_level_nodes(tree):
         names |= bound_name(node)
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
-            continue
-        stack.extend(ast.iter_child_nodes(node))
     return names
+
+
+def declared_all(tree: ast.Module) -> set[str]:
+    """Nomes declarados em `__all__`, que é o que `from pkg import *` alcança."""
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(
+            isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets
+        ):
+            continue
+        value = node.value
+        if isinstance(value, (ast.List, ast.Tuple, ast.Set)):
+            return {
+                element.value
+                for element in value.elts
+                if isinstance(element, ast.Constant) and isinstance(element.value, str)
+            }
+    return set()
+
+
+def imports_submodule(tree: ast.Module, name: str) -> bool:
+    """O módulo importa `name` como módulo, e não como atributo vindo de outro módulo?"""
+    for node in module_level_nodes(tree):
+        if isinstance(node, ast.ImportFrom):
+            imported = {alias.name for alias in node.names}
+            if node.module == name or (node.module is None and name in imported):
+                return True
+        elif isinstance(node, ast.Import) and any(
+            alias.name.split(".")[-1] == name for alias in node.names
+        ):
+            return True
+    return False
+
+
+def module_dotted(rel: str) -> str:
+    """Caminho pontilhado do módulo, com `__init__` reduzido ao nome do pacote."""
+    if rel == "__init__.py":
+        return ""
+    return rel[:-3].replace("/", ".").removesuffix(".__init__")
 
 
 def submodule_reachable(
@@ -1060,14 +1131,23 @@ def submodule_reachable(
         return False
     # O `__init__` do pacote está registrado sob o próprio nome do pacote, e o da raiz sob o nome vazio.
     init = dotted.get(path)
-    return not (init is not None and name in module_level_names(init))
+    if init is None:
+        return True
+    # Atributo criado pelo próprio import do submódulo não sombreia: `from . import target` no `__init__`
+    # executa `pkg/target.py`, e tratá-lo como atributo simples acusaria módulo vivo.
+    if imports_submodule(init, name):
+        return True
+    return name not in module_level_names(init)
 
 
-def module_dotted(rel: str) -> str:
-    """Caminho pontilhado do módulo, com `__init__` reduzido ao nome do pacote."""
-    if rel == "__init__.py":
-        return ""
-    return rel[:-3].replace("/", ".").removesuffix(".__init__")
+def wildcard_names(prefix: list[str], dotted: dict[str, ast.Module]) -> list[str]:
+    """Nomes alcançados por `from prefix import *`, pelo `__all__` declarado no pacote.
+
+    Sem `__all__`, o wildcard não importa submódulo que o `__init__` não importe, e por isso a lista é
+    vazia em vez de conservadora.
+    """
+    tree = dotted.get(".".join(prefix))
+    return sorted(declared_all(tree)) if tree is not None else []
 
 
 def register_from_aliases(
@@ -1080,8 +1160,10 @@ def register_from_aliases(
     """Registra os nomes importados por `from ... import ...`, só quando alcançam submódulo de verdade."""
     for alias in node.names:
         for prefix in prefixes:
-            if submodule_reachable(prefix, alias.name, dotted, packages):
-                resolve_import(local, [], [*prefix, alias.name])
+            names = wildcard_names(prefix, dotted) if alias.name == "*" else [alias.name]
+            for name in names:
+                if submodule_reachable(prefix, name, dotted, packages):
+                    resolve_import(local, [], [*prefix, name])
 
 
 def imported_modules(modules: dict[str, ast.Module]) -> dict[str, set[str]]:

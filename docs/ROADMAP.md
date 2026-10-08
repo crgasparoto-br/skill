@@ -241,6 +241,9 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A vigésima nona rodada de auditoria corrigiu o que as vinte e oito anteriores ainda não garantiam: o alvo do próprio `for` e do próprio
+`with` conta como atributo do módulo, o reexport `from . import target` no `__init__` deixa de acusar submódulo vivo, e `from pkg import *`
+segue o `__all__` declarado.
 A vigésima oitava rodada de auditoria corrigiu o que as vinte e sete anteriores ainda não garantiam: a sombra do atributo passou a valer
 também no `from` absoluto e no pacote da raiz, e nome ligado dentro de `if`, `try`, `for` ou `with` do `__init__` conta como atributo do módulo,
 sem contar nome local de função.
