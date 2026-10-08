@@ -140,7 +140,7 @@ def summary_errors(result: Any, label: str) -> list[str]:
     summary = result.get("summary") if isinstance(result, dict) else None
     if not isinstance(summary, dict):
         return [f"{label} nao devolveu um resumo legivel"]
-    faltando = [campo for campo in SUMMARY_FIELDS if not isinstance(summary.get(campo), int)]
+    faltando = [campo for campo in SUMMARY_FIELDS if type(summary.get(campo)) is not int]
     if faltando:
         return [f"{label} devolveu resumo sem contagem inteira em {', '.join(faltando)}"]
     return []
@@ -350,11 +350,44 @@ def validate_evals(root: Path) -> list[str]:
     return errors
 
 
+class ParserError(Exception):
+    """Erro de linha de comando que precisa reprovar com status 1, e nao encerrar com status 2."""
+
+
+class Parser(argparse.ArgumentParser):
+    """Interpretador de argumentos que reporta erro pela via legivel do gate."""
+
+    def error(self, message: str) -> None:
+        raise ParserError(message)
+
+
+def root_errors(value: str | None) -> list[str]:
+    """Resolve a raiz auditada recusando valor vazio, inacessivel ou em ciclo de links."""
+    if value is not None and not value.strip():
+        return ["argumento --root vazio"]
+    raiz = Path(value) if value is not None else Path(__file__).resolve().parents[1]
+    try:
+        raiz.resolve()
+    except (OSError, RuntimeError, UnicodeEncodeError, ValueError) as exc:
+        return [f"raiz inacessivel: {exc}"]
+    return []
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
-    args = parser.parse_args(argv)
-    errors = validate_evals(args.root.resolve())
+    parser = Parser(description=__doc__)
+    parser.add_argument("--root", default=None)
+    try:
+        args = parser.parse_args(argv)
+    except ParserError as exc:
+        print(f"Validação de avaliações falhou:\n- {exc}")
+        return 1
+    problems = root_errors(args.root)
+    if problems:
+        print("Validação de avaliações falhou:")
+        print("\n".join(f"- {problem}" for problem in problems))
+        return 1
+    raiz = Path(args.root) if args.root is not None else Path(__file__).resolve().parents[1]
+    errors = validate_evals(raiz.resolve())
     if errors:
         print("Validação de avaliações falhou:")
         print("\n".join(f"- {error}" for error in errors))

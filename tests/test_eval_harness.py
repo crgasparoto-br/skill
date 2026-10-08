@@ -649,3 +649,57 @@ def test_malformed_runner_result_is_reported_readably(tmp_path: Path, retorno: s
     assert resultado.returncode == 1
     assert "Traceback" not in resultado.stderr
     assert "resumo" in resultado.stdout
+
+
+def _executa(argv: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, "scripts/validate_evals.py", *argv],
+        cwd=cwd or ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [["--desconhecido"], ["--root"], ["--root="], ["--root", "  "]],
+    ids=["argumento-desconhecido", "root-sem-valor", "root-vazio", "root-em-branco"],
+)
+def test_invalid_cli_arguments_exit_with_status_one(argv: list[str]) -> None:
+    """Argumento invalido precisa reprovar com status 1 e mensagem legivel, nunca com status 2."""
+    resultado = _executa(argv)
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "falhou" in resultado.stdout
+
+
+def test_boolean_counts_are_not_integers(tmp_path: Path) -> None:
+    """Booleano nao e contagem inteira declarada, mesmo sendo subclasse de int."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    with (copia / "evals" / "run_evals.py").open("a", encoding="utf-8") as arquivo:
+        arquivo.write(
+            "\n\ndef run_evaluations(*args, **kwargs):\n"
+            "    return {'summary': {'total': True, 'passed': True, 'failed': False,"
+            " 'invalid': False, 'not_run': False}}\n"
+        )
+    resultado = _executa(["--root", "."], cwd=copia)
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "contagem inteira" in resultado.stdout
+
+
+def test_symlink_loop_in_root_is_reported_readably(tmp_path: Path) -> None:
+    """Raiz em ciclo de links precisa reprovar com status 1 e mensagem legivel."""
+    (tmp_path / "a").symlink_to("b")
+    (tmp_path / "b").symlink_to("a")
+    resultado = _executa(["--root", str(tmp_path / "a")])
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "inacessivel" in resultado.stdout
+
+
+def test_missing_root_is_reported_readably(tmp_path: Path) -> None:
+    resultado = _executa(["--root", str(tmp_path / "inexistente")])
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
