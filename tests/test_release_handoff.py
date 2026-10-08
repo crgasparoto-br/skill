@@ -437,3 +437,64 @@ def test_report_without_destination_directory_fails_closed(tmp_path: Path) -> No
             ["--root", str(ROOT), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", MAIN,
              "--report", str(tmp_path / "ausente/handoff.md")]
         )
+
+
+@pytest.mark.parametrize("filler", ["\u3164", "\u115f", "\uffa0", "\U00013441", "\u2800"])
+def test_blank_filler_in_value_is_rejected(filler: str) -> None:
+    """Achado bloqueante B1: o valor declarado tambem precisa passar pela regra de visibilidade."""
+    document = evidence()
+    document["items"]["issues-delivered"] = {"value": filler, "source": "github"}
+    assert report_for(document)["ready"] is False
+
+
+@pytest.mark.parametrize("value", ["x", "1", "z"])
+def test_single_character_value_is_rejected(value: str) -> None:
+    """Achado bloqueante B1: valor de um caractere nao e evidencia utilizavel."""
+    document = evidence()
+    document["items"]["gates"] = {"value": value, "source": "local"}
+    assert report_for(document)["ready"] is False
+
+
+@pytest.mark.parametrize("source", ["g", "gi\u200bthub", "lo\u034fcal", "\u3164"])
+def test_obfuscated_source_is_rejected(source: str) -> None:
+    """Achado bloqueante B2: origem nao pode ser reduzida nem ter um caractere."""
+    document = evidence()
+    document["items"]["gates"] = {"value": "ok", "source": source}
+    assert report_for(document)["ready"] is False
+
+
+@pytest.mark.parametrize("value", ["4\u200b5", "a\u034fb"])
+def test_obfuscated_value_is_rejected(value: str) -> None:
+    """Achado bloqueante B1/B2: caractere invisivel embutido nao pode ser apagado e aceito."""
+    document = evidence()
+    document["items"]["issues-delivered"] = {"value": value, "source": "github"}
+    assert report_for(document)["ready"] is False
+
+
+@pytest.mark.parametrize("destination", ["reports/relativo.md", "../fora.md"])
+def test_report_destination_outside_root_is_rejected(tmp_path: Path, destination: str) -> None:
+    """Achado bloqueante B4: relatorio precisa ficar dentro da raiz auditada."""
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(
+            ["--root", str(ROOT), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", MAIN,
+             "--report", destination]
+        )
+
+
+def test_audit_verdict_with_embedded_invisible_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante B3: parecer com caractere invisivel embutido nao pode passar."""
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "config").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    policy = json.loads(json.dumps(POLICY))
+    policy["verdicts"]["audit_approved"] = ["approved\u200b"]
+    (tmp_path / "config/release-handoff.json").write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
+    document = evidence()
+    document["items"]["independent-audit"] = {"value": "approved\u200b", "source": "auditar-issue"}
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+    assert contract_main(["--root", str(tmp_path), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN]) == 1

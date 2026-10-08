@@ -25,6 +25,12 @@ MEANINGFUL_CATEGORIES = frozenset({"L", "N"})
 # (`U+115F`, `U+1160`, `U+3164`, `U+FFA0`), preenchedores de hieroglifo egipcio (`U+13441`, `U+13442`),
 # braille em branco (`U+2800`), sinal de multiplicacao invisivel (`U+2062` a `U+2064`), separador de
 # palavra invisivel (`U+2060`), espaco estreito sem quebra (`U+202F`) e marca de ordem de byte (`U+FEFF`).
+INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Zl", "Zp"})
+MINIMUM_TEXT = 2
+INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Zl", "Zp"})
+MINIMUM_TEXT = 2
+INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Zl", "Zp"})
+MINIMUM_TEXT = 2
 BLANK_CHARACTERS = frozenset(
     {
         "\u115f",
@@ -154,8 +160,9 @@ def policy_shape_errors(policy: dict) -> list[str]:
     if not isinstance(approved, list) or not approved:
         errors.append("a politica nao declara `verdicts.audit_approved`")
         return errors
-    if not all(isinstance(item, str) and significant(item) for item in approved):
-        errors.append("a politica declara parecer invalido em `verdicts.audit_approved`")
+    for item in approved:
+        if not isinstance(item, str) or visible_problem(item):
+            errors.append("a politica declara parecer invalido em `verdicts.audit_approved`")
     return errors
 
 
@@ -165,6 +172,69 @@ def policy_items(policy: dict, key: str) -> list[dict]:
     if not isinstance(items, list):
         raise SystemExit(f"ERRO: a politica nao declara a lista `{key}`")
     return [item for item in items if isinstance(item, dict) and isinstance(item.get("id"), str)]
+
+
+def visible_problem(text: str) -> str:
+    """Descreve por que o texto nao serve como evidencia, ou devolve vazio quando serve.
+
+    A regra positiva de `significant()` nao basta aqui: ela **remove** o caractere estranho e aceitaria
+    `"lo\u200blocal"` como `"local"`. Para valor e origem declarados a exigencia e outra: nada invisivel,
+    espaco normal permitido no meio, ao menos uma letra ou digito e tamanho minimo de dois caracteres.
+    """
+    if not text:
+        return "esta vazio"
+    if any(
+        unicodedata.category(character) in INVISIBLE_CATEGORIES or character in BLANK_CHARACTERS
+        for character in text
+    ):
+        return "contem caractere invisivel ou preenchedor"
+    if not any(unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES for character in text):
+        return "nao contem letra nem digito"
+    if len(text) < MINIMUM_TEXT:
+        return f"tem menos de {MINIMUM_TEXT} caracteres"
+    return ""
+
+
+def visible_problem(text: str) -> str:
+    """Descreve por que o texto nao serve como evidencia, ou devolve vazio quando serve.
+
+    A regra positiva de `significant()` nao basta aqui: ela **remove** o caractere estranho e aceitaria
+    `"lo\u200blocal"` como `"local"`. Para valor e origem declarados a exigencia e outra: nada invisivel,
+    espaco normal permitido no meio, ao menos uma letra ou digito e tamanho minimo de dois caracteres.
+    """
+    if not text:
+        return "esta vazio"
+    if any(
+        unicodedata.category(character) in INVISIBLE_CATEGORIES or character in BLANK_CHARACTERS
+        for character in text
+    ):
+        return "contem caractere invisivel ou preenchedor"
+    if not any(unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES for character in text):
+        return "nao contem letra nem digito"
+    if len(text) < MINIMUM_TEXT:
+        return f"tem menos de {MINIMUM_TEXT} caracteres"
+    return ""
+
+
+def visible_problem(text: str) -> str:
+    """Descreve por que o texto nao serve como evidencia, ou devolve vazio quando serve.
+
+    A regra positiva de `significant()` nao basta aqui: ela **remove** o caractere estranho e aceitaria
+    `"lo\u200blocal"` como `"local"`. Para valor e origem declarados a exigencia e outra: nada invisivel,
+    espaco normal permitido no meio, ao menos uma letra ou digito e tamanho minimo de dois caracteres.
+    """
+    if not text:
+        return "esta vazio"
+    if any(
+        unicodedata.category(character) in INVISIBLE_CATEGORIES or character in BLANK_CHARACTERS
+        for character in text
+    ):
+        return "contem caractere invisivel ou preenchedor"
+    if not any(unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES for character in text):
+        return "nao contem letra nem digito"
+    if len(text) < MINIMUM_TEXT:
+        return f"tem menos de {MINIMUM_TEXT} caracteres"
+    return ""
 
 
 def declared_text(evidence: dict, item_id: str) -> str:
@@ -186,9 +256,9 @@ def evidence_value(evidence: dict, item_id: str) -> tuple[str, str]:
     if not isinstance(entry, dict):
         return "", ""
     source = entry.get("source")
-    # O valor vai intacto a validacao de formato: normalizar apagaria separador interno de um commit
-    # informado e o faria parecer hexadecimal de 40. A origem passa pela regra de conteudo.
-    return declared_text(evidence, item_id), significant(source)
+    # Valor e origem chegam intactos a validacao: normalizar apagaria separador interno de um commit ou
+    # o caractere invisivel embutido numa origem, e os dois passariam como se fossem validos.
+    return declared_text(evidence, item_id), (source.strip() if isinstance(source, str) else "")
 
 
 def check_required(policy: dict, evidence: dict, shas: dict[str, str]) -> list[dict]:
@@ -198,16 +268,22 @@ def check_required(policy: dict, evidence: dict, shas: dict[str, str]) -> list[d
         item_id = item["id"]
         value, source = evidence_value(evidence, item_id)
         problems = []
-        if not source:
-            problems.append("sem origem declarada para a evidencia")
+        reason = visible_problem(source)
+        if reason:
+            problems.append(f"origem declarada {reason}")
         if not value:
             problems.append("sem evidencia declarada")
-        elif item_id == "divergence":
-            problems.extend(divergence_problems(shas))
-        elif item_id == "independent-audit":
-            problems.extend(audit_problems(policy, value))
-        elif item_id in {"develop-sha"} and not SHA_RE.match(value):
-            problems.append("commit nao e hexadecimal de 40 caracteres")
+        else:
+            if item_id != "develop-sha":
+                reason = visible_problem(value)
+                if reason:
+                    problems.append(f"evidencia declarada {reason}")
+            if item_id == "divergence":
+                problems.extend(divergence_problems(shas))
+            elif item_id == "independent-audit":
+                problems.extend(audit_problems(policy, value))
+            elif item_id == "develop-sha" and not SHA_RE.match(value):
+                problems.append("commit nao e hexadecimal de 40 caracteres")
         rows.append({"id": item_id, "value": value, "source": source, "problems": problems})
     return rows
 
@@ -296,7 +372,7 @@ def refuse_symlink(path: Path, label: str) -> None:
         raise SystemExit(f"ERRO: {label} passa por link simbolico: {linked}")
 
 
-def write_report(path: Path, text: str, label: str) -> None:
+def write_report(root: Path, path: Path, text: str, label: str) -> None:
     """Escreve o relatorio de forma que o destino pedido seja o unico arquivo alterado.
 
     Duas brechas ficam fechadas: um destino que seja hard link de outro arquivo (`st_nlink` maior que um)
@@ -304,6 +380,10 @@ def write_report(path: Path, text: str, label: str) -> None:
     em que um link e criado entre a conferencia e a abertura. Por isso a conferencia vem antes e a escrita
     passa por arquivo temporario seguido de substituicao atomica, que troca o proprio link pelo arquivo.
     """
+    if not path.is_absolute():
+        raise SystemExit(f"ERRO: {label} precisa de caminho absoluto: {path}")
+    if not path.resolve().is_relative_to(root.resolve()):
+        raise SystemExit(f"ERRO: {label} precisa ficar dentro da raiz auditada: {path}")
     refuse_symlink(path, label)
     if not path.parent.is_dir():
         raise SystemExit(f"ERRO: {label} nao tem diretorio de destino: {path.parent}")
@@ -316,9 +396,10 @@ def write_report(path: Path, text: str, label: str) -> None:
         raise SystemExit(f"ERRO: {label} usa um caminho temporario ja ocupado: {temporary}")
     try:
         temporary.write_text(text, encoding="utf-8")
+        temporary.replace(path)
     except OSError as error:
+        temporary.unlink(missing_ok=True)
         raise SystemExit(f"ERRO: nao foi possivel escrever {label}: {error}") from error
-    temporary.replace(path)
 
 
 def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
@@ -359,11 +440,11 @@ def main(argv: list[str] | None = None) -> int:
     report = build_report(policy, evidence, shas)
     markdown = markdown_report(report)
     if arguments.report:
-        write_report(arguments.report, markdown, "o relatorio Markdown")
+        write_report(arguments.root, arguments.report, markdown, "o relatorio Markdown")
     else:
         sys.stdout.write(markdown)
     if arguments.json_report:
-        write_report(arguments.json_report, json.dumps(report, ensure_ascii=False, indent=2) + "\n", "o relatorio JSON")
+        write_report(arguments.root, arguments.json_report, json.dumps(report, ensure_ascii=False, indent=2) + "\n", "o relatorio JSON")
     if report["ready"]:
         print("Handoff OK: evidencia obrigatoria completa e verificada.")
         return 0
