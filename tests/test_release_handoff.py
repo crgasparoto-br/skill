@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from scripts.release_handoff import build_report, load_json, markdown_report
+from scripts.validate_release_handoff import policy_errors, script_errors
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = json.loads((ROOT / "config/release-handoff.json").read_text(encoding="utf-8"))
@@ -139,3 +140,59 @@ def test_invalid_evidence_file_fails_closed(tmp_path: Path) -> None:
     broken.write_text("{", encoding="utf-8")
     with pytest.raises(SystemExit):
         load_json(broken)
+
+
+def test_non_integer_version_is_rejected() -> None:
+    """Achado bloqueante: `True` e `1.0` nao sao a versao inteira declarada."""
+    for version in (True, 1.0, 2, None):
+        document = evidence()
+        document["schema_version"] = version
+        report = report_for(document)
+        assert report["ready"] is False, f"versao {version!r} foi aceita"
+    document = evidence()
+    document.pop("schema_version")
+    assert report_for(document)["ready"] is False
+
+
+def test_missing_evidence_source_is_rejected() -> None:
+    """Achado nao bloqueante: a origem da evidencia precisa existir."""
+    document = evidence()
+    document["items"]["gates"] = {"value": "ok"}
+    report = report_for(document)
+    assert report["ready"] is False
+    assert any("origem" in problem for problem in report["problems"])
+
+
+def test_policy_version_must_be_exact_integer() -> None:
+    """Achado bloqueante: a versao da politica tambem precisa ser o inteiro exato."""
+    for version in (True, 1.0, 2, None):
+        invalid = dict(POLICY)
+        invalid["policy_version"] = version
+        assert any("policy_version" in error for error in policy_errors(invalid)), f"versao {version!r}"
+
+
+def test_duplicate_id_across_sections_is_rejected() -> None:
+    """Identificador repetido entre obrigatorios e opcionais e recusado."""
+    invalid = dict(POLICY)
+    invalid["optional"] = [*POLICY["optional"], dict(POLICY["required"][0])]
+    assert any("opcionais" in error for error in policy_errors(invalid))
+
+
+def test_dynamic_import_in_contract_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante: autoridade adquirida em execucao precisa ser recusada."""
+    original = (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8")
+    injected = original.replace(
+        '    return parser.parse_args(argv)',
+        '    import importlib\n    importlib.import_module("subprocess")\n    return parser.parse_args(argv)',
+        1,
+    )
+    assert injected != original
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(injected, encoding="utf-8")
+    errors = script_errors(tmp_path)
+    assert any("importa" in error for error in errors)
+
+
+def test_contract_imports_stay_in_the_allowed_list() -> None:
+    """O contrato entregue so importa o que a lista permitida declara."""
+    assert script_errors(ROOT) == []

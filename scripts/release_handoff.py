@@ -18,6 +18,12 @@ from pathlib import Path
 
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 POLICY_RELATIVE = "config/release-handoff.json"
+SCHEMA_VERSION = 1
+
+
+def exact_version(value: object, expected: int) -> bool:
+    """A versão declarada precisa ser o inteiro exato: `True` e `1.0` não são a versão 1."""
+    return isinstance(value, int) and not isinstance(value, bool) and value == expected
 
 
 def load_json(path: Path) -> dict:
@@ -57,6 +63,8 @@ def check_required(policy: dict, evidence: dict, shas: dict[str, str]) -> list[d
         item_id = item["id"]
         value, source = evidence_value(evidence, item_id)
         problems = []
+        if not source:
+            problems.append("sem origem declarada para a evidencia")
         if not value:
             problems.append("sem evidencia declarada")
         elif item_id == "divergence":
@@ -97,7 +105,7 @@ def audit_problems(policy: dict, verdict: str) -> list[str]:
 def evidence_problems(policy: dict, evidence: dict, shas: dict[str, str]) -> list[str]:
     """Problemas da evidencia como um todo, antes da verificacao item a item."""
     problems = []
-    if evidence.get("schema_version") != 1:
+    if not exact_version(evidence.get("schema_version"), SCHEMA_VERSION):
         problems.append("a evidencia nao declara `schema_version` 1")
     declared = {item["id"] for item in policy_items(policy, "required")}
     declared |= {item["id"] for item in policy_items(policy, "optional")}

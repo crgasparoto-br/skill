@@ -9,8 +9,8 @@ acoes. Tambem exercita o contrato sobre uma evidencia sintetica, para provar que
 from __future__ import annotations
 
 import argparse
+import ast
 import json
-import re
 import subprocess
 import sys
 import tempfile
@@ -26,10 +26,19 @@ FORBIDDEN_COMMANDS = (
     "git merge",
     "git commit",
 )
+ALLOWED_IMPORTS = frozenset({"__future__", "argparse", "json", "re", "sys", "pathlib", "typing"})
+FORBIDDEN_PRIMITIVES = frozenset({"__import__", "eval", "exec", "compile", "importlib", "subprocess"})
 REQUIRED_IDS = frozenset(
     {"issues-delivered", "develop-sha", "gates", "independent-audit", "divergence"}
 )
 SHA_DEVELOP = "a" * 40
+SCHEMA_VERSION = 1
+POLICY_VERSION = 1
+
+
+def exact_version(value: object, expected: int) -> bool:
+    """A versão declarada precisa ser o inteiro exato: `True` e `1.0` não são a versão 1."""
+    return isinstance(value, int) and not isinstance(value, bool) and value == expected
 SHA_MAIN = "b" * 40
 
 
@@ -47,11 +56,12 @@ def load_object(path: Path) -> dict:
 def policy_errors(policy: dict) -> list[str]:
     """Problemas da politica declarada."""
     errors = []
-    if policy.get("policy_version") != 1:
-        errors.append("a politica nao declara `policy_version` 1")
+    if not exact_version(policy.get("policy_version"), POLICY_VERSION):
+        errors.append("a politica nao declara `policy_version` como o inteiro 1")
     errors.extend(authority_errors(policy))
     errors.extend(item_errors(policy, "required"))
     errors.extend(item_errors(policy, "optional"))
+    errors.extend(cross_section_errors(policy))
     errors.extend(missing_required_errors(policy))
     errors.extend(verdict_errors(policy))
     return errors
@@ -94,6 +104,16 @@ def item_errors(policy: dict, key: str) -> list[str]:
     return errors
 
 
+def cross_section_errors(policy: dict) -> list[str]:
+    """Identificador precisa ser unico entre a evidencia obrigatoria e a opcional."""
+    required = {item.get("id") for item in policy.get("required", []) if isinstance(item, dict)}
+    optional = {item.get("id") for item in policy.get("optional", []) if isinstance(item, dict)}
+    return [
+        f"identificador repetido entre obrigatorios e opcionais: `{item}`"
+        for item in sorted(required & optional)
+    ]
+
+
 def missing_required_errors(policy: dict) -> list[str]:
     """A evidencia exigida pelo contrato precisa estar declarada na politica."""
     declared = {
@@ -114,19 +134,61 @@ def verdict_errors(policy: dict) -> list[str]:
 
 
 def script_errors(root: Path) -> list[str]:
-    """O contrato nao pode executar merge, tag ou publicacao."""
+    """O contrato nao pode executar merge, tag ou publicacao, nem adquirir esse poder em execucao.
+
+    A prova tem tres partes: nenhum comando proibido no texto, nenhuma importacao fora da lista
+    permitida e nenhuma primitiva de importacao ou execucao dinamica no codigo. Sem a terceira parte,
+    `importlib.import_module("subprocess")` passaria pelas duas primeiras.
+    """
     path = root / SCRIPT_RELATIVE
     if not path.is_file():
         return [f"o contrato de handoff nao existe: {SCRIPT_RELATIVE}"]
     text = path.read_text(encoding="utf-8")
-    errors = []
-    for command in FORBIDDEN_COMMANDS:
-        if command in text:
-            errors.append(f"o contrato de handoff menciona comando proibido: `{command}`")
-    for call in ("subprocess", "os.system"):
-        if re.search(rf"^\s*(import|from)\s+{call.split('.')[0]}\b", text, re.MULTILINE) and call in text:
-            errors.append(f"o contrato de handoff usa `{call}`, que permite executar comando externo")
+    errors = [
+        f"o contrato de handoff menciona comando proibido: `{command}`"
+        for command in FORBIDDEN_COMMANDS
+        if command in text
+    ]
+    try:
+        tree = ast.parse(text)
+    except SyntaxError as error:
+        return [*errors, f"o contrato de handoff nao e Python valido: {error}"]
+    errors.extend(import_errors(tree))
+    errors.extend(dynamic_errors(tree))
     return errors
+
+
+def import_errors(tree: ast.Module) -> list[str]:
+    """Toda importacao do contrato precisa estar na lista permitida."""
+    names: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.extend(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            names.append(node.module.split(".")[0])
+    return [
+        f"o contrato de handoff importa `{name}`, fora da lista permitida de {sorted(ALLOWED_IMPORTS)}"
+        for name in sorted(set(names) - ALLOWED_IMPORTS)
+    ]
+
+
+def dynamic_errors(tree: ast.Module) -> list[str]:
+    """Primitivas que permitem importar ou executar codigo em tempo de execucao sao proibidas."""
+    used = {
+        node.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Name) and node.id in FORBIDDEN_PRIMITIVES
+    }
+    used |= {
+        node.func.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+        and node.func.id in FORBIDDEN_PRIMITIVES
+    }
+    return [
+        f"o contrato de handoff usa `{name}`, que permite adquirir autoridade em execucao"
+        for name in sorted(used)
+    ]
 
 
 def synthetic_evidence(verdict: str, develop: str, main: str) -> dict:
