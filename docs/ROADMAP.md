@@ -486,25 +486,26 @@ A release será considerada pronta somente quando todos os critérios abaixo for
 
 ### Critérios abertos declarados na v0.3.0
 
-A promoção da v0.3.0 foi decidida pelo responsável com cinco critérios declarados como abertos, para que a
-publicação não dependesse de trabalho fora do escopo dos itens entregues. Cada um tem decisão registrada, e a
-mesma lista está publicada em [`docs/RELEASE.md`](./RELEASE.md), de onde saem as notas de release:
+A promoção da v0.3.0 foi decidida pelo responsável com seis critérios declarados como abertos, para que a publicação
+não dependesse de trabalho fora do escopo das entregas concluídas. Cada um tem decisão registrada, e a mesma lista
+está publicada em [`docs/RELEASE.md`](./RELEASE.md), de onde saem as notas de release:
 
-- **licença (V030-003):** não escolhida por decisão explícita do responsável neste momento, que pediu para não
-  priorizar a questão; a ausência de licença é intencional e continua rastreável;
-- **secret scanning (V030-003):** existe a auditoria de dependências em `dependency-audit.yml`, mas não há decisão
-  registrada sobre varredura de segredos, que depende de configuração da conta e não do repositório;
-- **dependency review (V030-003):** a revisão automática de dependências em pull request não está habilitada nem
-  tem decisão registrada; o que existe é o gate offline de lockfile e a auditoria de digest fora da sequência
-  obrigatória;
-- **matriz de Python (V030-003):** a suíte roda em uma única versão do interpretador, e a ampliação da matriz
-  permanece aberta;
+- **licença (V030-003, passo 1):** não escolhida por decisão explícita do responsável neste momento, que pediu para
+  não priorizar a questão; a ausência de licença é intencional e continua rastreável;
+- **varredura de segredos (V030-003, passo 3):** sem decisão registrada; depende de configuração da conta;
+- **revisão de dependências em pull request (V030-003, passo 3):** não habilitada; a auditoria de dependências do
+  passo 4 existe e roda em `dependency-audit.yml`, com `UNKNOWN` quando não consegue verificar, e cobre o digest e a
+  consulta ao banco de vulnerabilidade fora da sequência obrigatória;
+- **matriz de Python (V030-003, passo 6):** a suíte roda em uma única versão do interpretador; adotar matriz exigiria
+  um lockfile por versão, que é a decisão que o passo 6 precisa enfrentar;
+- **pinagem de Actions por SHA completo (V030-003, passo 7):** a sequência obrigatória usa SHA completo, e o workflow
+  de auditoria de dependências ainda referencia `actions/checkout` e `actions/setup-python` por etiqueta de versão;
 - **contrato `transitional` (V030-005):** a compatibilidade continua mapeada para a linhagem `2026-08-20.3` sem
   inventário e plano de migração amplos, que o roadmap mantém fora do escopo por padrão.
 
 Os casos de prompt injection **não** estão abertos: a matriz `V030-002` os cobre em
-`evals/cases/V030-002-authority-001.json`, `-002.json` e `-004.json`, com conteúdo hostil em README, issue e
-contrato. Os itens acima permanecem no roadmap para a próxima release.
+`evals/cases/V030-002-authority-001.json`, `-002.json`, `-003.json` e `-004.json`, com conteúdo hostil em README, issue, resultado de ferramenta e contrato. Os itens acima permanecem
+no roadmap para a próxima release.
 
 ## 7. Fora do escopo por padrão
 

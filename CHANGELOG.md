@@ -90,6 +90,12 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 - terceira rodada de endurecimento da higienização global: a exclusão de diretório passou a cobrir a subárvore inteira, inclusive com caminho composto, e a valer também para a busca por citação e para a classe de dependência sem uso, a leitura de texto para citação passou a ficar contida na raiz de modo que link para fora entra como cobertura não analisada em vez de apagar achado, a normalização da duplicação passou a trocar o campo no nó em vez do texto do dump — a substituição anterior alcançava o conteúdo de string literal —, a complexidade passou a medir só o corpo, sem ramo de default de parâmetro nem de decorator, com a lacuna de lambda declarada, o import relativo além do pacote deixou de resolver por aproximação, a exclusão de nome dunder deixou de ser regra fixa no código e passou a ser declarada em `ignore_names`, a varredura de módulo passou a seguir `exclude_tests` declarado, manifest em diretório ou caminho excluído deixou de ser analisado, o caminho de exclusão passou a exigir forma canônica, a forma de `corpus_suffixes` passou a ser validada pelo gate e a cobertura não analisada passou a ser deduplicada;
 - a skill `higienizar-repositorio` entra no catálogo, na compatibilidade, no manifesto de capacidades, no contrato de composição e na allowlist de runtime do controlador, com o gate na sequência obrigatória na mesma posição em CI, `README.md` e `AGENTS.md` ([`config/skills-catalog.json`](./config/skills-catalog.json)).
 
+### Limitações
+Esta release é publicada com seis critérios de aceite declarados como abertos: licença, varredura de segredos,
+revisão de dependências em pull request, matriz de Python, pinagem de Actions por SHA completo no workflow de
+auditoria de dependências e contrato `transitional` sem inventário amplo de migração. A lista completa, com a decisão
+registrada de cada item, está em [`docs/RELEASE.md`](./docs/RELEASE.md).
+
 ### Compatibility
 
 Esta alteração entra na `v0.3.0` e deixa de valer para a tag pública `v0.2.0`. O snapshot interno do sistema avança para `2026-10-08.1`; o contrato público continua `1.0.0` e a linhagem interna continua `2026-08-20.3`.

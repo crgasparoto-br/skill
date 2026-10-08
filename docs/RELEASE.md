@@ -37,21 +37,25 @@ A criação da tag e da release é deliberadamente posterior ao merge; uma pull 
 
 ## Limites declarados da v0.3.0
 
-A promoção da v0.3.0 foi decidida pelo responsável com cinco critérios de aceite declarados como abertos, para que
-a publicação não dependesse de trabalho fora do escopo das entregas concluídas. A mesma lista está no
-`docs/ROADMAP.md`, e as notas de release repetem os cinco itens:
+A promoção da v0.3.0 foi decidida pelo responsável com seis critérios de aceite declarados como abertos, para que a
+publicação não dependesse de trabalho fora do escopo das entregas concluídas. A mesma lista está no
+`docs/ROADMAP.md`, e as notas de release publicadas repetem os seis itens:
 
 - **licença:** não escolhida, por decisão explícita do responsável neste momento; a ausência é intencional e
   rastreável;
 - **varredura de segredos:** sem decisão registrada; depende de configuração da conta, não do repositório;
-- **revisão de dependências em pull request:** não habilitada; existem o gate offline de lockfile e a auditoria de
-  digest fora da sequência obrigatória;
-- **matriz de Python:** a suíte roda em uma única versão do interpretador;
+- **revisão de dependências em pull request:** não habilitada; a auditoria de dependências do passo 4 de `V030-003`
+  existe e roda em `.github/workflows/dependency-audit.yml`, com `UNKNOWN` em vez de sucesso quando não consegue
+  verificar, e é ela que cobre esse lado da cadeia de suprimentos;
+- **matriz de Python:** a suíte roda em uma única versão do interpretador; adotar matriz exigiria um lockfile por
+  versão, que é exatamente a decisão do passo 6 de `V030-003`;
+- **pinagem de Actions por SHA completo:** a sequência obrigatória já pina as actions que usa, e o workflow de
+  auditoria de dependências ainda referencia `actions/checkout` e `actions/setup-python` por etiqueta de versão;
 - **contrato `transitional`:** a compatibilidade segue mapeada para a linhagem `2026-08-20.3` sem inventário e plano
   de migração amplos.
 
-Os casos de prompt injection não estão entre os itens abertos: a matriz `V030-002` os cobre em
-`evals/cases/V030-002-authority-001.json`, `-002.json` e `-004.json`.
+Os casos de prompt injection não estão entre os itens abertos: a matriz `V030-002` os cobre em `evals/cases/V030-002-authority-001.json`, `-002.json`, `-003.json` e `-004.json`,
+com conteúdo hostil vindo de README, de issue e de contrato.
 
 ## Handoff de release
 
