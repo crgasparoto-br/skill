@@ -116,7 +116,7 @@ def load_json(path: Path) -> dict:
         document = json.loads(
             path.read_text(encoding="utf-8"), object_pairs_hook=reject_duplicate_keys
         )
-    except (OSError, json.JSONDecodeError) as error:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise SystemExit(f"ERRO: nao foi possivel ler {path}: {error}") from error
     if not isinstance(document, dict):
         raise SystemExit(f"ERRO: {path} nao contem um objeto JSON")
@@ -132,6 +132,9 @@ def policy_shape_errors(policy: dict) -> list[str]:
     errors = []
     if not exact_version(policy.get("policy_version"), SCHEMA_VERSION):
         errors.append("a politica nao declara `policy_version` como o inteiro 1")
+    approved = (policy.get("verdicts") or {}).get("audit_approved") if isinstance(policy.get("verdicts"), dict) else None
+    if isinstance(approved, list) and len(approved) != len(set(map(str, approved))):
+        errors.append("a politica repete parecer em `verdicts.audit_approved`")
     authority = policy.get("authority")
     if not isinstance(authority, dict):
         errors.append("a politica nao declara o bloco `authority`")
@@ -266,9 +269,12 @@ def check_optional(policy: dict, evidence: dict) -> list[str]:
     problems = []
     for item in policy_items(policy, "optional"):
         item_id = item["id"]
-        entry = evidence.get("items")
-        entry = entry.get(item_id) if isinstance(entry, dict) else None
+        entries = evidence.get("items")
+        if not isinstance(entries, dict) or item_id not in entries:
+            continue
+        entry = entries[item_id]
         if not isinstance(entry, dict):
+            problems.append(f"o item opcional `{item_id}` precisa ser objeto com valor e origem")
             continue
         value, source = evidence_value(evidence, item_id)
         for field, text in (("valor", value), ("origem", source)):
@@ -307,10 +313,9 @@ def evidence_problems(policy: dict, evidence: dict, shas: dict[str, str]) -> lis
     """Problemas da evidencia como um todo, antes da verificacao item a item."""
 
     problems = []
-    if "main" in evidence:
-        declared = evidence["main"]
-        if not isinstance(declared, str) or not SHA_RE.match(declared.strip()):
-            problems.append("`main` da evidencia precisa ser hexadecimal de 40 caracteres")
+    declared_main = evidence.get("main")
+    if not isinstance(declared_main, str) or not SHA_RE.match(declared_main.strip()):
+        problems.append("a evidencia precisa declarar `main` como hexadecimal de 40 caracteres")
     if not exact_version(evidence.get("schema_version"), SCHEMA_VERSION):
         problems.append("a evidencia nao declara `schema_version` 1")
     declared = {item["id"] for item in policy_items(policy, "required")}
@@ -460,6 +465,12 @@ def main(argv: list[str] | None = None) -> int:
     shas = read_shas(arguments, evidence)
     report = build_report(policy, evidence, shas)
     markdown = markdown_report(report)
+    if (
+        arguments.report
+        and arguments.json_report
+        and Path(arguments.report).resolve() == Path(arguments.json_report).resolve()
+    ):
+        raise SystemExit("ERRO: `--report` e `--json-report` nao podem apontar para o mesmo destino")
     if arguments.report:
         write_report(arguments.root, arguments.report, arguments.evidence, markdown, "o relatorio Markdown")
     else:

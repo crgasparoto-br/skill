@@ -599,3 +599,46 @@ def test_unknown_item_field_is_rejected() -> None:
     document["items"]["gates"]["extra"] = "x"
     with pytest.raises(SystemExit):
         report_for(document)
+
+
+def test_missing_main_in_evidence_is_rejected() -> None:
+    """Achado bloqueante B1: argumento nao supre a ausencia do campo obrigatorio."""
+    document = evidence()
+    del document["main"]
+    assert report_for(document)["ready"] is False
+
+
+def test_duplicated_policy_verdict_fails_in_the_contract(tmp_path: Path) -> None:
+    """Achado bloqueante B2: o proprio contrato recusa politica com parecer repetido."""
+    root = tmp_path
+    (root / "config").mkdir()
+    policy = json.loads(json.dumps(POLICY))
+    policy["verdicts"]["audit_approved"] = ["approved", "approved"]
+    (root / "config/release-handoff.json").write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
+    path = root / "evidence.json"
+    path.write_text(json.dumps(evidence()), encoding="utf-8")
+    assert contract_main(["--root", str(root), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN]) == 1
+
+
+@pytest.mark.parametrize("bad", [None, [], 7, True, "approved"])
+def test_optional_item_with_invalid_shape_is_rejected(bad: object) -> None:
+    """Ressalva: item opcional presente com estrutura invalida nao pode ser ignorado."""
+    document = evidence()
+    document["items"]["behavioural-evals"] = bad
+    assert report_for(document)["ready"] is False
+
+
+def test_invalid_utf8_fails_closed_without_traceback(tmp_path: Path) -> None:
+    """Ressalva: UTF-8 invalido precisa falhar de forma controlada."""
+    path = tmp_path / "evidence.json"
+    path.write_bytes(b'{"schema_version": 1, "main": "\xff\xfe"}')
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN])
+
+
+def test_colliding_report_destinations_are_rejected(tmp_path: Path) -> None:
+    """Ressalva: os dois relatorios nao podem disputar o mesmo destino."""
+    target = tmp_path / "relatorio.md"
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evidence", str(ROOT / "config/release-handoff.json"),
+                       "--develop", DEVELOP, "--main", MAIN, "--report", str(target), "--json-report", str(target)])
