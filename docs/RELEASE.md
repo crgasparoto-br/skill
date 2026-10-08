@@ -66,8 +66,12 @@ criado entre a conferência e a abertura. O destino é recusado quando é relati
 é arquivo regular, quando passa por link simbólico, quando é diretório ou link físico, quando já existe um caminho
 temporário reservado ou quando Markdown e JSON colidem. Um destino ainda inexistente é criado, desde que o diretório
 pai exista. O contrato nunca sobrescreve o contrato executável da raiz auditada, a política ou a própria evidência. O
-limite é declarado: essa proteção cobre os artefatos do handoff; qualquer outro caminho do repositório é escolha de
-quem opera, e apontar o relatório para um arquivo versionado o substitui.
+diretório de destino ainda é reconferido pela identidade do inode imediatamente antes da substituição, para que a
+troca do próprio diretório durante a escrita seja detectada. O limite é declarado: a proteção cobre os artefatos do
+handoff e pressupõe que nenhum outro processo escreve na árvore auditada durante a verificação, premissa já assumida
+pela prova de ausência de autoridade; fechar a corrida remanescente entre essa reconferência e a substituição exigiria
+primitivas de descritor de diretório, que o contrato não usa. Qualquer outro caminho do repositório é escolha de quem
+opera, e apontar o relatório para um arquivo versionado o substitui.
 
 O gate `scripts/validate_release_handoff.py` valida a política, a ausência de autoridade no contrato e executa a
 evidência completa; ele também falha fechado, inclusive quando a raiz informada não pode ser resolvida.

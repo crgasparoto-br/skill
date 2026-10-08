@@ -1072,3 +1072,24 @@ def test_non_textual_argument_is_refused(entry: str) -> None:
     for token in (None, 7, b"x"):
         with pytest.raises(SystemExit):
             chosen([token])
+
+
+def test_parent_directory_swap_is_detected_before_the_atomic_swap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Achado bloqueante: trocar o diretorio de destino durante a escrita nao pode sobrescrever a politica."""
+    root = valid_root(tmp_path)
+    (root / "reports").mkdir()
+    policy = root / "config/release-handoff.json"
+    before = policy.read_bytes()
+    original = handoff_module.tempfile.NamedTemporaryFile
+
+    def swapping(**kwargs):
+        (root / "reports").rename(root / "reports-real")
+        (root / "reports").symlink_to(root / "config")
+        return original(**kwargs)
+
+    monkeypatch.setattr(handoff_module.tempfile, "NamedTemporaryFile", swapping)
+    with pytest.raises(SystemExit):
+        contract_main(contract_arguments_for(root, root / "reports/release-handoff.json"))
+    assert policy.read_bytes() == before

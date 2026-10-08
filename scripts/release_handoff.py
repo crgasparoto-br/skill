@@ -498,6 +498,22 @@ def discard_temporary(path: Path) -> None:
         return
 
 
+def directory_identity(path: Path, label: str) -> tuple[int, int]:
+    """Identidade do diretorio de destino: dispositivo e numero do inode.
+
+    Conferir o caminho textual nao basta, porque o diretorio conferido pode ser renomeado e substituido
+    por um link simbolico antes da escrita. Comparar a identidade antes e depois da gravacao detecta a
+    troca antes da substituicao final, que e o unico passo capaz de sobrescrever um arquivo protegido.
+    """
+    try:
+        status = path.lstat()
+    except (OSError, UnicodeEncodeError, ValueError) as error:
+        raise SystemExit(f"ERRO: {label} nao pode ser inspecionado: {error}") from error
+    if not stat.S_ISDIR(status.st_mode):
+        raise SystemExit(f"ERRO: {label} nao tem diretorio de destino: {path}")
+    return (status.st_dev, status.st_ino)
+
+
 def write_temporary(directory: Path, name: str, text: str, label: str) -> Path:
     """Grava o texto em arquivo temporario exclusivo e devolve o caminho criado.
 
@@ -551,7 +567,11 @@ def write_report(root: Path, path: Path, evidence: Path, text: str, label: str) 
     reserved = path.with_name(f"{path.name}.parcial")
     if destination_status(reserved, f"o temporario de {label}") is not None:
         raise SystemExit(f"ERRO: {label} usa um caminho temporario ja ocupado: {reserved}")
+    identity = directory_identity(path.parent, label)
     temporary = write_temporary(path.parent, path.name, text, label)
+    if directory_identity(path.parent, label) != identity:
+        discard_temporary(temporary)
+        raise SystemExit(f"ERRO: {label} trocou de diretorio durante a escrita: {path.parent}")
     try:
         temporary.replace(path)
     except (OSError, ValueError) as error:
