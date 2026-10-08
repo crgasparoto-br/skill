@@ -4,6 +4,8 @@
 **Origem:** [skill#66](https://github.com/crgasparoto-br/skill/issues/66).  
 **Aplicação:** [SolverFin#704](https://github.com/crgasparoto-br/SolverFin/issues/704), [controle_calorias#1317](https://github.com/crgasparoto-br/controle_calorias/issues/1317), [training-system#499](https://github.com/crgasparoto-br/training-system/issues/499).
 
+O documento [CI_STANDARD.md](./CI_STANDARD.md) é o guia prático complementar. Este arquivo é a **única fonte normativa**; o guia não substitui critérios de aceite nem autoriza mudança em required checks.
+
 ## Fronteiras de responsabilidade
 
 - O catálogo `skill` orienta agentes **fora** do GitHub Actions: `entregar-issue` prepara código, plano, evidências e PR; `corrigir-ci` lê logs e propõe/aplica correções com autorização.
@@ -64,6 +66,10 @@ Executar e anexar evidência ao PR de cada consumidor:
 4. **Trocar regras com segurança:** garantir que o novo check esteja sendo publicado e verificado **antes** de remover o antigo do ruleset. Preferir manter o mesmo contexto obrigatório estável quando viável; uma troca de nomes deve ser coordenada com branch protection e comprovada na PR.
 5. **Limpar legado:** só depois de comprovada substituição e ausência de consumidores, remover locks, `.delivery-v2`, variáveis `DELIVERY_V2_*`, referências `refs/orchestrator/*` e workflows obsoletos; revisar documentação e confirmar novo run exato.
 6. **Rollback:** se um required check sumir, um gate for dispensado incorretamente ou a CI não estabilizar, reverter os commits de migração ou restaurar o workflow/classificador anterior e os required contexts previamente registrados. Revalidar o HEAD restaurado e merge preview. Nunca desabilitar proteções para destravar merge.
+
+## Evidência de required contexts reais
+
+A matriz acima **não é inventário do estado atual**. Em cada PR consumidora, anexar dados da API do GitHub e da branch protection/rulesets com as colunas `context atual | workflow/job emissor | app | novo context | ruleset | SHA do check | data de troca | rollback`. Valor desconhecido é `UNKNOWN`; sem inventário e evidência de sucesso no SHA atual, não remover o contexto legado.
 
 ## Critério de encerramento
 
