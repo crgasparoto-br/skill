@@ -1008,8 +1008,57 @@ def requirement_name(line: str) -> str:
         return re.split(r"[<>=!~\[;@]", line, maxsplit=1)[0].strip()
 
 
-def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
-    """Módulos importados, resolvidos contra a raiz e contra o diretório de quem importa.
+def module_level_names(tree: ast.Module) -> set[str]:
+    """Nomes ligados no nível do módulo: atribuição, `def`, `class` e import.
+
+    `from pkg.sub import target` alcança o atributo `target` quando o `__init__` de `pkg.sub` o define, e
+    não o submódulo `pkg/sub/target.py`. Sem esta leitura, o submódulo ficaria vivo sem importador.
+    """
+    names: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.Assign):
+            names.update(target.id for target in node.targets if isinstance(target, ast.Name))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names.add(node.target.id)
+        elif isinstance(node, ast.Import):
+            names.update(alias.asname or alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            names.update(alias.asname or alias.name for alias in node.names)
+    return names
+
+
+def submodule_reachable(
+    base: list[str],
+    name: str,
+    dotted: dict[str, ast.Module],
+    packages: set[str],
+) -> bool:
+    """`from base import name` alcança o submódulo `base.name`?
+
+    Duas situações tornam o submódulo inalcançável, e as duas são invisíveis para quem só olha o caminho
+    pontilhado: `base` pode resolver para módulo simples, e nesse caso `name` é atributo dele; e o
+    `__init__` do pacote pode definir `name`, e nesse caso o atributo tem precedência.
+    """
+    if not base:
+        return True
+    path = ".".join(base)
+    if path in dotted and path not in packages:
+        return False
+    # O `__init__` do pacote está registrado sob o próprio nome do pacote.
+    init = dotted.get(path)
+    return not (init is not None and name in module_level_names(init))
+
+
+def module_dotted(rel: str) -> str:
+    """Caminho pontilhado do módulo, com `__init__` reduzido ao nome do pacote."""
+    dotted = rel[:-3].replace("/", ".")
+    return dotted.removesuffix(".__init__")
+
+
+def imported_modules(modules: dict[str, ast.Module]) -> dict[str, set[str]]:
+    """Imports de cada módulo, resolvidos contra a raiz e contra quem importa.
 
     Três formas precisam ser resolvidas para não acusar falso positivo nem falso negativo:
 
@@ -1018,28 +1067,36 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
       com o próprio diretório no caminho de importação, resolvida contra o diretório de quem importa;
     - relativa (`from . import orphan`), resolvida contra o pacote de quem importa, que é o que impede
       a colisão de nome: o relativo alcança `pkg/orphan.py`, e não um `orphan.py` solto na raiz.
+
+    O mapa é por módulo importador, e não um conjunto global, porque importador importa a si próprio não
+    conta como importador de outro módulo — e o `__init__` do pacote só é alcançado por quem importa o
+    pacote ou um descendente, sem contar o próprio `__init__`.
     """
     # `from .. import x` sobe para fora do pacote de quem importa; alcançar a raiz só é válido se a
     # própria raiz for pacote declarado, e sem isso o import não alcança módulo nenhum.
     root_is_package = "__init__.py" in modules
-    imported: set[str] = set()
+    dotted = {module_dotted(rel): tree for rel, tree in modules.items()}
+    packages = {module_dotted(rel) for rel in modules if rel.endswith("__init__.py")}
+    per_module: dict[str, set[str]] = {}
     for rel, tree in modules.items():
         package = list(Path(rel).parent.parts)
+        own = module_dotted(rel)
+        local: set[str] = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    resolve_import(imported, package, alias.name.split("."))
+                    resolve_import(local, package, alias.name.split("."))
             elif isinstance(node, ast.ImportFrom) and node.level == 0:
                 # Import absoluto é procurado no caminho de importação, que inclui a raiz do projeto e o
                 # diretório de quem importa: `from helper import run` dentro de `pkg/` alcança a raiz, e
                 # `import catalog` dentro de `scripts/` alcança o irmão. Sem as duas formas, módulo usado
                 # ficaria morto.
                 base = list(node.module.split(".")) if node.module else []
-                resolve_import(imported, [], base)
-                resolve_import(imported, package, base)
+                resolve_import(local, [], base)
+                resolve_import(local, package, base)
                 for alias in node.names:
-                    resolve_import(imported, [], [*base, alias.name])
-                    resolve_import(imported, package, [*base, alias.name])
+                    resolve_import(local, [], [*base, alias.name])
+                    resolve_import(local, package, [*base, alias.name])
             elif isinstance(node, ast.ImportFrom):
                 depth = node.level - 1
                 # Import relativo além do pacote é inválido e não alcança módulo nenhum; resolver por
@@ -1054,10 +1111,20 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
                 # O alvo do relativo já é absoluto a partir da raiz: somar o pacote do importador de novo
                 # manteria vivo um homônimo que ninguém importa, como `pkg.pkg` para `from . import x` em
                 # `pkg/consumer.py`.
-                resolve_import(imported, [], base)
+                resolve_import(local, [], base)
                 for alias in node.names:
-                    resolve_import(imported, [], [*base, alias.name])
-    return imported
+                    if submodule_reachable(base, alias.name, dotted, packages):
+                        resolve_import(local, [], [*base, alias.name])
+        # A autoaresta sai do conjunto do próprio módulo, e não do conjunto global: outro módulo que
+        # importe este continua contando como importador.
+        local.discard(own)
+        per_module[own] = local
+    return per_module
+
+
+def imported_by_others(per_module: dict[str, set[str]], own: str) -> set[str]:
+    """Imports feitos por módulos que não são o próprio módulo consultado."""
+    return {name for module, names in per_module.items() if module != own for name in names}
 
 
 def detect_dead_modules(
@@ -1076,7 +1143,7 @@ def detect_dead_modules(
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
     named = named_paths(texts, root, citation_suffixes(policy), policy, measured)
-    imported = imported_modules(modules)
+    per_module = imported_modules(modules)
     findings: list[dict] = []
     for rel in sorted(modules):
         path = Path(rel)
@@ -1091,10 +1158,11 @@ def detect_dead_modules(
         dotted = rel[:-3].replace("/", ".")
         # `import pkg` e `import pkg.sub` alcançam `pkg/__init__.py`: importar subpacote executa o módulo
         # de inicialização do pacote, e comparar só `pkg.__init__` acusaria módulo morto em pacote normal.
-        package = dotted[:-9] if dotted.endswith(".__init__") else None
-        if dotted in imported or (
+        package = dotted.removesuffix(".__init__") if dotted.endswith(".__init__") else None
+        others = imported_by_others(per_module, package if package is not None else dotted)
+        if dotted in others or (
             package is not None
-            and any(name == package or name.startswith(f"{package}.") for name in imported)
+            and any(name == package or name.startswith(f"{package}.") for name in others)
         ):
             continue
         findings.append(

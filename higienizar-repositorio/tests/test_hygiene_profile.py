@@ -3633,3 +3633,63 @@ def test_roadmap_describes_the_ratchet_as_it_is() -> None:
     roadmap = (SKILL_ROOT.parent / "docs" / "ROADMAP.md").read_text(encoding="utf-8")
     assert "só diminui" not in roadmap
     assert "só cresce com entrada nova e motivo escrito" in roadmap
+
+
+def test_self_import_does_not_keep_module_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: `from . import consumer` em `pkg/consumer.py` era importador de si mesmo."""
+    for name, extra in (("sem_init", {}), ("com_init", {"pkg/__init__.py": ""})):
+        tree = make_tree(
+            tmp_path / name,
+            {"pkg/consumer.py": "from . import consumer as alias\n", "README.md": "sem invocacao\n", **extra},
+        )
+        assert [item["path"] for item in findings_of(scan(tree), "dead-module")] == ["pkg/consumer.py"]
+
+
+def test_shadowed_package_does_not_keep_submodule_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: `from .sub import target` mantinha `pkg/sub/target.py` vivo sem importador."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "",
+            "pkg/consumer.py": "from .sub import target as alias\n",
+            "pkg/sub.py": "VALUE = 1\n",
+            "pkg/sub/target.py": "VALUE = 2\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/sub/target.py" in [
+        item["path"] for item in findings_of(scan(tree), "dead-module")
+    ]
+
+
+def test_package_init_attribute_does_not_keep_submodule_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: atributo definido no `__init__` do pacote tem precedência sobre o submódulo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "",
+            "pkg/consumer.py": "from .sub import target as alias\n",
+            "pkg/sub/__init__.py": "target = 1\n",
+            "pkg/sub/target.py": "VALUE = 2\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/sub/target.py" in [
+        item["path"] for item in findings_of(scan(tree), "dead-module")
+    ]
+
+
+def test_normal_package_import_keeps_submodule_alive(tmp_path: Path) -> None:
+    """Regressão do próprio endurecimento: submódulo realmente importado não pode virar achado."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "",
+            "pkg/consumer.py": "from .sub import target\n",
+            "pkg/sub/__init__.py": "",
+            "pkg/sub/target.py": "VALUE = 2\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    dead = [item["path"] for item in findings_of(scan(tree), "dead-module")]
+    assert "pkg/sub/target.py" not in dead

@@ -241,6 +241,9 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A vigésima sétima rodada de auditoria corrigiu o que as vinte e seis anteriores ainda não garantiam: o importador não conta como importador
+de si mesmo, e `from base import name` só mantém o submódulo vivo quando `base` é pacote e não define `name`; o limite de alcançabilidade
+direta, e não transitiva, ficou declarado na referência da skill.
 A vigésima sexta rodada de auditoria corrigiu o que as vinte e cinco anteriores ainda não garantiam: import relativo resolve a partir do
 pacote de quem importa sem reaplicar o pacote, a política e o requisito passam a exigir motivo escrito em toda medição da linha de base, e o
 roadmap descreve a catraca como ela é — cresce apenas por entrada nova com motivo escrito, em vez de nunca crescer.
