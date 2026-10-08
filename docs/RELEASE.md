@@ -4,9 +4,9 @@
 
 | Superfície | Exemplo | Finalidade |
 | --- | --- | --- |
-| `VERSION` | `0.3.0` | Versão pública SemVer do conjunto de skills e adaptadores. |
-| `config/skills-catalog.json.catalog_version` | `2026-10-08.1` | Snapshot temporal do catálogo e da governança interna. |
-| `config/skill-system-requirements.json.system_version` | `2026-10-08.1` | Versão das invariantes globais do sistema. |
+| `VERSION` | `0.3.1` | Versão pública SemVer do conjunto de skills e adaptadores. |
+| `config/skills-catalog.json.catalog_version` | `2026-10-08.2` | Snapshot temporal do catálogo e da governança interna. |
+| `config/skill-system-requirements.json.system_version` | `2026-10-08.2` | Versão das invariantes globais do sistema. |
 | `contracts/version.json.contract_version` | `2026-08-20.3` | Linhagem interna legada dos contratos já consumidos pelas skills. |
 | `config/compatibility.json.contract_policy.public_contract_version` | `1.0.0` | Versão pública SemVer do contrato de composição. |
 
