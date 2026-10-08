@@ -1098,12 +1098,16 @@ def declared_all(tree: ast.Module) -> set[str] | None:
     names: set[str] | None = set()
     for node in module_level_nodes(tree):
         if isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
-            declarations += 1 if node.target.id == "__all__" else 0
+            if node.target.id == "__all__":
+                declarations += 1
+                # Mutação em execução, mesmo sem atribuição literal local: o conteúdo é desconhecido.
+                names = None
             continue
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             owner = node.func.value
             if isinstance(owner, ast.Name) and owner.id == "__all__":
                 declarations += 1
+                names = None
             continue
         annotated = isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
         assigned = isinstance(node, ast.Assign) and any(

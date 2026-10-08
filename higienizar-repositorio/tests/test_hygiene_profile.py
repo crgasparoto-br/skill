@@ -4066,3 +4066,23 @@ def test_all_with_non_literal_item_is_dynamic(tmp_path: Path) -> None:
         },
     )
     assert "pkg/target.py" not in [item["path"] for item in findings_of(scan(tree), "dead-module")]
+
+
+def test_all_mutated_without_local_literal_is_dynamic(tmp_path: Path) -> None:
+    """Achado bloqueante: `__all__` mutado sem atribuição literal local é montagem dinâmica."""
+    for index, mutation in enumerate(
+        ('__all__.append("target")\n', '__all__.extend(["target"])\n', '__all__ += ["target"]\n')
+    ):
+        tree = make_tree(
+            tmp_path / f"mut{index}",
+            {
+                "helper.py": "__all__ = []\n",
+                "pkg/__init__.py": f"from helper import __all__\n{mutation}",
+                "pkg/target.py": "VALUE = 7\n",
+                "consumer.py": "from pkg import *\n",
+                "README.md": "sem invocacao\n",
+            },
+        )
+        assert "pkg/target.py" not in [
+            item["path"] for item in findings_of(scan(tree), "dead-module")
+        ]
