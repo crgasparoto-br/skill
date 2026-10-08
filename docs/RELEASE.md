@@ -111,9 +111,11 @@ compreensão, `type`, `importlib` e alvo indireto em `for`, `with` e `async`.
 Depois da importação, e de novo depois da execução das avaliações, os valores efetivos exportados são reconferidos:
 tipo, igualdade com o manifesto, lista de textos sem repetição nem nome vazio e origem dentro da raiz auditada. O
 limite é declarado: essa reconferência é defesa em profundidade, não prova. Ela roda no mesmo processo do código
-auditado, então código que adultere deliberadamente o interpretador — `builtins.getattr`, `sys.modules` ou a classe do
-módulo — pode mascará-la. A propriedade verificável é a checagem estática do envelope, que não executa nada; a
+auditado, então código que adultere deliberadamente o interpretador ou os atributos do próprio módulo importado —
+`builtins.getattr`, `sys.modules`, a classe do módulo ou atributos como `__file__` — pode mascará-la. A propriedade verificável é a checagem estática do envelope, que não executa nada; a
 reconferência serve para detectar alteração não deliberada, e não para resistir a autor com escrita no repositório.
+As pendências de endurecimento restantes dessa classe são acompanhadas em issues e não bloqueiam a promoção,
+porque não alteram o conteúdo verificado da release.
 
 ## Compatibilidade e migração
 
