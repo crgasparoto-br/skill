@@ -59,6 +59,16 @@ no relatório.
 python scripts/release_handoff.py --root . --evidence evidencia.json --develop "$(git rev-parse develop)" --main "$(git rev-parse main)"
 ```
 
+O contrato falha fechado e de forma legível: toda entrada inválida — tipo, formato, identificador, parecer, destino de
+relatório ou argumento de linha de comando — resulta em recusa declarada, nunca em exceção não tratada. O relatório
+usa arquivo temporário e troca atômica, recusa destino relativo, fora da raiz, inexistente, que seja diretório, link
+simbólico, link físico, temporário já ocupado ou colisão entre Markdown e JSON, e nunca sobrescreve o contrato, a
+política ou a própria evidência. O limite é declarado: essa proteção cobre os três artefatos do handoff; qualquer
+outro caminho do repositório é escolha de quem opera, e apontar o relatório para um arquivo versionado o substitui.
+
+O gate `scripts/validate_release_handoff.py` valida a política, a ausência de autoridade no contrato e executa a
+evidência completa; ele também falha fechado, inclusive quando a raiz informada não pode ser resolvida.
+
 ## Compatibilidade e migração
 
 Cada skill validada deve aparecer no manifesto de compatibilidade com sua versão pública de contrato, linhagem interna, release mínima suportada e instrução de migração. Uma combinação não declarada deve ser tratada como `UNKNOWN` ou incompatível, nunca como compatível por aproximação textual.
