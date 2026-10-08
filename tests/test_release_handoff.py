@@ -498,3 +498,70 @@ def test_audit_verdict_with_embedded_invisible_is_rejected(tmp_path: Path) -> No
     path = tmp_path / "evidence.json"
     path.write_text(json.dumps(document), encoding="utf-8")
     assert contract_main(["--root", str(tmp_path), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN]) == 1
+
+
+@pytest.mark.parametrize("text", ["aa\ue000bb", "ok\U0001f642", "a\u00a0b", "a\u3000b", "aaaa", "1111"])
+def test_weak_or_foreign_text_is_rejected(text: str) -> None:
+    """Achado bloqueante B1: uso privado, emoji, espaco especial e texto repetido nao sao evidencia."""
+    document = evidence()
+    document["items"]["issues-delivered"] = {"value": text, "source": text}
+    assert report_for(document)["ready"] is False
+
+
+def test_main_conflicting_with_evidence_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante B3: argumento e evidencia nao podem divergir para `main`."""
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(
+            ["--root", str(ROOT), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", "e" * 40]
+        )
+
+
+@pytest.mark.parametrize("flag", ["--develop", "--main"])
+def test_blank_sha_argument_is_rejected(tmp_path: Path, flag: str) -> None:
+    """Achado não bloqueante: argumento informado vazio nao pode cair no fallback silencioso."""
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence()), encoding="utf-8")
+    arguments = ["--root", str(ROOT), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", MAIN]
+    arguments[arguments.index(flag) + 1] = " "
+    with pytest.raises(SystemExit):
+        contract_main(arguments)
+
+
+def test_report_cannot_overwrite_handoff_artifacts(tmp_path: Path) -> None:
+    """Achado bloqueante B2: destino nao pode sobrescrever contrato, politica ou evidencia."""
+    root = tmp_path
+    evidence_path = root / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence()), encoding="utf-8")
+    # O contrato importado e o do proprio repositorio, portanto os alvos protegidos sao os dele.
+    targets = [ROOT / "scripts/release_handoff.py", ROOT / "config/release-handoff.json", evidence_path]
+    for target in targets:
+        with pytest.raises(SystemExit):
+            contract_main(
+                ["--root", str(ROOT), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", MAIN,
+                 "--report", str(target)]
+            )
+    assert json.loads(evidence_path.read_text(encoding="utf-8"))["items"]["issues-delivered"]["value"] == "45"
+
+
+def test_duplicated_policy_verdict_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante B4: politica que repete parecer e malformada."""
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "config").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    policy = json.loads(json.dumps(POLICY))
+    policy["verdicts"]["audit_approved"] = ["approved", "approved"]
+    (tmp_path / "config/release-handoff.json").write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
+    assert contract_main(["--root", str(tmp_path), "--evidence", str(ROOT / "config/release-handoff.json"),
+                          "--develop", DEVELOP, "--main", MAIN]) == 1
+
+
+def test_optional_item_present_with_weak_value_is_reported() -> None:
+    """Ressalva: item opcional presente tambem precisa de conteudo utilizavel."""
+    document = evidence()
+    document["items"]["behavioural-evals"] = {"value": "aaaa", "source": "aaaa"}
+    report = report_for(document)
+    assert any("behavioural-evals" in problem for problem in report["problems"])

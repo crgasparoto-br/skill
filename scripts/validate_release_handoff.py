@@ -170,7 +170,10 @@ def verdict_errors(policy: dict) -> list[str]:
     approved = verdicts.get("audit_approved") if isinstance(verdicts, dict) else None
     if not isinstance(approved, list) or not approved:
         return ["a politica nao declara `verdicts.audit_approved`"]
-    return [f"parecer invalido em `verdicts.audit_approved`: {item!r}" for item in approved if not isinstance(item, str)]
+    problems = [f"parecer invalido em `verdicts.audit_approved`: {item!r}" for item in approved if not isinstance(item, str)]
+    if len(approved) != len(set(map(str, approved))):
+        problems.append("a politica repete parecer em `verdicts.audit_approved`")
+    return problems
 
 
 def script_errors(root: Path) -> list[str]:

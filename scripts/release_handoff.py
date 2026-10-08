@@ -25,12 +25,9 @@ MEANINGFUL_CATEGORIES = frozenset({"L", "N"})
 # (`U+115F`, `U+1160`, `U+3164`, `U+FFA0`), preenchedores de hieroglifo egipcio (`U+13441`, `U+13442`),
 # braille em branco (`U+2800`), sinal de multiplicacao invisivel (`U+2062` a `U+2064`), separador de
 # palavra invisivel (`U+2060`), espaco estreito sem quebra (`U+202F`) e marca de ordem de byte (`U+FEFF`).
-INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Zl", "Zp"})
+DECLARED_CATEGORIES = frozenset({"L", "N", "P", "Zs"})
 MINIMUM_TEXT = 2
-INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Zl", "Zp"})
-MINIMUM_TEXT = 2
-INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Zl", "Zp"})
-MINIMUM_TEXT = 2
+MINIMUM_DISTINCT = 2
 BLANK_CHARACTERS = frozenset(
     {
         "\u115f",
@@ -183,15 +180,16 @@ def visible_problem(text: str) -> str:
     """
     if not text:
         return "esta vazio"
-    if any(
-        unicodedata.category(character) in INVISIBLE_CATEGORIES or character in BLANK_CHARACTERS
-        for character in text
-    ):
-        return "contem caractere invisivel ou preenchedor"
+    if any(character in BLANK_CHARACTERS for character in text):
+        return "contem preenchedor"
+    if any(unicodedata.category(character)[0] not in DECLARED_CATEGORIES for character in text):
+        return "contem caractere fora de letra, numero, pontuacao e espaco"
     if not any(unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES for character in text):
         return "nao contem letra nem digito"
     if len(text) < MINIMUM_TEXT:
         return f"tem menos de {MINIMUM_TEXT} caracteres"
+    if len(set(text)) < MINIMUM_DISTINCT:
+        return "nao tem caracteres distintos"
     return ""
 
 
@@ -246,6 +244,23 @@ def check_required(policy: dict, evidence: dict, shas: dict[str, str]) -> list[d
     return rows
 
 
+def check_optional(policy: dict, evidence: dict) -> list[str]:
+    """Item opcional presente precisa declarar valor e origem utilizaveis, mesmo sem bloquear o handoff."""
+    problems = []
+    for item in policy_items(policy, "optional"):
+        item_id = item["id"]
+        entry = evidence.get("items")
+        entry = entry.get(item_id) if isinstance(entry, dict) else None
+        if not isinstance(entry, dict):
+            continue
+        value, source = evidence_value(evidence, item_id)
+        for field, text in (("valor", value), ("origem", source)):
+            reason = visible_problem(text)
+            if reason:
+                problems.append(f"o {field} do item opcional `{item_id}` {reason}")
+    return problems
+
+
 def divergence_problems(shas: dict[str, str]) -> list[str]:
     """O handoff exige que `develop` e `main` divirjam."""
     develop = shas.get("develop", "")
@@ -292,6 +307,7 @@ def build_report(policy: dict, evidence: dict, shas: dict[str, str]) -> dict:
     """Relatorio do handoff, com o veredito e uma linha por item."""
     rows = check_required(policy, evidence, shas)
     problems = evidence_problems(policy, evidence, shas)
+    problems.extend(check_optional(policy, evidence))
     for row in rows:
         problems.extend(f"`{row['id']}`: {problem}" for problem in row["problems"])
     return {
@@ -330,7 +346,17 @@ def refuse_symlink(path: Path, label: str) -> None:
         raise SystemExit(f"ERRO: {label} passa por link simbolico: {linked}")
 
 
-def write_report(root: Path, path: Path, text: str, label: str) -> None:
+
+
+def refuse_protected(root: Path, path: Path, evidence: Path, label: str) -> None:
+    """Recusa destino que sobrescreveria o contrato, a politica ou a propria evidencia."""
+    resolved = path.resolve()
+    protected = [root.resolve() / POLICY_RELATIVE, Path(__file__).resolve(), evidence.resolve()]
+    if resolved in protected:
+        raise SystemExit(f"ERRO: {label} sobrescreveria um artefato do handoff: {resolved}")
+
+
+def write_report(root: Path, path: Path, evidence: Path, text: str, label: str) -> None:
     """Escreve o relatorio de forma que o destino pedido seja o unico arquivo alterado.
 
     Duas brechas ficam fechadas: um destino que seja hard link de outro arquivo (`st_nlink` maior que um)
@@ -338,6 +364,7 @@ def write_report(root: Path, path: Path, text: str, label: str) -> None:
     em que um link e criado entre a conferencia e a abertura. Por isso a conferencia vem antes e a escrita
     passa por arquivo temporario seguido de substituicao atomica, que troca o proprio link pelo arquivo.
     """
+    refuse_protected(root, path, evidence, label)
     if not path.is_absolute():
         raise SystemExit(f"ERRO: {label} precisa de caminho absoluto: {path}")
     if not path.resolve().is_relative_to(root.resolve()):
@@ -362,10 +389,20 @@ def write_report(root: Path, path: Path, text: str, label: str) -> None:
 
 def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
     """Commits de `develop` e `main`: argumento tem precedencia sobre a evidencia."""
-    develop = arguments.develop.strip() or declared_text(evidence, "develop-sha")
+    informed_develop = arguments.develop.strip() if arguments.develop else ""
+    if arguments.develop is not None and not informed_develop:
+        raise SystemExit("ERRO: `--develop` foi informado vazio")
+    if arguments.main is not None and not arguments.main.strip():
+        raise SystemExit("ERRO: `--main` foi informado vazio")
+    develop = informed_develop or declared_text(evidence, "develop-sha")
     declared_main = evidence.get("main")
     declared_main = declared_main.strip() if isinstance(declared_main, str) else ""
-    main = arguments.main.strip() or declared_main
+    informed_main = arguments.main.strip() if arguments.main else ""
+    if informed_main and declared_main and informed_main != declared_main:
+        raise SystemExit(
+            f"ERRO: `--main` diverge da evidencia: {informed_main} contra {declared_main}"
+        )
+    main = informed_main or declared_main
     return {"develop": develop or "", "main": main or ""}
 
 
@@ -398,11 +435,14 @@ def main(argv: list[str] | None = None) -> int:
     report = build_report(policy, evidence, shas)
     markdown = markdown_report(report)
     if arguments.report:
-        write_report(arguments.root, arguments.report, markdown, "o relatorio Markdown")
+        write_report(arguments.root, arguments.report, arguments.evidence, markdown, "o relatorio Markdown")
     else:
         sys.stdout.write(markdown)
     if arguments.json_report:
-        write_report(arguments.root, arguments.json_report, json.dumps(report, ensure_ascii=False, indent=2) + "\n", "o relatorio JSON")
+        write_report(
+            arguments.root, arguments.json_report, arguments.evidence,
+            json.dumps(report, ensure_ascii=False, indent=2) + "\n", "o relatorio JSON",
+        )
     if report["ready"]:
         print("Handoff OK: evidencia obrigatoria completa e verificada.")
         return 0
