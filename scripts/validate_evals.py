@@ -86,13 +86,6 @@ def _called_names(tree: ast.Module) -> set[str]:
     return names
 
 
-def _wildcard_import(tree: ast.Module) -> bool:
-    return any(
-        isinstance(node, ast.ImportFrom) and any(alias.name == "*" for alias in node.names)
-        for node in ast.walk(tree)
-    )
-
-
 def _indirect_write(tree: ast.Module) -> str:
     """Alvo de escrita que nao e nome simples, como atributo, subscrito ou cadeia.
 
@@ -185,6 +178,30 @@ def _binds(node: ast.AST) -> list[str]:
     return []
 
 
+def package_structure_problems(tree: ast.Module) -> list[str]:
+    """Recusa escrita indireta e formas dinamicas que poderiam religar a versao auditada.
+
+    Chamada de `globals`, `exec` e equivalentes, importacao coringa, escrita em subscrito ou
+    atributo, e uso de `__all__`/`__version__` como base de atributo mudam o namespace sem que o
+    inventario de nomes veja uma ligacao nova.
+    """
+    forbidden = sorted(set(FORBIDDEN_MODULE_CALLS) & _called_names(tree))
+    if forbidden:
+        return [f"evals/__init__.py chama {', '.join(forbidden)}, o que permite religar a versao"]
+    if any(
+        isinstance(node, ast.ImportFrom) and any(alias.name == "*" for alias in node.names)
+        for node in ast.walk(tree)
+    ):
+        return ["evals/__init__.py usa importacao coringa, que pode reexportar outro __version__"]
+    indirect = _indirect_write(tree)
+    if indirect:
+        return [f"evals/__init__.py escreve fora de nome simples: {indirect}"]
+    mutated = _mutated_names(tree)
+    if mutated:
+        return [f"evals/__init__.py manipula {', '.join(mutated)} por atributo ou chamada"]
+    return []
+
+
 def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
     """A versao exportada pelo pacote de avaliacoes precisa ser a mesma do manifesto do harness.
 
@@ -200,18 +217,9 @@ def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
     except (OSError, UnicodeDecodeError, SyntaxError) as exc:
         return [f"evals/__init__.py ilegivel: {exc}"]
 
-    forbidden = sorted(set(FORBIDDEN_MODULE_CALLS) & _called_names(tree))
-    if forbidden:
-        return [f"evals/__init__.py chama {', '.join(forbidden)}, o que permite religar a versao"]
-    wildcard = _wildcard_import(tree)
-    if wildcard:
-        return ["evals/__init__.py usa importacao coringa, que pode reexportar outro __version__"]
-    indirect = _indirect_write(tree)
-    if indirect:
-        return [f"evals/__init__.py escreve fora de nome simples: {indirect}"]
-    mutated = _mutated_names(tree)
-    if mutated:
-        return [f"evals/__init__.py manipula {', '.join(mutated)} por atributo ou chamada"]
+    structural = package_structure_problems(tree)
+    if structural:
+        return structural
 
     version_nodes = [node for node in ast.walk(tree) if "__version__" in _binds(node)]
     if not version_nodes:
