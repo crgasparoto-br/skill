@@ -23,6 +23,7 @@ ALLOWED_FILES = (
     "corrigir-ci/SKILL.md",
     "entregar-issue/references/terminal-handoff.md",
     "entregar-issue/references/handoff-certificate.md",
+    "higienizar-repositorio/references/global-hygiene-profile.md",
 )
 DEFAULTS = {
     "control_plane": {"max_bytes": 200, "max_line_chars": 80},

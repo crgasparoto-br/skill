@@ -23,7 +23,7 @@ A suíte determinística da base atual possui **517 testes aprovados** no commit
 
 ## 2. Objetivo da v0.3.0
 
-Transformar o catálogo de uma base estruturalmente governada em uma base que também mede o **comportamento real das IAs** que consomem as skills. A release deve reduzir quatro classes de risco que ainda não são cobertas integralmente por testes unitários:
+Transformar o catálogo de uma base estruturalmente governada em uma base que também mede o **comportamento real das IAs** que consomem as skills. A release deve reduzir cinco classes de risco que ainda não são cobertas integralmente por testes unitários:
 
 1. a IA escolher a skill errada ou não pedir desambiguação;
 2. a IA tratar conteúdo do repositório como instrução com autoridade;
@@ -46,6 +46,7 @@ Os IDs abaixo são estáveis para issues, commits, avaliações e notas de relea
 | `V030-006` | Release e regressão comportamental | P1 | `planned` | Integrar avaliações informativas ao CI, registrar resultados e publicar `v0.3.0` reproduzível. |
 | `V030-007` | Genericidade de assets permanentes | P1 | `implemented` | Rejeitar acoplamento concreto a issue, host, caminho e identificador de domínio, e executar o validador sobre o catálogo. |
 | `V030-009` | Análise estática real do código | P1 | `implemented` | Aplicar famílias de regras com política declarada, reprovar sujeira, import morto e supressão não declarada, e manter a cobertura de regras impossível de encolher em silêncio. |
+| `V030-010` | Perfil de higienização global | P2 | `implemented` | Medir dívida estrutural da árvore inteira sob demanda, com precisão declarada por classe, exceção justificada e linha de base que só cresce com entrada nova e motivo escrito na história declarada. |
 | `V030-008` | Governança do registro de auditores confiáveis | P2 | `implemented` | Declarar custódia, separação entre produtor e aprovador, rotação, revogação e limitação de operador único, e tornar a entrada de registro verificável. |
 
 ## 4. Entregas detalhadas
@@ -222,6 +223,213 @@ metacaractere de shell e no máximo um redirecionamento simples — e compara
 a sequência de validação entre CI, README e AGENTS, incluindo a conferência do fechamento dos lockfiles e o replay do
 relatório de avaliações; o CI acrescenta apenas o empacotamento do skill, que é release e não
 validação; e o requisito global, o changelog e este roadmap registram a entrega.
+### V030-010 — Perfil de higienização global
+Entregue a skill `higienizar-repositorio`, com o control plane em `SKILL.md`, a política em
+`config/hygiene-policy.json`, a varredura em `higienizar-repositorio/scripts/hygiene_scan.py`, o gate em
+`higienizar-repositorio/scripts/validate_hygiene.py` e o gerador de work items em
+`higienizar-repositorio/scripts/build_hygiene_work_items.py`. A varredura mede cinco classes sobre a árvore
+inteira: duplicação de corpo de função normalizado por AST, com cópia declarada em `config/shared-files.json`
+tratada como exclusão legítima; módulo sem importador e sem invocação declarada; símbolo de nível de módulo
+sem nenhuma referência na árvore; requisito declarado em manifest e nunca importado no escopo do manifest, com
+ferramenta executada e mapa de nome de import declarados; e complexidade ciclomática por função acima do teto.
+Cada classe declara o que não vê, porque classe que reivindica completude produz confiança falsa. A política é
+a única fonte de limiar, exceção e linha de base: achado aberto em classe controlada exige exceção com
+justificativa escrita, classe medida contra linha de base reprova acima e abaixo dela, exceção órfã reprova, e
+arquivo não analisado precisa estar declarado para que a cobertura não encolha em silêncio. A varredura é
+determinística e offline, o relatório é validado contra schema, e o gerador de work items emite a forma
+canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilidade, no manifesto de capacidades,
+no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
+varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
+retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A trigésima terceira rodada de auditoria corrigiu o que as trinta e duas anteriores ainda não garantiam: o wildcard estático volta a
+respeitar a sombra direta, e `__all__` com item não literal é tratado como montagem dinâmica.
+A trigésima segunda rodada de auditoria corrigiu o que as trinta e uma anteriores ainda não garantiam: alvo de `except` conta como
+ligação, `__all__` anotado é estático e `__all__` montado por chamada é dinâmico, o wildcard conservador não é estreitado pela sombra
+direta, e a ligação anterior ao primeiro import do `__init__` bloqueia o submódulo no reexport.
+A trigésima primeira rodada de auditoria corrigiu o que as trinta anteriores ainda não garantiam: `__all__` dinâmico faz o wildcard
+contar como alcançado, a ordem de ligação só bloqueia quando precede qualquer import do `__init__`, o relativo acima do pacote não conta
+como import do próprio pacote, e a forma irmã só entra quando o nome não existe a partir da raiz.
+A trigésima rodada de auditoria corrigiu o que as vinte e nove anteriores ainda não garantiam: pacote tem precedência sobre módulo
+homônimo, import do próprio pacote conta como alcance, capturas de `match` contam como atributo, e a semântica dinâmica de `__all__`,
+ordem de ligação e import condicional fica declarada como fora da precisão da classe.
+A vigésima nona rodada de auditoria corrigiu o que as vinte e oito anteriores ainda não garantiam: o alvo do próprio `for` e do próprio
+`with` conta como atributo do módulo, o reexport `from . import target` no `__init__` deixa de acusar submódulo vivo, e `from pkg import *`
+segue o `__all__` declarado.
+A vigésima oitava rodada de auditoria corrigiu o que as vinte e sete anteriores ainda não garantiam: a sombra do atributo passou a valer
+também no `from` absoluto e no pacote da raiz, e nome ligado dentro de `if`, `try`, `for` ou `with` do `__init__` conta como atributo do módulo,
+sem contar nome local de função.
+A vigésima sétima rodada de auditoria corrigiu o que as vinte e seis anteriores ainda não garantiam: o importador não conta como importador
+de si mesmo, e `from base import name` só mantém o submódulo vivo quando `base` é pacote e não define `name`; o limite de alcançabilidade
+direta, e não transitiva, ficou declarado na referência da skill.
+A vigésima sexta rodada de auditoria corrigiu o que as vinte e cinco anteriores ainda não garantiam: import relativo resolve a partir do
+pacote de quem importa sem reaplicar o pacote, a política e o requisito passam a exigir motivo escrito em toda medição da linha de base, e o
+roadmap descreve a catraca como ela é — cresce apenas por entrada nova com motivo escrito, em vez de nunca crescer.
+A vigésima quinta rodada de auditoria corrigiu o que as vinte e quatro anteriores ainda não garantiam: alvo por link externo mantém o escopo de
+manifest da subárvore analisada, a CLI recusa as duas direções da incoerência de cobertura, e a documentação da linha de base passou a exigir
+motivo escrito em toda medição, como o gate já exigia.
+A vigésima quarta rodada de auditoria corrigiu o que as vinte e três anteriores ainda não garantiam: o gerador de work item passou a exigir
+coerência, e não aprovação, para poder descrever dívida aberta; alvo por link externo que resolve para dentro da raiz é percorrido pelo
+caminho canônico; link de diretório quebrado ou em ciclo é recusa visível na cobertura; o temporário é registrado antes da escrita, de modo
+que resíduo de staging é declarado; e a CLI da varredura recusa permissão de cobertura órfã.
+A vigésima terceira rodada de auditoria corrigiu o que as vinte e duas anteriores ainda não garantiam: qualquer componente do alvo que
+seja link para diretório recusa o alvo inteiro, e temporário que não pôde ser removido passa a ser declarado com o caminho, junto com a
+falha de escrita fora de `OSError` que antes escapava crua.
+A vigésima segunda rodada de auditoria corrigiu o que as vinte e uma anteriores ainda não garantiam: o conteúdo anterior de cada
+destino passou a ser lido antes de preparar qualquer temporário, reversão que falha passou a ser declarada com código próprio em vez de
+silenciada, e alvo recusado deixou de restringir manifest, de modo que o manifest do diretório real apontado por link não entra na
+varredura direcionada.
+A vigésima primeira rodada de auditoria corrigiu o que as vinte anteriores ainda não garantiam: a publicação reverte o que já
+publicou quando um artefato do lote falha; a identidade da exceção precisa pertencer a uma classe declarada; o alvo tem a grafia
+normalizada antes de qualquer decisão e o rótulo publicado é canônico; toda entrada da linha de base exige motivo; e relatório externo
+fora de UTF-8 deixa de derrubar o gerador.
+A vigésima rodada de auditoria corrigiu o que as dezenove anteriores ainda não garantiam: a publicação deixou de deixar temporário
+órfão quando um artefato posterior falha e passou a recusar destino que é diretório; o alvo direcionado que é link de diretório passou a
+ser recusado no início da caminhada, sem medir o diretório real; a identidade da exceção declarada passou a ser validada no formato do
+relatório, também em modo direcionado; e o alvo inexistente com `..` passou a ser rotulado de forma canônica.
+A décima nona rodada de auditoria corrigiu o que as dezoito anteriores ainda não garantiam: a publicação passou a ser atômica por
+arquivo temporário e `os.replace`, sem destino truncado e sem destruir o artefato anterior; o import absoluto passou a ser procurado na
+raiz do projeto e no diretório de quem importa; a varredura direcionada deixou de acusar como órfã a exceção de achado fora do alvo; e a
+citação com `.` redundante passou a manter o módulo vivo.
+A décima oitava rodada de auditoria corrigiu o que as dezessete anteriores ainda não garantiam: o índice de citação de nome solto
+passou a ser o conjunto medido em qualquer forma de alvo, e não a árvore inteira quando o alvo é arquivo ou são vários alvos; a
+comparação entre `--report` e `--markdown` passou a usar destinos já resolvidos, e ciclo de links com dois destinos deixou de sair como
+exceção crua; a criação da saída do gerador passou a falhar de forma controlada; e a publicação passou a ser transacional, sem deixar
+artefato de execução reprovada no disco.
+A décima sétima rodada de auditoria corrigiu o que as dezesseis anteriores ainda não garantiam: escopo declarado fora do tipo
+passou a reprovar a política, em vez de derrubar o gate; a citação de nome solto passou a resolver contra o escopo medido, e não
+contra a árvore inteira; destino em ciclo de links passou a ser recusado com mensagem; e pai de destino que não é diretório passou a
+ser conferido antes da escrita, em vez de aparecer como exceção crua.
+A décima sexta rodada de auditoria corrigiu o que as quinze anteriores ainda não garantiam: as chaves da catraca passaram a valer
+em toda classe, e não só em complexidade, que era o único lugar onde a linha de base podia ser declarada; o import relativo que sobe
+além do pacote do importador deixou de manter vivo um homônimo que ninguém importa; o destino de `--report` e `--markdown` deixou de
+aceitar diretório, que terminava em exceção crua; o destino de `--out-dir` passou a ser conferido pelo que existe de fato, inclusive
+link quebrado; e o produtor passou a aplicar o mesmo contrato decimal do gate.
+A décima quinta rodada de auditoria corrigiu o que as quatorze anteriores ainda não garantiam: relatório com contagem decimal
+passou a ser recusado, porque o esquema aceita `1.0` como inteiro; alvos equivalentes escritos de forma diferente passaram a ser
+recusados como o mesmo caminho; destino com mais de um link passou a ser recusado, porque a escrita alcançaria a árvore medida; e
+qualquer classe declarada como medida passou a exigir linha de base, não apenas complexidade.
+A décima quarta rodada de auditoria corrigiu o que as treze anteriores ainda não garantiam: a versão da política passou a exigir o
+inteiro exato, linha de base negativa passou a reprovar, a varredura passou a recusar dois artefatos no mesmo caminho e o gerador
+passou a recusar diretório de saída já preenchido, para que artefato de execução anterior não circule como evidência atual.
+A décima terceira rodada de auditoria corrigiu o que as doze anteriores ainda não garantiam: o gerador de work items passou a
+conferir a política e a recusar relatório que não corresponde à árvore e à política atuais, inclusive quando recebido por `--report`;
+buraco de cobertura passou a reprovar antes de publicar; decisão declarada como booleana passou a exigir booleano; e história de
+linha de base passou a ser recusada em classe controlada, como a própria linha de base.
+A décima segunda rodada de auditoria corrigiu o que as onze anteriores ainda não garantiam: estrutura inválida de TOML, inclusive
+hierarquia de grupo do Poetry e chave não lida dentro do grupo, passou a ser recusa visível; import relativo na raiz de pacote passou
+a alcançar o irmão; o gerador de work items passou a reprovar política inválida e varredura com problema; caminho declarado com NUL
+passou a reprovar em vez de derrubar o validador; linha de base declarada em classe gated passou a ser recusada mesmo valendo zero; e
+os comandos do fluxo passaram a não deixar bytecode na árvore analisada.
+A décima primeira rodada de auditoria corrigiu o que as dez anteriores ainda não garantiam: chave de decisão passou a
+valer só na classe a que pertence; `exclude_dirs` passou a exigir caminho relativo canônico, sem `..`, `.` nem barra
+duplicada no meio; hierarquia inválida de grupo do Poetry passou a ser recusa visível; citação com `..` passou a ser
+recusada só quando de fato sai da raiz; supressor com tipo errado passou a reprovar; o Markdown passou a publicar o
+escopo excluído; o rótulo de alvo externo sem nome passou a existir; e a validação passou a não deixar bytecode na árvore
+analisada.
+A décima rodada de auditoria corrigiu o que as nove anteriores ainda não garantiam: alvo direcionado que escapa da raiz
+passou a deixar o escopo vazio, em vez de reabrir o percurso livre de manifest; o índice de citação passou a ser o do
+escopo medido, sem link de corpus que sai da raiz e sem autocitação; link quebrado e link em ciclo passaram a receber o
+mesmo rótulo nos dois modos, e caminho de fora da raiz passou a ser publicado só pelo nome; estrutura inválida dentro de
+formato declarado passou a ser recusa visível; o gerador de work items passou a recusar destino dentro da árvore medida;
+o relatório passou a ser publicado só depois de a política passar; `exclude_dirs` passou a exigir diretório relativo
+canônico; chave desconhecida dentro de classe passou a ser erro; e o relatório passou a publicar os diretórios excluídos
+declarados.
+A nona rodada de auditoria corrigiu o que as oito anteriores ainda não garantiam: a citação de nome solto passou a
+resolver contra o escopo medido, para que arquivo excluído não torne ambígua a citação de um nome único; a âncora da
+citação passou a exigir que o sufixo termine o nome, inclusive contra marca combinante; `python` passou a ficar fora da
+contagem também nas listas do PEP 621; formato sem leitura declarada passou a entrar em cobertura não analisada, e
+arquivo de trava passou a ser reconhecido por convenção de nome; alvo direcionado que resolve para fora da raiz passou a
+aparecer em cobertura, em vez de abortar; e a opção `--policy` passou a ser respeitada.
+A oitava rodada de auditoria corrigiu o que as sete anteriores ainda não garantiam: o modo direcionado passou a
+rotular a cobertura a partir da raiz do repositório e a usar caminho relativo canônico no alvo inexistente; o corpus de
+citação passou a ser percorrido pela própria varredura, para que diretório recusado apareça também no modo direcionado
+a arquivo; identificador e caminho citado passaram a seguir a gramática de Python em vez de classe de caractere;
+`import pkg.sub` passou a manter `pkg/__init__.py` vivo; o conjunto de manifestos passou a ser declarado na política e
+`pyproject.toml` passou a ser lido pelo formato; o relatório passou a ser recusado dentro da árvore medida; o comando da
+varredura passou a reprovar política que o gate reprova; apelido de exceção, nome global e apelido de import passaram a
+ser apagados na normalização; e requisito de VCS passou a usar o nome do fragmento `egg`.
+A sétima rodada de auditoria corrigiu o que as seis anteriores ainda não garantiam: a varredura passou a percorrer a
+árvore por conta própria, e diretório ilegível e link de diretório passaram a aparecer como cobertura não analisada em
+vez de sumirem do relatório; o motivo de cobertura passou a ser escrito com caminho relativo, o que torna o relatório
+idêntico entre cópias equivalentes da mesma árvore; identificador e caminho de arquivo passaram a seguir a gramática
+Unicode de Python; `import pkg` passou a alcançar `pkg/__init__.py`; requisito com URL direta passou a ser analisado
+pelo nome canônico; o comando que produz o relatório passou a conferir o contrato antes de gravar; o modo direcionado
+passou a usar alvo canônico também para manifest; `not_analyzed_allowed` passou a exigir caminho relativo canônico; e
+supressor declarativo passou a exigir nome e motivo escritos.
+A sexta rodada de auditoria corrigiu o que as cinco anteriores ainda não garantiam: a âncora de marcador de lugar
+passou a exigir `<...>` fechado imediatamente antes do caminho, e não qualquer `>`; identificador capturado por
+padrão estrutural, como `case int(left)`, passou a ser apagado na normalização, enquanto nome de argumento nomeado
+deixou de ser, porque `make(left=x)` e `make(right=x)` são chamadas diferentes; o rótulo de definição repetida passou
+a ser calculado sobre todas as definições do arquivo, inclusive as que ficam abaixo do limiar, o que elimina rótulo
+repetido entre definições distintas; a varredura isolada passou a reprovar política sem chave de decisão declarada,
+em vez de cair em default implícito; manifest ilegível e alvo direcionado que não existe passaram a entrar em
+cobertura não analisada; raiz relativa deixou de estourar na função pública; e o contrato do relatório passou a
+exigir justificativa quando o achado está aceito.
+A quinta rodada de auditoria corrigiu o que as quatro anteriores ainda não garantiam: caminho absoluto deixou de ser
+tratado como citação local, e a barra inicial só é âncora quando o caminho vem depois de um marcador de lugar; o
+limiar de corpo passou a contar instruções, e não a distância física entre a primeira e a última, com o valor
+re-derivado de forma explícita para não encolher a classe em silêncio; o rótulo sem sufixo passou a pertencer à
+definição que aparece primeiro no texto, e não à que a travessia da árvore visitou primeiro; as formas `sub`,
+`./sub` e `sub/` passaram a ser o mesmo alvo do modo direcionado; e toda chave de decisão de escopo e de exceção
+passou a ser obrigatória na política, com erro declarado em vez de default silencioso no código.
+A quarta rodada de auditoria corrigiu o que as três anteriores ainda não garantiam: o import relativo deixou de
+alcançar além do pacote e só alcança a raiz quando a raiz é pacote declarado; a citação de arquivo passou a ser
+resolvida por caminho — raiz, diretório de quem cita e raiz da skill —, com âncora de marcador de lugar aceita,
+caminho que sai da raiz ignorado e nome solto aceito apenas quando único na árvore, o que fecha a colisão entre
+homônimos; a normalização da duplicação passou a remover apenas o literal de documentação, e não qualquer literal
+de expressão; o limiar de corpo passou a medir linhas de código do corpo, sem decorator, assinatura nem
+documentação; a definição repetida do mesmo nome passou a receber rótulo com ordem de aparição, o que elimina
+identidade repetida em árvore Python legal; o modo direcionado por diretório passou a alcançar o manifest da
+subárvore; o import da classe de dependência passou a ser lido dos módulos analisados, e não do corpus de citação;
+manifest que resolve para fora da raiz passou a ser recusado como cobertura; link quebrado em formato de texto
+passou a entrar em cobertura não analisada; e o arquivo de pacote passou a ser ponto de entrada declarado em
+`package_init_is_entry`, em vez de exceção fixa no código.
+A terceira rodada de auditoria corrigiu o que as duas anteriores ainda não garantiam: a exclusão de diretório
+passou a cobrir a subárvore inteira, inclusive quando a entrada é caminho composto como `evals/fixtures`, e
+passou a valer também para a busca por citação e para a classe de dependência sem uso; a leitura de texto para
+citação passou a ficar contida na raiz, de modo que link para fora entra como cobertura não analisada em vez de
+apagar achado da árvore medida; a normalização da duplicação passou a trocar o campo no nó, e não o texto do
+dump, porque a substituição anterior alcançava o conteúdo de string literal e acusava cópia entre corpos com
+constantes diferentes; a complexidade passou a medir só o corpo, sem ramo de default de parâmetro nem de
+decorator, e a lacuna de lambda ficou declarada; o import relativo além do pacote deixou de resolver por
+aproximação; a exclusão de nome dunder deixou de ser regra fixa no código e passou a ser declarada em
+`ignore_names`; a varredura de módulo passou a seguir `exclude_tests` declarado na política; manifest em
+diretório ou caminho excluído deixou de ser analisado, no escopo e no modo direcionado; e o caminho de exclusão
+passou a exigir forma canônica e a forma de `corpus_suffixes` passou a ser validada pelo gate.
+A segunda rodada de auditoria corrigiu o que o primeiro endurecimento ainda não garantia: a catraca passou a
+aceitar redução da linha de base sem justificativa e a exigir motivo apenas para crescimento, exclusão de
+caminho passou a ser caminho relativo confinado à raiz, diretório com sufixo coberto passou a entrar como
+cobertura não analisada em vez de desaparecer, a normalização da duplicação passou a apagar identificador de
+fato — o dump anterior omitia o nome do campo e a promessa não se cumpria —, o import relativo passou a ser
+resolvido contra o pacote e o absoluto contra o diretório de quem importa, o que fecha a colisão de nome sem
+acusar o idioma de import entre irmãos, atribuição dentro de controle de fluxo no nível do módulo passou a
+contar como símbolo, os formatos de texto conferidos na busca por citação passaram a ser declarados na política
+em `scope.corpus_suffixes`, comentário em linha precedido de tabulação deixou de virar nome de dependência, e o
+work item passou a ser conferido contra o próprio contrato antes de sair; a contagem de uso de símbolo passou a
+ser feita em uma passada só, reduzindo o tempo da suíte do perfil de cerca de dois minutos e meio para cerca de
+quinze segundos.
+A entrega foi endurecida pela auditoria independente: classe medida contra linha de base deixou de aceitar
+exceção item a item, a linha de base passou a viver numa história declarada em que crescer exige entrada nova
+com motivo, exclusão de caminho passou a exigir motivo e a aparecer no relatório, escopo vazio e exclusão sem
+arquivo reprovam, link quebrado e caminho que resolve para fora da raiz entram como cobertura não analisada em
+vez de desaparecer, permissão de cobertura órfã reprova, a validação do relatório passou a ser em memória e
+somente leitura sobre a árvore varrida, a identidade do achado de complexidade passou a incluir o valor medido,
+a justificativa passou a exigir forma de texto e não apenas extensão, a normalização da duplicação deixou de
+apagar operador e constante, o import relativo passou a contar como import, a classe de símbolo morto passou a
+cobrir atribuição simples de módulo, a complexidade deixou de contar função aninhada e `with` como ramo, o
+comentário em linha do manifest deixou de virar nome de dependência, e o limiar exigido pela classe não cai mais
+em default escondido no código; a varredura passou a acusar, na própria árvore, o símbolo morto
+`DECISION_KINDS`, removido em vez de aceito.
+Critério de aceite: `python3 higienizar-repositorio/scripts/validate_hygiene.py --root .` aprova a árvore
+entregue com a política declarada; o gate reprova achado aberto sem exceção, contagem fora da linha de base,
+exceção órfã, permissão de cobertura órfã, exclusão sem motivo, exclusão sem arquivo, escopo vazio, arquivo não
+analisado não declarado, política com classe ausente, classe desconhecida, estado inválido, limiar incoerente,
+limiar ausente, história de linha de base incoerente, justificativa de preenchimento e relatório que não atende
+ao contrato, e a varredura acusa cada classe no fixture que a reproduz, sem acusar árvore limpa; a suíte completa continua aprovada; a sequência de validação é idêntica em CI,
+`README.md` e `AGENTS.md`, com o gate na mesma posição, verificado por
+`scripts/validate_workflow_classification.py`; o requisito global, o changelog e este roadmap registram a
+entrega.
+
 ## 5. Sequência de implementação
 
 ### Fase A — fundação e segurança
@@ -270,6 +478,7 @@ A release será considerada pronta somente quando todos os critérios abaixo for
 - [x] o registro de auditores confiáveis tem custódia, separação entre produtor e aprovador e limitação de operador único declaradas, com a entrada verificável por script;
 - [x] assets permanentes rejeitam acoplamento concreto a issue, host, caminho ou identificador de domínio, e o validador é executado sobre o catálogo;
 - [ ] a decisão do contrato `transitional` possui inventário, migração e compatibilidade testada;
+- [x] a dívida estrutural da árvore inteira é medida por perfil próprio, com precisão declarada por classe, exceção justificada, linha de base que só cresce com entrada nova e motivo escrito e cobertura que não encolhe em silêncio, verificado pelo gate de higienização;
 - [ ] a suíte determinística e os validadores do catálogo continuam verdes;
 - [ ] uma auditoria independente aprova o commit final;
 - [ ] `VERSION`, `CHANGELOG.md`, compatibilidade, tag e GitHub Release apontam para o mesmo commit.

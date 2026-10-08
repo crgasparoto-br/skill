@@ -23,6 +23,7 @@ def test_catalog_is_valid_and_matches_skill_metadata() -> None:
         "documentacao-repositorio",
         "entregar-issue",
         "fluxos-conversacionais",
+        "higienizar-repositorio",
         "revisar-issue",
     }
 

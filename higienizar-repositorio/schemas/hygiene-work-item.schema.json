@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hygiene-work-item.schema.json",
+  "title": "Work item de higiene global",
+  "description": "Contrato de um work item gerado pela varredura. O corpo é Markdown na forma canônica de issue; o artefato não abre nem altera issue por conta própria.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "system",
+    "class",
+    "id",
+    "title",
+    "finding_ids",
+    "body_markdown"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "system": {
+      "const": "hygiene-work-item"
+    },
+    "class": {
+      "enum": [
+        "duplication",
+        "dead-module",
+        "dead-symbol",
+        "unused-dependency",
+        "complexity"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^hygiene-[a-z-]+-[0-9a-f]{16}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 20
+    },
+    "finding_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z-]+:[0-9a-f]{16}$"
+      }
+    },
+    "body_markdown": {
+      "type": "string",
+      "allOf": [
+        {
+          "pattern": "(?m)^## Objetivo$"
+        },
+        {
+          "pattern": "(?m)^## Contexto$"
+        },
+        {
+          "pattern": "(?m)^## Escopo$"
+        },
+        {
+          "pattern": "(?m)^## Fora de escopo$"
+        },
+        {
+          "pattern": "(?m)^## Requisitos funcionais$"
+        },
+        {
+          "pattern": "(?m)^## Requisitos não funcionais$"
+        },
+        {
+          "pattern": "(?m)^## Invariantes$"
+        },
+        {
+          "pattern": "(?m)^## Critérios de aceite$"
+        },
+        {
+          "pattern": "(?m)^## Cenários e casos extremos$"
+        },
+        {
+          "pattern": "(?m)^## Considerações de testes$"
+        },
+        {
+          "pattern": "(?m)^## Impacto na documentação$"
+        },
+        {
+          "pattern": "(?m)^## Riscos e dependências$"
+        }
+      ]
+    }
+  }
+}

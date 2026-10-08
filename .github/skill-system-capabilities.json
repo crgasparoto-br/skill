@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "system_version": "2026-09-29.5",
+  "system_version": "2026-10-07.1",
   "canonical_controller": "entregar-issue",
   "canonical_contract_owner": "entregar-issue",
   "independent_auditor": "auditar-issue",
@@ -24,5 +24,6 @@
   "audit_transports": [
     "native-github-audit",
     "certified-handoff"
-  ]
+  ],
+  "global_hygiene_profile": "enabled"
 }

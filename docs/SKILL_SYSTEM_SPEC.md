@@ -127,6 +127,37 @@ O runner deve distinguir `PASS`, `FAIL`, `NOT_RUN` e `INVALID`. Runtime ausente,
 
 O harness é provider-agnostic. A CI valida os contratos e reproduz fixtures determinísticos; qualquer adapter de modelo deve declarar provider, modelo, adapter e métricas observadas. Avaliações comportamentais complementam, mas não substituem, a validação determinística de fatos críticos.
 
+## 8.2 Higienização global
+
+A higiene do diff cobre a entrega; ela não mede a árvore. O perfil de higienização global existe para
+medir, sob demanda, cinco dívidas estruturais sobre o repositório inteiro — duplicação de corpo de
+função, código morto em módulo e em símbolo, dependência declarada e nunca importada, e complexidade
+acima do teto — e transformá-las em trabalho rastreável.
+
+Invariantes:
+
+- cada classe declara o que **não** vê, porque classe que reivindica completude produz confiança falsa;
+- a política é a única fonte de limiar, exclusão, exceção e linha de base, limiar exigido pela classe
+  precisa estar declarado, e nenhum limiar vive no código;
+- achado aberto em classe controlada exige correção ou exceção declarada com justificativa escrita, e a
+  justificativa precisa ter forma de texto: extensão, palavras e variedade;
+- a identidade de um achado é derivada do conteúdo material — caminho, símbolo e valor medido —, e não
+  do número de linha, de modo que alteração substantiva invalida a exceção antiga;
+- classe medida contra linha de base não aceita exceção item a item, reprova tanto acima quanto abaixo
+  da contagem declarada, e cresce apenas por entrada nova na história de linha de base, com motivo;
+- exceção órfã reprova nos dois sentidos: exceção sem achado e permissão de cobertura sem arquivo;
+- exclusão de caminho é declaração com motivo escrito, em caminho relativo canônico dentro da raiz, aparece
+  no relatório, e diretório excluído cobre a subárvore inteira, inclusive com caminho composto; formato de texto
+  conferido na busca por citação e exclusão por classe — teste, arquivo de pacote e nome de protocolo — são
+  declarados na política, nunca fixos no código, e toda chave de decisão é obrigatória, sem default silencioso; a
+  leitura de texto e de manifest fica contida na raiz; citação é resolvida por caminho, com nome solto aceito apenas
+  quando único na árvore e marcador de lugar só reconhecido fechado; e arquivo, manifest, diretório ilegível ou alvo
+  que o escopo inclui e a varredura não analisa precisa estar declarado, para que a cobertura não encolha em silêncio,
+  com motivo escrito em caminho relativo e supressor declarado com nome e motivo;
+- a varredura é determinística e offline, o relatório é validado contra schema em memória, e a validação
+  é somente leitura sobre a árvore varrida;
+- o perfil relata e propõe: não implementa correção, não abre issue e não tem autoridade de merge.
+
 ## 9. Modelo de requisitos
 
 `config/skill-system-requirements.json` registra requisitos globais com IDs estáveis, estado, referências de implementação e referências de validação. Alterações que introduzam uma nova invariante global devem preferir estender esse registro e os contratos existentes antes de duplicar regras em múltiplos `SKILL.md`.

@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hygiene-report.schema.json",
+  "title": "Relatório da varredura global de higiene",
+  "description": "Contrato do relatório produzido por hygiene_scan.py. O relatório é determinístico e não carrega carimbo de tempo nem caminho absoluto: identidade estável de achado, contagem por classe e cobertura explícita do que não foi analisado.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "system",
+    "policy_system",
+    "policy_schema_version",
+    "mode",
+    "analyzed",
+    "excluded",
+    "excluded_dirs",
+    "not_analyzed",
+    "classes",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "system": {
+      "const": "hygiene-report"
+    },
+    "policy_system": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policy_schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "mode": {
+      "enum": [
+        "sweep",
+        "targeted"
+      ]
+    },
+    "analyzed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "excluded_dirs": {
+      "type": "array",
+      "description": "Diretórios excluídos por declaração na política, para que o escopo varrido não encolha em silêncio.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "not_analyzed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "reason"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "classes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "state",
+          "threshold",
+          "open",
+          "accepted",
+          "findings"
+        ],
+        "properties": {
+          "name": {
+            "enum": [
+              "duplication",
+              "dead-module",
+              "dead-symbol",
+              "unused-dependency",
+              "complexity"
+            ]
+          },
+          "state": {
+            "enum": [
+              "gated",
+              "reported"
+            ]
+          },
+          "threshold": {
+            "type": "object"
+          },
+          "open": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "accepted": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "class",
+                "location",
+                "path",
+                "detail",
+                "state"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z-]+:[0-9a-f]{16}$"
+                },
+                "class": {
+                  "enum": [
+                    "duplication",
+                    "dead-module",
+                    "dead-symbol",
+                    "unused-dependency",
+                    "complexity"
+                  ]
+                },
+                "location": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "symbol": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": "integer"
+                },
+                "detail": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "state": {
+                  "enum": [
+                    "open",
+                    "accepted"
+                  ]
+                },
+                "justification": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "state": {
+                        "const": "accepted"
+                      }
+                    },
+                    "required": [
+                      "state"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "justification"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "open",
+        "accepted",
+        "not_analyzed"
+      ],
+      "properties": {
+        "open": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "accepted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_analyzed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "excluded": {
+      "type": "array",
+      "description": "Exclusões declaradas na política, com o motivo escrito, para que o escopo varrido não encolha em silêncio.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "reason"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

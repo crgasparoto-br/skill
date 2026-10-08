@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -85,12 +84,6 @@ SEMANTIC_EFFECT_RE = re.compile(
     r"\b(referenci\w*|consum\w*|aliment\w*|impact\w*|ger\w*|deriv\w*)\b",
     re.IGNORECASE,
 )
-SCOPE_REDUCTION_RE = re.compile(
-    r"\b(fora do escopo|pr[oó]xima evolu[cç][aã]o|n[aã]o implementa|"
-    r"interface pendente|apenas backend|somente backend|funda[cç][aã]o backend|"
-    r"seed m[ií]nimo|pend[eê]ncia futura|ser[aá] tratado em outra issue)\b",
-    re.IGNORECASE,
-)
 NORMATIVE_SECTION_RE = re.compile(
     r"\b(escopo|scope|requisitos?|requirements?|crit[eé]rios?(?:\s+de)?\s+aceite|"
     r"acceptance\s+criteria|invariantes?|invariants?|comportamento\s+esperado|expected\s+behavio(?:u)?r)\b",
@@ -107,9 +100,6 @@ TEXTUAL_KINDS = {
     "issue-body", "issue-comment", "subissue", "user-decision", "document",
     "attachment-extract", "spreadsheet-extract", "other-text",
 }
-DECISION_KINDS = {"issue-body", "issue-comment", "subissue", "user-decision"}
-DOC_SUFFIXES = {".md", ".mdx", ".txt", ".rst", ".adoc"}
-
 
 def sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
@@ -260,40 +250,3 @@ def extract_candidates(snapshot_path: Path, errors: list[str]) -> tuple[dict[str
     return snapshot, sources, candidates
 
 
-def _doc_path(path: str) -> bool:
-    lower = path.lower()
-    name = Path(lower).name
-    return Path(lower).suffix in DOC_SUFFIXES or name.startswith("readme") or name == "agents.md"
-
-
-def detect_scope_reduction_matches(repo: Path, base_ref: str, head_sha: str) -> list[dict[str, Any]]:
-    proc = subprocess.run(
-        ["git", "diff", "--no-color", "--unified=0", f"{base_ref}...{head_sha}", "--"],
-        check=False, cwd=repo,
-        text=True,
-        capture_output=True,
-    )
-    if proc.returncode != 0:
-        raise RuntimeError(proc.stderr.strip() or "git diff failed")
-    current_path = ""
-    new_line = 0
-    matches: list[dict[str, Any]] = []
-    hunk_re = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
-    for raw in proc.stdout.splitlines():
-        if raw.startswith("+++ b/"):
-            current_path = raw[6:]
-            continue
-        hunk = hunk_re.match(raw)
-        if hunk:
-            new_line = int(hunk.group(1))
-            continue
-        if raw.startswith("+") and not raw.startswith("+++"):
-            text = raw[1:]
-            if current_path and _doc_path(current_path) and SCOPE_REDUCTION_RE.search(text):
-                matches.append({"path": current_path, "line": new_line, "text": text.strip()})
-            new_line += 1
-        elif raw.startswith("-") and not raw.startswith("---"):
-            continue
-        elif raw.startswith(" "):
-            new_line += 1
-    return matches

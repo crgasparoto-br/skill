@@ -14,7 +14,7 @@ CONTRACT_VERSION = '2026-08-20.3'
 # Mirrors config/skills-catalog.json; tests/test_catalog_governance.py keeps both in sync.
 CATALOG_SKILLS = frozenset({
     'auditar-issue', 'corrigir-ci', 'design-interface', 'documentacao-repositorio',
-    'entregar-issue', 'fluxos-conversacionais', 'revisar-issue',
+    'entregar-issue', 'fluxos-conversacionais', 'higienizar-repositorio', 'revisar-issue',
 })
 METRIC_NAMES = (
     'issue_full_reads', 'documentation_full_scans', 'planning_runs',
@@ -283,107 +283,11 @@ def _require_bool(payload: dict[str, Any], key: str) -> None:
         _fail(f'{key} must be boolean')
 
 
-def _require_int(payload: dict[str, Any], key: str, minimum: int = 1, maximum: int | None = None) -> None:
-    value = payload.get(key)
-    if not _is_int(value) or value < minimum or (maximum is not None and value > maximum):
-        suffix = f' and <= {maximum}' if maximum is not None else ''
-        _fail(f'{key} must be an integer >= {minimum}{suffix}')
-
-
 def _require_array_of(value: Any, item_type: type, field: str, *, unique: bool = False, minimum: int = 0) -> None:
     if not isinstance(value, list) or len(value) < minimum or any(not isinstance(item, item_type) for item in value):
         _fail(f'{field} must be an array of {item_type.__name__}')
     if unique and len(value) != len(set(value)):
         _fail(f'{field} must contain unique values')
-
-
-def validate_execution_context(payload: dict[str, Any]) -> None:
-    if not isinstance(payload, dict):
-        _fail('execution context must be an object')
-    allowed = {
-        'schema_version', 'contract_version', 'repository', 'repo_path', 'issue',
-        'base_ref', 'branch', 'pull_request', 'mode', 'execution_profile',
-        'implementation_context_id', 'cycle', 'controller_cycle',
-        'controller_state_revision', 'cycle_authority', 'controller_context_sha256',
-        'head_sha', 'base_sha', 'merge_preview_sha', 'artifacts_dir',
-        'controller_mode', 'controller_context_id', 'controller_cycle_limit',
-        'return_control_to', 'workflow_change_authorized',
-        'manual_approval_workflow_authorized', 'remote_action_mode',
-        'publish_policy', 'permissions',
-    }
-    unknown = sorted(set(payload) - allowed)
-    if unknown:
-        _fail(f'execution context has unknown fields: {unknown}')
-    required = {
-        'schema_version', 'contract_version', 'repository', 'repo_path', 'issue',
-        'base_ref', 'branch', 'mode', 'execution_profile',
-        'implementation_context_id', 'cycle', 'permissions', 'artifacts_dir',
-        'workflow_change_authorized', 'manual_approval_workflow_authorized',
-        'remote_action_mode', 'publish_policy',
-    }
-    missing = sorted(required - set(payload))
-    if missing:
-        _fail(f'execution context missing fields: {missing}')
-    if payload['schema_version'] != 1:
-        _fail('execution context schema_version must be 1')
-    if payload['contract_version'] != CONTRACT_VERSION:
-        _fail(f'execution context contract_version must be {CONTRACT_VERSION}')
-    for key, minimum in (
-        ('repository', 3), ('repo_path', 1), ('base_ref', 1), ('branch', 1),
-        ('mode', 1), ('implementation_context_id', 8), ('artifacts_dir', 1),
-    ):
-        _require_string(payload, key, minimum)
-    _require_int(payload, 'issue')
-    _require_int(payload, 'cycle')
-    pull_request = payload.get('pull_request')
-    if pull_request is not None and (not _is_int(pull_request) or pull_request < 1):
-        _fail('pull_request must be null or an integer >= 1')
-    if payload['execution_profile'] not in {'light', 'standard', 'critical'}:
-        _fail('execution_profile is invalid')
-    for key in ('head_sha', 'base_sha', 'merge_preview_sha'):
-        if payload.get(key) is not None and not isinstance(payload.get(key), str):
-            _fail(f'{key} must be string or null')
-    permissions = payload.get('permissions')
-    permission_keys = {
-        'may_write_code', 'may_update_issue', 'may_merge',
-        'may_execute_destructive_actions',
-    }
-    if not isinstance(permissions, dict) or set(permissions) != permission_keys:
-        _fail('permissions fields are invalid')
-    if any(not isinstance(value, bool) for value in permissions.values()):
-        _fail('permissions values must be boolean')
-    _require_bool(payload, 'workflow_change_authorized')
-    if payload['manual_approval_workflow_authorized'] is not False:
-        _fail('manual approval workflows must remain disabled')
-    if payload['remote_action_mode'] != 'observe-only':
-        _fail('remote_action_mode must be observe-only')
-    if payload['publish_policy'] != 'single-final-candidate':
-        _fail('publish_policy must be single-final-candidate')
-    controller_mode = payload.get('controller_mode')
-    if controller_mode not in {None, 'delivery-single-invocation'}:
-        _fail('controller_mode is invalid')
-    for key in ('controller_context_id', 'return_control_to'):
-        value = payload.get(key)
-        if value is not None and not isinstance(value, str):
-            _fail(f'{key} must be string or null')
-    if payload.get('controller_context_id') is not None and len(payload['controller_context_id']) < 8:
-        _fail('controller_context_id must have length >= 8')
-    for key in ('controller_cycle', 'controller_cycle_limit'):
-        value = payload.get(key)
-        if value is not None and (not _is_int(value) or not 1 <= value <= 10):
-            _fail(f'{key} must be null or between 1 and 10')
-    revision = payload.get('controller_state_revision')
-    if revision is not None and (not _is_int(revision) or revision < 1):
-        _fail('controller_state_revision must be null or >= 1')
-    if payload.get('cycle_authority') not in {None, 'entregar-issue'}:
-        _fail('cycle_authority is invalid')
-    context_hash = payload.get('controller_context_sha256')
-    if context_hash is not None and not _is_sha256(context_hash):
-        _fail('controller_context_sha256 must be null or a lowercase SHA-256')
-    if controller_mode == 'delivery-single-invocation':
-        for key in ('controller_cycle', 'controller_state_revision', 'cycle_authority', 'controller_context_sha256'):
-            if payload.get(key) is None:
-                _fail(f'{key} is required in controller mode')
 
 
 def _validate_evidence_artifact(value: Any, field: str) -> None:
