@@ -55,7 +55,7 @@ publicação não dependesse de trabalho fora do escopo das entregas concluídas
   de migração amplos.
 
 Os casos de prompt injection não estão entre os itens abertos: a matriz `V030-002` os cobre em `evals/cases/V030-002-authority-001.json`, `-002.json`, `-003.json` e `-004.json`,
-com conteúdo hostil vindo de README, de issue e de contrato.
+com conteúdo hostil vindo de README, de issue, de fixture e de contrato, na mesma ordem.
 
 ## Handoff de release
 
