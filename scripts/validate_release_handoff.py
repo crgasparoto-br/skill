@@ -28,7 +28,11 @@ FORBIDDEN_COMMANDS = (
     "git commit",
 )
 CONTRACT_TIMEOUT_SECONDS = 120
-ALLOWED_IMPORTS = frozenset({"__future__", "argparse", "json", "re", "stat", "sys", "unicodedata", "pathlib", "typing"})
+# `tempfile` entra na lista permitida porque a escrita do relatorio precisa criar arquivo exclusivo de
+# nome imprevisivel; a lista continua sem qualquer primitiva de execucao, como `os` ou `subprocess`.
+ALLOWED_IMPORTS = frozenset(
+    {"__future__", "argparse", "json", "re", "stat", "sys", "tempfile", "unicodedata", "pathlib", "typing"}
+)
 FORBIDDEN_PRIMITIVES = frozenset(
     {
         "__builtins__",
@@ -411,8 +415,8 @@ def root_path(value: str) -> Path:
 def reject_unencodable(arguments: list[str]) -> None:
     """Recusa argumento com texto nao codificavel antes que o analisador tente imprimi-lo."""
     for token in arguments:
-        if not encodable(token):
-            raise SystemExit("ERRO: o validador recebeu argumento com texto nao codificavel em UTF-8")
+        if not isinstance(token, str) or not encodable(token):
+            raise SystemExit("ERRO: o validador recebeu argumento que nao e texto codificavel em UTF-8")
 
 
 def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:

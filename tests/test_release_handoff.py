@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from scripts import release_handoff as handoff_module
 from scripts.release_handoff import build_report, load_json, markdown_report, significant, visible_problem
 from scripts.release_handoff import main as contract_main
 from scripts.release_handoff import parse_arguments as contract_arguments
@@ -1005,3 +1006,69 @@ def test_unencodable_argument_is_refused_before_argparse_prints(
     chosen = contract_main if entry == "contrato" else gate_main
     with pytest.raises(SystemExit):
         chosen(argv)
+
+
+def valid_root(directory: Path) -> Path:
+    """Raiz auditada minima: politica, contrato e evidencia validos."""
+    (directory / "config").mkdir()
+    (directory / "scripts").mkdir()
+    (directory / "scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (directory / "config/release-handoff.json").write_text(
+        (ROOT / "config/release-handoff.json").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (directory / "evidence.json").write_text(json.dumps(evidence()), encoding="utf-8")
+    return directory
+
+
+def contract_arguments_for(directory: Path, report: Path) -> list[str]:
+    """Argumentos do contrato apontando para uma raiz auditada temporaria."""
+    return [
+        "--root", str(directory), "--evidence", str(directory / "evidence.json"),
+        "--develop", DEVELOP, "--main", MAIN, "--report", str(report),
+    ]
+
+
+def test_audited_root_script_is_protected(tmp_path: Path) -> None:
+    """Achado bloqueante: o contrato da raiz auditada nao pode virar destino de relatorio."""
+    root = valid_root(tmp_path)
+    script = root / "scripts/release_handoff.py"
+    before = script.read_bytes()
+    with pytest.raises(SystemExit):
+        contract_main(contract_arguments_for(root, script))
+    assert script.read_bytes() == before
+
+
+def test_write_cannot_be_redirected_by_a_link_created_after_the_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Achado bloqueante: a escrita precisa ser exclusiva, nao apenas conferida antes de abrir."""
+    root = valid_root(tmp_path)
+    (root / "reports").mkdir()
+    policy = root / "config/release-handoff.json"
+    before = policy.read_bytes()
+    reserved = root / "reports/handoff.md.parcial"
+    reserved.symlink_to(policy)
+    monkeypatch.setattr(handoff_module, "destination_status", lambda path, label: None)
+    assert contract_main(contract_arguments_for(root, root / "reports/handoff.md")) == 0
+    assert policy.read_bytes() == before
+    assert (root / "reports/handoff.md").read_text(encoding="utf-8").startswith("# Handoff de release")
+
+
+def test_temporary_names_are_unique(tmp_path: Path) -> None:
+    """O temporario precisa ter nome imprevisivel e distinto a cada escrita."""
+    first = handoff_module.write_temporary(tmp_path, "handoff.md", "um\n", "o relatorio")
+    second = handoff_module.write_temporary(tmp_path, "handoff.md", "dois\n", "o relatorio")
+    assert first != second
+    assert first.read_text(encoding="utf-8") == "um\n"
+    assert second.read_text(encoding="utf-8") == "dois\n"
+
+
+@pytest.mark.parametrize("entry", ["contrato", "gate"], ids=["contrato", "gate"])
+def test_non_textual_argument_is_refused(entry: str) -> None:
+    """Achado nao bloqueante: argumento de tipo nao textual nao pode virar `AttributeError`."""
+    chosen = contract_main if entry == "contrato" else gate_main
+    for token in (None, 7, b"x"):
+        with pytest.raises(SystemExit):
+            chosen([token])

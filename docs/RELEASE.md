@@ -61,10 +61,13 @@ python scripts/release_handoff.py --root . --evidence evidencia.json --develop "
 
 O contrato falha fechado e de forma legível: toda entrada inválida — tipo, formato, identificador, parecer, destino de
 relatório ou argumento de linha de comando — resulta em recusa declarada, nunca em exceção não tratada. O relatório
-usa arquivo temporário e troca atômica, recusa destino relativo, fora da raiz, inexistente, que seja diretório, link
-simbólico, link físico, temporário já ocupado ou colisão entre Markdown e JSON, e nunca sobrescreve o contrato, a
-política ou a própria evidência. O limite é declarado: essa proteção cobre os três artefatos do handoff; qualquer
-outro caminho do repositório é escolha de quem opera, e apontar o relatório para um arquivo versionado o substitui.
+usa arquivo temporário exclusivo, de nome imprevisível, e troca atômica: a escrita não pode ser desviada por um link
+criado entre a conferência e a abertura. O destino é recusado quando é relativo, quando fica fora da raiz, quando não
+é arquivo regular, quando passa por link simbólico, quando é diretório ou link físico, quando já existe um caminho
+temporário reservado ou quando Markdown e JSON colidem. Um destino ainda inexistente é criado, desde que o diretório
+pai exista. O contrato nunca sobrescreve o contrato executável da raiz auditada, a política ou a própria evidência. O
+limite é declarado: essa proteção cobre os artefatos do handoff; qualquer outro caminho do repositório é escolha de
+quem opera, e apontar o relatório para um arquivo versionado o substitui.
 
 O gate `scripts/validate_release_handoff.py` valida a política, a ausência de autoridade no contrato e executa a
 evidência completa; ele também falha fechado, inclusive quando a raiz informada não pode ser resolvida.

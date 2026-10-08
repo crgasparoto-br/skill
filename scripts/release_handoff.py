@@ -15,11 +15,13 @@ import json
 import re
 import stat
 import sys
+import tempfile
 import unicodedata
 from pathlib import Path
 
 SHA_RE = re.compile(r"\A[0-9a-f]{40}\Z")
 POLICY_RELATIVE = "config/release-handoff.json"
+SCRIPT_RELATIVE = "scripts/release_handoff.py"
 MEANINGFUL_CATEGORIES = frozenset({"L", "N"})
 # Codigos que renderizam como nada apesar de a categoria ser letra ou numero: preenchedores de Hangul
 # (`U+115F`, `U+1160`, `U+3164`, `U+FFA0`), preenchedores de hieroglifo egipcio (`U+13441`, `U+13442`),
@@ -476,6 +478,7 @@ def refuse_protected(root: Path, path: Path, evidence: Path, label: str) -> None
     resolved = resolved_path(path, label)
     protected = [
         resolved_path(root, label) / POLICY_RELATIVE,
+        resolved_path(root, label) / SCRIPT_RELATIVE,
         resolved_path(Path(__file__), label),
         resolved_path(evidence, label),
     ]
@@ -493,6 +496,33 @@ def discard_temporary(path: Path) -> None:
         path.unlink(missing_ok=True)
     except OSError:
         return
+
+
+def write_temporary(directory: Path, name: str, text: str, label: str) -> Path:
+    """Grava o texto em arquivo temporario exclusivo e devolve o caminho criado.
+
+    O nome e imprevisivel e a criacao e exclusiva. Conferir um caminho fixo e depois abri-lo deixava uma
+    janela em que um link criado nesse intervalo desviava a escrita para outro arquivo; com criacao
+    exclusiva de nome imprevisivel, a escrita nao pode ser desviada nem observada com antecedencia.
+    """
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="",
+            dir=directory,
+            prefix=f".{name}.",
+            suffix=".parcial",
+            delete=False,
+        ) as handle:
+            temporary = Path(handle.name)
+            handle.write(text.encode("utf-8", "backslashreplace").decode("utf-8"))
+    except (OSError, UnicodeEncodeError, ValueError) as error:
+        if temporary is not None:
+            discard_temporary(temporary)
+        raise SystemExit(f"ERRO: nao foi possivel escrever {label}: {error}") from error
+    return temporary
 
 
 def write_report(root: Path, path: Path, evidence: Path, text: str, label: str) -> None:
@@ -518,15 +548,15 @@ def write_report(root: Path, path: Path, evidence: Path, text: str, label: str) 
         raise SystemExit(f"ERRO: {label} nao tem diretorio de destino: {path.parent}")
     if status is not None and (not stat.S_ISREG(status.st_mode) or status.st_nlink > 1):
         raise SystemExit(f"ERRO: {label} nao e um arquivo regular exclusivo: {path}")
-    temporary = path.with_name(f"{path.name}.parcial")
-    if destination_status(temporary, f"o temporario de {label}") is not None:
-        raise SystemExit(f"ERRO: {label} usa um caminho temporario ja ocupado: {temporary}")
+    reserved = path.with_name(f"{path.name}.parcial")
+    if destination_status(reserved, f"o temporario de {label}") is not None:
+        raise SystemExit(f"ERRO: {label} usa um caminho temporario ja ocupado: {reserved}")
+    temporary = write_temporary(path.parent, path.name, text, label)
     try:
-        temporary.write_text(text.encode("utf-8", "backslashreplace").decode("utf-8"), encoding="utf-8")
         temporary.replace(path)
-    except (OSError, UnicodeEncodeError, ValueError) as error:
+    except (OSError, ValueError) as error:
         discard_temporary(temporary)
-        raise SystemExit(f"ERRO: nao foi possivel escrever {label}: {error}") from error
+        raise SystemExit(f"ERRO: nao foi possivel concluir {label}: {error}") from error
 
 
 def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
@@ -582,8 +612,8 @@ def reject_unencodable(arguments: list[str], label: str) -> None:
     levanta `UnicodeEncodeError` onde se esperava a recusa. Conferir antes fecha essa porta.
     """
     for token in arguments:
-        if not encodable(token):
-            raise SystemExit(f"ERRO: {label} recebeu argumento com texto nao codificavel em UTF-8")
+        if not isinstance(token, str) or not encodable(token):
+            raise SystemExit(f"ERRO: {label} recebeu argumento que nao e texto codificavel em UTF-8")
 
 
 def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
