@@ -2,7 +2,7 @@
 
 Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A versão pública do conjunto é mantida em [`VERSION`](./VERSION). O formato segue SemVer para releases do catálogo; a versão interna de contratos permanece identificada no manifesto de compatibilidade durante a migração.
 
-## [Unreleased]
+## [0.3.0] - 2026-10-08
 
 ### Removed
 
