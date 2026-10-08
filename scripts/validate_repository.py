@@ -28,6 +28,7 @@ try:
     from validate_lint import validate_lint
     from validate_reachability import validate_reachability
     from validate_reference_indexes import validate_reference_indexes
+    from validate_release_handoff import validate_release_handoff
     from validate_versioning import validate_versioning
     from validate_workflow_classification import validate_workflow_classification
 except ImportError:  # pragma: no cover - package import fallback
@@ -44,6 +45,7 @@ except ImportError:  # pragma: no cover - package import fallback
     from .validate_lint import validate_lint
     from .validate_reachability import validate_reachability
     from .validate_reference_indexes import validate_reference_indexes
+    from .validate_release_handoff import validate_release_handoff
     from .validate_versioning import validate_versioning
     from .validate_workflow_classification import validate_workflow_classification
 
@@ -98,6 +100,9 @@ GLOBAL_FILES = {
     ".github/workflows/dependency-audit.yml",
     "config/lint-policy.json",
     "scripts/validate_lint.py",
+    "config/release-handoff.json",
+    "scripts/release_handoff.py",
+    "scripts/validate_release_handoff.py",
     "scripts/validate_workflow_classification.py",
     "config/hygiene-policy.json",
     "higienizar-repositorio/SKILL.md",
@@ -384,6 +389,7 @@ def main() -> int:
     errors.extend(f"índice de referência: {error}" for error in validate_reference_indexes(ROOT))
     errors.extend(f"dependências: {error}" for error in validate_dependency_locks(ROOT))
     errors.extend(f"lint: {error}" for error in validate_lint(ROOT))
+    errors.extend(f"handoff de release: {error}" for error in validate_release_handoff(ROOT))
     errors.extend(f"higiene: {error}" for error in validate_hygiene(ROOT))
     errors.extend(
         f"classificação de workflow: {error}" for error in validate_workflow_classification(ROOT)

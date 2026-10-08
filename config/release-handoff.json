@@ -1,0 +1,49 @@
+{
+  "policy_version": 1,
+  "authority": {
+    "merges": false,
+    "tags": false,
+    "publishes": false,
+    "note": "O contrato reune evidencia, verifica e reprova quando falta item; promover a release continua sendo ato de quem opera o repositorio."
+  },
+  "verdicts": {
+    "audit_approved": [
+      "approved",
+      "approved-with-reservations"
+    ]
+  },
+  "required": [
+    {
+      "id": "issues-delivered",
+      "description": "Issues entregues que entram na release, com identificador verificavel.",
+      "reason": "Sem a lista de entregas, o handoff nao prova o que a release contem."
+    },
+    {
+      "id": "develop-sha",
+      "description": "Commit de `develop` que sera promovido, em hexadecimal de 40 caracteres.",
+      "reason": "A release precisa apontar para um commit exato, e nao para um ramo movel."
+    },
+    {
+      "id": "gates",
+      "description": "Resultado da sequencia obrigatoria de validacao para esse commit.",
+      "reason": "Promover commit com gate reprovado propaga defeito para a linha principal."
+    },
+    {
+      "id": "independent-audit",
+      "description": "Parecer da auditoria independente do commit final.",
+      "reason": "A release exige auditoria independente aprovada do commit promovido."
+    },
+    {
+      "id": "divergence",
+      "description": "Diferenca funcional entre `develop` e `main`.",
+      "reason": "`develop` igual a `main` significa que nao ha release a promover."
+    }
+  ],
+  "optional": [
+    {
+      "id": "behavioural-evals",
+      "description": "Resultado das avaliacoes comportamentais do commit promovido.",
+      "reason": "Registra qualidade comportamental sem transformar avaliacao probabilistica em gate de fato critico."
+    }
+  ]
+}

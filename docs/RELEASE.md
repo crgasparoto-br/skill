@@ -35,6 +35,47 @@ Alterar apenas a data de catalogação ou uma implementação interna não autor
 
 A criação da tag e da release é deliberadamente posterior ao merge; uma pull request não cria uma release imutável.
 
+## Handoff de release
+
+Promover `develop` a `main` segue um contrato verificável, e não uma decisão de memória. `scripts/release_handoff.py`
+recebe a evidência declarada e reprova quando falta item obrigatório, quando um identificador é desconhecido,
+quando o commit não é hexadecimal de 40 caracteres, quando `develop` e `main` estão no mesmo commit ou quando a
+auditoria independente não consta como aprovada. A política em `config/release-handoff.json` declara cada item
+obrigatório com o motivo pelo qual ele existe.
+
+O contrato **não** tem autoridade de merge, de tag ou de publicação: ele reúne e verifica evidência, e promover a
+release continua sendo ato de quem opera o repositório.
+
+A prova de ausência de autoridade é semântica sobre o texto do contrato: importação fora da lista permitida é
+recusada, nome proibido é recusado como variável, como atributo — inclusive dunder, a via de introspecção — e como
+texto exato. O limite é declarado: quem tem permissão de escrita no contrato tem igual permissão no gate, então o
+contrato protege contra aquisição **acidental** de autoridade num commit revisado, e não contra autor com escrita
+no repositório, que poderia alterar as duas peças. Por isso a revisão de código continua sendo o controle de
+último recurso, e o contrato apenas a torna verificável. A execução da sequência de validação também não é
+terceirizada ao contrato: ele consome o resultado da sequência como evidência declarada, com a origem registrada
+no relatório.
+
+```bash
+python scripts/release_handoff.py --root . --evidence evidencia.json --develop "$(git rev-parse develop)" --main "$(git rev-parse main)"
+```
+
+O contrato falha fechado e de forma legível: toda entrada inválida — tipo, formato, identificador, parecer, destino de
+relatório ou argumento de linha de comando — resulta em recusa declarada, nunca em exceção não tratada. O relatório
+usa arquivo temporário exclusivo, de nome imprevisível, e troca atômica: a escrita não pode ser desviada por um link
+criado entre a conferência e a abertura. O destino é recusado quando é relativo, quando fica fora da raiz, quando não
+é arquivo regular, quando passa por link simbólico, quando é diretório ou link físico, quando já existe um caminho
+temporário reservado ou quando Markdown e JSON colidem. Um destino ainda inexistente é criado, desde que o diretório
+pai exista. O contrato nunca sobrescreve o contrato executável da raiz auditada, a política ou a própria evidência. O
+diretório de destino ainda é reconferido pela identidade do inode imediatamente antes da substituição, para que a
+troca do próprio diretório durante a escrita seja detectada. O limite é declarado: a proteção cobre os artefatos do
+handoff e pressupõe que nenhum outro processo escreve na árvore auditada durante a verificação, premissa já assumida
+pela prova de ausência de autoridade; fechar a corrida remanescente entre essa reconferência e a substituição exigiria
+primitivas de descritor de diretório, que o contrato não usa. Qualquer outro caminho do repositório é escolha de quem
+opera, e apontar o relatório para um arquivo versionado o substitui.
+
+O gate `scripts/validate_release_handoff.py` valida a política, a ausência de autoridade no contrato e executa a
+evidência completa; ele também falha fechado, inclusive quando a raiz informada não pode ser resolvida.
+
 ## Compatibilidade e migração
 
 Cada skill validada deve aparecer no manifesto de compatibilidade com sua versão pública de contrato, linhagem interna, release mínima suportada e instrução de migração. Uma combinação não declarada deve ser tratada como `UNKNOWN` ou incompatível, nunca como compatível por aproximação textual.
