@@ -39,6 +39,18 @@ Comecar toda resposta humana sem preambulo e com exatamente uma destas linhas:
 
 Nao colocar titulo, validade, resumo, contexto, saudacao ou explicacao antes dessa linha. A primeira informacao visivel deve ser o resultado.
 
+Imediatamente abaixo dessa linha, abrir o parecer com o bloco de conclusao em destaque:
+
+```markdown
+> **Conclusao:** `[veredito]` — achados bloqueantes: `[n]` — recomendacoes opcionais: `[n]`
+> **Motivo determinante:** [uma frase objetiva]
+> **Libera merge/release:** [SIM | NAO]
+
+**Validade:** [Independente | Controller-adversarial | Pre-auditoria]
+```
+
+O bloco deixa a conclusao visivel nas primeiras linhas e nao substitui o motivo determinante, a matriz, os achados nem o resultado estruturado; divergencia entre eles e defeito do parecer. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato.
+
 Aplicar o mapeamento deterministico:
 
 - `APROVADA`: somente auditoria `independent`, sem finding bloqueante, sem limitacao material e com todos os gates obrigatorios aprovados.
@@ -47,12 +59,7 @@ Aplicar o mapeamento deterministico:
 - `INCONCLUSIVA`: somente quando uma limitacao do runtime, ferramenta ou connector da propria auditoria impedir obter bytes exatos, executar recurso interno da Skill ou observar evidencia obrigatoria, sem evidencia de que o candidato ou a entrega causaram a limitacao. Nao converter limitacao de infraestrutura da auditoria em finding da issue.
 - `REPROVADA`: qualquer finding bloqueante, requisito incorreto ou nao implementado, identidade invalidada, gate obrigatorio falho/ausente por responsabilidade do candidato ou da entrega, handoff ausente/stale/inconsistente quando `audit_transport=certified-handoff`, ou evidencia material que a entrega deveria ter produzido mas nao produziu. Em `native-github-audit`, ausencia de `.audit/entregar-issue` nao e finding por si so.
 
-Logo abaixo do resultado, informar obrigatoriamente:
-
-```markdown
-**Validade:** [Independente | Controller-adversarial | Pre-auditoria]
-**Libera merge/release:** [SIM | NAO]
-```
+A decisao de liberacao aparece uma unica vez, no bloco de conclusao. Nao repetir a mesma informacao em outro ponto do cabecalho.
 
 Usar `SIM` somente para `APROVADA` ou `APROVADA COM RESSALVAS` com validade realmente independente e portao de release satisfeito. Para `APROVADA INTERNAMENTE`, `INCONCLUSIVA` e `REPROVADA`, usar sempre `NAO`. Depois apresentar motivo determinante, achados e evidencias. O resultado estruturado JSON continua obedecendo aos schemas e nao deve ser inferido apenas do cabecalho humano.
 
