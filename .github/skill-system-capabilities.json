@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "system_version": "2026-10-07.1",
+  "system_version": "2026-10-08.1",
   "canonical_controller": "entregar-issue",
   "canonical_contract_owner": "entregar-issue",
   "independent_auditor": "auditar-issue",

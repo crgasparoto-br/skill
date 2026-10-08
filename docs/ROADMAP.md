@@ -467,12 +467,12 @@ entrega.
 
 A release será considerada pronta somente quando todos os critérios abaixo forem comprovados:
 
-- [ ] `docs/ROADMAP.md` e as issues da release estão atualizados com status real;
+- [x] `docs/ROADMAP.md` e as issues da release estão atualizados com status real;
 - [ ] o runner de avaliações executa casos versionados de forma reproduzível;
 - [ ] existem casos para seleção errada, prompt injection, capacidade ausente, contexto insuficiente e evidência não executada;
 - [ ] cada caso possui resultado esperado, ações proibidas e pelo menos uma variação próxima;
 - [ ] indisponibilidade de runtime nunca vira `PASS`;
-- [ ] secret scanning, dependency review e auditoria de dependências estão ativos ou possuem decisão explícita e rastreável;
+- [ ] secret scanning, dependency review e a auditoria de dependências possuem decisão explícita e rastreável (ver critérios abertos abaixo);
 - [ ] a licença foi escolhida e publicada;
 - [ ] referências longas possuem índice ou exceção documentada e validada;
 - [x] referências longas possuem bloco de carregamento condicional e índice com âncoras resolvíveis, verificado pelo lint de navegabilidade;
@@ -480,9 +480,26 @@ A release será considerada pronta somente quando todos os critérios abaixo for
 - [x] assets permanentes rejeitam acoplamento concreto a issue, host, caminho ou identificador de domínio, e o validador é executado sobre o catálogo;
 - [ ] a decisão do contrato `transitional` possui inventário, migração e compatibilidade testada;
 - [x] a dívida estrutural da árvore inteira é medida por perfil próprio, com precisão declarada por classe, exceção justificada, linha de base que só cresce com entrada nova e motivo escrito e cobertura que não encolhe em silêncio, verificado pelo gate de higienização;
-- [ ] a suíte determinística e os validadores do catálogo continuam verdes;
+- [x] a suíte determinística e os validadores do catálogo continuam verdes;
 - [ ] uma auditoria independente aprova o commit final;
 - [ ] `VERSION`, `CHANGELOG.md`, compatibilidade, tag e GitHub Release apontam para o mesmo commit.
+
+### Critérios abertos declarados na v0.3.0
+
+A v0.3.0 foi promovida por decisão do responsável com quatro critérios declarados como abertos, para que a
+publicação não dependesse de trabalho fora do escopo dos itens entregues. Cada um tem decisão registrada:
+
+- **licença:** não escolhida por decisão explícita do responsável neste momento, que pediu para não priorizar a
+  questão; a ausência de licença é intencional e continua rastreável;
+- **secret scanning:** a auditoria de dependências existe e roda em `dependency-audit.yml`, mas não há decisão
+  registrada sobre varredura de segredos, que depende de configuração da conta e não do repositório;
+- **casos de prompt injection:** a matriz `V030-002` cobre seleção, autoridade, capacidade, contexto, evidência,
+  leitura progressiva, somente leitura e contrato de saída, mas ainda não tem família de prompt injection;
+- **contrato `transitional`:** a compatibilidade continua mapeada para a linhagem `2026-08-20.3` sem inventário e
+  plano de migração amplos, que o roadmap mantém fora do escopo por padrão.
+
+Promover com esses critérios abertos é decisão registrada, não omissão: as notas de release repetem a lista e os
+itens permanecem no roadmap para a próxima release.
 
 ## 7. Fora do escopo por padrão
 

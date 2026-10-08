@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "system": "skill-platform-adapters",
-  "catalog_version": "2026-10-07.1",
+  "catalog_version": "2026-10-08.1",
   "adapters": [
     {
       "id": "generic",
@@ -13,8 +13,20 @@
       "capability_profile": "none-assumed",
       "provided_capabilities": [],
       "fallback_policy": "config/capabilities.json",
-      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
-      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+      "prohibited_assumptions": [
+        "repository-write is available",
+        "ci-read is available",
+        "test-execution is available"
+      ],
+      "load_order": [
+        "config/compatibility.json",
+        "config/skills-catalog.json",
+        "config/capabilities.json",
+        "config/platform-adapters.json",
+        "<skill>/SKILL.md",
+        "conditional references",
+        "schemas/contracts/scripts"
+      ]
     },
     {
       "id": "openai",
@@ -26,8 +38,20 @@
       "capability_profile": "none-assumed",
       "provided_capabilities": [],
       "fallback_policy": "config/capabilities.json",
-      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
-      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+      "prohibited_assumptions": [
+        "repository-write is available",
+        "ci-read is available",
+        "test-execution is available"
+      ],
+      "load_order": [
+        "config/compatibility.json",
+        "config/skills-catalog.json",
+        "config/capabilities.json",
+        "config/platform-adapters.json",
+        "<skill>/SKILL.md",
+        "conditional references",
+        "schemas/contracts/scripts"
+      ]
     },
     {
       "id": "claude",
@@ -39,8 +63,20 @@
       "capability_profile": "none-assumed",
       "provided_capabilities": [],
       "fallback_policy": "config/capabilities.json",
-      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
-      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+      "prohibited_assumptions": [
+        "repository-write is available",
+        "ci-read is available",
+        "test-execution is available"
+      ],
+      "load_order": [
+        "config/compatibility.json",
+        "config/skills-catalog.json",
+        "config/capabilities.json",
+        "config/platform-adapters.json",
+        "<skill>/SKILL.md",
+        "conditional references",
+        "schemas/contracts/scripts"
+      ]
     },
     {
       "id": "gemini",
@@ -52,8 +88,20 @@
       "capability_profile": "none-assumed",
       "provided_capabilities": [],
       "fallback_policy": "config/capabilities.json",
-      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
-      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+      "prohibited_assumptions": [
+        "repository-write is available",
+        "ci-read is available",
+        "test-execution is available"
+      ],
+      "load_order": [
+        "config/compatibility.json",
+        "config/skills-catalog.json",
+        "config/capabilities.json",
+        "config/platform-adapters.json",
+        "<skill>/SKILL.md",
+        "conditional references",
+        "schemas/contracts/scripts"
+      ]
     },
     {
       "id": "ide",
@@ -65,8 +113,20 @@
       "capability_profile": "none-assumed",
       "provided_capabilities": [],
       "fallback_policy": "config/capabilities.json",
-      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
-      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+      "prohibited_assumptions": [
+        "repository-write is available",
+        "ci-read is available",
+        "test-execution is available"
+      ],
+      "load_order": [
+        "config/compatibility.json",
+        "config/skills-catalog.json",
+        "config/capabilities.json",
+        "config/platform-adapters.json",
+        "<skill>/SKILL.md",
+        "conditional references",
+        "schemas/contracts/scripts"
+      ]
     },
     {
       "id": "application",
@@ -78,8 +138,20 @@
       "capability_profile": "none-assumed",
       "provided_capabilities": [],
       "fallback_policy": "config/capabilities.json",
-      "prohibited_assumptions": ["repository-write is available", "ci-read is available", "test-execution is available"],
-      "load_order": ["config/compatibility.json", "config/skills-catalog.json", "config/capabilities.json", "config/platform-adapters.json", "<skill>/SKILL.md", "conditional references", "schemas/contracts/scripts"]
+      "prohibited_assumptions": [
+        "repository-write is available",
+        "ci-read is available",
+        "test-execution is available"
+      ],
+      "load_order": [
+        "config/compatibility.json",
+        "config/skills-catalog.json",
+        "config/capabilities.json",
+        "config/platform-adapters.json",
+        "<skill>/SKILL.md",
+        "conditional references",
+        "schemas/contracts/scripts"
+      ]
     }
   ]
 }
