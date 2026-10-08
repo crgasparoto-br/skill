@@ -3889,3 +3889,86 @@ def test_match_capture_shadows_submodule(tmp_path: Path) -> None:
         },
     )
     assert "pkg/target.py" in [item["path"] for item in findings_of(scan(tree), "dead-module")]
+
+
+def test_dynamic_all_keeps_package_submodules_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: `__all__` montado em execução é tratado conservadoramente."""
+    for index, body in enumerate(
+        ('__all__ = []\n__all__.append("target")\n', '__all__ = ["target"]\n__all__ = []\n')
+    ):
+        tree = make_tree(
+            tmp_path / f"all{index}",
+            {
+                "pkg/__init__.py": body,
+                "pkg/target.py": "VALUE = 1\n",
+                "consumer.py": "from pkg import *\n",
+                "README.md": "sem invocacao\n",
+            },
+        )
+        assert "pkg/target.py" not in [
+            item["path"] for item in findings_of(scan(tree), "dead-module")
+        ]
+
+
+def test_binding_after_import_does_not_shadow_submodule(tmp_path: Path) -> None:
+    """Achado bloqueante: durante um ciclo, o `from` executa o submódulo antes da ligação posterior."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "from consumer import x\ntarget = 1\n",
+            "pkg/target.py": "VALUE = 2\n",
+            "consumer.py": "from pkg import target\nx = target.VALUE\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" not in [
+        item["path"] for item in findings_of(scan(tree), "dead-module")
+    ]
+
+
+def test_relative_beyond_package_and_plain_module_parent(tmp_path: Path) -> None:
+    """Achados bloqueantes: relativo que sobe além do pacote e pai que é módulo simples."""
+    beyond = make_tree(
+        tmp_path / "acima",
+        {
+            "__init__.py": "",
+            "target.py": "VALUE = 1\n",
+            "pkg/__init__.py": "",
+            "pkg/sub/__init__.py": "from .. import target\n",
+            "pkg/sub/target.py": "VALUE = 2\n",
+            "consumer.py": "from pkg.sub import target\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/sub/target.py" in [
+        item["path"] for item in findings_of(scan(beyond), "dead-module")
+    ]
+    broken = make_tree(
+        tmp_path / "quebrado",
+        {
+            "pkg.py": "VALUE = 1\n",
+            "pkg/sub.py": "VALUE = 2\n",
+            "consumer.py": "import pkg.sub\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/sub.py" in [item["path"] for item in findings_of(scan(broken), "dead-module")]
+
+
+def test_foreign_homonym_is_not_kept_alive(tmp_path: Path) -> None:
+    """Achado bloqueante: `import other.target` resolve para fora do pacote e não mantém o homônimo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "",
+            "pkg/consumer.py": "import other.target\n",
+            "pkg/other/__init__.py": "",
+            "pkg/other/target.py": "VALUE = 1\n",
+            "other/__init__.py": "",
+            "other/target.py": "VALUE = 2\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/other/target.py" in [
+        item["path"] for item in findings_of(scan(tree), "dead-module")
+    ]

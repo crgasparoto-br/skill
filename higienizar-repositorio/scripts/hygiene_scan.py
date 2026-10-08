@@ -976,13 +976,35 @@ def detect_duplication(
     return findings
 
 
-def resolve_import(imported: set[str], package: list[str], parts: list[str]) -> None:
+def reachable_name(name: str, dotted: dict[str, ast.Module], packages: set[str]) -> bool:
+    """O nome é alcançável, ou algum ancestral é módulo simples e quebra a cadeia?
+
+    `import pkg.sub` com `pkg.py` e sem `pkg/__init__.py` falha em execução, e resolver o nome sem
+    conferir a cadeia manteria vivo um módulo que ninguém carrega.
+    """
+    parts = name.split(".")
+    for index in range(1, len(parts)):
+        prefix = ".".join(parts[:index])
+        if prefix in dotted and prefix not in packages:
+            return False
+    return True
+
+
+def resolve_import(
+    imported: set[str],
+    package: list[str],
+    parts: list[str],
+    dotted: dict[str, ast.Module],
+    packages: set[str],
+) -> None:
     """Acrescenta as formas resolvidas de um nome importado ao conjunto de módulos alcançados."""
     if not parts:
         return
-    imported.add(".".join(parts))
-    if package:
-        imported.add(".".join([*package, *parts]))
+    candidates = [parts, [*package, *parts]] if package else [parts]
+    for candidate in candidates:
+        name = ".".join(candidate)
+        if reachable_name(name, dotted, packages):
+            imported.add(name)
 
 
 def requirement_name(line: str) -> str:
@@ -1077,23 +1099,35 @@ def module_level_names(tree: ast.Module) -> set[str]:
     return names
 
 
-def declared_all(tree: ast.Module) -> set[str]:
-    """Nomes declarados em `__all__`, que é o que `from pkg import *` alcança."""
-    for node in tree.body:
-        if not isinstance(node, ast.Assign):
-            continue
-        if not any(
+def declared_all(tree: ast.Module) -> set[str] | None:
+    """Nomes declarados em `__all__`, ou `None` quando a declaração não é resolvida estaticamente.
+
+    `None` é o sinal de que a lista foi reatribuída ou montada em execução, e nesse caso o wildcard é
+    tratado conservadoramente: sem saber o conteúdo, nenhum submódulo do pacote pode ser acusado.
+    """
+    declarations = 0
+    names: set[str] = set()
+    for node in module_level_nodes(tree):
+        if isinstance(node, ast.Assign) and any(
             isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets
         ):
-            continue
-        value = node.value
-        if isinstance(value, (ast.List, ast.Tuple, ast.Set)):
-            return {
-                element.value
-                for element in value.elts
-                if isinstance(element, ast.Constant) and isinstance(element.value, str)
-            }
-    return set()
+            declarations += 1
+            value = node.value
+            if isinstance(value, (ast.List, ast.Tuple, ast.Set)):
+                names = {
+                    element.value
+                    for element in value.elts
+                    if isinstance(element, ast.Constant) and isinstance(element.value, str)
+                }
+        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
+            if node.target.id == "__all__":
+                declarations += 1
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if isinstance(node.func.value, ast.Name) and node.func.value.id == "__all__":
+                declarations += 1
+    if not declarations:
+        return set()
+    return names if declarations == 1 else None
 
 
 def imports_submodule(tree: ast.Module, package: str, name: str) -> bool:
@@ -1106,9 +1140,9 @@ def imports_submodule(tree: ast.Module, package: str, name: str) -> bool:
     for node in module_level_nodes(tree):
         if isinstance(node, ast.ImportFrom):
             imported = {alias.name for alias in node.names}
-            relative = node.module is None and name in imported
-            own_module = node.module == name and node.level >= 1
-            own_package = node.module == package and name in imported
+            relative = node.module is None and node.level == 1 and name in imported
+            own_module = node.module == name and node.level == 1
+            own_package = node.level == 0 and node.module == package and name in imported
             if relative or own_module or own_package:
                 return True
         elif isinstance(node, ast.Import):
@@ -1118,11 +1152,31 @@ def imports_submodule(tree: ast.Module, package: str, name: str) -> bool:
     return False
 
 
+def module_exists(parts: list[str], dotted: dict[str, ast.Module]) -> bool:
+    """O nome existe como módulo ou como pacote no escopo analisado?"""
+    name = ".".join(parts)
+    return name in dotted or any(candidate.startswith(f"{name}.") for candidate in dotted)
+
+
 def module_dotted(rel: str) -> str:
     """Caminho pontilhado do módulo, com `__init__` reduzido ao nome do pacote."""
     if rel == "__init__.py":
         return ""
     return rel[:-3].replace("/", ".").removesuffix(".__init__")
+
+
+def first_binding_line(tree: ast.Module, name: str) -> int:
+    """Linha da primeira ligação de `name` no nível do módulo."""
+    lines = [node.lineno for node in module_level_nodes(tree) if name in bound_name(node)]
+    return min(lines) if lines else 0
+
+
+def first_import_line(tree: ast.Module) -> int:
+    """Linha do primeiro import no nível do módulo."""
+    lines = [
+        node.lineno for node in module_level_nodes(tree) if isinstance(node, (ast.Import, ast.ImportFrom))
+    ]
+    return min(lines) if lines else 0
 
 
 def submodule_reachable(
@@ -1149,7 +1203,13 @@ def submodule_reachable(
     # executa `pkg/target.py`, e tratá-lo como atributo simples acusaria módulo vivo.
     if imports_submodule(init, path, name):
         return True
-    return name not in module_level_names(init)
+    if name not in module_level_names(init):
+        return True
+    # A ordem de execução fica fora da precisão declarada: só bloqueia quando a ligação aparece antes de
+    # qualquer import do `__init__`. Depois de um import, o submódulo pode ter sido carregado durante um
+    # ciclo, e acusá-lo seria o erro mais caro.
+    first_import = first_import_line(init)
+    return bool(first_import) and first_binding_line(init, name) > first_import
 
 
 def wildcard_names(prefix: list[str], dotted: dict[str, ast.Module]) -> list[str]:
@@ -1158,8 +1218,17 @@ def wildcard_names(prefix: list[str], dotted: dict[str, ast.Module]) -> list[str
     Sem `__all__`, o wildcard não importa submódulo que o `__init__` não importe, e por isso a lista é
     vazia em vez de conservadora.
     """
-    tree = dotted.get(".".join(prefix))
-    return sorted(declared_all(tree)) if tree is not None else []
+    name = ".".join(prefix)
+    tree = dotted.get(name)
+    if tree is None:
+        return []
+    declared = declared_all(tree)
+    if declared is not None:
+        return sorted(declared)
+    marker = f"{name}." if name else ""
+    return sorted(
+        candidate[len(marker):] for candidate in dotted if candidate.startswith(marker) and candidate != name
+    )
 
 
 def register_from_aliases(
@@ -1175,7 +1244,7 @@ def register_from_aliases(
             names = wildcard_names(prefix, dotted) if alias.name == "*" else [alias.name]
             for name in names:
                 if submodule_reachable(prefix, name, dotted, packages):
-                    resolve_import(local, [], [*prefix, name])
+                    resolve_import(local, [], [*prefix, name], dotted, packages)
 
 
 def imported_modules(modules: dict[str, ast.Module]) -> dict[str, set[str]]:
@@ -1206,16 +1275,28 @@ def imported_modules(modules: dict[str, ast.Module]) -> dict[str, set[str]]:
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    resolve_import(local, package, alias.name.split("."))
+                    parts = alias.name.split(".")
+                    resolve_import(local, [], parts, dotted, packages)
+                    # A forma irmã só vale quando o nome não existe a partir da raiz: se existe, o import
+                    # resolve para o módulo de fora do pacote e o homônimo interno fica sem importador.
+                    if not module_exists(parts, dotted):
+                        resolve_import(local, package, parts, dotted, packages)
             elif isinstance(node, ast.ImportFrom) and node.level == 0:
                 # Import absoluto é procurado no caminho de importação, que inclui a raiz do projeto e o
                 # diretório de quem importa: `from helper import run` dentro de `pkg/` alcança a raiz, e
                 # `import catalog` dentro de `scripts/` alcança o irmão. Sem as duas formas, módulo usado
                 # ficaria morto.
                 base = list(node.module.split(".")) if node.module else []
-                resolve_import(local, [], base)
-                resolve_import(local, package, base)
-                register_from_aliases(local, [base, [*package, *base]], node, dotted, packages)
+                resolve_import(local, [], base, dotted, packages)
+                # A forma irmã existe porque script de skill roda com o próprio diretório no caminho de
+                # importação, mas ela não vale quando o nome já existe a partir da raiz: aí o import
+                # resolve para o módulo de fora do pacote, e o homônimo interno fica sem importador.
+                from_root = module_exists(base, dotted)
+                if not from_root:
+                    resolve_import(local, package, base, dotted, packages)
+                register_from_aliases(local, [base], node, dotted, packages)
+                if not from_root:
+                    register_from_aliases(local, [[*package, *base]], node, dotted, packages)
             elif isinstance(node, ast.ImportFrom):
                 depth = node.level - 1
                 # Import relativo além do pacote é inválido e não alcança módulo nenhum; resolver por
@@ -1230,7 +1311,7 @@ def imported_modules(modules: dict[str, ast.Module]) -> dict[str, set[str]]:
                 # O alvo do relativo já é absoluto a partir da raiz: somar o pacote do importador de novo
                 # manteria vivo um homônimo que ninguém importa, como `pkg.pkg` para `from . import x` em
                 # `pkg/consumer.py`.
-                resolve_import(local, [], base)
+                resolve_import(local, [], base, dotted, packages)
                 register_from_aliases(local, [base], node, dotted, packages)
         # A autoaresta sai do conjunto do próprio módulo, e não do conjunto global: outro módulo que
         # importe este continua contando como importador.
