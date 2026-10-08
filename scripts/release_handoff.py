@@ -18,7 +18,7 @@ import sys
 import unicodedata
 from pathlib import Path
 
-SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+SHA_RE = re.compile(r"\A[0-9a-f]{40}\Z")
 POLICY_RELATIVE = "config/release-handoff.json"
 MEANINGFUL_CATEGORIES = frozenset({"L", "N"})
 # Codigos que renderizam como nada apesar de a categoria ser letra ou numero: preenchedores de Hangul
@@ -195,6 +195,9 @@ def visible_problem(text: str) -> str:
     `"lo\u200blocal"` como `"local"`. Para valor e origem declarados a exigencia e outra: nada invisivel,
     espaco normal permitido no meio, ao menos uma letra ou digito e tamanho minimo de dois caracteres.
     """
+    if text != text.strip():
+        return "tem espaco nas pontas"
+
     if not text:
         return "esta vazio"
     if any(character in BLANK_CHARACTERS for character in text):
@@ -219,7 +222,7 @@ def declared_text(evidence: dict, item_id: str) -> str:
     entry = evidence.get("items")
     entry = entry.get(item_id) if isinstance(entry, dict) else None
     value = entry.get("value") if isinstance(entry, dict) else None
-    return value.strip() if isinstance(value, str) else ""
+    return value if isinstance(value, str) else ""
 
 
 def evidence_value(evidence: dict, item_id: str) -> tuple[str, str]:
@@ -234,7 +237,7 @@ def evidence_value(evidence: dict, item_id: str) -> tuple[str, str]:
     source = entry.get("source")
     # Valor e origem chegam intactos a validacao: normalizar apagaria separador interno de um commit ou
     # o caractere invisivel embutido numa origem, e os dois passariam como se fossem validos.
-    return declared_text(evidence, item_id), (source.strip() if isinstance(source, str) else "")
+    return declared_text(evidence, item_id), (source if isinstance(source, str) else "")
 
 
 def check_required(policy: dict, evidence: dict, shas: dict[str, str]) -> list[dict]:
@@ -314,7 +317,7 @@ def evidence_problems(policy: dict, evidence: dict, shas: dict[str, str]) -> lis
 
     problems = []
     declared_main = evidence.get("main")
-    if not isinstance(declared_main, str) or not SHA_RE.match(declared_main.strip()):
+    if not isinstance(declared_main, str) or not SHA_RE.match(declared_main):
         problems.append("a evidencia precisa declarar `main` como hexadecimal de 40 caracteres")
     if not exact_version(evidence.get("schema_version"), SCHEMA_VERSION):
         problems.append("a evidencia nao declara `schema_version` 1")
@@ -418,15 +421,21 @@ def write_report(root: Path, path: Path, evidence: Path, text: str, label: str) 
 
 def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
     """Commits de `develop` e `main`: argumento tem precedencia sobre a evidencia."""
-    informed_develop = arguments.develop.strip() if arguments.develop else ""
+    informed_develop = arguments.develop if arguments.develop else ""
     if arguments.develop is not None and not informed_develop:
         raise SystemExit("ERRO: `--develop` foi informado vazio")
-    if arguments.main is not None and not arguments.main.strip():
+    if arguments.main is not None and not arguments.main:
         raise SystemExit("ERRO: `--main` foi informado vazio")
     develop = informed_develop or declared_text(evidence, "develop-sha")
     declared_main = evidence.get("main")
-    declared_main = declared_main.strip() if isinstance(declared_main, str) else ""
-    informed_main = arguments.main.strip() if arguments.main else ""
+    declared_main = declared_main if isinstance(declared_main, str) else ""
+    informed_main = arguments.main if arguments.main else ""
+    declared_develop = evidence_value(evidence, "develop-sha")[0]
+    if declared_develop and not SHA_RE.match(declared_develop):
+        raise SystemExit("ERRO: `develop-sha` da evidencia precisa ser hexadecimal de 40 caracteres")
+    for flag, informed in (("--develop", informed_develop), ("--main", informed_main)):
+        if informed and not SHA_RE.match(informed):
+            raise SystemExit(f"ERRO: {flag} precisa ser hexadecimal de 40 caracteres")
     if declared_main and not SHA_RE.match(declared_main):
         raise SystemExit(f"ERRO: `main` da evidencia nao e hexadecimal de 40: {declared_main}")
     if informed_main and declared_main and informed_main != declared_main:

@@ -144,10 +144,18 @@ def item_errors(policy: dict, key: str) -> list[str]:
     return errors
 
 
+def identifiers_of(policy: dict, key: str) -> set[str]:
+    """Identificadores textuais declarados, ignorando politica estruturalmente invalida."""
+    declared = policy.get(key)
+    if not isinstance(declared, list):
+        return set()
+    return {item["id"] for item in declared if isinstance(item, dict) and isinstance(item.get("id"), str)}
+
+
 def cross_section_errors(policy: dict) -> list[str]:
     """Identificador precisa ser unico entre a evidencia obrigatoria e a opcional."""
-    required = {item.get("id") for item in policy.get("required", []) if isinstance(item, dict)}
-    optional = {item.get("id") for item in policy.get("optional", []) if isinstance(item, dict)}
+    required = identifiers_of(policy, "required")
+    optional = identifiers_of(policy, "optional")
     return [
         f"identificador repetido entre obrigatorios e opcionais: `{item}`"
         for item in sorted(required & optional)
@@ -187,7 +195,10 @@ def script_errors(root: Path) -> list[str]:
     errors = confined_errors(root, path, SCRIPT_RELATIVE)
     if errors or not path.is_file():
         return errors or [f"o contrato de handoff nao existe: {SCRIPT_RELATIVE}"]
-    text = path.read_text(encoding="utf-8")
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        return [f"nao foi possivel ler o contrato do handoff: {error}"]
     errors += [
         f"o contrato de handoff menciona comando proibido: `{command}`"
         for command in FORBIDDEN_COMMANDS
@@ -332,10 +343,20 @@ def validate_release_handoff(root: Path) -> list[str]:
 
 
 def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
-    """Argumentos do validador."""
-    parser = argparse.ArgumentParser(description="Valida a politica do handoff de release.")
+    """Argumentos do validador, sem abreviacao e sem opcao repetida."""
+    parser = argparse.ArgumentParser(
+        description="Valida a politica do handoff de release.", allow_abbrev=False
+    )
     parser.add_argument("--root", type=Path, default=Path(), help="Raiz do repositorio.")
-    return parser.parse_args(argv)
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    seen = set()
+    for token in arguments:
+        name = token.split("=", 1)[0]
+        if name.startswith("--"):
+            if name in seen:
+                raise SystemExit(f"ERRO: a opcao {name} foi informada mais de uma vez")
+            seen.add(name)
+    return parser.parse_args(arguments)
 
 
 def main(argv: list[str] | None = None) -> int:

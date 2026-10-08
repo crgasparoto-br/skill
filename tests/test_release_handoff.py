@@ -9,7 +9,15 @@ import pytest
 
 from scripts.release_handoff import build_report, load_json, markdown_report, significant
 from scripts.release_handoff import main as contract_main
-from scripts.validate_release_handoff import policy_errors, script_errors, validate_release_handoff
+from scripts.validate_release_handoff import (
+    cross_section_errors,
+    policy_errors,
+    script_errors,
+    validate_release_handoff,
+)
+from scripts.validate_release_handoff import (
+    parse_arguments as gate_arguments,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = json.loads((ROOT / "config/release-handoff.json").read_text(encoding="utf-8"))
@@ -667,3 +675,50 @@ def test_gate_handles_invalid_utf8_without_traceback(tmp_path: Path) -> None:
     (tmp_path / "config/release-handoff.json").write_bytes(b"\xff")
     errors = validate_release_handoff(tmp_path)
     assert errors, "UTF-8 invalido precisa reprovar de forma controlada"
+
+
+@pytest.mark.parametrize("padded", [" " + "d" * 40, "d" * 40 + "\n"])
+def test_padded_main_is_rejected(padded: str) -> None:
+    """Achado bloqueante B2: SHA com espaco nas pontas nao e o hexadecimal declarado."""
+    document = evidence()
+    document["main"] = padded
+    assert report_for(document)["ready"] is False
+
+
+def test_padded_declared_value_is_rejected() -> None:
+    """Achado bloqueante B2: valor declarado tambem precisa ser literal."""
+    document = evidence()
+    document["items"]["develop-sha"]["value"] = " " + DEVELOP
+    assert report_for(document)["ready"] is False
+
+
+def test_padded_source_is_rejected() -> None:
+    """Achado bloqueante B2: origem declarada tambem precisa ser literal."""
+    document = evidence()
+    document["items"]["gates"]["source"] = " local "
+    assert report_for(document)["ready"] is False
+
+
+def test_gate_cli_rejects_abbreviation_and_repetition() -> None:
+    """Achado bloqueante B1: o validador agregado tambem recusa abreviacao e repeticao."""
+    with pytest.raises(SystemExit):
+        gate_arguments(["--ro", str(ROOT)])
+    with pytest.raises(SystemExit):
+        gate_arguments(["--root", "/tmp/nao-existe", "--root", str(ROOT)])
+
+
+def test_gate_handles_invalid_utf8_in_contract(tmp_path: Path) -> None:
+    """Achado bloqueante B3: contrato ilegivel em UTF-8 precisa falhar de forma controlada."""
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_bytes(b"\xff\xfe")
+    errors = validate_release_handoff(tmp_path)
+    assert errors
+
+
+def test_policy_with_null_required_is_reported(tmp_path: Path) -> None:
+    """Ressalva: politica estruturalmente invalida nao pode gerar traceback no gate."""
+    (tmp_path / "config").mkdir()
+    policy = json.loads(json.dumps(POLICY))
+    policy["required"] = None
+    (tmp_path / "config/release-handoff.json").write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
+    assert cross_section_errors(policy) == []
