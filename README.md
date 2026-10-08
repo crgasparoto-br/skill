@@ -4,7 +4,7 @@ Coleção de skills reutilizáveis para assistentes de IA que trabalham com issu
 
 As instruções centrais estão em Markdown e seguem um formato independente de provedor. Os arquivos `agents/openai.yaml` são adaptadores opcionais para produtos compatíveis; uma IA que não reconheça esse formato pode usar diretamente cada `SKILL.md` e carregar as referências necessárias sob demanda.
 
-**Release atual:** [`0.3.0`](./VERSION) · **catálogo:** `2026-10-08.1` · **compatibilidade:** [`config/compatibility.json`](./config/compatibility.json). Para integração reproduzível, prefira uma tag `v<version>` ou um SHA imutável; `develop` é a base de desenvolvimento e só é promovida a `main` em release.
+**Release do catálogo:** [`0.3.0`](./VERSION) · **catálogo:** `2026-10-08.1` · **compatibilidade:** [`config/compatibility.json`](./config/compatibility.json). Para integração reproduzível, prefira uma tag `v<version>` ou um SHA imutável; `develop` é a base de desenvolvimento e só é promovida a `main` em release.
 
 ## Catálogo
 
