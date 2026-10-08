@@ -2,6 +2,12 @@
 
 Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A versão pública do conjunto é mantida em [`VERSION`](./VERSION). O formato segue SemVer para releases do catálogo; a versão interna de contratos permanece identificada no manifesto de compatibilidade durante a migração.
 
+## [0.3.1] - 2026-10-08
+### Added
+- bloco de conclusao em destaque no parecer de auditoria: o resultado continua na primeira linha e, imediatamente abaixo, o bloco repete o veredito, informa achados bloqueantes e recomendacoes opcionais, resume o motivo determinante e registra a liberacao de merge/release, com a decisao aparecendo uma unica vez no cabecalho.
+- quatro testes de contrato fixam a posicao, o conteudo minimo e o encerramento do bloco no template do parecer e no control plane da auditoria.
+### Changed
+- a excecao de orcamento de contexto do `auditar-issue/SKILL.md` passa a registrar a medicao atual do arquivo.
 ## [0.3.0] - 2026-10-08
 
 ### Removed
