@@ -401,3 +401,25 @@ def test_harness_version_without_literal_is_rejected(tmp_path: Path) -> None:
 def test_harness_version_module_missing_is_rejected(tmp_path: Path) -> None:
     problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
     assert problems and "ilegivel" in problems[0]
+
+
+def test_harness_version_non_literal_after_literal_is_rejected(tmp_path: Path) -> None:
+    """Atribuicao nao literal depois da literal nao pode passar: o valor efetivo seria calculado."""
+    package = tmp_path / "evals"
+    package.mkdir()
+    (package / "__init__.py").write_text(
+        'def build_version():\n    return "9.9.9"\n\n__version__ = "0.3.0"\n__version__ = build_version()\n',
+        encoding="utf-8",
+    )
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems and "literal" in problems[0]
+
+
+def test_harness_version_assigned_twice_is_rejected(tmp_path: Path) -> None:
+    package = tmp_path / "evals"
+    package.mkdir()
+    (package / "__init__.py").write_text(
+        '__version__ = "0.1.0"\n__version__ = "0.3.0"\n', encoding="utf-8"
+    )
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems and "mais de uma vez" in problems[0]
