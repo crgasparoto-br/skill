@@ -241,6 +241,10 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A vigésima segunda rodada de auditoria corrigiu o que as vinte e uma anteriores ainda não garantiam: o conteúdo anterior de cada
+destino passou a ser lido antes de preparar qualquer temporário, reversão que falha passou a ser declarada com código próprio em vez de
+silenciada, e alvo recusado deixou de restringir manifest, de modo que o manifest do diretório real apontado por link não entra na
+varredura direcionada.
 A vigésima primeira rodada de auditoria corrigiu o que as vinte anteriores ainda não garantiam: a publicação reverte o que já
 publicou quando um artefato do lote falha; a identidade da exceção precisa pertencer a uma classe declarada; o alvo tem a grafia
 normalizada antes de qualquer decisão e o rótulo publicado é canônico; toda entrada da linha de base exige motivo; e relatório externo

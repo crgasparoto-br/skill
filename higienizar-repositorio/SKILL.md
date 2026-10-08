@@ -98,7 +98,9 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - O import relativo que sobe alem do pacote do importador nao soma esse pacote ao alvo, porque somar manteria vivo um homonimo que ninguem importa.
 - A citacao de nome solto resolve contra o escopo medido, em qualquer forma de alvo: arquivo, diretorio ou varios alvos usam o conjunto medido como indice, porque homonimo fora do alvo nao torna ambigua uma citacao que dentro do alvo e unica.
 - Destinos resolvidos sao comparados entre si, e a publicacao e transacional por arquivo temporario publicado com `os.replace`: falha no meio da escrita nao deixa destino truncado, nao destroi o artefato anterior e nao deixa temporario orfao, e destino que e diretorio e recusado antes de publicar.
-- Falha ao publicar um artefato do lote reverte o que ja foi publicado, porque o relatorio e uma unidade e metade dele no disco pareceria relatorio valido.
+- Falha ao publicar um artefato do lote reverte o que ja foi publicado, porque o relatorio e uma unidade e metade dele no disco pareceria relatorio valido; reversao que tambem falha e declarada com codigo proprio, porque contrato de lote integro nao se sustenta sob falha de I/O.
+- O conteudo anterior de cada destino e lido antes de preparar qualquer temporario, e destino anterior ilegivel reprova sem deixar temporario orfao.
+- Alvo recusado nao restringe manifest nenhum: o manifest do diretorio real apontado por link de diretorio nao entra na varredura que declara o alvo como nao analisado.
 - A grafia do alvo e normalizada antes de qualquer decisao, e o rotulo publicado e canonico: `foo/../alias` e `alias`, e `foo/../../x.py` e `../x.py`.
 - A identidade da excecao precisa pertencer a uma classe declarada na politica, e toda entrada da linha de base precisa de motivo escrito.
 - Alvo direcionado que e link de diretorio e recusado no proprio inicio da caminhada, porque seguir o link mediria o diretorio real enquanto o relatorio declara o alvo como nao analisado.

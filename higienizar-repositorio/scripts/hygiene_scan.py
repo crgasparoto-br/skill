@@ -343,6 +343,12 @@ def normalized_targets(root: Path, paths: list[str] | None) -> set[str] | None:
             candidate = root / raw if not Path(raw).is_absolute() else Path(raw)
             if not candidate.resolve().is_relative_to(root.resolve()):
                 continue
+            # Alvo recusado pela caminhada não restringe manifest nenhum: resolver o link aqui traria o
+            # manifest do diretório real para dentro de uma varredura que declara o alvo como não analisado.
+            if candidate.is_symlink() and candidate.is_dir():
+                continue
+            if not candidate.exists():
+                continue
             candidate = candidate.resolve()
         except (OSError, RuntimeError):
             # Link quebrado ou em ciclo não resolve: a recusa já está no conjunto analisado, e aqui o
@@ -1572,20 +1578,22 @@ def publish_artifacts(targets: dict[str, Path], contents: dict[str, str]) -> int
     `os.replace` mantém o destino intacto até a publicação, que é o que "transacional" significa.
     """
     staged: dict[str, Path] = {}
+    # O conteúdo anterior é lido antes de preparar qualquer temporário: ler depois deixaria temporário
+    # órfão quando o destino anterior existe e não pode ser lido, e o lote precisa ser uma unidade.
+    previous: dict[str, bytes | None] = {}
     try:
         for label, target in targets.items():
             # Destino que é diretório nunca é substituído por arquivo: sem esta recusa, o `os.replace`
             # falharia depois de publicar os artefatos anteriores.
             if target.is_dir():
                 raise IsADirectoryError(21, "destino e diretorio", str(target))
+            previous[label] = target.read_bytes() if target.exists() else None
+        for label, target in targets.items():
             staged[label] = stage_artifact(target, contents[label])
     except OSError as error:
         discard_artifacts(staged)
         print(f"ERRO: falha ao gravar o relatorio: {error}", file=sys.stderr)
         return 1
-    # O conteúdo anterior fica em memória para que falha na publicação não deixe o lote pela metade: o
-    # relatório é uma unidade, e metade dele publicado pareceria relatório válido.
-    previous = {label: (target.read_bytes() if target.exists() else None) for label, target in targets.items()}
     published: list[str] = []
     try:
         for label, temporary in staged.items():
@@ -1593,22 +1601,37 @@ def publish_artifacts(targets: dict[str, Path], contents: dict[str, str]) -> int
             published.append(label)
     except OSError as error:
         discard_artifacts(staged)
-        restore_artifacts(targets, previous, published)
+        pending = restore_artifacts(targets, previous, published)
         print(f"ERRO: falha ao publicar o relatorio: {error}", file=sys.stderr)
+        if pending:
+            # Reversão que falha é declarada: silenciá-la faria o operador acreditar em lote íntegro.
+            print(
+                f"ERRO: reversao incompleta; confira o conteudo de: {', '.join(pending)}",
+                file=sys.stderr,
+            )
+            return 2
         return 1
     return 0
 
 
-def restore_artifacts(targets: dict[str, Path], previous: dict[str, bytes | None], published: list[str]) -> None:
-    """Desfaz o que já foi publicado, devolvendo o conteúdo anterior ou removendo o artefato novo."""
+def restore_artifacts(
+    targets: dict[str, Path], previous: dict[str, bytes | None], published: list[str]
+) -> list[str]:
+    """Desfaz o que já foi publicado e devolve os destinos cuja reversão falhou.
+
+    Reversão que falha não pode ser silenciada: o operador precisa saber que o destino pode estar
+    parcialmente publicado, porque o contrato de lote íntegro não se sustenta sob falha de I/O.
+    """
+    pending: list[str] = []
     for label in published:
         try:
             if previous[label] is None:
                 targets[label].unlink(missing_ok=True)
             else:
                 targets[label].write_bytes(previous[label])
-        except OSError:  # pragma: no cover - reversão nunca derruba a execução
-            continue
+        except OSError:
+            pending.append(str(targets[label]))
+    return pending
 
 
 def discard_artifacts(staged: dict[str, Path]) -> None:

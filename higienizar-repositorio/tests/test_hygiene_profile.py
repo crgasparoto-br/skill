@@ -3277,3 +3277,75 @@ def test_equivalent_target_spelling_gets_the_same_refusal(tmp_path: Path) -> Non
     report, _ = hygiene_scan.build_report(tree, policy, ["foo/../pkg/alias"])
     assert [entry["path"] for entry in report["not_analyzed"]] == ["pkg/alias"]
     assert "link simbolico para diretorio" in report["not_analyzed"][0]["reason"]
+
+
+def test_failed_rollback_is_declared_and_not_silent(tmp_path: Path) -> None:
+    """Achado bloqueante: reversão que falhava era silenciada e deixava o lote parcialmente publicado."""
+    first = tmp_path / "a"
+    second = tmp_path / "b"
+    first.write_text("OLD-A", encoding="utf-8")
+    second.write_text("OLD-B", encoding="utf-8")
+    original_replace, original_write = Path.replace, Path.write_bytes
+    calls: list[str] = []
+
+    def failing_replace(self: Path, target: Path) -> Path:
+        calls.append(self.name)
+        if len(calls) == 2:
+            raise OSError("falha simulada no segundo destino")
+        return original_replace(self, target)
+
+    def failing_restore(self: Path, data: bytes) -> int:
+        if self == first:
+            raise OSError("falha simulada durante a reversao")
+        return original_write(self, data)
+
+    Path.replace, Path.write_bytes = failing_replace, failing_restore
+    try:
+        code = hygiene_scan.publish_artifacts({"a": first, "b": second}, {"a": "NEW-A", "b": "NEW-B"})
+    finally:
+        Path.replace, Path.write_bytes = original_replace, original_write
+    # Reversão incompleta tem código próprio: o operador precisa saber que o destino pode estar parcial.
+    assert code == 2
+    assert sorted(item.name for item in tmp_path.iterdir()) == ["a", "b"]
+
+
+def test_unreadable_previous_artifact_fails_without_temporary(tmp_path: Path) -> None:
+    """Achado bloqueante: destino anterior ilegível deixava temporários órfãos e exceção crua."""
+    first = tmp_path / "a"
+    second = tmp_path / "b"
+    first.write_text("OLD-A", encoding="utf-8")
+    second.write_text("OLD-B", encoding="utf-8")
+    first.chmod(0)
+    try:
+        code = hygiene_scan.publish_artifacts({"a": first, "b": second}, {"a": "NEW-A", "b": "NEW-B"})
+    finally:
+        first.chmod(0o600)
+    assert code == 1
+    assert sorted(item.name for item in tmp_path.iterdir()) == ["a", "b"]
+    assert first.read_text(encoding="utf-8") == "OLD-A"
+
+
+def test_refused_link_target_does_not_contribute_manifests(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo recusado por ser link de diretório injetava manifest do diretório real."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/consumer.py": "X = 1\n",
+            "other/orphan.py": "VALUE = 1\n",
+            "other/requirements.txt": "requests>=2\n",
+            "README.md": "Use pkg/consumer.py\n",
+        },
+        policy_variant(accepted=[]),
+    )
+    (tree / "pkg" / "alias").symlink_to(tree / "other", target_is_directory=True)
+    policy = hygiene_scan.load_policy(tree)
+    report, problems = hygiene_scan.build_report(tree, policy, ["foo/../pkg/alias"])
+    assert problems == []
+    assert report["analyzed"] == 0
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["pkg/alias"]
+    assert findings_of(report, "unused-dependency") == []
+    # A varredura completa continua medindo o manifest real, que está na árvore.
+    complete, _ = hygiene_scan.build_report(tree, policy)
+    assert [entry["location"] for entry in findings_of(complete, "unused-dependency")] == [
+        "other/requirements.txt::requests"
+    ]
