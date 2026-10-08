@@ -72,6 +72,63 @@ def selection_case_errors(case: dict[str, Any]) -> list[str]:
     return []
 
 
+FORBIDDEN_MODULE_CALLS = frozenset(
+    {"globals", "locals", "vars", "exec", "eval", "compile", "__import__", "setattr", "delattr"}
+)
+
+
+def _called_names(tree: ast.Module) -> set[str]:
+    """Nomes chamados diretamente no modulo, que poderiam alterar o namespace auditado."""
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            names.add(node.func.id)
+    return names
+
+
+def _wildcard_import(tree: ast.Module) -> bool:
+    return any(
+        isinstance(node, ast.ImportFrom) and any(alias.name == "*" for alias in node.names)
+        for node in ast.walk(tree)
+    )
+
+
+def _indirect_write(tree: ast.Module) -> str:
+    """Alvo de escrita que nao e nome simples, como atributo, subscrito ou cadeia.
+
+    Escrever em `sys.modules[__name__].__version__` ou em `globals()["__version__"]` muda o valor
+    efetivo sem que o inventario de nomes veja uma ligacao nova.
+    """
+    for node in ast.walk(tree):
+        targets: list[ast.AST] = []
+        if isinstance(node, ast.Assign):
+            targets = list(node.targets)
+        elif isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.NamedExpr)):
+            targets = [node.target]
+        elif isinstance(node, ast.Delete):
+            targets = list(node.targets)
+        for target in targets:
+            inner = target.value if isinstance(target, ast.Starred) else target
+            if isinstance(inner, (ast.Attribute, ast.Subscript)):
+                yield_names = ast.unparse(inner)
+                return yield_names
+    return ""
+
+
+def _mutated_names(tree: ast.Module) -> list[str]:
+    """Nomes auditados usados como base de atributo, como em `__all__.append(...)`."""
+    names = []
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id in {"__all__", "__version__"}
+            and node.value.id not in names
+        ):
+            names.append(node.value.id)
+    return names
+
+
 def _bound_names(target: ast.AST) -> list[str]:
     """Nomes ligados por um alvo de atribuicao, em qualquer forma de desempacotamento."""
     if isinstance(target, ast.Name):
@@ -124,6 +181,8 @@ def _binds(node: ast.AST) -> list[str]:
         return [node.name] if node.name else []
     if isinstance(node, ast.MatchMapping):
         return [node.rest] if node.rest else []
+    if isinstance(node, ast.TypeAlias):
+        return [node.name.id]
     return []
 
 
@@ -141,6 +200,19 @@ def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
         tree = ast.parse(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, SyntaxError) as exc:
         return [f"evals/__init__.py ilegivel: {exc}"]
+
+    forbidden = sorted(set(FORBIDDEN_MODULE_CALLS) & _called_names(tree))
+    if forbidden:
+        return [f"evals/__init__.py chama {', '.join(forbidden)}, o que permite religar a versao"]
+    wildcard = _wildcard_import(tree)
+    if wildcard:
+        return ["evals/__init__.py usa importacao coringa, que pode reexportar outro __version__"]
+    indirect = _indirect_write(tree)
+    if indirect:
+        return [f"evals/__init__.py escreve fora de nome simples: {indirect}"]
+    mutated = _mutated_names(tree)
+    if mutated:
+        return [f"evals/__init__.py manipula {', '.join(mutated)} por atributo ou chamada"]
 
     version_nodes = [node for node in ast.walk(tree) if "__version__" in _binds(node)]
     if not version_nodes:
@@ -197,7 +269,7 @@ def validate_v030_002_matrix(root: Path, harness: Any = None) -> list[str]:
         cases = [
             case for _, case in harness.discover_cases(root) if str(case["case_id"]).startswith("V030-002-")
         ]
-    except Exception as exc:  # o harness auditado pode falhar de qualquer forma
+    except BaseException as exc:  # o harness auditado pode falhar de qualquer forma
         return [f"harness de avaliacoes indisponivel: {exc}"]
 
     errors: list[str] = []
@@ -268,7 +340,7 @@ def validate_evals(root: Path) -> list[str]:
 
     try:
         harness = harness_module()
-    except Exception as exc:  # o pacote auditado pode falhar ao importar
+    except BaseException as exc:  # o pacote auditado pode falhar de qualquer forma
         return [f"evals nao pode ser importado: {exc}"]
 
     errors: list[str] = []
@@ -279,14 +351,14 @@ def validate_evals(root: Path) -> list[str]:
             target = root / manifest.get(key, "__missing__")
             if not target.is_file():
                 errors.append(f"manifest target ausente: {manifest.get(key)!r}")
-    except harness.HarnessError as exc:
+    except BaseException as exc:  # o harness auditado pode falhar de qualquer forma
         errors.append(str(exc))
         return errors
 
     errors.extend(validate_v030_002_matrix(root, harness))
     try:
         validation = harness.run_evaluations(root, validate_only=True)
-    except harness.HarnessError as exc:
+    except BaseException as exc:  # o harness auditado pode falhar de qualquer forma
         return [*errors, str(exc)]
     if validation["summary"]["total"] < 1:
         errors.append("nenhum caso de avaliação validado")
@@ -294,7 +366,7 @@ def validate_evals(root: Path) -> list[str]:
     fixture_dir = root / "evals" / "fixtures" / "results"
     try:
         replay = harness.run_evaluations(root, results_dir=fixture_dir)
-    except harness.HarnessError as exc:
+    except BaseException as exc:  # o harness auditado pode falhar de qualquer forma
         errors.append(str(exc))
         return errors
     if replay["summary"]["failed"] or replay["summary"]["invalid"]:

@@ -579,3 +579,47 @@ def test_broken_package_import_is_reported_readably(tmp_path: Path) -> None:
     assert resultado.returncode == 1
     assert "nao pode ser importado" in resultado.stdout
     assert "Traceback" not in resultado.stderr
+
+
+@pytest.mark.parametrize(
+    "sufixo",
+    [
+        "type __version__ = str\n",
+        "type __all__ = list[str]\n",
+        'globals()["__version__"] = "9.9.9"\n',
+        'locals()["__version__"] = "9.9.9"\n',
+        'exec("__version__ = \'9.9.9\'")\n',
+        'eval("1")\n',
+        "from os import *\n",
+        "__all__.append(42)\n",
+        "__all__.remove(\"__version__\")\n",
+        '__all__[0] = "outro"\n',
+        'import sys\nsys.modules[__name__].__version__ = "9.9.9"\n',
+        'setattr(object(), "x", 1)\n',
+        '__version__ = "0.3.0"\n',
+    ],
+)
+def test_harness_version_indirect_and_dynamic_forms_are_rejected(tmp_path: Path, sufixo: str) -> None:
+    """Alias de tipo, escrita indireta, import coringa e mutacao de __all__ precisam reprovar."""
+    root = _package(tmp_path, '__all__ = ["__version__"]\n__version__ = "0.3.0"\n' + sufixo)
+    assert harness_version_errors(root, {"harness_version": "0.3.0"})
+
+
+def test_base_exception_in_package_is_reported_readably(tmp_path: Path) -> None:
+    """Falha que nao e `Exception` tambem vira reprovacao legivel, sem traceback."""
+    copia = tmp_path / "copia"
+    shutil.copytree(ROOT, copia, ignore=shutil.ignore_patterns(".git", ".ruff_cache", "__pycache__"))
+    (copia / "evals" / "__init__.py").write_text(
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nraise BaseException("FALHA_BASE")\n',
+        encoding="utf-8",
+    )
+    resultado = subprocess.run(
+        [sys.executable, "scripts/validate_evals.py", "--root", "."],
+        cwd=copia,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert resultado.returncode == 1
+    assert "nao pode ser importado" in resultado.stdout
+    assert "Traceback" not in resultado.stderr
