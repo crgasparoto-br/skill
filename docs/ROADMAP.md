@@ -241,6 +241,9 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A trigésima segunda rodada de auditoria corrigiu o que as trinta e uma anteriores ainda não garantiam: alvo de `except` conta como
+ligação, `__all__` anotado é estático e `__all__` montado por chamada é dinâmico, o wildcard conservador não é estreitado pela sombra
+direta, e a ligação anterior ao primeiro import do `__init__` bloqueia o submódulo no reexport.
 A trigésima primeira rodada de auditoria corrigiu o que as trinta anteriores ainda não garantiam: `__all__` dinâmico faz o wildcard
 contar como alcançado, a ordem de ligação só bloqueia quando precede qualquer import do `__init__`, o relativo acima do pacote não conta
 como import do próprio pacote, e a forma irmã só entra quando o nome não existe a partir da raiz.

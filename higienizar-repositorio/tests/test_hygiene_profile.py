@@ -3972,3 +3972,69 @@ def test_foreign_homonym_is_not_kept_alive(tmp_path: Path) -> None:
     assert "pkg/other/target.py" in [
         item["path"] for item in findings_of(scan(tree), "dead-module")
     ]
+
+
+def test_except_target_shadows_submodule(tmp_path: Path) -> None:
+    """Achado bloqueante: o alvo de `except` liga nome no nível do módulo e sombreia o submódulo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "try:\n    pass\nexcept Exception as target:\n    pass\n",
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import target\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" in [item["path"] for item in findings_of(scan(tree), "dead-module")]
+
+
+def test_all_annotated_and_dynamic_call(tmp_path: Path) -> None:
+    """Achados bloqueantes: `__all__` anotado é estático, e `__all__` montado por chamada é dinâmico."""
+    annotated = make_tree(
+        tmp_path / "anotado",
+        {
+            "pkg/__init__.py": '__all__: list[str] = ["target"]\n',
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import *\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" not in [item["path"] for item in findings_of(scan(annotated), "dead-module")]
+    dynamic = make_tree(
+        tmp_path / "dinamico",
+        {
+            "pkg/__init__.py": "def make_all():\n    return ['target']\n__all__ = make_all()\n",
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import *\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" not in [item["path"] for item in findings_of(scan(dynamic), "dead-module")]
+
+
+def test_dynamic_all_survives_direct_shadow(tmp_path: Path) -> None:
+    """Achado bloqueante: o wildcard conservador não é estreitado pela sombra direta."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": '__all__ = []\n__all__.append("target")\ntarget = 1\n',
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import *\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" not in [item["path"] for item in findings_of(scan(tree), "dead-module")]
+
+
+def test_binding_before_reexport_blocks_submodule(tmp_path: Path) -> None:
+    """Achado bloqueante: `from . import target` com `target` já ligado não executa o submódulo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "target = 1\nfrom . import target\n",
+            "pkg/target.py": "VALUE = 9\n",
+            "consumer.py": "from pkg import target\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" in [item["path"] for item in findings_of(scan(tree), "dead-module")]

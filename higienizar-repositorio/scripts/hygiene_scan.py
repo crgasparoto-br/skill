@@ -1075,6 +1075,8 @@ def bound_name(node: ast.AST) -> set[str]:
         return {name for target in node.targets for name in bound_targets(target)}
     if isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.NamedExpr)):
         return bound_targets(node.target)
+    if isinstance(node, ast.ExceptHandler):
+        return {node.name} if node.name else set()
     if isinstance(node, (ast.MatchAs, ast.MatchStar)):
         return {node.name} if node.name else set()
     if isinstance(node, ast.MatchMapping):
@@ -1086,19 +1088,6 @@ def bound_name(node: ast.AST) -> set[str]:
     return set()
 
 
-def module_level_names(tree: ast.Module) -> set[str]:
-    """Nomes ligados no nível do módulo, inclusive dentro de `if`, `try`, `for` e `with`.
-
-    `from pkg.sub import target` alcança o atributo `target` quando o `__init__` de `pkg.sub` o define, e
-    não o submódulo `pkg/sub/target.py`. Sem esta leitura, o submódulo ficaria vivo sem importador. O
-    alvo de `for` e de `with` liga nome do mesmo modo que a atribuição simples.
-    """
-    names: set[str] = set()
-    for node in module_level_nodes(tree):
-        names |= bound_name(node)
-    return names
-
-
 def declared_all(tree: ast.Module) -> set[str] | None:
     """Nomes declarados em `__all__`, ou `None` quando a declaração não é resolvida estaticamente.
 
@@ -1106,25 +1095,33 @@ def declared_all(tree: ast.Module) -> set[str] | None:
     tratado conservadoramente: sem saber o conteúdo, nenhum submódulo do pacote pode ser acusado.
     """
     declarations = 0
-    names: set[str] = set()
+    names: set[str] | None = set()
     for node in module_level_nodes(tree):
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets
-        ):
-            declarations += 1
-            value = node.value
-            if isinstance(value, (ast.List, ast.Tuple, ast.Set)):
-                names = {
-                    element.value
-                    for element in value.elts
-                    if isinstance(element, ast.Constant) and isinstance(element.value, str)
-                }
-        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
-            if node.target.id == "__all__":
+        if isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
+            declarations += 1 if node.target.id == "__all__" else 0
+            continue
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            owner = node.func.value
+            if isinstance(owner, ast.Name) and owner.id == "__all__":
                 declarations += 1
-        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-            if isinstance(node.func.value, ast.Name) and node.func.value.id == "__all__":
-                declarations += 1
+            continue
+        annotated = isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+        assigned = isinstance(node, ast.Assign) and any(
+            isinstance(item, ast.Name) and item.id == "__all__" for item in node.targets
+        )
+        if not (annotated and node.target.id == "__all__") and not assigned:
+            continue
+        declarations += 1
+        value = node.value
+        if isinstance(value, (ast.List, ast.Tuple, ast.Set)):
+            names = {
+                element.value
+                for element in value.elts
+                if isinstance(element, ast.Constant) and isinstance(element.value, str)
+            }
+        elif value is not None:
+            # Declaração única que não é literal é montagem dinâmica: o conteúdo é desconhecido.
+            names = None
     if not declarations:
         return set()
     return names if declarations == 1 else None
@@ -1201,15 +1198,17 @@ def submodule_reachable(
         return True
     # Atributo criado pelo próprio import do submódulo não sombreia: `from . import target` no `__init__`
     # executa `pkg/target.py`, e tratá-lo como atributo simples acusaria módulo vivo.
-    if imports_submodule(init, path, name):
+    binding = first_binding_line(init, name)
+    if not binding:
         return True
-    if name not in module_level_names(init):
-        return True
-    # A ordem de execução fica fora da precisão declarada: só bloqueia quando a ligação aparece antes de
-    # qualquer import do `__init__`. Depois de um import, o submódulo pode ter sido carregado durante um
-    # ciclo, e acusá-lo seria o erro mais caro.
     first_import = first_import_line(init)
-    return bool(first_import) and first_binding_line(init, name) > first_import
+    # A ligação anterior ao primeiro import do `__init__` bloqueia: `from . import target` com `target` já
+    # ligado encontra o atributo e não executa o submódulo. Com a ligação depois de um import, o `from`
+    # pode ter carregado o submódulo durante um ciclo, e acusá-lo seria o erro mais caro.
+    shadow = not first_import or binding < first_import
+    if imports_submodule(init, path, name):
+        return not shadow
+    return bool(first_import) and binding > first_import
 
 
 def wildcard_names(prefix: list[str], dotted: dict[str, ast.Module]) -> list[str]:
@@ -1241,10 +1240,14 @@ def register_from_aliases(
     """Registra os nomes importados por `from ... import ...`, só quando alcançam submódulo de verdade."""
     for alias in node.names:
         for prefix in prefixes:
-            names = wildcard_names(prefix, dotted) if alias.name == "*" else [alias.name]
-            for name in names:
-                if submodule_reachable(prefix, name, dotted, packages):
+            if alias.name == "*":
+                # Wildcard conservador: quando o `__all__` é dinâmico, o contrato promete que nenhum
+                # submódulo do pacote é acusado, e por isso a sombra direta não estreita a lista.
+                for name in wildcard_names(prefix, dotted):
                     resolve_import(local, [], [*prefix, name], dotted, packages)
+                continue
+            if submodule_reachable(prefix, alias.name, dotted, packages):
+                resolve_import(local, [], [*prefix, alias.name], dotted, packages)
 
 
 def imported_modules(modules: dict[str, ast.Module]) -> dict[str, set[str]]:
