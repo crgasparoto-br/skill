@@ -35,6 +35,24 @@ Alterar apenas a data de catalogação ou uma implementação interna não autor
 
 A criação da tag e da release é deliberadamente posterior ao merge; uma pull request não cria uma release imutável.
 
+## Limites declarados da v0.3.0
+
+A promoção da v0.3.0 foi decidida pelo responsável com cinco critérios de aceite declarados como abertos, para que
+a publicação não dependesse de trabalho fora do escopo das entregas concluídas. A mesma lista está no
+`docs/ROADMAP.md`, e as notas de release repetem os cinco itens:
+
+- **licença:** não escolhida, por decisão explícita do responsável neste momento; a ausência é intencional e
+  rastreável;
+- **varredura de segredos:** sem decisão registrada; depende de configuração da conta, não do repositório;
+- **revisão de dependências em pull request:** não habilitada; existem o gate offline de lockfile e a auditoria de
+  digest fora da sequência obrigatória;
+- **matriz de Python:** a suíte roda em uma única versão do interpretador;
+- **contrato `transitional`:** a compatibilidade segue mapeada para a linhagem `2026-08-20.3` sem inventário e plano
+  de migração amplos.
+
+Os casos de prompt injection não estão entre os itens abertos: a matriz `V030-002` os cobre em
+`evals/cases/V030-002-authority-001.json`, `-002.json` e `-004.json`.
+
 ## Handoff de release
 
 Promover `develop` a `main` segue um contrato verificável, e não uma decisão de memória. `scripts/release_handoff.py`
