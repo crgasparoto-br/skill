@@ -50,7 +50,7 @@ except ImportError:  # pragma: no cover - package import fallback
     from .validate_workflow_classification import validate_workflow_classification
 
 ROOT = Path(__file__).resolve().parents[1]
-SYSTEM_VERSION = "2026-10-08.1"
+SYSTEM_VERSION = "2026-10-08.2"
 GLOBAL_FILES = {
     "docs/SKILL_SYSTEM_SPEC.md",
     "docs/SECURITY.md",
