@@ -3827,3 +3827,65 @@ def test_wildcard_import_follows_declared_all(tmp_path: Path) -> None:
     assert "pkg/target.py" in [
         item["path"] for item in findings_of(scan(without_all), "dead-module")
     ]
+
+
+def test_package_takes_precedence_over_homonym_module(tmp_path: Path) -> None:
+    """Achado bloqueante: `pkg/__init__.py` tem precedência, e o módulo homônimo fica sem importador."""
+    cases = (
+        (
+            {"pkg.py": "VALUE = 1\n", "pkg/__init__.py": "VALUE = 2\n", "consumer.py": "import pkg\n"},
+            "pkg.py",
+        ),
+        (
+            {
+                "pkg/__init__.py": "",
+                "pkg/sub.py": "VALUE = 1\n",
+                "pkg/sub/__init__.py": "VALUE = 2\n",
+                "consumer.py": "import pkg.sub\n",
+            },
+            "pkg/sub.py",
+        ),
+    )
+    for index, (files, expected) in enumerate(cases):
+        tree = make_tree(tmp_path / f"caso{index}", {**files, "README.md": "sem invocacao\n"})
+        assert expected in [item["path"] for item in findings_of(scan(tree), "dead-module")]
+
+
+def test_own_package_import_and_foreign_homonym(tmp_path: Path) -> None:
+    """Achados bloqueantes: import do próprio pacote alcança o submódulo, homônimo de outro pacote não."""
+    own = make_tree(
+        tmp_path / "proprio",
+        {
+            "pkg/__init__.py": "from pkg import target\n",
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "import pkg\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" not in [item["path"] for item in findings_of(scan(own), "dead-module")]
+    foreign = make_tree(
+        tmp_path / "estranho",
+        {
+            "pkg/__init__.py": "import other.target as target\n",
+            "pkg/target.py": "VALUE = 1\n",
+            "other/__init__.py": "",
+            "other/target.py": "VALUE = 3\n",
+            "consumer.py": "from pkg import target\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" in [item["path"] for item in findings_of(scan(foreign), "dead-module")]
+
+
+def test_match_capture_shadows_submodule(tmp_path: Path) -> None:
+    """Achado bloqueante: captura de `match` liga atributo do módulo e sombreia o submódulo."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/__init__.py": "value = 1\nmatch value:\n    case target:\n        pass\n",
+            "pkg/target.py": "VALUE = 1\n",
+            "consumer.py": "from pkg import target\n",
+            "README.md": "sem invocacao\n",
+        },
+    )
+    assert "pkg/target.py" in [item["path"] for item in findings_of(scan(tree), "dead-module")]

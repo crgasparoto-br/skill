@@ -43,7 +43,7 @@
     "dead-module": {
       "state": "gated",
       "entry_points": [],
-      "limits": "Não vê referência montada em tempo de execução por nome fora de arquivo texto, nem plugin carregado por convenção de diretório. Diretório de teste fica fora quando exclude_tests é declarado, e arquivo de pacote é ponto de entrada quando package_init_is_entry é declarado: teste é alcançado pelo executor e pacote é alcançado pelo import de quem usa o pacote, não por citação no próprio repositório.",
+      "limits": "Não vê referência montada em tempo de execução por nome fora de arquivo texto, nem plugin carregado por convenção de diretório. Diretório de teste fica fora quando exclude_tests é declarado, e arquivo de pacote é ponto de entrada quando package_init_is_entry é declarado: teste é alcançado pelo executor e pacote é alcançado pelo import de quem usa o pacote, não por citação no próprio repositório. Não resolve semântica dinâmica: `__all__` reatribuído ou montado em tempo de execução, ordem de ligação de nome antes do import e import condicional contam como alcançados, e por isso a classe erra para não acusar módulo vivo.",
       "exclude_tests": true,
       "package_init_is_entry": true
     },

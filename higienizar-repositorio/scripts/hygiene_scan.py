@@ -1053,6 +1053,10 @@ def bound_name(node: ast.AST) -> set[str]:
         return {name for target in node.targets for name in bound_targets(target)}
     if isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.NamedExpr)):
         return bound_targets(node.target)
+    if isinstance(node, (ast.MatchAs, ast.MatchStar)):
+        return {node.name} if node.name else set()
+    if isinstance(node, ast.MatchMapping):
+        return {node.rest} if node.rest else set()
     if isinstance(node, ast.Import):
         return {alias.asname or alias.name.split(".")[0] for alias in node.names}
     if isinstance(node, ast.ImportFrom):
@@ -1092,17 +1096,25 @@ def declared_all(tree: ast.Module) -> set[str]:
     return set()
 
 
-def imports_submodule(tree: ast.Module, name: str) -> bool:
-    """O módulo importa `name` como módulo, e não como atributo vindo de outro módulo?"""
+def imports_submodule(tree: ast.Module, package: str, name: str) -> bool:
+    """O módulo importa `package.name` como módulo, e não um homônimo vindo de outro pacote?
+
+    Só valem as formas que carregam o submódulo do próprio pacote: `from . import name`, `from .name import ...`,
+    `from package import name` e `import package.name`. `import outro.name as name` liga o atributo sem executar
+    `package/name.py`, e por isso não conta.
+    """
     for node in module_level_nodes(tree):
         if isinstance(node, ast.ImportFrom):
             imported = {alias.name for alias in node.names}
-            if node.module == name or (node.module is None and name in imported):
+            relative = node.module is None and name in imported
+            own_module = node.module == name and node.level >= 1
+            own_package = node.module == package and name in imported
+            if relative or own_module or own_package:
                 return True
-        elif isinstance(node, ast.Import) and any(
-            alias.name.split(".")[-1] == name for alias in node.names
-        ):
-            return True
+        elif isinstance(node, ast.Import):
+            full = f"{package}.{name}" if package else name
+            if any(alias.name == full or alias.name.startswith(f"{full}.") for alias in node.names):
+                return True
     return False
 
 
@@ -1135,7 +1147,7 @@ def submodule_reachable(
         return True
     # Atributo criado pelo próprio import do submódulo não sombreia: `from . import target` no `__init__`
     # executa `pkg/target.py`, e tratá-lo como atributo simples acusaria módulo vivo.
-    if imports_submodule(init, name):
+    if imports_submodule(init, path, name):
         return True
     return name not in module_level_names(init)
 
@@ -1265,6 +1277,10 @@ def detect_dead_modules(
         # de inicialização do pacote, e comparar só `pkg.__init__` acusaria módulo morto em pacote normal.
         package = dotted if rel.endswith("__init__.py") else None
         others = imported_by_others(per_module, package if package is not None else dotted)
+        # `pkg/__init__.py` tem precedência sobre `pkg.py` no mesmo diretório: quem importa `pkg` alcança o
+        # pacote, e não o módulo homônimo, que fica sem importador.
+        if others and f"{rel[:-3]}/__init__.py" in modules:
+            others = set()
         if dotted in others or (
             package is not None
             and any(name == package or name.startswith(f"{package}.") for name in others)
