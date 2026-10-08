@@ -25,7 +25,7 @@ MEANINGFUL_CATEGORIES = frozenset({"L", "N"})
 # (`U+115F`, `U+1160`, `U+3164`, `U+FFA0`), preenchedores de hieroglifo egipcio (`U+13441`, `U+13442`),
 # braille em branco (`U+2800`), sinal de multiplicacao invisivel (`U+2062` a `U+2064`), separador de
 # palavra invisivel (`U+2060`), espaco estreito sem quebra (`U+202F`) e marca de ordem de byte (`U+FEFF`).
-DECLARED_CATEGORIES = frozenset({"L", "N", "P", "Zs"})
+DECLARED_CATEGORIES = frozenset({"L", "N", "P"})
 MINIMUM_TEXT = 2
 MINIMUM_DISTINCT = 2
 BLANK_CHARACTERS = frozenset(
@@ -201,6 +201,17 @@ def encodable(text: str) -> bool:
     return True
 
 
+def allowed_character(character: str) -> bool:
+    """Caractere permitido em texto declarado: letra, numero, pontuacao ou espaco simples.
+
+    `L`, `N` e `P` sao familias de categorias, enquanto o espaco simples e um caractere exato. Comparar so
+    a familia descartaria o espaco legitimo, e aceitar toda a familia `Zs` aceitaria espaco nao quebravel e
+    espaco ideografico, que passam por texto normal sem serem o separador comum.
+    """
+    category = unicodedata.category(character)
+    return category[0] in DECLARED_CATEGORIES or character == " "
+
+
 def visible_problem(text: str) -> str:
     """Descreve por que o texto nao serve como evidencia, ou devolve vazio quando serve.
 
@@ -217,7 +228,7 @@ def visible_problem(text: str) -> str:
         return "tem caractere nao codificavel em UTF-8"
     if any(character in BLANK_CHARACTERS for character in text):
         return "contem preenchedor"
-    if any(unicodedata.category(character)[0] not in DECLARED_CATEGORIES for character in text):
+    if any(not allowed_character(character) for character in text):
         return "contem caractere fora de letra, numero, pontuacao e espaco"
     if not any(unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES for character in text):
         return "nao contem letra nem digito"
@@ -399,7 +410,7 @@ def resolved_path(path: Path, label: str) -> Path:
     """Resolve o caminho, recusando link ciclico de forma controlada."""
     try:
         return path.resolve()
-    except (OSError, RuntimeError) as error:
+    except (OSError, RuntimeError, UnicodeEncodeError, ValueError) as error:
         raise SystemExit(f"ERRO: {label} nao pode ser resolvido: {error}") from error
 
 

@@ -120,6 +120,11 @@ def authority_errors(policy: dict) -> list[str]:
     return errors
 
 
+def safe_text(text: str) -> str:
+    """Texto pronto para a saida padrao: caractere nao codificavel vira escape visivel."""
+    return text.encode("utf-8", "backslashreplace").decode("utf-8")
+
+
 def encodable(text: str) -> bool:
     """Texto que nao pode ser codificado em UTF-8 nao serve como identificador."""
     try:
@@ -389,11 +394,15 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """Valida politica e garantias do contrato, devolvendo 0 quando tudo passa."""
     arguments = parse_arguments(argv)
-    root = arguments.root.resolve()
+    try:
+        root = arguments.root.resolve()
+    except (OSError, RuntimeError, UnicodeEncodeError, ValueError) as error:
+        print(f"ERRO: a raiz nao pode ser resolvida: {error}")
+        return 1
     errors = validate_release_handoff(root)
     if errors:
         for error in errors:
-            print(f"ERRO: {error}")
+            print(safe_text(f"ERRO: {error}"))
         print(f"Handoff de release invalido: {len(errors)} erro(s).")
         return 1
     required = len(load_object(root / POLICY_RELATIVE).get("required", []))

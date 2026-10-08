@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.release_handoff import build_report, load_json, markdown_report, significant
+from scripts.release_handoff import build_report, load_json, markdown_report, significant, visible_problem
 from scripts.release_handoff import main as contract_main
 from scripts.release_handoff import parse_arguments as contract_arguments
 from scripts.validate_release_handoff import (
@@ -17,6 +17,9 @@ from scripts.validate_release_handoff import (
     policy_errors,
     script_errors,
     validate_release_handoff,
+)
+from scripts.validate_release_handoff import (
+    main as gate_main,
 )
 from scripts.validate_release_handoff import (
     parse_arguments as gate_arguments,
@@ -830,3 +833,51 @@ def test_handoff_artifacts_survive_the_refusal(tmp_path: Path) -> None:
              "--report", str(ROOT / "config/release-handoff.json")]
         )
     assert (ROOT / "config/release-handoff.json").read_bytes() == before
+
+
+def test_report_path_with_surrogate_fails_closed(tmp_path: Path) -> None:
+    """Achado bloqueante: caminho de relatorio nao codificavel nao pode derrubar o contrato."""
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(
+            ["--root", str(ROOT), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN,
+             "--report", str(tmp_path / "\ud800")]
+        )
+
+
+def test_gate_root_with_symlink_cycle_fails_closed(tmp_path: Path) -> None:
+    """Achado bloqueante: ciclo de links na raiz do gate precisa de recusa controlada."""
+    (tmp_path / "a").symlink_to(tmp_path / "b")
+    (tmp_path / "b").symlink_to(tmp_path / "a")
+    assert gate_main(["--root", str(tmp_path / "a")]) == 1
+
+
+def test_repeated_surrogate_identifier_keeps_gate_output_readable(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+    """Achado bloqueante: identificador invalido repetido nao pode quebrar a saida do gate."""
+    (tmp_path / "config").mkdir()
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts/release_handoff.py").write_text(
+        (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    policy = json.loads(json.dumps(POLICY))
+    policy["required"][0]["id"] = "\ud800"
+    policy["optional"][0]["id"] = "\ud800"
+    (tmp_path / "config/release-handoff.json").write_text(
+        json.dumps(policy, ensure_ascii=True), encoding="utf-8"
+    )
+    assert gate_main(["--root", str(tmp_path)]) == 1
+    assert "\\ud800" in capsys.readouterr().out
+
+
+def test_plain_space_inside_declared_text_is_accepted() -> None:
+    """Ressalva: o separador comum no meio do texto declarado e legitimo."""
+    assert visible_problem("a b") == ""
+    assert visible_problem("sim, com ressalva") == ""
+    assert visible_problem("  ok") == "tem espaco nas pontas"
+
+
+@pytest.mark.parametrize("character", ["\u00a0", "\u3000", "\u200b", "\ud800"])
+def test_exotic_spaces_and_invisibles_are_not_declared_text(character: str) -> None:
+    """Ressalva: aceitar o espaco comum nao pode abrir a familia inteira de separadores."""
+    assert visible_problem(f"a{character}b") != ""
