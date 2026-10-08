@@ -44,7 +44,7 @@
       "reason": "Referência do certificado de handoff, com uma linha que enumera os campos obrigatórios. Dividir a enumeração é melhoria editorial fora do escopo desta entrega."
     },
     "higienizar-repositorio/references/global-hygiene-profile.md": {
-      "max_bytes": 21527,
+      "max_bytes": 21532,
       "reason": "Referencia do perfil de higienizacao global, que declara o que cada classe mede, o que nao ve, os limites e o contrato da politica. Cresceu com as precisoes de normalizacao, cobertura, manifest e supressor declarativo exigidas pelas rodadas de auditoria; reduzir exige mover conteudo para referencia carregada sob demanda, o que e entrega propria."
     }
   }

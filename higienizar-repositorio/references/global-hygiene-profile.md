@@ -78,7 +78,7 @@ Classe `reported` existe para dívida estrutural pré-existente, como complexida
 - contagem acima da linha de base é dívida nova e reprova;
 - contagem abaixo é linha de base folgada e também reprova, porque deixa de medir o que já foi corrigido.
 
-Reduzir a linha de base registra progresso de forma verificável e não exige justificativa: a entrada pode ser declarada só com o valor. Aumentar exige entrada nova na história declarada, com motivo escrito, e a linha de base corrente precisa ser o último valor dessa história:
+Toda medição da linha de base registra progresso de forma verificável e exige motivo escrito, inclusive a redução: valor sem motivo não é conferível por quem audita, e a história é a evidência da medição. A linha de base corrente precisa ser o último valor dessa história:
 
 ```json
 "baseline_history": [

@@ -354,11 +354,13 @@ def normalized_targets(root: Path, paths: list[str] | None) -> set[str] | None:
             candidate = root / raw if not Path(raw).is_absolute() else Path(raw)
             if not candidate.resolve().is_relative_to(root.resolve()):
                 continue
-            # Alvo recusado pela caminhada não restringe manifest nenhum: resolver o link aqui traria o
-            # manifest do diretório real para dentro de uma varredura que declara o alvo como não analisado.
-            if candidate.is_symlink() and candidate.is_dir():
+            # A recusa de link só vale para link dentro da raiz: lá a caminhada não segue o link e mediria
+            # o diretório real. Alvo declarado fora da raiz que resolve para dentro é percorrido pelo
+            # canônico, e o manifest da mesma subárvore precisa entrar no escopo da classe de dependências.
+            inside = candidate.is_relative_to(root)
+            if inside and candidate.is_symlink() and candidate.is_dir():
                 continue
-            if symlinked_directory_component(candidate, root) is not None:
+            if inside and symlinked_directory_component(candidate, root) is not None:
                 continue
             if not candidate.exists():
                 continue
@@ -1456,7 +1458,11 @@ SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schemas" / "hygiene-report.
 
 
 def orphan_permission_errors(report: dict, policy: dict) -> list[str]:
-    """Permissão declarada na política sem arquivo não analisado correspondente no relatório."""
+    """Incoerência entre permissão declarada e arquivo não analisado, nas duas direções.
+
+    Publicar relatório que o gate recusaria deixaria evidência inválida circulando: permissão sem recusa
+    correspondente é política órfã, e recusa sem permissão é buraco de cobertura não declarado.
+    """
     allowed = {
         entry["path"]
         for entry in policy.get("not_analyzed_allowed", [])
@@ -1464,8 +1470,14 @@ def orphan_permission_errors(report: dict, policy: dict) -> list[str]:
     }
     missing = {entry.get("path") for entry in report.get("not_analyzed", [])}
     return [
-        f"permissao declarada sem arquivo nao analisado correspondente: {path}"
-        for path in sorted(allowed - missing)
+        *[
+            f"permissao declarada sem arquivo nao analisado correspondente: {path}"
+            for path in sorted(allowed - missing)
+        ],
+        *[
+            f"arquivo nao analisado e nao declarado na politica: {path}"
+            for path in sorted(missing - allowed)
+        ],
     ]
 
 

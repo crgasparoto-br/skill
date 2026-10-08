@@ -3533,3 +3533,62 @@ def test_scanner_refuses_orphan_coverage_permission(tmp_path: Path) -> None:
     assert result.returncode != 0
     assert "permissao declarada sem arquivo nao analisado correspondente" in result.stderr
     assert not (out / "report.json").exists()
+
+
+def test_external_directory_alias_keeps_manifest_scope(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo por link externo media o Python e excluía o manifest da subárvore."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {
+            "sub/a.py": "import json\n",
+            "sub/requirements.txt": "requests>=2\n",
+            "README.md": "Use sub/a.py\n",
+        },
+        policy_variant(accepted=[]),
+    )
+    alias = tmp_path / "alias"
+    alias.symlink_to(tree / "sub", target_is_directory=True)
+    policy = hygiene_scan.load_policy(tree)
+    targeted, problems = hygiene_scan.build_report(tree, policy, [str(alias)])
+    complete, _ = hygiene_scan.build_report(tree, policy)
+    assert problems == []
+    assert targeted["analyzed"] >= 1
+    assert [item["location"] for item in findings_of(targeted, "unused-dependency")] == [
+        item["location"] for item in findings_of(complete, "unused-dependency")
+    ]
+
+
+def test_scanner_refuses_undeclared_coverage_gap(tmp_path: Path) -> None:
+    """Ressalva: a CLI publicava buraco de cobertura que o gate recusa."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"broken.py": "def broken(:\n", "README.md": "texto\n"},
+        policy_variant(accepted=[]),
+    )
+    out = tmp_path / "fora"
+    out.mkdir()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(out / "report.json"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "arquivo nao analisado e nao declarado na politica" in result.stderr
+    assert not (out / "report.json").exists()
+
+
+def test_baseline_history_requires_reason_on_every_measurement() -> None:
+    """Ressalva: a documentação prometia redução sem motivo, mas o gate exige motivo em toda medição."""
+    skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+    reference = (SKILL_ROOT / "references" / "global-hygiene-profile.md").read_text(encoding="utf-8")
+    for text in (skill, reference):
+        assert "inclusive reducao" in text or "inclusive a redução" in text
+        assert "nao exige justificativa" not in text

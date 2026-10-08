@@ -58,7 +58,7 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - `open` em classe `gated` e divida sem decisao: corrigir ou declarar em `accepted`, com justificativa escrita.
 - `accepted` e divida conhecida e aceita, com motivo registrado: continua sendo work item. A justificativa precisa ser texto de verdade — extensao minima, palavras e variedade —, porque preenchimento nao e justificativa; o merito e da revisao, a forma e do gate.
 - Classe `reported` nao aceita excecao item a item: a divida dela e agregada e a contagem precisa ser exatamente a linha de base declarada, nem acima (divida nova) nem abaixo (linha de base folgada).
-- A linha de base de classe `reported` vive numa historia declarada na politica: crescer exige entrada nova com motivo escrito, e reduzir e progresso e nao exige justificativa.
+- A linha de base de classe `reported` vive numa historia declarada na politica: toda medicao, inclusive reducao, exige entrada com motivo escrito, porque valor sem motivo nao e conferivel por quem audita.
 - `excluded` e exclusao declarada com motivo, caminho relativo canonico dentro da raiz e visivel no relatorio: escopo que encolhe sem aparecer no relatorio e indistinguivel de aprovacao, e o gate reprova. `scope.exclude_dirs` cobre a subarvore inteira, e a entrada pode ser caminho composto como `evals/fixtures`.
 - A leitura de texto para citacao fica contida na raiz: link que resolve para fora entra em `not_analyzed`, porque texto de fora nao pode apagar achado da arvore medida. O mesmo vale para manifest que resolve para fora.
 - Citacao de arquivo e resolvida por caminho — na raiz, no diretorio de quem cita e na raiz da skill —, aceita a ancora de marcador de lugar como `<skill>/scripts/x.py`, ignora caminho que sai da raiz e so aceita nome solto quando ele e unico na arvore: nome ambiguo nao identifica invocacao de nenhum homonimo.
@@ -104,7 +104,9 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - Qualquer componente do alvo que seja link para diretorio recusa o alvo inteiro, e nao apenas o no final: `alias/sub` atravessa `alias` e mediria o diretorio real.
 - Temporario que nao pode ser removido e declarado com o caminho, e o registro do temporario acontece antes da escrita, para que falha de escrita ou de limpeza nunca deixe residuo silencioso.
 - O gerador de work item exige coerencia entre relatorio, politica e arvore, e nao aprovacao: a divida aberta e exatamente o que o work item descreve.
-- Link quebrado ou em ciclo e recusa visivel na cobertura, mesmo sem sufixo medido, e a CLI da varredura nao publica relatorio com permissao de cobertura orfa.
+- Link quebrado ou em ciclo e recusa visivel na cobertura, mesmo sem sufixo medido.
+- A CLI da varredura recusa as duas direcoes da incoerencia de cobertura: permissao orfa e buraco nao declarado, para nao publicar relatorio que o gate rejeita.
+- Alvo declarado fora da raiz que resolve para dentro dela e percorrido pelo caminho canonico e restringe manifest do mesmo modo que a varredura completa.
 - A grafia do alvo e normalizada antes de qualquer decisao, e o rotulo publicado e canonico: `foo/../alias` e `alias`, e `foo/../../x.py` e `../x.py`.
 - A identidade da excecao precisa pertencer a uma classe declarada na politica, e toda entrada da linha de base precisa de motivo escrito.
 - Alvo direcionado que e link de diretorio e recusado no proprio inicio da caminhada, porque seguir o link mediria o diretorio real enquanto o relatorio declara o alvo como nao analisado.
