@@ -184,7 +184,7 @@ def test_dynamic_import_in_contract_is_rejected(tmp_path: Path) -> None:
     """Achado bloqueante: autoridade adquirida em execucao precisa ser recusada."""
     original = (ROOT / "scripts/release_handoff.py").read_text(encoding="utf-8")
     injected = original.replace(
-        '    return parser.parse_args(argv)',
+        '    return parser.parse_args(arguments)',
         '    import importlib\n    importlib.import_module("subprocess")\n    return parser.parse_args(argv)',
         1,
     )
@@ -642,3 +642,28 @@ def test_colliding_report_destinations_are_rejected(tmp_path: Path) -> None:
     with pytest.raises(SystemExit):
         contract_main(["--root", str(ROOT), "--evidence", str(ROOT / "config/release-handoff.json"),
                        "--develop", DEVELOP, "--main", MAIN, "--report", str(target), "--json-report", str(target)])
+
+
+def test_abbreviated_option_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante: nome incompleto de opcao nao pode aprovar o handoff."""
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evi", str(path), "--dev", DEVELOP, "--mai", MAIN])
+
+
+def test_repeated_option_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante: opcao repetida nao pode deixar a ultima vencedora."""
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evidence", str(tmp_path / "ausente.json"),
+                       "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN])
+
+
+def test_gate_handles_invalid_utf8_without_traceback(tmp_path: Path) -> None:
+    """Ressalva: UTF-8 invalido no validador precisa falhar de forma controlada."""
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config/release-handoff.json").write_bytes(b"\xff")
+    errors = validate_release_handoff(tmp_path)
+    assert errors, "UTF-8 invalido precisa reprovar de forma controlada"

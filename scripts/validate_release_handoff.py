@@ -71,7 +71,7 @@ def load_object(path: Path) -> dict:
     """Le um JSON de objeto, falhando fechado."""
     try:
         document = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise SystemExit(f"ERRO: nao foi possivel ler {path}: {error}") from error
     if not isinstance(document, dict):
         raise SystemExit(f"ERRO: {path} nao contem um objeto JSON")
@@ -324,7 +324,7 @@ def validate_release_handoff(root: Path) -> list[str]:
         return errors or [f"a politica do handoff nao existe: {POLICY_RELATIVE}"]
     try:
         policy = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         return [f"nao foi possivel ler {POLICY_RELATIVE}: {error}"]
     if not isinstance(policy, dict):
         return [f"{POLICY_RELATIVE} nao contem um objeto JSON"]

@@ -437,16 +437,32 @@ def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
     return {"develop": develop or "", "main": main or ""}
 
 
+def reject_repeated_options(argv: list[str]) -> None:
+    """Recusa opcao repetida: sem isto a ultima ocorrencia venceria em silencio."""
+    seen = set()
+    for token in argv:
+        name = token.split("=", 1)[0]
+        if not name.startswith("--"):
+            continue
+        if name in seen:
+            raise SystemExit(f"ERRO: a opcao {name} foi informada mais de uma vez")
+        seen.add(name)
+
+
 def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
-    """Argumentos do contrato de handoff."""
-    parser = argparse.ArgumentParser(description="Verifica a evidencia do handoff de release.")
+    """Argumentos do contrato de handoff, sem abreviacao e sem opcao repetida."""
+    parser = argparse.ArgumentParser(
+        description="Verifica a evidencia do handoff de release.", allow_abbrev=False
+    )
     parser.add_argument("--root", type=Path, default=Path(), help="Raiz do repositorio.")
     parser.add_argument("--evidence", type=Path, required=True, help="Arquivo de evidencia declarada.")
     parser.add_argument("--develop", default="", help="Commit de `develop` a promover.")
     parser.add_argument("--main", default="", help="Commit atual de `main`.")
     parser.add_argument("--report", type=Path, help="Caminho do relatorio Markdown.")
     parser.add_argument("--json-report", type=Path, help="Caminho do relatorio JSON.")
-    return parser.parse_args(argv)
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    reject_repeated_options(arguments)
+    return parser.parse_args(arguments)
 
 
 def main(argv: list[str] | None = None) -> int:
