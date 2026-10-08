@@ -45,7 +45,7 @@ def sha256_bytes(value: bytes) -> str:
 def load_json(path: Path, label: str) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, RecursionError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise HarnessError(f"{label} inválido: {exc}") from exc
     if not isinstance(value, dict):
         raise HarnessError(f"{label} deve conter um objeto JSON")
@@ -325,7 +325,7 @@ def invoke_provider(command: str, case: dict[str, Any]) -> tuple[dict[str, Any] 
         return None, f"provider falhou: {detail}", elapsed_ms
     try:
         result = json.loads(bytes(stdout).decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except (ValueError, RecursionError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return None, f"provider-result-invalid: JSON inválido: {exc}", elapsed_ms
     if not isinstance(result, dict):
         return None, "provider-result-invalid: saída deve ser um objeto JSON", elapsed_ms
@@ -394,6 +394,9 @@ def _validate_report_consistency(report: dict[str, Any], schema: dict[str, Any])
         "not_run": sum(record["status"] == "NOT_RUN" for record in records),
         "invalid": sum(record["status"] == "INVALID" for record in records),
     }
+    for campo, valor in report["summary"].items():
+        if type(valor) is not int:
+            errors.append(f"summary {campo} precisa ser inteiro exato")
     if report["summary"] != expected_summary:
         errors.append("summary não corresponde aos status dos casos")
     case_ids = [record["case_id"] for record in records]
