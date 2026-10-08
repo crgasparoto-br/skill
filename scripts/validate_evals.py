@@ -121,6 +121,27 @@ def canonical_shim_problems(tree: ast.Module) -> list[str]:
     names = [element.value for element in exportado.elts]
     if "__version__" not in names:
         return [f"evals/__init__.py exporta {names!r}, sem __version__"]
+    if len(set(names)) != len(names):
+        return [f"evals/__init__.py exporta {names!r}, com nome repetido"]
+    if any(not name for name in names):
+        return [f"evals/__init__.py exporta {names!r}, com nome vazio"]
+    return []
+
+
+def effective_export_problems(module: Any, manifest: dict[str, Any]) -> list[str]:
+    """Confere a exportacao efetiva do pacote, que um modulo irmao pode ter alterado.
+
+    A checagem estatica cobre `evals/__init__.py`, mas a importacao de `evals.run_evals` executa
+    codigo irmao que pode reescrever `__version__` ou `__all__`. Por isso o valor real e lido do
+    modulo importado, antes e depois da execucao das avaliacoes.
+    """
+    expected = manifest.get("harness_version")
+    declared = getattr(module, "__version__", None)
+    if declared != expected:
+        return [f"evals exporta {declared!r} em tempo de execucao e o manifesto declara {expected!r}"]
+    exported = getattr(module, "__all__", None)
+    if not isinstance(exported, list) or "__version__" not in exported:
+        return [f"evals exporta {exported!r} em tempo de execucao, sem __version__"]
     return []
 
 
@@ -230,9 +251,16 @@ def validate_evals(root: Path) -> list[str]:
         return version_errors
 
     try:
+        # `harness_module` garante a raiz auditada no caminho de importacao antes de carregar o
+        # pacote, e o modulo de avaliacoes e recuperado em seguida para a conferencia efetiva.
         harness = harness_module()
+        import evals
     except BaseException as exc:  # o pacote auditado pode falhar de qualquer forma
         return [f"evals nao pode ser importado: {exc}"]
+
+    runtime = effective_export_problems(evals, manifest)
+    if runtime:
+        return runtime
 
     errors: list[str] = []
     try:
@@ -266,6 +294,10 @@ def validate_evals(root: Path) -> list[str]:
         errors.append("fixture replay contém casos não executados")
     if replay["summary"]["passed"] != replay["summary"]["total"]:
         errors.append("fixture replay não aprovou todos os casos")
+
+    # O envelope estatico nao basta: um modulo irmao pode alterar os valores efetivos durante a
+    # importacao ou a execucao, entao a exportacao real e reconferida no fim.
+    errors.extend(effective_export_problems(evals, manifest))
     return errors
 
 
