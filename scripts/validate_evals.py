@@ -128,21 +128,38 @@ def canonical_shim_problems(tree: ast.Module) -> list[str]:
     return []
 
 
-def effective_export_problems(module: Any, manifest: dict[str, Any]) -> list[str]:
+def effective_export_problems(module: Any, manifest: dict[str, Any], root: Path) -> list[str]:
     """Confere a exportacao efetiva do pacote, que um modulo irmao pode ter alterado.
 
-    A checagem estatica cobre `evals/__init__.py`, mas a importacao de `evals.run_evals` executa
-    codigo irmao que pode reescrever `__version__` ou `__all__`. Por isso o valor real e lido do
-    modulo importado, antes e depois da execucao das avaliacoes.
+    Esta conferencia e defesa em profundidade. A propriedade solida e a checagem estatica do
+    envelope, que nao executa o codigo auditado; nenhuma leitura feita depois da importacao resiste
+    a codigo que adultere deliberadamente o interpretador, como `builtins.getattr`, `sys.modules`
+    ou a classe do modulo. O limite esta declarado em `docs/RELEASE.md`.
     """
-    expected = manifest.get("harness_version")
+    problems: list[str] = []
+    origem = getattr(module, "__file__", None)
+    try:
+        dentro = origem is not None and Path(origem).resolve().is_relative_to(root)
+    except (OSError, ValueError, TypeError):
+        dentro = False
+    if not dentro:
+        problems.append(f"evals foi importado de {origem!r}, fora da raiz auditada")
+
     declared = getattr(module, "__version__", None)
-    if declared != expected:
-        return [f"evals exporta {declared!r} em tempo de execucao e o manifesto declara {expected!r}"]
+    expected = manifest.get("harness_version")
+    if type(declared) is not str or declared != expected:
+        problems.append(
+            f"evals exporta {declared!r} em tempo de execucao e o manifesto declara {expected!r}"
+        )
+
     exported = getattr(module, "__all__", None)
-    if not isinstance(exported, list) or "__version__" not in exported:
-        return [f"evals exporta {exported!r} em tempo de execucao, sem __version__"]
-    return []
+    if type(exported) is not list or not all(type(name) is str for name in exported):
+        return [*problems, f"evals exporta {exported!r} em tempo de execucao fora de lista de textos"]
+    if "__version__" not in exported:
+        problems.append(f"evals exporta {exported!r} em tempo de execucao, sem __version__")
+    elif len(set(exported)) != len(exported) or any(not name for name in exported):
+        problems.append(f"evals exporta {exported!r} em tempo de execucao, com repeticao ou nome vazio")
+    return problems
 
 
 def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
@@ -258,7 +275,10 @@ def validate_evals(root: Path) -> list[str]:
     except BaseException as exc:  # o pacote auditado pode falhar de qualquer forma
         return [f"evals nao pode ser importado: {exc}"]
 
-    runtime = effective_export_problems(evals, manifest)
+    try:
+        runtime = effective_export_problems(evals, manifest, root)
+    except BaseException as exc:  # o pacote auditado pode falhar de qualquer forma
+        return [f"evals nao pode ser conferido em tempo de execucao: {exc}"]
     if runtime:
         return runtime
 
@@ -297,7 +317,10 @@ def validate_evals(root: Path) -> list[str]:
 
     # O envelope estatico nao basta: um modulo irmao pode alterar os valores efetivos durante a
     # importacao ou a execucao, entao a exportacao real e reconferida no fim.
-    errors.extend(effective_export_problems(evals, manifest))
+    try:
+        errors.extend(effective_export_problems(evals, manifest, root))
+    except BaseException as exc:  # o pacote auditado pode falhar de qualquer forma
+        errors.append(f"evals nao pode ser conferido em tempo de execucao: {exc}")
     return errors
 
 

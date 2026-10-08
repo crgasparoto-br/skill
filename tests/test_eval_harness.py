@@ -536,3 +536,74 @@ def test_sibling_module_mutation_is_rejected(tmp_path: Path, injecao: str) -> No
 def test_harness_all_with_repetition_or_empty_name_is_rejected(tmp_path: Path, corpo: str) -> None:
     root = _package(tmp_path, corpo)
     assert harness_version_errors(root, {"harness_version": "0.3.0"})
+
+
+INJECOES_EFETIVAS = {
+    "all-item-nao-texto": 'import evals\nevals.__all__ = ["__version__", 1]\n',
+    "all-com-repeticao": 'import evals\nevals.__all__ = ["__version__", "__version__", ""]\n',
+    "eq-forjado": (
+        "import evals\n"
+        "class EqualVersion:\n"
+        "    def __eq__(self, other):\n"
+        '        return other == "0.3.0"\n'
+        "evals.__version__ = EqualVersion()\n"
+    ),
+    "subclasse-de-list": (
+        "import evals\n"
+        "class ExportList(list):\n"
+        "    def __contains__(self, item):\n"
+        "        return True\n"
+        'evals.__all__ = ExportList(["subclass-rogue"])\n'
+    ),
+    "classe-de-modulo-explosiva": (
+        "import types, evals\n"
+        "class Exploding(types.ModuleType):\n"
+        "    def __getattribute__(self, name):\n"
+        '        if name == "__version__":\n'
+        '            raise BaseException("EXPLODE")\n'
+        "        return super().__getattribute__(name)\n"
+        "evals.__class__ = Exploding\n"
+    ),
+}
+
+
+@pytest.mark.parametrize("injecao", INJECOES_EFETIVAS.values(), ids=list(INJECOES_EFETIVAS))
+def test_effective_export_divergence_is_rejected_readably(tmp_path: Path, injecao: str) -> None:
+    """Valor efetivo fora do envelope precisa reprovar com mensagem legivel, nunca com traceback."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    alvo = copia / "evals" / "run_evals.py"
+    texto = alvo.read_text(encoding="utf-8")
+    alvo.write_text(
+        texto.replace("from __future__ import annotations\n", "from __future__ import annotations\n" + injecao, 1),
+        encoding="utf-8",
+    )
+    resultado = subprocess.run(
+        [sys.executable, "scripts/validate_evals.py", "--root", "."],
+        cwd=copia,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "tempo de execucao" in resultado.stdout
+
+
+def test_foreign_package_outside_root_is_rejected(tmp_path: Path) -> None:
+    """Pacote resolvido fora da raiz auditada nao pode ser aceito como o harness do repositorio."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    falso = tmp_path / "falso" / "evals"
+    falso.mkdir(parents=True)
+    (falso / "__init__.py").write_text(CANONICAL_SHIM, encoding="utf-8")
+    (falso / "run_evals.py").write_text("def run_evaluations(**kwargs):\n    return {}\n", encoding="utf-8")
+    ambiente = dict(os.environ, PYTHONPATH=str(falso.parent))
+    resultado = subprocess.run(
+        [sys.executable, "scripts/validate_evals.py", "--root", "."],
+        cwd=copia,
+        capture_output=True,
+        text=True,
+        check=False,
+        env=ambiente,
+    )
+    assert resultado.returncode == 1
+    assert "fora da raiz auditada" in resultado.stdout
