@@ -102,7 +102,9 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - O conteudo anterior de cada destino e lido antes de preparar qualquer temporario, e destino anterior ilegivel reprova sem deixar temporario orfao.
 - Alvo recusado nao restringe manifest nenhum: o manifest do diretorio real apontado por link de diretorio nao entra na varredura que declara o alvo como nao analisado.
 - Qualquer componente do alvo que seja link para diretorio recusa o alvo inteiro, e nao apenas o no final: `alias/sub` atravessa `alias` e mediria o diretorio real.
-- Temporario que nao pode ser removido e declarado com o caminho, e falha de escrita fora de `OSError` tambem limpa o temporario antes de reprovar.
+- Temporario que nao pode ser removido e declarado com o caminho, e o registro do temporario acontece antes da escrita, para que falha de escrita ou de limpeza nunca deixe residuo silencioso.
+- O gerador de work item exige coerencia entre relatorio, politica e arvore, e nao aprovacao: a divida aberta e exatamente o que o work item descreve.
+- Link quebrado ou em ciclo e recusa visivel na cobertura, mesmo sem sufixo medido, e a CLI da varredura nao publica relatorio com permissao de cobertura orfa.
 - A grafia do alvo e normalizada antes de qualquer decisao, e o rotulo publicado e canonico: `foo/../alias` e `alias`, e `foo/../../x.py` e `../x.py`.
 - A identidade da excecao precisa pertencer a uma classe declarada na politica, e toda entrada da linha de base precisa de motivo escrito.
 - Alvo direcionado que e link de diretorio e recusado no proprio inicio da caminhada, porque seguir o link mediria o diretorio real enquanto o relatorio declara o alvo como nao analisado.

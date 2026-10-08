@@ -310,9 +310,11 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     # Por ultimo, o relatorio precisa ser aceito pela politica e pela arvore atuais: relatorio antigo,
     # de outra arvore ou com buraco de cobertura nao pode virar work item.
-    problems = coverage_errors(root, report, policy)
+    # Coerência sem veredito de dívida: work item existe justamente para a dívida aberta, e exigir
+    # aprovação aqui tornaria impossível descrever dívida nova em classe controlada.
+    problems = coverage_errors(root, report, policy, enforce_policy=False)
     if problems:
-        print("ERRO: relatorio reprovado pela politica e pela arvore atuais:", file=sys.stderr)
+        print("ERRO: relatorio incoerente com a politica e a arvore atuais:", file=sys.stderr)
         for problem in problems[:5]:
             print(f"- {problem}", file=sys.stderr)
         return 2

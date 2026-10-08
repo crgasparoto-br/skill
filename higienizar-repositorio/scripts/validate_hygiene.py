@@ -527,6 +527,18 @@ def policy_errors(policy: object) -> list[str]:
     return errors
 
 
+def _class_shape_errors(entry: dict) -> list[str]:
+    """Coerência interna da classe, sem veredito de dívida: contagem por estado e estado declarado."""
+    name = entry.get("name")
+    members = entry.get("findings") if isinstance(entry.get("findings"), list) else []
+    opened = sum(1 for finding in members if finding.get("state") == "open")
+    accepted = sum(1 for finding in members if finding.get("state") == "accepted")
+    errors: list[str] = []
+    if entry.get("open") != opened or entry.get("accepted") != accepted:
+        errors.append(f"{name}: contagem por estado nao corresponde aos achados da classe")
+    return errors
+
+
 def _class_coverage_errors(entry: dict, config: dict) -> list[str]:
     name = entry.get("name")
     members = entry.get("findings") if isinstance(entry.get("findings"), list) else []
@@ -553,8 +565,12 @@ def _class_coverage_errors(entry: dict, config: dict) -> list[str]:
     return errors
 
 
-def coverage_errors(root: Path, report: dict, policy: dict) -> list[str]:
-    """Estado de cada classe, exclusões declaradas e cobertura do que não foi analisado."""
+def coverage_errors(root: Path, report: dict, policy: dict, enforce_policy: bool = True) -> list[str]:
+    """Estado de cada classe, exclusões declaradas e cobertura do que não foi analisado.
+
+    `enforce_policy=False` devolve apenas a coerência entre relatório, política e árvore, sem o veredito
+    de dívida aberta: quem descreve a dívida em work item precisa da coerência, e não da aprovação.
+    """
     errors: list[str] = []
     if not report.get("analyzed"):
         errors.append("cobertura: nenhum arquivo analisado; escopo vazio nao e arvore limpa")
@@ -588,7 +604,10 @@ def coverage_errors(root: Path, report: dict, policy: dict) -> list[str]:
         errors.append("cobertura: relatorio precisa de exatamente uma entrada por classe")
     for entry in classes:
         if isinstance(entry, dict):
-            errors.extend(_class_coverage_errors(entry, policy["classes"].get(entry.get("name"), {})))
+            if enforce_policy:
+                errors.extend(_class_coverage_errors(entry, policy["classes"].get(entry.get("name"), {})))
+            else:
+                errors.extend(_class_shape_errors(entry))
     summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
     totals = {
         state: sum(

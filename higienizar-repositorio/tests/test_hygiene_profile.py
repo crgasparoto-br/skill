@@ -2374,7 +2374,8 @@ def test_work_item_generator_refuses_scan_with_coverage_gap(tmp_path: Path) -> N
         check=False,
     )
     assert result.returncode == 2, result.stdout
-    assert "reprovado" in result.stderr
+    # Buraco de cobertura é incoerência entre relatório e árvore, e não dívida aberta.
+    assert "incoerente" in result.stderr
     assert not out_dir.exists()
 
 
@@ -3403,3 +3404,132 @@ def test_unencodable_content_fails_without_temporary(tmp_path: Path) -> None:
     code = hygiene_scan.publish_artifacts({"a": target}, {"a": "\ud800"})
     assert code == 1
     assert list(tmp_path.iterdir()) == []
+
+
+def test_work_item_generator_describes_open_debt(tmp_path: Path) -> None:
+    """Achado bloqueante: o gerador recusava exatamente a dívida que o work item deve descrever."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"orphan.py": "VALUE = 1\n", "README.md": "texto sem citacao\n"},
+        policy_variant(accepted=[]),
+    )
+    out_dir = tmp_path / "saida"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "build_hygiene_work_items.py"),
+            "--root",
+            str(tree),
+            "--out-dir",
+            str(out_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    published = sorted(out_dir.glob("hygiene-*.json"))
+    assert published
+    items = [json.loads(item.read_text(encoding="utf-8")) for item in published]
+    assert any(item["class"] == "dead-module" for item in items)
+
+
+def test_external_alias_target_is_walked_by_canonical_path(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo por link externo para a raiz derrubava a varredura com traceback."""
+    tree = make_tree(tmp_path / "arvore", {"sub/alpha.py": "V = 1\n"}, policy_variant(accepted=[]))
+    alias = tmp_path / "raiz-alias"
+    alias.symlink_to(tree, target_is_directory=True)
+    out = tmp_path / "fora"
+    out.mkdir()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--paths",
+            str(alias / "sub"),
+            "--report",
+            str(out / "report.json"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert "Traceback" not in result.stderr
+    assert result.returncode in (0, 1)
+    if (out / "report.json").exists():
+        report = json.loads((out / "report.json").read_text(encoding="utf-8"))
+        assert report["analyzed"] >= 1
+
+
+def test_looping_directory_symlink_is_visible_in_coverage(tmp_path: Path) -> None:
+    """Achado bloqueante: link de diretório em ciclo desaparecia da cobertura."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"alpha.py": "def used(x):\n    return x\n", "README.md": "Use alpha.py e used\n"},
+        policy_variant(accepted=[]),
+    )
+    (tree / "loopdir").symlink_to(tree / "loopdir", target_is_directory=True)
+    report, problems = hygiene_scan.build_report(tree, hygiene_scan.load_policy(tree))
+    assert problems == []
+    refused = {entry["path"]: entry["reason"] for entry in report["not_analyzed"]}
+    assert "loopdir" in refused
+    assert "nao resolve" in refused["loopdir"]
+    # O buraco de cobertura é visível no gate: a varredura não pode declarar cobertura completa.
+    errors = validate_hygiene.validate_hygiene(tree)
+    assert any("loopdir" in error for error in errors)
+
+
+def test_cleanup_failure_during_staging_is_declared(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+    """Achado bloqueante: resíduo de staging por falha de limpeza não era declarado."""
+    target = tmp_path / "a"
+    original_unlink = Path.unlink
+
+    def failing_unlink(self: Path, *args: object, **kwargs: object) -> None:
+        if self.name.startswith(".a.") and self.name.endswith(".tmp"):
+            raise OSError("falha simulada na limpeza")
+        original_unlink(self, *args, **kwargs)
+
+    Path.unlink = failing_unlink
+    try:
+        code = hygiene_scan.publish_artifacts({"a": target}, {"a": "\ud800"})
+    finally:
+        Path.unlink = original_unlink
+    assert code == 1
+    assert "temporario residual" in capsys.readouterr().err
+
+
+def test_scanner_refuses_orphan_coverage_permission(tmp_path: Path) -> None:
+    """Ressalva: a CLI publicava relatório com permissão de cobertura que o gate recusa."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"},
+        policy_variant(
+            accepted=[],
+            not_analyzed_allowed=[
+                {
+                    "path": "ghost.py",
+                    "reason": "Permissao declarada para arquivo que nao existe nesta arvore de teste.",
+                }
+            ],
+        ),
+    )
+    out = tmp_path / "fora"
+    out.mkdir()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--report",
+            str(out / "report.json"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "permissao declarada sem arquivo nao analisado correspondente" in result.stderr
+    assert not (out / "report.json").exists()

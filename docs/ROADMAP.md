@@ -241,6 +241,10 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A vigésima quarta rodada de auditoria corrigiu o que as vinte e três anteriores ainda não garantiam: o gerador de work item passou a exigir
+coerência, e não aprovação, para poder descrever dívida aberta; alvo por link externo que resolve para dentro da raiz é percorrido pelo
+caminho canônico; link de diretório quebrado ou em ciclo é recusa visível na cobertura; o temporário é registrado antes da escrita, de modo
+que resíduo de staging é declarado; e a CLI da varredura recusa permissão de cobertura órfã.
 A vigésima terceira rodada de auditoria corrigiu o que as vinte e duas anteriores ainda não garantiam: qualquer componente do alvo que
 seja link para diretório recusa o alvo inteiro, e temporário que não pôde ser removido passa a ser declarado com o caminho, junto com a
 falha de escrita fora de `OSError` que antes escapava crua.

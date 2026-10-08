@@ -310,6 +310,17 @@ def walk_scope(start: Path, root: Path, skip: set[str]) -> tuple[list[Path], lis
             if in_excluded_dir(rel, skip):
                 continue
             found.append(entry)
+            if entry.is_symlink() and not entry.exists():
+                # Link quebrado ou em ciclo não é percorrível e não vira arquivo coberto: sem esta recusa o
+                # caminho desaparece da cobertura quando o sufixo não é medido, e a varredura declara
+                # cobertura completa sobre um diretório que não conseguiu percorrer.
+                refused.append(
+                    {
+                        "path": rel,
+                        "reason": "link simbolico quebrado ou em ciclo: o alvo nao resolve",
+                    }
+                )
+                continue
             if entry.is_symlink() and entry.is_dir():
                 # Link de diretório não é seguido: entrar nele mediria fora da raiz em silêncio.
                 refused.append(
@@ -439,7 +450,11 @@ def scope_files(
                 # A caminhada recebe o caminho como foi declarado: resolver antes perderia a identidade do
                 # link, e um alvo que é link de diretório seria percorrido como o diretório real, medindo
                 # arquivo fora do alvo que a própria varredura declara não analisado.
-                walked, refusals = walk_scope(literal, root, exclude_dirs)
+                # Caminho declarado fora da raiz que resolve para dentro dela não tem forma relativa à
+                # raiz: aí o canônico é o único caminho que a varredura consegue rotular.
+                walked, refusals = walk_scope(
+                    literal if literal.is_relative_to(root) else candidate, root, exclude_dirs
+                )
                 candidates.extend(walked)
                 missing.extend(refusals)
             elif candidate.is_file():
@@ -1440,6 +1455,20 @@ def detect_complexity(policy: dict, modules: dict[str, ast.Module]) -> list[dict
 SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schemas" / "hygiene-report.schema.json"
 
 
+def orphan_permission_errors(report: dict, policy: dict) -> list[str]:
+    """Permissão declarada na política sem arquivo não analisado correspondente no relatório."""
+    allowed = {
+        entry["path"]
+        for entry in policy.get("not_analyzed_allowed", [])
+        if isinstance(entry, dict) and isinstance(entry.get("path"), str)
+    }
+    missing = {entry.get("path") for entry in report.get("not_analyzed", [])}
+    return [
+        f"permissao declarada sem arquivo nao analisado correspondente: {path}"
+        for path in sorted(allowed - missing)
+    ]
+
+
 def report_contract_errors(report: dict) -> list[str]:
     """Relatório conferido contra o contrato, do mesmo modo que o validador faz.
 
@@ -1618,7 +1647,7 @@ def publish_artifacts(targets: dict[str, Path], contents: dict[str, str]) -> int
                 raise IsADirectoryError(21, "destino e diretorio", str(target))
             previous[label] = target.read_bytes() if target.exists() else None
         for label, target in targets.items():
-            staged[label] = stage_artifact(target, contents[label])
+            stage_artifact(target, contents[label], staged, label)
     except (OSError, UnicodeError) as error:
         leftover = discard_artifacts(staged)
         print(f"ERRO: falha ao gravar o relatorio: {error}", file=sys.stderr)
@@ -1682,7 +1711,7 @@ def discard_artifacts(staged: dict[str, Path]) -> list[str]:
     return leftover
 
 
-def stage_artifact(target: Path, content: str) -> Path:
+def stage_artifact(target: Path, content: str, staged: dict[str, Path], label: str) -> None:
     """Prepara o conteúdo ao lado do destino e devolve o temporário, ainda não publicado.
 
     O temporário vive no mesmo diretório do destino para que a publicação seja um `os.replace`, que é
@@ -1690,15 +1719,11 @@ def stage_artifact(target: Path, content: str) -> Path:
     próprio tratamento remove, e nunca um destino truncado nem o artefato anterior perdido.
     """
     handle, name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
-    temporary = Path(name)
-    try:
-        with os.fdopen(handle, "w", encoding="utf-8") as stream:
-            stream.write(content)
-    except (OSError, UnicodeError):
-        # `UnicodeError` não é `OSError` e escaparia sem limpeza, deixando o temporário no diretório.
-        temporary.unlink(missing_ok=True)
-        raise
-    return temporary
+    # O registro vem antes da escrita: falha de escrita, ou de limpeza dela, precisa ser declarada com o
+    # caminho, e nunca deixar resíduo silencioso no diretório de destino.
+    staged[label] = Path(name)
+    with os.fdopen(handle, "w", encoding="utf-8") as stream:
+        stream.write(content)
 
 
 def render_markdown(report: dict) -> str:
@@ -1827,6 +1852,14 @@ def main(argv: list[str] | None = None) -> int:
     except HygieneError as error:
         print(f"ERRO: {error}", file=sys.stderr)
         return 2
+    orphan = orphan_permission_errors(report, policy)
+    if orphan:
+        # Permissão de cobertura sem arquivo não analisado correspondente é incoerência entre política e
+        # árvore, e não dívida aberta: publicar o relatório deixaria evidência que o próprio gate recusa.
+        print("Permissoes de cobertura incoerentes:", file=sys.stderr)
+        for problem in orphan:
+            print(f"- {problem}", file=sys.stderr)
+        return 1
     contract = report_contract_errors(report)
     if contract:
         print("Relatorio fora do contrato:", file=sys.stderr)
