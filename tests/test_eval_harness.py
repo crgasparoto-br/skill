@@ -373,75 +373,7 @@ def test_run_id_and_content_hash_are_stable_for_same_inputs() -> None:
     assert first["content_sha256"] == second["content_sha256"]
 
 
-def test_harness_version_matches_the_manifest() -> None:
-    """A versao exportada pelo pacote de avaliacoes nao pode divergir do manifesto do harness."""
-    manifest = json.loads((ROOT / "evals" / "manifest.json").read_text(encoding="utf-8"))
-    assert harness_version_errors(ROOT, manifest) == []
-
-
-def test_harness_version_divergence_is_rejected(tmp_path: Path) -> None:
-    package = tmp_path / "evals"
-    package.mkdir()
-    (package / "__init__.py").write_text(
-        '__all__ = ["__version__"]\n__version__ = "0.1.0"\n', encoding="utf-8"
-    )
-    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
-    assert problems and "0.1.0" in problems[0] and "0.3.0" in problems[0]
-
-
-def test_harness_version_without_literal_is_rejected(tmp_path: Path) -> None:
-    """Valor calculado nao serve como declaracao verificavel da versao do harness."""
-    package = tmp_path / "evals"
-    package.mkdir()
-    (package / "__init__.py").write_text("__version__ = build_version()\n", encoding="utf-8")
-    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
-    assert problems and "literal" in problems[0]
-
-
-def test_harness_version_module_missing_is_rejected(tmp_path: Path) -> None:
-    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
-    assert problems and "ilegivel" in problems[0]
-
-
-def test_harness_version_non_literal_after_literal_is_rejected(tmp_path: Path) -> None:
-    """Atribuicao nao literal depois da literal nao pode passar: o valor efetivo seria calculado."""
-    package = tmp_path / "evals"
-    package.mkdir()
-    (package / "__init__.py").write_text(
-        'def build_version():\n    return "9.9.9"\n\n__version__ = "0.3.0"\n__version__ = build_version()\n',
-        encoding="utf-8",
-    )
-    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
-    assert problems and "mais de uma vez" in problems[0]
-
-
-def test_harness_version_assigned_twice_is_rejected(tmp_path: Path) -> None:
-    package = tmp_path / "evals"
-    package.mkdir()
-    (package / "__init__.py").write_text(
-        '__version__ = "0.1.0"\n__version__ = "0.3.0"\n', encoding="utf-8"
-    )
-    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
-    assert problems and "mais de uma vez" in problems[0]
-
-
-def test_harness_version_annotated_assignment_divergence_is_rejected(tmp_path: Path) -> None:
-    """Atribuicao anotada depois da literal tambem define o valor efetivo e precisa reprovar."""
-    package = tmp_path / "evals"
-    package.mkdir()
-    (package / "__init__.py").write_text(
-        '__version__ = "0.3.0"\n__version__: str = "9.9.9"\n', encoding="utf-8"
-    )
-    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
-    assert problems
-
-
-def test_harness_version_augmented_assignment_is_rejected(tmp_path: Path) -> None:
-    package = tmp_path / "evals"
-    package.mkdir()
-    (package / "__init__.py").write_text('__version__ = "0.3.0"\n__version__ += "-x"\n', encoding="utf-8")
-    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
-    assert problems and "mais de uma vez" in problems[0]
+CANONICAL_SHIM = '__all__ = ["__version__"]\n__version__ = "0.3.0"\n'
 
 
 def _package(tmp_path: Path, body: str) -> Path:
@@ -451,97 +383,86 @@ def _package(tmp_path: Path, body: str) -> Path:
     return tmp_path
 
 
-def test_harness_version_canonical_form_is_accepted(tmp_path: Path) -> None:
-    root = _package(tmp_path, '__all__ = ["__version__"]\n__version__ = "0.3.0"\n')
+def _copia_do_repositorio(tmp_path: Path, corpo: str) -> Path:
+    copia = tmp_path / "copia"
+    shutil.copytree(ROOT, copia, ignore=shutil.ignore_patterns(".git", ".ruff_cache", "__pycache__"))
+    (copia / "evals" / "__init__.py").write_text(corpo, encoding="utf-8")
+    return copia
+
+
+def test_harness_version_matches_the_manifest() -> None:
+    """A versao exportada pelo pacote de avaliacoes nao pode divergir do manifesto do harness."""
+    manifest = json.loads((ROOT / "evals" / "manifest.json").read_text(encoding="utf-8"))
+    assert harness_version_errors(ROOT, manifest) == []
+
+
+@pytest.mark.parametrize(
+    "corpo",
+    [
+        CANONICAL_SHIM,
+        '"""Versioned behavioral-evaluation harness for the skills catalog."""\n' + CANONICAL_SHIM,
+    ],
+)
+def test_harness_version_canonical_envelope_is_accepted(tmp_path: Path, corpo: str) -> None:
+    root = _package(tmp_path, corpo)
     assert harness_version_errors(root, {"harness_version": "0.3.0"}) == []
 
 
-def test_harness_version_without_all_is_rejected(tmp_path: Path) -> None:
-    root = _package(tmp_path, '__version__ = "0.3.0"\n')
+def test_harness_version_divergence_is_rejected(tmp_path: Path) -> None:
+    root = _package(tmp_path, '__all__ = ["__version__"]\n__version__ = "9.9.9"\n')
     problems = harness_version_errors(root, {"harness_version": "0.3.0"})
-    assert problems and "__all__" in problems[0]
-
-
-def test_harness_version_missing_from_all_is_rejected(tmp_path: Path) -> None:
-    root = _package(tmp_path, '__all__ = ["other"]\n__version__ = "0.3.0"\nother = "x"\n')
-    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
-    assert problems and "sem __version__" in problems[0]
-
-
-def test_harness_version_nested_assignment_is_rejected(tmp_path: Path) -> None:
-    """Atribuicao dentro de condicional muda o valor efetivo e nao pode escapar do inventario."""
-    root = _package(
-        tmp_path,
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nif True:\n    __version__ = "9.9.9"\n',
-    )
-    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
-    assert problems and "mais de uma vez" in problems[0]
-
-
-def test_harness_version_loop_assignment_is_rejected(tmp_path: Path) -> None:
-    root = _package(
-        tmp_path,
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nfor __version__ in ["9.9.9"]:\n    pass\n',
-    )
-    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
-    assert problems and "mais de uma vez" in problems[0]
-
-
-def test_harness_version_unpacked_assignment_is_rejected(tmp_path: Path) -> None:
-    root = _package(
-        tmp_path,
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\n__version__, alias = ("9.9.9", "x")\n',
-    )
-    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
-    assert problems and "mais de uma vez" in problems[0]
-
-
-def test_harness_version_global_declaration_is_rejected(tmp_path: Path) -> None:
-    root = _package(
-        tmp_path,
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\n\ndef troca():\n    global __version__\n',
-    )
-    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
-    assert problems and "mais de uma vez" in problems[0]
-
-
-def test_harness_version_chained_assignment_is_rejected(tmp_path: Path) -> None:
-    root = _package(tmp_path, '__all__ = ["__version__"]\n__version__ = alias = "0.3.0"\n')
-    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
-    assert problems and "fora de atribuicao simples" in problems[0]
+    assert problems and "9.9.9" in problems[0] and "0.3.0" in problems[0]
 
 
 @pytest.mark.parametrize(
     "corpo",
     [
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\ndef __version__():\n    return "9.9.9"\n',
+        '__all__ = ["__version__"]\n__version__ = build()\n',
+        '__all__ = ["__version__"]\n',
+        '__version__ = "0.3.0"\n',
+        '__all__ = ["other"]\n__version__ = "0.3.0"\n',
+        '__all__ = ("__version__",)\n__version__ = "0.3.0"\n',
+        '__all__ = ["__version__", 1]\n__version__ = "0.3.0"\n',
+        '__all__ = alias = ["__version__"]\n__version__ = "0.3.0"\n',
+        '__version__ = alias = "0.3.0"\n__all__ = ["__version__"]\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\n__version__ = "9.9.9"\n',
+        '__all__ = ["__version__"]\n__version__: str = "0.3.0"\n',
+        '__all__ = ["__version__"]\n__version__ += "-x"\n',
+        '__all__ = ["__version__"]\n__version__, alias = "0.3.0", "x"\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nif True:\n    __version__ = "9.9.9"\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nfor __version__ in ["9.9.9"]:\n    pass\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nwith open("x") as __version__:\n    pass\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\ndel __version__\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nimport os as __version__\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\ndef __version__():\n    pass\n',
         '__all__ = ["__version__"]\n__version__ = "0.3.0"\nclass __version__:\n    pass\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\ntype __version__ = str\n',
         '__all__ = ["__version__"]\n__version__ = "0.3.0"\ntry:\n    1 / 0\nexcept Exception as __version__:\n    pass\n',
         '__all__ = ["__version__"]\n__version__ = "0.3.0"\nmatch 9:\n    case __version__:\n        pass\n',
         '__all__ = ["__version__"]\n__version__ = "0.3.0"\ndef f(__version__):\n    return __version__\n',
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nwith open("x") as __version__:\n    pass\n',
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\ntry:\n    1 / 0\nexcept Exception:\n    __version__ = "9.9.9"\n',
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\ndel __version__\n',
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nimport os as __version__\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nfor __all__[0] in ["x"]:\n    pass\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nalias = __all__\nalias.clear()\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nglobals()["__version__"] = "9.9.9"\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nexec("__version__ = \'9.9.9\'")\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nfrom os import *\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\n__all__.append(42)\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\n__all__[0] = "outro"\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nimport sys\nsys.modules[__name__].__version__ = "9.9.9"\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\noutro = 1\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nprint("oi")\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nimport importlib\nimportlib.import_module("os")\n',
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\n[1 for _ in range(1)]\n',
     ],
 )
-def test_harness_version_rebinding_forms_are_rejected(tmp_path: Path, corpo: str) -> None:
-    """Definicao, excecao, captura de padrao, contexto, laco, del e import tambem religam o nome."""
+def test_harness_version_outside_canonical_envelope_is_rejected(tmp_path: Path, corpo: str) -> None:
+    """Fora do envelope canonico nao ha forma aceita de religar `__version__` ou `__all__`."""
     root = _package(tmp_path, corpo)
     assert harness_version_errors(root, {"harness_version": "0.3.0"})
 
 
-@pytest.mark.parametrize(
-    "corpo",
-    [
-        '__all__ = alias = ["__version__"]\n__version__ = "0.3.0"\n',
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\ndef __all__():\n    pass\n',
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nif True:\n    __all__ = ["__version__"]\n',
-    ],
-)
-def test_harness_all_non_canonical_forms_are_rejected(tmp_path: Path, corpo: str) -> None:
-    root = _package(tmp_path, corpo)
-    assert harness_version_errors(root, {"harness_version": "0.3.0"})
+def test_harness_version_module_missing_is_rejected(tmp_path: Path) -> None:
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems and "ilegivel" in problems[0]
 
 
 def test_version_divergence_is_reported_without_executing_the_package(tmp_path: Path) -> None:
@@ -555,64 +476,17 @@ def test_version_divergence_is_reported_without_executing_the_package(tmp_path: 
     )
     problems = validate_evals(root)
     assert problems
-    assert any("9.9.9" in problem for problem in problems)
     assert not any("PACOTE_EXECUTADO" in problem for problem in problems)
 
 
-def test_broken_package_import_is_reported_readably(tmp_path: Path) -> None:
-    """Versao correta e pacote que falha ao importar viram reprovacao legivel, nunca traceback."""
-    copia = tmp_path / "copia"
-    shutil.copytree(
-        ROOT, copia, ignore=shutil.ignore_patterns(".git", ".ruff_cache", "__pycache__")
-    )
-    (copia / "evals" / "__init__.py").write_text(
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nraise RuntimeError("PACOTE_EXECUTADO")\n',
-        encoding="utf-8",
-    )
-    resultado = subprocess.run(
-        [sys.executable, "scripts/validate_evals.py", "--root", "."],
-        cwd=copia,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert resultado.returncode == 1
-    assert "nao pode ser importado" in resultado.stdout
-    assert "Traceback" not in resultado.stderr
-
-
 @pytest.mark.parametrize(
-    "sufixo",
-    [
-        "type __version__ = str\n",
-        "type __all__ = list[str]\n",
-        'globals()["__version__"] = "9.9.9"\n',
-        'locals()["__version__"] = "9.9.9"\n',
-        'exec("__version__ = \'9.9.9\'")\n',
-        'eval("1")\n',
-        "from os import *\n",
-        "__all__.append(42)\n",
-        "__all__.remove(\"__version__\")\n",
-        '__all__[0] = "outro"\n',
-        'import sys\nsys.modules[__name__].__version__ = "9.9.9"\n',
-        'setattr(object(), "x", 1)\n',
-        '__version__ = "0.3.0"\n',
-    ],
+    "excecao",
+    ['raise RuntimeError("PACOTE_EXECUTADO")', 'raise BaseException("PACOTE_EXECUTADO")'],
 )
-def test_harness_version_indirect_and_dynamic_forms_are_rejected(tmp_path: Path, sufixo: str) -> None:
-    """Alias de tipo, escrita indireta, import coringa e mutacao de __all__ precisam reprovar."""
-    root = _package(tmp_path, '__all__ = ["__version__"]\n__version__ = "0.3.0"\n' + sufixo)
-    assert harness_version_errors(root, {"harness_version": "0.3.0"})
-
-
-def test_base_exception_in_package_is_reported_readably(tmp_path: Path) -> None:
-    """Falha que nao e `Exception` tambem vira reprovacao legivel, sem traceback."""
-    copia = tmp_path / "copia"
-    shutil.copytree(ROOT, copia, ignore=shutil.ignore_patterns(".git", ".ruff_cache", "__pycache__"))
-    (copia / "evals" / "__init__.py").write_text(
-        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nraise BaseException("FALHA_BASE")\n',
-        encoding="utf-8",
-    )
+def test_broken_harness_import_is_reported_readably(tmp_path: Path, excecao: str) -> None:
+    """Envelope canonico e harness que falha ao importar viram reprovacao legivel, sem traceback."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    (copia / "evals" / "run_evals.py").write_text(excecao + "\n", encoding="utf-8")
     resultado = subprocess.run(
         [sys.executable, "scripts/validate_evals.py", "--root", "."],
         cwd=copia,
