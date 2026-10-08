@@ -93,10 +93,10 @@ def confined_regular_file(root: Path, path: Path, label: str) -> None:
     linked = symlinked_component(path)
     if linked is not None:
         raise SystemExit(f"ERRO: {label} passa por link simbolico: {linked}")
-    resolved = path.resolve()
+    resolved = resolved_path(path, label)
     if not resolved.is_file():
         raise SystemExit(f"ERRO: {label} nao e um arquivo regular: {path}")
-    if not resolved.is_relative_to(root.resolve()):
+    if not resolved.is_relative_to(resolved_path(root, label)):
         raise SystemExit(f"ERRO: {label} resolve para fora da raiz auditada: {resolved}")
 
 
@@ -150,7 +150,11 @@ def policy_shape_errors(policy: dict) -> list[str]:
     identifiers = []
     for key in ("required", "optional"):
         for item in policy[key]:
-            if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not item["id"].strip():
+            if (
+                not isinstance(item, dict)
+                or not isinstance(item.get("id"), str)
+                or visible_problem(item["id"])
+            ):
                 errors.append(f"a politica declara item sem identificador textual em `{key}`")
                 continue
             for field in ("description", "reason"):
@@ -391,10 +395,22 @@ def refuse_symlink(path: Path, label: str) -> None:
 
 
 
+def resolved_path(path: Path, label: str) -> Path:
+    """Resolve o caminho, recusando link ciclico de forma controlada."""
+    try:
+        return path.resolve()
+    except (OSError, RuntimeError) as error:
+        raise SystemExit(f"ERRO: {label} nao pode ser resolvido: {error}") from error
+
+
 def refuse_protected(root: Path, path: Path, evidence: Path, label: str) -> None:
     """Recusa destino que sobrescreveria o contrato, a politica ou a propria evidencia."""
-    resolved = path.resolve()
-    protected = [root.resolve() / POLICY_RELATIVE, Path(__file__).resolve(), evidence.resolve()]
+    resolved = resolved_path(path, label)
+    protected = [
+        resolved_path(root, label) / POLICY_RELATIVE,
+        resolved_path(Path(__file__), label),
+        resolved_path(evidence, label),
+    ]
     if resolved in protected:
         raise SystemExit(f"ERRO: {label} sobrescreveria um artefato do handoff: {resolved}")
 
@@ -410,7 +426,7 @@ def write_report(root: Path, path: Path, evidence: Path, text: str, label: str) 
     refuse_protected(root, path, evidence, label)
     if not path.is_absolute():
         raise SystemExit(f"ERRO: {label} precisa de caminho absoluto: {path}")
-    if not path.resolve().is_relative_to(root.resolve()):
+    if not resolved_path(path, label).is_relative_to(resolved_path(root, label)):
         raise SystemExit(f"ERRO: {label} precisa ficar dentro da raiz auditada: {path}")
     refuse_symlink(path, label)
     if not path.parent.is_dir():
@@ -423,9 +439,9 @@ def write_report(root: Path, path: Path, evidence: Path, text: str, label: str) 
     if temporary.exists() or temporary.is_symlink():
         raise SystemExit(f"ERRO: {label} usa um caminho temporario ja ocupado: {temporary}")
     try:
-        temporary.write_text(text, encoding="utf-8")
+        temporary.write_text(text.encode("utf-8", "backslashreplace").decode("utf-8"), encoding="utf-8")
         temporary.replace(path)
-    except OSError as error:
+    except (OSError, UnicodeEncodeError) as error:
         temporary.unlink(missing_ok=True)
         raise SystemExit(f"ERRO: nao foi possivel escrever {label}: {error}") from error
 
@@ -511,7 +527,7 @@ def main(argv: list[str] | None = None) -> int:
     if (
         arguments.report
         and arguments.json_report
-        and Path(arguments.report).resolve() == Path(arguments.json_report).resolve()
+        and resolved_path(Path(arguments.report), "o relatorio") == resolved_path(Path(arguments.json_report), "o relatorio")
     ):
         raise SystemExit("ERRO: `--report` e `--json-report` nao podem apontar para o mesmo destino")
     if arguments.report:

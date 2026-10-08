@@ -765,3 +765,68 @@ def test_shas_may_come_from_the_evidence_alone(tmp_path: Path) -> None:
     path = tmp_path / "evidence.json"
     path.write_text(json.dumps(evidence()), encoding="utf-8")
     assert contract_main(["--root", str(ROOT), "--evidence", str(path)]) == 0
+
+
+def test_lone_surrogate_with_report_is_rejected_without_traceback(tmp_path: Path) -> None:
+    """Achado bloqueante: o caminho de relatorio nao pode quebrar com texto nao codificavel."""
+    document = evidence()
+    document["items"]["gates"]["value"] = "\ud800"
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/release_handoff.py"), "--root", str(ROOT), "--evidence", str(path),
+         "--develop", DEVELOP, "--main", MAIN, "--report", str(tmp_path / "relatorio.md")],
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 1
+    assert "Traceback" not in result.stderr
+
+
+def test_symlink_loop_in_report_destination_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante: destino com ciclo de links precisa falhar de forma controlada."""
+    (tmp_path / "reports").mkdir()
+    (tmp_path / "reports/a").symlink_to(tmp_path / "reports/b")
+    (tmp_path / "reports/b").symlink_to(tmp_path / "reports/a")
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(evidence()), encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/release_handoff.py"), "--root", str(tmp_path), "--evidence", str(path),
+         "--develop", DEVELOP, "--main", MAIN, "--report", str(tmp_path / "reports/a")],
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 1
+    assert "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize("bad", [[], {}, 7, True])
+def test_non_textual_policy_identifier_is_reported(tmp_path: Path, bad: object) -> None:
+    """Achado bloqueante: identificador nao textual nao pode derrubar o validador."""
+    (tmp_path / "config").mkdir()
+    policy = json.loads(json.dumps(POLICY))
+    policy["required"][0]["id"] = bad
+    (tmp_path / "config/release-handoff.json").write_text(json.dumps(policy), encoding="utf-8")
+    errors = validate_release_handoff(tmp_path)
+    assert errors
+
+
+def test_invisible_policy_identifier_is_reported(tmp_path: Path) -> None:
+    """Ressalva: identificador com surrogate isolado precisa ser recusado."""
+    (tmp_path / "config").mkdir()
+    policy = json.loads(json.dumps(POLICY))
+    policy["optional"][0]["id"] = "\ud800"
+    (tmp_path / "config/release-handoff.json").write_text(json.dumps(policy), encoding="utf-8")
+    errors = validate_release_handoff(tmp_path)
+    assert errors
+
+
+def test_handoff_artifacts_survive_the_refusal(tmp_path: Path) -> None:
+    """A recusa de sobrescrita nao pode alterar a politica nem o contrato reais."""
+    before = (ROOT / "config/release-handoff.json").read_bytes()
+    path = tmp_path / "evidence.json"
+    path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(
+            ["--root", str(ROOT), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN,
+             "--report", str(ROOT / "config/release-handoff.json")]
+        )
+    assert (ROOT / "config/release-handoff.json").read_bytes() == before

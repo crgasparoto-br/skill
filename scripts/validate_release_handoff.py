@@ -14,6 +14,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import unicodedata
 from pathlib import Path
 
 POLICY_RELATIVE = "config/release-handoff.json"
@@ -119,6 +120,24 @@ def authority_errors(policy: dict) -> list[str]:
     return errors
 
 
+def encodable(text: str) -> bool:
+    """Texto que nao pode ser codificado em UTF-8 nao serve como identificador."""
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
+def identifier_problem(text: str) -> str:
+    """Identificador precisa ser texto simples, visivel e codificavel em UTF-8."""
+    if not text or text != text.strip():
+        return "vazio ou com espaco nas pontas"
+    if not encodable(text) or any(unicodedata.category(char) in {"Cf", "Cc", "Cs", "Zl", "Zp"} for char in text):
+        return "com caractere invisivel"
+    return ""
+
+
 def item_errors(policy: dict, key: str) -> list[str]:
     """Itens declarados precisam de identificador unico, descricao e motivo."""
     items = policy.get(key)
@@ -131,8 +150,8 @@ def item_errors(policy: dict, key: str) -> list[str]:
             errors.append(f"item de `{key}` nao e um objeto")
             continue
         item_id = item.get("id")
-        if not isinstance(item_id, str) or not item_id:
-            errors.append(f"item de `{key}` sem identificador")
+        if not isinstance(item_id, str) or identifier_problem(item_id):
+            errors.append(f"item de `{key}` sem identificador utilizavel")
             continue
         if item_id in seen:
             errors.append(f"identificador repetido em `{key}`: `{item_id}`")
@@ -167,7 +186,9 @@ def missing_required_errors(policy: dict) -> list[str]:
     required = policy.get("required")
     if not isinstance(required, list):
         return []
-    declared = {item.get("id") for item in required if isinstance(item, dict)}
+    declared = {
+        item.get("id") for item in required if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
     return [f"a politica nao declara o item obrigatorio `{item}`" for item in sorted(REQUIRED_IDS - declared)]
 
 
