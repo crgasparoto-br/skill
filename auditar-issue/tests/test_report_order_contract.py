@@ -26,6 +26,17 @@ class ReportOrderContractTests(unittest.TestCase):
         self.assertEqual(3, len(block), block)
         for linha, marcador in zip(block, ("**Conclusao:**", "**Motivo determinante:**", "**Libera merge/release:**"), strict=True):
             self.assertTrue(linha.startswith("> " + marcador), linha)
+        cruas = text.splitlines()
+        fim = cruas.index("> **Libera merge/release:** [SIM | NAO]")
+        self.assertEqual("", cruas[fim + 1], "o bloco de conclusao precisa terminar em linha propria")
+        self.assertTrue(cruas[fim + 2].startswith("**Validade:**"), cruas[fim + 2])
+
+    def test_skill_conclusion_block_ends_before_metadata(self):
+        text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        linhas = [linha.strip() for linha in text.splitlines()]
+        indice = linhas.index("> **Libera merge/release:** [SIM | NAO]")
+        self.assertEqual("", linhas[indice + 1], "o bloco precisa terminar antes dos metadados")
+        self.assertTrue(linhas[indice + 2].startswith("**Validade:**"), linhas[indice + 2])
 
     def test_skill_requires_conclusion_block_before_other_metadata(self):
         text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
