@@ -412,7 +412,7 @@ def test_harness_version_non_literal_after_literal_is_rejected(tmp_path: Path) -
         encoding="utf-8",
     )
     problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
-    assert problems and "literal" in problems[0]
+    assert problems and "mais de uma vez" in problems[0]
 
 
 def test_harness_version_assigned_twice_is_rejected(tmp_path: Path) -> None:
@@ -423,3 +423,89 @@ def test_harness_version_assigned_twice_is_rejected(tmp_path: Path) -> None:
     )
     problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
     assert problems and "mais de uma vez" in problems[0]
+
+
+def test_harness_version_annotated_assignment_divergence_is_rejected(tmp_path: Path) -> None:
+    """Atribuicao anotada depois da literal tambem define o valor efetivo e precisa reprovar."""
+    package = tmp_path / "evals"
+    package.mkdir()
+    (package / "__init__.py").write_text(
+        '__version__ = "0.3.0"\n__version__: str = "9.9.9"\n', encoding="utf-8"
+    )
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems
+
+
+def test_harness_version_augmented_assignment_is_rejected(tmp_path: Path) -> None:
+    package = tmp_path / "evals"
+    package.mkdir()
+    (package / "__init__.py").write_text('__version__ = "0.3.0"\n__version__ += "-x"\n', encoding="utf-8")
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems and "mais de uma vez" in problems[0]
+
+
+def _package(tmp_path: Path, body: str) -> Path:
+    package = tmp_path / "evals"
+    package.mkdir()
+    (package / "__init__.py").write_text(body, encoding="utf-8")
+    return tmp_path
+
+
+def test_harness_version_canonical_form_is_accepted(tmp_path: Path) -> None:
+    root = _package(tmp_path, '__all__ = ["__version__"]\n__version__ = "0.3.0"\n')
+    assert harness_version_errors(root, {"harness_version": "0.3.0"}) == []
+
+
+def test_harness_version_without_all_is_rejected(tmp_path: Path) -> None:
+    root = _package(tmp_path, '__version__ = "0.3.0"\n')
+    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
+    assert problems and "__all__" in problems[0]
+
+
+def test_harness_version_missing_from_all_is_rejected(tmp_path: Path) -> None:
+    root = _package(tmp_path, '__all__ = ["other"]\n__version__ = "0.3.0"\nother = "x"\n')
+    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
+    assert problems and "sem __version__" in problems[0]
+
+
+def test_harness_version_nested_assignment_is_rejected(tmp_path: Path) -> None:
+    """Atribuicao dentro de condicional muda o valor efetivo e nao pode escapar do inventario."""
+    root = _package(
+        tmp_path,
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nif True:\n    __version__ = "9.9.9"\n',
+    )
+    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
+    assert problems and "mais de uma vez" in problems[0]
+
+
+def test_harness_version_loop_assignment_is_rejected(tmp_path: Path) -> None:
+    root = _package(
+        tmp_path,
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\nfor __version__ in ["9.9.9"]:\n    pass\n',
+    )
+    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
+    assert problems and "mais de uma vez" in problems[0]
+
+
+def test_harness_version_unpacked_assignment_is_rejected(tmp_path: Path) -> None:
+    root = _package(
+        tmp_path,
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\n__version__, alias = ("9.9.9", "x")\n',
+    )
+    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
+    assert problems and "mais de uma vez" in problems[0]
+
+
+def test_harness_version_global_declaration_is_rejected(tmp_path: Path) -> None:
+    root = _package(
+        tmp_path,
+        '__all__ = ["__version__"]\n__version__ = "0.3.0"\n\ndef troca():\n    global __version__\n',
+    )
+    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
+    assert problems and "mais de uma vez" in problems[0]
+
+
+def test_harness_version_chained_assignment_is_rejected(tmp_path: Path) -> None:
+    root = _package(tmp_path, '__all__ = ["__version__"]\n__version__ = alias = "0.3.0"\n')
+    problems = harness_version_errors(root, {"harness_version": "0.3.0"})
+    assert problems and "fora de atribuicao simples" in problems[0]

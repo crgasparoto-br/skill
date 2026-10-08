@@ -77,35 +77,100 @@ def selection_case_errors(case: dict[str, Any]) -> list[str]:
     return []
 
 
+def _bound_names(target: ast.AST) -> list[str]:
+    """Nomes ligados por um alvo de atribuicao, em qualquer forma de desempacotamento."""
+    if isinstance(target, ast.Name):
+        return [target.id]
+    if isinstance(target, (ast.Tuple, ast.List)):
+        names: list[str] = []
+        for element in target.elts:
+            names.extend(_bound_names(element))
+        return names
+    if isinstance(target, ast.Starred):
+        return _bound_names(target.value)
+    return []
+
+
+def _binds(node: ast.AST) -> list[str]:
+    """Nomes que um no pode definir ou remover, cobrindo atribuicao, laco, contexto e import."""
+    if isinstance(node, ast.Assign):
+        names: list[str] = []
+        for target in node.targets:
+            names.extend(_bound_names(target))
+        return names
+    if isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.NamedExpr)):
+        return _bound_names(node.target)
+    if isinstance(node, (ast.For, ast.AsyncFor, ast.comprehension)):
+        return _bound_names(node.target)
+    if isinstance(node, (ast.With, ast.AsyncWith)):
+        names = []
+        for item in node.items:
+            if item.optional_vars is not None:
+                names.extend(_bound_names(item.optional_vars))
+        return names
+    if isinstance(node, (ast.Global, ast.Nonlocal)):
+        return list(node.names)
+    if isinstance(node, ast.Delete):
+        names = []
+        for target in node.targets:
+            names.extend(_bound_names(target))
+        return names
+    if isinstance(node, (ast.Import, ast.ImportFrom)):
+        return [alias.asname or alias.name.split(".")[0] for alias in node.names]
+    return []
+
+
 def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
     """A versao exportada pelo pacote de avaliacoes precisa ser a mesma do manifesto do harness.
 
-    O valor e lido da arvore sintatica, sem importar o pacote: importar executaria codigo do
-    repositorio sob validacao, e a leitura textual aceitaria um numero comentado.
+    A leitura e estatica, sem importar o pacote, e exige a forma canonica: exatamente uma ligacao
+    de `__version__`, no nivel de modulo, com texto literal, e `__version__` presente em `__all__`.
+    Qualquer outra ligacao — anotada, aumentada, dentro de condicional, de laco, de contexto,
+    desempacotada, em `global`/`nonlocal`, em `del` ou por import — reprova, porque mudaria o valor
+    efetivo em tempo de import e a comparacao com o manifesto perderia sentido.
     """
     path = root / "evals" / "__init__.py"
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, SyntaxError) as exc:
         return [f"evals/__init__.py ilegivel: {exc}"]
-    assignments = [
-        node
-        for node in tree.body
-        if any(
-            isinstance(target, ast.Name) and target.id == "__version__"
-            for target in (node.targets if isinstance(node, ast.Assign) else [])
-        )
-    ]
-    values = [node.value for node in assignments]
-    # Fail closed: qualquer atribuicao que nao seja texto literal reprova, porque o valor efetivo
-    # passaria a ser calculado em tempo de import e a comparacao do gate perderia sentido.
-    if any(not (isinstance(value, ast.Constant) and isinstance(value.value, str)) for value in values):
-        return ["evals/__init__.py atribui __version__ fora de texto literal"]
-    if len(values) > 1:
-        return ["evals/__init__.py atribui __version__ mais de uma vez"]
-    if not values:
+
+    version_nodes = [node for node in ast.walk(tree) if "__version__" in _binds(node)]
+    if not version_nodes:
         return ["evals/__init__.py nao declara __version__ com texto literal"]
-    declared = values[0].value
+    if len(version_nodes) > 1:
+        return ["evals/__init__.py liga __version__ mais de uma vez"]
+    node = version_nodes[0]
+    simple = (
+        isinstance(node, ast.Assign)
+        and node in tree.body
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Name)
+    )
+    if not simple:
+        return ["evals/__init__.py liga __version__ fora de atribuicao simples no nivel de modulo"]
+    value = node.value
+    if not (isinstance(value, ast.Constant) and isinstance(value.value, str)):
+        return ["evals/__init__.py atribui __version__ fora de texto literal"]
+
+    all_nodes = [candidate for candidate in ast.walk(tree) if "__all__" in _binds(candidate)]
+    if not all_nodes:
+        return ["evals/__init__.py nao declara __all__"]
+    if len(all_nodes) > 1:
+        return ["evals/__init__.py liga __all__ mais de uma vez"]
+    declared_all = all_nodes[0]
+    if not isinstance(declared_all, ast.Assign) or declared_all not in tree.body:
+        return ["evals/__init__.py liga __all__ fora de atribuicao simples no nivel de modulo"]
+    exported = declared_all.value
+    if not isinstance(exported, ast.List) or not all(
+        isinstance(element, ast.Constant) and isinstance(element.value, str) for element in exported.elts
+    ):
+        return ["evals/__init__.py declara __all__ fora de lista de textos"]
+    names = [element.value for element in exported.elts]
+    if "__version__" not in names:
+        return [f"evals/__init__.py exporta {names!r}, sem __version__"]
+
+    declared = value.value
     expected = manifest.get("harness_version")
     if declared != expected:
         return [f"evals/__init__.py declara {declared!r} e o manifesto declara {expected!r}"]
