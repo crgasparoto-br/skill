@@ -98,6 +98,23 @@ opera, e apontar o relatório para um arquivo versionado o substitui.
 O gate `scripts/validate_release_handoff.py` valida a política, a ausência de autoridade no contrato e executa a
 evidência completa; ele também falha fechado, inclusive quando a raiz informada não pode ser resolvida.
 
+## Paridade da versão do harness de avaliações
+
+O pacote `evals/` exporta a versão que o manifesto do harness declara, e essa paridade é verificada por
+`scripts/validate_evals.py`. A prova sólida é estática e não executa o código auditado: `evals/__init__.py` só é
+aceito como envelope canônico — docstring inicial opcional, uma atribuição simples de `__all__` com lista literal de
+textos sem repetição nem nome vazio contendo `__version__`, uma atribuição simples de `__version__` com texto literal
+igual ao manifesto, e nenhuma outra instrução. Fora do envelope a recusa é imediata, o que elimina por construção as
+formas de religar os nomes por alias, `__dict__`, `globals`, `exec`, importação coringa, decorador, metaclasse,
+compreensão, `type`, `importlib` e alvo indireto em `for`, `with` e `async`.
+
+Depois da importação, e de novo depois da execução das avaliações, os valores efetivos exportados são reconferidos:
+tipo, igualdade com o manifesto, lista de textos sem repetição nem nome vazio e origem dentro da raiz auditada. O
+limite é declarado: essa reconferência é defesa em profundidade, não prova. Ela roda no mesmo processo do código
+auditado, então código que adultere deliberadamente o interpretador — `builtins.getattr`, `sys.modules` ou a classe do
+módulo — pode mascará-la. A propriedade verificável é a checagem estática do envelope, que não executa nada; a
+reconferência serve para detectar alteração não deliberada, e não para resistir a autor com escrita no repositório.
+
 ## Compatibilidade e migração
 
 Cada skill validada deve aparecer no manifesto de compatibilidade com sua versão pública de contrato, linhagem interna, release mínima suportada e instrução de migração. Uma combinação não declarada deve ser tratada como `UNKNOWN` ou incompatível, nunca como compatível por aproximação textual.
