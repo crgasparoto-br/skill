@@ -3349,3 +3349,57 @@ def test_refused_link_target_does_not_contribute_manifests(tmp_path: Path) -> No
     assert [entry["location"] for entry in findings_of(complete, "unused-dependency")] == [
         "other/requirements.txt::requests"
     ]
+
+
+def test_descendant_of_directory_symlink_is_refused(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo descendente de link de diretório media o diretório real."""
+    tree = tmp_path / "arvore"
+    (tree / "real" / "sub").mkdir(parents=True)
+    (tree / "real" / "sub" / "orphan.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (tree / "real" / "sub" / "requirements.txt").write_text("requests>=2\n", encoding="utf-8")
+    (tree / "config").mkdir()
+    (tree / "config" / "hygiene-policy.json").write_text(
+        json.dumps(policy_variant(accepted=[]), ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    (tree / "alias").symlink_to(tree / "real", target_is_directory=True)
+    policy = hygiene_scan.load_policy(tree)
+    report, problems = hygiene_scan.build_report(tree, policy, ["alias/sub"])
+    assert problems == []
+    assert report["analyzed"] == 0
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["alias"]
+    assert findings_of(report, "dead-module") == []
+    assert findings_of(report, "unused-dependency") == []
+    # A varredura completa continua medindo o diretório real, que está na árvore.
+    complete, _ = hygiene_scan.build_report(tree, policy)
+    assert [entry["path"] for entry in findings_of(complete, "dead-module")] == ["real/sub/orphan.py"]
+
+
+def test_leftover_temporary_is_declared(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+    """Achado bloqueante: temporário que não pôde ser removido ficava sem declaração."""
+    target = tmp_path / "a"
+    original_replace, original_unlink = Path.replace, Path.unlink
+
+    def failing_replace(self: Path, other: Path) -> Path:
+        raise OSError("falha simulada na publicacao")
+
+    def failing_unlink(self: Path, *args: object, **kwargs: object) -> None:
+        if self.name.startswith(".a.") and self.name.endswith(".tmp"):
+            raise OSError("falha simulada na limpeza")
+        original_unlink(self, *args, **kwargs)
+
+    Path.replace, Path.unlink = failing_replace, failing_unlink
+    try:
+        code = hygiene_scan.publish_artifacts({"a": target}, {"a": "NEW"})
+    finally:
+        Path.replace, Path.unlink = original_replace, original_unlink
+    assert code == 1
+    assert "temporario residual" in capsys.readouterr().err
+    assert [item.name for item in tmp_path.iterdir() if item.name.endswith(".tmp")]
+
+
+def test_unencodable_content_fails_without_temporary(tmp_path: Path) -> None:
+    """Achado bloqueante: falha de escrita fora de `OSError` deixava temporário e escapava crua."""
+    target = tmp_path / "a"
+    code = hygiene_scan.publish_artifacts({"a": target}, {"a": "\ud800"})
+    assert code == 1
+    assert list(tmp_path.iterdir()) == []

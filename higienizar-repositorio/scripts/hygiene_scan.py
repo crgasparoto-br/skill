@@ -347,6 +347,8 @@ def normalized_targets(root: Path, paths: list[str] | None) -> set[str] | None:
             # manifest do diretório real para dentro de uma varredura que declara o alvo como não analisado.
             if candidate.is_symlink() and candidate.is_dir():
                 continue
+            if symlinked_directory_component(candidate, root) is not None:
+                continue
             if not candidate.exists():
                 continue
             candidate = candidate.resolve()
@@ -395,6 +397,17 @@ def scope_files(
                     {
                         "path": safe_relative(literal, root),
                         "reason": "link simbolico quebrado: o alvo nao existe",
+                    }
+                )
+                continue
+            linked = symlinked_directory_component(literal, root)
+            if linked is not None:
+                # Recusa pelo componente linkado, e não pelo alvo inteiro: o motivo precisa apontar o
+                # diretório que a varredura não segue.
+                missing.append(
+                    {
+                        "path": safe_relative(linked, root),
+                        "reason": "link simbolico para diretorio: a varredura nao segue link",
                     }
                 )
                 continue
@@ -746,6 +759,22 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
         except HygieneError:
             refused.append({"path": rel, "reason": "arquivo de corpus ilegivel"})
     return texts, refused
+
+
+def symlinked_directory_component(literal: Path, root: Path) -> Path | None:
+    """Primeiro componente do alvo, dentro da raiz, que é link para diretório.
+
+    O nó final não é o único lugar onde o link aparece: `alias/sub` não é symlink, mas atravessa `alias`, e
+    seguir esse componente mediria o diretório real enquanto o relatório declara o alvo como não analisado.
+    """
+    if not literal.is_relative_to(root):
+        return None
+    current = root
+    for part in literal.relative_to(root).parts:
+        current = current / part
+        if current.is_symlink() and current.is_dir():
+            return current
+    return None
 
 
 def normalized_target(value: str) -> str:
@@ -1590,9 +1619,11 @@ def publish_artifacts(targets: dict[str, Path], contents: dict[str, str]) -> int
             previous[label] = target.read_bytes() if target.exists() else None
         for label, target in targets.items():
             staged[label] = stage_artifact(target, contents[label])
-    except OSError as error:
-        discard_artifacts(staged)
+    except (OSError, UnicodeError) as error:
+        leftover = discard_artifacts(staged)
         print(f"ERRO: falha ao gravar o relatorio: {error}", file=sys.stderr)
+        if leftover:
+            print(f"ERRO: temporario residual; remova: {', '.join(leftover)}", file=sys.stderr)
         return 1
     published: list[str] = []
     try:
@@ -1600,9 +1631,11 @@ def publish_artifacts(targets: dict[str, Path], contents: dict[str, str]) -> int
             temporary.replace(targets[label])
             published.append(label)
     except OSError as error:
-        discard_artifacts(staged)
+        leftover = discard_artifacts(staged)
         pending = restore_artifacts(targets, previous, published)
         print(f"ERRO: falha ao publicar o relatorio: {error}", file=sys.stderr)
+        if leftover:
+            print(f"ERRO: temporario residual; remova: {', '.join(leftover)}", file=sys.stderr)
         if pending:
             # Reversão que falha é declarada: silenciá-la faria o operador acreditar em lote íntegro.
             print(
@@ -1634,13 +1667,19 @@ def restore_artifacts(
     return pending
 
 
-def discard_artifacts(staged: dict[str, Path]) -> None:
-    """Remove os temporários ainda não publicados; o que já foi publicado não tem mais temporário."""
+def discard_artifacts(staged: dict[str, Path]) -> list[str]:
+    """Remove os temporários ainda não publicados e devolve os que não pôde remover.
+
+    Temporário que sobra não pode ser silencioso: é artefato residual no diretório de destino, e quem
+    opera precisa saber onde ele está para removê-lo.
+    """
+    leftover: list[str] = []
     for temporary in staged.values():
         try:
             temporary.unlink(missing_ok=True)
-        except OSError:  # pragma: no cover - limpeza nunca derruba a execução
-            continue
+        except OSError:
+            leftover.append(str(temporary))
+    return leftover
 
 
 def stage_artifact(target: Path, content: str) -> Path:
@@ -1655,7 +1694,8 @@ def stage_artifact(target: Path, content: str) -> Path:
     try:
         with os.fdopen(handle, "w", encoding="utf-8") as stream:
             stream.write(content)
-    except OSError:
+    except (OSError, UnicodeError):
+        # `UnicodeError` não é `OSError` e escaparia sem limpeza, deixando o temporário no diretório.
         temporary.unlink(missing_ok=True)
         raise
     return temporary

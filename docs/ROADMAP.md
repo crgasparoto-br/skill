@@ -241,6 +241,9 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A vigésima terceira rodada de auditoria corrigiu o que as vinte e duas anteriores ainda não garantiam: qualquer componente do alvo que
+seja link para diretório recusa o alvo inteiro, e temporário que não pôde ser removido passa a ser declarado com o caminho, junto com a
+falha de escrita fora de `OSError` que antes escapava crua.
 A vigésima segunda rodada de auditoria corrigiu o que as vinte e uma anteriores ainda não garantiam: o conteúdo anterior de cada
 destino passou a ser lido antes de preparar qualquer temporário, reversão que falha passou a ser declarada com código próprio em vez de
 silenciada, e alvo recusado deixou de restringir manifest, de modo que o manifest do diretório real apontado por link não entra na
