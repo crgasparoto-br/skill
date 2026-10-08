@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -386,3 +387,53 @@ def test_reserved_attribute_introspection_is_rejected(tmp_path: Path) -> None:
     (tmp_path / "scripts").mkdir()
     (tmp_path / "scripts/release_handoff.py").write_text(injected, encoding="utf-8")
     assert script_errors(tmp_path)
+
+
+@pytest.mark.parametrize("filler", ["\u3164", "\u115f", "\u1160", "\uffa0", "\U00013441", "\U00013442", "\u2800", "\u2060"])
+def test_visually_empty_filler_is_not_evidence(filler: str) -> None:
+    """Achado bloqueante B3-R5: preenchedor invisivel tem categoria de letra e nao e evidencia."""
+    assert significant(filler) == ""
+    document = evidence()
+    document["items"]["issues-delivered"] = {"value": filler, "source": filler}
+    assert report_for(document)["ready"] is False
+
+
+@pytest.mark.parametrize("separator", [" ", "\t", "\u200b", "\u034f", "-"])
+def test_declared_sha_with_internal_separator_is_rejected(separator: str) -> None:
+    """Achado bloqueante B3/SHA-R5: o valor declarado do commit precisa chegar intacto a validacao."""
+    document = evidence()
+    document["items"]["develop-sha"] = {"value": DEVELOP[:20] + separator + DEVELOP[20:], "source": "git"}
+    assert report_for(document)["ready"] is False
+
+
+@pytest.mark.parametrize("kind", ["symlink", "fifo"])
+def test_occupied_temporary_path_is_rejected(tmp_path: Path, kind: str) -> None:
+    """Achado bloqueante B4-R5: o arquivo temporario tambem precisa ser exclusivo."""
+    (tmp_path / "outside").mkdir()
+    (tmp_path / "reports").mkdir()
+    victim = tmp_path / "outside/victim.md"
+    victim.write_text("intacto", encoding="utf-8")
+    temporary = tmp_path / "reports/handoff.md.parcial"
+    if kind == "symlink":
+        temporary.symlink_to(victim)
+    else:
+        os.mkfifo(temporary)
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(
+            ["--root", str(ROOT), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", MAIN,
+             "--report", str(tmp_path / "reports/handoff.md")]
+        )
+    assert victim.read_text(encoding="utf-8") == "intacto"
+
+
+def test_report_without_destination_directory_fails_closed(tmp_path: Path) -> None:
+    """Robustez: destino sem diretorio-pai precisa reprovar de forma limpa."""
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence()), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(
+            ["--root", str(ROOT), "--evidence", str(evidence_path), "--develop", DEVELOP, "--main", MAIN,
+             "--report", str(tmp_path / "ausente/handoff.md")]
+        )

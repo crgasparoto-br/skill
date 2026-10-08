@@ -21,6 +21,28 @@ from pathlib import Path
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 POLICY_RELATIVE = "config/release-handoff.json"
 MEANINGFUL_CATEGORIES = frozenset({"L", "N"})
+# Codigos que renderizam como nada apesar de a categoria ser letra ou numero: preenchedores de Hangul
+# (`U+115F`, `U+1160`, `U+3164`, `U+FFA0`), preenchedores de hieroglifo egipcio (`U+13441`, `U+13442`),
+# braille em branco (`U+2800`), sinal de multiplicacao invisivel (`U+2062` a `U+2064`), separador de
+# palavra invisivel (`U+2060`), espaco estreito sem quebra (`U+202F`) e marca de ordem de byte (`U+FEFF`).
+BLANK_CHARACTERS = frozenset(
+    {
+        "\u115f",
+        "\u1160",
+        "\U00013441",
+        "\U00013442",
+        "\u202f",
+        "\u2060",
+        "\u2061",
+        "\u2062",
+        "\u2063",
+        "\u2064",
+        "\u2800",
+        "\u3164",
+        "\ufeff",
+        "\uffa0",
+    }
+)
 REQUIRED_IDS = frozenset(
     {"issues-delivered", "develop-sha", "gates", "independent-audit", "divergence"}
 )
@@ -37,7 +59,10 @@ def significant(text: object) -> str:
     if not isinstance(text, str):
         return ""
     return "".join(
-        character for character in text if unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES
+        character
+        for character in text
+        if unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES
+        and character not in BLANK_CHARACTERS
     ).strip()
 
 
@@ -162,8 +187,9 @@ def evidence_value(evidence: dict, item_id: str) -> tuple[str, str]:
         return "", ""
     value = entry.get("value")
     source = entry.get("source")
-    # Espaco e caractere de controle nao sao evidencia: o valor e a origem precisam ter conteudo.
-    return significant(value), significant(source)
+    # O valor vai intacto a validacao de formato: normalizar apagaria separador interno de um commit
+    # informado e o faria parecer hexadecimal de 40. A origem passa pela regra de conteudo.
+    return declared_text(evidence, item_id), significant(source)
 
 
 def check_required(policy: dict, evidence: dict, shas: dict[str, str]) -> list[dict]:
@@ -280,12 +306,19 @@ def write_report(path: Path, text: str, label: str) -> None:
     passa por arquivo temporario seguido de substituicao atomica, que troca o proprio link pelo arquivo.
     """
     refuse_symlink(path, label)
+    if not path.parent.is_dir():
+        raise SystemExit(f"ERRO: {label} nao tem diretorio de destino: {path.parent}")
     if path.exists():
         status = path.stat()
         if not stat.S_ISREG(status.st_mode) or status.st_nlink > 1:
             raise SystemExit(f"ERRO: {label} nao e um arquivo regular exclusivo: {path}")
     temporary = path.with_name(f"{path.name}.parcial")
-    temporary.write_text(text, encoding="utf-8")
+    if temporary.exists() or temporary.is_symlink():
+        raise SystemExit(f"ERRO: {label} usa um caminho temporario ja ocupado: {temporary}")
+    try:
+        temporary.write_text(text, encoding="utf-8")
+    except OSError as error:
+        raise SystemExit(f"ERRO: nao foi possivel escrever {label}: {error}") from error
     temporary.replace(path)
 
 
