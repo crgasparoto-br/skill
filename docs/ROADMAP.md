@@ -504,7 +504,7 @@ está publicada em [`docs/RELEASE.md`](./RELEASE.md), de onde saem as notas de r
   inventário e plano de migração amplos, que o roadmap mantém fora do escopo por padrão.
 
 Os casos de prompt injection **não** estão abertos: a matriz `V030-002` os cobre em
-`evals/cases/V030-002-authority-001.json`, `-002.json`, `-003.json` e `-004.json`, com conteúdo hostil em README, issue, resultado de ferramenta e contrato. Os itens acima permanecem
+`evals/cases/V030-002-authority-001.json`, `-002.json`, `-003.json` e `-004.json`, com conteúdo hostil em README, issue, fixture e contrato. Os itens acima permanecem
 no roadmap para a próxima release.
 
 ## 7. Fora do escopo por padrão

@@ -91,7 +91,7 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 - a skill `higienizar-repositorio` entra no catálogo, na compatibilidade, no manifesto de capacidades, no contrato de composição e na allowlist de runtime do controlador, com o gate na sequência obrigatória na mesma posição em CI, `README.md` e `AGENTS.md` ([`config/skills-catalog.json`](./config/skills-catalog.json)).
 
 ### Limitações
-Esta release é publicada com seis critérios de aceite declarados como abertos: licença, varredura de segredos,
+Esta release entra com seis critérios de aceite declarados como abertos: licença, varredura de segredos,
 revisão de dependências em pull request, matriz de Python, pinagem de Actions por SHA completo no workflow de
 auditoria de dependências e contrato `transitional` sem inventário amplo de migração. A lista completa, com a decisão
 registrada de cada item, está em [`docs/RELEASE.md`](./docs/RELEASE.md).
