@@ -474,15 +474,15 @@ A release será considerada pronta somente quando todos os critérios abaixo for
 - [x] indisponibilidade de runtime nunca vira `PASS`;
 - [ ] secret scanning, dependency review e a auditoria de dependências possuem decisão explícita e rastreável (ver critérios abertos abaixo);
 - [ ] a licença foi escolhida e publicada;
-- [ ] referências longas possuem índice ou exceção documentada e validada;
+- [x] referências longas possuem índice ou exceção documentada e validada;
 - [x] referências longas possuem bloco de carregamento condicional e índice com âncoras resolvíveis, verificado pelo lint de navegabilidade;
 - [x] o registro de auditores confiáveis tem custódia, separação entre produtor e aprovador e limitação de operador único declaradas, com a entrada verificável por script;
 - [x] assets permanentes rejeitam acoplamento concreto a issue, host, caminho ou identificador de domínio, e o validador é executado sobre o catálogo;
 - [ ] a decisão do contrato `transitional` possui inventário, migração e compatibilidade testada;
 - [x] a dívida estrutural da árvore inteira é medida por perfil próprio, com precisão declarada por classe, exceção justificada, linha de base que só cresce com entrada nova e motivo escrito e cobertura que não encolhe em silêncio, verificado pelo gate de higienização;
 - [x] a suíte determinística e os validadores do catálogo continuam verdes;
-- [ ] uma auditoria independente aprova o commit final;
-- [ ] `VERSION`, `CHANGELOG.md`, compatibilidade, tag e GitHub Release apontam para o mesmo commit.
+- [ ] uma auditoria independente aprova o commit final (passo do processo de promoção, não do conteúdo);
+- [ ] `VERSION`, `CHANGELOG.md`, compatibilidade, tag e GitHub Release apontam para o mesmo commit (concluído pela tag anotada criada após o merge em `main`).
 
 ### Critérios abertos declarados na v0.3.0
 
