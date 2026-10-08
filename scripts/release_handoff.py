@@ -185,7 +185,6 @@ def evidence_value(evidence: dict, item_id: str) -> tuple[str, str]:
     entry = items.get(item_id) if isinstance(items, dict) else None
     if not isinstance(entry, dict):
         return "", ""
-    value = entry.get("value")
     source = entry.get("source")
     # O valor vai intacto a validacao de formato: normalizar apagaria separador interno de um commit
     # informado e o faria parecer hexadecimal de 40. A origem passa pela regra de conteudo.
