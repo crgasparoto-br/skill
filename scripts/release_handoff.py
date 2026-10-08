@@ -195,48 +195,6 @@ def visible_problem(text: str) -> str:
     return ""
 
 
-def visible_problem(text: str) -> str:
-    """Descreve por que o texto nao serve como evidencia, ou devolve vazio quando serve.
-
-    A regra positiva de `significant()` nao basta aqui: ela **remove** o caractere estranho e aceitaria
-    `"lo\u200blocal"` como `"local"`. Para valor e origem declarados a exigencia e outra: nada invisivel,
-    espaco normal permitido no meio, ao menos uma letra ou digito e tamanho minimo de dois caracteres.
-    """
-    if not text:
-        return "esta vazio"
-    if any(
-        unicodedata.category(character) in INVISIBLE_CATEGORIES or character in BLANK_CHARACTERS
-        for character in text
-    ):
-        return "contem caractere invisivel ou preenchedor"
-    if not any(unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES for character in text):
-        return "nao contem letra nem digito"
-    if len(text) < MINIMUM_TEXT:
-        return f"tem menos de {MINIMUM_TEXT} caracteres"
-    return ""
-
-
-def visible_problem(text: str) -> str:
-    """Descreve por que o texto nao serve como evidencia, ou devolve vazio quando serve.
-
-    A regra positiva de `significant()` nao basta aqui: ela **remove** o caractere estranho e aceitaria
-    `"lo\u200blocal"` como `"local"`. Para valor e origem declarados a exigencia e outra: nada invisivel,
-    espaco normal permitido no meio, ao menos uma letra ou digito e tamanho minimo de dois caracteres.
-    """
-    if not text:
-        return "esta vazio"
-    if any(
-        unicodedata.category(character) in INVISIBLE_CATEGORIES or character in BLANK_CHARACTERS
-        for character in text
-    ):
-        return "contem caractere invisivel ou preenchedor"
-    if not any(unicodedata.category(character)[0] in MEANINGFUL_CATEGORIES for character in text):
-        return "nao contem letra nem digito"
-    if len(text) < MINIMUM_TEXT:
-        return f"tem menos de {MINIMUM_TEXT} caracteres"
-    return ""
-
-
 def declared_text(evidence: dict, item_id: str) -> str:
     """Valor declarado sem normalizacao de conteudo: espaco interno precisa chegar a validacao.
 
