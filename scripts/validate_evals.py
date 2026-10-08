@@ -88,15 +88,24 @@ def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
         tree = ast.parse(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, SyntaxError) as exc:
         return [f"evals/__init__.py ilegivel: {exc}"]
-    declared = ""
-    for node in tree.body:
-        targets = node.targets if isinstance(node, ast.Assign) else []
-        if any(isinstance(target, ast.Name) and target.id == "__version__" for target in targets):
-            value = getattr(node, "value", None)
-            if isinstance(value, ast.Constant) and isinstance(value.value, str):
-                declared = value.value
-    if not declared:
+    assignments = [
+        node
+        for node in tree.body
+        if any(
+            isinstance(target, ast.Name) and target.id == "__version__"
+            for target in (node.targets if isinstance(node, ast.Assign) else [])
+        )
+    ]
+    values = [node.value for node in assignments]
+    # Fail closed: qualquer atribuicao que nao seja texto literal reprova, porque o valor efetivo
+    # passaria a ser calculado em tempo de import e a comparacao do gate perderia sentido.
+    if any(not (isinstance(value, ast.Constant) and isinstance(value.value, str)) for value in values):
+        return ["evals/__init__.py atribui __version__ fora de texto literal"]
+    if len(values) > 1:
+        return ["evals/__init__.py atribui __version__ mais de uma vez"]
+    if not values:
         return ["evals/__init__.py nao declara __version__ com texto literal"]
+    declared = values[0].value
     expected = manifest.get("harness_version")
     if declared != expected:
         return [f"evals/__init__.py declara {declared!r} e o manifesto declara {expected!r}"]
