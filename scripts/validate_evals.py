@@ -110,8 +110,7 @@ def _indirect_write(tree: ast.Module) -> str:
         for target in targets:
             inner = target.value if isinstance(target, ast.Starred) else target
             if isinstance(inner, (ast.Attribute, ast.Subscript)):
-                yield_names = ast.unparse(inner)
-                return yield_names
+                return ast.unparse(inner)
     return ""
 
 
