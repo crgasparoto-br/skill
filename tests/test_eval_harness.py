@@ -423,3 +423,22 @@ def test_harness_version_assigned_twice_is_rejected(tmp_path: Path) -> None:
     )
     problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
     assert problems and "mais de uma vez" in problems[0]
+
+
+def test_harness_version_annotated_assignment_divergence_is_rejected(tmp_path: Path) -> None:
+    """Atribuicao anotada depois da literal tambem define o valor efetivo e precisa reprovar."""
+    package = tmp_path / "evals"
+    package.mkdir()
+    (package / "__init__.py").write_text(
+        '__version__ = "0.3.0"\n__version__: str = "9.9.9"\n', encoding="utf-8"
+    )
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems
+
+
+def test_harness_version_augmented_assignment_is_rejected(tmp_path: Path) -> None:
+    package = tmp_path / "evals"
+    package.mkdir()
+    (package / "__init__.py").write_text('__version__ = "0.3.0"\n__version__ += "-x"\n', encoding="utf-8")
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems and "aumentada" in problems[0]

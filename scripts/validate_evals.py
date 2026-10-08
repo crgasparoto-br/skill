@@ -96,6 +96,22 @@ def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
             for target in (node.targets if isinstance(node, ast.Assign) else [])
         )
     ]
+    # Atribuicao aumentada muda o valor efetivo mesmo depois de uma literal, e atribuicao anotada
+    # tambem define o nome: as duas contam para o inventario do gate.
+    if any(
+        isinstance(node, ast.AugAssign)
+        and isinstance(node.target, ast.Name)
+        and node.target.id == "__version__"
+        for node in tree.body
+    ):
+        return ["evals/__init__.py altera __version__ por atribuicao aumentada"]
+    assignments.extend(
+        node
+        for node in tree.body
+        if isinstance(node, ast.AnnAssign)
+        and isinstance(node.target, ast.Name)
+        and node.target.id == "__version__"
+    )
     values = [node.value for node in assignments]
     # Fail closed: qualquer atribuicao que nao seja texto literal reprova, porque o valor efetivo
     # passaria a ser calculado em tempo de import e a comparacao do gate perderia sentido.
