@@ -3592,3 +3592,44 @@ def test_baseline_history_requires_reason_on_every_measurement() -> None:
     for text in (skill, reference):
         assert "inclusive reducao" in text or "inclusive a redução" in text
         assert "nao exige justificativa" not in text
+
+
+def test_relative_import_of_missing_name_does_not_revive_homonym(tmp_path: Path) -> None:
+    """Achado bloqueante: `from . import x` resolvia `pkg.pkg` e mantinha homônimo morto vivo."""
+    for name, consumer, body in (
+        ("ponto", "pkg/consumer.py", "from . import missing\n"),
+        ("dois_pontos", "pkg/sub/consumer.py", "from .. import missing\n"),
+    ):
+        tree = make_tree(
+            tmp_path / name,
+            {
+                "pkg/__init__.py": "",
+                "pkg/pkg.py": "VALUE = 1\n",
+                "pkg/sub/__init__.py": "",
+                consumer: body,
+                "README.md": f"{consumer}\n",
+            },
+        )
+        assert "pkg/pkg.py" in [
+            finding["path"] for finding in findings_of(scan(tree), "dead-module")
+        ]
+
+
+def test_normative_texts_require_reason_on_every_baseline_measurement() -> None:
+    """Achado bloqueante: política e requisito ainda diziam que redução não exige justificativa."""
+    repo = SKILL_ROOT.parent
+    policy = json.loads((repo / "config" / "hygiene-policy.json").read_text(encoding="utf-8"))
+    assert "nao exige justificativa" not in policy["description"]
+    assert "não exige justificativa" not in policy["description"]
+    requirements = json.loads(
+        (repo / "config" / "skill-system-requirements.json").read_text(encoding="utf-8")
+    )
+    entry = next(item for item in requirements["requirements"] if item["id"] == "SKSYS-028")
+    assert "sem exigir justificativa" not in entry["summary"]
+
+
+def test_roadmap_describes_the_ratchet_as_it_is() -> None:
+    """Achado bloqueante: o roadmap prometia linha de base que só diminui."""
+    roadmap = (SKILL_ROOT.parent / "docs" / "ROADMAP.md").read_text(encoding="utf-8")
+    assert "só diminui" not in roadmap
+    assert "só cresce com entrada nova e motivo escrito" in roadmap

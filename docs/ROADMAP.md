@@ -46,7 +46,7 @@ Os IDs abaixo são estáveis para issues, commits, avaliações e notas de relea
 | `V030-006` | Release e regressão comportamental | P1 | `planned` | Integrar avaliações informativas ao CI, registrar resultados e publicar `v0.3.0` reproduzível. |
 | `V030-007` | Genericidade de assets permanentes | P1 | `implemented` | Rejeitar acoplamento concreto a issue, host, caminho e identificador de domínio, e executar o validador sobre o catálogo. |
 | `V030-009` | Análise estática real do código | P1 | `implemented` | Aplicar famílias de regras com política declarada, reprovar sujeira, import morto e supressão não declarada, e manter a cobertura de regras impossível de encolher em silêncio. |
-| `V030-010` | Perfil de higienização global | P2 | `implemented` | Medir dívida estrutural da árvore inteira sob demanda, com precisão declarada por classe, exceção justificada e linha de base que só diminui. |
+| `V030-010` | Perfil de higienização global | P2 | `implemented` | Medir dívida estrutural da árvore inteira sob demanda, com precisão declarada por classe, exceção justificada e linha de base que só cresce com entrada nova e motivo escrito na história declarada. |
 | `V030-008` | Governança do registro de auditores confiáveis | P2 | `implemented` | Declarar custódia, separação entre produtor e aprovador, rotação, revogação e limitação de operador único, e tornar a entrada de registro verificável. |
 
 ## 4. Entregas detalhadas
@@ -241,6 +241,9 @@ canônica de issue sem abrir issue. A skill entrou no catálogo, na compatibilid
 no contrato de composição e na allowlist de runtime do controlador, e a árvore foi corrigida do que a própria
 varredura encontrou: código morto em módulo e em símbolo removido, dependência declarada e nunca importada
 retirada com lockfile regenerado, e a função nova da entrega refatorada em vez de absorvida pela linha de base.
+A vigésima sexta rodada de auditoria corrigiu o que as vinte e cinco anteriores ainda não garantiam: import relativo resolve a partir do
+pacote de quem importa sem reaplicar o pacote, a política e o requisito passam a exigir motivo escrito em toda medição da linha de base, e o
+roadmap descreve a catraca como ela é — cresce apenas por entrada nova com motivo escrito, em vez de nunca crescer.
 A vigésima quinta rodada de auditoria corrigiu o que as vinte e quatro anteriores ainda não garantiam: alvo por link externo mantém o escopo de
 manifest da subárvore analisada, a CLI recusa as duas direções da incoerência de cobertura, e a documentação da linha de base passou a exigir
 motivo escrito em toda medição, como o gate já exigia.
@@ -455,7 +458,7 @@ A release será considerada pronta somente quando todos os critérios abaixo for
 - [x] o registro de auditores confiáveis tem custódia, separação entre produtor e aprovador e limitação de operador único declaradas, com a entrada verificável por script;
 - [x] assets permanentes rejeitam acoplamento concreto a issue, host, caminho ou identificador de domínio, e o validador é executado sobre o catálogo;
 - [ ] a decisão do contrato `transitional` possui inventário, migração e compatibilidade testada;
-- [x] a dívida estrutural da árvore inteira é medida por perfil próprio, com precisão declarada por classe, exceção justificada, linha de base que só diminui e cobertura que não encolhe em silêncio, verificado pelo gate de higienização;
+- [x] a dívida estrutural da árvore inteira é medida por perfil próprio, com precisão declarada por classe, exceção justificada, linha de base que só cresce com entrada nova e motivo escrito e cobertura que não encolhe em silêncio, verificado pelo gate de higienização;
 - [ ] a suíte determinística e os validadores do catálogo continuam verdes;
 - [ ] uma auditoria independente aprova o commit final;
 - [ ] `VERSION`, `CHANGELOG.md`, compatibilidade, tag e GitHub Release apontam para o mesmo commit.

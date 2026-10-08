@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "system": "hygiene-policy",
-  "description": "Política da varredura global de higiene. A política é a única fonte dos limiares, do escopo, das exclusões, das exceções e da linha de base: nenhum limiar vive no código, sufixo de texto conferido na busca por citação é declarado, exclusão de caminho exige motivo escrito, é caminho relativo dentro da raiz e aparece no relatório, exceção sem justificativa escrita reprova, e classe medida contra linha de base não aceita exceção item a item — ela cresce apenas por entrada nova na história declarada, com motivo registrado, e reduzir é progresso e não exige justificativa. Cada classe declara o que não vê, porque uma classe que reivindica completude produz confiança falsa.",
+  "description": "Política da varredura global de higiene. A política é a única fonte dos limiares, do escopo, das exclusões, das exceções e da linha de base: nenhum limiar vive no código, sufixo de texto conferido na busca por citação é declarado, exclusão de caminho exige motivo escrito, é caminho relativo dentro da raiz e aparece no relatório, exceção sem justificativa escrita reprova, e classe medida contra linha de base não aceita exceção item a item — toda medição entra na história declarada com motivo registrado, inclusive a redução. Cada classe declara o que não vê, porque uma classe que reivindica completude produz confiança falsa.",
   "scope": {
     "include_suffixes": [
       ".py"

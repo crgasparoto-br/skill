@@ -1051,12 +1051,12 @@ def imported_modules(modules: dict[str, ast.Module]) -> set[str]:
                 if depth == len(package) and not root_is_package:
                     continue
                 base = [*package[: len(package) - depth], *(node.module.split(".") if node.module else [])]
-                # Alvo do relativo já é absoluto a partir da raiz quando a subida consome o pacote: somar
-                # o pacote do importador ali manteria vivo um homônimo que ninguém importa.
-                target_package = base[: len(package) - depth] if base else []
-                resolve_import(imported, package, base)
+                # O alvo do relativo já é absoluto a partir da raiz: somar o pacote do importador de novo
+                # manteria vivo um homônimo que ninguém importa, como `pkg.pkg` para `from . import x` em
+                # `pkg/consumer.py`.
+                resolve_import(imported, [], base)
                 for alias in node.names:
-                    resolve_import(imported, target_package, [*base, alias.name])
+                    resolve_import(imported, [], [*base, alias.name])
     return imported
 
 
