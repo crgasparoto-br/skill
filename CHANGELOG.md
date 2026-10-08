@@ -92,7 +92,7 @@ Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A 
 
 ### Compatibility
 
-Esta alteração está planejada para a `v0.3.0` e ainda não altera a tag pública `v0.2.0`. O snapshot interno do sistema avança para `2026-10-07.1`; o contrato público continua `1.0.0` e a linhagem interna continua `2026-08-20.3`.
+Esta alteração entra na `v0.3.0` e deixa de valer para a tag pública `v0.2.0`. O snapshot interno do sistema avança para `2026-10-08.1`; o contrato público continua `1.0.0` e a linhagem interna continua `2026-08-20.3`.
 
 ## [0.2.0] — 2026-09-29
 

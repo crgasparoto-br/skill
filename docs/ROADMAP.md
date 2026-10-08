@@ -468,10 +468,10 @@ entrega.
 A release será considerada pronta somente quando todos os critérios abaixo forem comprovados:
 
 - [x] `docs/ROADMAP.md` e as issues da release estão atualizados com status real;
-- [ ] o runner de avaliações executa casos versionados de forma reproduzível;
-- [ ] existem casos para seleção errada, prompt injection, capacidade ausente, contexto insuficiente e evidência não executada;
-- [ ] cada caso possui resultado esperado, ações proibidas e pelo menos uma variação próxima;
-- [ ] indisponibilidade de runtime nunca vira `PASS`;
+- [x] o runner de avaliações executa casos versionados de forma reproduzível;
+- [x] existem casos para seleção errada, prompt injection, capacidade ausente, contexto insuficiente e evidência não executada;
+- [x] cada caso possui resultado esperado, ações proibidas e pelo menos uma variação próxima, com a única exceção do caso de contrato do próprio harness, que não tem par;
+- [x] indisponibilidade de runtime nunca vira `PASS`;
 - [ ] secret scanning, dependency review e a auditoria de dependências possuem decisão explícita e rastreável (ver critérios abertos abaixo);
 - [ ] a licença foi escolhida e publicada;
 - [ ] referências longas possuem índice ou exceção documentada e validada;
@@ -486,20 +486,25 @@ A release será considerada pronta somente quando todos os critérios abaixo for
 
 ### Critérios abertos declarados na v0.3.0
 
-A v0.3.0 foi promovida por decisão do responsável com quatro critérios declarados como abertos, para que a
-publicação não dependesse de trabalho fora do escopo dos itens entregues. Cada um tem decisão registrada:
+A promoção da v0.3.0 foi decidida pelo responsável com cinco critérios declarados como abertos, para que a
+publicação não dependesse de trabalho fora do escopo dos itens entregues. Cada um tem decisão registrada, e a
+mesma lista está publicada em [`docs/RELEASE.md`](./RELEASE.md), de onde saem as notas de release:
 
-- **licença:** não escolhida por decisão explícita do responsável neste momento, que pediu para não priorizar a
-  questão; a ausência de licença é intencional e continua rastreável;
-- **secret scanning:** a auditoria de dependências existe e roda em `dependency-audit.yml`, mas não há decisão
+- **licença (V030-003):** não escolhida por decisão explícita do responsável neste momento, que pediu para não
+  priorizar a questão; a ausência de licença é intencional e continua rastreável;
+- **secret scanning (V030-003):** existe a auditoria de dependências em `dependency-audit.yml`, mas não há decisão
   registrada sobre varredura de segredos, que depende de configuração da conta e não do repositório;
-- **casos de prompt injection:** a matriz `V030-002` cobre seleção, autoridade, capacidade, contexto, evidência,
-  leitura progressiva, somente leitura e contrato de saída, mas ainda não tem família de prompt injection;
-- **contrato `transitional`:** a compatibilidade continua mapeada para a linhagem `2026-08-20.3` sem inventário e
-  plano de migração amplos, que o roadmap mantém fora do escopo por padrão.
+- **dependency review (V030-003):** a revisão automática de dependências em pull request não está habilitada nem
+  tem decisão registrada; o que existe é o gate offline de lockfile e a auditoria de digest fora da sequência
+  obrigatória;
+- **matriz de Python (V030-003):** a suíte roda em uma única versão do interpretador, e a ampliação da matriz
+  permanece aberta;
+- **contrato `transitional` (V030-005):** a compatibilidade continua mapeada para a linhagem `2026-08-20.3` sem
+  inventário e plano de migração amplos, que o roadmap mantém fora do escopo por padrão.
 
-Promover com esses critérios abertos é decisão registrada, não omissão: as notas de release repetem a lista e os
-itens permanecem no roadmap para a próxima release.
+Os casos de prompt injection **não** estão abertos: a matriz `V030-002` os cobre em
+`evals/cases/V030-002-authority-001.json`, `-002.json` e `-004.json`, com conteúdo hostil em README, issue e
+contrato. Os itens acima permanecem no roadmap para a próxima release.
 
 ## 7. Fora do escopo por padrão
 
