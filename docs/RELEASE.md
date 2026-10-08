@@ -39,7 +39,7 @@ A criação da tag e da release é deliberadamente posterior ao merge; uma pull 
 
 A promoção da v0.3.0 foi decidida pelo responsável com seis critérios de aceite declarados como abertos, para que a
 publicação não dependesse de trabalho fora do escopo das entregas concluídas. A mesma lista está no
-`docs/ROADMAP.md`, e as notas de release publicadas repetem os seis itens:
+`docs/ROADMAP.md`, e as notas a publicar e o changelog desta release repetem os seis itens:
 
 - **licença:** não escolhida, por decisão explícita do responsável neste momento; a ausência é intencional e
   rastreável;

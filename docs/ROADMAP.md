@@ -109,7 +109,7 @@ Fechar as lacunas de manutenção restantes:
 3. habilitar secret scanning e dependency review no GitHub, respeitando o princípio de menor privilégio;
 4. adicionar `pip-audit` ou ferramenta equivalente para dependências Python;
 5. definir a política para exceções, vulnerabilidades sem correção e atualizações incompatíveis;
-6. decidir se haverá matriz de versões Python além de 3.11 e, caso haja, testá-la no CI;
+6. decidir se haverá matriz de versões Python além da atualmente fixada (3.12) e, caso haja, testá-la no CI;
 7. manter actions pinadas por SHA completo e validar o pin em cada atualização.
 
 Os passos 4 e 5 foram **entregues em 2026-10-06**: os quatro manifests de skill têm lockfile irmão com versão exata,

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import sys
 from pathlib import Path
 from typing import Any
@@ -76,6 +77,32 @@ def selection_case_errors(case: dict[str, Any]) -> list[str]:
     return []
 
 
+def harness_version_errors(root: Path, manifest: dict[str, Any]) -> list[str]:
+    """A versao exportada pelo pacote de avaliacoes precisa ser a mesma do manifesto do harness.
+
+    O valor e lido da arvore sintatica, sem importar o pacote: importar executaria codigo do
+    repositorio sob validacao, e a leitura textual aceitaria um numero comentado.
+    """
+    path = root / "evals" / "__init__.py"
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, SyntaxError) as exc:
+        return [f"evals/__init__.py ilegivel: {exc}"]
+    declared = ""
+    for node in tree.body:
+        targets = node.targets if isinstance(node, ast.Assign) else []
+        if any(isinstance(target, ast.Name) and target.id == "__version__" for target in targets):
+            value = getattr(node, "value", None)
+            if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                declared = value.value
+    if not declared:
+        return ["evals/__init__.py nao declara __version__ com texto literal"]
+    expected = manifest.get("harness_version")
+    if declared != expected:
+        return [f"evals/__init__.py declara {declared!r} e o manifesto declara {expected!r}"]
+    return []
+
+
 def validate_v030_002_matrix(root: Path) -> list[str]:
     """Require stable adversarial coverage instead of accepting case files alone."""
     try:
@@ -145,6 +172,7 @@ def validate_evals(root: Path) -> list[str]:
         errors.append(str(exc))
         return errors
 
+    errors.extend(harness_version_errors(root, manifest))
     errors.extend(validate_v030_002_matrix(root))
     try:
         validation = run_evaluations(root, validate_only=True)

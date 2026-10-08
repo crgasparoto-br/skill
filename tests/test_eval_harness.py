@@ -12,7 +12,7 @@ import pytest
 
 from evals import run_evals as eval_harness
 from evals.run_evals import evaluate_result, run_evaluations, verify_report
-from scripts.validate_evals import validate_evals
+from scripts.validate_evals import harness_version_errors, validate_evals
 
 ROOT = Path(__file__).resolve().parents[1]
 CASE_ID = "V030-001-runner-contract-001"
@@ -371,3 +371,33 @@ def test_run_id_and_content_hash_are_stable_for_same_inputs() -> None:
     second = run_evaluations(ROOT, results_dir=results)
     assert first["run_id"] == second["run_id"]
     assert first["content_sha256"] == second["content_sha256"]
+
+
+def test_harness_version_matches_the_manifest() -> None:
+    """A versao exportada pelo pacote de avaliacoes nao pode divergir do manifesto do harness."""
+    manifest = json.loads((ROOT / "evals" / "manifest.json").read_text(encoding="utf-8"))
+    assert harness_version_errors(ROOT, manifest) == []
+
+
+def test_harness_version_divergence_is_rejected(tmp_path: Path) -> None:
+    package = tmp_path / "evals"
+    package.mkdir()
+    (package / "__init__.py").write_text(
+        '__all__ = ["__version__"]\n__version__ = "0.1.0"\n', encoding="utf-8"
+    )
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems and "0.1.0" in problems[0] and "0.3.0" in problems[0]
+
+
+def test_harness_version_without_literal_is_rejected(tmp_path: Path) -> None:
+    """Valor calculado nao serve como declaracao verificavel da versao do harness."""
+    package = tmp_path / "evals"
+    package.mkdir()
+    (package / "__init__.py").write_text("__version__ = build_version()\n", encoding="utf-8")
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems and "literal" in problems[0]
+
+
+def test_harness_version_module_missing_is_rejected(tmp_path: Path) -> None:
+    problems = harness_version_errors(tmp_path, {"harness_version": "0.3.0"})
+    assert problems and "ilegivel" in problems[0]
