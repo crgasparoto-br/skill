@@ -296,7 +296,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"- {problem}", file=sys.stderr)
             return 2
         report = current
-    except (HygieneError, json.JSONDecodeError, OSError) as error:
+    except (HygieneError, json.JSONDecodeError, UnicodeDecodeError, OSError) as error:
         print(f"ERRO: {error}", file=sys.stderr)
         return 2
     items = build_work_items(root, report)

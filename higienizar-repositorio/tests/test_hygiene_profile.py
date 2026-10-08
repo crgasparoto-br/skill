@@ -3158,3 +3158,122 @@ def test_missing_target_with_dotdot_gets_canonical_label(tmp_path: Path) -> None
     policy = hygiene_scan.load_policy(tree)
     report, _ = hygiene_scan.build_report(tree, policy, ["foo/../missing.py"])
     assert [entry["path"] for entry in report["not_analyzed"]] == ["missing.py"]
+
+
+def test_publication_rolls_back_when_a_later_artifact_fails(tmp_path: Path) -> None:
+    """Achado bloqueante: falha no segundo destino deixava o primeiro já publicado."""
+    first = tmp_path / "a.txt"
+    second = tmp_path / "b.txt"
+    first.write_text("OLD-A", encoding="utf-8")
+    second.write_text("OLD-B", encoding="utf-8")
+    original = Path.replace
+    calls: list[str] = []
+
+    def failing_replace(self: Path, target: Path) -> Path:
+        calls.append(self.name)
+        if len(calls) == 2:
+            raise OSError("falha simulada no segundo destino")
+        return original(self, target)
+
+    Path.replace = failing_replace
+    try:
+        code = hygiene_scan.publish_artifacts({"a": first, "b": second}, {"a": "NEW-A", "b": "NEW-B"})
+    finally:
+        Path.replace = original
+    assert code == 1
+    assert first.read_text(encoding="utf-8") == "OLD-A"
+    assert second.read_text(encoding="utf-8") == "OLD-B"
+    assert sorted(item.name for item in tmp_path.iterdir()) == ["a.txt", "b.txt"]
+
+
+def test_exception_class_must_be_declared_in_the_policy(tmp_path: Path) -> None:
+    """Achado bloqueante: classe desconhecida com formato válido era aceita em modo direcionado."""
+    tree = make_tree(
+        tmp_path / "arvore",
+        {"alpha.py": "V = 1\n", "README.md": "Use alpha.py\n"},
+        policy_variant(
+            accepted=[
+                {
+                    "id": "garbage:0000000000000000",
+                    "reason": "Excecao declarada para achado fora do alvo ainda nao medido nesta arvore.",
+                }
+            ]
+        ),
+    )
+    (tmp_path / "fora").mkdir()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "hygiene_scan.py"),
+            "--root",
+            str(tree),
+            "--paths",
+            "alpha.py",
+            "--report",
+            str(tmp_path / "fora" / "report.json"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "classe declarada na politica" in result.stderr
+    assert not (tmp_path / "fora" / "report.json").exists()
+
+
+def test_escaping_missing_target_gets_canonical_label(tmp_path: Path) -> None:
+    """Achado bloqueante: alvo inexistente que escapa da raiz mantinha a grafia informada."""
+    tree = make_tree(tmp_path, {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    policy = hygiene_scan.load_policy(tree)
+    report, _ = hygiene_scan.build_report(tree, policy, ["foo/../../missing.py"])
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["missing.py"]
+
+
+def test_baseline_history_requires_reason_in_every_entry(tmp_path: Path) -> None:
+    """Ressalva: a primeira medição da linha de base podia ficar sem motivo escrito."""
+    tree = make_tree(tmp_path, {"alpha.py": '"""Modulo."""\n', "README.md": "`alpha.py`\n"})
+    policy = hygiene_scan.load_policy(tree)
+    policy["classes"]["complexity"]["baseline_history"] = [{"value": 0}]
+    errors = validate_hygiene.policy_errors(policy)
+    assert any("baseline_history[0].reason" in error for error in errors)
+
+
+def test_generator_reports_unreadable_report_without_traceback(tmp_path: Path) -> None:
+    """Ressalva: relatório externo fora de UTF-8 derrubava o gerador com exceção crua."""
+    forged = tmp_path / "forged.json"
+    forged.write_bytes(b"\xff\xfe")
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "build_hygiene_work_items.py"),
+            "--root",
+            str(REPO_ROOT),
+            "--report",
+            str(forged),
+            "--out-dir",
+            str(tmp_path / "saida"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "Traceback" not in result.stderr
+
+
+def test_equivalent_target_spelling_gets_the_same_refusal(tmp_path: Path) -> None:
+    """Ressalva: grafia equivalente do alvo produzia recusa por motivo diferente."""
+    tree = make_tree(
+        tmp_path,
+        {
+            "pkg/consumer.py": "X = 1\n",
+            "other/orphan.py": "VALUE = 1\n",
+            "README.md": "Use pkg/consumer.py\n",
+        },
+        policy_variant(accepted=[]),
+    )
+    (tree / "pkg" / "alias").symlink_to(tree / "other", target_is_directory=True)
+    policy = hygiene_scan.load_policy(tree)
+    report, _ = hygiene_scan.build_report(tree, policy, ["foo/../pkg/alias"])
+    assert [entry["path"] for entry in report["not_analyzed"]] == ["pkg/alias"]
+    assert "link simbolico para diretorio" in report["not_analyzed"][0]["reason"]

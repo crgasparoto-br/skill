@@ -145,7 +145,6 @@ def _history_errors(name: str, entry: dict) -> list[str]:
         return [f"politica: classes.{name}.baseline_history precisa declarar a historia da linha de base"]
     errors: list[str] = []
     values: list[int] = []
-    previous: int | None = None
     for index, item in enumerate(history):
         if not isinstance(item, dict):
             errors.append(f"politica: classes.{name}.baseline_history[{index}] precisa ser objeto")
@@ -159,16 +158,12 @@ def _history_errors(name: str, entry: dict) -> list[str]:
             # alvo impossível e o produtor publicar evidência que o gate recusa.
             errors.append(f"politica: classes.{name}.baseline_history[{index}].value nao pode ser negativo")
             continue
-        # Crescer divida exige motivo escrito; reduzir e progresso e pode ser declarado sem justificar,
-        # mas motivo presente precisa ter forma, para que o campo nao vire lugar de preenchimento.
-        if value > (previous if previous is not None else value) or item.get("reason") is not None:
-            problem = reason_problem(item.get("reason"))
-            if problem is not None:
-                errors.append(
-                    f"politica: classes.{name}.baseline_history[{index}].reason {problem}"
-                )
+        # Toda medição da linha de base precisa de motivo escrito, inclusive a primeira: a história é a
+        # evidência da medição, e valor sem motivo não é conferível por quem audita.
+        problem = reason_problem(item.get("reason"))
+        if problem is not None:
+            errors.append(f"politica: classes.{name}.baseline_history[{index}].reason {problem}")
         values.append(value)
-        previous = value
     if values and entry.get("baseline") != values[-1]:
         errors.append(
             f"politica: classes.{name}.baseline precisa ser o ultimo valor da historia declarada"
@@ -433,7 +428,9 @@ def _identity_errors(policy: dict) -> list[str]:
 IDENTITY_RE = re.compile(r"[a-z][a-z-]*:[0-9a-f]{16}")
 
 
-def _justified_error(index: int, entry: object, label: str) -> list[str]:
+def _justified_error(
+    index: int, entry: object, label: str, declared_class: set[str] | None = None
+) -> list[str]:
     """Exceção e cobertura declarada precisam de justificativa escrita, nunca texto vazio."""
     if not isinstance(entry, dict):
         return [f"politica: {label}[{index}] precisa ser objeto"]
@@ -448,6 +445,12 @@ def _justified_error(index: int, entry: object, label: str) -> list[str]:
         return [
             f"politica: {label}[{index}].id precisa ser identidade de achado no formato "
             "classe:16 digitos hexadecimais"
+        ]
+    if field == "id" and declared_class and value.split(":")[0] not in declared_class:
+        # Classe fora do contrato não é identidade de achado: aceitá-la deixaria declarar exceção para
+        # classe que a política não mede, e a coerência com o achado não poderia ser conferida.
+        return [
+            f"politica: {label}[{index}].id precisa pertencer a uma classe declarada na politica"
         ]
     if field == "path":
         if any(character in value for character in ("\x00", "\n", "\r")):
@@ -473,6 +476,7 @@ def _justified_error(index: int, entry: object, label: str) -> list[str]:
 
 def _declared_errors(policy: dict) -> list[str]:
     errors: list[str] = []
+    declared_class = set(policy.get("classes") or {})
     measured = {
         name
         for name, config in (policy.get("classes") or {}).items()
@@ -484,7 +488,7 @@ def _declared_errors(policy: dict) -> list[str]:
             errors.append(f"politica: {label} precisa ser lista")
             continue
         for index, entry in enumerate(entries):
-            errors.extend(_justified_error(index, entry, label))
+            errors.extend(_justified_error(index, entry, label, declared_class))
             if label == "accepted" and isinstance(entry, dict):
                 identity = str(entry.get("id") or "")
                 class_name = identity.split(":", 1)[0]

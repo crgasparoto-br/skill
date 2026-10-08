@@ -377,7 +377,10 @@ def scope_files(
     candidates: list[Path] = []
     missing: list[dict] = []
     if paths:
-        for raw in sorted(paths):
+        # A grafia de cada alvo é normalizada antes de qualquer decisão: `foo/../alias` é `alias`, e sem
+        # normalizar o link não seria reconhecido e a recusa sairia por motivo diferente.
+        for declared in sorted(paths):
+            raw = normalized_target(declared)
             literal = root / raw if not Path(raw).is_absolute() else Path(raw)
             if literal.is_symlink() and not literal.exists():
                 # Link quebrado ou em ciclo: o percurso livre recusa pelo caminho literal, e o modo
@@ -406,7 +409,9 @@ def scope_files(
                 # recusa o mesmo link, e abortar no modo direcionado seria contrato diferente por modo.
                 missing.append(
                     {
-                        "path": safe_relative(literal, root),
+                        # Rótulo canônico e relativo à raiz: `foo/../../x.py` e `../x.py` são o mesmo alvo,
+                        # e publicar a forma informada faria o relatório depender de como foi escrito.
+                        "path": safe_relative(Path(normalized_target(raw)), root),
                         "reason": "alvo direcionado que resolve para fora da raiz",
                     }
                 )
@@ -735,6 +740,15 @@ def corpus_texts(root: Path, policy: dict) -> tuple[dict[str, str], list[dict]]:
         except HygieneError:
             refused.append({"path": rel, "reason": "arquivo de corpus ilegivel"})
     return texts, refused
+
+
+def normalized_target(value: str) -> str:
+    """Alvo direcionado na forma canônica: sem `.`, sem separador repetido e com a subida resolvida.
+
+    `posixpath.normpath` mantém a subida que sai da raiz, que é justamente o que a recusa de alvo fora da
+    raiz precisa enxergar, e devolve a mesma forma para grafias equivalentes do mesmo alvo.
+    """
+    return posixpath.normpath(value) if value else value
 
 
 def normalized_citation(value: str) -> str | None:
@@ -1569,15 +1583,32 @@ def publish_artifacts(targets: dict[str, Path], contents: dict[str, str]) -> int
         discard_artifacts(staged)
         print(f"ERRO: falha ao gravar o relatorio: {error}", file=sys.stderr)
         return 1
+    # O conteúdo anterior fica em memória para que falha na publicação não deixe o lote pela metade: o
+    # relatório é uma unidade, e metade dele publicado pareceria relatório válido.
+    previous = {label: (target.read_bytes() if target.exists() else None) for label, target in targets.items()}
+    published: list[str] = []
     try:
         for label, temporary in staged.items():
             temporary.replace(targets[label])
+            published.append(label)
     except OSError as error:
-        # Falha na publicação não pode deixar temporário no diretório de destino.
         discard_artifacts(staged)
+        restore_artifacts(targets, previous, published)
         print(f"ERRO: falha ao publicar o relatorio: {error}", file=sys.stderr)
         return 1
     return 0
+
+
+def restore_artifacts(targets: dict[str, Path], previous: dict[str, bytes | None], published: list[str]) -> None:
+    """Desfaz o que já foi publicado, devolvendo o conteúdo anterior ou removendo o artefato novo."""
+    for label in published:
+        try:
+            if previous[label] is None:
+                targets[label].unlink(missing_ok=True)
+            else:
+                targets[label].write_bytes(previous[label])
+        except OSError:  # pragma: no cover - reversão nunca derruba a execução
+            continue
 
 
 def discard_artifacts(staged: dict[str, Path]) -> None:
