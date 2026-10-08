@@ -46,6 +46,8 @@ BLANK_CHARACTERS = frozenset(
         "\uffa0",
     }
 )
+EVIDENCE_KEYS = frozenset({"schema_version", "main", "items"})
+ITEM_KEYS = frozenset({"value", "source"})
 REQUIRED_IDS = frozenset(
     {"issues-delivered", "develop-sha", "gates", "independent-audit", "divergence"}
 )
@@ -98,10 +100,22 @@ def confined_regular_file(root: Path, path: Path, label: str) -> None:
         raise SystemExit(f"ERRO: {label} resolve para fora da raiz auditada: {resolved}")
 
 
+def reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict:
+    """Converte pares em objeto e recusa chave repetida, que `json.loads` resolveria em silencio."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise SystemExit(f"ERRO: chave repetida no JSON: {key!r}")
+        result[key] = value
+    return result
+
+
 def load_json(path: Path) -> dict:
     """Le um JSON de objeto, falhando fechado quando o arquivo falta ou nao e um objeto."""
     try:
-        document = json.loads(path.read_text(encoding="utf-8"))
+        document = json.loads(
+            path.read_text(encoding="utf-8"), object_pairs_hook=reject_duplicate_keys
+        )
     except (OSError, json.JSONDecodeError) as error:
         raise SystemExit(f"ERRO: nao foi possivel ler {path}: {error}") from error
     if not isinstance(document, dict):
@@ -211,6 +225,9 @@ def evidence_value(evidence: dict, item_id: str) -> tuple[str, str]:
     entry = items.get(item_id) if isinstance(items, dict) else None
     if not isinstance(entry, dict):
         return "", ""
+    extra = sorted(set(entry) - ITEM_KEYS)
+    if extra:
+        raise SystemExit(f"ERRO: o item `{item_id}` traz campo desconhecido: {', '.join(extra)}")
     source = entry.get("source")
     # Valor e origem chegam intactos a validacao: normalizar apagaria separador interno de um commit ou
     # o caractere invisivel embutido numa origem, e os dois passariam como se fossem validos.
@@ -288,11 +305,18 @@ def audit_problems(policy: dict, verdict: str) -> list[str]:
 
 def evidence_problems(policy: dict, evidence: dict, shas: dict[str, str]) -> list[str]:
     """Problemas da evidencia como um todo, antes da verificacao item a item."""
+
     problems = []
+    if "main" in evidence:
+        declared = evidence["main"]
+        if not isinstance(declared, str) or not SHA_RE.match(declared.strip()):
+            problems.append("`main` da evidencia precisa ser hexadecimal de 40 caracteres")
     if not exact_version(evidence.get("schema_version"), SCHEMA_VERSION):
         problems.append("a evidencia nao declara `schema_version` 1")
     declared = {item["id"] for item in policy_items(policy, "required")}
     declared |= {item["id"] for item in policy_items(policy, "optional")}
+    for key in sorted(set(evidence) - EVIDENCE_KEYS):
+        problems.append(f"a evidencia traz campo desconhecido `{key}`")
     items = evidence.get("items")
     known = set(items) if isinstance(items, dict) else set()
     for unknown in sorted(known - declared):
@@ -398,6 +422,8 @@ def read_shas(arguments: argparse.Namespace, evidence: dict) -> dict[str, str]:
     declared_main = evidence.get("main")
     declared_main = declared_main.strip() if isinstance(declared_main, str) else ""
     informed_main = arguments.main.strip() if arguments.main else ""
+    if declared_main and not SHA_RE.match(declared_main):
+        raise SystemExit(f"ERRO: `main` da evidencia nao e hexadecimal de 40: {declared_main}")
     if informed_main and declared_main and informed_main != declared_main:
         raise SystemExit(
             f"ERRO: `--main` diverge da evidencia: {informed_main} contra {declared_main}"

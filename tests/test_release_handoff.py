@@ -565,3 +565,37 @@ def test_optional_item_present_with_weak_value_is_reported() -> None:
     document["items"]["behavioural-evals"] = {"value": "aaaa", "source": "aaaa"}
     report = report_for(document)
     assert any("behavioural-evals" in problem for problem in report["problems"])
+
+
+@pytest.mark.parametrize("bad", [7, [], True, None, {}, ""])
+def test_invalid_main_in_evidence_is_rejected(bad: object) -> None:
+    """Achado bloqueante B1: `main` presente e invalido nao pode ser tratado como ausente."""
+    document = evidence()
+    document["main"] = bad
+    assert report_for(document)["ready"] is False
+
+
+def test_duplicated_json_key_is_rejected(tmp_path: Path) -> None:
+    """Achado bloqueante B2: chave repetida e entrada ambigua e precisa reprovar."""
+    path = tmp_path / "evidence.json"
+    raw = json.dumps(evidence())
+    duplicated = raw.replace(f'"main": "{MAIN}"', f'"main": "{"e" * 40}", "main": "{MAIN}"')
+    assert duplicated != raw
+    path.write_text(duplicated, encoding="utf-8")
+    with pytest.raises(SystemExit):
+        contract_main(["--root", str(ROOT), "--evidence", str(path), "--develop", DEVELOP, "--main", MAIN])
+
+
+def test_unknown_evidence_field_is_rejected() -> None:
+    """Ressalva: campo desconhecido deixa a evidencia ambigua."""
+    document = evidence()
+    document["surpresa"] = "x"
+    assert report_for(document)["ready"] is False
+
+
+def test_unknown_item_field_is_rejected() -> None:
+    """Ressalva: campo extra dentro do item tambem deixa a evidencia ambigua."""
+    document = evidence()
+    document["items"]["gates"]["extra"] = "x"
+    with pytest.raises(SystemExit):
+        report_for(document)
