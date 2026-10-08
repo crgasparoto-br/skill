@@ -1,7 +1,10 @@
 # RESULTADO: [APROVADA | APROVADA COM RESSALVAS | APROVADA INTERNAMENTE | INCONCLUSIVA | REPROVADA]
 
+> **Conclusao:** `[APROVADA | APROVADA COM RESSALVAS | APROVADA INTERNAMENTE | INCONCLUSIVA | REPROVADA]` — achados bloqueantes: `[n]` — recomendacoes opcionais: `[n]`
+> **Motivo determinante:** [uma frase objetiva com o requisito bloqueador, a ressalva demonstrada ou a evidencia que sustenta a aprovacao]
+> **Libera merge/release:** [SIM | NAO]
+
 **Validade:** [Independente | Controller-adversarial | Pre-auditoria]
-**Libera merge/release:** [SIM | NAO]
 
 **Rejection ID:** `[audit-rejection:...]` — incluir somente em auditoria `Independente` com `RESULTADO: REPROVADA`; reutilizar exatamente o mesmo ID no resultado estruturado e no `external-audit.json` quando existir.
 
@@ -49,6 +52,8 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 - merge preview antes/depois: `[...]` / `[...]`
 
 ### Regras do cabecalho
+
+A primeira linha continua sendo o titulo do resultado. Imediatamente abaixo dele vem o bloco de conclusao em destaque, que repete o veredito e o resume, antes de qualquer outro metadado. Ele nao substitui o motivo determinante, os achados nem a matriz: resume o veredito, a contagem de achados bloqueantes e recomendacoes, o motivo em uma frase e a liberacao de merge/release. Manter o bloco consistente com o corpo do relatorio; divergencia entre o bloco e o corpo e defeito do proprio relatorio. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato.
 
 - `APROVADA`: apenas auditoria independente com portao de release satisfeito.
 - `APROVADA COM RESSALVAS`: apenas auditoria independente, sem bloqueio, com ressalva material nao bloqueante.
