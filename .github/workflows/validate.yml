@@ -15,6 +15,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # A validacao da linha de release confere a ultima tag publicada. Sem historico e tags
+          # completos ela seria fail-closed e reprovaria a promocao, entao o checkout registra a
+          # profundidade necessaria em vez de presumir conformidade.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
