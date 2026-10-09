@@ -147,9 +147,6 @@ ROADMAP_CANONICAL_RE = re.compile(
 VERSION_DECLARATION_RE = re.compile(
     r"\bVERSION\b\s*(?:\||=)\s*`?([0-9]+\.[0-9]+\.[0-9]+)`?\s*(?:\||$)"
 )
-CANONICAL_DOC_ROW_RE = re.compile(
-    r"^\| `VERSION` \| `([0-9]+\.[0-9]+\.[0-9]+)` \|", re.MULTILINE
-)
 CHANGELOG_HEADING_RE = re.compile(
     r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})$",
     re.MULTILINE,
