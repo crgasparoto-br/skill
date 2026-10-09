@@ -289,6 +289,8 @@ Usar `ci_mode=delivery-snapshot` somente para a primeira observacao do material 
 
 ## Fechamento obrigatorio
 
+`handoff-not-produced|handoff-stale` **nao seleciona fast path sozinho**; aplicar sempre o classificador e respeitar o piso de recuperacao da auditoria.
+
 Antes do resultado terminal, executar `references/delivery-obligation-completion-gate.md`.
 
 ## Saida
