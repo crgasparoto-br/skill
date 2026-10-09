@@ -279,7 +279,7 @@ Usar `ci_mode=delivery-snapshot` somente para a primeira observacao do material 
 - `finalize-after-ci`: fast path obrigatorio apos retorno de `corrigir-ci`; validar o checkpoint, proibir discovery/readiness/planejamento/suite material repetidos, executar `post-write-refreeze` somente se o material SHA mudou, resolver `audit_transport` e fechar `result-only-child` + handoff terminal apenas em `certified-handoff`; em `native-github-audit`, fechar diretamente `terminal_native_audit_ready=READY` sem `.audit`.
 - `post-ci-refreeze`, `recovery_scope=post-write-refreeze`, `requires_refreeze=true` ou qualquer pos-escrita material: usar o mesmo `post-write-refreeze` de `references/terminal-handoff.md`; invalidar apenas descendentes do delta, refazer gate final/freeze no head material corrente e publicar novo result-only child. O envelope v2 de `corrigir-ci` seleciona este recorte por `next_phase=finalize-after-ci`; nao existe callback da subskill para o controlador.
 - correcao exclusiva de `result-only-child` em PR aberta: antes de criar branch/PR nova, executar `scripts/validate_result_only_pr_recovery.py`. Se retornar `replace-result-only-child-in-original-pr`, prevalidar localmente o filho novo e substituir somente o ref da PR original conforme `references/result-only-pr-recovery.md`; se retornar `publish-in-original-pr`, publicar normalmente na mesma PR.
-- `handoff-not-produced|handoff-stale` **nao seleciona fast path sozinho**. Primeiro executar `scripts/classify_handoff_recovery.py` com certificado e identidade remota frescos, propagando `recovery_scope`/`requires_refreeze` da auditoria quando existirem. Executar `handoff-only` apenas se o classificador devolver `handoff-only`, o pacote pertencer ao mesmo target e nenhum piso de refreeze estiver ativo. `foreign-target` exige reconstrucao corrente; qualquer material drift exige `post-write-refreeze`.
+- `handoff-not-produced|handoff-stale`: executar `scripts/classify_handoff_recovery.py` com certificado, identidade remota e piso de auditoria frescos. `handoff-only` exige retorno explicito do classificador, mesmo target e nenhum refreeze pendente; `foreign-target` exige reconstrucao, e material drift exige `post-write-refreeze`.
 - findings estruturados de auditoria imediatamente anterior: usar os findings como work items prontos; nao repetir discovery, readiness ou decomposicao integral da issue.
 - ambiente sem checkout executavel: selecionar uma vez `connector-only` ou `artifact-bundle`; nao repetir clone/instalacao sem evidencia material nova.
 - PR `dirty`/conflitada: resolver na mesma branch/PR antes de gate final/CI conforme `references/pr-conflict-resolution.md`; publicar a resolucao como material, revalidar o novo head e refazer freeze/CI descendentes.
@@ -287,9 +287,9 @@ Usar `ci_mode=delivery-snapshot` somente para a primeira observacao do material 
 - documentacao/assets isolados: perfil `light`; config/schema, testes ou gerados preservam apenas os gates aplicaveis.
 - finding novo nos mesmos arquivos: novo `work_item_fingerprint`; igualdade de paths nao autoriza reuso.
 
-## Barreira deterministica de conclusao
+## Fechamento obrigatorio
 
-Antes de qualquer resultado terminal, carregar `references/delivery-obligation-completion-gate.md` e executar os validadores indicados. Nao declarar entrega pronta com obrigacoes abertas, CI pendente ou handoff stale.
+Antes do resultado terminal, executar `references/delivery-obligation-completion-gate.md`.
 
 ## Saida
 
