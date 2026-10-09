@@ -4,7 +4,6 @@ import argparse
 import re
 from pathlib import Path
 
-VERDICTS = ("APROVADA", "APROVADA COM RESSALVAS", "APROVADA INTERNAMENTE", "INCONCLUSIVA", "REPROVADA")
 HEADER = re.compile(r"^# RESULTADO: (APROVADA COM RESSALVAS|APROVADA INTERNAMENTE|APROVADA|INCONCLUSIVA|REPROVADA)$")
 SUMMARY = re.compile(r"^> \*\*Conclusao:\*\* \`([^\`]+)\` — achados bloqueantes: \`(\d+)\` — recomendacoes opcionais: \`(\d+)\`$")
 REASON = re.compile(r"^> \*\*Motivo determinante:\*\* \S.+$")
@@ -18,7 +17,8 @@ def validate(text: str) -> list[str]:
         errors.append("BOM antes do veredito")
     lines = text.splitlines()
     if len(lines) < 6 or not (match := HEADER.fullmatch(lines[0])):
-        return errors + ["primeira linha deve conter exatamente # RESULTADO: <veredito valido>"]
+        errors.append("primeira linha deve conter exatamente # RESULTADO: <veredito valido>")
+        return errors
     verdict = match.group(1)
     if len(lines) < 6 or lines[1] != "":
         errors.append("linha vazia obrigatoria apos veredito")
@@ -37,6 +37,12 @@ def validate(text: str) -> list[str]:
     validity = VALIDITY.fullmatch(lines[6]) if len(lines) > 6 else None
     if validity is None:
         errors.append("validade ausente ou invalida")
+    errors.extend(validate_decision(verdict, summary, merge, validity))
+    return errors
+
+
+def validate_decision(verdict, summary, merge, validity):
+    errors = []
     blockers = int(summary.group(2)) if summary else None
     if blockers is not None:
         if verdict == "REPROVADA" and blockers == 0:
