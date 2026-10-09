@@ -22,9 +22,9 @@ jsonschema==4.26.0 \
 jsonschema-specifications==2025.9.1 \
     --hash=sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe
 # via cffi
-# arquivo: pycparser-3.1-py3-none-any.whl
-pycparser==3.1 \
-    --hash=sha256:f09d358c840bd147b79e55f2bc494f18ea869dc897f5852a8f5766b74f787882
+# arquivo: pycparser-3.11-py3-none-any.whl
+pycparser==3.11 \
+    --hash=sha256:51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80
 # via jsonschema, jsonschema-specifications
 # arquivo: referencing-0.37.0-py3-none-any.whl
 referencing==0.37.0 \

@@ -34,9 +34,9 @@ packaging==26.3 \
 pluggy==1.6.0 \
     --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
 # via cffi
-# arquivo: pycparser-3.1-py3-none-any.whl
-pycparser==3.1 \
-    --hash=sha256:f09d358c840bd147b79e55f2bc494f18ea869dc897f5852a8f5766b74f787882
+# arquivo: pycparser-3.11-py3-none-any.whl
+pycparser==3.11 \
+    --hash=sha256:51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80
 # via pytest
 # arquivo: pygments-2.21.0-py3-none-any.whl
 pygments==2.21.0 \
