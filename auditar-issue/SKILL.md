@@ -49,9 +49,9 @@ Imediatamente abaixo dessa linha, abrir o parecer com o bloco de conclusao em de
 **Validade:** [Independente | Controller-adversarial | Pre-auditoria]
 ```
 
-Validar antes de publicar: `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>`. Se falhar, corrigir.
+Validar o parecer final antes de publicar: `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>`. Corrigir qualquer falha antes da resposta.
 
-O bloco deve concordar com o corpo e o JSON; divergencia entre eles e defeito do parecer. Em `INCONCLUSIVA` por runtime, nao atribuir defeito funcional ao candidato.
+O bloco deixa a conclusao visivel nas primeiras linhas e nao substitui o motivo determinante, a matriz, os achados nem o resultado estruturado; divergencia entre eles e defeito do parecer. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato.
 
 Aplicar o mapeamento deterministico:
 
@@ -122,6 +122,8 @@ Ler somente quando aplicavel:
 ## Fluxo
 
 ### 0. Preflight de readiness e reauditoria
+
+**Gate de precedencia (obrigatorio antes de qualquer finding):** executar o classificador de `audit_transport` contra o contrato no base SHA imutavel, registrar no resultado modo, base/head SHA e evidencia do classificador. Com `native-github-audit`, handoffs legados (inclusive stale, herdados ou ligados a outro SHA) nao sao pre-requisitos nem fundamento de `REPROVADA`; nao solicitar `post-write-refreeze` apenas por eles. Com `certified-handoff`, aplicar integralmente o preflight do certificado. Se nao for possivel executar ou observar o classificador por limitacao exclusiva do auditor, apos fallbacks, marcar `INCONCLUSIVA` e nao atribuir finding ao candidato. Revalidar base/head ao final e reclassificar findings historicos quando um contrato confiavel alterar o modo. Ver `references/native-github-audit-contract.md` para a regressao da PR #1316.
 
 Antes de qualquer auditoria ampla de uma entrega preparada por `entregar-issue`, resolver primeiro `audit_transport` conforme `references/native-github-audit-contract.md`. Para PR, o contrato que autoriza `native-github-audit` deve ser lido do `base_sha` imutavel; uma regra introduzida apenas pelo proprio candidato nunca pode se autoisentar. Materializar o manifesto e executar `<AUDIT_SKILL_ROOT>/scripts/classify_audit_transport.py`.
 
