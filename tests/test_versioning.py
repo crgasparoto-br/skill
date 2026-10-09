@@ -500,3 +500,88 @@ def test_release_alignment_rejects_tag_with_surrounding_space(tmp_path: Path) ->
     erros = release_alignment_errors(repositorio, ref="main", tag=" v0.3.1 ")
     assert len(erros) == 1
     assert "nome lexical valido" in erros[0]
+
+
+def test_versioning_rejects_release_date_diverging_from_the_heading(tmp_path: Path) -> None:
+    """O titulo do changelog e release_date sao a mesma data canonica."""
+    root = _versioning_fixture(tmp_path)
+    changelog = root / "CHANGELOG.md"
+    changelog.write_text(
+        changelog.read_text(encoding="utf-8").replace(
+            "## [0.3.2] - 2026-10-09", "## [0.3.2] - 2026-10-08"
+        ),
+        encoding="utf-8",
+    )
+    assert any("differs from compatibility release_date" in erro for erro in validate_versioning(root))
+
+
+def test_versioning_rejects_duplicated_release_declarations(tmp_path: Path) -> None:
+    """Declaracao contraditoria nao pode passar por existir uma ocorrencia correta."""
+    root = _versioning_fixture(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8") + "\n**Release do catálogo:** [`0.3.1`](./VERSION)\n",
+        encoding="utf-8",
+    )
+    changelog = root / "CHANGELOG.md"
+    changelog.write_text(
+        changelog.read_text(encoding="utf-8") + "\n## [0.3.2] - 2026-10-09\n",
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("README.md declares the release more than once" in erro for erro in erros)
+    assert any("declares the release [0.3.2] more than once" in erro for erro in erros)
+
+
+def test_versioning_accepts_roadmap_without_backticks(tmp_path: Path) -> None:
+    """A declaracao do roadmap e semantica, nao uma forma Markdown exata."""
+    root = _versioning_fixture(tmp_path)
+    roadmap = root / "docs/ROADMAP.md"
+    roadmap.write_text(
+        roadmap.read_text(encoding="utf-8").replace(
+            "> **Release atual:** `v0.3.2`", "> **Release atual:** v0.3.2"
+        ),
+        encoding="utf-8",
+    )
+    assert validate_versioning(root) == []
+
+
+def test_versioning_requires_public_surfaces(tmp_path: Path) -> None:
+    """README e roadmap ausentes nao podem passar silenciosamente."""
+    for relativo in ("README.md", "docs/ROADMAP.md"):
+        root = _versioning_fixture(tmp_path / relativo.replace("/", "-"))
+        (root / relativo).unlink()
+        erros = validate_versioning(root)
+        assert any("is missing" in erro and relativo in erro for erro in erros), relativo
+
+
+def test_semver_parser_is_controlled_for_extreme_numbers() -> None:
+    """SemVer nao fixa teto, mas a conversao precisa recusar sem excecao."""
+    assert parse_semver("999999.0.0") == (999999, 0, 0)
+    assert parse_semver("9" * 4301 + ".0.0") is None
+
+
+def test_release_alignment_fails_closed_in_ci_without_determinable_line(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Detached HEAD no CI nao pode desativar em silencio a barreira de alinhamento."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.delenv("GITHUB_REF_NAME", raising=False)
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    _git(repositorio, "checkout", "-q", "--detach")
+    erros = release_alignment_errors(repositorio)
+    assert len(erros) == 1
+    assert "nao pode ser determinada no CI" in erros[0]
+
+
+def test_release_alignment_rejects_isolated_carriage_return(tmp_path: Path) -> None:
+    """Retorno de carro isolado nao e a forma canonica de VERSION."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    (repositorio / "VERSION").write_bytes(b"0.3.2\r\n")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "publica com retorno de carro")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "quebra de linha final" in erros[0]

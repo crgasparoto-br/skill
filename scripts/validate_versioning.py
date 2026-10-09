@@ -32,7 +32,13 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def parse_semver(value: str) -> tuple[int, int, int] | None:
     match = SEMVER_RE.fullmatch(value)
-    return tuple(int(part) for part in match.groups()) if match else None
+    if not match:
+        return None
+    try:
+        return tuple(int(part) for part in match.groups())
+    except ValueError:
+        # SemVer nao fixa teto, mas a conversao de inteiros tem limite e precisa de recusa controlada.
+        return None
 
 
 def parse_lineage(value: str) -> tuple[date, int] | None:
@@ -130,6 +136,20 @@ def _release_line(value: str) -> str | None:
     return RELEASE_LINE if value.strip() in RELEASE_REF_FORMS else None
 
 
+README_RELEASE_RE = re.compile(
+    r"^\*\*Release do catálogo:\*\* \[`([0-9]+\.[0-9]+\.[0-9]+)`\]",
+    re.MULTILINE,
+)
+ROADMAP_RELEASE_RE = re.compile(
+    r"^> \*\*Release atual:\*\* `?v([0-9]+\.[0-9]+\.[0-9]+)`?",
+    re.MULTILINE,
+)
+CHANGELOG_HEADING_RE = re.compile(
+    r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})$",
+    re.MULTILINE,
+)
+
+
 RELEASE_TAG_RE = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 
 
@@ -169,7 +189,14 @@ def release_alignment_errors(
     tag alcancavel; a costura existe para conferir o caminho de divergencia de ancestralidade.
     """
     target = _effective_ref(root, ref)
-    if target is None or _release_line(target) is None:
+    if target is None:
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            return [
+                "release alignment: a linha de release nao pode ser determinada no CI; "
+                "informe a referencia ou faça checkout da linha de release"
+            ]
+        return []
+    if _release_line(target) is None:
         return []
     errors: list[str] = []
     inside_code, _ = _git_output(root, "rev-parse", "--is-inside-work-tree")
@@ -479,36 +506,62 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         errors.append("CHANGELOG.md is missing")
     else:
         changelog_text = changelog_path.read_text(encoding="utf-8")
-        padrao = (
-            rf"^## \[{re.escape(release_version)}\] - "
-            r"([0-9]{4}-[0-9]{2}-[0-9]{2})$"
-        )
-        cabecalho = re.search(padrao, changelog_text, re.MULTILINE)
-        if cabecalho is None:
+        cabecalhos = CHANGELOG_HEADING_RE.findall(changelog_text)
+        correntes = [data for versao, data in cabecalhos if versao == release_version]
+        if not cabecalhos:
             errors.append(
                 f"CHANGELOG.md lacks release heading ## [{release_version}] - YYYY-MM-DD"
             )
-        else:
+        for versao, data in cabecalhos:
             try:
-                date.fromisoformat(cabecalho.group(1))
+                date.fromisoformat(data)
             except ValueError:
                 errors.append(
-                    f"CHANGELOG.md release heading has an invalid date: {cabecalho.group(1)}"
+                    f"CHANGELOG.md release heading has an invalid date: {versao} - {data}"
                 )
+        if len(correntes) > 1:
+            errors.append(
+                f"CHANGELOG.md declares the release [{release_version}] more than once"
+            )
+        if not correntes:
+            errors.append(
+                f"CHANGELOG.md lacks release heading ## [{release_version}] - YYYY-MM-DD"
+            )
+        elif len(correntes) == 1 and str(release_date) != correntes[0]:
+            errors.append(
+                "CHANGELOG.md release date differs from compatibility release_date: "
+                f"{correntes[0]} != {release_date}"
+            )
     readme_path = root / "README.md"
     if not readme_path.is_file():
         errors.append("README.md is missing")
-    elif f"**Release do catálogo:** [`{release_version}`](./VERSION)" not in readme_path.read_text(encoding="utf-8"):
-        errors.append(
-            f"README.md is stale: it does not declare the current release {release_version}"
-        )
+    else:
+        declaracoes = README_RELEASE_RE.findall(readme_path.read_text(encoding="utf-8"))
+        if not declaracoes:
+            errors.append(
+                f"README.md is stale: it does not declare the current release {release_version}"
+            )
+        elif len(declaracoes) > 1:
+            errors.append(f"README.md declares the release more than once: {sorted(declaracoes)}")
+        elif declaracoes[0] != release_version:
+            errors.append(
+                f"README.md is stale: it declares {declaracoes[0]} instead of {release_version}"
+            )
     roadmap_path = root / "docs" / "ROADMAP.md"
     if not roadmap_path.is_file():
         errors.append("docs/ROADMAP.md is missing")
-    elif f"> **Release atual:** `v{release_version}`" not in roadmap_path.read_text(encoding="utf-8"):
-        errors.append(
-            f"docs/ROADMAP.md is stale: it does not declare the current release v{release_version}"
-        )
+    else:
+        declaracoes = ROADMAP_RELEASE_RE.findall(roadmap_path.read_text(encoding="utf-8"))
+        if not declaracoes:
+            errors.append(
+                f"docs/ROADMAP.md is stale: it does not declare the current release v{release_version}"
+            )
+        elif len(declaracoes) > 1:
+            errors.append(f"docs/ROADMAP.md declares the release more than once: {sorted(declaracoes)}")
+        elif declaracoes[0] != release_version:
+            errors.append(
+                f"docs/ROADMAP.md is stale: it declares v{declaracoes[0]} instead of v{release_version}"
+            )
     if not release_doc.is_file():
         errors.append("docs/RELEASE.md is missing")
     else:
