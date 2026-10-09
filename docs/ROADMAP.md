@@ -1,7 +1,7 @@
 # Roadmap do catálogo de skills
 
 > **Status:** planejado
-> **Release atual:** `v0.3.2`
+> **Release atual:** `v0.3.3`
 > **Data-alvo:** não definida
 > **Fonte de contexto:** backlog `IMP-001` a `IMP-008` produzido durante a análise de melhorias do catálogo.
 
