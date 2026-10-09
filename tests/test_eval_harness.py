@@ -715,6 +715,47 @@ def _executa_harness(argv: list[str], cwd: Path | None = None) -> subprocess.Com
     )
 
 
+@pytest.mark.parametrize(
+    ("argv", "fragmento"),
+    [
+        (["--desconhecido"], "unrecognized arguments"),
+        (["--root"], "expected one argument"),
+        (["--root="], "argumento --root vazio"),
+        (["--root", "  "], "argumento --root vazio"),
+    ],
+    ids=["argumento-desconhecido", "root-sem-valor", "root-vazio", "root-em-branco"],
+)
+def test_harness_cli_invalid_arguments_exit_with_status_one(argv: list[str], fragmento: str) -> None:
+    """Item 2 da issue #64: entradas invalidas do CLI do harness precisam reprovar com status 1.
+
+    Os testes equivalentes existentes exercitam o CLI do gate; sem estes, uma regressao nas guardas
+    de argumento do proprio harness nao seria acusada.
+    """
+    resultado = _executa_harness(argv)
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "EVAL_HARNESS_ERROR" in resultado.stderr
+    assert fragmento in resultado.stderr
+
+
+def test_harness_cli_symlink_loop_in_root_is_reported_readably(tmp_path: Path) -> None:
+    """Item 2 da issue #64: raiz do harness em ciclo de links precisa reprovar com status 1."""
+    (tmp_path / "a").symlink_to("b")
+    (tmp_path / "b").symlink_to("a")
+    resultado = _executa_harness(["--root", str(tmp_path / "a")])
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "raiz inacessivel" in resultado.stderr
+
+
+def test_harness_cli_missing_root_is_reported_readably(tmp_path: Path) -> None:
+    """Item 2 da issue #64: raiz inexistente no harness precisa reprovar com status 1."""
+    resultado = _executa_harness(["--root", str(tmp_path / "inexistente")])
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "EVAL_HARNESS_ERROR" in resultado.stderr
+
+
 def test_results_dir_that_is_not_a_directory_is_reported_readably(tmp_path: Path) -> None:
     """Item 2 da issue #64: `--results-dir` apontando para arquivo precisa reprovar com status 1.
 
@@ -729,16 +770,23 @@ def test_results_dir_that_is_not_a_directory_is_reported_readably(tmp_path: Path
     assert "--results-dir precisa apontar para um diretorio" in resultado.stderr
 
 
-def _bloqueia_leitura(monkeypatch: pytest.MonkeyPatch, nome: str) -> None:
-    """Faz a leitura de um arquivo especifico falhar, sem depender de permissao do sistema.
+def _bloqueia_leitura(monkeypatch: pytest.MonkeyPatch, alvo: Path) -> None:
+    """Faz a leitura de um arquivo exato falhar, sem depender de permissao do sistema.
 
     A cobertura por `chmod` e pulada quando o processo roda como root, porque a permissao nao
     restringe root. Este bloqueio injetado mantem a guarda coberta em qualquer privilegio.
+    O alvo e comparado pelo caminho canonico completo, e nao pelo nome do arquivo: um bloqueio por
+    basename poderia ser satisfeito por uma leitura intermediaria de outro caminho com o mesmo nome.
     """
     original = Path.read_bytes
+    canonico = alvo.resolve()
 
     def leitura_bloqueada(self: Path) -> bytes:
-        if self.name == nome:
+        try:
+            mesmo_alvo = Path(self).resolve() == canonico
+        except (OSError, ValueError):
+            mesmo_alvo = False
+        if mesmo_alvo:
             raise PermissionError(13, "Permission denied", str(self))
         return original(self)
 
@@ -750,9 +798,9 @@ def test_unreadable_fixture_raises_controlled_error_without_permission_dependenc
 ) -> None:
     """Guarda `fixture nao pode ser lido` coberta sem depender de privilegio do processo."""
     copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
-    nomes = sorted(path.name for path in (copia / "evals" / "fixtures" / "results").glob("*.json"))
-    assert nomes, "o repositorio precisa ter fixtures de resultado"
-    _bloqueia_leitura(monkeypatch, nomes[0])
+    fixtures = sorted((copia / "evals" / "fixtures" / "results").glob("*.json"))
+    assert fixtures, "o repositorio precisa ter fixtures de resultado"
+    _bloqueia_leitura(monkeypatch, fixtures[0])
     with pytest.raises(eval_harness.HarnessError, match="fixture nao pode ser lido"):
         run_evaluations(copia, results_dir=copia / "evals" / "fixtures" / "results")
 
@@ -763,9 +811,9 @@ def test_unreadable_result_raises_controlled_error_without_permission_dependency
     """Guarda `resultado nao pode ser lido` coberta sem depender de privilegio do processo."""
     resultados = tmp_path / "resultados"
     shutil.copytree(ROOT / "evals" / "fixtures" / "results", resultados)
-    nomes = sorted(path.name for path in resultados.glob("*.json"))
-    assert nomes, "o repositorio precisa ter resultados de fixture"
-    _bloqueia_leitura(monkeypatch, nomes[0])
+    arquivos = sorted(resultados.glob("*.json"))
+    assert arquivos, "o repositorio precisa ter resultados de fixture"
+    _bloqueia_leitura(monkeypatch, arquivos[0])
     with pytest.raises(eval_harness.HarnessError, match="resultado nao pode ser lido"):
         run_evaluations(ROOT, results_dir=resultados)
 
@@ -778,11 +826,14 @@ def test_invalid_report_destination_is_reported_readably(tmp_path: Path) -> None
     """
     alvo = tmp_path / "diretorio-de-destino"
     alvo.mkdir()
+    sentinela = alvo / "sentinela.json"
+    sentinela.write_text('{"intacto": true}\n', encoding="utf-8")
     resultado = _executa_harness(["--root", str(ROOT), "--validate-only", "--report", str(alvo)])
     assert resultado.returncode == 1
     assert "Traceback" not in resultado.stderr
     assert "destino de relatorio invalido" in resultado.stderr
-    assert alvo.is_dir() and not any(alvo.iterdir())
+    assert sentinela.read_text(encoding="utf-8") == '{"intacto": true}\n'
+    assert [path.name for path in alvo.iterdir()] == ["sentinela.json"]
 
 
 @pytest.mark.skipif(os.geteuid() == 0, reason="permissao de leitura nao restringe root")
