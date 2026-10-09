@@ -2,6 +2,11 @@
 
 Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A versão pública do conjunto é mantida em [`VERSION`](./VERSION). O formato segue SemVer para releases do catálogo; a versão interna de contratos permanece identificada no manifesto de compatibilidade durante a migração.
 
+## [0.3.3] - 2026-10-09
+### Fixed
+- Alinhamento da versao de release com os commits incorporados a main apos a tag v0.3.2, preservando o contrato de CI fail-closed.
+- Atualizacao do manifesto e das declaracoes de versao para identificar o conteudo publicado.
+
 ## [0.3.2] - 2026-10-09
 ### Added
 - validacao deterministica do alinhamento entre a versao publicada e o conteudo da linha de release: [`scripts/validate_versioning.py`](./scripts/validate_versioning.py) reprova promocao para `main` que avance commits alem da ultima tag sem incrementar a versao publicada, informando a tag, a contagem de commits e a versao corrente; a verificacao vale apenas para `main`, e e fail-closed quando nao ha repositorio git, tag alcancavel, clone completo ou ancestralidade entre a tag e a linha de release.
