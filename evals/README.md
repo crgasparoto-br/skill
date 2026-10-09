@@ -62,9 +62,9 @@ O runner não usa `shell=True`, executa o provider em diretório temporário, li
 
 O trust `attested` possui contrato estrutural, mas permanece `NOT_RUN` até existir um verificador criptográfico confiável. O replay pode aprovar somente fixtures determinísticos no diretório canônico; esses fixtures validam o contrato e o baseline versionado, não afirmam que um modelo real foi executado. Para avaliações em lote com LLM, o adapter deve descobrir o catálogo de modelos e declarar provider, modelo, métricas e limites no resultado.
 
-## Entradas invalidas
+## Entradas inválidas
 
-O CLI falha de forma controlada, com status 1 e prefixo `EVAL_HARNESS_ERROR`, sem traceback: argumento desconhecido, `--root` sem valor, vazio ou em branco, raiz em ciclo de links, raiz inexistente ou que nao seja diretorio, `--results-dir` que nao seja diretorio, destino de relatorio que nao possa ser escrito e fixture ou resultado ilegivel.
+O CLI falha de forma controlada, com status 1 e prefixo `EVAL_HARNESS_ERROR`, sem traceback: argumento desconhecido, `--root` sem valor, vazio ou em branco, raiz em ciclo de links, raiz inexistente ou que não seja diretório, `--results-dir` que não seja diretório, destino de relatório que não possa ser escrito e fixture ou resultado ilegível.
 
 ## Resultado e estados
 

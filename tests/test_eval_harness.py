@@ -738,6 +738,21 @@ def test_harness_cli_invalid_arguments_exit_with_status_one(argv: list[str], fra
     assert fragmento in resultado.stderr
 
 
+def test_harness_cli_root_that_is_not_a_directory_is_reported_readably(tmp_path: Path) -> None:
+    """Item 2 da issue #64: `--root` apontando para arquivo comum precisa reprovar com status 1.
+
+    A mesma guarda cobre raiz inexistente e raiz que nao seja diretorio; este caso fixa o segundo,
+    que antes nao tinha teste proprio.
+    """
+    alvo = tmp_path / "arquivo-comum.json"
+    alvo.write_text("{}\n", encoding="utf-8")
+    resultado = _executa_harness(["--root", str(alvo)])
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "raiz inexistente ou nao e diretorio" in resultado.stderr
+    assert alvo.name in resultado.stderr
+
+
 def test_harness_cli_symlink_loop_in_root_is_reported_readably(tmp_path: Path) -> None:
     """Item 2 da issue #64: raiz do harness em ciclo de links precisa reprovar com status 1."""
     (tmp_path / "a").symlink_to("b")
