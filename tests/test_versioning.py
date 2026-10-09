@@ -427,7 +427,7 @@ def test_versioning_requires_dated_release_heading(tmp_path: Path) -> None:
     root = _versioning_fixture(tmp_path)
     changelog = root / "CHANGELOG.md"
     changelog.write_text(
-        changelog.read_text(encoding="utf-8").replace("## [0.3.2] - 2026-10-09", "## [0.3.2]"),
+        changelog.read_text(encoding="utf-8").replace("## [0.3.3] - 2026-10-09", "## [0.3.3]"),
         encoding="utf-8",
     )
     erros = validate_versioning(root)
@@ -493,12 +493,12 @@ def test_versioning_rejects_stale_public_surfaces(tmp_path: Path) -> None:
     root = _versioning_fixture(tmp_path)
     readme = root / "README.md"
     readme.write_text(
-        readme.read_text(encoding="utf-8").replace("`0.3.2`](./VERSION)", "`0.3.1`](./VERSION)"),
+        readme.read_text(encoding="utf-8").replace("`0.3.3`](./VERSION)", "`0.3.1`](./VERSION)"),
         encoding="utf-8",
     )
     roadmap = root / "docs/ROADMAP.md"
     roadmap.write_text(
-        roadmap.read_text(encoding="utf-8").replace("> **Release atual:** `v0.3.2`", "> **Release atual:** `v0.3.1`"),
+        roadmap.read_text(encoding="utf-8").replace("> **Release atual:** `v0.3.3`", "> **Release atual:** `v0.3.1`"),
         encoding="utf-8",
     )
     erros = validate_versioning(root)
@@ -531,7 +531,7 @@ def test_versioning_rejects_release_date_diverging_from_the_heading(tmp_path: Pa
     changelog = root / "CHANGELOG.md"
     changelog.write_text(
         changelog.read_text(encoding="utf-8").replace(
-            "## [0.3.2] - 2026-10-09", "## [0.3.2] - 2026-10-08"
+            "## [0.3.3] - 2026-10-09", "## [0.3.3] - 2026-10-08"
         ),
         encoding="utf-8",
     )
@@ -548,12 +548,12 @@ def test_versioning_rejects_duplicated_release_declarations(tmp_path: Path) -> N
     )
     changelog = root / "CHANGELOG.md"
     changelog.write_text(
-        changelog.read_text(encoding="utf-8") + "\n## [0.3.2] - 2026-10-09\n",
+        changelog.read_text(encoding="utf-8") + "\n## [0.3.3] - 2026-10-09\n",
         encoding="utf-8",
     )
     erros = validate_versioning(root)
     assert any("README.md declares the release more than once" in erro for erro in erros)
-    assert any("declares the release [0.3.2] more than once" in erro for erro in erros)
+    assert any("declares the release [0.3.3] more than once" in erro for erro in erros)
 
 
 def test_versioning_accepts_roadmap_without_backticks(tmp_path: Path) -> None:
@@ -637,7 +637,7 @@ def test_versioning_rejects_roadmap_release_with_suffix(tmp_path: Path) -> None:
     roadmap = root / "docs/ROADMAP.md"
     roadmap.write_text(
         roadmap.read_text(encoding="utf-8").replace(
-            "> **Release atual:** `v0.3.2`", "> **Release atual:** v0.3.2-beta"
+            "> **Release atual:** `v0.3.3`", "> **Release atual:** v0.3.3-beta"
         ),
         encoding="utf-8",
     )
@@ -707,7 +707,7 @@ def test_versioning_rejects_readme_declaration_with_wrong_target(tmp_path: Path)
     readme = root / "README.md"
     readme.write_text(
         readme.read_text(encoding="utf-8").replace(
-            "[`0.3.2`](./VERSION)", "[`0.3.2`](https://wrong.invalid/VERSION)"
+            "[`0.3.3`](./VERSION)", "[`0.3.3`](https://wrong.invalid/VERSION)"
         ),
         encoding="utf-8",
     )
@@ -849,8 +849,8 @@ def test_versioning_rejects_conflicting_version_on_the_label_line(tmp_path: Path
     readme = root / "README.md"
     readme.write_text(
         readme.read_text(encoding="utf-8").replace(
-            "[`0.3.2`](./VERSION)",
-            "[`0.3.2`](./VERSION) — release publicada e v0.3.1",
+            "[`0.3.3`](./VERSION)",
+            "[`0.3.3`](./VERSION) — release publicada e v0.3.1",
         ),
         encoding="utf-8",
     )
