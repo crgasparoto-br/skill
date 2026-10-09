@@ -78,7 +78,7 @@
     "complexity": {
       "state": "reported",
       "max_complexity": 30,
-      "baseline": 49,
+      "baseline": 50,
       "limits": "Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento entre módulos. Mede só o corpo da própria função: função aninhada é medida por si, ramo de default de parâmetro e de decorator não entra, with não conta como ramo e lambda não é medida.",
       "baseline_history": [
         {
@@ -92,6 +92,10 @@
         {
           "value": 49,
           "reason": "A leitura de fixture e de resultado passou a converter falha de sistema de arquivos em erro controlado do harness."
+        },
+        {
+          "value": 50,
+          "reason": "A validacao de obrigacoes de entrega adicionou tratamento fail-closed de estados executaveis e bloqueios por obrigacao; a medicao de complexidade estrutural subiu de 49 para 50, sem dispensar varredura."
         }
       ]
     }

@@ -295,6 +295,8 @@ Usar `ci_mode=delivery-snapshot` somente para a primeira observacao do material 
 
 Antes do resultado terminal, executar `references/delivery-obligation-completion-gate.md`.
 
+O controle de saida e por **obrigacao**, nao por quantidade de commits: apos cada patch, listar obrigacoes abertas e executar a proxima enquanto houver caminho de escrita/validacao disponivel. CI pendente nao bloqueia patch independente. Um bloqueio global so pode encerrar a rodada com evidencias de impedimento por cada obrigacao aberta, conforme `DELIVERY-EXECUTABLE-007`. Nunca transformar pendencia executavel em justificativa narrativa de retorno.
+
 ## Saida
 
 Declarar exatamente um estado:
