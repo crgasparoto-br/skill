@@ -29,6 +29,14 @@ def validate(data):
         if data.get("completion_gate") != "READY":
             errors.append("DELIVERY-HANDOFF-005: completion gate not READY")
     elif data.get("status") == "bloqueado-por-impedimento-real":
+        # A failed or pending CI does not block unrelated implementation work.
+        # An overall blocker is valid only if every unfinished in-scope item
+        # has an independently evidenced obstruction.
+        open_items = [item for item in obligations if isinstance(item, dict) and item.get("state") not in ("passed", "deferred-by-scope")]
+        for item in open_items:
+            detail = item.get("blocker")
+            if not isinstance(detail, dict) or any(not detail.get(key) for key in ("operation", "failure", "evidence", "recovery")):
+                errors.append("DELIVERY-EXECUTABLE-007: unfinished obligation lacks proven blocker " + str(item.get("id")))
         blocker = data.get("blocker", {})
         if not isinstance(blocker, dict) or any(not blocker.get(k) for k in ("operation", "failure", "evidence", "recovery")):
             errors.append("DELIVERY-BLOCKER-004: missing concrete blocker proof")
