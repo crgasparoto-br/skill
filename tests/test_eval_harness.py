@@ -729,6 +729,47 @@ def test_results_dir_that_is_not_a_directory_is_reported_readably(tmp_path: Path
     assert "--results-dir precisa apontar para um diretorio" in resultado.stderr
 
 
+def _bloqueia_leitura(monkeypatch: pytest.MonkeyPatch, nome: str) -> None:
+    """Faz a leitura de um arquivo especifico falhar, sem depender de permissao do sistema.
+
+    A cobertura por `chmod` e pulada quando o processo roda como root, porque a permissao nao
+    restringe root. Este bloqueio injetado mantem a guarda coberta em qualquer privilegio.
+    """
+    original = Path.read_bytes
+
+    def leitura_bloqueada(self: Path) -> bytes:
+        if self.name == nome:
+            raise PermissionError(13, "Permission denied", str(self))
+        return original(self)
+
+    monkeypatch.setattr(Path, "read_bytes", leitura_bloqueada)
+
+
+def test_unreadable_fixture_raises_controlled_error_without_permission_dependency(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Guarda `fixture nao pode ser lido` coberta sem depender de privilegio do processo."""
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    nomes = sorted(path.name for path in (copia / "evals" / "fixtures" / "results").glob("*.json"))
+    assert nomes, "o repositorio precisa ter fixtures de resultado"
+    _bloqueia_leitura(monkeypatch, nomes[0])
+    with pytest.raises(eval_harness.HarnessError, match="fixture nao pode ser lido"):
+        run_evaluations(copia, results_dir=copia / "evals" / "fixtures" / "results")
+
+
+def test_unreadable_result_raises_controlled_error_without_permission_dependency(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Guarda `resultado nao pode ser lido` coberta sem depender de privilegio do processo."""
+    resultados = tmp_path / "resultados"
+    shutil.copytree(ROOT / "evals" / "fixtures" / "results", resultados)
+    nomes = sorted(path.name for path in resultados.glob("*.json"))
+    assert nomes, "o repositorio precisa ter resultados de fixture"
+    _bloqueia_leitura(monkeypatch, nomes[0])
+    with pytest.raises(eval_harness.HarnessError, match="resultado nao pode ser lido"):
+        run_evaluations(ROOT, results_dir=resultados)
+
+
 def test_invalid_report_destination_is_reported_readably(tmp_path: Path) -> None:
     """Item 2 da issue #64: destino de relatorio invalido precisa reprovar sem traceback.
 
