@@ -749,11 +749,17 @@ def test_harness_cli_symlink_loop_in_root_is_reported_readably(tmp_path: Path) -
 
 
 def test_harness_cli_missing_root_is_reported_readably(tmp_path: Path) -> None:
-    """Item 2 da issue #64: raiz inexistente no harness precisa reprovar com status 1."""
+    """Item 2 da issue #64: raiz inexistente no harness precisa reprovar com status 1.
+
+    A guarda de raiz existe no harness: sem ela o processo seguiria adiante e falharia adiante,
+    com mensagem sobre o manifesto, que nao identifica o argumento errado.
+    """
     resultado = _executa_harness(["--root", str(tmp_path / "inexistente")])
     assert resultado.returncode == 1
     assert "Traceback" not in resultado.stderr
     assert "EVAL_HARNESS_ERROR" in resultado.stderr
+    assert "raiz inexistente ou nao e diretorio" in resultado.stderr
+    assert "inexistente" in resultado.stderr
 
 
 def test_results_dir_that_is_not_a_directory_is_reported_readably(tmp_path: Path) -> None:
@@ -791,6 +797,30 @@ def _bloqueia_leitura(monkeypatch: pytest.MonkeyPatch, alvo: Path) -> None:
         return original(self)
 
     monkeypatch.setattr(Path, "read_bytes", leitura_bloqueada)
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="permissao de leitura nao restringe root")
+def test_harness_cli_unreadable_fixture_is_reported_readably(tmp_path: Path) -> None:
+    """Item 2 da issue #64: fixture ilegivel precisa reprovar pelo CLI do harness, com status 1.
+
+    O teste equivalente existente exercita o CLI do gate. Este atravessa a entrada do propio
+    harness no modo replay do diretorio canonico de fixtures, em que o manifesto e conferido.
+    """
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    fixtures = sorted((copia / "evals" / "fixtures" / "results").glob("*.json"))
+    assert fixtures, "o repositorio precisa ter fixtures de resultado"
+    alvo = fixtures[0]
+    alvo.chmod(0)
+    try:
+        resultado = _executa_harness(
+            ["--root", str(copia), "--results-dir", str(copia / "evals" / "fixtures" / "results")]
+        )
+    finally:
+        alvo.chmod(0o644)
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "fixture nao pode ser lido" in resultado.stderr
+    assert alvo.name in resultado.stderr
 
 
 def test_unreadable_fixture_raises_controlled_error_without_permission_dependency(
