@@ -136,14 +136,17 @@ def _release_line(value: str) -> str | None:
     return RELEASE_LINE if value.strip() in RELEASE_REF_FORMS else None
 
 
+README_LABEL_RE = re.compile(r"^\*\*Release do catálogo:\*\* .*$", re.MULTILINE)
 README_RELEASE_RE = re.compile(
-    r"^\*\*Release do catálogo:\*\* \[[`]?([0-9]+\.[0-9]+\.[0-9]+)[`]?\]\(",
+    r"^\*\*Release do catálogo:\*\* \[[`*]*([0-9]+\.[0-9]+\.[0-9]+)[`*]*\]\(\./VERSION\)",
     re.MULTILINE,
 )
+ROADMAP_LABEL_RE = re.compile(r"^\s*>?\s*\*\*Release atual:\*\*.*$", re.MULTILINE)
 ROADMAP_RELEASE_RE = re.compile(
-    r"^> \*\*Release atual:\*\* [`]?v([0-9]+\.[0-9]+\.[0-9]+)[`]?\s*$",
+    r"^\s*>?\s*\*\*Release atual:\*\* [`]?v([0-9]+\.[0-9]+\.[0-9]+)[`]?\s*$",
     re.MULTILINE,
 )
+VERSION_MENTION_RE = re.compile(r"VERSION[^\n]*?([0-9]+\.[0-9]+\.[0-9]+)")
 RELEASE_DOC_ROW_RE = re.compile(r"^\| `([^`]+)` \| `([^`]+)` \|", re.MULTILINE)
 CHANGELOG_HEADING_RE = re.compile(
     r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})$",
@@ -568,7 +571,14 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
     if not readme_path.is_file():
         errors.append("README.md is missing")
     else:
-        declaracoes = README_RELEASE_RE.findall(readme_path.read_text(encoding="utf-8"))
+        texto_readme = readme_path.read_text(encoding="utf-8")
+        rotulos = README_LABEL_RE.findall(texto_readme)
+        declaracoes = README_RELEASE_RE.findall(texto_readme)
+        if len(rotulos) != len(declaracoes):
+            errors.append(
+                "README.md declares the release in a non canonical form: "
+                f"{sorted(set(rotulos) - set(declaracoes))}"
+            )
         if not declaracoes:
             errors.append(
                 f"README.md is stale: it does not declare the current release {release_version}"
@@ -583,7 +593,14 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
     if not roadmap_path.is_file():
         errors.append("docs/ROADMAP.md is missing")
     else:
-        declaracoes = ROADMAP_RELEASE_RE.findall(roadmap_path.read_text(encoding="utf-8"))
+        texto_roadmap = roadmap_path.read_text(encoding="utf-8")
+        rotulos = ROADMAP_LABEL_RE.findall(texto_roadmap)
+        declaracoes = ROADMAP_RELEASE_RE.findall(texto_roadmap)
+        if len(rotulos) != len(declaracoes):
+            errors.append(
+                "docs/ROADMAP.md declares the release in a non canonical form: "
+                f"{sorted(set(rotulos) - set(declaracoes))}"
+            )
         if not declaracoes:
             errors.append(
                 f"docs/ROADMAP.md is stale: it does not declare the current release v{release_version}"
@@ -608,6 +625,15 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         for expected in expected_doc_values:
             if expected not in release_text:
                 errors.append(f"docs/RELEASE.md is stale or missing: {expected}")
+        mencoes = [
+            valor
+            for valor in VERSION_MENTION_RE.findall(release_text)
+            if valor != release_version
+        ]
+        if mencoes:
+            errors.append(
+                f"docs/RELEASE.md mentions VERSION with a different version: {sorted(set(mencoes))}"
+            )
         linhas_versao = [
             valor for chave, valor in RELEASE_DOC_ROW_RE.findall(release_text) if chave == "VERSION"
         ]

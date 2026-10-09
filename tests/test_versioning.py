@@ -678,3 +678,61 @@ def test_release_alignment_rejects_ci_ref_diverging_from_the_checked_out_branch(
     erros = release_alignment_errors(repositorio)
     assert len(erros) == 1
     assert "diverge da revisao checada" in erros[0]
+
+
+def test_versioning_rejects_release_doc_mention_with_other_version(tmp_path: Path) -> None:
+    """Declaracao de VERSION fora do formato tabelado tambem precisa concordar."""
+    root = _versioning_fixture(tmp_path)
+    doc = root / "docs/RELEASE.md"
+    doc.write_text(doc.read_text(encoding="utf-8") + "\nVERSION = 0.3.1\n", encoding="utf-8")
+    erros = validate_versioning(root)
+    assert any("mentions VERSION with a different version" in erro for erro in erros)
+
+
+def test_versioning_rejects_readme_declaration_with_markup(tmp_path: Path) -> None:
+    """Forma nao canonica no README nao pode passar so por existir uma declaracao correta."""
+    root = _versioning_fixture(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8") + "\n**Release do catálogo:** [**0.3.2**](./VERSION)\n",
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("README.md declares the release more than once" in erro for erro in erros)
+
+
+def test_versioning_rejects_readme_declaration_with_wrong_target(tmp_path: Path) -> None:
+    """O link precisa apontar para o VERSION canonico."""
+    root = _versioning_fixture(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8").replace(
+            "[`0.3.2`](./VERSION)", "[`0.3.2`](https://wrong.invalid/VERSION)"
+        ),
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("non canonical form" in erro for erro in erros)
+
+
+def test_versioning_rejects_roadmap_declaration_with_suffix_on_another_line(tmp_path: Path) -> None:
+    """Sufixo contraditorio em outra linha do roadmap precisa reprovar."""
+    root = _versioning_fixture(tmp_path)
+    roadmap = root / "docs/ROADMAP.md"
+    roadmap.write_text(
+        roadmap.read_text(encoding="utf-8") + "\n> **Release atual:** v0.3.2-beta\n",
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("docs/ROADMAP.md declares the release in a non canonical form" in erro for erro in erros)
+
+
+def test_release_alignment_documents_explicit_remote_validation(tmp_path: Path) -> None:
+    """Validar referencia remota a partir de outra branch exige alvo explicito."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    _git(repositorio, "update-ref", "refs/remotes/origin/main", "main")
+    _git(repositorio, "checkout", "-q", "-b", "develop")
+    erros = release_alignment_errors(repositorio, ref="origin/main")
+    assert len(erros) == 1
+    assert "sem incremento da versao publicada" in erros[0]
