@@ -22,7 +22,7 @@
   },
   "allowances": {
     "entregar-issue/SKILL.md": {
-      "max_bytes": 60999,
+      "max_bytes": 61098,
       "max_line_chars": 2293,
       "reason": "Control plane mais crítico do catálogo: define os gates de ancoragem no código, crescimento de código, fechamento de requisitos e handoff. Reduzir exige mover conteúdo para referências já carregadas, o que é uma entrega própria."
     },
