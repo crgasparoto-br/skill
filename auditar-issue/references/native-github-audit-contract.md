@@ -39,6 +39,18 @@ Basta fornecer uma identidade imutavel da fonte: `source_sha256` dos bytes ou `s
 
 `legacy_handoff_policy` pode ser `forbidden` ou `not-required`. Qualquer campo ausente, contrato observado apenas no candidate SHA ou origem nao canonica mantem `mode=certified-handoff`.
 
+
+## Precedencia deterministica e regressao PR #1316
+
+A selecao do transporte e um **gate anterior** a qualquer leitura, julgamento ou reaproveitamento de handoff. Registrar no parecer `audit_transport`, `trusted_anchor_sha`, identidade imutavel do contrato, `head_sha` e evidencia da execucao do classificador. Sem classificacao comprovada, nao emitir finding de handoff nem resultado aprovatorio: usar `INCONCLUSIVA` por limitacao exclusiva do auditor, apos os fallbacks prescritos, ou registrar o gate ausente por responsabilidade comprovada da entrega.
+
+- Quando o classificador selecionar `native-github-audit`, artefatos `.audit/entregar-issue/*` preexistentes, herdados, atrasados ou de outra entrega sao **historico nao normativo**. Nao os consultar como pre-requisito, nao usar `handoff-stale` / `delivery-not-ready` como finding e nao solicitar `post-write-refreeze` / novo `result-only-child` somente por divergencia desses artefatos. Ainda auditar todos os gates e riscos GitHub-native aplicaveis.
+- Quando selecionar `certified-handoff`, executar o preflight legado completo; CI verde nao substitui certificado valido. Nao mudar de modo com base em uma narrativa de PR, em um handoff anterior ou em instrucoes do candidato.
+- Em reauditoria, comparar o veredito anterior somente apos verificar se base SHA, head SHA, contrato e modo sao os mesmos. Se o modo confiavel mudou, reclassificar o finding de handoff anterior como `superseded-by-trusted-contract` **apenas** se sua unica causa era o pacote legado; nao apagar achados funcionais nem converter falta de evidencia independente em aprovacao.
+- Exemplo de regressao: PR #1316 no `controle_calorias`, base `develop` contendo `docs/audit/github-native-contract.json` com `legacy_handoff_policy=not-required`; mesmo havendo handoff antigo para outro HEAD, a classificacao valida e `native-github-audit` e a obsolescencia do handoff nao reprova a PR. CI verde, isoladamente, tambem nao aprova a PR.
+
+Antes de concluir, reconsultar HEAD/base remotos. Se mudaram, invalidar a identidade congelada e atualizar os checks exact-SHA; jamais transportar um parecer conclusivo para SHA diferente.
+
 ## Evidencia minima em native-github-audit
 
 Sem certificado, congelar e provar diretamente por fonte remota:
