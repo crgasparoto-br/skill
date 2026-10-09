@@ -4,7 +4,7 @@
 
 | Superfície | Exemplo | Finalidade |
 | --- | --- | --- |
-| `VERSION` | `0.3.1` | Versão pública SemVer do conjunto de skills e adaptadores. |
+| `VERSION` | `0.3.2` | Versão pública SemVer do conjunto de skills e adaptadores. |
 | `config/skills-catalog.json.catalog_version` | `2026-10-08.2` | Snapshot temporal do catálogo e da governança interna. |
 | `config/skill-system-requirements.json.system_version` | `2026-10-08.2` | Versão das invariantes globais do sistema. |
 | `contracts/version.json.contract_version` | `2026-08-20.3` | Linhagem interna legada dos contratos já consumidos pelas skills. |
@@ -13,6 +13,14 @@
 A skill `higienizar-repositorio` foi declarada com `min_release` `0.2.0` enquanto a release pública corrente era a `0.2.0`, porque o manifesto de compatibilidade não aceita declarar release futura. A v0.3.0 elevou o campo para `0.3.0` no mesmo change set que atualizou `VERSION`, e a divergência é verificada por `scripts/validate_versioning.py`.
 
 A versão pública é a referência para consumidores externos. A linhagem interna não deve ser alterada silenciosamente: durante a transição, uma entrada explícita em `config/compatibility.json` mapeia cada versão pública para a linhagem interna suportada.
+
+## Alinhamento da versão publicada
+
+A linha de release é `main`. Toda promoção de `develop` para `main` que avance commits além da última tag precisa publicar uma versão que identifique esse conteúdo: `VERSION` e `config/compatibility.json.release_version` devem ficar à frente da versão da última tag, e o `CHANGELOG.md` precisa descrever a versão declarada.
+
+`scripts/validate_versioning.py` reprova a divergência, com mensagem que informa a tag, a contagem de commits e a versão corrente. A verificação é fail-closed: sem repositório git, sem tag alcançável, em clone raso ou quando a tag não é ancestral da linha de release, a conformidade não é presumida. Por isso o checkout da CI usa `fetch-depth: 0`, que traz as tags.
+
+Caminho de correção quando a promoção ocorreu sem incremento: publicar uma versão de patch que identifique o conteúdo já promovido, atualizar `CHANGELOG.md` e as superfícies de versão, e promover esse ajuste para `main`. A tag publicada é imutável e não deve ser movida.
 
 ## Regras SemVer
 

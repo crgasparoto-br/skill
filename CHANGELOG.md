@@ -2,6 +2,15 @@
 
 Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A versão pública do conjunto é mantida em [`VERSION`](./VERSION). O formato segue SemVer para releases do catálogo; a versão interna de contratos permanece identificada no manifesto de compatibilidade durante a migração.
 
+## [0.3.2] - 2026-10-09
+### Added
+- validacao deterministica do alinhamento entre a versao publicada e o conteudo da linha de release: [`scripts/validate_versioning.py`](./scripts/validate_versioning.py) reprova promocao para `main` que avance commits alem da ultima tag sem incrementar a versao publicada, informando a tag, a contagem de commits e a versao corrente; a verificacao vale apenas para `main`, e e fail-closed quando nao ha repositorio git, tag alcancavel, clone completo ou ancestralidade entre a tag e a linha de release.
+- checkout da CI com `fetch-depth: 0` em [`.github/workflows/validate.yml`](./.github/workflows/validate.yml), para que a validacao da linha de release tenha as tags disponiveis em vez de presumir conformidade.
+### Changed
+- a versao publicada passa a identificar o conteudo promovido depois da `v0.3.1`, que estava na linha principal sem versao correspondente: a barreira deterministica de conclusao de obrigacoes da entrega (#73), que impede termino prematuro com requisito pendente, CI nao terminal, checkpoint obsoleto, blocker sem evidencia ou handoff nao pronto, e a reconciliacao de historico da promocao anterior (#74).
+- o contrato canonico de CI independente para repositorios consumidores e o guia reutilizavel que o liga a implementacao passam a constar do changelog, porque estavam na linha principal sem descricao em versao publicada (#66, #68).
+- [`docs/RELEASE.md`](./docs/RELEASE.md) declara a regra de alinhamento, a postura fail-closed e o caminho de correcao quando a promocao ocorre sem incremento de versao.
+
 ## [0.3.1] - 2026-10-08
 ### Added
 - bloco de conclusao em destaque no parecer de auditoria: o resultado continua na primeira linha e, imediatamente abaixo, o bloco repete o veredito, informa achados bloqueantes e recomendacoes opcionais, resume o motivo determinante e registra a liberacao de merge/release, com a decisao aparecendo uma unica vez no cabecalho.

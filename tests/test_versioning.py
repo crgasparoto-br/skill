@@ -3,12 +3,14 @@ from __future__ import annotations
 import builtins
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 from scripts.catalog import load_catalog
 from scripts.validate_versioning import (
     parse_lineage,
     parse_semver,
+    release_alignment_errors,
     validate_json_schema,
     validate_versioning,
 )
@@ -138,3 +140,130 @@ def test_schema_dependency_is_fail_closed(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(builtins, "__import__", blocked_import)
     errors = validate_json_schema(schema, document, "test schema")
     assert any("jsonschema dependency unavailable" in error for error in errors)
+
+
+def _git(path: Path, *argumentos: str) -> None:
+    subprocess.run(
+        ["git", *argumentos],
+        cwd=path,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _repositorio_com_tag(tmp_path: Path, versao: str = "0.3.1") -> Path:
+    """Cria um repositorio minimo com uma release ja publicada e marcada por tag anotada."""
+    repositorio = tmp_path / "repositorio"
+    repositorio.mkdir()
+    _git(repositorio, "init", "-q", "-b", "main")
+    _git(repositorio, "config", "user.email", "teste@exemplo.invalid")
+    _git(repositorio, "config", "user.name", "Teste")
+    (repositorio / "VERSION").write_text(f"{versao}\n", encoding="utf-8")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", f"publica {versao}")
+    _git(repositorio, "tag", "-a", f"v{versao}", "-m", f"release v{versao}")
+    return repositorio
+
+
+def _promove_conteudo(repositorio: Path, mensagem: str = "conteudo promovido") -> None:
+    (repositorio / "conteudo.txt").write_text("promovido\n", encoding="utf-8")
+    _git(repositorio, "add", "conteudo.txt")
+    _git(repositorio, "commit", "-q", "-m", mensagem)
+
+
+def test_release_alignment_rejects_promotion_without_published_version(tmp_path: Path) -> None:
+    """Regressao: a main avancou alem da tag sem versao publicada, o estado que originou a issue."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "sem incremento da versao publicada" in erros[0]
+    assert "v0.3.1" in erros[0]
+    assert "VERSION=0.3.1" in erros[0]
+
+
+def test_release_alignment_accepts_version_that_identifies_promoted_content(tmp_path: Path) -> None:
+    """Cenario conforme: a versao publicada avanca junto com o conteudo promovido."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    (repositorio / "VERSION").write_text("0.3.2\n", encoding="utf-8")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "publica 0.3.2")
+    assert release_alignment_errors(repositorio, ref="main") == []
+
+
+def test_release_alignment_accepts_release_line_matching_the_tag(tmp_path: Path) -> None:
+    """Promocao sem commit novo nao exige versao adicional."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    assert release_alignment_errors(repositorio, ref="main") == []
+
+
+def test_release_alignment_ignores_other_lines(tmp_path: Path) -> None:
+    """A verificacao vale para a linha de release; develop nao e reprovado por estar a frente."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    assert release_alignment_errors(repositorio, ref="develop") == []
+    assert release_alignment_errors(repositorio, ref="refs/heads/develop") == []
+
+
+def test_release_alignment_normalizes_remote_ref(tmp_path: Path) -> None:
+    """origin/main e refs/remotes/origin/main designam a mesma linha de release."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    _git(repositorio, "update-ref", "refs/remotes/origin/main", "main")
+    for referencia in ("origin/main", "refs/remotes/origin/main", "refs/heads/main"):
+        erros = release_alignment_errors(repositorio, ref=referencia)
+        assert len(erros) == 1, referencia
+        assert "sem incremento da versao publicada" in erros[0]
+
+
+def test_release_alignment_is_fail_closed_without_reachable_tag(tmp_path: Path) -> None:
+    """Sem tag alcancavel a conformidade nao e presumida."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    _git(repositorio, "tag", "-d", "v0.3.1")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "nenhuma tag alcancavel" in erros[0]
+
+
+def test_release_alignment_is_fail_closed_on_shallow_clone(tmp_path: Path) -> None:
+    """Clone raso nao permite conferir a tag publicada e precisa reprovar, nao passar em silencio."""
+    origem = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(origem)
+    raso = tmp_path / "raso"
+    subprocess.run(
+        ["git", "clone", "-q", "--depth", "1", "--no-tags", f"file://{origem}", str(raso)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    erros = release_alignment_errors(raso, ref="main")
+    assert len(erros) == 1
+    assert "clone raso" in erros[0]
+
+
+def test_release_alignment_is_fail_closed_outside_a_repository(tmp_path: Path) -> None:
+    """Fora de repositorio git a linha de release nao pode ser conferida."""
+    erros = release_alignment_errors(tmp_path, ref="main")
+    assert len(erros) == 1
+    assert "nao esta em repositorio git" in erros[0]
+
+
+def test_release_alignment_rejects_tag_outside_the_release_line(tmp_path: Path) -> None:
+    """Tag que nao e ancestral da linha de release e divergencia, nao conformidade.
+
+    A tag e informada pela costura publica porque `git describe` so devolve tag alcancavel,
+    tornando o caminho de defesa inalcancavel apenas com repositorios reais.
+    """
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    erros = release_alignment_errors(repositorio, ref="main", tag="v0.9.9")
+    assert len(erros) == 1
+    assert "nao e ancestral" in erros[0]
+
+
+def test_release_alignment_is_inert_without_a_determinable_ref(tmp_path: Path) -> None:
+    """Sem referencia determinavel a verificacao nao se aplica, em vez de reprovar um alvo desconhecido."""
+    assert release_alignment_errors(tmp_path) == []
