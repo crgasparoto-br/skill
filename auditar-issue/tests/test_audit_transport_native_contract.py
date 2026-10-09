@@ -76,3 +76,29 @@ def test_skill_contract_does_not_require_legacy_handoff_in_native_mode():
     assert "native-github-audit" in skill
     assert "ausencia de `.audit/entregar-issue`" in skill
     assert "candidate" in ref.lower()
+
+
+def test_not_required_policy_selects_native_with_stale_legacy_context():
+    """Regression PR 1316: old handoff is not a gate under a trusted native contract."""
+    value = base_manifest()
+    value["repository"] = "crgasparoto-br/controle_calorias"
+    value["contract"]["path"] = "docs/audit/github-native-contract.json"
+    value["contract"]["legacy_handoff_policy"] = "not-required"
+    value["legacy_handoff"] = {
+        "material_head_sha": "d0da06cb" + "0" * 32,
+        "published_head_sha": "38a1b6fb" + "0" * 32,
+        "status": "stale",
+    }
+    code, out = run_manifest(value)
+    assert code == 0, out
+    result = json.loads(out)
+    assert result["mode"] == "native-github-audit"
+    assert result["legacy_handoff_required"] is False
+
+
+def test_native_precedence_is_explicit_in_skill_and_reference():
+    skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    guide = (ROOT / "references" / "native-github-audit-contract.md").read_text(encoding="utf-8")
+    assert "Gate de precedencia (obrigatorio" in skill
+    assert "superseded-by-trusted-contract" in guide
+    assert "CI verde, isoladamente, tambem nao aprova" in guide
