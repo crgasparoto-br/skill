@@ -547,9 +547,12 @@ def _resolve_root(value: str | None) -> Path:
         raise HarnessError("argumento --root vazio")
     raiz = Path(value) if value is not None else Path(__file__).resolve().parents[1]
     try:
-        return raiz.resolve()
+        resolvida = raiz.resolve()
     except (OSError, RuntimeError, ValueError) as exc:
         raise HarnessError(f"raiz inacessivel: {exc}") from exc
+    if not resolvida.is_dir():
+        raise HarnessError(f"raiz inexistente ou nao e diretorio: {value!r}")
+    return resolvida
 
 
 def main(argv: list[str] | None = None) -> int:
