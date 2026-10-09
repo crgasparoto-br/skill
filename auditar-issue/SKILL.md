@@ -49,7 +49,7 @@ Imediatamente abaixo dessa linha, abrir o parecer com o bloco de conclusao em de
 **Validade:** [Independente | Controller-adversarial | Pre-auditoria]
 ```
 
-Antes de publicar qualquer parecer humano, salvar o Markdown final em arquivo temporario e executar `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>`. Em caso de erro, corrigir o parecer e revalidar; nunca enviar um relatorio cujo cabecalho falhou. Este portao valida formato e coerencia minima, nao substitui a auditoria do conteudo nem prova que a conclusao e verdadeira. Em ambientes sem execucao do script, verificar manualmente todas as mesmas invariantes e declarar a limitacao, sem alegar validacao automatica. A obrigacao vale tambem para reuso de auditorias e saidas de controller.
+Antes de publicar ou reutilizar um parecer, validar o Markdown final com `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>`. Corrigir falhas antes de enviar. Sem execucao disponivel, conferir manualmente e declarar a limitacao. O script confere formato, nao veracidade.
 
 O bloco deixa a conclusao visivel nas primeiras linhas e nao substitui o motivo determinante, a matriz, os achados nem o resultado estruturado; divergencia entre eles e defeito do parecer. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato.
 
