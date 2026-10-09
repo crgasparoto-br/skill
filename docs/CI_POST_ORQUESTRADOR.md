@@ -67,6 +67,8 @@ Executar e anexar evidência ao PR de cada consumidor:
 5. **Limpar legado:** só depois de comprovada substituição e ausência de consumidores, remover locks, `.delivery-v2`, variáveis `DELIVERY_V2_*`, referências `refs/orchestrator/*` e workflows obsoletos; revisar documentação e confirmar novo run exato.
 6. **Rollback:** se um required check sumir, um gate for dispensado incorretamente ou a CI não estabilizar, reverter os commits de migração ou restaurar o workflow/classificador anterior e os required contexts previamente registrados. Revalidar o HEAD restaurado e merge preview. Nunca desabilitar proteções para destravar merge.
 
+Para registrar as evidências em cada projeto, copiar e preencher o [template de migração e testes negativos](./CI_MIGRATION_EVIDENCE_TEMPLATE.md); campos `UNKNOWN` e `NOT RUN` não autorizam a retirada de proteções.
+
 ## Evidência de required contexts reais
 
 A matriz acima **não é inventário do estado atual**. Em cada PR consumidora, anexar dados da API do GitHub e da branch protection/rulesets com as colunas `context atual | workflow/job emissor | app | novo context | ruleset | SHA do check | data de troca | rollback`. Valor desconhecido é `UNKNOWN`; sem inventário e evidência de sucesso no SHA atual, não remover o contexto legado.
