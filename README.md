@@ -6,6 +6,8 @@ As instruções centrais estão em Markdown e seguem um formato independente de 
 
 **Release do catálogo:** [`0.3.1`](./VERSION) · **catálogo:** `2026-10-08.2` · **compatibilidade:** [`config/compatibility.json`](./config/compatibility.json). Para integração reproduzível, prefira uma tag `v<version>` ou um SHA imutável; `develop` é a base de desenvolvimento e só é promovida a `main` em release.
 
+**Padrão de CI para repositórios consumidores:** [contrato normativo pós-Orquestrador](./docs/CI_POST_ORQUESTRADOR.md) e [guia de implementação reutilizável](./docs/CI_STANDARD.md) (classificação de risco, exact-head, merge preview, required checks e rollback).
+
 ## Catálogo
 
 <!-- BEGIN GENERATED: skill-catalog -->
