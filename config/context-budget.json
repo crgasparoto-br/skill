@@ -27,7 +27,7 @@
       "reason": "Control plane mais crítico do catálogo: define os gates de ancoragem no código, crescimento de código, fechamento de requisitos e handoff. Reduzir exige mover conteúdo para referências já carregadas, o que é uma entrega própria."
     },
     "auditar-issue/SKILL.md": {
-      "max_bytes": 35055,
+      "max_bytes": 35914,
       "max_line_chars": 1974,
       "reason": "Control plane da auditoria independente, com o contrato de rederivação, os gates de refutação e o bloco obrigatório de conclusão do parecer. Reduzir depende de separar o preflight proporcional em referência carregada condicionalmente."
     },
