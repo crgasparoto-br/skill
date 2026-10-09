@@ -21,7 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 def _versioning_fixture(tmp_path: Path) -> Path:
     files = [
         "VERSION",
+        "README.md",
         "CHANGELOG.md",
+        "docs/ROADMAP.md",
         "docs/RELEASE.md",
         "config/compatibility.json",
         "config/skills-catalog.json",
@@ -425,3 +427,76 @@ def test_release_alignment_reads_the_version_of_the_target_revision(tmp_path: Pa
 def test_release_alignment_is_inert_without_a_determinable_ref(tmp_path: Path) -> None:
     """Sem referencia determinavel a verificacao nao se aplica, em vez de reprovar um alvo desconhecido."""
     assert release_alignment_errors(tmp_path) == []
+
+
+def test_versioning_reports_invalid_utf8_without_traceback(tmp_path: Path) -> None:
+    """O entrypoint agregado precisa recusar VERSION com bytes invalidos sem excecao."""
+    root = _versioning_fixture(tmp_path)
+    (root / "VERSION").write_bytes(b"0.3.2\xff\n")
+    erros = validate_versioning(root)
+    assert erros == ["VERSION must be valid UTF-8"]
+
+
+def test_versioning_rejects_bom_and_missing_newline(tmp_path: Path) -> None:
+    """BOM e ausencia de quebra de linha final nao sao a forma canonica de VERSION."""
+    for conteudo in (b"\xef\xbb\xbf0.3.2\n", b"0.3.2", b""):
+        root = _versioning_fixture(tmp_path / conteudo.hex())
+        (root / "VERSION").write_bytes(conteudo)
+        erros = validate_versioning(root)
+        assert any("single trailing newline" in erro for erro in erros), conteudo
+
+
+def test_versioning_rejects_impossible_release_date(tmp_path: Path) -> None:
+    """Data impossivel no titulo do changelog precisa reprovar."""
+    root = _versioning_fixture(tmp_path)
+    changelog = root / "CHANGELOG.md"
+    changelog.write_text(
+        changelog.read_text(encoding="utf-8").replace("## [0.3.2] - 2026-10-09", "## [0.3.2] - 2026-13-99"),
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("invalid date" in erro for erro in erros)
+
+
+def test_versioning_requires_the_changelog(tmp_path: Path) -> None:
+    """Sem changelog o contrato de release nao pode ser satisfeito."""
+    root = _versioning_fixture(tmp_path)
+    (root / "CHANGELOG.md").unlink()
+    assert "CHANGELOG.md is missing" in validate_versioning(root)
+
+
+def test_versioning_rejects_stale_public_surfaces(tmp_path: Path) -> None:
+    """README e roadmap declaram a release corrente e nao podem divergir de VERSION."""
+    root = _versioning_fixture(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8").replace("`0.3.2`](./VERSION)", "`0.3.1`](./VERSION)"),
+        encoding="utf-8",
+    )
+    roadmap = root / "docs/ROADMAP.md"
+    roadmap.write_text(
+        roadmap.read_text(encoding="utf-8").replace("> **Release atual:** `v0.3.2`", "> **Release atual:** `v0.3.1`"),
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("README.md is stale" in erro for erro in erros)
+    assert any("docs/ROADMAP.md is stale" in erro for erro in erros)
+
+
+def test_release_alignment_rejects_explicit_uppercase_tag(tmp_path: Path) -> None:
+    """Mesmo informada explicitamente, a tag com prefixo maiusculo precisa reprovar."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    _git(repositorio, "tag", "-a", "V0.3.1", "-m", "release com prefixo maiusculo")
+    erros = release_alignment_errors(repositorio, ref="main", tag="V0.3.1")
+    assert len(erros) == 1
+    assert "vMAJOR.MINOR.PATCH" in erros[0]
+
+
+def test_release_alignment_rejects_tag_with_surrounding_space(tmp_path: Path) -> None:
+    """Espaco no nome informado nao pode ser tratado como tag valida."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    erros = release_alignment_errors(repositorio, ref="main", tag=" v0.3.1 ")
+    assert len(erros) == 1
+    assert "nome lexical valido" in erros[0]

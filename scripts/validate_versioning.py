@@ -306,10 +306,6 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
     if not version_path.is_file():
         return ["VERSION is missing"]
     try:
-        release_version = version_path.read_text(encoding="utf-8").strip()
-    except OSError as exc:
-        return [f"VERSION cannot be read: {exc}"]
-    try:
         raw_bytes = version_path.read_bytes()
     except OSError as exc:
         return [f"VERSION cannot be read: {exc}"]
@@ -321,6 +317,7 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         errors.append(
             "VERSION must contain only MAJOR.MINOR.PATCH and a single trailing newline"
         )
+    release_version = raw_version[:-1] if raw_version.endswith("\n") else raw_version.strip()
     release_semver = parse_semver(release_version)
     if release_semver is None:
         errors.append("VERSION must use MAJOR.MINOR.PATCH SemVer")
@@ -482,11 +479,36 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         errors.append("CHANGELOG.md is missing")
     else:
         changelog_text = changelog_path.read_text(encoding="utf-8")
-        padrao = rf"^## \[{re.escape(release_version)}\] - [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$"
-        if not re.search(padrao, changelog_text, re.MULTILINE):
+        padrao = (
+            rf"^## \[{re.escape(release_version)}\] - "
+            r"([0-9]{4}-[0-9]{2}-[0-9]{2})$"
+        )
+        cabecalho = re.search(padrao, changelog_text, re.MULTILINE)
+        if cabecalho is None:
             errors.append(
                 f"CHANGELOG.md lacks release heading ## [{release_version}] - YYYY-MM-DD"
             )
+        else:
+            try:
+                date.fromisoformat(cabecalho.group(1))
+            except ValueError:
+                errors.append(
+                    f"CHANGELOG.md release heading has an invalid date: {cabecalho.group(1)}"
+                )
+    readme_path = root / "README.md"
+    if not readme_path.is_file():
+        errors.append("README.md is missing")
+    elif f"**Release do catálogo:** [`{release_version}`](./VERSION)" not in readme_path.read_text(encoding="utf-8"):
+        errors.append(
+            f"README.md is stale: it does not declare the current release {release_version}"
+        )
+    roadmap_path = root / "docs" / "ROADMAP.md"
+    if not roadmap_path.is_file():
+        errors.append("docs/ROADMAP.md is missing")
+    elif f"> **Release atual:** `v{release_version}`" not in roadmap_path.read_text(encoding="utf-8"):
+        errors.append(
+            f"docs/ROADMAP.md is stale: it does not declare the current release v{release_version}"
+        )
     if not release_doc.is_file():
         errors.append("docs/RELEASE.md is missing")
     else:
