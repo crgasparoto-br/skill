@@ -145,7 +145,7 @@ ROADMAP_CANONICAL_RE = re.compile(
     r"^> \*\*Release atual:\*\* [`]?v([0-9]+\.[0-9]+\.[0-9]+)[`]?\s*$"
 )
 VERSION_DECLARATION_RE = re.compile(
-    r"\bVERSION\b\s*(?:\||=)\s*`?([0-9]+\.[0-9]+\.[0-9]+)`?\s*(?:\||$)"
+    r"`?VERSION`?\s*(?:\||=)\s*`?([0-9]+\.[0-9]+\.[0-9]+)`?\s*(?:\||$)"
 )
 CHANGELOG_HEADING_RE = re.compile(
     r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})$",
@@ -236,7 +236,7 @@ def _release_doc_version_errors(texto: str, release_version: str) -> list[str]:
     erros: list[str] = []
     declaradas: list[str] = []
     for numero, linha in _visible_lines(texto):
-        if not re.search(r"\bVERSION\b\s*(?:\||=)", linha):
+        if not re.search(r"(?<![A-Za-z])VERSION(?![A-Za-z])`?\s*(?:\||=)", linha):
             continue
         achado = VERSION_DECLARATION_RE.search(linha)
         if achado is None:
