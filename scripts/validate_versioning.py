@@ -137,13 +137,14 @@ def _release_line(value: str) -> str | None:
 
 
 README_RELEASE_RE = re.compile(
-    r"^\*\*Release do catálogo:\*\* \[`([0-9]+\.[0-9]+\.[0-9]+)`\]",
+    r"^\*\*Release do catálogo:\*\* \[[`]?([0-9]+\.[0-9]+\.[0-9]+)[`]?\]\(",
     re.MULTILINE,
 )
 ROADMAP_RELEASE_RE = re.compile(
-    r"^> \*\*Release atual:\*\* `?v([0-9]+\.[0-9]+\.[0-9]+)`?",
+    r"^> \*\*Release atual:\*\* [`]?v([0-9]+\.[0-9]+\.[0-9]+)[`]?\s*$",
     re.MULTILINE,
 )
+RELEASE_DOC_ROW_RE = re.compile(r"^\| `([^`]+)` \| `([^`]+)` \|", re.MULTILINE)
 CHANGELOG_HEADING_RE = re.compile(
     r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})$",
     re.MULTILINE,
@@ -199,6 +200,13 @@ def _resolve_release_tag(
         return "", [
             f"release alignment: a tag {tag} precisa ser anotada; "
             "uma tag leve nao registra a versao publicada"
+        ]
+    tagged_code, tagged_raw = _git_bytes(root, "show", f"{tag}:VERSION")
+    esperado = f"{tag[1:]}\n".encode()
+    if tagged_code != 0 or tagged_raw != esperado:
+        return "", [
+            f"release alignment: a tag {tag} aponta para um commit cujo VERSION nao e "
+            f"{tag[1:]}; a tag publicada nao identifica a versao declarada"
         ]
     ancestor_code, _ = _git_output(root, "merge-base", "--is-ancestor", tag, target)
     if ancestor_code != 0:
@@ -297,6 +305,19 @@ def release_alignment_errors(
                 "informe a referencia ou faca checkout da linha de release"
             ]
         return []
+    if ref is None and os.environ.get("GITHUB_REF_NAME"):
+        branch_code, branch = _git_output(root, "rev-parse", "--abbrev-ref", "HEAD")
+        if (
+            branch_code == 0
+            and branch
+            and branch != "HEAD"
+            and _release_line(branch) != _release_line(target)
+        ):
+            return [
+                "release alignment: a referencia do CI "
+                f"{target} diverge da revisao checada {branch}; "
+                "a linha de release nao pode ser validada nesse contexto"
+            ]
     if _release_line(target) is None:
         return []
     inside_code, _ = _git_output(root, "rev-parse", "--is-inside-work-tree")
@@ -322,10 +343,15 @@ def release_alignment_errors(
     count_code, count_output = _git_output(root, "rev-list", "--count", f"{tag}..{target}")
     if count_code != 0 or not count_output.isdigit():
         return [f"release alignment: nao foi possivel contar os commits de {tag} ate {target}"]
-    if release_version is None:
-        release_version, problemas = _target_release_version(root, target)
-        if problemas:
-            return problemas
+    versao_alvo, problemas = _target_release_version(root, target)
+    if problemas:
+        return problemas
+    if release_version is not None and release_version != versao_alvo:
+        return [
+            "release alignment: a versao informada "
+            f"{release_version} diverge da revisao alvo {target}, que declara {versao_alvo}"
+        ]
+    release_version = versao_alvo
     return _version_comparison_problems(target, tag, release_version, int(count_output))
 
 
@@ -582,6 +608,19 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         for expected in expected_doc_values:
             if expected not in release_text:
                 errors.append(f"docs/RELEASE.md is stale or missing: {expected}")
+        linhas_versao = [
+            valor for chave, valor in RELEASE_DOC_ROW_RE.findall(release_text) if chave == "VERSION"
+        ]
+        if not linhas_versao:
+            errors.append("docs/RELEASE.md is stale or missing: | `VERSION` | `<versao>` |")
+        elif len(linhas_versao) > 1:
+            errors.append(
+                f"docs/RELEASE.md declares VERSION more than once: {sorted(linhas_versao)}"
+            )
+        elif linhas_versao[0] != release_version:
+            errors.append(
+                f"docs/RELEASE.md declares VERSION {linhas_versao[0]} instead of {release_version}"
+            )
         compatibility_by_id = {
             item.get("id"): item for item in adapters
             if isinstance(item, dict)

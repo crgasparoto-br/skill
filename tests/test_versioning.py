@@ -267,6 +267,9 @@ def test_release_alignment_rejects_tag_outside_the_release_line(tmp_path: Path) 
     repositorio = _repositorio_com_tag(tmp_path)
     _git(repositorio, "checkout", "-q", "-b", "divergente")
     _promove_conteudo(repositorio, "ramo divergente")
+    (repositorio / "VERSION").write_text("0.9.9\n", encoding="utf-8")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "declara 0.9.9 no ramo divergente")
     _git(repositorio, "tag", "-a", "v0.9.9", "-m", "release v0.9.9")
     _git(repositorio, "checkout", "-q", "main")
     _promove_conteudo(repositorio)
@@ -308,13 +311,28 @@ def test_release_alignment_requires_the_documented_tag_format(tmp_path: Path) ->
 
 
 def test_release_alignment_rejects_tag_ahead_of_the_published_version(tmp_path: Path) -> None:
-    """Sem commits novos, uma tag a frente do VERSION tambem e divergencia."""
+    """A tag publicada precisa declarar a propria versao no commit apontado."""
     repositorio = _repositorio_com_tag(tmp_path)
     _git(repositorio, "tag", "-d", "v0.3.1")
     _git(repositorio, "tag", "-a", "v0.3.3", "-m", "release v0.3.3")
     erros = release_alignment_errors(repositorio, ref="main")
     assert len(erros) == 1
-    assert "diverge da tag" in erros[0]
+    assert "VERSION nao e 0.3.3" in erros[0]
+
+
+def test_release_alignment_rejects_tag_diverging_without_new_commits(tmp_path: Path) -> None:
+    """Sem commits novos, uma tag a frente do VERSION continua sendo divergencia."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    (repositorio / "VERSION").write_text("0.3.3\n", encoding="utf-8")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "declara 0.3.3")
+    _git(repositorio, "tag", "-a", "v0.3.3", "-m", "release v0.3.3")
+    (repositorio / "VERSION").write_text("0.3.2\n", encoding="utf-8")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "volta para 0.3.2")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "sem incremento da versao publicada" in erros[0]
 
 
 def test_release_alignment_rejects_unknown_informed_tag(tmp_path: Path) -> None:
@@ -590,3 +608,73 @@ def test_release_alignment_rejects_isolated_carriage_return(tmp_path: Path) -> N
     erros = release_alignment_errors(repositorio, ref="main")
     assert len(erros) == 1
     assert "quebra de linha final" in erros[0]
+
+
+def test_versioning_rejects_duplicated_release_doc_row(tmp_path: Path) -> None:
+    """docs/RELEASE.md nao pode declarar duas versoes diferentes para VERSION."""
+    root = _versioning_fixture(tmp_path)
+    doc = root / "docs/RELEASE.md"
+    doc.write_text(doc.read_text(encoding="utf-8") + "\n| `VERSION` | `0.3.1` |\n", encoding="utf-8")
+    erros = validate_versioning(root)
+    assert any("docs/RELEASE.md declares VERSION more than once" in erro for erro in erros)
+
+
+def test_versioning_rejects_duplicated_roadmap_declaration(tmp_path: Path) -> None:
+    """O roadmap tambem precisa declarar a release uma unica vez."""
+    root = _versioning_fixture(tmp_path)
+    roadmap = root / "docs/ROADMAP.md"
+    roadmap.write_text(
+        roadmap.read_text(encoding="utf-8") + "\n> **Release atual:** `v0.3.1`\n",
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("docs/ROADMAP.md declares the release more than once" in erro for erro in erros)
+
+
+def test_versioning_rejects_roadmap_release_with_suffix(tmp_path: Path) -> None:
+    """Sufixo contraditorio no roadmap nao pode casar como a versao publicada."""
+    root = _versioning_fixture(tmp_path)
+    roadmap = root / "docs/ROADMAP.md"
+    roadmap.write_text(
+        roadmap.read_text(encoding="utf-8").replace(
+            "> **Release atual:** `v0.3.2`", "> **Release atual:** v0.3.2-beta"
+        ),
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("docs/ROADMAP.md is stale" in erro for erro in erros)
+
+
+def test_versioning_accepts_equivalent_readme_declaration(tmp_path: Path) -> None:
+    """A declaracao do README e semantica: rotulo sem crase continua sendo a mesma declaracao."""
+    root = _versioning_fixture(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8").replace(
+            "[`0.3.2`](./VERSION)", "[0.3.2](./VERSION)"
+        ),
+        encoding="utf-8",
+    )
+    assert validate_versioning(root) == []
+
+
+def test_release_alignment_rejects_seam_version_diverging_from_the_target(tmp_path: Path) -> None:
+    """A costura de versao nao pode suprimir a leitura da revisao alvo."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    erros = release_alignment_errors(repositorio, ref="main", release_version="9.9.9")
+    assert len(erros) == 1
+    assert "diverge da revisao alvo" in erros[0]
+
+
+def test_release_alignment_rejects_ci_ref_diverging_from_the_checked_out_branch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Referencia de CI contraditoria nao pode desativar a barreira em silencio."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("GITHUB_REF_NAME", "feature/main")
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    erros = release_alignment_errors(repositorio)
+    assert len(erros) == 1
+    assert "diverge da revisao checada" in erros[0]
