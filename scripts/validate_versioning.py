@@ -136,20 +136,20 @@ def _release_line(value: str) -> str | None:
     return RELEASE_LINE if value.strip() in RELEASE_REF_FORMS else None
 
 
-README_LABEL_RE = re.compile(r"^[\s>]*\*\*Release do catálogo:\*\* .*$", re.MULTILINE)
-README_RELEASE_RE = re.compile(
-    r"^[\s>]*\*\*Release do catálogo:\*\* \[[`*]*([0-9]+\.[0-9]+\.[0-9]+)[`*]*\]\(\./VERSION\)",
-    re.MULTILINE,
+README_LABEL = "Release do catálogo:"
+ROADMAP_LABEL = "Release atual:"
+README_CANONICAL_RE = re.compile(
+    r"^\*\*Release do catálogo:\*\* \[[`*]*([0-9]+\.[0-9]+\.[0-9]+)[`*]*\]\(\./VERSION\)"
 )
-ROADMAP_LABEL_RE = re.compile(r"^[\s>]*\*\*Release atual:\*\*.*$", re.MULTILINE)
-ROADMAP_RELEASE_RE = re.compile(
-    r"^[\s>]*\*\*Release atual:\*\* [`]?v([0-9]+\.[0-9]+\.[0-9]+)[`]?\s*$",
-    re.MULTILINE,
+ROADMAP_CANONICAL_RE = re.compile(
+    r"^> \*\*Release atual:\*\* [`]?v([0-9]+\.[0-9]+\.[0-9]+)[`]?\s*$"
 )
 VERSION_DECLARATION_RE = re.compile(
-    r"`?VERSION`?\s*(?:\||=|:)\s*`?([0-9]+\.[0-9]+\.[0-9]+)`?"
+    r"\bVERSION\b\s*(?:\||=|:)\s*`?([0-9]+\.[0-9]+\.[0-9]+)(?![0-9A-Za-z.-])"
 )
-RELEASE_DOC_ROW_RE = re.compile(r"^\| `([^`]+)` \| `([^`]+)` \|", re.MULTILINE)
+CANONICAL_DOC_ROW_RE = re.compile(
+    r"^\| `VERSION` \| `([0-9]+\.[0-9]+\.[0-9]+)` \|", re.MULTILINE
+)
 CHANGELOG_HEADING_RE = re.compile(
     r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})$",
     re.MULTILINE,
@@ -157,6 +157,78 @@ CHANGELOG_HEADING_RE = re.compile(
 
 
 RELEASE_TAG_RE = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+
+
+def _fenced_lines(text: str) -> list[tuple[int, str]]:
+    """Devolve linhas fora de blocos de codigo, com o numero da linha."""
+    dentro = False
+    linhas: list[tuple[int, str]] = []
+    for numero, linha in enumerate(text.splitlines(), start=1):
+        if linha.strip().startswith("```"):
+            dentro = not dentro
+            continue
+        if not dentro:
+            linhas.append((numero, linha))
+    return linhas
+
+
+def _label_surface_errors(
+    caminho: Path, rotulo_arquivo: str, rotulo: str, canonico: re.Pattern[str], release_version: str
+) -> list[str]:
+    """Toda linha com o rotulo precisa ser a declaracao canonica da versao publicada."""
+    if not caminho.is_file():
+        return [f"{rotulo_arquivo} is missing"]
+    erros: list[str] = []
+    declaracoes: list[str] = []
+    for numero, linha in _fenced_lines(caminho.read_text(encoding="utf-8")):
+        if rotulo not in linha:
+            continue
+        achado = canonico.match(linha)
+        if achado is None:
+            erros.append(
+                f"{rotulo_arquivo}:{numero}: declares {rotulo} in a non canonical form: "
+                f"{linha.strip()}"
+            )
+            continue
+        declaracoes.append(achado.group(1))
+    if erros:
+        return erros
+    if not declaracoes:
+        return [
+            f"{rotulo_arquivo} is stale: it does not declare the current release {release_version}"
+        ]
+    if len(declaracoes) > 1:
+        return [f"{rotulo_arquivo} declares the release more than once: {sorted(declaracoes)}"]
+    if declaracoes[0] != release_version:
+        return [
+            f"{rotulo_arquivo} is stale: it declares {declaracoes[0]} instead of {release_version}"
+        ]
+    return []
+
+
+def _release_doc_version_errors(texto: str, release_version: str) -> list[str]:
+    """Declaracoes de VERSION no documento de release precisam ser unicas e coerentes."""
+    erros: list[str] = []
+    for numero, linha in _fenced_lines(texto):
+        if not re.search(r"\bVERSION\b\s*(?:\||=|:)", linha):
+            continue
+        achado = VERSION_DECLARATION_RE.search(linha)
+        if achado is None:
+            erros.append(
+                "docs/RELEASE.md declares VERSION without a complete version at line "
+                f"{numero}: {linha.strip()}"
+            )
+        elif achado.group(1) != release_version:
+            erros.append(
+                f"docs/RELEASE.md declares VERSION {achado.group(1)} at line {numero} "
+                f"instead of {release_version}"
+            )
+    linhas_canonicas = CANONICAL_DOC_ROW_RE.findall(texto)
+    if len(linhas_canonicas) > 1:
+        erros.append(
+            f"docs/RELEASE.md declares VERSION more than once: {sorted(linhas_canonicas)}"
+        )
+    return erros
 
 
 def _highest_release_tag(root: Path, target: str) -> str:
@@ -569,50 +641,20 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
                 "CHANGELOG.md release date differs from compatibility release_date: "
                 f"{correntes[0]} != {release_date}"
             )
-    readme_path = root / "README.md"
-    if not readme_path.is_file():
-        errors.append("README.md is missing")
-    else:
-        texto_readme = readme_path.read_text(encoding="utf-8")
-        rotulos = README_LABEL_RE.findall(texto_readme)
-        declaracoes = README_RELEASE_RE.findall(texto_readme)
-        if len(rotulos) != len(declaracoes):
-            errors.append(
-                "README.md declares the release in a non canonical form: "
-                f"{sorted(set(rotulos) - set(declaracoes))}"
-            )
-        if not declaracoes:
-            errors.append(
-                f"README.md is stale: it does not declare the current release {release_version}"
-            )
-        elif len(declaracoes) > 1:
-            errors.append(f"README.md declares the release more than once: {sorted(declaracoes)}")
-        elif declaracoes[0] != release_version:
-            errors.append(
-                f"README.md is stale: it declares {declaracoes[0]} instead of {release_version}"
-            )
-    roadmap_path = root / "docs" / "ROADMAP.md"
-    if not roadmap_path.is_file():
-        errors.append("docs/ROADMAP.md is missing")
-    else:
-        texto_roadmap = roadmap_path.read_text(encoding="utf-8")
-        rotulos = ROADMAP_LABEL_RE.findall(texto_roadmap)
-        declaracoes = ROADMAP_RELEASE_RE.findall(texto_roadmap)
-        if len(rotulos) != len(declaracoes):
-            errors.append(
-                "docs/ROADMAP.md declares the release in a non canonical form: "
-                f"{sorted(set(rotulos) - set(declaracoes))}"
-            )
-        if not declaracoes:
-            errors.append(
-                f"docs/ROADMAP.md is stale: it does not declare the current release v{release_version}"
-            )
-        elif len(declaracoes) > 1:
-            errors.append(f"docs/ROADMAP.md declares the release more than once: {sorted(declaracoes)}")
-        elif declaracoes[0] != release_version:
-            errors.append(
-                f"docs/ROADMAP.md is stale: it declares v{declaracoes[0]} instead of v{release_version}"
-            )
+    errors.extend(
+        _label_surface_errors(
+            root / "README.md", "README.md", README_LABEL, README_CANONICAL_RE, release_version
+        )
+    )
+    errors.extend(
+        _label_surface_errors(
+            root / "docs" / "ROADMAP.md",
+            "docs/ROADMAP.md",
+            ROADMAP_LABEL,
+            ROADMAP_CANONICAL_RE,
+            release_version,
+        )
+    )
     if not release_doc.is_file():
         errors.append("docs/RELEASE.md is missing")
     else:
@@ -627,28 +669,7 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         for expected in expected_doc_values:
             if expected not in release_text:
                 errors.append(f"docs/RELEASE.md is stale or missing: {expected}")
-        mencoes = [
-            valor
-            for valor in VERSION_DECLARATION_RE.findall(release_text)
-            if valor != release_version
-        ]
-        if mencoes:
-            errors.append(
-                f"docs/RELEASE.md declares VERSION with a different version: {sorted(set(mencoes))}"
-            )
-        linhas_versao = [
-            valor for chave, valor in RELEASE_DOC_ROW_RE.findall(release_text) if chave == "VERSION"
-        ]
-        if not linhas_versao:
-            errors.append("docs/RELEASE.md is stale or missing: | `VERSION` | `<versao>` |")
-        elif len(linhas_versao) > 1:
-            errors.append(
-                f"docs/RELEASE.md declares VERSION more than once: {sorted(linhas_versao)}"
-            )
-        elif linhas_versao[0] != release_version:
-            errors.append(
-                f"docs/RELEASE.md declares VERSION {linhas_versao[0]} instead of {release_version}"
-            )
+        errors.extend(_release_doc_version_errors(release_text, release_version))
         compatibility_by_id = {
             item.get("id"): item for item in adapters
             if isinstance(item, dict)

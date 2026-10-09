@@ -642,7 +642,7 @@ def test_versioning_rejects_roadmap_release_with_suffix(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     erros = validate_versioning(root)
-    assert any("docs/ROADMAP.md is stale" in erro for erro in erros)
+    assert any("declares Release atual: in a non canonical form" in erro for erro in erros)
 
 
 def test_versioning_accepts_equivalent_readme_declaration(tmp_path: Path) -> None:
@@ -686,7 +686,7 @@ def test_versioning_rejects_release_doc_mention_with_other_version(tmp_path: Pat
     doc = root / "docs/RELEASE.md"
     doc.write_text(doc.read_text(encoding="utf-8") + "\nVERSION = 0.3.1\n", encoding="utf-8")
     erros = validate_versioning(root)
-    assert any("declares VERSION with a different version" in erro for erro in erros)
+    assert any("declares VERSION 0.3.1 at line" in erro for erro in erros)
 
 
 def test_versioning_rejects_readme_declaration_with_markup(tmp_path: Path) -> None:
@@ -724,7 +724,7 @@ def test_versioning_rejects_roadmap_declaration_with_suffix_on_another_line(tmp_
         encoding="utf-8",
     )
     erros = validate_versioning(root)
-    assert any("docs/ROADMAP.md declares the release in a non canonical form" in erro for erro in erros)
+    assert any("declares Release atual: in a non canonical form" in erro for erro in erros)
 
 
 def test_release_alignment_documents_explicit_remote_validation(tmp_path: Path) -> None:
@@ -752,8 +752,8 @@ def test_versioning_rejects_quoted_release_label(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     erros = validate_versioning(root)
-    assert any("README.md declares the release more than once" in erro for erro in erros)
-    assert any("docs/ROADMAP.md declares the release more than once" in erro for erro in erros)
+    assert any("declares Release do catálogo: in a non canonical form" in erro for erro in erros)
+    assert any("declares Release atual: in a non canonical form" in erro for erro in erros)
 
 
 def test_versioning_accepts_historical_version_narrative(tmp_path: Path) -> None:
@@ -766,3 +766,55 @@ def test_versioning_accepts_historical_version_narrative(tmp_path: Path) -> None
         encoding="utf-8",
     )
     assert validate_versioning(root) == []
+
+
+def test_versioning_ignores_declarations_inside_code_fences(tmp_path: Path) -> None:
+    """Exemplo em bloco de codigo nao e declaracao real da release."""
+    root = _versioning_fixture(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8")
+        + "\n```markdown\n**Release do catálogo:** [`0.3.1`](./VERSION)\n```\n",
+        encoding="utf-8",
+    )
+    assert validate_versioning(root) == []
+
+
+def test_versioning_rejects_label_in_list_or_quote(tmp_path: Path) -> None:
+    """Duplicata em lista ou citacao, inclusive aninhada, nao pode escapar."""
+    root = _versioning_fixture(tmp_path)
+    roadmap = root / "docs/ROADMAP.md"
+    roadmap.write_text(
+        roadmap.read_text(encoding="utf-8") + "\n- **Release atual:** `v0.3.1`\n",
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any(
+        "docs/ROADMAP.md:" in erro and "declares Release atual" in erro for erro in erros
+    )
+
+
+def test_versioning_ignores_composite_word(tmp_path: Path) -> None:
+    """Palavra composta que contenha VERSION nao e declaracao."""
+    root = _versioning_fixture(tmp_path)
+    doc = root / "docs/RELEASE.md"
+    doc.write_text(doc.read_text(encoding="utf-8") + "\nMYVERSION: 0.3.1\n", encoding="utf-8")
+    assert validate_versioning(root) == []
+
+
+def test_versioning_rejects_incomplete_version_declaration(tmp_path: Path) -> None:
+    """Sufixo depois da versao nao pode ser aceito como declaracao completa."""
+    root = _versioning_fixture(tmp_path)
+    doc = root / "docs/RELEASE.md"
+    doc.write_text(doc.read_text(encoding="utf-8") + "\nVERSION: 0.3.2-beta\n", encoding="utf-8")
+    erros = validate_versioning(root)
+    assert any("without a complete version" in erro for erro in erros)
+
+
+def test_versioning_reports_the_line_of_a_stale_declaration(tmp_path: Path) -> None:
+    """O diagnostico precisa localizar a linha divergente."""
+    root = _versioning_fixture(tmp_path)
+    doc = root / "docs/RELEASE.md"
+    doc.write_text(doc.read_text(encoding="utf-8") + "\nVERSION = 0.3.1\n", encoding="utf-8")
+    erros = validate_versioning(root)
+    assert any("docs/RELEASE.md declares VERSION 0.3.1 at line" in erro for erro in erros)
