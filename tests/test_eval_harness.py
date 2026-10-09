@@ -705,6 +705,75 @@ def test_missing_root_is_reported_readably(tmp_path: Path) -> None:
     assert "Traceback" not in resultado.stderr
 
 
+def _executa_harness(argv: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, "evals/run_evals.py", *argv],
+        cwd=cwd or ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_results_dir_that_is_not_a_directory_is_reported_readably(tmp_path: Path) -> None:
+    """Item 2 da issue #64: `--results-dir` apontando para arquivo precisa reprovar com status 1.
+
+    A guarda existe no CLI do harness; sem teste regressivo, voltar a aceitar o caminho invalido
+    passaria despercebido e o modo replay seguiria sem diretorio de resultados.
+    """
+    alvo = tmp_path / "nao-e-diretorio.json"
+    alvo.write_text("{}\n", encoding="utf-8")
+    resultado = _executa_harness(["--results-dir", str(alvo)])
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "--results-dir precisa apontar para um diretorio" in resultado.stderr
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="permissao de leitura nao restringe root")
+def test_unreadable_fixture_is_reported_readably(tmp_path: Path) -> None:
+    """Item 2 da issue #64: fixture sem permissao de leitura precisa reprovar sem traceback.
+
+    Exercita a guarda `fixture nao pode ser lido`, que existia sem teste. A leitura continua
+    fail-closed: o gate nao pode tratar a fixture ilegivel como verificacao satisfeita.
+    """
+    copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
+    fixtures = sorted((copia / "evals" / "fixtures" / "results").glob("*.json"))
+    assert fixtures, "o repositorio precisa ter fixtures de resultado"
+    alvo = fixtures[0]
+    alvo.chmod(0)
+    try:
+        resultado = _executa(["--root", "."], cwd=copia)
+    finally:
+        alvo.chmod(0o644)
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "fixture nao pode ser lido" in resultado.stdout
+    assert alvo.name in resultado.stdout
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="permissao de leitura nao restringe root")
+def test_unreadable_result_is_reported_readably(tmp_path: Path) -> None:
+    """Item 2 da issue #64: resultado sem permissao de leitura precisa reprovar sem traceback.
+
+    O caso alimenta a guarda `resultado nao pode ser lido` no modo replay, que antes nao tinha
+    teste que a provocasse.
+    """
+    resultados = tmp_path / "resultados"
+    shutil.copytree(ROOT / "evals" / "fixtures" / "results", resultados)
+    arquivos = sorted(resultados.glob("*.json"))
+    assert arquivos, "o repositorio precisa ter resultados de fixture"
+    alvo = arquivos[0]
+    alvo.chmod(0)
+    try:
+        resultado = _executa_harness(["--root", str(ROOT), "--results-dir", str(resultados)])
+    finally:
+        alvo.chmod(0o644)
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "resultado nao pode ser lido" in resultado.stderr
+    assert alvo.name in resultado.stderr
+
+
 def test_extreme_integer_manifest_is_reported_readably(tmp_path: Path) -> None:
     """Numero JSON fora do limite de digitos precisa reprovar de forma legivel."""
     copia = _copia_do_repositorio(tmp_path, CANONICAL_SHIM)
