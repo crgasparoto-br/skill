@@ -225,7 +225,7 @@ def test_release_alignment_is_fail_closed_without_reachable_tag(tmp_path: Path) 
     _git(repositorio, "tag", "-d", "v0.3.1")
     erros = release_alignment_errors(repositorio, ref="main")
     assert len(erros) == 1
-    assert "nenhuma tag alcancavel" in erros[0]
+    assert "nenhuma tag de release vMAJOR.MINOR.PATCH alcancavel" in erros[0]
 
 
 def test_release_alignment_is_fail_closed_on_shallow_clone(tmp_path: Path) -> None:
@@ -314,10 +314,99 @@ def test_release_alignment_rejects_unknown_informed_tag(tmp_path: Path) -> None:
     """A costura publica nao pode servir de atalho para uma tag que nao existe."""
     repositorio = _repositorio_com_tag(tmp_path)
     _promove_conteudo(repositorio)
-    for valor in ("HEAD", "main", "refs/heads/main", "v9.9.9"):
+    for valor in ("HEAD", "main", "refs/heads/main"):
         erros = release_alignment_errors(repositorio, ref="main", tag=valor)
         assert len(erros) == 1, valor
-        assert "nao existe em refs/tags" in erros[0], valor
+        assert "vMAJOR.MINOR.PATCH" in erros[0], valor
+    erros = release_alignment_errors(repositorio, ref="main", tag="v9.9.9")
+    assert len(erros) == 1
+    assert "nao existe em refs/tags" in erros[0]
+    erros = release_alignment_errors(repositorio, ref="main", tag="v0.3.1:VERSION")
+    assert len(erros) == 1
+    assert "nome lexical valido" in erros[0]
+
+
+def test_release_alignment_rejects_uppercase_tag_prefix(tmp_path: Path) -> None:
+    """O contrato exige `v` minusculo; `V0.3.1` nao e tag de release reconhecida."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    _git(repositorio, "tag", "-d", "v0.3.1")
+    _git(repositorio, "tag", "-a", "V0.3.1", "-m", "release com prefixo maiusculo")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "nenhuma tag de release" in erros[0]
+
+
+def test_release_alignment_picks_the_highest_release_tag(tmp_path: Path) -> None:
+    """Duas tags de release no mesmo commit nao podem fazer o resultado depender do git describe."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    (repositorio / "VERSION").write_text("0.3.2\n", encoding="utf-8")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "publica 0.3.2")
+    _git(repositorio, "tag", "-a", "v0.3.2", "-m", "release v0.3.2")
+    _git(repositorio, "tag", "-a", "v0.3.1", "-m", "release v0.3.1 concorrente", "--force")
+    assert release_alignment_errors(repositorio, ref="main") == []
+    (repositorio / "VERSION").write_text("0.3.1\n", encoding="utf-8")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "volta para 0.3.1")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "sem incremento da versao publicada" in erros[0]
+    assert "v0.3.2" in erros[0]
+
+
+def test_release_alignment_rejects_crlf_in_version(tmp_path: Path) -> None:
+    """CRLF nao e a forma canonica declarada para VERSION."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    (repositorio / "VERSION").write_bytes(b"0.3.2\r\n")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "publica com crlf")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "quebra de linha final" in erros[0]
+
+
+def test_release_alignment_rejects_unreadable_version_bytes(tmp_path: Path) -> None:
+    """VERSION com bytes invalidos precisa de recusa controlada, sem excecao."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    (repositorio / "VERSION").write_bytes(b"0.3.2\xff\n")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "publica com bytes invalidos")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "nao e UTF-8 valido" in erros[0]
+
+
+def test_release_alignment_rejects_tree_diverging_from_the_target_revision(tmp_path: Path) -> None:
+    """Arvore e revisao alvo precisam declarar a mesma versao quando sao o mesmo commit."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    (repositorio / "VERSION").write_text("0.3.2\n", encoding="utf-8")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "declaram VERSION diferentes" in erros[0]
+
+
+def test_versioning_rejects_extra_line_in_version(tmp_path: Path) -> None:
+    """Linha extra no VERSION precisa reprovar de forma controlada, sem traceback."""
+    root = _versioning_fixture(tmp_path)
+    (root / "VERSION").write_text("0.3.2\nignorado\n", encoding="utf-8")
+    erros = validate_versioning(root)
+    assert any("single trailing newline" in erro for erro in erros)
+    assert not any("TypeError" in erro for erro in erros)
+
+
+def test_versioning_requires_dated_release_heading(tmp_path: Path) -> None:
+    """O changelog precisa do titulo de release com data, nao de mencao textual."""
+    root = _versioning_fixture(tmp_path)
+    changelog = root / "CHANGELOG.md"
+    changelog.write_text(
+        changelog.read_text(encoding="utf-8").replace("## [0.3.2] - 2026-10-09", "## [0.3.2]"),
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("lacks release heading" in erro for erro in erros)
 
 
 def test_release_alignment_reads_the_version_of_the_target_revision(tmp_path: Path) -> None:

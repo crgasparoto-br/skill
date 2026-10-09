@@ -18,6 +18,7 @@ except ImportError:  # pragma: no cover - direct script execution
     from catalog import ROOT, catalog_skill_ids, load_catalog
 
 SEMVER_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+VERSION_FILE_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\n$")
 LINEAGE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}\.[0-9]+$")
 RELEASE_LINE = "main"
 
@@ -76,19 +77,27 @@ def validate_json_schema(schema_path: Path, document_path: Path, label: str) -> 
     ]
 
 
-def _git_output(root: Path, *arguments: str) -> tuple[int, str]:
-    """Executa git na raiz auditada e devolve codigo e saida, sem levantar excecao."""
+def _git_bytes(root: Path, *arguments: str) -> tuple[int, bytes]:
+    """Executa git na raiz auditada e devolve codigo e saida crua, sem levantar excecao."""
     try:
         completed = subprocess.run(
             ["git", *arguments],
             cwd=root,
             capture_output=True,
-            text=True,
             check=False,
         )
     except OSError as exc:
-        return 127, str(exc)
-    return completed.returncode, completed.stdout.strip()
+        return 127, str(exc).encode("utf-8", "backslashreplace")
+    return completed.returncode, completed.stdout
+
+
+def _git_output(root: Path, *arguments: str) -> tuple[int, str]:
+    """Executa git e decodifica a saida; conteudo nao decodificavel vira erro controlado."""
+    code, raw = _git_bytes(root, *arguments)
+    try:
+        return code, raw.decode("utf-8").strip()
+    except UnicodeDecodeError:
+        return 127, "saida do git nao e UTF-8 valido"
 
 
 def _effective_ref(root: Path, ref: str | None) -> str | None:
@@ -119,6 +128,27 @@ def _release_line(value: str) -> str | None:
     release: isso reprovaria promocao legitima de uma branch comum cujo ultimo componente e `main`.
     """
     return RELEASE_LINE if value.strip() in RELEASE_REF_FORMS else None
+
+
+RELEASE_TAG_RE = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+
+
+def _highest_release_tag(root: Path, target: str) -> str:
+    """Escolhe a maior tag de release alcancavel, para nao depender da ordem do `git describe`."""
+    code, output = _git_output(root, "tag", "--merged", target, "--list", "v*")
+    if code != 0 or not output:
+        return ""
+    candidatas: list[tuple[tuple[int, int, int], str]] = []
+    for linha in output.splitlines():
+        nome = linha.strip()
+        if not RELEASE_TAG_RE.fullmatch(nome):
+            continue
+        parsed = parse_semver(nome[1:])
+        if parsed is not None:
+            candidatas.append((parsed, nome))
+    if not candidatas:
+        return ""
+    return max(candidatas)[1]
 
 
 def release_alignment_errors(
@@ -162,12 +192,21 @@ def release_alignment_errors(
         )
         return errors
     if tag is None:
-        tag_code, resolved_tag = _git_output(root, "describe", "--tags", "--abbrev=0", target)
-        tag = resolved_tag if tag_code == 0 else ""
+        tag = _highest_release_tag(root, target)
     if not tag:
         errors.append(
-            f"release alignment: nenhuma tag alcancavel a partir de {target}; "
-            "busque as tags do repositorio antes de validar a linha de release"
+            f"release alignment: nenhuma tag de release vMAJOR.MINOR.PATCH alcancavel a partir de "
+            f"{target}; busque as tags do repositorio antes de validar a linha de release"
+        )
+        return errors
+    if ":" in tag or tag.strip() != tag:
+        errors.append(
+            f"release alignment: a tag informada {tag!r} nao e um nome lexical valido de tag"
+        )
+        return errors
+    if not RELEASE_TAG_RE.fullmatch(tag):
+        errors.append(
+            f"release alignment: a tag {tag} precisa seguir o formato vMAJOR.MINOR.PATCH"
         )
         return errors
     object_code, object_type = _git_output(root, "cat-file", "-t", f"refs/tags/{tag}")
@@ -196,16 +235,43 @@ def release_alignment_errors(
             f"release alignment: nao foi possivel contar os commits de {tag} ate {target}"
         )
         return errors
-    if release_version is None:
-        version_code, version_output = _git_output(root, "show", f"{target}:VERSION")
-        if version_code != 0:
-            return [
-                *errors,
-                f"release alignment: VERSION da revisao {target} nao pode ser lido; "
-                "a versao publicada nao pode ser conferida",
-            ]
-        release_version = version_output.strip()
-    published = parse_semver(tag[1:]) if tag[:1] in {"v", "V"} else None
+    version_code, version_raw = _git_bytes(root, "show", f"{target}:VERSION")
+    if version_code != 0:
+        return [
+            *errors,
+            f"release alignment: VERSION da revisao {target} nao pode ser lido; "
+            "a versao publicada nao pode ser conferida",
+        ]
+    try:
+        version_text = version_raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return [
+            *errors,
+            f"release alignment: VERSION da revisao {target} nao e UTF-8 valido; "
+            "a versao publicada nao pode ser conferida",
+        ]
+    if not VERSION_FILE_RE.fullmatch(version_text):
+        errors.append(
+            f"release alignment: VERSION da revisao {target} deve conter apenas a versao "
+            "e uma quebra de linha final"
+        )
+        return errors
+    release_version = version_text[:-1]
+    if release_version is not None:
+        head_code, head_sha = _git_output(root, "rev-parse", "HEAD")
+        target_code, target_sha = _git_output(root, "rev-parse", target)
+        if head_code == 0 and target_code == 0 and head_sha == target_sha:
+            try:
+                tree_bytes = (root / "VERSION").read_bytes()
+            except OSError as exc:
+                return [*errors, f"release alignment: VERSION da arvore nao pode ser lido: {exc}"]
+            if tree_bytes != version_raw:
+                errors.append(
+                    "release alignment: a arvore de trabalho e a revisao alvo declaram VERSION "
+                    "diferentes; valide a mesma revisao em todas as superficies"
+                )
+                return errors
+    published = parse_semver(tag[1:])
     if published is None:
         errors.append(
             f"release alignment: a tag {tag} precisa seguir o formato vMAJOR.MINOR.PATCH"
@@ -244,14 +310,19 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
     except OSError as exc:
         return [f"VERSION cannot be read: {exc}"]
     try:
-        raw_version = version_path.read_text(encoding="utf-8")
+        raw_bytes = version_path.read_bytes()
     except OSError as exc:
         return [f"VERSION cannot be read: {exc}"]
-    if raw_version != f"{release_version}\n":
+    try:
+        raw_version = raw_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        return ["VERSION must be valid UTF-8"]
+    if not VERSION_FILE_RE.fullmatch(raw_version):
         errors.append(
             "VERSION must contain only MAJOR.MINOR.PATCH and a single trailing newline"
         )
-    if parse_semver(release_version) is None:
+    release_semver = parse_semver(release_version)
+    if release_semver is None:
         errors.append("VERSION must use MAJOR.MINOR.PATCH SemVer")
     if not compatibility_path.is_file():
         errors.append("config/compatibility.json is missing")
@@ -346,9 +417,10 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
                 errors.append(f"{skill_id}: internal lineage differs from policy")
             if parse_lineage(str(item.get("internal_lineage_version"))) is None:
                 errors.append(f"{skill_id}: internal lineage must use a valid YYYY-MM-DD.N date")
-            if parse_semver(str(item.get("min_release"))) is None:
+            min_release = parse_semver(str(item.get("min_release")))
+            if min_release is None:
                 errors.append(f"{skill_id}: min_release must use SemVer")
-            elif parse_semver(str(item.get("min_release"))) > parse_semver(release_version):
+            elif release_semver is not None and min_release > release_semver:
                 errors.append(f"{skill_id}: min_release cannot be newer than release")
             version_path = root / str(skill_id) / "contracts" / "version.json"
             if version_path.is_file():
@@ -393,9 +465,10 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
                     errors.append("compatibility adapters contains a non-object")
                     continue
                 adapter_id = item.get("id")
-                if parse_semver(str(item.get("min_release"))) is None:
+                adapter_min = parse_semver(str(item.get("min_release")))
+                if adapter_min is None:
                     errors.append(f"{adapter_id}: adapter min_release must use SemVer")
-                elif parse_semver(str(item.get("min_release"))) > parse_semver(release_version):
+                elif release_semver is not None and adapter_min > release_semver:
                     errors.append(f"{adapter_id}: adapter min_release cannot be newer than release")
                 manifest_item = next(
                     (candidate for candidate in adapter_manifest.get("adapters", [])
@@ -409,8 +482,11 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         errors.append("CHANGELOG.md is missing")
     else:
         changelog_text = changelog_path.read_text(encoding="utf-8")
-        if not re.search(rf"^## \[{re.escape(release_version)}\]", changelog_text, re.MULTILINE):
-            errors.append(f"CHANGELOG.md lacks release heading ## [{release_version}]")
+        padrao = rf"^## \[{re.escape(release_version)}\] - [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$"
+        if not re.search(padrao, changelog_text, re.MULTILINE):
+            errors.append(
+                f"CHANGELOG.md lacks release heading ## [{release_version}] - YYYY-MM-DD"
+            )
     if not release_doc.is_file():
         errors.append("docs/RELEASE.md is missing")
     else:
