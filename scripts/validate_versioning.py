@@ -171,6 +171,105 @@ def _highest_release_tag(root: Path, target: str) -> str:
     return max(candidatas)[1]
 
 
+def _resolve_release_tag(
+    root: Path, target: str, informed: str | None
+) -> tuple[str, list[str]]:
+    """Resolve e valida a tag de release: existente, anotada e no formato vMAJOR.MINOR.PATCH."""
+    tag = _highest_release_tag(root, target) if informed is None else informed
+    if not tag:
+        return "", [
+            f"release alignment: nenhuma tag de release vMAJOR.MINOR.PATCH alcancavel a partir de "
+            f"{target}; busque as tags do repositorio antes de validar a linha de release"
+        ]
+    if ":" in tag or tag.strip() != tag:
+        return "", [
+            f"release alignment: a tag informada {tag!r} nao e um nome lexical valido de tag"
+        ]
+    if not RELEASE_TAG_RE.fullmatch(tag):
+        return "", [
+            f"release alignment: a tag {tag} precisa seguir o formato vMAJOR.MINOR.PATCH"
+        ]
+    object_code, object_type = _git_output(root, "cat-file", "-t", f"refs/tags/{tag}")
+    if object_code != 0:
+        return "", [
+            f"release alignment: a tag {tag} nao existe em refs/tags; "
+            "a versao publicada nao pode ser conferida"
+        ]
+    if object_type != "tag":
+        return "", [
+            f"release alignment: a tag {tag} precisa ser anotada; "
+            "uma tag leve nao registra a versao publicada"
+        ]
+    ancestor_code, _ = _git_output(root, "merge-base", "--is-ancestor", tag, target)
+    if ancestor_code != 0:
+        return "", [
+            f"release alignment: a tag {tag} nao e ancestral de {target}; "
+            "a tag foi movida ou o historico diverge da versao publicada"
+        ]
+    return tag, []
+
+
+def _target_release_version(root: Path, target: str) -> tuple[str, list[str]]:
+    """Le a versao publicada da propria revisao alvo e confere a forma canonica do arquivo."""
+    version_code, version_raw = _git_bytes(root, "show", f"{target}:VERSION")
+    if version_code != 0:
+        return "", [
+            f"release alignment: VERSION da revisao {target} nao pode ser lido; "
+            "a versao publicada nao pode ser conferida"
+        ]
+    try:
+        version_text = version_raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return "", [
+            f"release alignment: VERSION da revisao {target} nao e UTF-8 valido; "
+            "a versao publicada nao pode ser conferida"
+        ]
+    if not VERSION_FILE_RE.fullmatch(version_text):
+        return "", [
+            f"release alignment: VERSION da revisao {target} deve conter apenas a versao "
+            "e uma quebra de linha final"
+        ]
+    head_code, head_sha = _git_output(root, "rev-parse", "HEAD")
+    target_code, target_sha = _git_output(root, "rev-parse", target)
+    if head_code == 0 and target_code == 0 and head_sha == target_sha:
+        try:
+            tree_bytes = (root / "VERSION").read_bytes()
+        except OSError as exc:
+            return "", [f"release alignment: VERSION da arvore nao pode ser lido: {exc}"]
+        if tree_bytes != version_raw:
+            return "", [
+                "release alignment: a arvore de trabalho e a revisao alvo declaram VERSION "
+                "diferentes; valide a mesma revisao em todas as superficies"
+            ]
+    return version_text[:-1], []
+
+
+def _version_comparison_problems(
+    target: str, tag: str, release_version: str, commits: int
+) -> list[str]:
+    """Compara a versao declarada com a tag publicada, conforme existam commits novos."""
+    published = parse_semver(tag[1:])
+    if published is None:
+        return [f"release alignment: a tag {tag} precisa seguir o formato vMAJOR.MINOR.PATCH"]
+    current = parse_semver(release_version)
+    if current is None:
+        return []
+    if commits == 0:
+        if current != published:
+            return [
+                f"release alignment: a versao publicada {release_version} diverge da tag {tag} "
+                "sem commits novos na linha de release"
+            ]
+        return []
+    if current <= published:
+        return [
+            f"release alignment: {target} avancou {commits} commit(s) alem de {tag} "
+            f"sem incremento da versao publicada (VERSION={release_version}); "
+            "publique uma versao que identifique o conteudo promovido"
+        ]
+    return []
+
+
 def release_alignment_errors(
     root: Path = ROOT,
     ref: str | None = None,
@@ -183,22 +282,23 @@ def release_alignment_errors(
     `develop` para `main` que avanca commits sem incrementar a versao publicada deixaria a linha
     principal sem identificacao de versao, porque a tag continuaria apontando para o conteudo
     anterior; esse cenario e recusado. A verificacao e fail-closed: sem repositorio git, sem tag
-    alcancavel ou em clone raso, a conformidade nao e presumida.
+    alcancavel, em clone raso, sem ancestralidade ou, no CI, sem referencia determinavel, a
+    conformidade nao e presumida.
 
-    `tag` permite informar a tag publicada em vez de deixa-la para `git describe`, que so devolve
-    tag alcancavel; a costura existe para conferir o caminho de divergencia de ancestralidade.
+    `tag` permite informar a tag publicada em vez de deixa-la para a descoberta automatica, que so
+    devolve tag alcancavel; o valor informado tambem precisa ser tag anotada existente no formato
+    canonico. A costura existe para conferir o caminho de divergencia de ancestralidade.
     """
     target = _effective_ref(root, ref)
     if target is None:
         if os.environ.get("GITHUB_ACTIONS") == "true":
             return [
                 "release alignment: a linha de release nao pode ser determinada no CI; "
-                "informe a referencia ou faça checkout da linha de release"
+                "informe a referencia ou faca checkout da linha de release"
             ]
         return []
     if _release_line(target) is None:
         return []
-    errors: list[str] = []
     inside_code, _ = _git_output(root, "rev-parse", "--is-inside-work-tree")
     if inside_code != 0:
         return [
@@ -207,121 +307,27 @@ def release_alignment_errors(
         ]
     shallow_code, shallow_output = _git_output(root, "rev-parse", "--is-shallow-repository")
     if shallow_code != 0:
-        errors.append(
+        return [
             "release alignment: nao foi possivel determinar se o clone e raso; "
             "a tag publicada nao pode ser conferida com seguranca"
-        )
-        return errors
+        ]
     if shallow_output == "true":
-        errors.append(
+        return [
             "release alignment: clone raso nao permite conferir a tag publicada; "
             "use fetch-depth: 0 antes de validar a linha de release"
-        )
-        return errors
-    if tag is None:
-        tag = _highest_release_tag(root, target)
-    if not tag:
-        errors.append(
-            f"release alignment: nenhuma tag de release vMAJOR.MINOR.PATCH alcancavel a partir de "
-            f"{target}; busque as tags do repositorio antes de validar a linha de release"
-        )
-        return errors
-    if ":" in tag or tag.strip() != tag:
-        errors.append(
-            f"release alignment: a tag informada {tag!r} nao e um nome lexical valido de tag"
-        )
-        return errors
-    if not RELEASE_TAG_RE.fullmatch(tag):
-        errors.append(
-            f"release alignment: a tag {tag} precisa seguir o formato vMAJOR.MINOR.PATCH"
-        )
-        return errors
-    object_code, object_type = _git_output(root, "cat-file", "-t", f"refs/tags/{tag}")
-    if object_code != 0:
-        errors.append(
-            f"release alignment: a tag {tag} nao existe em refs/tags; "
-            "a versao publicada nao pode ser conferida"
-        )
-        return errors
-    if object_type != "tag":
-        errors.append(
-            f"release alignment: a tag {tag} precisa ser anotada; "
-            "uma tag leve nao registra a versao publicada"
-        )
-        return errors
-    ancestor_code, _ = _git_output(root, "merge-base", "--is-ancestor", tag, target)
-    if ancestor_code != 0:
-        errors.append(
-            f"release alignment: a tag {tag} nao e ancestral de {target}; "
-            "a tag foi movida ou o historico diverge da versao publicada"
-        )
-        return errors
+        ]
+    tag, problemas = _resolve_release_tag(root, target, tag)
+    if problemas:
+        return problemas
     count_code, count_output = _git_output(root, "rev-list", "--count", f"{tag}..{target}")
     if count_code != 0 or not count_output.isdigit():
-        errors.append(
-            f"release alignment: nao foi possivel contar os commits de {tag} ate {target}"
-        )
-        return errors
-    version_code, version_raw = _git_bytes(root, "show", f"{target}:VERSION")
-    if version_code != 0:
-        return [
-            *errors,
-            f"release alignment: VERSION da revisao {target} nao pode ser lido; "
-            "a versao publicada nao pode ser conferida",
-        ]
-    try:
-        version_text = version_raw.decode("utf-8")
-    except UnicodeDecodeError:
-        return [
-            *errors,
-            f"release alignment: VERSION da revisao {target} nao e UTF-8 valido; "
-            "a versao publicada nao pode ser conferida",
-        ]
-    if not VERSION_FILE_RE.fullmatch(version_text):
-        errors.append(
-            f"release alignment: VERSION da revisao {target} deve conter apenas a versao "
-            "e uma quebra de linha final"
-        )
-        return errors
-    release_version = version_text[:-1]
-    if release_version is not None:
-        head_code, head_sha = _git_output(root, "rev-parse", "HEAD")
-        target_code, target_sha = _git_output(root, "rev-parse", target)
-        if head_code == 0 and target_code == 0 and head_sha == target_sha:
-            try:
-                tree_bytes = (root / "VERSION").read_bytes()
-            except OSError as exc:
-                return [*errors, f"release alignment: VERSION da arvore nao pode ser lido: {exc}"]
-            if tree_bytes != version_raw:
-                errors.append(
-                    "release alignment: a arvore de trabalho e a revisao alvo declaram VERSION "
-                    "diferentes; valide a mesma revisao em todas as superficies"
-                )
-                return errors
-    published = parse_semver(tag[1:])
-    if published is None:
-        errors.append(
-            f"release alignment: a tag {tag} precisa seguir o formato vMAJOR.MINOR.PATCH"
-        )
-        return errors
-    current = parse_semver(release_version)
-    if current is None:
-        return errors
-    commits = int(count_output)
-    if commits == 0:
-        if current != published:
-            errors.append(
-                f"release alignment: a versao publicada {release_version} diverge da tag {tag} "
-                "sem commits novos na linha de release"
-            )
-        return errors
-    if current <= published:
-        errors.append(
-            f"release alignment: {target} avancou {commits} commit(s) alem de {tag} "
-            f"sem incremento da versao publicada (VERSION={release_version}); "
-            "publique uma versao que identifique o conteudo promovido"
-        )
-    return errors
+        return [f"release alignment: nao foi possivel contar os commits de {tag} ate {target}"]
+    if release_version is None:
+        release_version, problemas = _target_release_version(root, target)
+        if problemas:
+            return problemas
+    return _version_comparison_problems(target, tag, release_version, int(count_output))
+
 
 
 def validate_versioning(root: Path = ROOT) -> list[str]:
