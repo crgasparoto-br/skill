@@ -729,6 +729,21 @@ def test_results_dir_that_is_not_a_directory_is_reported_readably(tmp_path: Path
     assert "--results-dir precisa apontar para um diretorio" in resultado.stderr
 
 
+def test_invalid_report_destination_is_reported_readably(tmp_path: Path) -> None:
+    """Item 2 da issue #64: destino de relatorio invalido precisa reprovar sem traceback.
+
+    A guarda `destino de relatorio invalido` existia no CLI sem teste. O destino e um diretorio
+    existente, que o harness nao pode sobrescrever com arquivo depois da execucao valida.
+    """
+    alvo = tmp_path / "diretorio-de-destino"
+    alvo.mkdir()
+    resultado = _executa_harness(["--root", str(ROOT), "--validate-only", "--report", str(alvo)])
+    assert resultado.returncode == 1
+    assert "Traceback" not in resultado.stderr
+    assert "destino de relatorio invalido" in resultado.stderr
+    assert alvo.is_dir() and not any(alvo.iterdir())
+
+
 @pytest.mark.skipif(os.geteuid() == 0, reason="permissao de leitura nao restringe root")
 def test_unreadable_fixture_is_reported_readably(tmp_path: Path) -> None:
     """Item 2 da issue #64: fixture sem permissao de leitura precisa reprovar sem traceback.
