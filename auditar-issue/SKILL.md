@@ -51,7 +51,7 @@ Imediatamente abaixo dessa linha, abrir o parecer com o bloco de conclusao em de
 
 Validar antes de publicar: `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>`. Se falhar, corrigir.
 
-O bloco deve concordar com o corpo e o JSON. Em `INCONCLUSIVA` por runtime, nao atribuir defeito funcional ao candidato.
+O bloco deve concordar com o corpo e o JSON; divergencia entre eles e defeito do parecer. Em `INCONCLUSIVA` por runtime, nao atribuir defeito funcional ao candidato.
 
 Aplicar o mapeamento deterministico:
 
