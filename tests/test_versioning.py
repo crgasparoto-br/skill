@@ -5,6 +5,7 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from scripts.catalog import load_catalog
 from scripts.validate_versioning import (
@@ -14,6 +15,10 @@ from scripts.validate_versioning import (
     validate_json_schema,
     validate_versioning,
 )
+
+if TYPE_CHECKING:
+    import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
