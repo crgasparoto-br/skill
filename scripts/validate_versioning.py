@@ -136,17 +136,19 @@ def _release_line(value: str) -> str | None:
     return RELEASE_LINE if value.strip() in RELEASE_REF_FORMS else None
 
 
-README_LABEL_RE = re.compile(r"^\*\*Release do catálogo:\*\* .*$", re.MULTILINE)
+README_LABEL_RE = re.compile(r"^[\s>]*\*\*Release do catálogo:\*\* .*$", re.MULTILINE)
 README_RELEASE_RE = re.compile(
-    r"^\*\*Release do catálogo:\*\* \[[`*]*([0-9]+\.[0-9]+\.[0-9]+)[`*]*\]\(\./VERSION\)",
+    r"^[\s>]*\*\*Release do catálogo:\*\* \[[`*]*([0-9]+\.[0-9]+\.[0-9]+)[`*]*\]\(\./VERSION\)",
     re.MULTILINE,
 )
-ROADMAP_LABEL_RE = re.compile(r"^\s*>?\s*\*\*Release atual:\*\*.*$", re.MULTILINE)
+ROADMAP_LABEL_RE = re.compile(r"^[\s>]*\*\*Release atual:\*\*.*$", re.MULTILINE)
 ROADMAP_RELEASE_RE = re.compile(
-    r"^\s*>?\s*\*\*Release atual:\*\* [`]?v([0-9]+\.[0-9]+\.[0-9]+)[`]?\s*$",
+    r"^[\s>]*\*\*Release atual:\*\* [`]?v([0-9]+\.[0-9]+\.[0-9]+)[`]?\s*$",
     re.MULTILINE,
 )
-VERSION_MENTION_RE = re.compile(r"VERSION[^\n]*?([0-9]+\.[0-9]+\.[0-9]+)")
+VERSION_DECLARATION_RE = re.compile(
+    r"`?VERSION`?\s*(?:\||=|:)\s*`?([0-9]+\.[0-9]+\.[0-9]+)`?"
+)
 RELEASE_DOC_ROW_RE = re.compile(r"^\| `([^`]+)` \| `([^`]+)` \|", re.MULTILINE)
 CHANGELOG_HEADING_RE = re.compile(
     r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})$",
@@ -627,12 +629,12 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
                 errors.append(f"docs/RELEASE.md is stale or missing: {expected}")
         mencoes = [
             valor
-            for valor in VERSION_MENTION_RE.findall(release_text)
+            for valor in VERSION_DECLARATION_RE.findall(release_text)
             if valor != release_version
         ]
         if mencoes:
             errors.append(
-                f"docs/RELEASE.md mentions VERSION with a different version: {sorted(set(mencoes))}"
+                f"docs/RELEASE.md declares VERSION with a different version: {sorted(set(mencoes))}"
             )
         linhas_versao = [
             valor for chave, valor in RELEASE_DOC_ROW_RE.findall(release_text) if chave == "VERSION"

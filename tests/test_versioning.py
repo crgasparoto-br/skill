@@ -686,7 +686,7 @@ def test_versioning_rejects_release_doc_mention_with_other_version(tmp_path: Pat
     doc = root / "docs/RELEASE.md"
     doc.write_text(doc.read_text(encoding="utf-8") + "\nVERSION = 0.3.1\n", encoding="utf-8")
     erros = validate_versioning(root)
-    assert any("mentions VERSION with a different version" in erro for erro in erros)
+    assert any("declares VERSION with a different version" in erro for erro in erros)
 
 
 def test_versioning_rejects_readme_declaration_with_markup(tmp_path: Path) -> None:
@@ -736,3 +736,33 @@ def test_release_alignment_documents_explicit_remote_validation(tmp_path: Path) 
     erros = release_alignment_errors(repositorio, ref="origin/main")
     assert len(erros) == 1
     assert "sem incremento da versao publicada" in erros[0]
+
+
+def test_versioning_rejects_quoted_release_label(tmp_path: Path) -> None:
+    """Rotulo em citacao, inclusive aninhada, precisa ser canonico como qualquer outro."""
+    root = _versioning_fixture(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8") + "\n>> **Release do catálogo:** [`0.3.1`](./VERSION)\n",
+        encoding="utf-8",
+    )
+    roadmap = root / "docs/ROADMAP.md"
+    roadmap.write_text(
+        roadmap.read_text(encoding="utf-8") + "\n>> **Release atual:** v0.3.1\n",
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("README.md declares the release more than once" in erro for erro in erros)
+    assert any("docs/ROADMAP.md declares the release more than once" in erro for erro in erros)
+
+
+def test_versioning_accepts_historical_version_narrative(tmp_path: Path) -> None:
+    """Texto historico que cita versao anterior nao e declaracao de VERSION."""
+    root = _versioning_fixture(tmp_path)
+    doc = root / "docs/RELEASE.md"
+    doc.write_text(
+        doc.read_text(encoding="utf-8")
+        + "\nHistorico: `VERSION` era `0.3.1` antes desta release, e a v0.2.0 foi a anterior.\n",
+        encoding="utf-8",
+    )
+    assert validate_versioning(root) == []
