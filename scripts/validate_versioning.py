@@ -104,14 +104,21 @@ def _effective_ref(root: Path, ref: str | None) -> str | None:
     return output
 
 
-def _release_line(value: str) -> str:
-    """Normaliza a referencia para o nome da linha: main, origin/main e refs/heads/main equivalem."""
-    candidate = value.strip()
-    for prefix in ("refs/heads/", "refs/remotes/", "refs/tags/"):
-        candidate = candidate.removeprefix(prefix)
-    if "/" in candidate:
-        candidate = candidate.split("/", 1)[1]
-    return candidate
+RELEASE_REF_FORMS = frozenset({
+    "main",
+    "refs/heads/main",
+    "origin/main",
+    "refs/remotes/origin/main",
+})
+
+
+def _release_line(value: str) -> str | None:
+    """Reconhece somente formas inequivocas da linha de release.
+
+    Formas genericas como `feature/main` ou `release/main` nao podem ser tratadas como a linha de
+    release: isso reprovaria promocao legitima de uma branch comum cujo ultimo componente e `main`.
+    """
+    return RELEASE_LINE if value.strip() in RELEASE_REF_FORMS else None
 
 
 def release_alignment_errors(
@@ -132,7 +139,7 @@ def release_alignment_errors(
     tag alcancavel; a costura existe para conferir o caminho de divergencia de ancestralidade.
     """
     target = _effective_ref(root, ref)
-    if target is None or _release_line(target) != RELEASE_LINE:
+    if target is None or _release_line(target) is None:
         return []
     errors: list[str] = []
     inside_code, _ = _git_output(root, "rev-parse", "--is-inside-work-tree")
@@ -163,6 +170,19 @@ def release_alignment_errors(
             "busque as tags do repositorio antes de validar a linha de release"
         )
         return errors
+    object_code, object_type = _git_output(root, "cat-file", "-t", f"refs/tags/{tag}")
+    if object_code != 0:
+        errors.append(
+            f"release alignment: a tag {tag} nao existe em refs/tags; "
+            "a versao publicada nao pode ser conferida"
+        )
+        return errors
+    if object_type != "tag":
+        errors.append(
+            f"release alignment: a tag {tag} precisa ser anotada; "
+            "uma tag leve nao registra a versao publicada"
+        )
+        return errors
     ancestor_code, _ = _git_output(root, "merge-base", "--is-ancestor", tag, target)
     if ancestor_code != 0:
         errors.append(
@@ -176,26 +196,35 @@ def release_alignment_errors(
             f"release alignment: nao foi possivel contar os commits de {tag} ate {target}"
         )
         return errors
-    if int(count_output) == 0:
-        return errors
     if release_version is None:
-        version_path = root / "VERSION"
-        if not version_path.is_file():
-            return [*errors, "release alignment: VERSION is missing"]
-        try:
-            release_version = version_path.read_text(encoding="utf-8").strip()
-        except OSError as exc:
-            return [*errors, f"release alignment: VERSION cannot be read: {exc}"]
-    published = parse_semver(tag[1:]) if tag[:1] in {"v", "V"} else parse_semver(tag)
-    current = parse_semver(release_version)
+        version_code, version_output = _git_output(root, "show", f"{target}:VERSION")
+        if version_code != 0:
+            return [
+                *errors,
+                f"release alignment: VERSION da revisao {target} nao pode ser lido; "
+                "a versao publicada nao pode ser conferida",
+            ]
+        release_version = version_output.strip()
+    published = parse_semver(tag[1:]) if tag[:1] in {"v", "V"} else None
     if published is None:
-        errors.append(f"release alignment: a tag {tag} nao identifica uma versao SemVer")
+        errors.append(
+            f"release alignment: a tag {tag} precisa seguir o formato vMAJOR.MINOR.PATCH"
+        )
         return errors
+    current = parse_semver(release_version)
     if current is None:
+        return errors
+    commits = int(count_output)
+    if commits == 0:
+        if current != published:
+            errors.append(
+                f"release alignment: a versao publicada {release_version} diverge da tag {tag} "
+                "sem commits novos na linha de release"
+            )
         return errors
     if current <= published:
         errors.append(
-            f"release alignment: {target} avancou {count_output} commit(s) alem de {tag} "
+            f"release alignment: {target} avancou {commits} commit(s) alem de {tag} "
             f"sem incremento da versao publicada (VERSION={release_version}); "
             "publique uma versao que identifique o conteudo promovido"
         )
@@ -214,6 +243,14 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         release_version = version_path.read_text(encoding="utf-8").strip()
     except OSError as exc:
         return [f"VERSION cannot be read: {exc}"]
+    try:
+        raw_version = version_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return [f"VERSION cannot be read: {exc}"]
+    if raw_version != f"{release_version}\n":
+        errors.append(
+            "VERSION must contain only MAJOR.MINOR.PATCH and a single trailing newline"
+        )
     if parse_semver(release_version) is None:
         errors.append("VERSION must use MAJOR.MINOR.PATCH SemVer")
     if not compatibility_path.is_file():
@@ -232,7 +269,7 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
         compatibility_path,
         "compatibility schema",
     ))
-    errors.extend(release_alignment_errors(root, release_version=release_version))
+    errors.extend(release_alignment_errors(root))
     if compatibility.get("system") != "skill-compatibility" or compatibility.get("schema_version") != 1:
         errors.append("compatibility manifest identity is invalid")
     release_date = compatibility.get("release_date")
@@ -370,8 +407,10 @@ def validate_versioning(root: Path = ROOT) -> list[str]:
 
     if not changelog_path.is_file():
         errors.append("CHANGELOG.md is missing")
-    elif f"[{release_version}]" not in changelog_path.read_text(encoding="utf-8"):
-        errors.append(f"CHANGELOG.md lacks release [{release_version}]")
+    else:
+        changelog_text = changelog_path.read_text(encoding="utf-8")
+        if not re.search(rf"^## \[{re.escape(release_version)}\]", changelog_text, re.MULTILINE):
+            errors.append(f"CHANGELOG.md lacks release heading ## [{release_version}]")
     if not release_doc.is_file():
         errors.append("docs/RELEASE.md is missing")
     else:

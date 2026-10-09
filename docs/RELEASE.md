@@ -20,6 +20,10 @@ A linha de release é `main`. Toda promoção de `develop` para `main` que avanc
 
 `scripts/validate_versioning.py` reprova a divergência, com mensagem que informa a tag, a contagem de commits e a versão corrente. A verificação é fail-closed: sem repositório git, sem tag alcançável, em clone raso ou quando a tag não é ancestral da linha de release, a conformidade não é presumida. Por isso o checkout da CI usa `fetch-depth: 0`, que traz as tags.
 
+A linha de release é reconhecida apenas nas formas `main`, `refs/heads/main`, `origin/main` e `refs/remotes/origin/main`. Branch comum cujo último componente é `main`, como `feature/main`, não é a linha de release e não sofre essa verificação.
+
+A tag conferida precisa existir em `refs/tags`, ser anotada e seguir `vMAJOR.MINOR.PATCH`, como o procedimento acima exige. A versão comparada é a da revisão alvo, lida por `git show <ref>:VERSION`, e não a da árvore de trabalho, de modo que conferir uma referência remota não misture revisões. Sem commits novos, a versão declarada precisa coincidir com a da tag; com commits novos, precisa estar à frente dela. `VERSION` deve conter apenas a versão e uma quebra de linha final, e o `CHANGELOG.md` precisa de um título de release `## [VERSÃO]`, não de uma menção textual qualquer.
+
 Caminho de correção quando a promoção ocorreu sem incremento: publicar uma versão de patch que identifique o conteúdo já promovido, atualizar `CHANGELOG.md` e as superfícies de versão, e promover esse ajuste para `main`. A tag publicada é imutável e não deve ser movida.
 
 ## Regras SemVer

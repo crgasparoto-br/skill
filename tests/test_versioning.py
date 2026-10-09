@@ -252,16 +252,85 @@ def test_release_alignment_is_fail_closed_outside_a_repository(tmp_path: Path) -
 
 
 def test_release_alignment_rejects_tag_outside_the_release_line(tmp_path: Path) -> None:
-    """Tag que nao e ancestral da linha de release e divergencia, nao conformidade.
+    """Tag anotada de um ramo divergente nao identifica a linha de release.
 
     A tag e informada pela costura publica porque `git describe` so devolve tag alcancavel,
     tornando o caminho de defesa inalcancavel apenas com repositorios reais.
     """
     repositorio = _repositorio_com_tag(tmp_path)
+    _git(repositorio, "checkout", "-q", "-b", "divergente")
+    _promove_conteudo(repositorio, "ramo divergente")
+    _git(repositorio, "tag", "-a", "v0.9.9", "-m", "release v0.9.9")
+    _git(repositorio, "checkout", "-q", "main")
     _promove_conteudo(repositorio)
     erros = release_alignment_errors(repositorio, ref="main", tag="v0.9.9")
     assert len(erros) == 1
     assert "nao e ancestral" in erros[0]
+
+
+def test_release_alignment_ignores_branches_whose_last_component_is_main(tmp_path: Path) -> None:
+    """`feature/main` e `release/main` nao sao a linha de release e nao podem ser reprovadas."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    for ramo in ("feature/main", "release/main", "main-2"):
+        _git(repositorio, "branch", ramo)
+        assert release_alignment_errors(repositorio, ref=ramo) == [], ramo
+        assert release_alignment_errors(repositorio, ref=f"refs/heads/{ramo}") == [], ramo
+
+
+def test_release_alignment_requires_annotated_tag(tmp_path: Path) -> None:
+    """Tag leve nao registra a versao publicada e precisa reprovar."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    _git(repositorio, "tag", "-d", "v0.3.1")
+    _git(repositorio, "tag", "v0.3.1")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "precisa ser anotada" in erros[0]
+
+
+def test_release_alignment_requires_the_documented_tag_format(tmp_path: Path) -> None:
+    """A tag publicada precisa seguir vMAJOR.MINOR.PATCH, como a documentacao de release exige."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    _git(repositorio, "tag", "-d", "v0.3.1")
+    _git(repositorio, "tag", "-a", "0.3.1", "-m", "release sem prefixo")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "vMAJOR.MINOR.PATCH" in erros[0]
+
+
+def test_release_alignment_rejects_tag_ahead_of_the_published_version(tmp_path: Path) -> None:
+    """Sem commits novos, uma tag a frente do VERSION tambem e divergencia."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _git(repositorio, "tag", "-d", "v0.3.1")
+    _git(repositorio, "tag", "-a", "v0.3.3", "-m", "release v0.3.3")
+    erros = release_alignment_errors(repositorio, ref="main")
+    assert len(erros) == 1
+    assert "diverge da tag" in erros[0]
+
+
+def test_release_alignment_rejects_unknown_informed_tag(tmp_path: Path) -> None:
+    """A costura publica nao pode servir de atalho para uma tag que nao existe."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    for valor in ("HEAD", "main", "refs/heads/main", "v9.9.9"):
+        erros = release_alignment_errors(repositorio, ref="main", tag=valor)
+        assert len(erros) == 1, valor
+        assert "nao existe em refs/tags" in erros[0], valor
+
+
+def test_release_alignment_reads_the_version_of_the_target_revision(tmp_path: Path) -> None:
+    """A versao conferida e a da revisao alvo, nao a da arvore de trabalho."""
+    repositorio = _repositorio_com_tag(tmp_path)
+    _promove_conteudo(repositorio)
+    (repositorio / "VERSION").write_text("0.3.2\n", encoding="utf-8")
+    _git(repositorio, "add", "VERSION")
+    _git(repositorio, "commit", "-q", "-m", "publica 0.3.2")
+    _git(repositorio, "update-ref", "refs/remotes/origin/main", "main")
+    _git(repositorio, "checkout", "-q", "--detach", "v0.3.1")
+    assert (repositorio / "VERSION").read_text(encoding="utf-8") == "0.3.1\n"
+    assert release_alignment_errors(repositorio, ref="origin/main") == []
 
 
 def test_release_alignment_is_inert_without_a_determinable_ref(tmp_path: Path) -> None:
