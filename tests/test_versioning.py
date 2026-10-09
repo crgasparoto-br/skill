@@ -806,7 +806,7 @@ def test_versioning_rejects_incomplete_version_declaration(tmp_path: Path) -> No
     """Sufixo depois da versao nao pode ser aceito como declaracao completa."""
     root = _versioning_fixture(tmp_path)
     doc = root / "docs/RELEASE.md"
-    doc.write_text(doc.read_text(encoding="utf-8") + "\nVERSION: 0.3.2-beta\n", encoding="utf-8")
+    doc.write_text(doc.read_text(encoding="utf-8") + "\nVERSION = 0.3.2-beta\n", encoding="utf-8")
     erros = validate_versioning(root)
     assert any("without a complete version" in erro for erro in erros)
 
@@ -818,3 +818,64 @@ def test_versioning_reports_the_line_of_a_stale_declaration(tmp_path: Path) -> N
     doc.write_text(doc.read_text(encoding="utf-8") + "\nVERSION = 0.3.1\n", encoding="utf-8")
     erros = validate_versioning(root)
     assert any("docs/RELEASE.md declares VERSION 0.3.1 at line" in erro for erro in erros)
+
+
+def test_versioning_ignores_historical_url_with_version(tmp_path: Path) -> None:
+    """Narrativa historica com URL nao pode ser lida como declaracao."""
+    root = _versioning_fixture(tmp_path)
+    doc = root / "docs/RELEASE.md"
+    doc.write_text(
+        doc.read_text(encoding="utf-8")
+        + "\nHistorico VERSION: https://example.invalid/releases/0.3.1\n",
+        encoding="utf-8",
+    )
+    assert validate_versioning(root) == []
+
+
+def test_versioning_rejects_unquoted_duplicate_row(tmp_path: Path) -> None:
+    """Linha de tabela sem crase com a mesma versao continua sendo declaracao duplicada."""
+    root = _versioning_fixture(tmp_path)
+    doc = root / "docs/RELEASE.md"
+    doc.write_text(
+        doc.read_text(encoding="utf-8") + "\n| VERSION | 0.3.2 |\n", encoding="utf-8"
+    )
+    erros = validate_versioning(root)
+    assert any("more than once" in erro for erro in erros)
+
+
+def test_versioning_rejects_conflicting_version_on_the_label_line(tmp_path: Path) -> None:
+    """O rotulo canonico nao pode conviver com outra versao na mesma linha."""
+    root = _versioning_fixture(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8").replace(
+            "[`0.3.2`](./VERSION)",
+            "[`0.3.2`](./VERSION) — release publicada e v0.3.1",
+        ),
+        encoding="utf-8",
+    )
+    erros = validate_versioning(root)
+    assert any("with a conflicting version" in erro for erro in erros)
+
+
+def test_versioning_ignores_html_comments(tmp_path: Path) -> None:
+    """Comentario HTML nao renderiza, logo nao declara nem mascara a declaracao."""
+    root = _versioning_fixture(tmp_path)
+    roadmap = root / "docs/ROADMAP.md"
+    roadmap.write_text(
+        roadmap.read_text(encoding="utf-8") + "\n<!-- > **Release atual:** v0.3.1 -->\n",
+        encoding="utf-8",
+    )
+    assert validate_versioning(root) == []
+
+
+def test_versioning_ignores_tilde_code_fences(tmp_path: Path) -> None:
+    """Fence de til e Markdown valido e tambem precisa ser tratado como exemplo."""
+    root = _versioning_fixture(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8")
+        + "\n~~~markdown\n**Release do catálogo:** [`0.3.1`](./VERSION)\n~~~\n",
+        encoding="utf-8",
+    )
+    assert validate_versioning(root) == []

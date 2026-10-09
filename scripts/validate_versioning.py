@@ -145,7 +145,7 @@ ROADMAP_CANONICAL_RE = re.compile(
     r"^> \*\*Release atual:\*\* [`]?v([0-9]+\.[0-9]+\.[0-9]+)[`]?\s*$"
 )
 VERSION_DECLARATION_RE = re.compile(
-    r"\bVERSION\b\s*(?:\||=|:)\s*`?([0-9]+\.[0-9]+\.[0-9]+)(?![0-9A-Za-z.-])"
+    r"\bVERSION\b\s*(?:\||=)\s*`?([0-9]+\.[0-9]+\.[0-9]+)`?\s*(?:\||$)"
 )
 CANONICAL_DOC_ROW_RE = re.compile(
     r"^\| `VERSION` \| `([0-9]+\.[0-9]+\.[0-9]+)` \|", re.MULTILINE
@@ -159,17 +159,34 @@ CHANGELOG_HEADING_RE = re.compile(
 RELEASE_TAG_RE = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 
 
-def _fenced_lines(text: str) -> list[tuple[int, str]]:
-    """Devolve linhas fora de blocos de codigo, com o numero da linha."""
-    dentro = False
-    linhas: list[tuple[int, str]] = []
-    for numero, linha in enumerate(text.splitlines(), start=1):
-        if linha.strip().startswith("```"):
-            dentro = not dentro
+def _masked_text(text: str) -> str:
+    """Remove blocos de codigo e comentarios HTML, preservando a numeracao de linha."""
+    sem_comentarios = re.sub(r"<!--.*?-->", lambda m: "\n" * m.group(0).count("\n"), text, flags=re.DOTALL)
+    linhas = sem_comentarios.splitlines()
+    saida: list[str] = []
+    dentro = ""
+    for linha in linhas:
+        marca = linha.strip()[:3]
+        if not dentro and marca in {"```", "~~~"}:
+            dentro = marca
+            saida.append("")
             continue
-        if not dentro:
-            linhas.append((numero, linha))
-    return linhas
+        if dentro:
+            if linha.strip().startswith(dentro):
+                dentro = ""
+            saida.append("")
+            continue
+        saida.append(linha)
+    return "\n".join(saida)
+
+
+def _visible_lines(text: str) -> list[tuple[int, str]]:
+    """Devolve as linhas efetivamente renderizadas, com o numero da linha."""
+    return [
+        (numero, linha)
+        for numero, linha in enumerate(_masked_text(text).splitlines(), start=1)
+        if linha.strip()
+    ]
 
 
 def _label_surface_errors(
@@ -180,7 +197,7 @@ def _label_surface_errors(
         return [f"{rotulo_arquivo} is missing"]
     erros: list[str] = []
     declaracoes: list[str] = []
-    for numero, linha in _fenced_lines(caminho.read_text(encoding="utf-8")):
+    for numero, linha in _visible_lines(caminho.read_text(encoding="utf-8")):
         if rotulo not in linha:
             continue
         achado = canonico.match(linha)
@@ -188,6 +205,17 @@ def _label_surface_errors(
             erros.append(
                 f"{rotulo_arquivo}:{numero}: declares {rotulo} in a non canonical form: "
                 f"{linha.strip()}"
+            )
+            continue
+        outras = [
+            token
+            for token in re.findall(r"v?([0-9]+\.[0-9]+\.[0-9]+)", linha)
+            if token not in {achado.group(1), release_version}
+        ]
+        if outras:
+            erros.append(
+                f"{rotulo_arquivo}:{numero}: declares {rotulo} with a conflicting version "
+                f"{sorted(set(outras))}"
             )
             continue
         declaracoes.append(achado.group(1))
@@ -209,8 +237,9 @@ def _label_surface_errors(
 def _release_doc_version_errors(texto: str, release_version: str) -> list[str]:
     """Declaracoes de VERSION no documento de release precisam ser unicas e coerentes."""
     erros: list[str] = []
-    for numero, linha in _fenced_lines(texto):
-        if not re.search(r"\bVERSION\b\s*(?:\||=|:)", linha):
+    declaradas: list[str] = []
+    for numero, linha in _visible_lines(texto):
+        if not re.search(r"\bVERSION\b\s*(?:\||=)", linha):
             continue
         achado = VERSION_DECLARATION_RE.search(linha)
         if achado is None:
@@ -218,16 +247,15 @@ def _release_doc_version_errors(texto: str, release_version: str) -> list[str]:
                 "docs/RELEASE.md declares VERSION without a complete version at line "
                 f"{numero}: {linha.strip()}"
             )
-        elif achado.group(1) != release_version:
+            continue
+        declaradas.append(achado.group(1))
+        if achado.group(1) != release_version:
             erros.append(
                 f"docs/RELEASE.md declares VERSION {achado.group(1)} at line {numero} "
                 f"instead of {release_version}"
             )
-    linhas_canonicas = CANONICAL_DOC_ROW_RE.findall(texto)
-    if len(linhas_canonicas) > 1:
-        erros.append(
-            f"docs/RELEASE.md declares VERSION more than once: {sorted(linhas_canonicas)}"
-        )
+    if len(declaradas) > 1:
+        erros.append(f"docs/RELEASE.md declares VERSION more than once: {sorted(declaradas)}")
     return erros
 
 
