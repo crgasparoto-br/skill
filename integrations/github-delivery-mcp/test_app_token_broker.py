@@ -9,29 +9,29 @@ import app_token_broker as broker
 class BrokerTests(unittest.TestCase):
     def test_unauthorized_request_never_reads_key(self):
         with patch.object(broker, "_make_jwt") as sign, self.assertRaises(PermissionError):
-                broker.mint_token(repository="crgasparoto-br/training-system",
+            broker.mint_token(repository="crgasparoto-br/training-system",
                                   operation="read-issue")
-            sign.assert_not_called()
+        sign.assert_not_called()
 
     def test_other_repository_rejected(self):
         with patch.object(broker, "_make_jwt") as sign, self.assertRaises(PermissionError):
-                broker.mint_token(repository="crgasparoto-br/solverfin",
+            broker.mint_token(repository="crgasparoto-br/solverfin",
                                   operation="read-issue", server_authorized=True)
-            sign.assert_not_called()
+        sign.assert_not_called()
 
     def test_unknown_operation_rejected(self):
         with patch.object(broker, "_make_jwt") as sign, self.assertRaises(PermissionError):
-                broker.mint_token(repository="crgasparoto-br/training-system",
+            broker.mint_token(repository="crgasparoto-br/training-system",
                                   operation="admin", server_authorized=True)
-            sign.assert_not_called()
+        sign.assert_not_called()
 
     def test_wrong_process_identity_rejected(self):
         with patch.object(broker.os, "geteuid", return_value=1004), \
              patch.object(broker, "_make_jwt") as sign:
             with self.assertRaises(PermissionError):
-                broker.mint_token(repository="crgasparoto-br/training-system",
+            broker.mint_token(repository="crgasparoto-br/training-system",
                                   operation="read-issue", server_authorized=True)
-            sign.assert_not_called()
+        sign.assert_not_called()
 
     def test_minimal_read_token(self):
         class Response:
@@ -50,7 +50,7 @@ class BrokerTests(unittest.TestCase):
              patch.object(broker, "_make_jwt", return_value="jwt"), \
              patch.object(broker.urllib.request, "urlopen", return_value=Response()):
             with self.assertRaises(RuntimeError):
-                broker.mint_token(repository="crgasparoto-br/training-system",
+            broker.mint_token(repository="crgasparoto-br/training-system",
                                   operation="read-issue", server_authorized=True)
 
     def test_scoped_token_returned_without_logging(self):
