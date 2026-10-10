@@ -7,7 +7,7 @@ This module issues no GitHub token. It returns a narrowly scoped *decision*
 that cannot be serialized as a bearer credential.
 """
 from dataclasses import dataclass
-from policy import DeliveryPolicy, PolicyDenied, VerifiedPrincipal
+from policy import DeliveryPolicy, PolicyDeniedError, VerifiedPrincipal
 
 PILOT_REPOSITORY = "crgasparoto-br/training-system"
 PILOT_PROFILE = "entregar-issue"
@@ -24,7 +24,7 @@ def authorize_operation(*, principal: VerifiedPrincipal, action: str,
                         repository: str, branch: str, expected_head: str,
                         allowed_subjects: frozenset[str]) -> AuthorizedOperation:
     if not allowed_subjects:
-        raise PolicyDenied("no authorized users configured")
+        raise PolicyDeniedError("no authorized users configured")
     policy = DeliveryPolicy(
         allowed_users=allowed_subjects,
         allowed_repos=frozenset({PILOT_REPOSITORY}),
@@ -43,4 +43,4 @@ def authorize_token_operation(decision: AuthorizedOperation, *,
         "publish-pr": "open_pull_request",
     }.get(requested_operation)
     if required_action is None or decision.action != required_action:
-        raise PolicyDenied("requested token exceeds authorized operation")
+        raise PolicyDeniedError("requested token exceeds authorized operation")
