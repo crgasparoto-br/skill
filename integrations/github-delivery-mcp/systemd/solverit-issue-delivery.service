@@ -1,0 +1,28 @@
+[Unit]
+Description=SolverIT Issue Delivery - Local Recovery Controller
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=solverit-worker
+Group=solverit-worker
+WorkingDirectory=/home/solverit-worker/app/issue-delivery
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=DOCKER_HOST=unix:///run/user/1004/docker.sock
+Environment=HOME=/home/solverit-worker
+ExecStart=/usr/bin/python3 -B /home/solverit-worker/app/issue-delivery/local_controller.py --database /home/solverit-worker/.local/state/solverit-delivery/jobs.sqlite3 --lock /home/solverit-worker/.local/state/solverit-delivery/controller.lock
+TimeoutStartSec=120
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/solverit-worker/.local/state/solverit-delivery
+ReadWritePaths=/home/solverit-worker/.local/share/docker
+ReadWritePaths=/run/user/1004
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=solverit-issue-delivery
+
+[Install]
+WantedBy=multi-user.target
