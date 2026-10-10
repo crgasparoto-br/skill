@@ -45,10 +45,10 @@ class ProbeTests(unittest.TestCase):
         self.assertFalse(results["unauthorized_tools_hidden"])
 
     def test_empty_json_rpc_result_is_not_success(self):
-        self.assertFalse(live._successful({"result": {}}))
-        self.assertFalse(live._successful({"result": {"isError": False}}))
-        self.assertFalse(live._successful({"result": {"content": [], "isError": True}}))
-        self.assertTrue(live._successful({"result": {"content": [], "isError": False}}))
+        self.assertFalse(live._successful({"result": {}}))  # noqa: SLF001 - exercising decision helper
+        self.assertFalse(live._successful({"result": {"isError": False}}))  # noqa: SLF001 - exercising decision helper
+        self.assertFalse(live._successful({"result": {"content": [], "isError": True}}))  # noqa: SLF001 - exercising decision helper
+        self.assertTrue(live._successful({"result": {"content": [], "isError": False}}))  # noqa: SLF001 - exercising decision helper
 
     def test_rpc_does_not_follow_redirect_or_log_token(self):
         def handler(request):
