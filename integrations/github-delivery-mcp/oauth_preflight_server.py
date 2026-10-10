@@ -8,14 +8,15 @@ trusted client flow; do not expose to public networks.
 """
 from __future__ import annotations
 
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
 from github_oauth_identity import verify_github_user_token, IdentityVerificationError
 from mcp_authorization import authorize_operation
 from policy import PolicyDeniedError
+
 MAX_BODY = 4096
 BIND_ADDRESS = "127.0.0.1"
 
