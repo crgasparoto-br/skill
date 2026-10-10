@@ -8,6 +8,8 @@ HERE = Path(__file__).resolve().parent
 UNIT = HERE / "systemd/solverit-issue-delivery.service"
 OVERRIDE = HERE / "systemd/10-rootless.conf"
 
+
+
 def section(path):
     config = configparser.ConfigParser(interpolation=None, strict=False)
     config.read(path)
