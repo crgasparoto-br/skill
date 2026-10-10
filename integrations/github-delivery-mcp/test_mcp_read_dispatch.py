@@ -2,12 +2,14 @@
 import unittest
 from unittest.mock import patch
 
-from mcp_read_dispatch import dispatch, VERSION, META_VERSION
+from mcp_read_dispatch import META_VERSION, VERSION, dispatch
 from policy import VerifiedPrincipal
 
 META = {META_VERSION: VERSION}
 ARGS = {"repository": "crgasparoto-br/training-system",
         "branch": "feat/88-controlled-issue-delivery", "expected_head": "a" * 40}
+
+
 
 def rpc(method="tools/call", args=ARGS):
     return {"jsonrpc": "2.0", "id": 1, "method": method,
