@@ -1,5 +1,6 @@
 """Negative HTTP boundary checks without GitHub calls."""
 import unittest
+
 import test_mcp_http_local as local_tests
 
 class HTTPBoundaryTests(unittest.TestCase):
