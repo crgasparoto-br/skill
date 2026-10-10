@@ -9,7 +9,6 @@ from http.server import ThreadingHTTPServer
 import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-
 from mcp_http_local import MCPHandler
 from mcp_jwt_verifier import MCPTokenPolicy
 from mcp_read_dispatch import META_VERSION, VERSION
