@@ -1,0 +1,19 @@
+{
+  "realm": "solverit-delivery",
+  "enabled": true,
+  "displayName": "SolverIT Issue Delivery",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": false,
+  "resetPasswordAllowed": true,
+  "bruteForceProtected": true,
+  "verifyEmail": true,
+  "loginWithEmailAllowed": true,
+  "rememberMe": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 28800,
+  "defaultSignatureAlgorithm": "RS256",
+  "clients": [],
+  "users": []
+}

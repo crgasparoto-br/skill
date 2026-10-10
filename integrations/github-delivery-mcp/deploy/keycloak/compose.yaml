@@ -1,0 +1,60 @@
+# Issue 88: isolated OAuth AS, loopback only. Requires a separate HTTPS reverse proxy.
+# Do not publish a public port directly. No GitHub App credentials are mounted.
+name: solverit-issue88-auth
+services:
+  postgres:
+    image: postgres:17.6
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:?set keycloak database password}
+    volumes:
+      - kc_postgres:/var/lib/postgresql/data
+    networks:
+      - auth_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.2
+    command: ["start"]
+    restart: unless-stopped
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:?set keycloak database password}
+      KC_HOSTNAME: ${KC_HOSTNAME:?set exact public HTTPS hostname}
+      KC_HOSTNAME_STRICT: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "false"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:?set admin username}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?set strong admin password}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18780:8080"
+    networks:
+      - auth_internal
+      - auth_loopback
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 1536m
+
+networks:
+  auth_internal:
+    internal: true
+  auth_loopback:
+    driver: bridge
+volumes:
+  kc_postgres:
