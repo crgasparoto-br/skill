@@ -1,7 +1,7 @@
 """Offline, credential-free regression tests for delivery authorization."""
 import unittest
 
-from policy import DeliveryPolicy, PolicyDenied, VerifiedPrincipal, require_unchanged_head
+from policy import DeliveryPolicy, PolicyDeniedError, VerifiedPrincipal, require_unchanged_head
 
 SHA = "a" * 40
 POLICY = DeliveryPolicy(
@@ -32,7 +32,7 @@ class AuthorizationTests(unittest.TestCase):
             VerifiedPrincipal("stranger", frozenset({"entregar-issue"}), True),
             VerifiedPrincipal("trusted-user", frozenset({"auditar-issue"}), True),
         ):
-            with self.subTest(principal=principal), self.assertRaises(PolicyDenied):
+            with self.subTest(principal=principal), self.assertRaises(PolicyDeniedError):
                 self.call(principal=principal)
 
     def test_prohibited_repo_and_operations(self):
@@ -44,12 +44,12 @@ class AuthorizationTests(unittest.TestCase):
             {"action": "force_push"},
             {"action": "run_shell"},
         ):
-            with self.subTest(change=change), self.assertRaises(PolicyDenied):
+            with self.subTest(change=change), self.assertRaises(PolicyDeniedError):
                 self.call(**change)
 
     def test_protected_branches(self):
         for branch in ("main", "develop", "refs/heads/main", "feat/../../main", "fix/88"):
-            with self.subTest(branch=branch), self.assertRaises(PolicyDenied):
+            with self.subTest(branch=branch), self.assertRaises(PolicyDeniedError):
                 self.call(branch=branch)
 
     def test_prohibited_paths(self):
@@ -57,19 +57,19 @@ class AuthorizationTests(unittest.TestCase):
             "../x", "/etc/passwd", "src/../.env", ".github/workflows/ci.yml",
             "src\\evil", "secrets/key.txt", "cert.pem", ".npmrc", "src//file.py",
         ):
-            with self.subTest(path=path), self.assertRaises(PolicyDenied):
+            with self.subTest(path=path), self.assertRaises(PolicyDeniedError):
                 self.call(path=path)
 
     def test_invalid_sha_and_content_size(self):
         for head in (None, "", "other", "B" * 40):
-            with self.subTest(head=head), self.assertRaises(PolicyDenied):
+            with self.subTest(head=head), self.assertRaises(PolicyDeniedError):
                 self.call(expected_head=head)
-        with self.assertRaises(PolicyDenied):
+        with self.assertRaises(PolicyDeniedError):
             self.call(size=262145)
 
     def test_concurrent_update(self):
         require_unchanged_head(SHA, SHA)
-        with self.assertRaises(PolicyDenied):
+        with self.assertRaises(PolicyDeniedError):
             require_unchanged_head(SHA, "b" * 40)
 
 
