@@ -3,6 +3,7 @@
 Run: python -m unittest discover -s integrations/github-audit-mcp -p 'test_*.py'
 """
 import os
+import asyncio
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -22,6 +23,27 @@ with patch.dict(os.environ, ENV):
 
 
 class AuthorizationTests(unittest.TestCase):
+    def test_tools_hidden_without_authenticated_context(self):
+        async def check():
+            tools = await server.mcp.list_tools()
+            self.assertEqual([tool.name for tool in tools], [])
+        asyncio.run(check())
+
+    def test_direct_tool_call_without_context_is_denied(self):
+        async def check():
+            with patch.object(server, "_get") as github_api:
+                try:
+                    await server.mcp.call_tool(
+                        "list_rulesets",
+                        {"repository": "crgasparoto-br/training-system"},
+                    )
+                except Exception:
+                    pass  # Not found / unauthorized are valid fail-closed outcomes.
+                else:
+                    self.fail("Protected tool unexpectedly succeeded without OAuth")
+                github_api.assert_not_called()
+        asyncio.run(check())
+
     def test_allowed_identity(self):
         ctx = SimpleNamespace(token=SimpleNamespace(claims={"login": "CrGasparoto-Br"}))
         self.assertTrue(server.authorized_github_user(ctx))
