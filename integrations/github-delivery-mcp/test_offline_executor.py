@@ -9,12 +9,12 @@ import offline_executor as executor
 class OfflineExecutorTests(unittest.TestCase):
     def test_rejects_unlisted_check_before_side_effects(self):
         with patch.object(executor.subprocess, "run") as run, self.assertRaises(ValueError):
-                executor.run_allowed_check("sh -c 'cat /etc/shadow'")
-            run.assert_not_called()
+            executor.run_allowed_check("sh -c 'cat /etc/shadow'")
+        run.assert_not_called()
 
     def test_rejects_wrong_identity(self):
         with patch.object(executor.os, "geteuid", return_value=0), self.assertRaises(PermissionError):
-                executor.run_allowed_check("smoke-v1")
+            executor.run_allowed_check("smoke-v1")
 
     def test_fixed_profile_and_bounded_output(self):
         result = Mock(returncode=0, stdout="a" * 5000, stderr="")
@@ -52,7 +52,7 @@ class OfflineExecutorTests(unittest.TestCase):
              patch.object(executor, "cleanup_container",
                           side_effect=RuntimeError("container survived")):
             with self.assertRaisesRegex(RuntimeError, "survived"):
-                executor.run_allowed_check("smoke-v1")
+            executor.run_allowed_check("smoke-v1")
 
 if __name__ == "__main__":
     unittest.main()
