@@ -10,6 +10,8 @@ VALID = {"action": "prepare_workspace",
          "branch": "feat/88-controlled-issue-delivery",
          "expected_head": "a" * 40}
 
+
+
 class PreflightTests(unittest.TestCase):
     def test_valid_request(self):
         with patch("oauth_preflight_server.verify_github_user_token",
