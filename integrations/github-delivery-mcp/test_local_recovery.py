@@ -28,7 +28,7 @@ class RecoveryTests(unittest.TestCase):
     def test_cleanup_before_marking_timed_out(self):
         name = "solverit-issue88-" + "a" * 32
         with patch("local_recovery.os.geteuid", return_value=1004), \
-             patch("local_recovery.os.path.exists", return_value=True), \
+             patch("local_recovery.Path.exists", return_value=True), \
              patch("local_recovery.subprocess.run", side_effect=[
                  Mock(stdout=name + "\n"), Mock(stdout="")
              ]), patch("local_recovery.cleanup_container") as cleanup:
@@ -40,7 +40,7 @@ class RecoveryTests(unittest.TestCase):
     def test_failed_cleanup_preserves_running_state(self):
         name = "solverit-issue88-" + "b" * 32
         with patch("local_recovery.os.geteuid", return_value=1004), \
-             patch("local_recovery.os.path.exists", return_value=True), \
+             patch("local_recovery.Path.exists", return_value=True), \
              patch("local_recovery.subprocess.run", return_value=Mock(stdout=name + "\n")), \
              patch("local_recovery.cleanup_container", side_effect=RuntimeError("cleanup failed")):
             with self.assertRaises(RuntimeError):
@@ -50,7 +50,7 @@ class RecoveryTests(unittest.TestCase):
     def test_enumeration_error_preserves_running_state(self):
         import subprocess
         with patch("local_recovery.os.geteuid", return_value=1004), \
-             patch("local_recovery.os.path.exists", return_value=True), \
+             patch("local_recovery.Path.exists", return_value=True), \
              patch("local_recovery.subprocess.run", side_effect=subprocess.CalledProcessError(1, "docker")):
             with self.assertRaises(subprocess.CalledProcessError):
                 recover_local_jobs(self.path)
