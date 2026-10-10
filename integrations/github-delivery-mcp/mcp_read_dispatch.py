@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from oauth_preflight_server import authorize_http_request
+
 VERSION = "2026-07-28"
 META_VERSION = "io.modelcontextprotocol/protocolVersion"
 TOOLS = [{
