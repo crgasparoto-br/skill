@@ -1,8 +1,9 @@
 """No-network tests for stateless read-only MCP dispatcher."""
 import unittest
 from unittest.mock import patch
-from policy import VerifiedPrincipal
+
 from mcp_read_dispatch import dispatch, VERSION, META_VERSION
+from policy import VerifiedPrincipal
 
 META = {META_VERSION: VERSION}
 ARGS = {"repository": "crgasparoto-br/training-system",
