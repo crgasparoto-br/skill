@@ -27,8 +27,7 @@ class PreflightTests(unittest.TestCase):
 
     def test_write_operation_disabled(self):
         payload = {**VALID, "action": "open_pull_request"}
-        with patch("oauth_preflight_server.verify_github_user_token") as verify:
-            with self.assertRaises(PolicyDeniedError):
+        with patch("oauth_preflight_server.verify_github_user_token") as verify, self.assertRaises(PolicyDeniedError):
                 authorize_http_request("opaque-bearer", payload, frozenset({123}))
             verify.assert_not_called()
 
