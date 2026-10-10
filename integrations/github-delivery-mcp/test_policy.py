@@ -13,12 +13,12 @@ WRITER = VerifiedPrincipal("trusted-user", frozenset({"entregar-issue"}), True)
 
 class AuthorizationTests(unittest.TestCase):
     def call(self, **overrides):
-        args = dict(
-            principal=WRITER, action="apply_patch",
-            repo="crgasparoto-br/training-system",
-            branch="feat/88-controlled-delivery", expected_head=SHA,
-            path="src/example.py", size=12,
-        )
+        args = {
+            "principal": WRITER, "action": "apply_patch",
+            "repo": "crgasparoto-br/training-system",
+            "branch": "feat/88-controlled-delivery", "expected_head": SHA,
+            "path": "src/example.py", "size": 12,
+        }
         args.update(overrides)
         POLICY.authorize(**args)
 
