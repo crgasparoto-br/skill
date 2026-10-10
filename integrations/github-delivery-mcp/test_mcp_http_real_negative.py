@@ -10,13 +10,17 @@ import unittest
 from http.server import ThreadingHTTPServer
 
 from mcp_http_local import MCPHandler
+from mcp_jwt_verifier import MCPTokenPolicy
 from mcp_read_dispatch import VERSION, META_VERSION
 
 class RealNegativeHTTPTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         class PilotHandler(MCPHandler):
-            allowed_ids = frozenset({123})
+            token_policy = MCPTokenPolicy(issuer="https://identity.example.test",
+                audience="https://delivery.example.test/mcp",
+                public_key_pem="TEST ONLY UNUSED", key_id="test-key",
+                allowed_subjects=frozenset({"test-user"}))
         cls.server = ThreadingHTTPServer(("127.0.0.1", 0), PilotHandler)
         cls.server.allow_ephemeral_host = True
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
@@ -62,7 +66,7 @@ class RealNegativeHTTPTests(unittest.TestCase):
         self.assertEqual(self.send("tools/call", {}, "   "), 401)
 
     def test_malformed_bearer_denied_without_github(self):
-        self.assertEqual(self.send("tools/call", {}, "x"), 403)
+        self.assertEqual(self.send("tools/call", {}, "x"), 401)
 
     def test_tools_list_malformed_bearer_denied_without_github(self):
         self.assertEqual(self.send("tools/list", {}, "x"), 401)
