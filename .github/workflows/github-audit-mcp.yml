@@ -28,4 +28,4 @@ jobs:
           docker run --rm --network none \
             -v "$PWD/integrations/github-audit-mcp/test_authorization.py:/app/test_authorization.py:ro" \
             --entrypoint python solverit-github-audit-mcp:ci \
-            -m unittest -v test_authorization
+            -m unittest -v test_authorization test_release_evidence
