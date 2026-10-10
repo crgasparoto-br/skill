@@ -27,10 +27,9 @@ class BrokerTests(unittest.TestCase):
 
     def test_wrong_process_identity_rejected(self):
         with patch.object(broker.os, "geteuid", return_value=1004), \
-             patch.object(broker, "_make_jwt") as sign:
-            with self.assertRaises(PermissionError):
-                broker.mint_token(repository="crgasparoto-br/training-system",
-                                  operation="read-issue", server_authorized=True)
+             patch.object(broker, "_make_jwt") as sign, self.assertRaises(PermissionError):
+            broker.mint_token(repository="crgasparoto-br/training-system",
+                              operation="read-issue", server_authorized=True)
         sign.assert_not_called()
 
     def test_minimal_read_token(self):
@@ -48,10 +47,9 @@ class BrokerTests(unittest.TestCase):
         # A read-issue operation must NOT accept a token with contents permission.
         with patch.object(broker.os, "geteuid", return_value=997), \
              patch.object(broker, "_make_jwt", return_value="jwt"), \
-             patch.object(broker.urllib.request, "urlopen", return_value=Response()):
-            with self.assertRaises(RuntimeError):
-                broker.mint_token(repository="crgasparoto-br/training-system",
-                                  operation="read-issue", server_authorized=True)
+             patch.object(broker.urllib.request, "urlopen", return_value=Response()), self.assertRaises(RuntimeError):
+            broker.mint_token(repository="crgasparoto-br/training-system",
+                              operation="read-issue", server_authorized=True)
 
     def test_scoped_token_returned_without_logging(self):
         class Response:
