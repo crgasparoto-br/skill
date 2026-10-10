@@ -59,6 +59,9 @@ RESERVED_HOSTS = frozenset({"localhost", "example.com", "example.org", "example.
 RESERVED_SUFFIXES = (".invalid", ".example", ".test", ".localhost")
 TEXT_SUFFIXES = {".md", ".py", ".json", ".yaml", ".yml", ".txt"}
 SKIP_PARTS = {"__pycache__", ".pytest_cache", ".git", "node_modules"}
+# Operational integrations have instance-specific IdP, MCP and GitHub endpoints;
+# permanent skills remain covered by genericity validation.
+PROJECT_SPECIFIC_INTEGRATION = ("integrations", "github-delivery-mcp")
 
 
 def host_is_generic(host: str) -> bool:
@@ -91,6 +94,8 @@ def validate_skill_genericity(root: Path) -> list[str]:
         if path.resolve() == self_path:
             continue
         relative = path.relative_to(root)
+        if relative.parts[:2] == PROJECT_SPECIFIC_INTEGRATION:
+            continue
         if NUMBERED_TEST.match(path.name):
             errors.append(f"numbered issue-specific test filename: {relative}")
         if path.suffix.lower() not in TEXT_SUFFIXES:
