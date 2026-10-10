@@ -90,6 +90,7 @@ def _repository_installation(repo: str) -> int:
 
 
 def _installation_token(repo: str) -> str:
+    allowed_repository(repo)
     installation_id = _repository_installation(repo)
     with httpx.Client(base_url=API, timeout=15.0, follow_redirects=False) as client:
         response = client.post(
@@ -113,8 +114,17 @@ def _get(repo: str, suffix: str) -> Any:
 @mcp.tool(auth=authorized_github_user)
 def list_rulesets(repository: str) -> dict[str, Any]:
     """List repository and inherited rulesets; no writes."""
-    data = _get(repository, "rulesets?includes_parents=true&per_page=100")
-    return {"repository": repository, "rulesets": data, "pagination_complete": len(data) < 100}
+    # Stop at a bounded page count and expose truncation rather than claim exhaustiveness.
+    rulesets: list[dict[str, Any]] = []
+    for page in range(1, 11):
+        batch = _get(repository, f"rulesets?includes_parents=true&per_page=100&page={page}")
+        if not isinstance(batch, list):
+            raise ValueError("Unexpected GitHub rulesets response")
+        rulesets.extend(batch)
+        if len(batch) < 100:
+            return {"repository": repository, "rulesets": rulesets, "pagination_complete": True}
+    return {"repository": repository, "rulesets": rulesets, "pagination_complete": False,
+            "note": "Maximum 1000 rulesets reached; audit cannot conclude exhaustiveness"}
 
 
 @mcp.tool(auth=authorized_github_user)
