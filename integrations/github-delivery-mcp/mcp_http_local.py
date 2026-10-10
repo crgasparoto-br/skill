@@ -11,7 +11,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
-from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejectedError, verify_mcp_access_token
+from mcp_jwt_verifier import (
+    MCPTokenPolicy,
+    MCPTokenRejectedError,
+    verify_mcp_access_token,
+)
 from mcp_read_dispatch import VERSION
 from oauth_resource_metadata import authenticate_challenge, resource_metadata
 
