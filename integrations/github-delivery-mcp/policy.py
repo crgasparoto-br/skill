@@ -8,7 +8,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing import FrozenSet
 
 _REPO = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 _BRANCH = re.compile(r"^feat/[0-9]+-[a-z0-9][a-z0-9-]{0,70}$")
@@ -30,14 +29,14 @@ class PolicyDenied(PermissionError):
 class VerifiedPrincipal:
     """Created ONLY by trusted OAuth verification middleware."""
     subject: str
-    profiles: FrozenSet[str]
+    profiles: frozenset[str]
     oauth_verified: bool
 
 
 @dataclass(frozen=True)
 class DeliveryPolicy:
-    allowed_users: FrozenSet[str]
-    allowed_repos: FrozenSet[str]
+    allowed_users: frozenset[str]
+    allowed_repos: frozenset[str]
     max_file_bytes: int = 262_144
 
     def authorize(self, principal: VerifiedPrincipal | None, action: str, repo: str,
