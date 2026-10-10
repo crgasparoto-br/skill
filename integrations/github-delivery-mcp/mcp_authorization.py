@@ -8,6 +8,7 @@ This module issues no GitHub token. It returns a narrowly scoped *decision*
 that cannot be serialized as a bearer credential.
 """
 from dataclasses import dataclass
+
 from policy import DeliveryPolicy, PolicyDeniedError, VerifiedPrincipal
 
 PILOT_REPOSITORY = "crgasparoto-br/training-system"
