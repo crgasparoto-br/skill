@@ -1,7 +1,7 @@
 """Offline recovery tests; no real Docker or GitHub calls."""
-import os
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch, Mock
 
 from jobs import JobStore
@@ -10,7 +10,7 @@ from local_recovery import recover_local_jobs
 class RecoveryTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.path = os.path.join(self.temp.name, "jobs.sqlite3")
+        self.path = str(Path(self.temp.name) / "jobs.sqlite3")
         self.store = JobStore(self.path)
         self.job = self.store.create(
             actor="local-smoke-operator", key="recover-one", payload_hash="a" * 64,
