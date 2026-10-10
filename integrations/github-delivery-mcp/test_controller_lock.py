@@ -9,6 +9,7 @@ from unittest.mock import patch
 import local_controller
 from controller_lock import controller_lock
 
+
 class ControllerLockTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
