@@ -139,4 +139,4 @@ def get_ruleset_details(repository: str, ruleset_id: int) -> dict[str, Any]:
 
 
 if __name__ == "__main__":
-    mcp.run(transport="http", host="127.0.0.1", port=int(os.getenv("PORT", "8765")))
+    mcp.run(transport="http", host=os.getenv("BIND_HOST", "127.0.0.1"), port=int(os.getenv("PORT", "8765")))
