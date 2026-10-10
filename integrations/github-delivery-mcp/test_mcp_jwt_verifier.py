@@ -22,7 +22,7 @@ class JWTVerifierTests(unittest.TestCase):
             public_key_pem=pem, key_id="test-key", allowed_subjects=frozenset({"user-123"}))
 
     def signed(self, **overrides):
-        now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        now = int(datetime.datetime.now(datetime.UTC).timestamp())
         claims = {"iss": self.policy.issuer, "aud": self.policy.audience,
                   "sub": "user-123", "iat": now - 10, "nbf": now - 10,
                   "exp": now + 120, "scope": "solverit:read"}
@@ -64,7 +64,7 @@ class JWTVerifierTests(unittest.TestCase):
             verify_mcp_access_token("ghu_invalid_example", self.policy)
 
     def test_missing_exp(self):
-        now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        now = int(datetime.datetime.now(datetime.UTC).timestamp())
         token = jwt.encode({"iss": self.policy.issuer, "aud": self.policy.audience,
             "sub": "user-123", "iat": now, "nbf": now, "scope": "solverit:read"},
             self.private_key, algorithm="RS256", headers={"kid": "test-key"})
