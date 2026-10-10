@@ -42,7 +42,7 @@ Prerequisites: Python 3.12 or Docker, reverse proxy with trusted HTTPS certifica
 5. Record only redacted timestamps, HTTP statuses, tool names, branch names and verification outcomes. Never save credentials, authorization codes, access tokens, refresh tokens, or response authorization headers.
 6. Require an independent reviewer to inspect the exact PR HEAD, matching offline workflow, dependency resolution and recorded live evidence before approval. **Without both a permitted and a denied live session, status must remain NOT VALIDATED.**
 
-Direct dependencies are pinned in `requirements.txt`; a complete transitive hash lockfile is not yet provided. Deployment MUST resolve and record the complete dependency tree and image digest in the release evidence. Treat changed transitive versions as a new deployment requiring revalidation.
+Direct dependencies are pinned in `requirements.txt`; all resolved Python 3.12 dependencies and SHA-256 distribution hashes are committed in `requirements.lock.txt`. The Docker image installs with `pip --require-hashes`, and the lock-generation workflow checks drift against the committed lockfile. Record the deployed image digest and verify the resolved dependencies match the audited image. Treat changes to the lockfile or image as requiring revalidation.
 
 
 ## Fail-closed release evidence gate
@@ -53,4 +53,4 @@ After obtaining evidence from **real** permitted and unpermitted GitHub identiti
 
 Run `python integrations/github-audit-mcp/verify_release_evidence.py /secure/path/evidence.json <exact-40-character-PR-HEAD>`. Exit code 1 blocks sign-off for missing/invalid entries; exit code 0 **only** means the submitted structure is complete. The CI unit tests use synthetic records and cannot certify production OAuth. Never commit the evidence document, login credentials or access tokens.
 
-A complete, hash-locked transitive dependency manifest must be produced and consumed by the Docker build before declaring deployment reproducible. The current `requirements.txt` pins only direct dependencies; **do not claim the lockfile requirement is complete**. Independent verification of live negative OAuth, restart, expiration, rotation, image digest and transitive locking is still mandatory before merge.
+The Docker build now requires the committed transitive `requirements.lock.txt` with hashes; check the `Generate MCP dependency lock artifact` workflow and container build on the exact PR HEAD. This only proves repeatability of Python package selection, not a successful live OAuth audit. Independent verification of live negative OAuth, restart, expiration, rotation and deployed image digest is still mandatory before merge. Independent verification of live negative OAuth, restart, expiration, rotation, image digest and transitive locking is still mandatory before merge.
