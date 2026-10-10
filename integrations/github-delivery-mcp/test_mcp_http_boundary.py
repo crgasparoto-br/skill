@@ -1,13 +1,13 @@
 """Negative HTTP boundary checks without GitHub calls."""
 import unittest
-from test_mcp_http_local import HTTPMCPTests
+import test_mcp_http_local as local_tests
 
 class HTTPBoundaryTests(unittest.TestCase):
-    setUpClass = classmethod(HTTPMCPTests.setUpClass.__func__)
-    tearDownClass = classmethod(HTTPMCPTests.tearDownClass.__func__)
-    request = HTTPMCPTests.request
-    rpc = HTTPMCPTests.rpc
-    headers = HTTPMCPTests.headers
+    setUpClass = classmethod(local_tests.HTTPMCPTests.setUpClass.__func__)
+    tearDownClass = classmethod(local_tests.HTTPMCPTests.tearDownClass.__func__)
+    request = local_tests.HTTPMCPTests.request
+    rpc = local_tests.HTTPMCPTests.rpc
+    headers = local_tests.HTTPMCPTests.headers
     def test_browser_origin_rejected(self):
         status, _ = self.request(self.rpc(),
             {**self.headers(), "Origin": "https://example.invalid"})
