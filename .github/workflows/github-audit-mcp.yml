@@ -30,4 +30,4 @@ jobs:
             -v "$PWD/integrations/github-audit-mcp/test_release_evidence.py:/app/test_release_evidence.py:ro" \
             -v "$PWD/integrations/github-audit-mcp/verify_release_evidence.py:/app/verify_release_evidence.py:ro" \
             --entrypoint python solverit-github-audit-mcp:ci \
-            -m unittest -v test_authorization test_release_evidence
+            -m unittest -v test_authorization test_release_evidence test_live_probe
