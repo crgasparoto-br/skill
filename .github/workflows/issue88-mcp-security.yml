@@ -1,0 +1,42 @@
+name: Issue 88 MCP security regression
+on:
+  pull_request:
+    paths:
+      - 'integrations/github-delivery-mcp/**'
+      - '.github/workflows/issue88-mcp-security.yml'
+  push:
+    branches:
+      - develop
+    paths:
+      - 'integrations/github-delivery-mcp/**'
+      - '.github/workflows/issue88-mcp-security.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  mcp-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Install isolated cryptography test dependencies
+        run: python -m pip install -r integrations/github-delivery-mcp/requirements-jwt.txt
+      - name: Compile MCP Python sources without deployment
+        run: python -m compileall -q integrations/github-delivery-mcp
+      - name: HTTP, framing, OAuth and JWT tests
+        working-directory: integrations/github-delivery-mcp
+        run: |
+          python -B -m unittest -v \
+            test_mcp_http_local \
+            test_mcp_http_boundary \
+            test_mcp_http_real_negative \
+            test_mcp_oauth_discovery_http \
+            test_mcp_http_signed_jwt \
+            test_mcp_jwt_verifier \
+            test_oauth_resource_metadata \
+            test_mcp_http_framing \
+            test_mcp_independent_wire_client
