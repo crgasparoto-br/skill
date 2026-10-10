@@ -3,7 +3,7 @@ import http.client
 import json
 import threading
 import unittest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http.server import ThreadingHTTPServer
 
 import jwt
@@ -40,7 +40,7 @@ class SignedHTTPTests(unittest.TestCase):
         cls.thread.join(timeout=3)
 
     def token(self, **changes):
-        now = int(datetime.now(timezone.utc).timestamp())
+        now = int(datetime.now(UTC).timestamp())
         claims = {"iss": "https://identity.example.test",
                   "aud": "https://delivery.example.test/mcp",
                   "sub": "authorized", "scope": "solverit:read",
