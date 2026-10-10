@@ -5,9 +5,10 @@ flow, public endpoints, production rate limits and writes are not enabled.
 All requests must pass verified GitHub identity in a trusted HTTP wrapper.
 """
 from __future__ import annotations
-from dataclasses import dataclass
-from oauth_preflight_server import authorize_http_request
 
+from dataclasses import dataclass
+
+from oauth_preflight_server import authorize_http_request
 VERSION = "2026-07-28"
 META_VERSION = "io.modelcontextprotocol/protocolVersion"
 TOOLS = [{
