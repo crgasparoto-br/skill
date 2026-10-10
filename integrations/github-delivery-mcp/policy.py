@@ -21,7 +21,7 @@ _WRITE_ACTIONS = frozenset({
 })
 
 
-class PolicyDenied(PermissionError):
+class PolicyDeniedError(PermissionError):
     """Safe error; never include credentials or repository file content."""
 
 
@@ -45,34 +45,34 @@ class DeliveryPolicy:
         if (principal is None or not principal.oauth_verified
                 or principal.subject not in self.allowed_users
                 or "entregar-issue" not in principal.profiles):
-            raise PolicyDenied("write profile not authorized")
+            raise PolicyDeniedError("write profile not authorized")
         if action not in _WRITE_ACTIONS:
-            raise PolicyDenied("operation not allowed")
+            raise PolicyDeniedError("operation not allowed")
         if not _REPO.fullmatch(repo) or repo not in self.allowed_repos:
-            raise PolicyDenied("repository not allowed")
+            raise PolicyDeniedError("repository not allowed")
         if not _BRANCH.fullmatch(branch):
-            raise PolicyDenied("work branch not allowed")
+            raise PolicyDeniedError("work branch not allowed")
         if expected_head is None or not _SHA.fullmatch(expected_head):
-            raise PolicyDenied("verified HEAD SHA required")
+            raise PolicyDeniedError("verified HEAD SHA required")
         if path is not None:
             self.validate_path(path)
         if size is not None and (size < 0 or size > self.max_file_bytes):
-            raise PolicyDenied("content size exceeds limit")
+            raise PolicyDeniedError("content size exceeds limit")
 
     @staticmethod
     def validate_path(path: str) -> None:
         if not path or "\\" in path or "\x00" in path or path.startswith("/"):
-            raise PolicyDenied("invalid repository path")
+            raise PolicyDeniedError("invalid repository path")
         parts = PurePosixPath(path).parts
         if (any(segment in ("", ".", "..") for segment in path.split("/"))
                 or any(segment.lower() in _FORBIDDEN_SEGMENTS for segment in parts)
                 or parts[-1].lower() in _FORBIDDEN_NAMES
                 or parts[-1].lower().endswith((".pem", ".key", ".p12", ".pfx"))
                 or len(path) > 240):
-            raise PolicyDenied("repository path forbidden")
+            raise PolicyDeniedError("repository path forbidden")
 
 
 def require_unchanged_head(expected_head: str, observed_head: str) -> None:
     """Invoke immediately before publication, within an atomic compare-and-swap."""
     if not _SHA.fullmatch(expected_head) or observed_head != expected_head:
-        raise PolicyDenied("concurrent HEAD update detected")
+        raise PolicyDeniedError("concurrent HEAD update detected")
