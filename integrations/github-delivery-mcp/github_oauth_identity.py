@@ -21,10 +21,9 @@ class IdentityVerificationError(PermissionError):
 
 
 def verify_github_user_token(token: str, *, allowed_github_ids: frozenset[int]) -> VerifiedPrincipal:
-    if not isinstance(token, str) or not token.startswith("ghu_") and not token.startswith("gho_"):
-        # Fine-grained / OAuth bearer formats may evolve; caller must configure
-        # accepted OAuth formats as part of provider integration.
-        raise IdentityVerificationError("unsupported GitHub OAuth token format")
+    if (not isinstance(token, str) or len(token) < 16 or len(token) > 1024
+            or not token.isascii() or any(c.isspace() for c in token)):
+        raise IdentityVerificationError("invalid bearer token syntax")
     if len(token) > 1024 or not allowed_github_ids:
         raise IdentityVerificationError("invalid token or empty allowlist")
     request = urllib.request.Request(
