@@ -11,6 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from mcp_read_dispatch import dispatch, VERSION
 from oauth_resource_metadata import resource_metadata, authenticate_challenge
+from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejected, verify_mcp_access_token
 
 MAX_BODY = 16384
 
@@ -19,6 +20,7 @@ class MCPHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     oauth_metadata = None
     oauth_metadata_url = None
+    token_policy = None
 
     def log_message(self, *args):
         # Avoid logging tokens, request contents or untrusted paths.
@@ -56,6 +58,33 @@ class MCPHandler(BaseHTTPRequestHandler):
             self._send(401, {"error": "invalid authorization header"})
             return
         bearer = authorization[7:] if authorization.startswith("Bearer ") else ""
+        # Never fall back to GitHub user-token authentication.
+        if self.token_policy is None:
+            self._send(503, {"error": "MCP token validation not configured"})
+            return
+        try:
+            subject = verify_mcp_access_token(bearer, self.token_policy)
+        except MCPTokenRejected:
+            self._send(401, {"error": "invalid MCP access token"},
+                       headers={"WWW-Authenticate": authenticate_challenge(
+                           resource_metadata_url=self.oauth_metadata_url)}
+                       if self.oauth_metadata_url else None)
+            return
+        # Validation above establishes authenticated identity for discovery.
+        # Write operations remain blocked; tool preflight awaits policy redesign.
+        if isinstance(request, dict) and request.get("method") == "tools/list":
+            params = request.get("params", {})
+            if (isinstance(params, dict) and
+                    self.headers.get("MCP-Method") == "tools/list" and
+                    self.headers.get("MCP-Name") is None and
+                    self.headers.get("MCP-Protocol-Version") == VERSION and
+                    params.get("_meta", {}).get("io.modelcontextprotocol/protocolVersion") == VERSION):
+                self._send(200, {"jsonrpc": "2.0", "id": request.get("id"),
+                                 "result": {"tools": []}})
+                return
+        self._send(403, {"error": "tools are disabled pending MCP policy binding"})
+        return
+
         outcome = dispatch(
             request,
             protocol_header=self.headers.get("MCP-Protocol-Version", ""),
@@ -103,6 +132,14 @@ def main():
     if resource:
         MCPHandler.oauth_metadata = resource_metadata(resource_url=resource, issuer_url=issuer)
         MCPHandler.oauth_metadata_url = resource.removesuffix("/mcp") + "/.well-known/oauth-protected-resource"
+    key_path = os.environ.get("SOLVERIT_MCP_JWT_PUBLIC_KEY_FILE", "")
+    key_id = os.environ.get("SOLVERIT_MCP_JWT_KEY_ID", "")
+    subjects = frozenset(v for v in os.environ.get("SOLVERIT_MCP_SUBJECTS", "").split(",") if v)
+    if resource and issuer and key_path and key_id and subjects:
+        with open(key_path, "r", encoding="ascii") as pem_file:
+            MCPHandler.token_policy = MCPTokenPolicy(
+                issuer=issuer, audience=resource, public_key_pem=pem_file.read(),
+                key_id=key_id, allowed_subjects=subjects)
     server = ThreadingHTTPServer(("127.0.0.1", 8769), MCPHandler)
     server.serve_forever()
 
