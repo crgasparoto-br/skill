@@ -78,7 +78,7 @@
     "complexity": {
       "state": "reported",
       "max_complexity": 30,
-      "baseline": 50,
+      "baseline": 51,
       "limits": "Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento entre módulos. Mede só o corpo da própria função: função aninhada é medida por si, ramo de default de parâmetro e de decorator não entra, with não conta como ramo e lambda não é medida.",
       "baseline_history": [
         {
@@ -96,6 +96,10 @@
         {
           "value": 50,
           "reason": "A validacao de obrigacoes de entrega adicionou tratamento fail-closed de estados executaveis e bloqueios por obrigacao; a medicao de complexidade estrutural subiu de 49 para 50, sem dispensar varredura."
+        },
+        {
+          "value": 51,
+          "reason": "A entrega da Issue 88 introduziu verificacoes de autorizacao e transporte MCP com ramificacoes fail-closed; a medicao estrutural real subiu de 50 para 51. O limite de complexidade e a cobertura permanecem inalterados, com revisao independente antes da integracao."
         }
       ]
     }
