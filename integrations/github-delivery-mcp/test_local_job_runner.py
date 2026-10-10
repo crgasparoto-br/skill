@@ -8,6 +8,7 @@ from jobs import JobStore
 from local_job_runner import submit_offline_smoke
 from offline_executor import CheckResult
 
+
 class LocalJobRunnerTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
