@@ -4,6 +4,7 @@ from dataclasses import replace
 
 from sandbox_profile import OFFLINE_CHECK_V1
 
+
 class SandboxProfileTests(unittest.TestCase):
     def test_reviewed_defaults(self):
         OFFLINE_CHECK_V1.validate()
