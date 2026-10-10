@@ -5,11 +5,10 @@ Caller must enforce OAuth authorization on *every* read and write before use.
 """
 from __future__ import annotations
 
-import json
 import sqlite3
 import time
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 TERMINAL = frozenset({"succeeded", "failed", "cancelled", "timed_out"})
 TRANSITIONS = {
