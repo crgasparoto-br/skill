@@ -1,9 +1,10 @@
 """Unit tests for fixed offline execution contract (no Docker required)."""
 import subprocess
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import offline_executor as executor
+
 
 class OfflineExecutorTests(unittest.TestCase):
     def test_rejects_unlisted_check_before_side_effects(self):
