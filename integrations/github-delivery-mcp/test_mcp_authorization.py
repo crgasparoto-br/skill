@@ -1,8 +1,8 @@
 """Tests of server-side MCP authorization decisions. No live OAuth/GitHub."""
 import unittest
 
-from policy import PolicyDeniedError, VerifiedPrincipal
 from mcp_authorization import authorize_operation, authorize_token_operation
+from policy import PolicyDeniedError, VerifiedPrincipal
 
 SHA = "a" * 40
 REPO = "crgasparoto-br/training-system"
