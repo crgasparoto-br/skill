@@ -6,6 +6,7 @@ from http.server import ThreadingHTTPServer
 
 from mcp_http_local import MCPHandler
 
+
 class HTTPFramingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
