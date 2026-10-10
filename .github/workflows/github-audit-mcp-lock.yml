@@ -2,6 +2,10 @@ name: Generate MCP dependency lock artifact
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'integrations/github-audit-mcp/**'
+      - '.github/workflows/github-audit-mcp-lock.yml'
 
 permissions:
   contents: read
