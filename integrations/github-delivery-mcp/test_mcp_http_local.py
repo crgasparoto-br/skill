@@ -6,7 +6,8 @@ import unittest
 from http.server import ThreadingHTTPServer
 
 from mcp_http_local import MCPHandler
-from mcp_read_dispatch import VERSION, META_VERSION
+from mcp_read_dispatch import META_VERSION, VERSION
+
 
 class HTTPMCPTests(unittest.TestCase):
     @classmethod
