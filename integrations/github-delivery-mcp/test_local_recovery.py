@@ -2,10 +2,11 @@
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from jobs import JobStore
 from local_recovery import recover_local_jobs
+
 
 class RecoveryTests(unittest.TestCase):
     def setUp(self):
