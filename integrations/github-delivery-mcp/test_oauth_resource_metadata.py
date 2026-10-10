@@ -1,7 +1,8 @@
 """OAuth protected-resource metadata contract tests; no secrets or network."""
 import unittest
 
-from oauth_resource_metadata import resource_metadata, authenticate_challenge
+from oauth_resource_metadata import authenticate_challenge, resource_metadata
+
 
 class MetadataTests(unittest.TestCase):
     def test_metadata_points_to_distinct_authorization_server(self):
