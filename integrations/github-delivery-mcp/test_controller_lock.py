@@ -20,9 +20,9 @@ class ControllerLockTests(unittest.TestCase):
         self.directory.cleanup()
 
     def test_second_controller_rejected_while_first_holds_lock(self):
-        with controller_lock(self.lock), self.assertRaisesRegex(RuntimeError, "another controller"):
-            with controller_lock(self.lock):
-                pass
+        with (controller_lock(self.lock), self.assertRaisesRegex(RuntimeError, "another controller"),
+              controller_lock(self.lock)):
+            pass
 
     def test_lock_can_be_reacquired(self):
         with controller_lock(self.lock):
