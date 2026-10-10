@@ -32,9 +32,8 @@ class IdentityTests(unittest.TestCase):
 
     def test_user_not_allowlisted(self):
         with patch("github_oauth_identity.urllib.request.urlopen",
-                   return_value=FakeResponse({"id": 999})):
-            with self.assertRaises(IdentityVerificationError):
-                verify_github_user_token(TOKEN, allowed_github_ids=frozenset({123}))
+                   return_value=FakeResponse({"id": 999})), self.assertRaises(IdentityVerificationError):
+            verify_github_user_token(TOKEN, allowed_github_ids=frozenset({123}))
 
     def test_no_allowlist_prevents_network(self):
         with patch("github_oauth_identity.urllib.request.urlopen") as http, self.assertRaises(IdentityVerificationError):
@@ -48,15 +47,13 @@ class IdentityTests(unittest.TestCase):
 
     def test_http_authentication_failure(self):
         with patch("github_oauth_identity.urllib.request.urlopen",
-                   side_effect=urllib.error.HTTPError("https://api.github.com/user", 401, "unauthorized", {}, None)):
-            with self.assertRaises(IdentityVerificationError):
-                verify_github_user_token(TOKEN, allowed_github_ids=frozenset({123}))
+                   side_effect=urllib.error.HTTPError("https://api.github.com/user", 401, "unauthorized", {}, None)), self.assertRaises(IdentityVerificationError):
+            verify_github_user_token(TOKEN, allowed_github_ids=frozenset({123}))
 
     def test_boolean_user_id_rejected(self):
         with patch("github_oauth_identity.urllib.request.urlopen",
-                   return_value=FakeResponse({"id": True})):
-            with self.assertRaises(IdentityVerificationError):
-                verify_github_user_token(TOKEN, allowed_github_ids=frozenset({123}))
+                   return_value=FakeResponse({"id": True})), self.assertRaises(IdentityVerificationError):
+            verify_github_user_token(TOKEN, allowed_github_ids=frozenset({123}))
 
 if __name__ == "__main__":
     unittest.main()
