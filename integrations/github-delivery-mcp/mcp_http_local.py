@@ -25,6 +25,14 @@ class MCPHandler(BaseHTTPRequestHandler):
         if self.path != "/mcp":
             self._send(404, {"error": "not found"})
             return
+        # Reject browser-origin requests (including DNS rebinding attempts).
+        # This prototype is a non-browser loopback API only.
+        if self.headers.get("Origin") is not None:
+            self._send(403, {"error": "browser origins are not accepted"})
+            return
+        if self.headers.get("Host") not in ("127.0.0.1:8769", "localhost:8769") and not getattr(self.server, "allow_ephemeral_host", False):
+            self._send(403, {"error": "invalid host"})
+            return
         if self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/json":
             self._send(415, {"error": "unsupported media type"})
             return
@@ -41,6 +49,9 @@ class MCPHandler(BaseHTTPRequestHandler):
             self._send(400, {"error": "invalid json"})
             return
         authorization = self.headers.get("Authorization", "")
+        if len(authorization) > 1200 or "," in authorization or self.headers.get_all("Authorization", []) and len(self.headers.get_all("Authorization", [])) != 1:
+            self._send(401, {"error": "invalid authorization header"})
+            return
         bearer = authorization[7:] if authorization.startswith("Bearer ") else ""
         outcome = dispatch(
             request,
