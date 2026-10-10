@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
+
 from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
 from mcp_jwt_verifier import MCPTokenRejectedError
 
@@ -31,8 +32,8 @@ class JWKSRotationTests(unittest.TestCase):
                           headers={"kid": "key-" + str(index)})
 
     def install(self, index):
-        self.verifier._keys = {"key-" + str(index): self.keys[index].public_key()}  # noqa: SLF001
-        self.verifier._expiry = float("inf")  # noqa: SLF001 - cache fixture
+        self.verifier._keys = {"key-" + str(index): self.keys[index].public_key()}  # noqa: SLF001 - white-box cache replacement for rotation regression
+        self.verifier._expiry = float("inf")  # noqa: SLF001 - deterministic cache setup for test only
 
     def test_valid(self):
         self.install(0)
