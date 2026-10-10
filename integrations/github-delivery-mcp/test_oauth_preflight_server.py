@@ -1,8 +1,9 @@
 """No-network authorization preflight tests."""
 import unittest
 from unittest.mock import patch
-from policy import PolicyDeniedError, VerifiedPrincipal
+
 from oauth_preflight_server import authorize_http_request
+from policy import PolicyDeniedError, VerifiedPrincipal
 
 VALID = {"action": "prepare_workspace",
          "repository": "crgasparoto-br/training-system",
