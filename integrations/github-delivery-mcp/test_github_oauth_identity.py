@@ -37,14 +37,12 @@ class IdentityTests(unittest.TestCase):
                 verify_github_user_token(TOKEN, allowed_github_ids=frozenset({123}))
 
     def test_no_allowlist_prevents_network(self):
-        with patch("github_oauth_identity.urllib.request.urlopen") as http:
-            with self.assertRaises(IdentityVerificationError):
+        with patch("github_oauth_identity.urllib.request.urlopen") as http, self.assertRaises(IdentityVerificationError):
                 verify_github_user_token(TOKEN, allowed_github_ids=frozenset())
             http.assert_not_called()
 
     def test_invalid_token_prevents_network(self):
-        with patch("github_oauth_identity.urllib.request.urlopen") as http:
-            with self.assertRaises(IdentityVerificationError):
+        with patch("github_oauth_identity.urllib.request.urlopen") as http, self.assertRaises(IdentityVerificationError):
                 verify_github_user_token("has spaces in bearer token", allowed_github_ids=frozenset({123}))
             http.assert_not_called()
 
