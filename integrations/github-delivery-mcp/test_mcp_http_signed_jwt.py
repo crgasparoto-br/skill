@@ -5,6 +5,7 @@ import threading
 import unittest
 from datetime import datetime, timezone
 from http.server import ThreadingHTTPServer
+
 import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
