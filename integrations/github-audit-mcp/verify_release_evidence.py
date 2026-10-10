@@ -41,7 +41,7 @@ def validate(document, expected_head):
         if not isinstance(item, dict) or item.get("result") != "PASS" or item.get("kind") != "LIVE":
             errors.append(f"{name}: required LIVE PASS evidence missing")
             continue
-        if not isinstance(item.get("timestamp_utc"), str) or not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z", item["timestamp_utc"]):
+        if not isinstance(item.get("timestamp_utc"), str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", item["timestamp_utc"]):
             errors.append(f"{name}: timestamp_utc must be RFC3339 UTC seconds")
         if not isinstance(item.get("evidence_reference"), str) or not item["evidence_reference"].strip():
             errors.append(f"{name}: evidence_reference required")
