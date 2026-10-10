@@ -4,8 +4,8 @@ The operator MUST independently perform and document restart/rotation/expiry.
 This tool checks fresh real sessions and optionally rejects a retired session.
 """
 import argparse
-from datetime import UTC, datetime
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
