@@ -44,6 +44,12 @@ class ProbeTests(unittest.TestCase):
             results = live.probe("https://example.test/mcp", "allowed", "denied", "owner/repo")
         self.assertFalse(results["unauthorized_tools_hidden"])
 
+    def test_empty_json_rpc_result_is_not_success(self):
+        self.assertFalse(live._successful({"result": {}}))
+        self.assertFalse(live._successful({"result": {"isError": False}}))
+        self.assertFalse(live._successful({"result": {"content": [], "isError": True}}))
+        self.assertTrue(live._successful({"result": {"content": [], "isError": False}}))
+
     def test_rpc_does_not_follow_redirect_or_log_token(self):
         def handler(request):
             self.assertEqual(request.headers["Authorization"], "Bearer secret")
