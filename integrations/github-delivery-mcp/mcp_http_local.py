@@ -10,7 +10,7 @@ import json
 import os
 from pathlib import Path
 
-from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejected, verify_mcp_access_token
+from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejectedError, verify_mcp_access_token
 from mcp_read_dispatch import VERSION
 from oauth_resource_metadata import resource_metadata, authenticate_challenge
 MAX_BODY = 16384
@@ -72,7 +72,7 @@ class MCPHandler(BaseHTTPRequestHandler):
             return
         try:
             verify_mcp_access_token(bearer, self.token_policy)
-        except MCPTokenRejected:
+        except MCPTokenRejectedError:
             self._send(401, {"error": "invalid MCP access token"},
                        headers={"WWW-Authenticate": authenticate_challenge(
                            resource_metadata_url=self.oauth_metadata_url)}
