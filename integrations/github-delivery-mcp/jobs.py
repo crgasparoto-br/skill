@@ -24,7 +24,7 @@ SAFE_FIELDS = frozenset({"job_id", "repo", "issue_number", "branch",
                          "created_at", "updated_at"})
 
 
-class JobConflict(RuntimeError):
+class JobConflictError(RuntimeError):
     pass
 
 
@@ -81,7 +81,7 @@ class JobStore:
             ).fetchone()
             if existing:
                 if existing["payload_hash"] != payload_hash:
-                    raise JobConflict("idempotency key reused with different payload")
+                    raise JobConflictError("idempotency key reused with different payload")
                 return self._public(existing)
             job_id = str(uuid.uuid4())
             correlation_id = str(uuid.uuid4())
@@ -104,7 +104,7 @@ class JobStore:
 
     def transition(self, job_id: str, actor: str, expected: str, target: str) -> Job:
         if target not in TRANSITIONS.get(expected, ()):
-            raise JobConflict("invalid job transition")
+            raise JobConflictError("invalid job transition")
         with self._connect() as db:
             updated = db.execute(
                 """UPDATE jobs SET status=?, updated_at=?
@@ -112,7 +112,7 @@ class JobStore:
                 (target, int(time.time()), job_id, actor, expected),
             )
             if updated.rowcount != 1:
-                raise JobConflict("job transition conflict")
+                raise JobConflictError("job transition conflict")
             return self._public(db.execute(
                 "SELECT * FROM jobs WHERE job_id=?", (job_id,)
             ).fetchone())
