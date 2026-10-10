@@ -46,7 +46,12 @@ class ControllerLockTests(unittest.TestCase):
             from local_job_runner import LocalJobOutcome
             return LocalJobOutcome("id", "succeeded", 0, "CHECK_OK")
         import sys
-        with patch.object(local_controller.os, "geteuid", return_value=1004), \
+        # os is a shared module: mocking local_controller.os.geteuid also affects
+        # controller_lock.os.geteuid. The controller first sees the simulated
+        # worker UID; the lock must compare ownership against the actual UID
+        # of the temporary test file.
+        actual_uid = os.geteuid()
+        with patch.object(local_controller.os, "geteuid", side_effect=[1004, actual_uid]), \
              patch.object(local_controller, "recover_local_jobs", side_effect=recover), \
              patch.object(local_controller, "submit_offline_smoke", side_effect=dispatch), \
              patch.object(sys, "argv", ["local_controller", "--database", self.db, "--lock", self.lock, "--smoke-key", "k"]):
