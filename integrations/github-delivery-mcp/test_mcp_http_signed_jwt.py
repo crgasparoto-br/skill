@@ -48,7 +48,7 @@ class SignedHTTPTests(unittest.TestCase):
 
     def send(self, token=None, method="tools/list"):
         payload = {"jsonrpc": "2.0", "id": 1, "method": method,
-                   "params": {"_meta": {META_VERSION: VERSION, "io.modelcontextprotocol/clientCapabilities": {}}}}
+                   "params": {"_meta": {META_VERSION: VERSION, "io.modelcontextprotocol/clientCapabilities": {}, "io.modelcontextprotocol/clientInfo": {"name": "issue88-http-test", "version": "1.0"}}}}
         headers = {"Content-Type": "application/json", "MCP-Protocol-Version": VERSION,
                    "MCP-Method": method}
         if token is not None:
@@ -89,6 +89,23 @@ class SignedHTTPTests(unittest.TestCase):
         status, payload = self.send(self.token(), method="tools/call")
         self.assertEqual(status, 404)
         self.assertEqual(payload["error"]["code"], -32601)
+
+    def test_missing_client_info_rejected(self):
+        original = self.send
+        # Reuse real HTTP transport, sending a valid token with incomplete metadata.
+        import http.client
+        conn = http.client.HTTPConnection("127.0.0.1", self.server.server_address[1], timeout=3)
+        payload = {"jsonrpc": "2.0", "id": 9, "method": "tools/list",
+                   "params": {"_meta": {META_VERSION: VERSION,
+                                       "io.modelcontextprotocol/clientCapabilities": {}}}}
+        conn.request("POST", "/mcp", json.dumps(payload),
+                     {"Content-Type": "application/json",
+                      "Authorization": "Bearer " + self.token(),
+                      "MCP-Protocol-Version": VERSION, "MCP-Method": "tools/list"})
+        response = conn.getresponse()
+        self.assertEqual(response.status, 400)
+        response.read()
+        conn.close()
 
     def test_no_policy_fails_closed(self):
         class NoPolicyHandler(MCPHandler):
