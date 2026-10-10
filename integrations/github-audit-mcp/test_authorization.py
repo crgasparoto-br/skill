@@ -85,8 +85,8 @@ class AuthorizationTests(unittest.TestCase):
         with patch.object(server, "_repository_installation", return_value=123), patch.object(server, "_jwt", return_value="appjwt"), patch.object(server.httpx, "Client") as client:
             response = client.return_value.__enter__.return_value.post.return_value
             response.json.side_effect = [{"token": "first"}, {"token": "second"}]
-            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "first")  # noqa: SLF001
-            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "second")  # noqa: SLF001
+            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "first")  # noqa: SLF001 - verify token renewal behavior
+            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "second")  # noqa: SLF001 - verify token renewal behavior
             self.assertEqual(response.raise_for_status.call_count, 2)
 
     def test_allowed_identity(self):
