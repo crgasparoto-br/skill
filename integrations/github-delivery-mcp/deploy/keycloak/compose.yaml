@@ -43,6 +43,7 @@ services:
       - "127.0.0.1:18780:8080"
     networks:
       - auth_internal
+      - auth_loopback
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -53,5 +54,7 @@ services:
 networks:
   auth_internal:
     internal: true
+  auth_loopback:
+    driver: bridge
 volumes:
   kc_postgres:
