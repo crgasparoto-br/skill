@@ -12,7 +12,6 @@ from urllib.parse import urlsplit
 from urllib.request import Request
 
 import jwt
-
 from mcp_jwt_verifier import MCPTokenRejectedError
 
 
