@@ -43,18 +43,16 @@ class RecoveryTests(unittest.TestCase):
         with patch("local_recovery.os.geteuid", return_value=1004), \
              patch("local_recovery.Path.exists", return_value=True), \
              patch("local_recovery.subprocess.run", return_value=Mock(stdout=name + "\n")), \
-             patch("local_recovery.cleanup_container", side_effect=RuntimeError("cleanup failed")):
-            with self.assertRaises(RuntimeError):
-                recover_local_jobs(self.path)
+             patch("local_recovery.cleanup_container", side_effect=RuntimeError("cleanup failed")), self.assertRaises(RuntimeError):
+            recover_local_jobs(self.path)
         self.assertEqual(self._state(), "running")
 
     def test_enumeration_error_preserves_running_state(self):
         import subprocess
         with patch("local_recovery.os.geteuid", return_value=1004), \
              patch("local_recovery.Path.exists", return_value=True), \
-             patch("local_recovery.subprocess.run", side_effect=subprocess.CalledProcessError(1, "docker")):
-            with self.assertRaises(subprocess.CalledProcessError):
-                recover_local_jobs(self.path)
+             patch("local_recovery.subprocess.run", side_effect=subprocess.CalledProcessError(1, "docker")), self.assertRaises(subprocess.CalledProcessError):
+            recover_local_jobs(self.path)
         self.assertEqual(self._state(), "running")
 
     def test_invalid_identity_denied(self):
