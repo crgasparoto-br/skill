@@ -1,9 +1,9 @@
 """Local controller concurrency tests, without real Docker."""
-import os
 import sys
 import tempfile
 import unittest
 from contextlib import contextmanager
+from pathlib import Path
 from unittest.mock import patch
 
 import local_controller
@@ -12,17 +12,16 @@ from controller_lock import controller_lock
 class ControllerLockTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
-        self.lock = os.path.join(self.directory.name, "controller.lock")
-        self.db = os.path.join(self.directory.name, "jobs.sqlite3")
+        self.lock = str(Path(self.directory.name) / "controller.lock")
+        self.db = str(Path(self.directory.name) / "jobs.sqlite3")
 
     def tearDown(self):
         self.directory.cleanup()
 
     def test_second_controller_rejected_while_first_holds_lock(self):
-        with controller_lock(self.lock):
-            with self.assertRaisesRegex(RuntimeError, "another controller"):
-                with controller_lock(self.lock):
-                    pass
+        with controller_lock(self.lock), self.assertRaisesRegex(RuntimeError, "another controller"):
+            with controller_lock(self.lock):
+                pass
 
     def test_lock_can_be_reacquired(self):
         with controller_lock(self.lock):
@@ -31,12 +30,11 @@ class ControllerLockTests(unittest.TestCase):
             pass
 
     def test_unsafe_lock_mode_rejected(self):
-        with open(self.lock, "w", encoding="utf-8") as lock:
+        with Path(self.lock).open("w", encoding="utf-8") as lock:
             lock.write("")
-        os.chmod(self.lock, 0o666)
-        with self.assertRaises(PermissionError):
-            with controller_lock(self.lock):
-                pass
+        Path(self.lock).chmod(0o666)
+        with self.assertRaises(PermissionError), controller_lock(self.lock):
+            pass
 
     def test_recovery_before_dispatch_under_same_lock(self):
         events = []
