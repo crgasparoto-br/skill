@@ -21,7 +21,12 @@ def call(req=None, bearer="sample-valid-token", version=VERSION, method="tools/c
 class MCPReadTests(unittest.TestCase):
     def test_missing_bearer_denied(self):
         with patch("mcp_read_dispatch.authorize_http_request") as auth:
-            self.assertEqual(call(bearer="").http_status, 403)
+            self.assertEqual(call(bearer="").http_status, 401)
+            auth.assert_not_called()
+
+    def test_whitespace_bearer_denied_before_authorization(self):
+        with patch("mcp_read_dispatch.authorize_http_request") as auth:
+            self.assertEqual(call(bearer="   ").http_status, 401)
             auth.assert_not_called()
 
     def test_mismatched_version_denied(self):
