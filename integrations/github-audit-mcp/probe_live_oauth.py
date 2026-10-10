@@ -13,14 +13,14 @@ PROTOCOL = "2025-03-26"
 TOOLS = ("list_rulesets", "get_branch_rules", "get_branch_protection", "get_ruleset_details")
 
 
-def rpc(client, endpoint, token, method, params, request_id):
+def rpc(client, endpoint, token, method, params, request_id, session_ids):
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
         "Accept": "application/json, text/event-stream",
         "MCP-Protocol-Version": PROTOCOL,
     }
-    session_id = getattr(client, "_solverit_sessions", {}).get(token)
+    session_id = session_ids.get(token)
     if session_id:
         headers["Mcp-Session-Id"] = session_id
     payload = {"jsonrpc": "2.0", "id": request_id, "method": method, "params": params}
@@ -31,9 +31,7 @@ def rpc(client, endpoint, token, method, params, request_id):
     new_session = response.headers.get("Mcp-Session-Id")
     if new_session:
         # Track MCP transport sessions per credential without printing token or session id.
-        if not hasattr(client, "_solverit_sessions"):
-            client._solverit_sessions = {}
-        client._solverit_sessions[token] = new_session
+        session_ids[token] = new_session
     if "text/event-stream" in response.headers.get("content-type", ""):
         messages = [
             json.loads(line[6:])
@@ -58,26 +56,27 @@ def _successful(result):
 
 def probe(endpoint, authorized_token, denied_token, repository):
     outcomes = {}
+    session_ids = {}
     with httpx.Client(timeout=25.0, follow_redirects=False) as client:
         for label, token in (("authorized", authorized_token), ("unauthorized", denied_token)):
             initial = rpc(client, endpoint, token, "initialize", {
                 "protocolVersion": PROTOCOL,
                 "capabilities": {},
                 "clientInfo": {"name": "solverit-live-audit-probe", "version": "1.0"},
-            }, 1)
+            }, 1, session_ids)
             outcomes[label + "_initialized"] = _successful(initial)
             if not outcomes[label + "_initialized"]:
                 # A rejected OAuth session proves ingress denial, not application-layer denial.
                 outcomes[label + "_application_auth_tested"] = False
                 continue
-            listed = rpc(client, endpoint, token, "tools/list", {}, 2)
+            listed = rpc(client, endpoint, token, "tools/list", {}, 2, session_ids)
             names = {t.get("name") for t in listed.get("result", {}).get("tools", [])}
             if label == "authorized":
                 outcomes["authorized_tools_visible"] = set(TOOLS).issubset(names)
                 for branch in ("develop", "main"):
                     result = rpc(client, endpoint, token, "tools/call", {
                         "name": "get_branch_rules", "arguments": {"repository": repository, "branch": branch}
-                    }, 3 if branch == "develop" else 4)
+                    }, 3 if branch == "develop" else 4, session_ids)
                     outcomes["authorized_" + branch] = _successful(result)
                 for name, arguments in (
                     ("list_rulesets", {"repository": "unapproved/repository"}),
@@ -85,7 +84,7 @@ def probe(endpoint, authorized_token, denied_token, repository):
                 ):
                     result = rpc(client, endpoint, token, "tools/call", {
                         "name": name, "arguments": arguments
-                    }, 5)
+                    }, 5, session_ids)
                     outcomes["blocked_" + name] = not _successful(result)
             else:
                 outcomes["unauthorized_application_auth_tested"] = True
@@ -98,7 +97,7 @@ def probe(endpoint, authorized_token, denied_token, repository):
                         args["ruleset_id"] = 1
                     result = rpc(client, endpoint, token, "tools/call", {
                         "name": name, "arguments": args
-                    }, 6)
+                    }, 6, session_ids)
                     outcomes["unauthorized_denied_" + name] = not _successful(result)
     return outcomes
 
