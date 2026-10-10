@@ -29,7 +29,7 @@ class BrokerTests(unittest.TestCase):
         with patch.object(broker.os, "geteuid", return_value=1004), \
              patch.object(broker, "_make_jwt") as sign:
             with self.assertRaises(PermissionError):
-            broker.mint_token(repository="crgasparoto-br/training-system",
+                broker.mint_token(repository="crgasparoto-br/training-system",
                                   operation="read-issue", server_authorized=True)
         sign.assert_not_called()
 
@@ -50,7 +50,7 @@ class BrokerTests(unittest.TestCase):
              patch.object(broker, "_make_jwt", return_value="jwt"), \
              patch.object(broker.urllib.request, "urlopen", return_value=Response()):
             with self.assertRaises(RuntimeError):
-            broker.mint_token(repository="crgasparoto-br/training-system",
+                broker.mint_token(repository="crgasparoto-br/training-system",
                                   operation="read-issue", server_authorized=True)
 
     def test_scoped_token_returned_without_logging(self):
