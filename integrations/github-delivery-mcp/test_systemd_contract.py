@@ -1,7 +1,8 @@
 """Static unit assertions: no services are started by these tests."""
-from pathlib import Path
-import configparser
 import unittest
+from pathlib import Path
+
+import configparser
 
 HERE = Path(__file__).resolve().parent
 UNIT = HERE / "systemd/solverit-issue-delivery.service"
