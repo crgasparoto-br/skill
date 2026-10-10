@@ -30,18 +30,25 @@ class AuthorizationTests(unittest.TestCase):
         asyncio.run(check())
 
     def test_direct_tool_call_without_context_is_denied(self):
+        protected_tools = (
+            ("list_rulesets", {"repository": "crgasparoto-br/training-system"}),
+            ("get_branch_rules", {"repository": "crgasparoto-br/training-system", "branch": "develop"}),
+            ("get_branch_protection", {"repository": "crgasparoto-br/training-system", "branch": "main"}),
+            ("get_ruleset_details", {"repository": "crgasparoto-br/training-system", "ruleset_id": 1}),
+        )
+
         async def check():
-            with patch.object(server, "_get") as github_api:
-                try:
-                    await server.mcp.call_tool(
-                        "list_rulesets",
-                        {"repository": "crgasparoto-br/training-system"},
-                    )
-                except Exception:
-                    pass  # Not found / unauthorized are valid fail-closed outcomes.
-                else:
-                    self.fail("Protected tool unexpectedly succeeded without OAuth")
-                github_api.assert_not_called()
+            for tool_name, arguments in protected_tools:
+                with self.subTest(tool=tool_name):
+                    with patch.object(server, "_get") as github_api:
+                        try:
+                            await server.mcp.call_tool(tool_name, arguments)
+                        except Exception:
+                            pass  # Not found / unauthorized are valid fail-closed outcomes.
+                        else:
+                            self.fail(f"{tool_name} unexpectedly succeeded without OAuth")
+                        github_api.assert_not_called()
+
         asyncio.run(check())
 
     def test_allowed_identity(self):
