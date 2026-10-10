@@ -5,6 +5,7 @@ Run: python -m unittest discover -s integrations/github-audit-mcp -p 'test_*.py'
 import asyncio
 import os
 import unittest
+import httpx
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -49,6 +50,44 @@ class AuthorizationTests(unittest.TestCase):
                     github_api.assert_not_called()
 
         asyncio.run(check())
+
+    def test_rulesets_multiple_pages(self):
+        first = [{"id": i} for i in range(100)]
+        second = [{"id": 100}]
+        with patch.object(server, "_get", side_effect=[first, second]) as github_api:
+            result = server.list_rulesets.fn("crgasparoto-br/training-system") if hasattr(server.list_rulesets, "fn") else server.list_rulesets("crgasparoto-br/training-system")
+        self.assertEqual(len(result["rulesets"]), 101)
+        self.assertTrue(result["pagination_complete"])
+        self.assertIn("page=2", github_api.call_args_list[1].args[1])
+
+    def test_rulesets_limit_fails_closed(self):
+        with patch.object(server, "_get", return_value=[{"id": i} for i in range(100)]) as github_api:
+            result = server.list_rulesets.fn("crgasparoto-br/training-system") if hasattr(server.list_rulesets, "fn") else server.list_rulesets("crgasparoto-br/training-system")
+        self.assertFalse(result["pagination_complete"])
+        self.assertEqual(github_api.call_count, 10)
+
+    def test_rulesets_api_failure_propagates(self):
+        with patch.object(server, "_get", side_effect=httpx.TimeoutException("timeout")):
+            with self.assertRaises(httpx.TimeoutException):
+                server.list_rulesets.fn("crgasparoto-br/training-system") if hasattr(server.list_rulesets, "fn") else server.list_rulesets("crgasparoto-br/training-system")
+
+    def test_missing_bypass_remains_unknown(self):
+        with patch.object(server, "_get", return_value={"id": 42}):
+            result = server.get_ruleset_details.fn("crgasparoto-br/training-system", 42) if hasattr(server.get_ruleset_details, "fn") else server.get_ruleset_details("crgasparoto-br/training-system", 42)
+        self.assertEqual(result["bypass_actors_visibility"], "UNKNOWN_NO_WRITE_ACCESS")
+
+    def test_explicit_empty_bypass_is_observed(self):
+        with patch.object(server, "_get", return_value={"id": 42, "bypass_actors": []}):
+            result = server.get_ruleset_details.fn("crgasparoto-br/training-system", 42) if hasattr(server.get_ruleset_details, "fn") else server.get_ruleset_details("crgasparoto-br/training-system", 42)
+        self.assertEqual(result["bypass_actors_visibility"], "OBSERVED")
+
+    def test_token_generation_is_not_cached(self):
+        with patch.object(server, "_repository_installation", return_value=123), patch.object(server, "_jwt", return_value="appjwt"), patch.object(server.httpx, "Client") as client:
+            response = client.return_value.__enter__.return_value.post.return_value
+            response.json.side_effect = [{"token": "first"}, {"token": "second"}]
+            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "first")
+            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "second")
+            self.assertEqual(response.raise_for_status.call_count, 2)
 
     def test_allowed_identity(self):
         ctx = SimpleNamespace(token=SimpleNamespace(claims={"login": "CrGasparoto-Br"}))
