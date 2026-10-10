@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import os
 import subprocess
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-import uuid
 from rootless_reconciler import cleanup_container
 from sandbox_profile import OFFLINE_CHECK_V1
 
