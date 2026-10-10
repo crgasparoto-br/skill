@@ -20,11 +20,20 @@ def rpc(client, endpoint, token, method, params, request_id):
         "Accept": "application/json, text/event-stream",
         "MCP-Protocol-Version": PROTOCOL,
     }
+    session_id = getattr(client, "_solverit_sessions", {}).get(token)
+    if session_id:
+        headers["Mcp-Session-Id"] = session_id
     payload = {"jsonrpc": "2.0", "id": request_id, "method": method, "params": params}
     response = client.post(endpoint, headers=headers, json=payload)
     if response.status_code in (401, 403):
         return {"denied": True}
     response.raise_for_status()
+    new_session = response.headers.get("Mcp-Session-Id")
+    if new_session:
+        # Track MCP transport sessions per credential without printing token or session id.
+        if not hasattr(client, "_solverit_sessions"):
+            client._solverit_sessions = {}
+        client._solverit_sessions[token] = new_session
     if "text/event-stream" in response.headers.get("content-type", ""):
         messages = [
             json.loads(line[6:])
