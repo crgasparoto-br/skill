@@ -2,7 +2,12 @@
 import unittest
 from test_mcp_http_local import HTTPMCPTests
 
-class HTTPBoundaryTests(HTTPMCPTests):
+class HTTPBoundaryTests(unittest.TestCase):
+    setUpClass = HTTPMCPTests.setUpClass.__func__
+    tearDownClass = HTTPMCPTests.tearDownClass.__func__
+    request = HTTPMCPTests.request
+    rpc = HTTPMCPTests.rpc
+    headers = HTTPMCPTests.headers
     def test_browser_origin_rejected(self):
         status, _ = self.request(self.rpc(),
             {**self.headers(), "Origin": "https://example.invalid"})
