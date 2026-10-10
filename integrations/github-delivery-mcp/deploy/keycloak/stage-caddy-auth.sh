@@ -24,7 +24,7 @@ candidate=$(mktemp /tmp/solverit-caddy-auth.XXXXXX) || return 1
 cat "$CADDY" > "$candidate"
 printf '\n' >> "$candidate"
 cat "$SOURCE" >> "$candidate"
-if ! caddy validate --config "$candidate"; then
+if ! caddy validate --config "$candidate" --adapter caddyfile; then
   printf 'BLOCKED: Caddy candidate invalid\n'
   rm -f "$candidate"
   return 1
