@@ -85,6 +85,14 @@ class MCPHandler(BaseHTTPRequestHandler):
                 or metadata.get("io.modelcontextprotocol/protocolVersion") != VERSION):
             self._send(400, {"error": "unsupported or mismatched MCP protocol version"})
             return
+        client_info = metadata.get("io.modelcontextprotocol/clientInfo")
+        if (not isinstance(client_info, dict)
+                or not isinstance(client_info.get("name"), str)
+                or not client_info["name"].strip()
+                or not isinstance(client_info.get("version"), str)
+                or not client_info["version"].strip()):
+            self._send(400, {"error": "valid MCP clientInfo required"})
+            return
         if not isinstance(metadata.get("io.modelcontextprotocol/clientCapabilities"), dict):
             self._send(400, {"error": "client capabilities required"})
             return
