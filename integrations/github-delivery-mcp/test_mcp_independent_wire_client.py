@@ -8,7 +8,7 @@ import http.client
 import json
 import threading
 import unittest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http.server import ThreadingHTTPServer
 
 import jwt
@@ -44,7 +44,7 @@ class IndependentWireClientTests(unittest.TestCase):
         cls.worker.join(timeout=3)
 
     def token(self):
-        now = int(datetime.now(timezone.utc).timestamp())
+        now = int(datetime.now(UTC).timestamp())
         return jwt.encode({
             "iss": "https://id.example.test", "aud": "https://mcp.example.test/mcp",
             "sub": "operator", "iat": now - 5, "nbf": now - 5,
