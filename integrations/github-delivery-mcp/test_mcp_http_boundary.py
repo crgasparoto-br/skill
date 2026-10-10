@@ -3,6 +3,7 @@ import unittest
 
 import test_mcp_http_local as local_tests
 
+
 class HTTPBoundaryTests(unittest.TestCase):
     setUpClass = classmethod(local_tests.HTTPMCPTests.setUpClass.__func__)
     tearDownClass = classmethod(local_tests.HTTPMCPTests.tearDownClass.__func__)
