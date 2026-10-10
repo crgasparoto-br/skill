@@ -1,11 +1,14 @@
 """Local controller concurrency tests, without real Docker."""
 import os
+import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
 from unittest.mock import patch
 
 from controller_lock import controller_lock
 import local_controller
+
 
 class ControllerLockTests(unittest.TestCase):
     def setUp(self):
@@ -38,25 +41,37 @@ class ControllerLockTests(unittest.TestCase):
 
     def test_recovery_before_dispatch_under_same_lock(self):
         events = []
-        def recover(_):
+
+        @contextmanager
+        def fake_lock(path):
+            self.assertEqual(path, self.lock)
+            events.append("lock_enter")
+            try:
+                yield
+            finally:
+                events.append("lock_exit")
+
+        def recover(path):
+            self.assertEqual(path, self.db)
             events.append("recover")
             return 0
+
         def dispatch(*args, **kwargs):
             events.append("dispatch")
             from local_job_runner import LocalJobOutcome
             return LocalJobOutcome("id", "succeeded", 0, "CHECK_OK")
-        import sys
-        # os is a shared module: mocking local_controller.os.geteuid also affects
-        # controller_lock.os.geteuid. The controller first sees the simulated
-        # worker UID; the lock must compare ownership against the actual UID
-        # of the temporary test file.
-        actual_uid = os.geteuid()
-        with patch.object(local_controller.os, "geteuid", side_effect=[1004, actual_uid]), \
+
+        # This tests orchestration, not filesystem ownership.
+        # Actual flock/permission behavior is tested in the other tests.
+        with patch.object(local_controller.os, "geteuid", return_value=1004), \
+             patch.object(local_controller, "controller_lock", side_effect=fake_lock), \
              patch.object(local_controller, "recover_local_jobs", side_effect=recover), \
              patch.object(local_controller, "submit_offline_smoke", side_effect=dispatch), \
              patch.object(sys, "argv", ["local_controller", "--database", self.db, "--lock", self.lock, "--smoke-key", "k"]):
             local_controller.main()
-        self.assertEqual(events, ["recover", "dispatch"])
+
+        self.assertEqual(events, ["lock_enter", "recover", "dispatch", "lock_exit"])
+
 
 if __name__ == "__main__":
     unittest.main()
