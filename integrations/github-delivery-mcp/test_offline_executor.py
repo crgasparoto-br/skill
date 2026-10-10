@@ -19,7 +19,7 @@ class OfflineExecutorTests(unittest.TestCase):
     def test_fixed_profile_and_bounded_output(self):
         result = Mock(returncode=0, stdout="a" * 5000, stderr="")
         with patch.object(executor.os, "geteuid", return_value=1004), \
-             patch.object(executor.os.path, "exists", return_value=True), \
+             patch.object(executor.Path, "exists", return_value=True), \
              patch.object(executor.subprocess, "run", return_value=result) as run:
             outcome = executor.run_allowed_check("smoke-v1")
         self.assertEqual(outcome.exit_code, 0)
@@ -34,7 +34,7 @@ class OfflineExecutorTests(unittest.TestCase):
 
     def test_timeout_triggers_cleanup(self):
         with patch.object(executor.os, "geteuid", return_value=1004), \
-             patch.object(executor.os.path, "exists", return_value=True), \
+             patch.object(executor.Path, "exists", return_value=True), \
              patch.object(executor.subprocess, "run",
                           side_effect=subprocess.TimeoutExpired(["docker"], 60)), \
              patch.object(executor, "cleanup_container") as cleanup:
@@ -46,7 +46,7 @@ class OfflineExecutorTests(unittest.TestCase):
 
     def test_cleanup_failure_does_not_report_success(self):
         with patch.object(executor.os, "geteuid", return_value=1004), \
-             patch.object(executor.os.path, "exists", return_value=True), \
+             patch.object(executor.Path, "exists", return_value=True), \
              patch.object(executor.subprocess, "run",
                           side_effect=subprocess.TimeoutExpired(["docker"], 60)), \
              patch.object(executor, "cleanup_container",
