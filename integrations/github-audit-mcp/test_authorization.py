@@ -5,7 +5,6 @@ Run: python -m unittest discover -s integrations/github-audit-mcp -p 'test_*.py'
 import asyncio
 import os
 import unittest
-
 from types import SimpleNamespace
 from unittest.mock import patch
 
