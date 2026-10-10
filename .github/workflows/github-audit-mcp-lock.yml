@@ -24,6 +24,11 @@ jobs:
           python -m pip install 'pip-tools==7.5.2'
           python -m piptools compile --generate-hashes --resolver=backtracking --output-file integrations/github-audit-mcp/requirements.lock.txt integrations/github-audit-mcp/requirements.txt
           python -m pip install --require-hashes --no-deps -r integrations/github-audit-mcp/requirements.lock.txt
+      - name: Print generated lock for automated promotion
+        run: |
+          echo SOLVERIT_LOCK_BEGIN
+          cat integrations/github-audit-mcp/requirements.lock.txt
+          echo SOLVERIT_LOCK_END
       - name: Publish lock as review artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
