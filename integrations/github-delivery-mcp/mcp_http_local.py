@@ -69,22 +69,37 @@ class MCPHandler(BaseHTTPRequestHandler):
                            resource_metadata_url=self.oauth_metadata_url)}
                        if self.oauth_metadata_url else None)
             return
-        # Validation above establishes authenticated identity for discovery.
-        # Write operations remain blocked; tool preflight awaits policy redesign.
-        if isinstance(request, dict) and request.get("method") == "tools/list":
-            params = request.get("params", {})
-            if (isinstance(params, dict) and isinstance(params.get("_meta"), dict) and
-                    type(request.get("id")) in (str, int) and
-                    self.headers.get("MCP-Method") == "tools/list" and
-                    self.headers.get("MCP-Name") is None and
-                    self.headers.get("MCP-Protocol-Version") == VERSION and
-                    params.get("_meta", {}).get("io.modelcontextprotocol/protocolVersion") == VERSION):
-                self._send(200, {"jsonrpc": "2.0", "id": request.get("id"),
-                                 "result": {"tools": []}})
-                return
-        self._send(403, {"error": "tools are disabled pending MCP policy binding"})
+        # This pilot intentionally exposes no tools or write methods.
+        if not isinstance(request, dict) or request.get("jsonrpc") != "2.0":
+            self._send(400, {"error": "invalid JSON-RPC request"})
+            return
+        if type(request.get("id")) not in (int, str):
+            self._send(400, {"error": "invalid JSON-RPC request id"})
+            return
+        params = request.get("params")
+        metadata = params.get("_meta") if isinstance(params, dict) else None
+        if not isinstance(metadata, dict):
+            self._send(400, {"error": "missing MCP request metadata"})
+            return
+        if (self.headers.get("MCP-Protocol-Version") != VERSION
+                or metadata.get("io.modelcontextprotocol/protocolVersion") != VERSION):
+            self._send(400, {"error": "unsupported or mismatched MCP protocol version"})
+            return
+        if not isinstance(metadata.get("io.modelcontextprotocol/clientCapabilities"), dict):
+            self._send(400, {"error": "client capabilities required"})
+            return
+        if self.headers.get("MCP-Method") != request.get("method"):
+            self._send(400, {"error": "MCP method header mismatch"})
+            return
+        if request.get("method") == "tools/list" and self.headers.get("MCP-Name") is None:
+            self._send(200, {"jsonrpc": "2.0", "id": request["id"],
+                             "result": {"tools": [], "_meta": {
+                                 "io.modelcontextprotocol/serverInfo": {
+                                     "name": "solverit-issue-delivery-pilot", "version": "0.0.0"}}}})
+            return
+        self._send(404, {"jsonrpc": "2.0", "id": request["id"],
+                         "error": {"code": -32601, "message": "Method not found"}})
         return
-
 
     def do_GET(self):
         if self.path == "/.well-known/oauth-protected-resource":
