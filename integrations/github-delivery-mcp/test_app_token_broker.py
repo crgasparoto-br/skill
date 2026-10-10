@@ -1,5 +1,4 @@
 """Broker authorization unit tests; no actual PEM or GitHub network calls."""
-import io
 import json
 import unittest
 from unittest.mock import patch
