@@ -58,7 +58,7 @@ GENERIC_HOSTS = frozenset({
 RESERVED_HOSTS = frozenset({"localhost", "example.com", "example.org", "example.net"})
 RESERVED_SUFFIXES = (".invalid", ".example", ".test", ".localhost")
 TEXT_SUFFIXES = {".md", ".py", ".json", ".yaml", ".yml", ".txt"}
-SKIP_PARTS = {"__pycache__", ".pytest_cache", ".git", "node_modules"}
+SKIP_PARTS = {"__pycache__", ".pytest_cache", ".git", "node_modules", "integrations"}
 
 
 def host_is_generic(host: str) -> bool:
