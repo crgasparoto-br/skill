@@ -31,5 +31,7 @@ jobs:
             -v "$PWD/integrations/github-audit-mcp/verify_release_evidence.py:/app/verify_release_evidence.py:ro" \
             -v "$PWD/integrations/github-audit-mcp/probe_live_oauth.py:/app/probe_live_oauth.py:ro" \
             -v "$PWD/integrations/github-audit-mcp/test_live_probe.py:/app/test_live_probe.py:ro" \
+            -v "$PWD/integrations/github-audit-mcp/operational_check.py:/app/operational_check.py:ro" \
+            -v "$PWD/integrations/github-audit-mcp/test_operational_check.py:/app/test_operational_check.py:ro" \
             --entrypoint python solverit-github-audit-mcp:ci \
             -m unittest -v test_authorization test_release_evidence test_live_probe test_operational_check
