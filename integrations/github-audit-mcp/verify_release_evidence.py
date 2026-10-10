@@ -7,7 +7,7 @@ import hashlib
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 CASES = (
@@ -60,8 +60,8 @@ def validate(document, expected_head, *, lock_path=None, deployed_image_digest=N
             errors.append(f"{name}: timestamp_utc must be RFC3339 UTC seconds")
         if isinstance(item.get("timestamp_utc"), str):
             try:
-                observed_time = datetime.strptime(item["timestamp_utc"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-                if observed_time > datetime.now(timezone.utc):
+                observed_time = datetime.strptime(item["timestamp_utc"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
+                if observed_time > datetime.now(UTC):
                     errors.append(f"{name}: timestamp cannot be in the future")
             except ValueError:
                 errors.append(f"{name}: timestamp is not a valid UTC date")
