@@ -58,8 +58,7 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(self._state(), "running")
 
     def test_invalid_identity_denied(self):
-        with patch("local_recovery.os.geteuid", return_value=0):
-            with self.assertRaises(PermissionError):
+        with patch("local_recovery.os.geteuid", return_value=0), self.assertRaises(PermissionError):
                 recover_local_jobs(self.path)
         self.assertEqual(self._state(), "running")
 
