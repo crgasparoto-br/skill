@@ -7,10 +7,11 @@ This does not replace distributed leases in a future multi-host controller.
 """
 from __future__ import annotations
 
-from contextlib import contextmanager
 import fcntl
 import os
+from contextlib import contextmanager
 from pathlib import Path
+
 @contextmanager
 def controller_lock(lock_path: str):
     parent = Path(lock_path).resolve().parent
