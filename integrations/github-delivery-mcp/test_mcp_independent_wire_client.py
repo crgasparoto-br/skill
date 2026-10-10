@@ -74,7 +74,7 @@ class IndependentWireClientTests(unittest.TestCase):
         return status, content_type, payload
 
     def test_discovery_has_response_identity(self):
-        status, content_type, body = self.exchange("server/discover", token=self.token())
+        status, content_type, _body = self.exchange("server/discover", token=self.token())
         self.assertEqual(status, 200)
         self.assertEqual(content_type, "application/json")
         self.assertEqual(body["id"], 78)
@@ -82,17 +82,17 @@ class IndependentWireClientTests(unittest.TestCase):
         self.assertIn("io.modelcontextprotocol/serverInfo", body["result"]["_meta"])
 
     def test_tool_catalog_is_empty_without_write_access(self):
-        status, _, body = self.exchange("tools/list", token=self.token())
+        status, _, _body = self.exchange("tools/list", token=self.token())
         self.assertEqual(status, 200)
         self.assertEqual(body["result"]["tools"], [])
 
     def test_header_mismatch_is_denied(self):
-        status, _, body = self.exchange(
+        status, _, _body = self.exchange(
             "tools/list", token=self.token(), method_header="tools/call")
         self.assertEqual(status, 400)
 
     def test_unknown_method_jsonrpc_error(self):
-        status, _, body = self.exchange("tools/unknown", token=self.token())
+        status, _, _body = self.exchange("tools/unknown", token=self.token())
         self.assertEqual(status, 404)
         self.assertEqual(body["error"]["code"], -32601)
 
