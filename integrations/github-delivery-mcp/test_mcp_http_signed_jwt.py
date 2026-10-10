@@ -91,7 +91,6 @@ class SignedHTTPTests(unittest.TestCase):
         self.assertEqual(payload["error"]["code"], -32601)
 
     def test_missing_client_info_rejected(self):
-        original = self.send
         # Reuse real HTTP transport, sending a valid token with incomplete metadata.
         import http.client
         conn = http.client.HTTPConnection("127.0.0.1", self.server.server_address[1], timeout=3)
