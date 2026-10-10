@@ -15,7 +15,6 @@ import jwt
 
 from mcp_jwt_verifier import MCPTokenRejectedError
 
-
 @dataclass(frozen=True)
 class JWKSVerifierPolicy:
     issuer: str
