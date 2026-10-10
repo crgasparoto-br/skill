@@ -8,22 +8,19 @@ import app_token_broker as broker
 
 class BrokerTests(unittest.TestCase):
     def test_unauthorized_request_never_reads_key(self):
-        with patch.object(broker, "_make_jwt") as sign:
-            with self.assertRaises(PermissionError):
+        with patch.object(broker, "_make_jwt") as sign, self.assertRaises(PermissionError):
                 broker.mint_token(repository="crgasparoto-br/training-system",
                                   operation="read-issue")
             sign.assert_not_called()
 
     def test_other_repository_rejected(self):
-        with patch.object(broker, "_make_jwt") as sign:
-            with self.assertRaises(PermissionError):
+        with patch.object(broker, "_make_jwt") as sign, self.assertRaises(PermissionError):
                 broker.mint_token(repository="crgasparoto-br/solverfin",
                                   operation="read-issue", server_authorized=True)
             sign.assert_not_called()
 
     def test_unknown_operation_rejected(self):
-        with patch.object(broker, "_make_jwt") as sign:
-            with self.assertRaises(PermissionError):
+        with patch.object(broker, "_make_jwt") as sign, self.assertRaises(PermissionError):
                 broker.mint_token(repository="crgasparoto-br/training-system",
                                   operation="admin", server_authorized=True)
             sign.assert_not_called()
