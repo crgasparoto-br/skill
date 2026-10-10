@@ -3,6 +3,7 @@
 The transport must verify OAuth access tokens using a trusted provider and
 construct VerifiedPrincipal server-side. Never accept identities or profiles
 from MCP tool parameters, issue text, or client-supplied headers.
+
 This module issues no GitHub token. It returns a narrowly scoped *decision*
 that cannot be serialized as a bearer credential.
 """
