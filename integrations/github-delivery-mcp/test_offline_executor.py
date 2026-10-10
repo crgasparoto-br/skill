@@ -50,9 +50,8 @@ class OfflineExecutorTests(unittest.TestCase):
              patch.object(executor.subprocess, "run",
                           side_effect=subprocess.TimeoutExpired(["docker"], 60)), \
              patch.object(executor, "cleanup_container",
-                          side_effect=RuntimeError("container survived")):
-            with self.assertRaisesRegex(RuntimeError, "survived"):
-                executor.run_allowed_check("smoke-v1")
+                          side_effect=RuntimeError("container survived")), self.assertRaisesRegex(RuntimeError, "survived"):
+            executor.run_allowed_check("smoke-v1")
 
 if __name__ == "__main__":
     unittest.main()
