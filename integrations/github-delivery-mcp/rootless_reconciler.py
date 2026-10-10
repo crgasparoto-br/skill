@@ -6,7 +6,6 @@ Never accepts a caller-supplied name or arbitrary Docker flags.
 import subprocess
 
 DOCKER = "/usr/bin/docker"
-ENV_KEYS = ("DOCKER_HOST", "HOME", "PATH")
 
 def cleanup_container(container_name, env):
     if not container_name.startswith("solverit-issue88-"):
