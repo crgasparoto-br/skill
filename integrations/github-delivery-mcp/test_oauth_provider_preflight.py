@@ -39,7 +39,7 @@ class OAuthProviderReadinessTests(unittest.TestCase):
     def test_non_https_metadata_endpoint_blocks(self):
         metadata = {**VALID, "token_endpoint": "http://localhost/token"}
         self.assertTrue(any("token_endpoint" in issue for issue in
-                            validate_authorization_server_metadata(metadata, expected_issuer=ISSUER))
+                            validate_authorization_server_metadata(metadata, expected_issuer=ISSUER)))
 
     def test_malformed_discovery_arrays_block_without_crashing(self):
         for invalid in (None, "authorization_code", 42, {"code": True}, ["S256", 4]):
@@ -47,7 +47,7 @@ class OAuthProviderReadinessTests(unittest.TestCase):
                 with self.subTest(field=field, invalid=invalid):
                     metadata = {**VALID, field: invalid}
                     self.assertTrue(validate_authorization_server_metadata(
-                        metadata, expected_issuer=ISSUER))
+                        metadata, expected_issuer=ISSUER)))
 
     def test_missing_refresh_grant_blocks_chatgpt_readiness(self):
         metadata = {**VALID, "grant_types_supported": ["authorization_code"]}
