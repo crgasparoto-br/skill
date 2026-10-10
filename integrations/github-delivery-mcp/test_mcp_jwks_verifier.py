@@ -1,6 +1,5 @@
 """Offline key rotation and JWT rejection checks for trusted JWKS verifier."""
 import datetime
-import json
 import unittest
 from unittest.mock import patch
 
@@ -22,7 +21,7 @@ class JWKSRotationTests(unittest.TestCase):
         self.verifier = CachedJWKSVerifier(policy, ttl_seconds=30)
 
     def signed(self, index=0, **changes):
-        now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        now = int(datetime.datetime.now(datetime.UTC).timestamp())
         claims = {"iss": self.verifier.policy.issuer,
                   "aud": self.verifier.policy.audience,
                   "sub": "test-sub", "iat": now - 1, "nbf": now - 1,
@@ -32,8 +31,8 @@ class JWKSRotationTests(unittest.TestCase):
                           headers={"kid": "key-" + str(index)})
 
     def install(self, index):
-        self.verifier._keys = {"key-" + str(index): self.keys[index].public_key()}
-        self.verifier._expiry = float("inf")
+        self.verifier._keys = {"key-" + str(index): self.keys[index].public_key()}  # noqa: SLF001
+        self.verifier._expiry = float("inf")  # noqa: SLF001 - cache fixture
 
     def test_valid(self):
         self.install(0)
@@ -55,16 +54,16 @@ class JWKSRotationTests(unittest.TestCase):
 
     def test_unknown_kid_does_not_trigger_network(self):
         self.install(0)
-        with patch.object(self.verifier, "refresh", side_effect=AssertionError("network")):
-            with self.assertRaises(MCPTokenRejectedError):
-                self.verifier.verify(self.signed(1))
+        with (patch.object(self.verifier, "refresh", side_effect=AssertionError("network")),
+              self.assertRaises(MCPTokenRejectedError)):
+            self.verifier.verify(self.signed(1))
 
     def test_expired_cache_refuses_when_refresh_fails(self):
         self.install(0)
-        self.verifier._expiry = 0
-        with patch.object(self.verifier, "refresh", side_effect=OSError("unavailable")):
-            with self.assertRaises(MCPTokenRejectedError):
-                self.verifier.verify(self.signed())
+        self.verifier._expiry = 0  # noqa: SLF001 - verify expired cache
+        with (patch.object(self.verifier, "refresh", side_effect=OSError("unavailable")),
+              self.assertRaises(MCPTokenRejectedError)):
+            self.verifier.verify(self.signed())
 
     def test_malformed_policy(self):
         with self.assertRaises(ValueError):
