@@ -5,6 +5,7 @@ import os
 import subprocess
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 
 from sandbox_profile import OFFLINE_CHECK_V1
 from rootless_reconciler import cleanup_container
@@ -29,7 +30,7 @@ def run_allowed_check(check: str) -> CheckResult:
         raise ValueError("unknown check profile")
     if os.geteuid() != 1004:
         raise PermissionError("dedicated worker identity required")
-    if not os.path.exists(ROOTLESS_SOCKET):
+    if not Path(ROOTLESS_SOCKET).exists():
         raise RuntimeError("rootless daemon socket unavailable")
 
     container_name = "solverit-issue88-" + uuid.uuid4().hex
