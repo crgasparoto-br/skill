@@ -6,9 +6,8 @@ import unittest
 from contextlib import contextmanager
 from unittest.mock import patch
 
-from controller_lock import controller_lock
 import local_controller
-
+from controller_lock import controller_lock
 
 class ControllerLockTests(unittest.TestCase):
     def setUp(self):
