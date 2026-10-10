@@ -5,8 +5,11 @@ import unittest
 import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-
-from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejectedError, verify_mcp_access_token
+from mcp_jwt_verifier import (
+    MCPTokenPolicy,
+    MCPTokenRejectedError,
+    verify_mcp_access_token,
+)
 
 
 class JWTVerifierTests(unittest.TestCase):
