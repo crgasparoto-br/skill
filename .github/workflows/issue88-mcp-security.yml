@@ -39,4 +39,5 @@ jobs:
             test_mcp_jwt_verifier \
             test_oauth_resource_metadata \
             test_mcp_http_framing \
-            test_mcp_independent_wire_client
+            test_mcp_independent_wire_client \
+            test_oauth_provider_preflight
