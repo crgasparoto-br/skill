@@ -55,7 +55,7 @@ class ProbeTests(unittest.TestCase):
         with httpx.Client(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
             sessions = {}
             result = live.rpc(client, "https://example.test/mcp", "secret", "tools/list", {}, 1, sessions)
-        self.assertTrue(live._successful(result))
+        self.assertEqual(result["result"], {"ok": True})
         self.assertEqual(sessions["secret"], "session1")
 
 
