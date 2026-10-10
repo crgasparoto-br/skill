@@ -27,8 +27,19 @@ Prerequisites: Python 3.12 or Docker, reverse proxy with trusted HTTPS certifica
 - Only repositories in `ALLOWED_REPOS` are accessible, and only `main`/`develop` for branch-specific tools.
 - Only GitHub GET requests are exposed to MCP; POST is used server-side exclusively to mint temporary installation access tokens.
 - No GitHub tokens, private keys or write operations appear in MCP results.
-- For more than 100 rulesets the response sets `pagination_complete=false`; do not treat the result as exhaustive.
+- Rulesets are paginated up to 10 pages (1,000 entries); a full final page yields `pagination_complete=false`, which prohibits exhaustive conclusions.
 - A protected branch may have rulesets while classic protection returns 404.
 - On 2026-10-10 the VPS operator reported FastMCP 3.4.8, local `/mcp` HTTP 401, OAuth discovery HTTP 200, valid HTTPS through Caddy, and a successful ChatGPT OAuth-connected functional audit against `training-system`. These observations are operational evidence, **not** an automated security certification.
 - Run the offline regressions from the integration directory with `python -m unittest -v test_authorization.py` after installing dependencies. Simulated tokens do not replace a live negative OAuth test with an unapproved GitHub account.
 - Before production sign-off, confirm authorized and unauthorized OAuth sessions, service restart behavior, token/credential rotation, outbound requests, and CI. Do not share authorization codes, tokens, client secrets or private keys in audit output.
+
+## Mandatory release verification — live OAuth (not covered by offline CI)
+
+1. Using an explicitly permitted GitHub account, authenticate over the public HTTPS MCP endpoint and confirm tool discovery, a successful `get_branch_rules` call for `develop`, and a successful `get_branch_rules` call for `main`.
+2. In a fresh independent browser/session, authenticate using an account **not** in `ALLOWED_GITHUB_USERS`. Verify that no privileged tools are discoverable and all four tool calls are denied, with zero outbound GitHub App installation API calls. Do not mistake a failed OAuth login for an application-layer deny test.
+3. Try another repository and an invalid branch in a permitted session. Confirm both fail without a GitHub API request.
+4. Restart the MCP container and repeat permitted/denied checks, verify token minting after restart, expiry and credential rotation against actual live provider sessions.
+5. Record only redacted timestamps, HTTP statuses, tool names, branch names and verification outcomes. Never save credentials, authorization codes, access tokens, refresh tokens, or response authorization headers.
+6. Require an independent reviewer to inspect the exact PR HEAD, matching offline workflow, dependency resolution and recorded live evidence before approval. **Without both a permitted and a denied live session, status must remain NOT VALIDATED.**
+
+Direct dependencies are pinned in `requirements.txt`; a complete transitive hash lockfile is not yet provided. Deployment MUST resolve and record the complete dependency tree and image digest in the release evidence. Treat changed transitive versions as a new deployment requiring revalidation.
