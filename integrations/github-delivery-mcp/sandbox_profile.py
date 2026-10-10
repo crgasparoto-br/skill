@@ -5,6 +5,7 @@ An independent trusted controller must validate image provenance and digest,
 workspace ownership, cgroup enforcement and outbound-network policy.
 """
 from dataclasses import dataclass
+
 @dataclass(frozen=True)
 class SandboxProfile:
     name: str = "offline-check-v1"
