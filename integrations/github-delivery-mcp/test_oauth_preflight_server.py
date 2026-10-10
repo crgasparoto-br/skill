@@ -21,9 +21,8 @@ class PreflightTests(unittest.TestCase):
 
     def test_unverified_identity_rejected(self):
         with patch("oauth_preflight_server.verify_github_user_token",
-                   return_value=VerifiedPrincipal("github:123", frozenset({"entregar-issue"}), False)):
-            with self.assertRaises(PolicyDeniedError):
-                authorize_http_request("opaque-bearer", VALID, frozenset({123}))
+                   return_value=VerifiedPrincipal("github:123", frozenset({"entregar-issue"}), False)), self.assertRaises(PolicyDeniedError):
+            authorize_http_request("opaque-bearer", VALID, frozenset({123}))
 
     def test_write_operation_disabled(self):
         payload = {**VALID, "action": "open_pull_request"}
@@ -37,15 +36,13 @@ class PreflightTests(unittest.TestCase):
 
     def test_other_repository_rejected(self):
         with patch("oauth_preflight_server.verify_github_user_token",
-                   return_value=VerifiedPrincipal("github:123", frozenset({"entregar-issue"}), True)):
-            with self.assertRaises(PolicyDeniedError):
-                authorize_http_request("opaque-bearer", {**VALID, "repository": "crgasparoto-br/solverfin"}, frozenset({123}))
+                   return_value=VerifiedPrincipal("github:123", frozenset({"entregar-issue"}), True)), self.assertRaises(PolicyDeniedError):
+            authorize_http_request("opaque-bearer", {**VALID, "repository": "crgasparoto-br/solverfin"}, frozenset({123}))
 
     def test_other_user_rejected(self):
         with patch("oauth_preflight_server.verify_github_user_token",
-                   return_value=VerifiedPrincipal("github:456", frozenset({"entregar-issue"}), True)):
-            with self.assertRaises(PolicyDeniedError):
-                authorize_http_request("opaque-bearer", VALID, frozenset({123}))
+                   return_value=VerifiedPrincipal("github:456", frozenset({"entregar-issue"}), True)), self.assertRaises(PolicyDeniedError):
+            authorize_http_request("opaque-bearer", VALID, frozenset({123}))
 
 if __name__ == "__main__":
     unittest.main()
