@@ -2,13 +2,10 @@ name: Validate GitHub Audit MCP
 
 on:
   push:
-    paths:
-      - "integrations/github-audit-mcp/**"
-      - ".github/workflows/github-audit-mcp.yml"
+    branches: [develop, main]
   pull_request:
-    paths:
-      - "integrations/github-audit-mcp/**"
-      - ".github/workflows/github-audit-mcp.yml"
+    branches: [develop, main]
+  workflow_dispatch:
 
 permissions:
   contents: read
