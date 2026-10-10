@@ -16,7 +16,6 @@ from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejected, verify_mcp_access
 MAX_BODY = 16384
 
 class MCPHandler(BaseHTTPRequestHandler):
-    allowed_ids = frozenset()
     protocol_version = "HTTP/1.1"
     oauth_metadata = None
     oauth_metadata_url = None
@@ -74,7 +73,8 @@ class MCPHandler(BaseHTTPRequestHandler):
         # Write operations remain blocked; tool preflight awaits policy redesign.
         if isinstance(request, dict) and request.get("method") == "tools/list":
             params = request.get("params", {})
-            if (isinstance(params, dict) and
+            if (isinstance(params, dict) and isinstance(params.get("_meta"), dict) and
+                    type(request.get("id")) in (str, int) and
                     self.headers.get("MCP-Method") == "tools/list" and
                     self.headers.get("MCP-Name") is None and
                     self.headers.get("MCP-Protocol-Version") == VERSION and
@@ -107,11 +107,6 @@ class MCPHandler(BaseHTTPRequestHandler):
         self.wfile.write(encoded)
 
 def main():
-    raw = os.environ.get("SOLVERIT_ALLOWED_GITHUB_IDS", "")
-    ids = frozenset(int(part) for part in raw.split(",") if part.isdecimal())
-    if not ids:
-        raise RuntimeError("non-empty server-side GitHub ID allowlist required")
-    MCPHandler.allowed_ids = ids
     resource = os.environ.get("SOLVERIT_MCP_RESOURCE_URL", "")
     issuer = os.environ.get("SOLVERIT_OAUTH_ISSUER_URL", "")
     if bool(resource) != bool(issuer):
