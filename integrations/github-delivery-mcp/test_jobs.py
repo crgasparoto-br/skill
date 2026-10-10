@@ -1,8 +1,8 @@
 """Credential-free tests of durable job state and actor isolation."""
 import hashlib
-import os
 import tempfile
 import unittest
+from pathlib import Path
 
 from jobs import JobConflictError, JobStore
 
@@ -14,14 +14,14 @@ class JobStoreTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.path = os.path.join(self.temp.name, "jobs.sqlite3")
+        self.path = str(Path(self.temp.name) / "jobs.sqlite3")
         self.store = JobStore(self.path)
 
     def create(self, **overrides):
-        args = dict(actor="trusted", key="attempt-1", payload_hash=DIGEST,
-                    repo="crgasparoto-br/training-system", issue_number=88,
-                    branch="feat/88-controlled-delivery", base_sha=SHA,
-                    expected_head=SHA)
+        args = {"actor": "trusted", "key": "attempt-1", "payload_hash": DIGEST,
+                "repo": "crgasparoto-br/training-system", "issue_number": 88,
+                "branch": "feat/88-controlled-delivery", "base_sha": SHA,
+                "expected_head": SHA}
         args.update(overrides)
         return self.store.create(**args)
 
