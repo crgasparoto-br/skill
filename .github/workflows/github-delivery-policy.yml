@@ -27,4 +27,4 @@ jobs:
           python-version: "3.12"
       - name: Offline security tests
         working-directory: integrations/github-delivery-mcp
-        run: python -m unittest -v test_policy.py
+        run: python -m unittest discover -v -p 'test_*.py'
