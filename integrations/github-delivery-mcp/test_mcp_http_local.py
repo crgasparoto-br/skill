@@ -71,9 +71,9 @@ class HTTPMCPTests(unittest.TestCase):
         status, _ = self.request(payload, h)
         self.assertEqual(status, 503)
 
-    def test_invalid_body_rejected(self):
+    def test_invalid_body_cannot_bypass_missing_policy(self):
         status, _ = self.request([], self.headers())
-        self.assertEqual(status, 400)
+        self.assertEqual(status, 503)
 
 if __name__ == "__main__":
     unittest.main()
