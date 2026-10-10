@@ -363,7 +363,7 @@ def main() -> int:
         for path in ROOT.iterdir()
         if path.is_dir()
         and not path.name.startswith(".")
-        and path.name not in {"adapters", "config", "docs", "evals", "scripts", "schemas", "tests"}
+        and path.name not in {"adapters", "config", "docs", "evals", "scripts", "schemas", "tests", "integrations"}
     }
     missing = expected_skills - actual
     unexpected = actual - expected_skills

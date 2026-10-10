@@ -190,7 +190,7 @@ def validate_contract_sync(root: Path = ROOT) -> list[str]:
 
     # Every versioned skill in the catalog must be represented by a checked contract directory.
     for path in root.iterdir():
-        if path.is_dir() and not path.name.startswith(".") and path.name not in {"adapters", "config", "docs", "evals", "scripts", "schemas", "tests"} and path.name not in skill_ids:
+        if path.is_dir() and not path.name.startswith(".") and path.name not in {"adapters", "config", "docs", "evals", "scripts", "schemas", "tests", "integrations"} and path.name not in skill_ids:
             errors.append(f"unexpected skill directory outside catalog: {path.name}")
 
     errors.extend(validate_shared_files(root))

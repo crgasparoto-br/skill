@@ -1,0 +1,34 @@
+name: Validate GitHub Audit MCP
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authorization:
+    name: Offline authorization tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build read-only MCP image
+        run: docker build -t solverit-github-audit-mcp:ci integrations/github-audit-mcp
+      - name: Test MCP authorization without network
+        run: |
+          docker run --rm --network none \
+            -v "$PWD/integrations/github-audit-mcp/test_authorization.py:/app/test_authorization.py:ro" \
+            -v "$PWD/integrations/github-audit-mcp/test_release_evidence.py:/app/test_release_evidence.py:ro" \
+            -v "$PWD/integrations/github-audit-mcp/verify_release_evidence.py:/app/verify_release_evidence.py:ro" \
+            -v "$PWD/integrations/github-audit-mcp/probe_live_oauth.py:/app/probe_live_oauth.py:ro" \
+            -v "$PWD/integrations/github-audit-mcp/test_live_probe.py:/app/test_live_probe.py:ro" \
+            -v "$PWD/integrations/github-audit-mcp/operational_check.py:/app/operational_check.py:ro" \
+            -v "$PWD/integrations/github-audit-mcp/test_operational_check.py:/app/test_operational_check.py:ro" \
+            --entrypoint python solverit-github-audit-mcp:ci \
+            -m unittest -v test_authorization test_release_evidence test_live_probe test_operational_check
