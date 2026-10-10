@@ -90,7 +90,7 @@ class SignedHTTPTests(unittest.TestCase):
         self.assertEqual(status, 404)
         self.assertEqual(payload["error"]["code"], -32601)
 
-    def test_missing_client_info_rejected(self):
+    def test_missing_client_info_allowed(self):
         # Reuse real HTTP transport, sending a valid token with incomplete metadata.
         import http.client
         conn = http.client.HTTPConnection("127.0.0.1", self.server.server_address[1], timeout=3)
@@ -102,9 +102,15 @@ class SignedHTTPTests(unittest.TestCase):
                       "Authorization": "Bearer " + self.token(),
                       "MCP-Protocol-Version": VERSION, "MCP-Method": "tools/list"})
         response = conn.getresponse()
-        self.assertEqual(response.status, 400)
+        self.assertEqual(response.status, 200)
         response.read()
         conn.close()
+
+    def test_server_discover(self):
+        status, payload = self.send(self.token(), method="server/discover")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["result"]["supportedVersions"], [VERSION])
+        self.assertEqual(payload["result"]["capabilities"], {})
 
     def test_no_policy_fails_closed(self):
         class NoPolicyHandler(MCPHandler):
