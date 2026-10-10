@@ -25,7 +25,7 @@ def _https_url(value: object, *, allow_query: bool = False) -> bool:
     )
 
 
-def validate_authorization_server_metadata(metadata: object, *, expected_issuer: str) -> list[str]:
+def validate_authorization_server_metadata(metadata: object, *, expected_issuer: str, pre_registered_client: bool = False) -> list[str]:
     """Fail closed on missing OAuth 2.1/MCP-interoperability prerequisites."""
     errors: list[str] = []
     if not _https_url(expected_issuer):
@@ -45,11 +45,9 @@ def validate_authorization_server_metadata(metadata: object, *, expected_issuer:
         errors.append("code response type not advertised")
     if "S256" not in metadata.get("code_challenge_methods_supported", []):
         errors.append("PKCE S256 not advertised")
-    if "RS256" not in metadata.get("id_token_signing_alg_values_supported", ["RS256"]):
-        errors.append("RS256 signature support not advertised")
     if not (metadata.get("client_id_metadata_document_supported") is True
             or _https_url(metadata.get("registration_endpoint"))
-            or metadata.get("solverit_pre_registered_client") is True):
+            or pre_registered_client):
         errors.append("no declared client registration strategy")
     return errors
 
@@ -58,13 +56,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--issuer", required=True, help="configured HTTPS OAuth issuer URL")
     parser.add_argument("--metadata-json", required=True, type=Path, help="locally saved sanitized discovery JSON")
+    parser.add_argument("--pre-registered-client", action="store_true", help="operator confirms a client was registered at the AS")
     args = parser.parse_args()
     try:
         data = json.loads(args.metadata_json.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         print(f"OAuth metadata unavailable or invalid: {type(exc).__name__}")
         return 1
-    errors = validate_authorization_server_metadata(data, expected_issuer=args.issuer)
+    errors = validate_authorization_server_metadata(data, expected_issuer=args.issuer, pre_registered_client=args.pre_registered_client)
     for error in errors:
         print(f"BLOCKED: {error}")
     if errors:
