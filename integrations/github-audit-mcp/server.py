@@ -11,6 +11,7 @@ import httpx
 import jwt
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.github import GitHubProvider
+from fastmcp.server.auth import AuthContext
 
 API = "https://api.github.com"
 APP_ID = os.environ["GITHUB_APP_ID"]
@@ -23,6 +24,11 @@ ALLOWED_REPOS = frozenset(
 )
 if not ALLOWED_REPOS or any("/" not in repo or repo.count("/") != 1 for repo in ALLOWED_REPOS):
     raise RuntimeError("ALLOWED_REPOS must contain owner/repository names")
+ALLOWED_GITHUB_USERS = frozenset(
+    u.strip().lower() for u in os.environ.get("ALLOWED_GITHUB_USERS", "").split(",") if u.strip()
+)
+if not ALLOWED_GITHUB_USERS:
+    raise RuntimeError("ALLOWED_GITHUB_USERS is required; refusing unrestricted OAuth")
 if not BASE_URL.startswith("https://"):
     raise RuntimeError("MCP_BASE_URL must use HTTPS")
 
@@ -33,6 +39,14 @@ auth = GitHubProvider(
     base_url=BASE_URL,
 )
 mcp = FastMCP("SolverIT GitHub Auditor", auth=auth)
+
+
+def authorized_github_user(ctx: AuthContext) -> bool:
+    """Deny unless validated OAuth identity belongs to the explicit user allowlist."""
+    if ctx.token is None or not isinstance(ctx.token.claims, dict):
+        return False
+    login = ctx.token.claims.get("login")
+    return isinstance(login, str) and login.lower() in ALLOWED_GITHUB_USERS
 
 
 def _allowed(repo: str) -> tuple[str, str]:
@@ -94,14 +108,14 @@ def _get(repo: str, suffix: str) -> Any:
     return _request(f"/repos/{owner}/{name}/{suffix}", _installation_token(repo))
 
 
-@mcp.tool()
+@mcp.tool(auth=authorized_github_user)
 def list_rulesets(repository: str) -> dict[str, Any]:
     """List repository and inherited rulesets; no writes."""
     data = _get(repository, "rulesets?includes_parents=true&per_page=100")
     return {"repository": repository, "rulesets": data, "pagination_complete": len(data) < 100}
 
 
-@mcp.tool()
+@mcp.tool(auth=authorized_github_user)
 def get_branch_rules(repository: str, branch: str) -> dict[str, Any]:
     """Read effective active rules for an allowlisted branch; no writes."""
     if branch not in ("develop", "main"):
@@ -110,7 +124,7 @@ def get_branch_rules(repository: str, branch: str) -> dict[str, Any]:
     return {"repository": repository, "branch": branch, "rules": data}
 
 
-@mcp.tool()
+@mcp.tool(auth=authorized_github_user)
 def get_branch_protection(repository: str, branch: str) -> dict[str, Any]:
     """Read classic protection. A 404 is not evidence that rulesets are absent."""
     if branch not in ("develop", "main"):
@@ -124,7 +138,7 @@ def get_branch_protection(repository: str, branch: str) -> dict[str, Any]:
     return {"repository": repository, "branch": branch, "classic_protection": data}
 
 
-@mcp.tool()
+@mcp.tool(auth=authorized_github_user)
 def get_ruleset_details(repository: str, ruleset_id: int) -> dict[str, Any]:
     """Inspect checks, enforcement and bypass visibility without inferring missing actors."""
     if ruleset_id <= 0:
