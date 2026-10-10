@@ -5,9 +5,10 @@ Run: python -m unittest discover -s integrations/github-audit-mcp -p 'test_*.py'
 import asyncio
 import os
 import unittest
-import httpx
 from types import SimpleNamespace
 from unittest.mock import patch
+
+import httpx
 
 ENV = {
     "GITHUB_APP_ID": "5257238",
@@ -67,8 +68,7 @@ class AuthorizationTests(unittest.TestCase):
         self.assertEqual(github_api.call_count, 10)
 
     def test_rulesets_api_failure_propagates(self):
-        with patch.object(server, "_get", side_effect=httpx.TimeoutException("timeout")):
-            with self.assertRaises(httpx.TimeoutException):
+        with patch.object(server, "_get", side_effect=httpx.TimeoutException("timeout")), self.assertRaises(httpx.TimeoutException):
                 server.list_rulesets.fn("crgasparoto-br/training-system") if hasattr(server.list_rulesets, "fn") else server.list_rulesets("crgasparoto-br/training-system")
 
     def test_missing_bypass_remains_unknown(self):
@@ -85,8 +85,8 @@ class AuthorizationTests(unittest.TestCase):
         with patch.object(server, "_repository_installation", return_value=123), patch.object(server, "_jwt", return_value="appjwt"), patch.object(server.httpx, "Client") as client:
             response = client.return_value.__enter__.return_value.post.return_value
             response.json.side_effect = [{"token": "first"}, {"token": "second"}]
-            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "first")
-            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "second")
+            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "first")  # noqa: SLF001
+            self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "second")  # noqa: SLF001
             self.assertEqual(response.raise_for_status.call_count, 2)
 
     def test_allowed_identity(self):
