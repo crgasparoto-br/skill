@@ -1,5 +1,6 @@
 """Offline tests for release evidence gate (no real identities or credentials)."""
 import unittest
+
 from verify_release_evidence import CASES, validate
 
 HEAD = "a" * 40
