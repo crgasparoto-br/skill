@@ -1,15 +1,14 @@
 """Restricted offline check adapter; fixed commands only, no untrusted mounts."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
+from pathlib import Path
 import subprocess
 import uuid
-from dataclasses import dataclass
-from pathlib import Path
 
-from sandbox_profile import OFFLINE_CHECK_V1
 from rootless_reconciler import cleanup_container
-
+from sandbox_profile import OFFLINE_CHECK_V1
 ROOTLESS_SOCKET = "/run/user/1004/docker.sock"
 IMAGE = "alpine:3.20"
 CHECKS = {
