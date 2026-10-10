@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+from pathlib import Path
 
 from jobs import JobStore
 from rootless_reconciler import cleanup_container
@@ -20,7 +21,7 @@ NAME_PATTERN = re.compile(r"^solverit-issue88-[0-9a-f]{32}$")
 def recover_local_jobs(database_path: str) -> int:
     if os.geteuid() != 1004:
         raise PermissionError("dedicated worker identity required")
-    if not os.path.exists(SOCKET):
+    if not Path(SOCKET).exists():
         raise RuntimeError("rootless socket unavailable")
     env = {"PATH": "/usr/bin:/bin",
            "DOCKER_HOST": "unix://" + SOCKET,
