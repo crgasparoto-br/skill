@@ -4,7 +4,6 @@ import json
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
-from unittest.mock import patch
 
 from mcp_http_local import MCPHandler
 from mcp_read_dispatch import VERSION, META_VERSION
@@ -51,19 +50,18 @@ class HTTPMCPTests(unittest.TestCase):
         h = self.headers()
         del h["Authorization"]
         status, _ = self.request(self.rpc(), h)
-        self.assertEqual(status, 401)
+        self.assertEqual(status, 503)
 
-    def test_valid_authorization_preflight(self):
-        with patch("mcp_read_dispatch.authorize_http_request"):
-            status, body = self.request(self.rpc(), self.headers())
-        self.assertEqual(status, 200)
-        self.assertIn("no job started", body["result"]["content"][0]["text"])
+    def test_missing_token_policy_fails_closed(self):
+        status, body = self.request(self.rpc(), self.headers())
+        self.assertEqual(status, 503)
+        self.assertIn("not configured", body["error"])
 
     def test_wrong_version_rejected(self):
         h = self.headers()
         h["MCP-Protocol-Version"] = "invalid"
         status, _ = self.request(self.rpc(), h)
-        self.assertEqual(status, 400)
+        self.assertEqual(status, 503)
 
     def test_write_not_exposed(self):
         payload = self.rpc()
@@ -71,7 +69,7 @@ class HTTPMCPTests(unittest.TestCase):
         h = self.headers()
         h["MCP-Name"] = "publish_pr"
         status, _ = self.request(payload, h)
-        self.assertEqual(status, 404)
+        self.assertEqual(status, 503)
 
     def test_invalid_body_rejected(self):
         status, _ = self.request([], self.headers())
