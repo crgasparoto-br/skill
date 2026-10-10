@@ -43,3 +43,14 @@ Prerequisites: Python 3.12 or Docker, reverse proxy with trusted HTTPS certifica
 6. Require an independent reviewer to inspect the exact PR HEAD, matching offline workflow, dependency resolution and recorded live evidence before approval. **Without both a permitted and a denied live session, status must remain NOT VALIDATED.**
 
 Direct dependencies are pinned in `requirements.txt`; a complete transitive hash lockfile is not yet provided. Deployment MUST resolve and record the complete dependency tree and image digest in the release evidence. Treat changed transitive versions as a new deployment requiring revalidation.
+
+
+## Fail-closed release evidence gate
+
+The repository includes `verify_release_evidence.py`, which validates the **structure** of independently collected, redacted evidence. It does not perform an OAuth login or establish that the submitted evidence is authentic. Never create a fabricated PASS record to satisfy the gate.
+
+After obtaining evidence from **real** permitted and unpermitted GitHub identities, record a JSON document outside the repository with `pr_head` (the exact 40-character HEAD), `image_digest` (`sha256:<64-hex>`), `dependency_lock_sha256` (64-character hex), and a `cases` object. Every case needs `result: "PASS"`, `kind: "LIVE"`, `timestamp_utc` (UTC `YYYY-MM-DDTHH:MM:SSZ`) and a redacted `evidence_reference`. Required case identifiers are defined in `CASES` in the script. The reviewer must independently confirm each underlying observation and the reported hashes.
+
+Run `python integrations/github-audit-mcp/verify_release_evidence.py /secure/path/evidence.json <exact-40-character-PR-HEAD>`. Exit code 1 blocks sign-off for missing/invalid entries; exit code 0 **only** means the submitted structure is complete. The CI unit tests use synthetic records and cannot certify production OAuth. Never commit the evidence document, login credentials or access tokens.
+
+A complete, hash-locked transitive dependency manifest must be produced and consumed by the Docker build before declaring deployment reproducible. The current `requirements.txt` pins only direct dependencies; **do not claim the lockfile requirement is complete**. Independent verification of live negative OAuth, restart, expiration, rotation, image digest and transitive locking is still mandatory before merge.
