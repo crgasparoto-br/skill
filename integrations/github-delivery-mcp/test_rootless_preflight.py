@@ -3,6 +3,7 @@ import subprocess
 import unittest
 from pathlib import Path
 
+
 class RootlessPreflightTests(unittest.TestCase):
     def test_missing_socket_fails_closed(self):
         # An intentionally nonexistent socket proves the same precondition
