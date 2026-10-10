@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 
 from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejectedError, verify_mcp_access_token
+from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
 from mcp_read_dispatch import VERSION
 from oauth_resource_metadata import resource_metadata, authenticate_challenge
 MAX_BODY = 16384
@@ -71,7 +72,10 @@ class MCPHandler(BaseHTTPRequestHandler):
             self._send(503, {"error": "MCP token validation not configured"})
             return
         try:
-            verify_mcp_access_token(bearer, self.token_policy)
+            if isinstance(self.token_policy, CachedJWKSVerifier):
+                self.token_policy.verify(bearer)
+            else:
+                verify_mcp_access_token(bearer, self.token_policy)
         except MCPTokenRejectedError:
             self._send(401, {"error": "invalid MCP access token"},
                        headers={"WWW-Authenticate": authenticate_challenge(
@@ -158,7 +162,16 @@ def main():
     key_path = os.environ.get("SOLVERIT_MCP_JWT_PUBLIC_KEY_FILE", "")
     key_id = os.environ.get("SOLVERIT_MCP_JWT_KEY_ID", "")
     subjects = frozenset(v for v in os.environ.get("SOLVERIT_MCP_SUBJECTS", "").split(",") if v)
-    if resource and issuer and key_path and key_id and subjects:
+    jwks_uri = os.environ.get("SOLVERIT_OAUTH_JWKS_URI", "")
+    if jwks_uri and key_path:
+        raise RuntimeError("Select JWKS or pinned key, not both")
+    if jwks_uri and resource and issuer and subjects:
+        verifier = CachedJWKSVerifier(JWKSVerifierPolicy(
+            issuer=issuer, audience=resource, jwks_uri=jwks_uri,
+            allowed_subjects=subjects))
+        verifier.refresh()  # Fail startup closed if configured issuer keys cannot be loaded.
+        MCPHandler.token_policy = verifier
+    elif resource and issuer and key_path and key_id and subjects:
         with Path(key_path).open(encoding="ascii") as pem_file:
             MCPHandler.token_policy = MCPTokenPolicy(
                 issuer=issuer, audience=resource, public_key_pem=pem_file.read(),
