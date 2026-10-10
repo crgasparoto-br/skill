@@ -2,9 +2,10 @@
 
 Run: python -m unittest discover -s integrations/github-audit-mcp -p 'test_*.py'
 """
-import os
 import asyncio
+import os
 import unittest
+
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -58,11 +59,11 @@ class AuthorizationTests(unittest.TestCase):
         self.assertFalse(server.authorized_github_user(SimpleNamespace(token=None)))
 
     def test_allowed_repo(self):
-        self.assertEqual(server._allowed("CRGASPAROTO-BR/TRAINING-SYSTEM"), ("crgasparoto-br", "training-system"))
+        self.assertEqual(server.allowed_repository("CRGASPAROTO-BR/TRAINING-SYSTEM"), ("crgasparoto-br", "training-system"))
 
     def test_blocked_repo(self):
         with self.assertRaises(ValueError):
-            server._allowed("another-owner/private")
+            server.allowed_repository("another-owner/private")
 
 
 if __name__ == "__main__":
