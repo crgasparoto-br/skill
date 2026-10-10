@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from urllib.parse import urlsplit
 
 import jwt
+
 class MCPTokenRejectedError(ValueError):
     pass
 
