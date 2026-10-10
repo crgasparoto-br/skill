@@ -28,7 +28,7 @@ class HTTPFramingTests(unittest.TestCase):
         connection.putheader("Host", "127.0.0.1")
         for key, val in extra:
             connection.putheader(key, val)
-        connection.endheaders()
+        connection.endheaders(b"{}" if ("Content-Length", "2") in extra else None)
         response = connection.getresponse()
         status = response.status
         response.read()
@@ -39,7 +39,8 @@ class HTTPFramingTests(unittest.TestCase):
         self.assertEqual(self.send([("Host", "attacker.invalid")]), 403)
 
     def test_duplicate_content_length_denied(self):
-        self.assertEqual(self.send([("Content-Length", "0"),
+        self.assertEqual(self.send([("Content-Type", "application/json"),
+                                    ("Content-Length", "0"),
                                     ("Content-Length", "0")]), 400)
 
     def test_transfer_encoding_denied(self):
