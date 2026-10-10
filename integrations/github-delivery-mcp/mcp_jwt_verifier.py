@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from urllib.parse import urlsplit
 
 import jwt
-class MCPTokenRejected(ValueError):
+class MCPTokenRejectedError(ValueError):
     pass
 
 @dataclass(frozen=True)
@@ -35,13 +35,13 @@ class MCPTokenPolicy:
 
 def verify_mcp_access_token(token: str, policy: MCPTokenPolicy) -> str:
     if not isinstance(token, str) or not 10 <= len(token) <= 8192:
-        raise MCPTokenRejected("Invalid MCP token")
+        raise MCPTokenRejectedError("Invalid MCP token")
     try:
         header = jwt.get_unverified_header(token)
         if header.get("alg") != "RS256" or header.get("kid") != policy.key_id:
-            raise MCPTokenRejected("Unexpected signing algorithm or key")
+            raise MCPTokenRejectedError("Unexpected signing algorithm or key")
         if any(k in header for k in ("jku", "jwk", "x5u", "x5c", "crit")):
-            raise MCPTokenRejected("Untrusted key header")
+            raise MCPTokenRejectedError("Untrusted key header")
         claims = jwt.decode(
             token, policy.public_key_pem,
             algorithms=["RS256"],
@@ -52,10 +52,10 @@ def verify_mcp_access_token(token: str, policy: MCPTokenPolicy) -> str:
         )
         subject = claims["sub"]
         if not isinstance(subject, str) or subject not in policy.allowed_subjects:
-            raise MCPTokenRejected("Subject not authorized")
+            raise MCPTokenRejectedError("Subject not authorized")
         scope = claims.get("scope")
         if not isinstance(scope, str) or policy.required_scope not in scope.split():
-            raise MCPTokenRejected("Insufficient scope")
+            raise MCPTokenRejectedError("Insufficient scope")
         return subject
     except (jwt.PyJWTError, ValueError, TypeError, KeyError) as exc:
-        raise MCPTokenRejected("MCP token rejected") from exc
+        raise MCPTokenRejectedError("MCP token rejected") from exc
