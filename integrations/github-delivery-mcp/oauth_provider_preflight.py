@@ -37,6 +37,9 @@ def validate_authorization_server_metadata(metadata: object, *, expected_issuer:
     for name in ("authorization_endpoint", "token_endpoint", "jwks_uri"):
         if not _https_url(metadata.get(name)):
             errors.append(f"{name} must be an HTTPS URL")
+    for field in ("grant_types_supported", "response_types_supported", "code_challenge_methods_supported"):
+        if not isinstance(metadata.get(field), list) or not all(isinstance(v, str) for v in metadata[field]):
+            return [f"{field} must be an array of strings"]
     if "authorization_code" not in metadata.get("grant_types_supported", []):
         errors.append("authorization_code grant not advertised")
     if "refresh_token" not in metadata.get("grant_types_supported", []):
