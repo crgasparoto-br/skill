@@ -1,9 +1,8 @@
 """Offline policy invariants: profiles cannot silently weaken confinement."""
-from dataclasses import replace
 import unittest
+from dataclasses import replace
 
 from sandbox_profile import OFFLINE_CHECK_V1
-
 
 class SandboxProfileTests(unittest.TestCase):
     def test_reviewed_defaults(self):
