@@ -64,6 +64,8 @@ def dispatch(request: dict, *, protocol_header: str, method_header: str,
             return _error(request_id, -32001, "Unauthorized", 401)
         return MCPResponse(200, {"jsonrpc": "2.0", "id": request_id,
                                  "result": {"tools": TOOLS}})
+    if not isinstance(bearer, str) or not bearer.strip():
+        return _error(request_id, -32001, "Unauthorized", 401)
     if method != "tools/call":
         return _error(request_id, -32601, "Method not found", 404)
     if params.get("name") != "solverit_authorize_read" or name_header != params.get("name"):
