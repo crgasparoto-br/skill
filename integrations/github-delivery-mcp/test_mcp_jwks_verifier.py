@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
-
 from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
 from mcp_jwt_verifier import MCPTokenRejectedError
 
