@@ -46,6 +46,19 @@ jobs:
         if: failure()
         run: |
           ruff check --select I001 --diff integrations/github-delivery-mcp || true
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+          root = Path.cwd()
+          sys.path.insert(0, str(root / "higienizar-repositorio/scripts"))
+          from hygiene_scan import build_report, load_policy
+          report, _ = build_report(root, load_policy(root))
+          for group in report.get("classes", []):
+              if group.get("name") == "dead-symbol":
+                  for item in group.get("findings", []):
+                      if item.get("state") == "open":
+                          print("OPEN DEAD SYMBOL:", item)
+          PY
 
       - name: Validate machine-readable catalog
         run: python scripts/validate_catalog.py --root .
