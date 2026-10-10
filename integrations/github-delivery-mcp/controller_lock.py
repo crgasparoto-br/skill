@@ -12,6 +12,7 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 
+
 @contextmanager
 def controller_lock(lock_path: str):
     parent = Path(lock_path).resolve().parent
