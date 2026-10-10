@@ -3,9 +3,10 @@ import os
 import tempfile
 import unittest
 from unittest.mock import patch
-from offline_executor import CheckResult
+
 from jobs import JobStore
 from local_job_runner import submit_offline_smoke
+from offline_executor import CheckResult
 
 class LocalJobRunnerTests(unittest.TestCase):
     def setUp(self):
