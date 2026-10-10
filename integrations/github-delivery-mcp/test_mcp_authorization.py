@@ -1,7 +1,7 @@
 """Tests of server-side MCP authorization decisions. No live OAuth/GitHub."""
 import unittest
 
-from policy import PolicyDenied, VerifiedPrincipal
+from policy import PolicyDeniedError, VerifiedPrincipal
 from mcp_authorization import authorize_operation, authorize_token_operation
 
 SHA = "a" * 40
@@ -24,30 +24,30 @@ class MCPAuthorizationTests(unittest.TestCase):
         authorize_token_operation(decision, requested_operation="read-issue")
 
     def test_unverified_oauth_denied(self):
-        with self.assertRaises(PolicyDenied):
+        with self.assertRaises(PolicyDeniedError):
             self.allowed(VerifiedPrincipal("github:12345",
                          frozenset({"entregar-issue"}), False))
 
     def test_other_user_denied(self):
-        with self.assertRaises(PolicyDenied):
+        with self.assertRaises(PolicyDeniedError):
             self.allowed(VerifiedPrincipal("github:999",
                          frozenset({"entregar-issue"}), True))
 
     def test_missing_profile_denied(self):
-        with self.assertRaises(PolicyDenied):
+        with self.assertRaises(PolicyDeniedError):
             self.allowed(VerifiedPrincipal("github:12345", frozenset(), True))
 
     def test_unlisted_repository_denied(self):
-        with self.assertRaises(PolicyDenied):
+        with self.assertRaises(PolicyDeniedError):
             self.allowed(repository="crgasparoto-br/solverfin")
 
     def test_read_decision_cannot_grant_write_token(self):
         decision = self.allowed()
-        with self.assertRaises(PolicyDenied):
+        with self.assertRaises(PolicyDeniedError):
             authorize_token_operation(decision, requested_operation="publish-pr")
 
     def test_empty_allowlist_denied(self):
-        with self.assertRaises(PolicyDenied):
+        with self.assertRaises(PolicyDeniedError):
             authorize_operation(
                 principal=VerifiedPrincipal("github:12345",
                     frozenset({"entregar-issue"}), True),
