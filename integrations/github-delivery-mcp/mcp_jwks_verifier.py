@@ -9,7 +9,7 @@ import json
 import time
 from dataclasses import dataclass
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import Request
 
 import jwt
 
