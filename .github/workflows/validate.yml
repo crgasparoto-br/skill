@@ -42,6 +42,11 @@ jobs:
       - name: Validate catalog
         run: python scripts/validate_repository.py
 
+      - name: Diagnostic Ruff import patch (read-only; CI remains failed)
+        if: failure()
+        run: |
+          ruff check --select I001 --diff integrations/github-delivery-mcp || true
+
       - name: Validate machine-readable catalog
         run: python scripts/validate_catalog.py --root .
 
