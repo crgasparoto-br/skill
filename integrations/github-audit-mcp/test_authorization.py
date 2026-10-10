@@ -89,6 +89,21 @@ class AuthorizationTests(unittest.TestCase):
             self.assertEqual(server._installation_token("crgasparoto-br/training-system"), "second")  # noqa: SLF001 - verify token renewal behavior
             self.assertEqual(response.raise_for_status.call_count, 2)
 
+    def test_disallowed_repository_never_calls_github(self):
+        with patch.object(server, "_request") as request:
+            with self.assertRaises(ValueError):
+                server._get("unauthorized/repo", "rulesets")
+            request.assert_not_called()
+
+    def test_invalid_branch_never_calls_github(self):
+        for name in ("get_branch_rules", "get_branch_protection"):
+            tool = getattr(server, name)
+            call = tool.fn if hasattr(tool, "fn") else tool
+            with self.subTest(tool=name), patch.object(server, "_get") as github_api:
+                with self.assertRaises(ValueError):
+                    call("crgasparoto-br/training-system", "unauthorized")
+                github_api.assert_not_called()
+
     def test_allowed_identity(self):
         ctx = SimpleNamespace(token=SimpleNamespace(claims={"login": "CrGasparoto-Br"}))
         self.assertTrue(server.authorized_github_user(ctx))
