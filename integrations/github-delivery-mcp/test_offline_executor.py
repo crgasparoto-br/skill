@@ -52,7 +52,7 @@ class OfflineExecutorTests(unittest.TestCase):
              patch.object(executor, "cleanup_container",
                           side_effect=RuntimeError("container survived")):
             with self.assertRaisesRegex(RuntimeError, "survived"):
-            executor.run_allowed_check("smoke-v1")
+                executor.run_allowed_check("smoke-v1")
 
 if __name__ == "__main__":
     unittest.main()
