@@ -37,6 +37,7 @@ jobs:
             test_mcp_oauth_discovery_http \
             test_mcp_http_signed_jwt \
             test_mcp_jwt_verifier \
+            test_mcp_jwks_verifier \
             test_oauth_resource_metadata \
             test_mcp_http_framing \
             test_mcp_independent_wire_client \
