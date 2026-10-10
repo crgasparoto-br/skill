@@ -1,0 +1,31 @@
+name: Validate GitHub Audit MCP
+
+on:
+  push:
+    paths:
+      - "integrations/github-audit-mcp/**"
+      - ".github/workflows/github-audit-mcp.yml"
+  pull_request:
+    paths:
+      - "integrations/github-audit-mcp/**"
+      - ".github/workflows/github-audit-mcp.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  authorization:
+    name: Offline authorization tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build read-only MCP image
+        run: docker build -t solverit-github-audit-mcp:ci integrations/github-audit-mcp
+      - name: Test MCP authorization without network
+        run: |
+          docker run --rm --network none \
+            -v "$PWD/integrations/github-audit-mcp/test_authorization.py:/app/test_authorization.py:ro" \
+            --entrypoint python solverit-github-audit-mcp:ci \
+            -m unittest -v test_authorization
