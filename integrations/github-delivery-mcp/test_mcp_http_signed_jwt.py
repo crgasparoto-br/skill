@@ -48,7 +48,7 @@ class SignedHTTPTests(unittest.TestCase):
 
     def send(self, token=None, method="tools/list"):
         payload = {"jsonrpc": "2.0", "id": 1, "method": method,
-                   "params": {"_meta": {META_VERSION: VERSION}}}
+                   "params": {"_meta": {META_VERSION: VERSION, "io.modelcontextprotocol/clientCapabilities": {}}}}
         headers = {"Content-Type": "application/json", "MCP-Protocol-Version": VERSION,
                    "MCP-Method": method}
         if token is not None:
@@ -78,7 +78,17 @@ class SignedHTTPTests(unittest.TestCase):
         self.assertEqual(self.send(self.token(exp=1))[0], 401)
 
     def test_no_write_or_tool_call_exposed(self):
-        self.assertEqual(self.send(self.token(), method="tools/call")[0], 403)
+        self.assertEqual(self.send(self.token(), method="tools/call")[0], 404)
+
+    def test_discovery_has_server_info(self):
+        status, payload = self.send(self.token())
+        self.assertEqual(status, 200)
+        self.assertIn("io.modelcontextprotocol/serverInfo", payload["result"]["_meta"])
+
+    def test_rejected_method_is_jsonrpc_error(self):
+        status, payload = self.send(self.token(), method="tools/call")
+        self.assertEqual(status, 404)
+        self.assertEqual(payload["error"]["code"], -32601)
 
     def test_no_policy_fails_closed(self):
         class NoPolicyHandler(MCPHandler):
