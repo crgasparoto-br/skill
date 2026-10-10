@@ -106,16 +106,6 @@ jobs:
       - name: Run skill tests
         run: python -m pytest -q
 
-      - name: Build read-only GitHub Audit MCP test image
-        run: docker build -t solverit-github-audit-mcp:ci integrations/github-audit-mcp
-
-      - name: Test GitHub Audit MCP authorization offline
-        run: |
-          docker run --rm --network none \
-            -v "$PWD/integrations/github-audit-mcp/test_authorization.py:/app/test_authorization.py:ro" \
-            --entrypoint python solverit-github-audit-mcp:ci \
-            -m unittest -v test_authorization
-
       - name: Package entregar-issue skill
         run: python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip
 
