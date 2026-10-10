@@ -1,4 +1,5 @@
 """Unit tests for fixed offline execution contract (no Docker required)."""
+import subprocess
 import unittest
 from unittest.mock import patch, Mock
 import offline_executor as executor
@@ -26,20 +27,32 @@ class OfflineExecutorTests(unittest.TestCase):
         args = run.call_args.args[0]
         for required in ("--network", "none", "--cap-drop", "ALL",
                          "--read-only", "--pids-limit", "64",
-                         "--user", "65532:65532"):
+                         "--user", "65532:65532", "--name"):
             self.assertIn(required, args)
         self.assertEqual(run.call_args.kwargs["timeout"], 60)
         self.assertNotIn("/var/run/docker.sock", " ".join(args))
 
-    def test_timeout_is_not_misreported_as_success(self):
-        import subprocess
+    def test_timeout_triggers_cleanup(self):
         with patch.object(executor.os, "geteuid", return_value=1004), \
              patch.object(executor.os.path, "exists", return_value=True), \
              patch.object(executor.subprocess, "run",
-                          side_effect=subprocess.TimeoutExpired(["docker"], 60)):
+                          side_effect=subprocess.TimeoutExpired(["docker"], 60)), \
+             patch.object(executor, "cleanup_container") as cleanup:
             outcome = executor.run_allowed_check("smoke-v1")
         self.assertTrue(outcome.timed_out)
         self.assertEqual(outcome.exit_code, 124)
+        cleanup.assert_called_once()
+        self.assertTrue(cleanup.call_args.args[0].startswith("solverit-issue88-"))
+
+    def test_cleanup_failure_does_not_report_success(self):
+        with patch.object(executor.os, "geteuid", return_value=1004), \
+             patch.object(executor.os.path, "exists", return_value=True), \
+             patch.object(executor.subprocess, "run",
+                          side_effect=subprocess.TimeoutExpired(["docker"], 60)), \
+             patch.object(executor, "cleanup_container",
+                          side_effect=RuntimeError("container survived")):
+            with self.assertRaisesRegex(RuntimeError, "survived"):
+                executor.run_allowed_check("smoke-v1")
 
 if __name__ == "__main__":
     unittest.main()
