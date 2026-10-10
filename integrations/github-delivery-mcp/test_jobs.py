@@ -4,7 +4,7 @@ import os
 import tempfile
 import unittest
 
-from jobs import JobConflict, JobStore
+from jobs import JobConflictError, JobStore
 
 SHA = "a" * 40
 DIGEST = hashlib.sha256(b"request").hexdigest()
@@ -29,14 +29,14 @@ class JobStoreTests(unittest.TestCase):
         job = self.create()
         self.assertEqual(self.create().job_id, job.job_id)
         self.assertEqual(JobStore(self.path).read(job.job_id, "trusted"), job)
-        with self.assertRaises(JobConflict):
+        with self.assertRaises(JobConflictError):
             self.create(payload_hash="b" * 64)
 
     def test_actor_isolation(self):
         job = self.create()
         with self.assertRaises(KeyError):
             self.store.read(job.job_id, "stranger")
-        with self.assertRaises(JobConflict):
+        with self.assertRaises(JobConflictError):
             self.store.transition(job.job_id, "stranger", "queued", "running")
 
     def test_transitions_and_recovery(self):
@@ -44,12 +44,12 @@ class JobStoreTests(unittest.TestCase):
         self.store.transition(job.job_id, "trusted", "queued", "running")
         self.assertEqual(JobStore(self.path).recover_interrupted(), 1)
         self.assertEqual(self.store.read(job.job_id, "trusted").status, "timed_out")
-        with self.assertRaises(JobConflict):
+        with self.assertRaises(JobConflictError):
             self.store.transition(job.job_id, "trusted", "running", "succeeded")
         self.store.transition(job.job_id, "trusted", "timed_out", "queued")
         self.store.transition(job.job_id, "trusted", "queued", "running")
         self.store.transition(job.job_id, "trusted", "running", "succeeded")
-        with self.assertRaises(JobConflict):
+        with self.assertRaises(JobConflictError):
             self.store.transition(job.job_id, "trusted", "succeeded", "queued")
 
 
