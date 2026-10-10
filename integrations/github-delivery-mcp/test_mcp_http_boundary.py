@@ -12,7 +12,7 @@ class HTTPBoundaryTests(HTTPMCPTests):
     def test_invalid_host_rejected(self):
         HTTPMCPTests.server.allow_ephemeral_host = False
         try:
-            status, _ = self.request(self.rpc(), self.headers())
+            status, _ = self.request(self.rpc(), {**self.headers(), "Host": "attacker.example"})
             self.assertEqual(status, 403)
         finally:
             HTTPMCPTests.server.allow_ephemeral_host = True
