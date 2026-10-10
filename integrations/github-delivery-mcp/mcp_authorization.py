@@ -13,6 +13,8 @@ from policy import DeliveryPolicy, PolicyDeniedError, VerifiedPrincipal
 PILOT_REPOSITORY = "crgasparoto-br/training-system"
 PILOT_PROFILE = "entregar-issue"
 
+
+
 @dataclass(frozen=True)
 class AuthorizedOperation:
     subject: str
