@@ -92,7 +92,7 @@ class AuthorizationTests(unittest.TestCase):
     def test_disallowed_repository_never_calls_github(self):
         with patch.object(server, "_request") as request:
             with self.assertRaises(ValueError):
-                server._get("unauthorized/repo", "rulesets")
+                server._get("unauthorized/repo", "rulesets")  # noqa: SLF001 - assert outbound request guard
             request.assert_not_called()
 
     def test_invalid_branch_never_calls_github(self):
