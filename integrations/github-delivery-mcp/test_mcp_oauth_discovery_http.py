@@ -6,6 +6,7 @@ import unittest
 from http.server import ThreadingHTTPServer
 
 from mcp_http_local import MCPHandler
+from mcp_jwt_verifier import MCPTokenPolicy
 from oauth_resource_metadata import resource_metadata
 from mcp_read_dispatch import VERSION, META_VERSION
 
@@ -17,7 +18,10 @@ class OAuthDiscoveryHTTPTests(unittest.TestCase):
                 resource_url="https://delivery.example.test/mcp",
                 issuer_url="https://identity.example.test")
             oauth_metadata_url = "https://delivery.example.test/.well-known/oauth-protected-resource"
-            allowed_ids = frozenset({123})
+            token_policy = MCPTokenPolicy(issuer="https://identity.example.test",
+                audience="https://delivery.example.test/mcp",
+                public_key_pem="TEST ONLY UNUSED", key_id="test-key",
+                allowed_subjects=frozenset({"test-user"}))
         cls.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         cls.server.allow_ephemeral_host = True
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
