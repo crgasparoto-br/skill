@@ -47,7 +47,7 @@ class OAuthProviderReadinessTests(unittest.TestCase):
                 with self.subTest(field=field, invalid=invalid):
                     metadata = {**VALID, field: invalid}
                     self.assertTrue(validate_authorization_server_metadata(
-                        metadata, expected_issuer=ISSUER)))
+                        metadata, expected_issuer=ISSUER))
 
     def test_missing_refresh_grant_blocks_chatgpt_readiness(self):
         metadata = {**VALID, "grant_types_supported": ["authorization_code"]}
