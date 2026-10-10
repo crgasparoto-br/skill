@@ -6,7 +6,6 @@ The issuer must be a separately configured, standards-compliant authority.
 This module does not enable OAuth or network exposure.
 """
 from urllib.parse import urlsplit
-
 def resource_metadata(*, resource_url: str, issuer_url: str) -> dict:
     resource = urlsplit(resource_url)
     issuer = urlsplit(issuer_url)
