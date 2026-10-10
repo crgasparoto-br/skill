@@ -1,7 +1,7 @@
 """Offline integration tests for state transitions; never starts Docker."""
-import os
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from jobs import JobStore
@@ -11,7 +11,7 @@ from offline_executor import CheckResult
 class LocalJobRunnerTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.path = os.path.join(self.temp.name, "jobs.sqlite3")
+        self.path = str(Path(self.temp.name) / "jobs.sqlite3")
 
     def tearDown(self):
         self.temp.cleanup()
