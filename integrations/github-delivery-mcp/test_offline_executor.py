@@ -8,14 +8,12 @@ import offline_executor as executor
 
 class OfflineExecutorTests(unittest.TestCase):
     def test_rejects_unlisted_check_before_side_effects(self):
-        with patch.object(executor.subprocess, "run") as run:
-            with self.assertRaises(ValueError):
+        with patch.object(executor.subprocess, "run") as run, self.assertRaises(ValueError):
                 executor.run_allowed_check("sh -c 'cat /etc/shadow'")
             run.assert_not_called()
 
     def test_rejects_wrong_identity(self):
-        with patch.object(executor.os, "geteuid", return_value=0):
-            with self.assertRaises(PermissionError):
+        with patch.object(executor.os, "geteuid", return_value=0), self.assertRaises(PermissionError):
                 executor.run_allowed_check("smoke-v1")
 
     def test_fixed_profile_and_bounded_output(self):
