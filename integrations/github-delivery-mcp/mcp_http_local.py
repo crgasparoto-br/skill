@@ -5,15 +5,14 @@ production quotas and compatibility certification remain outside this pilot.
 """
 from __future__ import annotations
 
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
 from pathlib import Path
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejected, verify_mcp_access_token
 from mcp_read_dispatch import VERSION
 from oauth_resource_metadata import resource_metadata, authenticate_challenge
-from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejected, verify_mcp_access_token
-
 MAX_BODY = 16384
 
 class MCPHandler(BaseHTTPRequestHandler):
