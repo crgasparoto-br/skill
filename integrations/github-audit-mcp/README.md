@@ -54,3 +54,18 @@ After obtaining evidence from **real** permitted and unpermitted GitHub identiti
 Run `python integrations/github-audit-mcp/verify_release_evidence.py /secure/path/evidence.json <exact-40-character-PR-HEAD> integrations/github-audit-mcp/requirements.lock.txt sha256:<observed-deployed-image-digest>`. Obtain the final digest independently from the deployed runtime (not from the submitted JSON). The validator compares the actual lockfile SHA-256 and the independently observed image digest against the recorded evidence; it also rejects invalid and future-dated UTC timestamps. Exit code 1 blocks sign-off for missing/invalid entries; exit code 0 **only** means the submitted structure is complete. The CI unit tests use synthetic records and cannot certify production OAuth. Never commit the evidence document, login credentials or access tokens.
 
 The Docker build now requires the committed transitive `requirements.lock.txt` with hashes; check the `Generate MCP dependency lock artifact` workflow and container build on the exact PR HEAD. This only proves repeatability of Python package selection, not a successful live OAuth audit. Independent verification of live negative OAuth, restart, expiration, rotation, image digest and transitive locking is still mandatory before merge. A structurally valid evidence file or green CI does not constitute operational approval.
+
+
+## Live two-identity probe (operator-run, secrets stay outside Git)
+
+The optional `probe_live_oauth.py` tests real MCP sessions over HTTPS; it is **not** executed in CI because CI has no independent OAuth identities. Obtain two distinct MCP-issued bearer session tokens, one from an allowlisted GitHub identity and one from a separate unapproved identity. Store each in a separate root-protected file outside the checkout. Never provide GitHub App installation tokens or GitHub OAuth provider tokens in their place.
+
+```sh
+python integrations/github-audit-mcp/probe_live_oauth.py \\
+  --endpoint https://audit-mcp.solveritconsultoria.com.br/mcp \\
+  --repository crgasparoto-br/skill \\
+  --allowed-token-file /secure/allowed-mcp-token \\
+  --denied-token-file /secure/denied-mcp-token
+```
+
+The tool emits only PASS/NOT_VALIDATED and per-case boolean results; it does not output bearer tokens. A negative identity rejected at initial OAuth/MCP authentication is **not** sufficient to demonstrate application-layer authorization denial and remains NOT_VALIDATED. Separately verify from server-side redacted request logs that denied probes produced zero outbound GitHub App installation calls. Perform restart, expiry and credential-rotation scenarios with fresh real sessions and preserve the resulting redacted operator evidence outside the repository. Do not mark any release case as LIVE PASS solely based on an offline test or this client-side probe.
