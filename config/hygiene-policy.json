@@ -62,7 +62,8 @@
       "state": "gated",
       "import_name_map": {
         "pyyaml": "yaml",
-        "pip-audit": "pip_audit"
+        "pip-audit": "pip_audit",
+        "pyjwt": "jwt"
       },
       "tool_dependencies": [
         "ruff",
