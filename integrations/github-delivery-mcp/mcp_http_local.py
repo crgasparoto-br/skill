@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from mcp_read_dispatch import VERSION
@@ -62,7 +63,7 @@ class MCPHandler(BaseHTTPRequestHandler):
             self._send(400, {"error": "invalid json"})
             return
         authorization = self.headers.get("Authorization", "")
-        if len(authorization) > 1200 or "," in authorization or self.headers.get_all("Authorization", []) and len(self.headers.get_all("Authorization", [])) != 1:
+        if (len(authorization) > 1200 or "," in authorization or (self.headers.get_all("Authorization", []) and len(self.headers.get_all("Authorization", [])) != 1)):
             self._send(401, {"error": "invalid authorization header"})
             return
         bearer = authorization[7:] if authorization.startswith("Bearer ") else ""
@@ -71,7 +72,7 @@ class MCPHandler(BaseHTTPRequestHandler):
             self._send(503, {"error": "MCP token validation not configured"})
             return
         try:
-            subject = verify_mcp_access_token(bearer, self.token_policy)
+            verify_mcp_access_token(bearer, self.token_policy)
         except MCPTokenRejected:
             self._send(401, {"error": "invalid MCP access token"},
                        headers={"WWW-Authenticate": authenticate_challenge(
@@ -159,7 +160,7 @@ def main():
     key_id = os.environ.get("SOLVERIT_MCP_JWT_KEY_ID", "")
     subjects = frozenset(v for v in os.environ.get("SOLVERIT_MCP_SUBJECTS", "").split(",") if v)
     if resource and issuer and key_path and key_id and subjects:
-        with open(key_path, "r", encoding="ascii") as pem_file:
+        with Path(key_path).open(encoding="ascii") as pem_file:
             MCPHandler.token_policy = MCPTokenPolicy(
                 issuer=issuer, audience=resource, public_key_pem=pem_file.read(),
                 key_id=key_id, allowed_subjects=subjects)
