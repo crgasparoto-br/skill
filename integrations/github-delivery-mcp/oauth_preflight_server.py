@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 
 from github_oauth_identity import verify_github_user_token, IdentityVerificationError
 from mcp_authorization import authorize_operation
-from policy import PolicyDenied
+from policy import PolicyDeniedError
 MAX_BODY = 4096
 BIND_ADDRESS = "127.0.0.1"
 
@@ -25,7 +25,7 @@ def authorize_http_request(bearer: str, payload: dict, allowed_ids: frozenset[in
     }:
         raise ValueError("invalid request fields")
     if payload["action"] not in ("prepare_workspace", "get_job_status"):
-        raise PolicyDenied("operation not enabled")
+        raise PolicyDeniedError("operation not enabled")
     principal = verify_github_user_token(bearer, allowed_github_ids=allowed_ids)
     return authorize_operation(
         principal=principal,
@@ -57,7 +57,7 @@ class AuthPreflightHandler(BaseHTTPRequestHandler):
                 raise ValueError("invalid request size")
             payload = json.loads(self.rfile.read(content_length))
             authorize_http_request(auth[7:], payload, self.allowed_ids)
-        except (ValueError, TypeError, IdentityVerificationError, PolicyDenied,
+        except (ValueError, TypeError, IdentityVerificationError, PolicyDeniedError,
                 KeyError, AttributeError):
             self._reply(403, {"allowed": False})
             return
