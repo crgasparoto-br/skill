@@ -31,6 +31,12 @@ class MCPHandler(BaseHTTPRequestHandler):
             return
         # Reject browser-origin requests (including DNS rebinding attempts).
         # This prototype is a non-browser loopback API only.
+        if len(self.headers.get_all("Host", [])) != 1:
+            self._send(403, {"error": "ambiguous host"})
+            return
+        if self.headers.get("Transfer-Encoding") is not None:
+            self._send(400, {"error": "chunked bodies are not supported"})
+            return
         if self.headers.get("Origin") is not None:
             self._send(403, {"error": "browser origins are not accepted"})
             return
@@ -39,6 +45,9 @@ class MCPHandler(BaseHTTPRequestHandler):
             return
         if self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/json":
             self._send(415, {"error": "unsupported media type"})
+            return
+        if len(self.headers.get_all("Content-Length", [])) != 1:
+            self._send(400, {"error": "ambiguous content length"})
             return
         try:
             size = int(self.headers.get("Content-Length", "-1"))
