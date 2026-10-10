@@ -39,15 +39,14 @@ class AuthorizationTests(unittest.TestCase):
 
         async def check():
             for tool_name, arguments in protected_tools:
-                with self.subTest(tool=tool_name):
-                    with patch.object(server, "_get") as github_api:
-                        try:
-                            await server.mcp.call_tool(tool_name, arguments)
-                        except Exception:
-                            pass  # Not found / unauthorized are valid fail-closed outcomes.
-                        else:
-                            self.fail(f"{tool_name} unexpectedly succeeded without OAuth")
-                        github_api.assert_not_called()
+                with self.subTest(tool=tool_name), patch.object(server, "_get") as github_api:
+                    try:
+                        await server.mcp.call_tool(tool_name, arguments)
+                    except Exception:
+                        pass  # Not found / unauthorized are valid fail-closed outcomes.
+                    else:
+                        self.fail(f"{tool_name} unexpectedly succeeded without OAuth")
+                    github_api.assert_not_called()
 
         asyncio.run(check())
 
