@@ -40,7 +40,7 @@ def authorize_http_request(bearer: str, payload: dict, allowed_ids: frozenset[in
 class AuthPreflightHandler(BaseHTTPRequestHandler):
     allowed_ids: frozenset[int] = frozenset()
 
-    def log_message(self, format, *args):
+    def log_message(self, fmt, *args):
         # Never print arbitrary request paths or headers to logs.
         pass
 
