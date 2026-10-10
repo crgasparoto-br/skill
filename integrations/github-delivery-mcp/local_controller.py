@@ -14,6 +14,7 @@ from controller_lock import controller_lock
 from local_job_runner import submit_offline_smoke
 from local_recovery import recover_local_jobs
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--database", required=True)
