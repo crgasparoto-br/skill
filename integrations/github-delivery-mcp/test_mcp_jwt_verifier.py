@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejectedError, verify_mcp_access_token
 
+
 class JWTVerifierTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
