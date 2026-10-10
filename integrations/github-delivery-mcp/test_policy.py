@@ -1,7 +1,12 @@
 """Offline, credential-free regression tests for delivery authorization."""
 import unittest
 
-from policy import DeliveryPolicy, PolicyDeniedError, VerifiedPrincipal, require_unchanged_head
+from policy import (
+    DeliveryPolicy,
+    PolicyDeniedError,
+    VerifiedPrincipal,
+    require_unchanged_head,
+)
 
 SHA = "a" * 40
 POLICY = DeliveryPolicy(
