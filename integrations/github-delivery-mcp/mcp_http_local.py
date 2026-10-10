@@ -86,11 +86,11 @@ class MCPHandler(BaseHTTPRequestHandler):
             self._send(400, {"error": "unsupported or mismatched MCP protocol version"})
             return
         client_info = metadata.get("io.modelcontextprotocol/clientInfo")
-        if (not isinstance(client_info, dict)
+        if (client_info is not None and (not isinstance(client_info, dict)
                 or not isinstance(client_info.get("name"), str)
                 or not client_info["name"].strip()
                 or not isinstance(client_info.get("version"), str)
-                or not client_info["version"].strip()):
+                or not client_info["version"].strip())):
             self._send(400, {"error": "valid MCP clientInfo required"})
             return
         if not isinstance(metadata.get("io.modelcontextprotocol/clientCapabilities"), dict):
@@ -98,6 +98,15 @@ class MCPHandler(BaseHTTPRequestHandler):
             return
         if self.headers.get("MCP-Method") != request.get("method"):
             self._send(400, {"error": "MCP method header mismatch"})
+            return
+        if request.get("method") == "server/discover" and self.headers.get("MCP-Name") is None:
+            self._send(200, {"jsonrpc": "2.0", "id": request["id"],
+                             "result": {"supportedVersions": [VERSION],
+                                        "capabilities": {},
+                                        "_meta": {
+                                            "io.modelcontextprotocol/serverInfo": {
+                                                "name": "solverit-issue-delivery-pilot",
+                                                "version": "0.0.0"}}}})
             return
         if request.get("method") == "tools/list" and self.headers.get("MCP-Name") is None:
             self._send(200, {"jsonrpc": "2.0", "id": request["id"],
