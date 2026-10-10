@@ -16,6 +16,8 @@ CHECKS = {
     "smoke-v1": ("sh", "-ec", 'test "$(id -u)" = 65532; test "$(cat /sys/fs/cgroup/memory.max)" = 536870912; echo CHECK_OK'),
 }
 
+
+
 @dataclass(frozen=True)
 class CheckResult:
     check: str
