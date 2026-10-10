@@ -5,13 +5,15 @@ import os
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
 import jwt
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.github import GitHubProvider
-from fastmcp.server.auth import AuthContext
+
+if TYPE_CHECKING:
+    from fastmcp.server.auth import AuthContext
 
 API = "https://api.github.com"
 APP_ID = os.environ["GITHUB_APP_ID"]
@@ -49,7 +51,7 @@ def authorized_github_user(ctx: AuthContext) -> bool:
     return isinstance(login, str) and login.lower() in ALLOWED_GITHUB_USERS
 
 
-def _allowed(repo: str) -> tuple[str, str]:
+def allowed_repository(repo: str) -> tuple[str, str]:
     value = repo.strip().lower()
     if value not in ALLOWED_REPOS:
         raise ValueError("Repository not on the server-side allowlist")
@@ -82,7 +84,7 @@ def _request(path: str, token: str) -> Any:
 
 @lru_cache(maxsize=32)
 def _repository_installation(repo: str) -> int:
-    owner, name = _allowed(repo)
+    owner, name = allowed_repository(repo)
     result = _request(f"/repos/{owner}/{name}/installation", _jwt())
     return int(result["id"])
 
@@ -104,7 +106,7 @@ def _installation_token(repo: str) -> str:
 
 
 def _get(repo: str, suffix: str) -> Any:
-    owner, name = _allowed(repo)
+    owner, name = allowed_repository(repo)
     return _request(f"/repos/{owner}/{name}/{suffix}", _installation_token(repo))
 
 
