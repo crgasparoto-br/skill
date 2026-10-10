@@ -2,6 +2,7 @@
 import subprocess
 import unittest
 from unittest.mock import patch, Mock
+
 import offline_executor as executor
 
 class OfflineExecutorTests(unittest.TestCase):
