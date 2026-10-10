@@ -9,7 +9,7 @@ import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from mcp_read_dispatch import dispatch, VERSION
+from mcp_read_dispatch import VERSION
 from oauth_resource_metadata import resource_metadata, authenticate_challenge
 from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejected, verify_mcp_access_token
 
@@ -85,19 +85,6 @@ class MCPHandler(BaseHTTPRequestHandler):
         self._send(403, {"error": "tools are disabled pending MCP policy binding"})
         return
 
-        outcome = dispatch(
-            request,
-            protocol_header=self.headers.get("MCP-Protocol-Version", ""),
-            method_header=self.headers.get("MCP-Method", ""),
-            name_header=self.headers.get("MCP-Name"),
-            bearer=bearer,
-            allowed_ids=self.allowed_ids,
-        )
-        extra = {}
-        if outcome.http_status == 401 and self.oauth_metadata_url:
-            extra["WWW-Authenticate"] = authenticate_challenge(
-                resource_metadata_url=self.oauth_metadata_url)
-        self._send(outcome.http_status, outcome.payload, headers=extra)
 
     def do_GET(self):
         if self.path == "/.well-known/oauth-protected-resource":
