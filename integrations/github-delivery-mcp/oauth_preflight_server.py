@@ -13,12 +13,14 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-from github_oauth_identity import verify_github_user_token, IdentityVerificationError
+from github_oauth_identity import IdentityVerificationError, verify_github_user_token
 from mcp_authorization import authorize_operation
 from policy import PolicyDeniedError
 
 MAX_BODY = 4096
 BIND_ADDRESS = "127.0.0.1"
+
+
 
 def authorize_http_request(bearer: str, payload: dict, allowed_ids: frozenset[int]):
     if not isinstance(payload, dict) or set(payload) != {
