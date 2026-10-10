@@ -1,6 +1,5 @@
 """HTTP request smuggling hardening checks using real loopback TCP."""
 import http.client
-import json
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
