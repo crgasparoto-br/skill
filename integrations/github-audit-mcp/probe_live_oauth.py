@@ -50,6 +50,7 @@ def _successful(result):
     return (
         isinstance(result, dict)
         and isinstance(result.get("result"), dict)
+        and ("protocolVersion" in result["result"] or "content" in result["result"])
         and not result["result"].get("isError", False)
     )
 
