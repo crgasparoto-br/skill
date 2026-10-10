@@ -16,7 +16,7 @@ CASES = (
 )
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
-FORBIDDEN_KEYS = re.compile(r"(secret|password|private.key|authorization|access.token|refresh.token|oauth.code|client.secret)", re.I)
+FORBIDDEN_KEYS = re.compile(r"(secret|password|private.key|authorization|access.token|refresh.token|oauth.code|client.secret)", re.IGNORECASE)
 
 
 def validate(document, expected_head):
