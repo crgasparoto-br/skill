@@ -1,5 +1,4 @@
 """Server-side identity verification tests; no external network calls."""
-import io
 import json
 import unittest
 import urllib.error
