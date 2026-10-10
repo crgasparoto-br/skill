@@ -5,7 +5,7 @@ import unittest
 import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
-from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejected, verify_mcp_access_token
+from mcp_jwt_verifier import MCPTokenPolicy, MCPTokenRejectedError, verify_mcp_access_token
 
 class JWTVerifierTests(unittest.TestCase):
     @classmethod
@@ -32,33 +32,33 @@ class JWTVerifierTests(unittest.TestCase):
         self.assertEqual(verify_mcp_access_token(self.signed(), self.policy), "user-123")
 
     def test_wrong_issuer(self):
-        with self.assertRaises(MCPTokenRejected):
+        with self.assertRaises(MCPTokenRejectedError):
             verify_mcp_access_token(self.signed(iss="https://other.example.test"), self.policy)
 
     def test_wrong_audience(self):
-        with self.assertRaises(MCPTokenRejected):
+        with self.assertRaises(MCPTokenRejectedError):
             verify_mcp_access_token(self.signed(aud="https://api.github.com"), self.policy)
 
     def test_expired(self):
-        with self.assertRaises(MCPTokenRejected):
+        with self.assertRaises(MCPTokenRejectedError):
             verify_mcp_access_token(self.signed(exp=1), self.policy)
 
     def test_missing_scope(self):
-        with self.assertRaises(MCPTokenRejected):
+        with self.assertRaises(MCPTokenRejectedError):
             verify_mcp_access_token(self.signed(scope="unrelated"), self.policy)
 
     def test_unknown_subject(self):
-        with self.assertRaises(MCPTokenRejected):
+        with self.assertRaises(MCPTokenRejectedError):
             verify_mcp_access_token(self.signed(sub="unknown"), self.policy)
 
     def test_tampered_signature(self):
         parts = self.signed().split(".")
         parts[-1] = ("A" if parts[-1][0] != "A" else "B") + parts[-1][1:]
-        with self.assertRaises(MCPTokenRejected):
+        with self.assertRaises(MCPTokenRejectedError):
             verify_mcp_access_token(".".join(parts), self.policy)
 
     def test_plain_github_token_denied(self):
-        with self.assertRaises(MCPTokenRejected):
+        with self.assertRaises(MCPTokenRejectedError):
             verify_mcp_access_token("ghu_invalid_example", self.policy)
 
     def test_missing_exp(self):
@@ -66,7 +66,7 @@ class JWTVerifierTests(unittest.TestCase):
         token = jwt.encode({"iss": self.policy.issuer, "aud": self.policy.audience,
             "sub": "user-123", "iat": now, "nbf": now, "scope": "solverit:read"},
             self.private_key, algorithm="RS256", headers={"kid": "test-key"})
-        with self.assertRaises(MCPTokenRejected):
+        with self.assertRaises(MCPTokenRejectedError):
             verify_mcp_access_token(token, self.policy)
 
 if __name__ == "__main__":
