@@ -39,7 +39,7 @@ class SnapshotTests(unittest.TestCase):
              patch("workspace_container_check.subprocess.run") as run:
             stat.return_value.st_uid = 1004
             stat.return_value.st_mode = 0o40755
-            run.return_value = SimpleNamespace(returncode=0, stdout="SNAPSHOT_OK\\n", stderr="")
+            run.return_value = SimpleNamespace(returncode=0, stdout="SNAPSHOT_OK\n", stderr="")
             self.assertTrue(inspect_workspace_in_container(
                 str(self.dir), self.sha, check="posix-shell-syntax-v1"))
             command = run.call_args.args[0]
