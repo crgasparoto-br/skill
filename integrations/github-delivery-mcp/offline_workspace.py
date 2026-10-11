@@ -24,6 +24,8 @@ def prepare_offline_workspace(
         raise PermissionError("dedicated solverit-worker identity required")
     if not _REPO.fullmatch(repository) or not _SHA.fullmatch(expected_sha):
         raise ValueError("invalid repository or pinned SHA")
+    if Path(workspace_root).is_symlink() or Path(mirror_path).is_symlink():
+        raise PermissionError("symlink workspace or mirror path forbidden")
     root = Path(workspace_root).resolve(strict=True)
     mirror = Path(mirror_path).resolve(strict=True)
     if not root.is_dir() or root.is_symlink() or root.stat().st_uid != 1004:
