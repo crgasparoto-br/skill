@@ -111,3 +111,17 @@ que ambos usam exatamente o mesmo banco e lock.
 ## Proteção de conclusão de jobs reais
 
 `JobStore.transition(..., 'succeeded')` bloqueia todos os jobs de entrega; a exceção preserva apenas o smoke offline legado, exigindo simultaneamente ator `local-smoke-operator`, repositório `crgasparoto-br/training-system`, issue 88, branch `develop` e os marcadores de base/HEAD `offline-smoke-no-repo-operation`. Um marcador isolado não autoriza sucesso. Essa é uma proteção provisória **fail-closed**, não uma API de conclusão. A futura finalização deverá verificar evidências imutáveis de publicação, CI no HEAD exato e auditoria independente antes de alterar o estado. Jobs anteriores já concluídos continuam legíveis e não são migrados.
+
+## Finalização: bloqueio explícito até haver verificador confiável
+
+O módulo `delivery_finalization.py` introduz a fronteira de verificação de conclusão,
+mas **não finaliza jobs**: recusa inclusive jobs `prepared` enquanto não houver
+consulta autenticada e independente às evidências de publicação da PR, CI no
+HEAD exato e auditoria. Não aceita resultado de check, booleano nem parecer
+fornecido pelo worker, texto de issue ou argumento MCP. `jobs.py` continua
+impedindo a transição comum dos jobs reais para `succeeded`.
+
+A futura implementação deve recuperar evidências diretamente de GitHub e do
+canal independente de auditoria, conferir owner/repo, issue, PR, base
+`develop`, HEAD e integridade temporal, e registrar a conclusão de forma
+atômica e idempotente. A presença deste módulo não comprova a finalização E2E.
