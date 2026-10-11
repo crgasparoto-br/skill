@@ -58,7 +58,8 @@ class SnapshotTests(unittest.TestCase):
             self.assertTrue(inspect_workspace_in_container(
                 str(self.dir), self.sha, check="bash-syntax-v1"))
             cmd = run.call_args.args[0]
-            self.assertIn("bash:5.2", cmd)
+            self.assertIn("bash@sha256:a54fb4422b18f05dd3107c36f39d67b26334fda7ec89f4126052b45e228e2f15", cmd)
+            self.assertNotIn("bash:5.2", cmd)
             self.assertIn("bash -n", cmd[-3])
             self.assertIn("sha256sum -c", cmd[-3])
             self.assertIn("--network", cmd)
