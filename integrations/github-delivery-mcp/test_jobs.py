@@ -52,11 +52,22 @@ class JobStoreTests(unittest.TestCase):
         reopened.transition(job.job_id, "trusted", "running", "failed")
 
     def test_legacy_smoke_still_can_finish(self):
+        job = self.create(actor="local-smoke-operator",
+                          repo="crgasparoto-br/training-system",
+                          issue_number=88, branch="develop",
+                          base_sha="offline-smoke-no-repo-operation",
+                          expected_head="offline-smoke-no-repo-operation")
+        self.store.transition(job.job_id, "local-smoke-operator", "queued", "running")
+        self.store.transition(job.job_id, "local-smoke-operator", "running", "succeeded")
+        self.assertEqual(self.store.read(job.job_id, "local-smoke-operator").status, "succeeded")
+
+    def test_spoofed_smoke_marker_does_not_bypass_delivery_gate(self):
         job = self.create(base_sha="offline-smoke-no-repo-operation",
                           expected_head="offline-smoke-no-repo-operation")
         self.store.transition(job.job_id, "trusted", "queued", "running")
-        self.store.transition(job.job_id, "trusted", "running", "succeeded")
-        self.assertEqual(self.store.read(job.job_id, "trusted").status, "succeeded")
+        with self.assertRaises(JobConflictError):
+            self.store.transition(job.job_id, "trusted", "running", "succeeded")
+        self.assertEqual(self.store.read(job.job_id, "trusted").status, "running")
 
     def test_transitions_and_recovery(self):
         job = self.create()
