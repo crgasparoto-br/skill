@@ -13,7 +13,7 @@ import uuid
 from pathlib import Path
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
-_REPO = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+_REPO = re.compile(r"^(?!\\.{1,2}/)[A-Za-z0-9_.-]+/(?!\\.{1,2}$)[A-Za-z0-9_.-]+$")
 
 
 def prepare_offline_workspace(
