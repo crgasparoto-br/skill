@@ -86,6 +86,7 @@ def build_server(*, env=None) -> FastMCP:
             issuer_url=AnyHttpUrl(issuer),
             resource_server_url=AnyHttpUrl(resource),
             required_scopes=["solverit:read"],
+            validate_token_resource=True,
         ),
     )
     server.add_tool(get_delivery_status, name="get_delivery_status", description="Read-only authentication pilot status; no GitHub access.")
