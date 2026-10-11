@@ -19,7 +19,9 @@ from sandbox_profile import OFFLINE_CHECK_V1
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 _FIXED_CHECKS = {
     "integrity-v1": "echo SNAPSHOT_OK",
-    "shell-syntax-v1": "find /workspace -type f -name '*.sh' -exec sh -n {} + && echo SNAPSHOT_OK",
+    # Only scripts explicitly declaring /bin/sh are compatible with Alpine ash.
+    # Bash scripts are NOT treated as verified by this profile.
+    "posix-shell-syntax-v1": "find /workspace -type f -name '*.sh' -exec sh -c 'for f do IFS= read -r first < \"$f\" || :; case \"$first\" in \"#!/bin/sh\"| \"#!/usr/bin/env sh\") sh -n \"$f\" || exit 1 ;; esac; done' sh {} + && echo SNAPSHOT_OK",
 }
 
 
