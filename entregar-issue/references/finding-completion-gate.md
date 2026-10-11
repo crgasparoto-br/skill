@@ -1,14 +1,41 @@
-# Gate de completude de pendências de auditoria
+# Gate de completude de pendências de auditoria e de issue
+
+## Quando ler este arquivo
+
+Ler quando houver pedido de implementação de pendências de issue, PR ou auditoria, antes das alterações e da declaração de completude.
+
+## Índice
+
+- [Entrada e escopo](#entrada-e-escopo)
+- [Ledger obrigatório](#ledger-obrigatório)
+- [Laço obrigatório de execução integral](#laço-obrigatório-de-execução-integral)
+- [Barreira de encerramento](#barreira-de-encerramento)
+- [Continuidade e bloqueio legítimo](#continuidade-e-bloqueio-legítimo)
+- [Teste adversarial mínimo](#teste-adversarial-mínimo)
+- [Validador determinístico e origem confiável](#validador-determinístico-e-origem-confiável)
+- [Verificador operacional GitHub](#verificador-operacional-github)
 
 ## Entrada e escopo
 
-Ativar para "implementar pendências", "corrigir todos os achados", "finalizar auditoria" ou solicitação equivalente. Fixar repositório, PR, base, HEAD, rodada da auditoria e `rejection_id` quando existente. Consumir **todos** os achados da rodada, comentários de revisão materialmente relevantes e requisitos vinculados, não apenas o primeiro blocker. Diferenciar `blocking`, `actionable-recommendation`, `optional-recommendation`, `out-of-scope` e `invalid-finding`. Justificar com evidência qualquer exclusão; não ampliar unilateralmente o escopo da issue.
+Ativar para "implementar pendências", "corrigir todos os achados", "finalizar auditoria" ou solicitação equivalente. Fixar repositório, PR, base, HEAD, rodada da auditoria e `rejection_id` quando existente. Consumir **todos** os achados da rodada, comentários de revisão materialmente relevantes, instruções explícitas da issue, critérios de aceite, checklists abertos, pendências de PR e requisitos vinculados, não apenas o primeiro blocker. Quando não houver auditoria, a própria issue e suas fontes canônicas constituem o manifesto de obrigações. Quando houver ambos, calcular a união sem descartar obrigações de nenhuma origem. 'Implementar pendências', 'implementar todas', 'corrigir pontos levantados' e equivalentes têm semântica de fechamento integral das obrigações aplicáveis, mesmo sem a palavra 'todas'. Diferenciar `blocking`, `actionable-recommendation`,
+`optional-recommendation`, `out-of-scope` e `invalid-finding`. Justificar com evidência qualquer exclusão; não ampliar unilateralmente o escopo da issue.
 
 ## Ledger obrigatório
 
-Manter para cada achado: `finding_id`, fonte/rodada, requisito/critério de aceite, classificação de aplicabilidade, evidência reproduzível, arquivos/ação planejados, prova negativa (quando aplicável), teste/validação executada, status e HEAD exato. Estados: `open`, `implementing`, `implemented-unverified`, `verified`, `blocked`, `not-applicable`. Não transformar "implementado" em "verified" antes das verificações correspondentes. Se nova auditoria reabrir achado, retornar para `open` com nova evidência.
+Manter para cada requisito/achado de qualquer origem: `finding_id`, fonte/rodada, requisito/critério de aceite, classificação de aplicabilidade, evidência reproduzível, arquivos/ação planejados, prova negativa (quando aplicável), teste/validação executada, status e HEAD exato. Estados: `open`, `implementing`, `implemented-unverified`, `verified`, `blocked`, `not-applicable`. Não transformar "implementado" em "verified" antes das verificações correspondentes. Se nova auditoria reabrir achado, retornar para `open` com nova evidência.
 
-Reconciliar todos os itens do ledger depois de cada alteração material, antes de congelar e antes da resposta. Ausência de item da rodada anterior é falha de completude.
+Reconciliar todos os itens do ledger depois de cada alteração material, antes de congelar e antes da resposta. Ausência de item da rodada anterior **ou de qualquer requisito/pendência ainda aberto na issue** é falha de completude. O ledger deve incluir dependências de fechamento (evidência visual, testes, recertificação e documentação) como ações executáveis, sem confundi-las com aprovação independente.
+
+## Laço obrigatório de execução integral
+
+1. Antes de editar, levantar o universo completo: issue (descrição, critérios de aceite, comentários e checklist), PR vinculada (diff, comentários, reviews e threads), últimas auditorias, falhas da CI e artefatos/evidências exigidos. Criar um ledger unificado com identificadores e fonte exata; não restringir o escopo ao primeiro erro visível ou ao primeiro commit.
+2. Para cada item aplicável, realizar a correção executável no repositório (código, layout, testes, documentação, evidências ou pacote de handoff) e marcar como `implemented-unverified`. Não substituir implementação por comentário, issue nova, recomendação ou uma lista de instruções.
+3. Executar verificações focadas; estabilizado o conjunto, executar os gates completos no HEAD material. Em CI falha ou pendente, delegar a `corrigir-ci` sob o contrato de ownership e retomar a própria entrega; não transferir o próximo passo ao usuário.
+4. Se testes, revisão visual ou auditoria interna revelarem novas falhas, incorporar os achados ao mesmo ledger e voltar à etapa 2. CI verde não fecha requisito visual, funcional ou de recertificação; evidência visual deve ser inspecionada e comparada com a fonte de referência.
+5. Após **todas** as obrigações executáveis estarem verificadas, reconstruir evidências/certificado exact-SHA e preparar auditoria independente. A aprovação independente somente pode ser declarada pelo auditor separado; não paralisar ajustes de implementação porque a aprovação ainda não existe.
+6. Antes da resposta, reconciliar integralmente o ledger contra as fontes originais e o HEAD remoto. Não encerrar depois de um commit, PR, CI disparada ou primeiro teste verde. Responder com conclusão apenas quando o estado for verificável. Se existir bloqueio real de ferramenta, permissão ou fonte, concluir a execução possível e especificar cada ID bloqueado e evidência; não inventar validação nem prometer trabalho em background.
+
+**Controle negativo de fluxo:** dado um pedido com correção A, correção B e recertificação C, publicar A e observar CI `pending` não é saída terminal permitida. Mesmo com CI verde de A, o controlador deve continuar implementando B e C. Somente impedimento real verificável permite resposta `PARCIAL`, com ledger integral.
 
 ## Barreira de encerramento
 
