@@ -1,6 +1,5 @@
 """GitHub checks are only matching data, never authorization to finalize."""
 import unittest
-from dataclasses import replace
 from types import SimpleNamespace
 
 from github_evidence_validation import (
