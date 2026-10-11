@@ -84,7 +84,7 @@ def verify(ledger, token, required_checks):
     attestation = {
         "repository": repo, "pr_number": number, "audit_round": ledger["audit_round"],
         "head_sha": head,
-        "verified_findings": {fid: head for fid in contract.get("verified_finding_ids", [])},
+        "verified_findings": dict.fromkeys(contract.get("verified_finding_ids", []), head),
         "accepted_exclusions": contract.get("accepted_exclusions", []),
         "ci": {"head_sha": head, "conclusion": "success",
                "run_url": runs[0].get("html_url") or "https://github.com/" + repo + "/actions"},
