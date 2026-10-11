@@ -33,6 +33,12 @@ class OfflineWorkspaceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 prepare_offline_workspace(**(self.params | {"repository": "../unsafe"}))
 
+    def test_refuses_dot_path_components(self):
+        with patch("offline_workspace.os.geteuid", return_value=1004):
+            for value in ("../unsafe", "./unsafe", "owner/..", "owner/."):
+                with self.subTest(repository=value), self.assertRaises(ValueError):
+                    prepare_offline_workspace(**(self.params | {"repository": value}))
+
     def test_refuses_non_commit_sha(self):
         with patch("offline_workspace.os.geteuid", return_value=1004):
             with self.assertRaises(ValueError):
