@@ -9,13 +9,17 @@ from __future__ import annotations
 import json
 import re
 import urllib.error
-import urllib.parse
 import urllib.request
 
 from github_evidence_validation import GitHubEvidenceRejected, require_github_evidence
 
 _REPO = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 _SHA = re.compile(r"^[a-f0-9]{40}$")
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        raise GitHubEvidenceRejected("GitHub redirect refused")
 
 
 def _get_json(*, token: str, repo: str, suffix: str) -> dict:
@@ -30,7 +34,7 @@ def _get_json(*, token: str, repo: str, suffix: str) -> dict:
                  "User-Agent": "solverit-delivery-evidence/1"},
     )
     try:
-        with urllib.request.urlopen(request, timeout=15) as response:
+        with urllib.request.build_opener(_NoRedirect).open(request, timeout=15) as response:
             payload = response.read(1024 * 1024 + 1)
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         raise GitHubEvidenceRejected("GitHub evidence retrieval failed") from exc
@@ -68,7 +72,9 @@ def fetch_and_validate_github(*, job, pr_number: int, token: str,
                        suffix="/commits/" + job.expected_head + "/check-runs?per_page=100")
     if (checks.get("total_count") is None or
             type(checks["total_count"]) is not int or
-            checks["total_count"] > 100):
+            checks["total_count"] > 100 or
+            not isinstance(checks.get("check_runs"), list) or
+            len(checks["check_runs"]) != checks["total_count"]):
         raise GitHubEvidenceRejected("check runs pagination incomplete")
     runs = []
     for item in checks.get("check_runs", []):
