@@ -80,3 +80,19 @@ A recuperação e o despacho ocorrem em seções protegidas pelo mesmo arquivo d
 7. Executar homologação E2E com repositório alvo autorizado, testes negativos de segurança e auditoria independente; atualizar esta documentação com links aos artefatos.
 
 **Não fazer merge da PR #89 nem encerrar a Issue #88 apenas com os testes e a homologação acima.**
+
+## Serviço systemd: unidade de recuperação em staging (não ativada)
+
+O arquivo [`ops/solverit-issue88-recovery.service`](./ops/solverit-issue88-recovery.service)
+é um exemplo **oneshot**, limitado à recuperação conservadora de jobs locais.
+Foi versionado após a homologação manual do controlador em 2026-10-11
+(job `aac25a8e-fdb0-43de-a730-140d8aef8c3b`: 3 verificações aprovadas,
+3 evidências persistidas, status final `prepared`, exit code 0).
+A unidade **não** é um daemon contínuo, não executa o MCP e não publica código.
+Não tem seção `[Install]`, não foi instalada nem ativada na VPS.
+
+Antes de instalar, revisão independente deve confirmar compatibilidade das
+diretivas systemd com Ubuntu/daemon Docker rootless, permissões das pastas,
+separação da unidade `solverit-issue-delivery.service` já existente e
+segurança do banco `controller-service.sqlite3` em staging.
+Ela não deve ser copiada para a unidade de produção sem aceite explícito.
