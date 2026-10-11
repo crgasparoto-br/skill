@@ -17,11 +17,17 @@ from rootless_reconciler import cleanup_container
 from sandbox_profile import OFFLINE_CHECK_V1
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
+_FIXED_CHECKS = {
+    "integrity-v1": "echo SNAPSHOT_OK",
+    "shell-syntax-v1": "find /workspace -type f -name '*.sh' -exec sh -n {} + && echo SNAPSHOT_OK",
+}
 
 
-def inspect_workspace_in_container(snapshot_dir: str, expected_sha: str) -> bool:
+def inspect_workspace_in_container(snapshot_dir: str, expected_sha: str, *, check: str = "integrity-v1") -> bool:
     """Check a trusted read-only snapshot marker in rootless Docker."""
     OFFLINE_CHECK_V1.validate()
+    if check not in _FIXED_CHECKS:
+        raise ValueError("unsupported fixed snapshot check")
     if os.geteuid() != 1004:
         raise PermissionError("worker identity required")
     if not isinstance(expected_sha, str) or not _SHA.fullmatch(expected_sha):
@@ -48,7 +54,7 @@ def inspect_workspace_in_container(snapshot_dir: str, expected_sha: str) -> bool
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
         "--mount", f"type=bind,src={resolved},dst=/workspace,readonly",
         IMAGE, "sh", "-ec",
-        'test "$(id -u)" = 65532 && test "$(cat /workspace/.solverit-expected-sha)" = "$1" && cd /workspace && sha256sum -c .solverit-sha256 >/dev/null && echo SNAPSHOT_OK',
+        'test "$(id -u)" = 65532 && test "$(cat /workspace/.solverit-expected-sha)" = "$1" && cd /workspace && sha256sum -c .solverit-sha256 >/dev/null && " + _FIXED_CHECKS[check] + "',
         "sh", expected_sha,
     ]
     try:
