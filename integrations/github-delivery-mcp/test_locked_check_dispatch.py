@@ -17,6 +17,8 @@ class LockedDispatchTests(unittest.TestCase):
         base = Path(self.tmp.name)
         self.db = str(base / "jobs.sqlite3")
         self.lock = str(base / "controller.lock")
+        # Exercise a real flock under the actual test UID; do not fake
+        # ownership while controller_lock is validating the inode owner.
         self.snapshot = base / "snapshot"
         self.snapshot.mkdir()
         self.store = CheckEvidenceStore(self.db)
@@ -39,7 +41,7 @@ class LockedDispatchTests(unittest.TestCase):
                 with controller_lock(self.lock):
                     pass
             return ("verified",)
-        with patch("locked_check_dispatch.os.geteuid", return_value=1004), patch(
+        with patch("locked_check_dispatch.os.geteuid", return_value=__import__("os").geteuid()), patch(
             "locked_check_dispatch.run_and_record_checks", side_effect=check
         ) as run:
             self.assertEqual(dispatch_locked_checks(**self.args), ("verified",))
