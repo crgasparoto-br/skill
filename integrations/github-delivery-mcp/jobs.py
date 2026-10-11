@@ -13,7 +13,8 @@ from dataclasses import dataclass
 TERMINAL = frozenset({"succeeded", "failed", "cancelled", "timed_out"})
 TRANSITIONS = {
     "queued": frozenset({"running", "cancelled"}),
-    "running": frozenset({"succeeded", "failed", "cancelled", "timed_out"}),
+    "running": frozenset({"prepared", "succeeded", "failed", "cancelled", "timed_out"}),
+    "prepared": frozenset({"running", "failed", "cancelled"}),
     "failed": frozenset({"queued"}),
     "timed_out": frozenset({"queued"}),
     "cancelled": frozenset(),
@@ -118,7 +119,7 @@ class JobStore:
             ).fetchone())
 
     def recover_interrupted(self) -> int:
-        """Mark interrupted running jobs timed_out; never silently replay writes."""
+        """Mark interrupted running jobs timed_out; keep prepared jobs pending."""
         with self._connect() as db:
             cursor = db.execute(
                 "UPDATE jobs SET status='timed_out', updated_at=? WHERE status='running'",
