@@ -36,11 +36,12 @@ class WorkspaceDispatchTests(unittest.TestCase):
         ) as prepare:
             result = dispatch_queued_workspace(**self.args)
             replay = dispatch_queued_workspace(**self.args)
-        self.assertEqual(result.status, "succeeded")
+        self.assertEqual(result.status, "prepared")
         self.assertEqual(result.workspace, "/safe/workspace")
-        self.assertEqual(replay.status, "succeeded")
+        self.assertEqual(replay.status, "prepared")
         self.assertIsNone(replay.workspace)
         prepare.assert_called_once()
+        self.assertEqual(JobStore(self.database).read(self.job.job_id, "operator").status, "prepared")
 
     def test_failed_workspace_does_not_replay(self):
         with patch("worker_workspace_dispatch.os.geteuid", return_value=1004), patch(
