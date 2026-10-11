@@ -73,7 +73,8 @@ def export_pinned_snapshot(*, mirror_path: str, root_path: str, expected_sha: st
             raise ValueError("non-UTF8 path rejected") from exc
         parts = name.split("/")
         if (not name or any(part in ("", ".", "..") for part in parts)
-                or any(part.startswith(".") and (part not in _ALLOWED_DOTFILES or part != parts[-1]) for part in parts)
+                or any(part.startswith(".") for part in parts[:-1])
+                or (parts[-1].startswith(".") and parts[-1] not in _ALLOWED_DOTFILES)
                 or any(part.lower() in ("secrets", ".github", ".git", ".ssh") for part in parts)):
             raise ValueError("unsafe tracked path")
         DeliveryPolicy.validate_path(name)
