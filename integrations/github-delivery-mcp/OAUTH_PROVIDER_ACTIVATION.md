@@ -50,13 +50,21 @@ A passing static check is **not proof** that the provider issues suitable RS256
 resource-bound access tokens, supports refresh in practice, performs client
 registration safely, or interoperates with ChatGPT. Those are live validation gates.
 
-## Blocking issue in current implementation
+## Verification state and deployment gate
 
-The active MCP handler accepts a **single pinned RS256 public key** from a local
-file and a strict subject allowlist. An OIDC provider's discovery document does
-not itself guarantee that its *access tokens* use RS256, are JWTs or contain the
-required scope/resource audience. Live issuer and token validation must be tested;
-key rotation/JWKS refresh policy must be implemented before production.
+The pilot supports either a **pinned RS256 public key** or a **trusted HTTPS JWKS**
+(`SOLVERIT_OAUTH_JWKS_URI`), never both. Its JWKS verifier caches only issuer-relative
+RS256 RSA verification keys, rejects unknown key IDs, and refreshes on bounded TTL.
+This is source-level functionality, **not** evidence of a configured Keycloak realm,
+a deployed service, working token rotation, or ChatGPT interoperability.
+
+Before public activation, validate real Keycloak access tokens for `iss`, exact
+`aud`, `sub`, `scope=solverit:read`, `iat`, `nbf`, `exp`, `alg=RS256` and a known
+`kid`; reject absent/incorrect claims, untrusted users, and unsigned tokens.
+Exercise key rotation across cache expiry, issuer outage, and revocation policy
+without relaxing verification. Verify the deployed image digest and commit HEAD.
+The pilot currently exposes **no write tools**; passing OAuth checks must not
+be interpreted as authorization to start the issue executor.
 
 No public listener, production credentials, GitHub writes, or deployed AS are
 authorized by this document.
