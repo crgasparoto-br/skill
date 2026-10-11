@@ -44,10 +44,10 @@ class SnapshotExportTests(unittest.TestCase):
                     expected_sha=self.sha())
         args.update(overrides)
         # Test uses a real local Git mirror; only filesystem identity is simulated.
+        original = Path.stat
         with patch("snapshot_export.os.geteuid", return_value=1004), patch(
             "snapshot_export.Path.stat", autospec=True
         ) as stat:
-            original = Path.stat
             def fake_stat(path, *a, **k):
                 value = original(path, *a, **k)
                 # Avoid mutating cached os.stat_result; use a minimal proxy.
