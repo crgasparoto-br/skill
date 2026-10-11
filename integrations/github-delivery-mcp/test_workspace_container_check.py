@@ -21,9 +21,13 @@ class SnapshotTests(unittest.TestCase):
 
     def test_fixed_shell_check_command(self):
         from workspace_container_check import _FIXED_CHECKS
-        self.assertIn("sh -n", _FIXED_CHECKS["shell-syntax-v1"])
-        self.assertIn("find /workspace", _FIXED_CHECKS["shell-syntax-v1"])
-        self.assertNotIn("exec sh -c", _FIXED_CHECKS["shell-syntax-v1"])
+        self.assertIn("sh -n", _FIXED_CHECKS["posix-shell-syntax-v1"])
+        self.assertIn("find /workspace", _FIXED_CHECKS["posix-shell-syntax-v1"])
+        self.assertIn("case", _FIXED_CHECKS["posix-shell-syntax-v1"])
+
+    def test_bash_check_not_falsely_supported(self):
+        with self.assertRaises(ValueError):
+            inspect_workspace_in_container(str(self.dir), self.sha, check="shell-syntax-v1")
 
     def test_reject_worker_mismatch(self):
         with patch("workspace_container_check.os.geteuid", return_value=1000):
