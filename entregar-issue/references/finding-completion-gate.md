@@ -9,6 +9,7 @@ Ler quando houver pedido de implementação de pendências de issue, PR ou audit
 - [Entrada e escopo](#entrada-e-escopo)
 - [Ledger obrigatório](#ledger-obrigatório)
 - [Laço obrigatório de execução integral](#laço-obrigatório-de-execução-integral)
+- [Gate contra encerramento parcial por escolha do agente](#gate-contra-encerramento-parcial-por-escolha-do-agente)
 - [Barreira de encerramento](#barreira-de-encerramento)
 - [Continuidade e bloqueio legítimo](#continuidade-e-bloqueio-legítimo)
 - [Teste adversarial mínimo](#teste-adversarial-mínimo)
