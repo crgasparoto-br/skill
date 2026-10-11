@@ -6,7 +6,6 @@ Caller must enforce OAuth authorization on *every* read and write before use.
 from __future__ import annotations
 
 import sqlite3
-import re
 import time
 import uuid
 from dataclasses import dataclass
