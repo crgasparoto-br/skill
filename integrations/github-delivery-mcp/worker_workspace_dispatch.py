@@ -47,5 +47,6 @@ def dispatch_queued_workspace(
         # Failed workspace remains available for controller-led reconciliation.
         store.transition(job.job_id, actor, "running", "failed")
         raise
-    store.transition(job.job_id, actor, "running", "succeeded")
-    return WorkspaceDispatchResult(job.job_id, "succeeded", workspace)
+    # Preparing a workspace is not completing issue implementation, CI or audit.
+    store.transition(job.job_id, actor, "running", "prepared")
+    return WorkspaceDispatchResult(job.job_id, "prepared", workspace)
