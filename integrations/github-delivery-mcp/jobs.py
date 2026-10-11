@@ -105,7 +105,18 @@ class JobStore:
 
     def transition(self, job_id: str, actor: str, expected: str, target: str) -> Job:
         if target == "succeeded":
-            # Real Git-SHA jobs require a future independently verified delivery\n            # finalization API; only the fixed legacy offline smoke may finish.\n            with self._connect() as db:\n                row = db.execute("SELECT base_sha FROM jobs WHERE job_id=? AND actor=?",\n                                 (job_id, actor)).fetchone()\n            if row is None or row["base_sha"] != "offline-smoke-no-repo-operation":\n                raise JobConflictError("delivery success requires verified publication, CI and audit")\n        if target not in TRANSITIONS.get(expected, ()):
+            # Real deliveries must wait for verified publication, CI and audit.
+            # Only the established fixed offline smoke is allowed to finish.
+            with self._connect() as db:
+                row = db.execute(
+                    "SELECT base_sha FROM jobs WHERE job_id=? AND actor=?",
+                    (job_id, actor),
+                ).fetchone()
+            if row is None or row["base_sha"] != "offline-smoke-no-repo-operation":
+                raise JobConflictError(
+                    "delivery success requires verified publication, CI and audit"
+                )
+        if target not in TRANSITIONS.get(expected, ()):
             raise JobConflictError("invalid job transition")
         with self._connect() as db:
             updated = db.execute(
