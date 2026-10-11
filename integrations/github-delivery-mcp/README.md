@@ -31,6 +31,11 @@ Nunca transferir chave privada da App, tokens de publicação ou socket Docker d
 | `verified_check_runner.py` | Encadeia execuções rootless e registros de evidência, falhando fechado em erro |
 | `locked_check_dispatch.py` | Valida estado `prepared`, marcador do snapshot e bloqueio exclusivo durante verificações |
 | `local_controller.py` | CLI local: recuperação sob lock e despacho explícito para job preparado; **não** é endpoint MCP |
+| `controller_loop.py` | Loop interrompível de recuperação; testado, não implantado como serviço contínuo |
+| `github_evidence_validation.py` | Validação estrutural da identidade PR, SHA e checks; não autentica a origem |
+| `github_evidence_reader.py` | Adaptador de leitura GitHub com rejeição conservadora; sem homologação de rede real |
+| `pr_binding.py` | Registro SQLite imutável e idempotente job–PR; não valida publicação sem broker |
+| `delivery_finalization.py` | Bloqueio explícito de conclusão na ausência de CI e auditoria independentes |
 
 **Nota de confiança:** comparar o marcador `.solverit-expected-sha` com o SHA do job não prova, sozinho, que os bytes do snapshot vieram do Git remoto. O manifesto dentro do próprio snapshot também não é uma âncora independente de confiança. Antes da produção, é necessário ancorar o snapshot em um mirror e armazenamento protegidos, controlar TOCTOU e revisar o modelo de ameaça do usuário com acesso ao daemon Docker rootless. Evidências de checks não equivalem a CI aprovado, testes funcionais completos ou auditoria.
 
@@ -41,6 +46,13 @@ Ambiente reportado pelo operador: Ubuntu na OVH, usuário dedicado `solverit-wor
 - **Commit `c65cfc93`:** 5 testes de evidências aprovados; regressão **203/203**.
 - **Commit `2b5099c6`:** 5 testes de exclusividade/ator/SHA aprovados; regressão **208/208**.
 - **Commit `f497b0f2`:** 3 testes do controlador aprovados; regressão **211/211**, em **2026-10-11**, código de saída 0. Os avisos `usage: controller ... error:` são esperados em testes negativos.
+- **Commit `d4dbdafd`:** regressão **215/215**, incluindo 4 testes do loop de recuperação.
+- **Commit `9d44bbd9`:** regressão **216/216** após correção da guarda de conclusão.
+- **Commit `3ce0fed4`:** regressão **217/217** com rejeição de marcador smoke falsificado.
+- **Commit `d4fec687`:** regressão **220/220** com bloqueio explícito de finalização.
+- **Commit `0dadba31`:** regressão **229/229** com validação estrutural de evidências GitHub.
+- **Commit `5d8dd69e`:** regressão **234/234** com adaptador read-only de consulta GitHub (respostas simuladas).
+- **Commit `3864aeb4`:** **5/5** testes de vínculo job–PR e regressão completa **239/239**, código de saída **0**, conforme execução reportada pelo operador em **2026-10-11**. Testes de persistência, isolamento entre atores, divergência do SHA e rejeição de reassociação conflitante aprovados.
 - **Execução rootless integrada real** reportada após `2b5099c6`: job `d6c4e992-eff1-4541-8a1c-ef3ec7a5ea07`, banco `/home/solverit-worker/issue88-homologacao/integrated-3c07c684f577435e96fbe430a4fb4af1.sqlite3`, base SHA `c10136fe8335a04aea3d2d9a959d42aa6223dd8a`. Foram persistidas **3/3** evidências `passed=True`, `timed_out=False`; job permaneceu `prepared`; código 0; nenhum contêiner remanescente listado.
 - Snapshot usado na homologação: `/home/solverit-worker/issue88-homologacao/runtime-snapshots/solverit-issue88-0ef9cca3eba44d1194588083fed2e087`, manifesto de **557** entradas. O snapshot pertence ao worker: inspecionar arquivos protegidos com `sudo -u solverit-worker`; **não** alterar permissões para contornar erros.
 
@@ -150,18 +162,26 @@ uma estratégia autoritativa de associação job→PR→issue; assim, o adaptado
 sempre recusa a conclusão, mesmo quando o CI é verde. Ele não foi integrado ao
 serviço da VPS e não autentica MCP, não finaliza jobs ou executa auditoria.
 
-## Vinculo persistente job-PR (staging)
+## Vínculo persistente job–PR (staging)
 
 `pr_binding.py` adiciona `job_pr_bindings` ao mesmo SQLite, sem alterar
-o schema legado de `jobs`. O vinculo e imutavel e idempotente: um job
+o schema legado de `jobs`. O vínculo é imutável e idempotente: um job
 `prepared` pode associar apenas uma PR e o `expected_head` da entrega.
 Outro ator, HEAD divergente, branch `main`/`develop` ou nova PR para o
-mesmo job sao rejeitados. A gravacao nao modifica o estado do job.
+mesmo job são rejeitados. A gravação não modifica o estado do job.
 
-**Fronteira de confianca:** o metodo `bind_published_pr` so pode ser chamado
+**Fronteira de confiança:** o método `bind_published_pr` só pode ser chamado
 pelo futuro broker privilegiado, apos obter e conferir a resposta autenticada
-do GitHub e a autorizacao do solicitante. O metodo nao executa por conta
-propria essas consultas. Portanto, a entrada do worker/MCP **nao** pode
-escrever nesse banco nem invocar a associacao. Nao ha vinculo autoritativo
-em producao ainda, e `github_evidence_reader.py` continua recusando a
-finalizacao por falta de verificacao independente da issue e auditoria.
+do GitHub e a autorização do solicitante. O método não executa por conta
+própria essas consultas. Portanto, a entrada do worker/MCP **não** pode
+escrever nesse banco nem invocar a associação. Não há vínculo autoritativo
+em produção ainda, e `github_evidence_reader.py` continua recusando a
+finalização por falta de verificação independente da issue e auditoria.
+
+## Marco de validação em 2026-10-11: 239 testes aprovados
+
+A regressão **239/239** corresponde ao checkout da PR #89 no SHA `3864aeb4bfb5561f7d4889a0a077400e86ee8549`; não equivale a CI GitHub exact-head verde ou auditoria independente. O serviço `solverit-issue-delivery.service` foi homologado anteriormente como `oneshot` com `Result=success` e dois jobs históricos `succeeded` preservados. Os componentes adicionados posteriormente (`controller_loop.py`, `pr_binding.py`, adaptadores de evidência e novas guardas de `jobs.py`) **não foram implantados ou homologados como serviços ativos** nesta etapa.
+
+A associação SQLite job–PR é apenas um dado correlacionado; ela não comprova publicação GitHub nem autentica o vínculo com a issue. Permanecem bloqueantes: broker confiável, consultas GitHub reais, política de required checks, confirmação independente de issue/PR, auditoria exact-head, finalização atômica, autorização MCP/Keycloak e execução funcional ponta a ponta em sandbox.
+
+**Decisão operacional:** manter a PR #89 em draft para `develop`, sem merge e sem fechar a Issue #88. Não iniciar uma segunda unidade de recuperação em paralelo ao serviço já instalado.
