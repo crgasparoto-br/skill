@@ -34,7 +34,7 @@ def validate(data, manifest=None, attestation=None):
         expected = []
     findings = data.get("findings")
     if not isinstance(findings, list) or not findings:
-        return False, errors + ["findings must be nonempty"]
+        return False, [*errors, "findings must be nonempty"]
     seen = set()
     for index, finding in enumerate(findings):
         if not isinstance(finding, dict):
