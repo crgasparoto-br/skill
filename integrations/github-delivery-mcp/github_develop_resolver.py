@@ -13,7 +13,7 @@ from urllib.request import Request, urlopen
 
 from policy import PolicyDeniedError
 
-_REPO = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+_REPO = re.compile(r"^(?!\\.{1,2}/)[A-Za-z0-9_.-]+/(?!\\.{1,2}$)[A-Za-z0-9_.-]+$")
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 _API = "https://api.github.com"
 
