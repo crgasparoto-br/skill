@@ -6,6 +6,7 @@ credential-named paths and oversized repositories fail closed.
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import subprocess
@@ -97,6 +98,7 @@ def export_pinned_snapshot(*, mirror_path: str, root_path: str, expected_sha: st
     snapshot = root / ("solverit-issue88-" + uuid.uuid4().hex)
     snapshot.mkdir(mode=0o700)
     try:
+        manifest = []
         for parts, oid in vetted:
             parent = snapshot.joinpath(*parts[:-1])
             parent.mkdir(parents=True, exist_ok=True, mode=0o755)
@@ -107,6 +109,15 @@ def export_pinned_snapshot(*, mirror_path: str, root_path: str, expected_sha: st
             with destination.open("xb") as out:
                 out.write(data)
             destination.chmod(0o644)
+            # Git path constraints exclude newline, backslash and other unsafe
+            # characters from checksum manifest paths.
+            name = "/".join(parts)
+            if "\\n" in name or "\\r" in name or "\\\\" in name:
+                raise ValueError("unsafe manifest path")
+            manifest.append(f"{hashlib.sha256(data).hexdigest()}  {name}\\n")
+        integrity = snapshot / ".solverit-sha256"
+        integrity.write_text("".join(manifest), encoding="utf-8")
+        integrity.chmod(0o644)
         marker = snapshot / ".solverit-expected-sha"
         marker.write_text(expected_sha + "\n", encoding="ascii")
         marker.chmod(0o644)
