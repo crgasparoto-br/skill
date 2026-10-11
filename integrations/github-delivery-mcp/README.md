@@ -107,3 +107,7 @@ Não substitui ainda o `solverit-issue-delivery.service` oneshot na VPS.
 Testes de shutdown, exclusividade e identidade devem passar antes de uma
 implantação piloto; não iniciar um segundo controlador simultâneo sem verificar
 que ambos usam exatamente o mesmo banco e lock.
+
+## Proteção de conclusão de jobs reais
+
+`JobStore.transition(..., 'succeeded')` bloqueia todos os jobs de entrega; a exceção preserva apenas o smoke offline legado, identificado pelo marcador `offline-smoke-no-repo-operation`. Essa é uma proteção provisória **fail-closed**, não uma API de conclusão. A futura finalização deverá verificar evidências imutáveis de publicação, CI no HEAD exato e auditoria independente antes de alterar o estado. Jobs anteriores já concluídos continuam legíveis e não são migrados.
