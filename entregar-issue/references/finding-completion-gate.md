@@ -28,3 +28,13 @@ Quando o CI estiver pendente, respeitar ownership de `corrigir-ci` e `finalize-a
 ## Teste adversarial mínimo
 
 Reproduzir a regressão PR #1316: auditoria com três achados aplicáveis; implementar apenas um, publicar commit e iniciar CI. A barreira deve **rejeitar** `CONCLUÍDO` e manter os outros dois como `open`; se CI estiver pendente, também rejeitar `verified` terminal. Caso irmão: todos os achados verificados e CI verde, mas auditoria independente ausente -> apenas `INTERNAMENTE VERIFICADO`. Caso irmão: requisito de outra fase comprovadamente fora do escopo -> `not-applicable` justificado, não bloquear os itens realmente contratados.
+
+## Validador determinístico
+
+Antes de declarar `CONCLUÍDO`, persistir um ledger JSON com `head_sha`, `previous_finding_ids`, `findings` (cada um com `finding_id`, `disposition`, `status`, `evidence_head_sha`, `validation_evidence` ou `justification`), `ci.head_sha`, `ci.conclusion` e `independent_audit`. Executar:
+
+```bash
+python entregar-issue/scripts/validate_finding_completion.py <caminho-do-ledger.json>
+```
+
+Saída/exit code diferente de `CONCLUIDO`/zero proíbe conclusão integral. Em ausência de permissão/ambiente para executar, nunca presumir resultado positivo. O ledger não é obrigatório como artefato do repositório-alvo: pode ser efêmero e deve ser materializado no ambiente seguro do executor. A Skill `entregar-issue` não fabrica `independent_audit=approved`: esse campo só pode vir de resultado independente validado. Quando a auditoria ainda não ocorreu, informar `INTERNAMENTE VERIFICADO` se gates internos e CI estiverem verdes.
