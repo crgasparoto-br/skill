@@ -1,4 +1,5 @@
 """Bounded snapshot export denies unsafe Git trees and verifies pinned HEAD."""
+import hashlib
 import os
 import subprocess
 import tempfile
@@ -66,6 +67,9 @@ class SnapshotExportTests(unittest.TestCase):
         exported = Path(self.export())
         self.assertEqual((exported / "readme.txt").read_text(), "Hello\n")
         self.assertEqual((exported / ".solverit-expected-sha").read_text().strip(), self.sha())
+        expected_hash = hashlib.sha256(b"Hello\\n").hexdigest()
+        self.assertEqual((exported / ".solverit-sha256").read_text(),
+                         f"{expected_hash}  readme.txt\\n")
 
     def test_wrong_sha_denied(self):
         with self.assertRaises(ValueError):
