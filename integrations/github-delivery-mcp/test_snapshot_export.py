@@ -89,6 +89,33 @@ class SnapshotExportTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.export()
 
+    def refresh(self):
+        subprocess.run(["git", "--git-dir", str(self.mirror), "fetch", "-q",
+                        str(self.source), "develop:develop"], check=True)
+
+    def test_reviewed_dotfiles_are_exported(self):
+        self.write(".gitignore", "node_modules/\\n")
+        self.write("src/.editorconfig", "root=true\\n")
+        self.commit()
+        self.refresh()
+        exported = Path(self.export())
+        self.assertEqual((exported / ".gitignore").read_text(), "node_modules/\\n")
+        self.assertEqual((exported / "src/.editorconfig").read_text(), "root=true\\n")
+
+    def test_hidden_directory_denied(self):
+        self.write(".cache/data.txt", "not-a-secret")
+        self.commit()
+        self.refresh()
+        with self.assertRaises(ValueError):
+            self.export()
+
+    def test_credential_name_denied(self):
+        self.write("config/.npmrc", "//registry:password=example")
+        self.commit()
+        self.refresh()
+        with self.assertRaises(ValueError):
+            self.export()
+
     def test_invalid_sha_denied(self):
         with self.assertRaises(ValueError):
             self.export(expected_sha="../develop")
