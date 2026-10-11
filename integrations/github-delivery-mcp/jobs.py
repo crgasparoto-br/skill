@@ -109,10 +109,14 @@ class JobStore:
             # Only the established fixed offline smoke is allowed to finish.
             with self._connect() as db:
                 row = db.execute(
-                    "SELECT base_sha FROM jobs WHERE job_id=? AND actor=?",
+                    "SELECT actor, repo, issue_number, branch, base_sha, expected_head FROM jobs WHERE job_id=? AND actor=?",
                     (job_id, actor),
                 ).fetchone()
-            if row is None or row["base_sha"] != "offline-smoke-no-repo-operation":
+            if (row is None or row["actor"] != "local-smoke-operator"
+                    or row["repo"] != "crgasparoto-br/training-system"
+                    or row["issue_number"] != 88 or row["branch"] != "develop"
+                    or row["base_sha"] != "offline-smoke-no-repo-operation"
+                    or row["expected_head"] != "offline-smoke-no-repo-operation"):
                 raise JobConflictError(
                     "delivery success requires verified publication, CI and audit"
                 )
