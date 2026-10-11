@@ -24,6 +24,10 @@ class SnapshotExportTests(unittest.TestCase):
         self.mirror = self.base / "mirror.git"
         subprocess.run(["git", "clone", "-q", "--bare", str(self.source),
                         str(self.mirror)], check=True)
+        # Git bare clone inherits umask and may create a group-writable mirror.
+        # Match the production contract without weakening its permission check.
+        self.mirror.chmod(0o700)
+        self.root.chmod(0o700)
 
     def write(self, name, value):
         target = self.source / name
