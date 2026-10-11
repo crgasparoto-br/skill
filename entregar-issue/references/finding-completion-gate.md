@@ -44,3 +44,13 @@ python entregar-issue/scripts/validate_finding_completion.py ledger.json --manif
 ```
 
 O validador executa apenas a reconciliação determinística; **não autentica** as fontes JSON. Seu exit code zero somente autoriza `CONCLUIDO` quando a procedência e todas as evidências tiverem sido verificadas fora do processo. Sem verificador operacional disponível, bloquear conclusão final. Nunca fabricar aprovação independente. Toda recomendação opcional fora da entrega exige status `not-applicable`, justificativa e aceitação do auditor.
+
+## Verificador operacional GitHub
+
+Usar `verify_github_completion.py` com `GH_TOKEN` de leitura autenticado e nomes reais dos required checks. O processo consulta a PR no GitHub, confirma `develop`, HEAD, autores de commits, aprovação em review separado e check-runs no SHA. O auditor independente deve publicar em review **APPROVED** no HEAD uma linha `SOLVERIT_AUDIT_JSON:{"schema":"solverit-audit-v1","audit_round":"...","head_sha":"...","finding_ids":["..."],"verified_finding_ids":["..."],"accepted_exclusions":[]}`. Não aceitar manifesto enviado pelo executor. Exemplo:
+
+```bash
+python entregar-issue/scripts/verify_github_completion.py ledger.json --required-check "Structure and tests" --required-check "Validate GitHub Audit MCP"
+```
+
+Usar os nomes efetivos de checks exigidos pela proteção da branch; não inferir que exemplos são as regras atuais. Quando a auditoria não contiver esse contrato ou não houver aprovação independente, a execução falha fechada. O contrato somente comprova decisão do reviewer, e o reviewer deve verificar as evidências substanciais antes de emitir a aprovação.
