@@ -149,3 +149,19 @@ constitui vínculo verificável. O campo de issue permanece `None` até haver
 uma estratégia autoritativa de associação job→PR→issue; assim, o adaptador
 sempre recusa a conclusão, mesmo quando o CI é verde. Ele não foi integrado ao
 serviço da VPS e não autentica MCP, não finaliza jobs ou executa auditoria.
+
+## Vinculo persistente job-PR (staging)
+
+`pr_binding.py` adiciona `job_pr_bindings` ao mesmo SQLite, sem alterar
+o schema legado de `jobs`. O vinculo e imutavel e idempotente: um job
+`prepared` pode associar apenas uma PR e o `expected_head` da entrega.
+Outro ator, HEAD divergente, branch `main`/`develop` ou nova PR para o
+mesmo job sao rejeitados. A gravacao nao modifica o estado do job.
+
+**Fronteira de confianca:** o metodo `bind_published_pr` so pode ser chamado
+pelo futuro broker privilegiado, apos obter e conferir a resposta autenticada
+do GitHub e a autorizacao do solicitante. O metodo nao executa por conta
+propria essas consultas. Portanto, a entrada do worker/MCP **nao** pode
+escrever nesse banco nem invocar a associacao. Nao ha vinculo autoritativo
+em producao ainda, e `github_evidence_reader.py` continua recusando a
+finalizacao por falta de verificacao independente da issue e auditoria.
