@@ -96,3 +96,14 @@ diretivas systemd com Ubuntu/daemon Docker rootless, permissões das pastas,
 separação da unidade `solverit-issue-delivery.service` já existente e
 segurança do banco `controller-service.sqlite3` em staging.
 Ela não deve ser copiada para a unidade de produção sem aceite explícito.
+
+## Loop de recuperação preparado (ainda não ativado)
+
+O módulo `controller_loop.py` implementa um laço interrompível por SIGTERM/SIGINT,
+com intervalo configurável entre 10 e 3600 segundos, e usa o mesmo `flock`
+exclusivo por ciclo. Após reconciliação, libera o lock antes de aguardar.
+O módulo **não despacha jobs preparados**, não expõe MCP e não publica código.
+Não substitui ainda o `solverit-issue-delivery.service` oneshot na VPS.
+Testes de shutdown, exclusividade e identidade devem passar antes de uma
+implantação piloto; não iniciar um segundo controlador simultâneo sem verificar
+que ambos usam exatamente o mesmo banco e lock.
