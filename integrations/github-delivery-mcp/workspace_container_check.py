@@ -25,7 +25,7 @@ _FIXED_CHECKS = {
 }
 
 # Bash is absent from Alpine. Require a separately reviewed local image.
-_BASH_IMAGE = "bash:5.2"
+_BASH_IMAGE = "bash@sha256:a54fb4422b18f05dd3107c36f39d67b26334fda7ec89f4126052b45e228e2f15"
 _BASH_CHECK = """find /workspace -type f -name '*.sh' -exec bash -c '
 for f do
     IFS= read -r first < "$f" || :
