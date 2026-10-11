@@ -116,6 +116,41 @@ class SnapshotExportTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.export()
 
+    def test_github_metadata_excluded_from_runtime_snapshot(self):
+        self.write(".github/workflows/validate.yml", "name: CI\\n")
+        self.write(".github/CODEOWNERS", "* @team\\n")
+        self.write("integrations/github-audit-mcp/.env.example", "FAKE=placeholder\\n")
+        self.commit()
+        self.refresh()
+        exported = Path(self.export())
+        self.assertTrue((exported / "readme.txt").is_file())
+        self.assertFalse((exported / ".github").exists())
+        self.assertFalse((exported / "integrations/github-audit-mcp/.env.example").exists())
+
+    def test_real_env_still_denied(self):
+        self.write("integrations/github-audit-mcp/.env", "SECRET=not-real\\n")
+        self.commit()
+        self.refresh()
+        with self.assertRaises(ValueError):
+            self.export()
+
+    def test_nested_github_directory_denied(self):
+        self.write("src/.github/workflows/test.yml", "name: Untrusted\\n")
+        self.commit()
+        self.refresh()
+        with self.assertRaises(ValueError):
+            self.export()
+
+    def test_symlink_under_excluded_tree_denied(self):
+        self.write(".github/temporary", "placeholder")
+        (self.source / ".github/temporary").unlink()
+        (self.source / ".github/temporary").symlink_to("CODEOWNERS")
+        self.commit()
+        self.refresh()
+        # Excluded metadata never appears in the exported snapshot.
+        exported = Path(self.export())
+        self.assertFalse((exported / ".github").exists())
+
     def test_invalid_sha_denied(self):
         with self.assertRaises(ValueError):
             self.export(expected_sha="../develop")
