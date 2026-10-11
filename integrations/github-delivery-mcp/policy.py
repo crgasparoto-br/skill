@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
-_REPO = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+_REPO = re.compile(r"^(?!\\.{1,2}/)[A-Za-z0-9_.-]+/(?!\\.{1,2}$)[A-Za-z0-9_.-]+$")
 _BRANCH = re.compile(r"^feat/[0-9]+-[a-z0-9][a-z0-9-]{0,70}$")
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 _FORBIDDEN_NAMES = frozenset({".env", ".npmrc", ".pypirc", "id_rsa", "id_ed25519"})
