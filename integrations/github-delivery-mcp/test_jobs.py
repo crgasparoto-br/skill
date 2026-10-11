@@ -39,6 +39,18 @@ class JobStoreTests(unittest.TestCase):
         with self.assertRaises(JobConflictError):
             self.store.transition(job.job_id, "stranger", "queued", "running")
 
+    def test_prepared_workspace_is_not_terminal_success(self):
+        job = self.create()
+        self.store.transition(job.job_id, "trusted", "queued", "running")
+        self.store.transition(job.job_id, "trusted", "running", "prepared")
+        reopened = JobStore(self.path)
+        self.assertEqual(reopened.read(job.job_id, "trusted").status, "prepared")
+        self.assertEqual(reopened.recover_interrupted(), 0)
+        with self.assertRaises(JobConflictError):
+            reopened.transition(job.job_id, "trusted", "prepared", "succeeded")
+        reopened.transition(job.job_id, "trusted", "prepared", "running")
+        reopened.transition(job.job_id, "trusted", "running", "failed")
+
     def test_transitions_and_recovery(self):
         job = self.create()
         self.store.transition(job.job_id, "trusted", "queued", "running")
