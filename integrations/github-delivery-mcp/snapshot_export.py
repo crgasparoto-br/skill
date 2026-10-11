@@ -10,11 +10,13 @@ import os
 import re
 import subprocess
 import uuid
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 from policy import DeliveryPolicy
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
+# Deliberately narrow: only configuration files reviewed as safe to export.
+_ALLOWED_DOTFILES = frozenset({".gitignore", ".gitattributes", ".editorconfig"})
 MAX_FILES = 5000
 MAX_TOTAL_BYTES = 32 * 1024 * 1024
 MAX_FILE_BYTES = 1024 * 1024
@@ -71,7 +73,7 @@ def export_pinned_snapshot(*, mirror_path: str, root_path: str, expected_sha: st
             raise ValueError("non-UTF8 path rejected") from exc
         parts = name.split("/")
         if (not name or any(part in ("", ".", "..") for part in parts)
-                or any(part.startswith(".") for part in parts)
+                or any(part.startswith(".") and (part not in _ALLOWED_DOTFILES or part != parts[-1]) for part in parts)
                 or any(part.lower() in ("secrets", ".github", ".git", ".ssh") for part in parts)):
             raise ValueError("unsafe tracked path")
         DeliveryPolicy.validate_path(name)
