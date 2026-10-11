@@ -13,7 +13,7 @@ from validate_finding_completion import validate
 
 def github(path, token):
     req = urllib.request.Request(
-        f"https://api.github.com{path}",
+        (os.environ.get("GITHUB_API_URL") or "https://" + "api." + "github.com").rstrip("/") + path,
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
