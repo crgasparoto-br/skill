@@ -1,7 +1,7 @@
 """Issue 88: read-only OAuth MCP interoperability pilot using the official SDK.
 
-This is a separate candidate from mcp_http_local.py. No GitHub or job tools
-are registered. Bind to loopback; do not enable write operations.
+This is a separate candidate from mcp_http_local.py. Only one inert status
+inspection tool is registered. Bind to loopback; do not enable write operations.
 """
 from __future__ import annotations
 
@@ -48,6 +48,16 @@ class KeycloakVerifier:
             return None
 
 
+def get_delivery_status() -> dict[str, object]:
+    """Return public pilot status; never access GitHub, jobs, credentials or host."""
+    return {
+        "service": "SolverIT Issue Delivery",
+        "status": "authentication_pilot",
+        "executor_enabled": False,
+        "write_operations_enabled": False,
+    }
+
+
 def build_server(*, env=None) -> FastMCP:
     env = os.environ if env is None else env
     resource = env.get("SOLVERIT_MCP_RESOURCE_URL", "")
@@ -64,7 +74,7 @@ def build_server(*, env=None) -> FastMCP:
     )
     verifier = CachedJWKSVerifier(policy)
     verifier.refresh()  # startup fails closed if keys unavailable
-    return FastMCP(
+    server = FastMCP(
         "SolverIT Issue Delivery - Authentication Pilot",
         host="127.0.0.1",
         port=8770,
@@ -78,6 +88,8 @@ def build_server(*, env=None) -> FastMCP:
             required_scopes=["solverit:read"],
         ),
     )
+    server.add_tool(get_delivery_status, name="get_delivery_status", description="Read-only authentication pilot status; no GitHub access.")
+    return server
 
 
 if __name__ == "__main__":
