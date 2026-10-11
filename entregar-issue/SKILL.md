@@ -44,6 +44,7 @@ Este modelo e a lista completa de delegacoes: nunca invocar skill que nao aparec
 Ler sempre:
 
 - `references/controller-execution-efficiency.md`;
+- `references/finding-completion-gate.md`;
 - `references/composition-contract.md`;
 - `references/implementation-workflow.md`;
 - `references/delivery-target-binding.md`.
@@ -86,6 +87,10 @@ Ler somente quando aplicavel:
 - resposta final: `references/controller-result-template.md`.
 
 Nao carregar referencias condicionais por antecipacao.
+
+## Gate de completude de remediacao
+
+Para qualquer pedido de implementar todas as pendencias de uma auditoria, aplicar obrigatoriamente `references/finding-completion-gate.md` antes da primeira edicao e antes de declarar resultado. Um commit parcial ou CI iniciado nunca encerram o ledger de achados. Aprovacao independente exige contexto separado.
 
 ## Autoridade e invariantes
 
