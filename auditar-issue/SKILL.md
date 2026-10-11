@@ -67,7 +67,7 @@ Usar `SIM` somente para `APROVADA` ou `APROVADA COM RESSALVAS` com validade real
 
 ## Carregamento progressivo
 
-Ler sempre `references/evidence-rules.md` e `references/gate-preflight.md`. Ler `references/delivery-contract.md` somente quando houver handoff composto ou modo controller.
+Ler sempre `references/evidence-rules.md`, `references/gate-preflight.md` e `references/finding-disposition-contract.md`. Ler `references/delivery-contract.md` somente quando houver handoff composto ou modo controller.
 
 Ler somente quando aplicavel:
 
@@ -90,6 +90,10 @@ Ler somente quando aplicavel:
 - `input-parser`: `references/input-parser-audit.md`;
 - auditoria externa assinada: `references/external-audit-contract.md`;
 - entrega: `references/report-template.md`.
+
+## Fechamento de achados anteriores
+
+Aplicar `references/finding-disposition-contract.md` a todos os findings e recomendacoes acionaveis, preservando IDs e status por HEAD. Nao converter item de outra fase em blocker sem requisito vinculante.
 
 ## Invariantes
 

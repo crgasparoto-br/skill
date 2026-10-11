@@ -91,6 +91,10 @@ def validate_skill_genericity(root: Path) -> list[str]:
         if path.resolve() == self_path:
             continue
         relative = path.relative_to(root)
+        # This runtime-specific deployment package is not a reusable skill asset.
+        # Keep the exception narrowly scoped, never skip all integrations.
+        if relative.parts[:2] == ("integrations", "github-audit-mcp"):
+            continue
         if NUMBERED_TEST.match(path.name):
             errors.append(f"numbered issue-specific test filename: {relative}")
         if path.suffix.lower() not in TEXT_SUFFIXES:

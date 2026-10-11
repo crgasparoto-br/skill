@@ -1,6 +1,6 @@
 ---
 name: entregar-issue
-description: "Conduzir a entrega ponta a ponta de issues em repositorios de software com um unico controlador, plano e estado: revisar readiness quando necessario, implementar codigo/testes/schemas/configuracao/documentacao, validar durante a edicao, aplicar higiene limitada ao diff, acionar especialidades condicionais, executar gates finais, congelar o candidato, acompanhar CI ate estado terminal por delegacao automatica a corrigir-ci, remediar falhas sem novo prompt e preparar auditoria independente. Usar quando o usuario informar uma issue, PR, branch ou pendencias e esperar continuidade autonoma. Nunca fazer merge nem declarar auditoria independente no mesmo contexto."
+description: "Conduzir a entrega ponta a ponta de issues em repositorios de software com um unico controlador, plano e estado: revisar readiness quando necessario, implementar codigo/testes/schemas/configuracao/documentacao, validar durante a edicao, aplicar higiene limitada ao diff, acionar especialidades condicionais, executar gates finais, congelar o candidato, acompanhar CI ate estado terminal por delegacao automatica a corrigir-ci, remediar falhas sem novo prompt e preparar auditoria independente. Usar quando o usuario informar uma issue, PR, branch ou pedir 'implementar pendências' (com ou sem 'todas'), incluindo pendências provenientes de auditoria, instruções da issue, checklist, critérios de aceite ou revisão. Exigir fechamento integral verificável na mesma execução, sem encerrar após commits parciais ou CI iniciada. Nunca fazer merge nem declarar auditoria independente no mesmo contexto."
 ---
 
 # Entregar Issue
@@ -12,6 +12,19 @@ Produzir o menor candidato completo, rastreavel e localmente verde para uma issu
 O objetivo operacional e concluir a entrega, sempre que nao houver impedimento real, em **uma unica invocacao de nivel superior**. Estado de CI `pending-no-run`, `queued`, `waiting` ou `in_progress` nunca e motivo para devolver o controle ao usuario: transferir a propriedade temporaria da CI para `corrigir-ci`, aguardar o terminal e retomar automaticamente a entrega.
 
 A verificacao executada no mesmo contexto e interna. Somente `auditar-issue` em contexto realmente separado pode liberar aprovacao operacional.
+
+## Fechamento integral obrigatório de pendências
+
+"Implementar pendências", "implementar todas as pendências", "corrigir tudo" e equivalentes exigem executar **todos** os itens acionáveis da issue, critérios de aceite, revisão/auditoria, comentários e CI; não selecionar apenas itens fáceis, não encerrar com P1 aberto, e não substituir correções por documentação das pendências.
+
+1. Criar inventário de cada finding com ID, evidência, escopo, critério de aceite, estado, bloqueio e dependências. Conciliar duplicatas sem perder requisitos.
+2. Executar bloqueadores P0/P1 antes dos demais, processando todos os casos em lotes rastreáveis quando necessário. A cada rodada implementar, testar, conferir comportamento real, checar CI no HEAD exato e atualizar o inventário. Repetir enquanto houver itens acionáveis.
+3. Pendências que exigem verdade independente (ex.: oráculos semânticos alimentares) requerem fonte primária ou evidência histórica específica por caso, com procedência e teste verificável. Nunca tratar fixture, saída do próprio resolvedor, teste autorreferente, comentário ou CI verde como certificação independente.
+4. Em conjuntos com dezenas de casos, tentar revisar **cada caso**, registrando evidência e decisão por caso, em vez de revisar somente exemplos. Se faltar fonte acessível, marcar o caso como bloqueado e continuar nos demais; não mascarar a pendência nem alterar artificialmente o oráculo para passar.
+5. Distinguir implementação, verificação automática e revisão independente. Reconsultar issue, diff, testes, CI e auditoria no último HEAD antes da resposta final. Declarar entrega integral somente com zero pendências acionáveis não validadas. Reportar total, concluídas, bloqueadas e prova para cada ID.
+6. Se um bloqueio externo real impedir conclusão, registrar motivo preciso e requisito de desbloqueio na PR, sem pedir outra vez para o usuário emitir o mesmo comando, nem prometer trabalho assíncrono.
+
+Anti-padrões proibidos: corrigir só itens simples; deixar casos rotulados sem fonte e apresentar o corpus como certificado; chamar documentação de pendência de implementação; devolver ao usuário por CI pendente; declarar conclusão com P1 aberto.
 
 ## Modelo arquitetural
 
@@ -44,6 +57,7 @@ Este modelo e a lista completa de delegacoes: nunca invocar skill que nao aparec
 Ler sempre:
 
 - `references/controller-execution-efficiency.md`;
+- `references/finding-completion-gate.md`;
 - `references/composition-contract.md`;
 - `references/implementation-workflow.md`;
 - `references/delivery-target-binding.md`.
@@ -86,6 +100,10 @@ Ler somente quando aplicavel:
 - resposta final: `references/controller-result-template.md`.
 
 Nao carregar referencias condicionais por antecipacao.
+
+## Gate de completude de remediacao
+
+Para qualquer pedido de 'implementar pendências', 'implementar todas as pendências' ou equivalente, seja a fonte uma auditoria, issue, PR, comentários, checklist ou critérios de aceite, aplicar obrigatoriamente `references/finding-completion-gate.md` antes da primeira edição e antes de declarar resultado. Unificar todas as fontes em um ledger e executar cada obrigação aplicável até verificação ou impedimento real comprovado. Publicação de commit, CI iniciada ou CI verde isolada não constitui entrega integral. Aprovacao independente exige contexto separado, mas não impede que toda correção executável seja concluída primeiro. Um commit parcial ou CI iniciado nunca encerram o ledger de achados. Aprovacao independente exige contexto separado.
 
 ## Autoridade e invariantes
 
