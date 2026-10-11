@@ -56,7 +56,7 @@ def inspect_workspace_in_container(snapshot_dir: str, expected_sha: str, *, chec
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
         "--mount", f"type=bind,src={resolved},dst=/workspace,readonly",
         IMAGE, "sh", "-ec",
-        'test "$(id -u)" = 65532 && test "$(cat /workspace/.solverit-expected-sha)" = "$1" && cd /workspace && sha256sum -c .solverit-sha256 >/dev/null && " + _FIXED_CHECKS[check] + "',
+        ('test "$(id -u)" = 65532 && test "$(cat /workspace/.solverit-expected-sha)" = "$1" && cd /workspace && sha256sum -c .solverit-sha256 >/dev/null && ' + _FIXED_CHECKS[check]),
         "sh", expected_sha,
     ]
     try:
