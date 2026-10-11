@@ -29,6 +29,23 @@ class SnapshotTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             inspect_workspace_in_container(str(self.dir), self.sha, check="shell-syntax-v1")
 
+    def test_fixed_check_is_really_in_docker_command(self):
+        from types import SimpleNamespace
+        from workspace_container_check import _FIXED_CHECKS
+        self.dir.chmod(0o755)
+        with patch("workspace_container_check.os.geteuid", return_value=1004), \
+             patch("workspace_container_check.Path.stat") as stat, \
+             patch("workspace_container_check.Path.is_socket", return_value=True), \
+             patch("workspace_container_check.subprocess.run") as run:
+            stat.return_value.st_uid = 1004
+            stat.return_value.st_mode = 0o40755
+            run.return_value = SimpleNamespace(returncode=0, stdout="SNAPSHOT_OK\\n", stderr="")
+            self.assertTrue(inspect_workspace_in_container(
+                str(self.dir), self.sha, check="posix-shell-syntax-v1"))
+            command = run.call_args.args[0]
+            self.assertIn(_FIXED_CHECKS["posix-shell-syntax-v1"], command[-3])
+            self.assertNotIn(' + _FIXED_CHECKS[check] + ', command[-3])
+
     def test_reject_worker_mismatch(self):
         with patch("workspace_container_check.os.geteuid", return_value=1000):
             with self.assertRaises(PermissionError):
