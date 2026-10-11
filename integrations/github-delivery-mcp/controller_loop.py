@@ -9,7 +9,6 @@ from __future__ import annotations
 import os
 import signal
 import threading
-import time
 
 from controller_lock import controller_lock
 from local_recovery import recover_local_jobs
