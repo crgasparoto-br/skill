@@ -67,9 +67,9 @@ class SnapshotExportTests(unittest.TestCase):
         exported = Path(self.export())
         self.assertEqual((exported / "readme.txt").read_text(), "Hello\n")
         self.assertEqual((exported / ".solverit-expected-sha").read_text().strip(), self.sha())
-        expected_hash = hashlib.sha256(b"Hello\\n").hexdigest()
+        expected_hash = hashlib.sha256(b"Hello\n").hexdigest()
         self.assertEqual((exported / ".solverit-sha256").read_text(),
-                         f"{expected_hash}  readme.txt\\n")
+                         f"{expected_hash}  readme.txt\n")
 
     def test_wrong_sha_denied(self):
         with self.assertRaises(ValueError):
@@ -98,13 +98,13 @@ class SnapshotExportTests(unittest.TestCase):
                         str(self.source), "develop:develop"], check=True)
 
     def test_reviewed_dotfiles_are_exported(self):
-        self.write(".gitignore", "node_modules/\\n")
-        self.write("src/.editorconfig", "root=true\\n")
+        self.write(".gitignore", "node_modules/\n")
+        self.write("src/.editorconfig", "root=true\n")
         self.commit()
         self.refresh()
         exported = Path(self.export())
-        self.assertEqual((exported / ".gitignore").read_text(), "node_modules/\\n")
-        self.assertEqual((exported / "src/.editorconfig").read_text(), "root=true\\n")
+        self.assertEqual((exported / ".gitignore").read_text(), "node_modules/\n")
+        self.assertEqual((exported / "src/.editorconfig").read_text(), "root=true\n")
 
     def test_hidden_directory_denied(self):
         self.write(".cache/data.txt", "not-a-secret")
@@ -121,9 +121,9 @@ class SnapshotExportTests(unittest.TestCase):
             self.export()
 
     def test_github_metadata_excluded_from_runtime_snapshot(self):
-        self.write(".github/workflows/validate.yml", "name: CI\\n")
-        self.write(".github/CODEOWNERS", "* @team\\n")
-        self.write("integrations/github-audit-mcp/.env.example", "FAKE=placeholder\\n")
+        self.write(".github/workflows/validate.yml", "name: CI\n")
+        self.write(".github/CODEOWNERS", "* @team\n")
+        self.write("integrations/github-audit-mcp/.env.example", "FAKE=placeholder\n")
         self.commit()
         self.refresh()
         exported = Path(self.export())
@@ -132,14 +132,14 @@ class SnapshotExportTests(unittest.TestCase):
         self.assertFalse((exported / "integrations/github-audit-mcp/.env.example").exists())
 
     def test_real_env_still_denied(self):
-        self.write("integrations/github-audit-mcp/.env", "SECRET=not-real\\n")
+        self.write("integrations/github-audit-mcp/.env", "SECRET=not-real\n")
         self.commit()
         self.refresh()
         with self.assertRaises(ValueError):
             self.export()
 
     def test_nested_github_directory_denied(self):
-        self.write("src/.github/workflows/test.yml", "name: Untrusted\\n")
+        self.write("src/.github/workflows/test.yml", "name: Untrusted\n")
         self.commit()
         self.refresh()
         with self.assertRaises(ValueError):
