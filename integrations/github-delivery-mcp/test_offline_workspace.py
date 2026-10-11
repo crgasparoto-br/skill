@@ -43,7 +43,9 @@ class OfflineWorkspaceTests(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 prepare_offline_workspace(**self.params)
 
-    def test_refuses_nonexistent_mirror(self):
+    def test_refuses_symlink_mirror(self):
+        alias = self.root / "alias.git"
+        alias.symlink_to(self.mirror, target_is_directory=True)
         with patch("offline_workspace.os.geteuid", return_value=1004):
-            with self.assertRaises(FileNotFoundError):
-                prepare_offline_workspace(**(self.params | {"mirror_path": str(self.root / "none")}))
+            with self.assertRaises(PermissionError):
+                prepare_offline_workspace(**(self.params | {"mirror_path": str(alias)}))
