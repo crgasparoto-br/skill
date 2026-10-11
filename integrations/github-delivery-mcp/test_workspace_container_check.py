@@ -46,6 +46,25 @@ class SnapshotTests(unittest.TestCase):
             self.assertIn(_FIXED_CHECKS["posix-shell-syntax-v1"], command[-3])
             self.assertNotIn(' + _FIXED_CHECKS[check] + ', command[-3])
 
+    def test_bash_profile_pins_image_and_syntax_only(self):
+        from types import SimpleNamespace
+        with patch("workspace_container_check.os.geteuid", return_value=1004), \
+             patch("workspace_container_check.Path.stat") as stat, \
+             patch("workspace_container_check.Path.is_socket", return_value=True), \
+             patch("workspace_container_check.subprocess.run") as run:
+            stat.return_value.st_uid = 1004
+            stat.return_value.st_mode = 0o40755
+            run.return_value = SimpleNamespace(returncode=0, stdout="SNAPSHOT_OK\n", stderr="")
+            self.assertTrue(inspect_workspace_in_container(
+                str(self.dir), self.sha, check="bash-syntax-v1"))
+            cmd = run.call_args.args[0]
+            self.assertIn("bash:5.2", cmd)
+            self.assertIn("bash -n", cmd[-3])
+            self.assertIn("sha256sum -c", cmd[-3])
+            self.assertIn("--network", cmd)
+            self.assertIn("none", cmd)
+            self.assertIn("readonly", next(x for x in cmd if x.startswith("type=bind,")))
+
     def test_reject_worker_mismatch(self):
         with patch("workspace_container_check.os.geteuid", return_value=1000):
             with self.assertRaises(PermissionError):
