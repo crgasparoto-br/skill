@@ -17,6 +17,9 @@ from policy import DeliveryPolicy
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 # Deliberately narrow: only configuration files reviewed as safe to export.
 _ALLOWED_DOTFILES = frozenset({".gitignore", ".gitattributes", ".editorconfig"})
+# Excluded from the offline runtime snapshot, NOT an authorization bypass for edits.
+_EXCLUDED_TREE = ".github"
+_EXCLUDED_FILE = ".env.example"
 MAX_FILES = 5000
 MAX_TOTAL_BYTES = 32 * 1024 * 1024
 MAX_FILE_BYTES = 1024 * 1024
@@ -72,6 +75,10 @@ def export_pinned_snapshot(*, mirror_path: str, root_path: str, expected_sha: st
         except UnicodeDecodeError as exc:
             raise ValueError("non-UTF8 path rejected") from exc
         parts = name.split("/")
+        # GitHub automation files and env examples are metadata, not runtime input.
+        # Exclude them rather than making forbidden paths eligible for execution.
+        if parts[0] == _EXCLUDED_TREE or parts[-1] == _EXCLUDED_FILE:
+            continue
         if (not name or any(part in ("", ".", "..") for part in parts)
                 or any(part.startswith(".") for part in parts[:-1])
                 or (parts[-1].startswith(".") and parts[-1] not in _ALLOWED_DOTFILES)
