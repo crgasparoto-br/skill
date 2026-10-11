@@ -29,12 +29,18 @@ Quando o CI estiver pendente, respeitar ownership de `corrigir-ci` e `finalize-a
 
 Reproduzir a regressão PR #1316: auditoria com três achados aplicáveis; implementar apenas um, publicar commit e iniciar CI. A barreira deve **rejeitar** `CONCLUÍDO` e manter os outros dois como `open`; se CI estiver pendente, também rejeitar `verified` terminal. Caso irmão: todos os achados verificados e CI verde, mas auditoria independente ausente -> apenas `INTERNAMENTE VERIFICADO`. Caso irmão: requisito de outra fase comprovadamente fora do escopo -> `not-applicable` justificado, não bloquear os itens realmente contratados.
 
-## Validador determinístico
+## Validador determinístico e origem confiável
 
-Antes de declarar `CONCLUÍDO`, persistir um ledger JSON com `head_sha`, `previous_finding_ids`, `findings` (cada um com `finding_id`, `disposition`, `status`, `evidence_head_sha`, `validation_evidence` ou `justification`), `ci.head_sha`, `ci.conclusion` e `independent_audit`. Executar:
+O ledger editável pelo implementador **não** é fonte confiável de completude, CI ou aprovação. O gate deve obter **independentemente**, por integração autenticada, antes da validação:
+- manifesto da rodada de auditoria com `repository`, `pr_number`, `audit_round` e lista completa `finding_ids`; nunca construir esse manifesto a partir do ledger do implementador;
+- atestação com os mesmos identificadores, `head_sha`, mapa `verified_findings` (ID -> SHA), `accepted_exclusions`, `ci` (`head_sha`, `conclusion=success`, `run_url`) e `independent_audit=approved`, `auditor`, `implementer`, `audit_url`.
+
+O controlador deve verificar contra GitHub API autenticada os IDs/revisões de auditoria, os checks obrigatórios, o HEAD real da PR, os URLs de execução, a identidade do auditor e sua separação do implementador; verificar também a origem de cada evidência e se o review trata do HEAD exato. URLs e campos JSON não são prova por si só. Arquivos de atestação só podem ser fornecidos ao validador pelo componente de verificação independente, jamais por arquivos controlados pelo executor. Sem cadeia de confiança verificada, devolver `NAO_CONCLUIDO` ou `INTERNAMENTE VERIFICADO`, nunca aprovação final.
+
+Executar após verificação externa:
 
 ```bash
-python entregar-issue/scripts/validate_finding_completion.py <caminho-do-ledger.json>
+python entregar-issue/scripts/validate_finding_completion.py ledger.json --manifest manifest-verificado.json --attestation atestacao-verificada.json
 ```
 
-Saída/exit code diferente de `CONCLUIDO`/zero proíbe conclusão integral. Em ausência de permissão/ambiente para executar, nunca presumir resultado positivo. O ledger não é obrigatório como artefato do repositório-alvo: pode ser efêmero e deve ser materializado no ambiente seguro do executor. A Skill `entregar-issue` não fabrica `independent_audit=approved`: esse campo só pode vir de resultado independente validado. Quando a auditoria ainda não ocorreu, informar `INTERNAMENTE VERIFICADO` se gates internos e CI estiverem verdes.
+O validador executa apenas a reconciliação determinística; **não autentica** as fontes JSON. Seu exit code zero somente autoriza `CONCLUIDO` quando a procedência e todas as evidências tiverem sido verificadas fora do processo. Sem verificador operacional disponível, bloquear conclusão final. Nunca fabricar aprovação independente. Toda recomendação opcional fora da entrega exige status `not-applicable`, justificativa e aceitação do auditor.
