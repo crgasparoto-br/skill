@@ -37,6 +37,16 @@ Reconciliar todos os itens do ledger depois de cada alteração material, antes 
 
 **Controle negativo de fluxo:** dado um pedido com correção A, correção B e recertificação C, publicar A e observar CI `pending` não é saída terminal permitida. Mesmo com CI verde de A, o controlador deve continuar implementando B e C. Somente impedimento real verificável permite resposta `PARCIAL`, com ledger integral.
 
+## Gate contra encerramento parcial por escolha do agente
+
+Antes da resposta final, executar uma **reconciliação de saída** com todos os achados do manifesto original, mesmo que commit, PR ou CI tenha tido sucesso. Para cada item ainda não `verified`, registrar `remaining_action`, `attempted_actions`, `blocker_evidence` e `next_available_tool_action`. Se a próxima ação existir e estiver autorizada, **executá-la na mesma solicitação**, sem substituir a operação por recomendação, comentário ou pergunta. Repetir o ciclo enquanto houver ações possíveis.
+
+Uma classificação `blocked` exige prova verificável vinculada ao ID (permissão negada, fonte inacessível após tentativa fundamentada, ou dependência externa irredutível). Quantidade elevada de casos, dificuldade, sucesso da correção mais simples e necessidade de consultar referências independentes **não constituem bloqueio**. Em revisões semânticas extensas, percorrer cada caso e tentar obter evidência adequada; não inventar certificação.
+
+Recusar `CONCLUÍDO` e `INTERNAMENTE VERIFICADO` enquanto algum item aplicável estiver `open`, `implementing`, `implemented-unverified` ou `blocked`. Permitir `PARCIAL` somente diante de impedimento real demonstrado ou limite real de execução, depois de tentar todas as ações disponíveis; nesse caso preservar os itens remanescentes e **não afirmar que foram corrigidos**.
+
+**Regressão PR #1316:** dados `AUD-1316-003` (72 revisões semânticas) e `AUD-1316-006` (descrição), corrigir apenas `AUD-1316-006` e devolver `PARCIAL` sem tentativas por caso **deve reprovar a barreira**. CI verde e commit de documentação não mudam esse resultado.
+
 ## Barreira de encerramento
 
 É proibido responder `CONCLUÍDO` quando:
