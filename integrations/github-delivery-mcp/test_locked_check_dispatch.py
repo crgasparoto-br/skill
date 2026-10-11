@@ -1,8 +1,10 @@
 """Exclusive controller lock and pinned SHA are prerequisites to execution."""
 import hashlib
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from check_evidence import CheckEvidenceStore
@@ -36,14 +38,19 @@ class LockedDispatchTests(unittest.TestCase):
         self.store.jobs.transition(self.id, "operator", "running", "prepared")
 
     def test_dispatch_holds_exclusive_lock(self):
+        real_fstat = os.fstat
+        def fake_fstat(fd):
+            stat = real_fstat(fd)
+            return SimpleNamespace(st_uid=1004, st_mode=stat.st_mode)
+
         def check(**kwargs):
             with self.assertRaises(RuntimeError):
                 with controller_lock(self.lock):
                     pass
             return ("verified",)
-        with patch("locked_check_dispatch.os.geteuid", return_value=__import__("os").geteuid()), patch(
+        with patch("locked_check_dispatch.os.geteuid", return_value=1004), patch(
             "locked_check_dispatch.run_and_record_checks", side_effect=check
-        ) as run:
+        ) as run, patch("controller_lock.os.fstat", side_effect=fake_fstat):
             self.assertEqual(dispatch_locked_checks(**self.args), ("verified",))
             run.assert_called_once()
 
@@ -57,9 +64,13 @@ class LockedDispatchTests(unittest.TestCase):
             run.assert_not_called()
 
     def test_actor_denied(self):
+        real_fstat = os.fstat
+        def fake_fstat(fd):
+            stat = real_fstat(fd)
+            return SimpleNamespace(st_uid=1004, st_mode=stat.st_mode)
         with patch("locked_check_dispatch.os.geteuid", return_value=1004), patch(
             "locked_check_dispatch.run_and_record_checks"
-        ) as run:
+        ) as run, patch("controller_lock.os.fstat", side_effect=fake_fstat):
             with self.assertRaises(KeyError):
                 dispatch_locked_checks(**(self.args | {"actor":"other"}))
             run.assert_not_called()
