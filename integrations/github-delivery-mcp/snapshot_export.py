@@ -112,9 +112,9 @@ def export_pinned_snapshot(*, mirror_path: str, root_path: str, expected_sha: st
             # Git path constraints exclude newline, backslash and other unsafe
             # characters from checksum manifest paths.
             name = "/".join(parts)
-            if "\\n" in name or "\\r" in name or "\\\\" in name:
+            if "\n" in name or "\\r" in name or "\\\\" in name:
                 raise ValueError("unsafe manifest path")
-            manifest.append(f"{hashlib.sha256(data).hexdigest()}  {name}\\n")
+            manifest.append(f"{hashlib.sha256(data).hexdigest()}  {name}\n")
         integrity = snapshot / ".solverit-sha256"
         integrity.write_text("".join(manifest), encoding="utf-8")
         integrity.chmod(0o644)
