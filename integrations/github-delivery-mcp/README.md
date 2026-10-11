@@ -125,3 +125,14 @@ A futura implementação deve recuperar evidências diretamente de GitHub e do
 canal independente de auditoria, conferir owner/repo, issue, PR, base
 `develop`, HEAD e integridade temporal, e registrar a conclusão de forma
 atômica e idempotente. A presença deste módulo não comprova a finalização E2E.
+
+## Validação estrutural de evidências GitHub (ainda não conectada)
+
+O módulo `github_evidence_validation.py` compara PR e checks com repositório,
+issue, branch e base `develop`, HEAD esperado do job, conclusões `success`
+e lista não vazia de checks obrigatórios. Rejeita registros ausentes, duplicados,
+pendentes ou associados a outro SHA. É um **validador puro**; o campo `source`
+nos registros não autentica origem e **não** deve ser aceito de entrada MCP/worker.
+O catálogo de required checks precisa vir de política protegida. O adaptador de
+consulta read-only GitHub, a auditoria independente e a finalização atômica
+continuam pendentes. Passar nesses testes não libera `succeeded`.
