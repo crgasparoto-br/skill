@@ -51,6 +51,13 @@ class JobStoreTests(unittest.TestCase):
         reopened.transition(job.job_id, "trusted", "prepared", "running")
         reopened.transition(job.job_id, "trusted", "running", "failed")
 
+    def test_legacy_smoke_still_can_finish(self):
+        job = self.create(base_sha="offline-smoke-no-repo-operation",
+                          expected_head="offline-smoke-no-repo-operation")
+        self.store.transition(job.job_id, "trusted", "queued", "running")
+        self.store.transition(job.job_id, "trusted", "running", "succeeded")
+        self.assertEqual(self.store.read(job.job_id, "trusted").status, "succeeded")
+
     def test_transitions_and_recovery(self):
         job = self.create()
         self.store.transition(job.job_id, "trusted", "queued", "running")
@@ -60,9 +67,9 @@ class JobStoreTests(unittest.TestCase):
             self.store.transition(job.job_id, "trusted", "running", "succeeded")
         self.store.transition(job.job_id, "trusted", "timed_out", "queued")
         self.store.transition(job.job_id, "trusted", "queued", "running")
-        self.store.transition(job.job_id, "trusted", "running", "succeeded")
         with self.assertRaises(JobConflictError):
-            self.store.transition(job.job_id, "trusted", "succeeded", "queued")
+            self.store.transition(job.job_id, "trusted", "running", "succeeded")
+        self.store.transition(job.job_id, "trusted", "running", "failed")
 
 
 if __name__ == "__main__":
