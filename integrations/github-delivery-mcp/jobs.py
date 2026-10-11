@@ -6,6 +6,7 @@ Caller must enforce OAuth authorization on *every* read and write before use.
 from __future__ import annotations
 
 import sqlite3
+import re
 import time
 import uuid
 from dataclasses import dataclass
@@ -104,7 +105,8 @@ class JobStore:
             return self._public(row)
 
     def transition(self, job_id: str, actor: str, expected: str, target: str) -> Job:
-        if target not in TRANSITIONS.get(expected, ()):
+        if target == "succeeded":
+            # Real Git-SHA jobs require a future independently verified delivery\n            # finalization API; only the fixed legacy offline smoke may finish.\n            with self._connect() as db:\n                row = db.execute("SELECT base_sha FROM jobs WHERE job_id=? AND actor=?",\n                                 (job_id, actor)).fetchone()\n            if row is None or row["base_sha"] != "offline-smoke-no-repo-operation":\n                raise JobConflictError("delivery success requires verified publication, CI and audit")\n        if target not in TRANSITIONS.get(expected, ()):
             raise JobConflictError("invalid job transition")
         with self._connect() as db:
             updated = db.execute(
