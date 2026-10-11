@@ -147,9 +147,9 @@ class SnapshotExportTests(unittest.TestCase):
         (self.source / ".github/temporary").symlink_to("CODEOWNERS")
         self.commit()
         self.refresh()
-        # Excluded metadata never appears in the exported snapshot.
-        exported = Path(self.export())
-        self.assertFalse((exported / ".github").exists())
+        # Reject unsafe Git entry types before considering path exclusions.
+        with self.assertRaises(ValueError):
+            self.export()
 
     def test_invalid_sha_denied(self):
         with self.assertRaises(ValueError):
