@@ -1,74 +1,82 @@
-# Issue #88: delivery control plane (phase 1)
+# Issue #88 — plano de controle de entregas (em desenvolvimento)
 
-**Status: PARTIAL IMPLEMENTATION — NOT PRODUCTION READY.**
+**Estado em 2026-10-11: IMPLEMENTAÇÃO PARCIAL; NÃO APTO PARA PRODUÇÃO.**
+**Repositório:** `crgasparoto-br/skill`; **base:** `develop`; **PR:** [#89](https://github.com/crgasparoto-br/skill/pull/89) (draft, sem merge).
+Este documento registra resultados **reportados pelo operador da VPS**, distintos dos testes unitários e de uma auditoria independente.
 
-This package provides a standalone fail-closed policy module and offline regression
-tests. It is **not** an MCP server and does not offer GitHub writes or a VPS job
-executor. Do not connect it to the production read-only auditor.
+## Arquitetura prevista
 
-## Trust boundaries
+```text
+ChatGPT -> MCP de entrega -> Keycloak/OAuth + autorização por repositório/ação
+  -> controlador persistente (lock, SQLite, recuperação)
+  -> snapshot Git da develop fixado por SHA -> Docker rootless isolado
+  -> edição e testes funcionais -> broker GitHub App separado
+  -> commit + PR para develop -> CI no HEAD exato -> auditoria independente
+```
 
-| Component | Credential | Allowed actions |
-| --- | --- | --- |
-| Existing auditor (PR #87) | Auditor GitHub App, read-only | Observe rulesets/protection |
-| Delivery MCP (not implemented yet) | Independent OAuth audience and GitHub App installation | Explicit per-tool authorization |
-| Job control plane (not implemented yet) | Short-lived, repo-scoped publication token | Validate state and publish commits/PR |
-| Ephemeral executor (not implemented yet) | No GitHub token, host secrets or Docker socket | Clone through mediated input, edit, test |
+A auditoria de GitHub existente continua **somente leitura** e separada do serviço de entrega.
+O MCP de entrega autenticado ainda **não** possui ferramentas de escrita habilitadas neste fluxo.
+Nunca transferir chave privada da App, tokens de publicação ou socket Docker do host para código de repositório não confiável.
 
-The server MUST construct `VerifiedPrincipal` from verified OAuth identity and
-server-stored profile membership. The principal MUST NOT originate from an MCP
-argument, repository file, issue body, test output or job logs. Every dispatch,
-including direct MCP calls, requires server-side authorization before any
-GitHub request or job enqueue.
+## Implementado e testado até aqui
 
-## Job contract v1 (future implementation)
+| Componente | Evidência / limite |
+| --- | --- |
+| Política de autorização deny-by-default | Implementação e testes offline; integração OAuth por operação pendente |
+| `jobs.py` | Jobs SQLite, idempotência, ownership por ator, estados e recuperação conservadora |
+| `controller_lock.py` | `flock` exclusivo; todos os caminhos concorrentes devem usar o mesmo lock |
+| `snapshot_export.py` | Snapshot do Git mirror com SHA fixado, seleção restrita de arquivos, manifesto SHA-256 e marcador de commit |
+| `workspace_container_check.py` | Perfis fixos `integrity-v1`, `posix-shell-syntax-v1` e `bash-syntax-v1`, sem shell arbitrário fornecido por MCP |
+| `check_evidence.py` | Evidências SQLite imutáveis por (job, check), ligadas a ator, base SHA e imagem de verificação |
+| `verified_check_runner.py` | Encadeia execuções rootless e registros de evidência, falhando fechado em erro |
+| `locked_check_dispatch.py` | Valida estado `prepared`, marcador do snapshot e bloqueio exclusivo durante verificações |
+| `local_controller.py` | CLI local: recuperação sob lock e despacho explícito para job preparado; **não** é endpoint MCP |
 
-Tools: `prepare_workspace`, `inspect_workspace`, `apply_patch`,
-`run_allowed_checks`, `get_job_status`, `get_job_logs`,
-`publish_branch`, `open_pull_request`.
+**Nota de confiança:** comparar o marcador `.solverit-expected-sha` com o SHA do job não prova, sozinho, que os bytes do snapshot vieram do Git remoto. O manifesto dentro do próprio snapshot também não é uma âncora independente de confiança. Antes da produção, é necessário ancorar o snapshot em um mirror e armazenamento protegidos, controlar TOCTOU e revisar o modelo de ameaça do usuário com acesso ao daemon Docker rootless. Evidências de checks não equivalem a CI aprovado, testes funcionais completos ou auditoria.
 
-Each request MUST contain a stable idempotency key, authorized repo,
-issue number, work branch, and expected HEAD SHA. Responses MUST expose
-`job_id`, `status`, `base_sha`, `head_sha`, `correlation_id`,
-redacted artifact references, timestamps, and typed error codes.
-Accepted states: `queued`, `running`, `succeeded`, `failed`,
-`cancelled`, `timed_out`. Persist transitions before side effects;
-recover interrupted running jobs into a reconcilable state. Retry MUST
-not duplicate commits, branches or PRs.
+## Homologações realizadas na VPS
 
-The controller MUST use CAS for both branch HEAD and file blob SHA,
-and reauthorize before push/PR. The `policy.py` SHA comparison is
-a precondition only; it does **not** replace an atomic server-side
-ref update with expected SHA.
+Ambiente reportado pelo operador: Ubuntu na OVH, usuário dedicado `solverit-worker` (UID 1004), Docker rootless em `/run/user/1004/docker.sock`; autenticação privilegiada da GitHub App mantida em usuário separado. Não ampliar privilégios do worker nem copiar credenciais.
 
-## Execution profiles
+- **Commit `c65cfc93`:** 5 testes de evidências aprovados; regressão **203/203**.
+- **Commit `2b5099c6`:** 5 testes de exclusividade/ator/SHA aprovados; regressão **208/208**.
+- **Commit `f497b0f2`:** 3 testes do controlador aprovados; regressão **211/211**, em **2026-10-11**, código de saída 0. Os avisos `usage: controller ... error:` são esperados em testes negativos.
+- **Execução rootless integrada real** reportada após `2b5099c6`: job `d6c4e992-eff1-4541-8a1c-ef3ec7a5ea07`, banco `/home/solverit-worker/issue88-homologacao/integrated-3c07c684f577435e96fbe430a4fb4af1.sqlite3`, base SHA `c10136fe8335a04aea3d2d9a959d42aa6223dd8a`. Foram persistidas **3/3** evidências `passed=True`, `timed_out=False`; job permaneceu `prepared`; código 0; nenhum contêiner remanescente listado.
+- Snapshot usado na homologação: `/home/solverit-worker/issue88-homologacao/runtime-snapshots/solverit-issue88-0ef9cca3eba44d1194588083fed2e087`, manifesto de **557** entradas. O snapshot pertence ao worker: inspecionar arquivos protegidos com `sudo -u solverit-worker`; **não** alterar permissões para contornar erros.
 
-Keep versioned Node/Python task templates in this repository. Never
-execute arbitrary user/issue shell strings. Isolate each checkout by
-issue and run ID. Reject direct `main`/`develop` publication; reject
-merge, deletion and force push. Workers must run without host Docker
-socket, credentials, privileged user, unrestricted egress or access
-to the auditor's infrastructure. Apply CPU, RAM, PIDs, storage and
-duration quotas; preserve exit codes and redacted logs.
+Essas homologações **não** validam a inicialização do `solverit-issue-delivery.service`, o fluxo E2E via ChatGPT/Keycloak/MCP, a publicação de PR, CI exact-head nem auditoria independente.
 
-## Operations and rollback
+## Operação local restrita
 
-Do not deploy this partial package. Deploy a future delivery MCP under
-a **different service and credential boundary** after an independent
-security review. Rollback is disabling the delivery service, revoking
-its installation tokens and keeping the existing read-only audit MCP
-unchanged. Never share installation credentials with the audit service.
+Testes automatizados do módulo (sem segredos GitHub):
 
-## Remaining gates
+```bash
+cd integrations/github-delivery-mcp
+python -m unittest discover -p 'test_*.py'
+```
 
-1. Authenticated delivery MCP with explicit per-tool authorization,
-   separate App, scope limits and deny-by-default integration tests.
-2. Secure job scheduler/executor and runner hardening on the VPS.
-3. Clone, patch, pinned checks, repair loop and CAS publication.
-4. Crash recovery, cancellation, idempotency, redacted audit logs.
-5. End-to-end training-system sandbox proof including failing CI,
-   repair, commit, PR to develop and exact-head green CI.
-6. Negative security tests and independent audit verdict as first line.
+O controlador aceita `--database`, `--lock`, `--check-job`, `--check-actor` e `--check-snapshot`; os três `--check-*` são obrigatórios em conjunto, incompatíveis com `--smoke-key`. Requer execução como UID 1004 e job `prepared` **sem evidências anteriores**; tentativas repetidas não substituem evidências automaticamente. Um mesmo lock persistente deve ser empregado em todo despacho e recuperação. **Não usar esses argumentos como entrada pública de um cliente MCP** nem executar contra banco de produção durante a homologação.
 
-Run phase-1 tests: `cd integrations/github-delivery-mcp && python -m unittest -v test_policy.py`.
-No live credentials are used.
+Exemplo de invocação **apenas para um novo job de laboratório previamente preparado**:
+
+```bash
+sudo -u solverit-worker -H /usr/bin/python3 local_controller.py \
+  --database /caminho/protegido/jobs.sqlite3 \
+  --lock /caminho/protegido/controller.lock \
+  --check-job ID_DO_JOB --check-actor ATOR_CONFIAVEL \
+  --check-snapshot /caminho/protegido/snapshot
+```
+
+A recuperação e o despacho ocorrem em seções protegidas pelo mesmo arquivo de lock, mas o controlador atual **libera e readquire** o lock entre recuperação e despacho; a validação é refeita ao despachar. Isso não constitui uma transação atômica entre as duas etapas. O serviço contínuo ainda precisa de integração própria.
+
+## Restrições e pendências obrigatórias
+
+1. Implementar o servidor MCP de entrega com validação independente de token OIDC (issuer, audience, assinatura e expiração), permissões server-side por ferramenta e reautorização; jamais confiar em `actor` fornecido pelo cliente.
+2. Projetar a fronteira do executor de código não confiável: snapshots protegidos, proveniência Git, separação de permissões, quotas de disco, isolamento de egress, recuperação e cancelamento seguros.
+3. Implementar edição autorizada, testes funcionais específicos do projeto e tratamento determinístico de falhas; checks de sintaxe não substituem a suíte funcional.
+4. Implementar broker privilegiado de GitHub App separado do worker, CAS no SHA esperado da branch, commits e PRs **somente contra `develop`**, sem force push, merge ou alteração direta de `main`.
+5. Integrar serviço `systemd`, política de logs redigidos, idempotência ponta a ponta e recuperação de falhas sem duplicar efeitos.
+6. Exigir CI no HEAD exato, confirmação de branch/PR e auditoria independente com veredito explícito na primeira linha; não marcar `succeeded` até que evidências necessárias sejam verificadas.
+7. Executar homologação E2E com repositório alvo autorizado, testes negativos de segurança e auditoria independente; atualizar esta documentação com links aos artefatos.
+
+**Não fazer merge da PR #89 nem encerrar a Issue #88 apenas com os testes e a homologação acima.**
