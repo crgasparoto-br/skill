@@ -1,8 +1,24 @@
 # Gate de completude de pendências de auditoria e de issue
 
+## Quando ler este arquivo
+
+Ler quando houver pedido de implementação de pendências de issue, PR ou auditoria, antes das alterações e da declaração de completude.
+
+## Índice
+
+- [Entrada e escopo](#entrada-e-escopo)
+- [Ledger obrigatório](#ledger-obrigatório)
+- [Laço obrigatório de execução integral](#laço-obrigatório-de-execução-integral)
+- [Barreira de encerramento](#barreira-de-encerramento)
+- [Continuidade e bloqueio legítimo](#continuidade-e-bloqueio-legítimo)
+- [Teste adversarial mínimo](#teste-adversarial-mínimo)
+- [Validador determinístico e origem confiável](#validador-determinístico-e-origem-confiável)
+- [Verificador operacional GitHub](#verificador-operacional-github)
+
 ## Entrada e escopo
 
-Ativar para "implementar pendências", "corrigir todos os achados", "finalizar auditoria" ou solicitação equivalente. Fixar repositório, PR, base, HEAD, rodada da auditoria e `rejection_id` quando existente. Consumir **todos** os achados da rodada, comentários de revisão materialmente relevantes, instruções explícitas da issue, critérios de aceite, checklists abertos, pendências de PR e requisitos vinculados, não apenas o primeiro blocker. Quando não houver auditoria, a própria issue e suas fontes canônicas constituem o manifesto de obrigações. Quando houver ambos, calcular a união sem descartar obrigações de nenhuma origem. 'Implementar pendências', 'implementar todas', 'corrigir pontos levantados' e equivalentes têm semântica de fechamento integral das obrigações aplicáveis, mesmo sem a palavra 'todas'. Diferenciar `blocking`, `actionable-recommendation`, `optional-recommendation`, `out-of-scope` e `invalid-finding`. Justificar com evidência qualquer exclusão; não ampliar unilateralmente o escopo da issue.
+Ativar para "implementar pendências", "corrigir todos os achados", "finalizar auditoria" ou solicitação equivalente. Fixar repositório, PR, base, HEAD, rodada da auditoria e `rejection_id` quando existente. Consumir **todos** os achados da rodada, comentários de revisão materialmente relevantes, instruções explícitas da issue, critérios de aceite, checklists abertos, pendências de PR e requisitos vinculados, não apenas o primeiro blocker. Quando não houver auditoria, a própria issue e suas fontes canônicas constituem o manifesto de obrigações. Quando houver ambos, calcular a união sem descartar obrigações de nenhuma origem. 'Implementar pendências', 'implementar todas', 'corrigir pontos levantados' e equivalentes têm semântica de fechamento integral das obrigações aplicáveis, mesmo sem a palavra 'todas'. Diferenciar `blocking`, `actionable-recommendation`,
+`optional-recommendation`, `out-of-scope` e `invalid-finding`. Justificar com evidência qualquer exclusão; não ampliar unilateralmente o escopo da issue.
 
 ## Ledger obrigatório
 
