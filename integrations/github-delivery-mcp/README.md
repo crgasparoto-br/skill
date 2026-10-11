@@ -136,3 +136,16 @@ nos registros não autentica origem e **não** deve ser aceito de entrada MCP/wo
 O catálogo de required checks precisa vir de política protegida. O adaptador de
 consulta read-only GitHub, a auditoria independente e a finalização atômica
 continuam pendentes. Passar nesses testes não libera `succeeded`.
+
+## Adaptador read-only de consultas GitHub (staging, sem liberação)
+
+`github_evidence_reader.py` consulta a API oficial GitHub por HTTPS com token
+de instalação **somente leitura e duração curta**, fornecido exclusivamente por
+um broker separado. Rejeita redirects, respostas grandes, paginação incompleta,
+forks e divergência do SHA/branch. Não registra tokens ou conteúdos de headers.
+
+**Bloqueio intencional:** uma PR que mencione a issue no título ou no corpo não
+constitui vínculo verificável. O campo de issue permanece `None` até haver
+uma estratégia autoritativa de associação job→PR→issue; assim, o adaptador
+sempre recusa a conclusão, mesmo quando o CI é verde. Ele não foi integrado ao
+serviço da VPS e não autentica MCP, não finaliza jobs ou executa auditoria.
