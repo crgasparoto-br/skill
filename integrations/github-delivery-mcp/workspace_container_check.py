@@ -24,11 +24,23 @@ _FIXED_CHECKS = {
     "posix-shell-syntax-v1": "find /workspace -type f -name '*.sh' -exec sh -c 'for f do IFS= read -r first < \"$f\" || :; case \"$first\" in \"#!/bin/sh\"| \"#!/usr/bin/env sh\") sh -n \"$f\" || exit 1 ;; esac; done' sh {} + && echo SNAPSHOT_OK",
 }
 
+# Bash is absent from Alpine. Require a separately reviewed local image.
+_BASH_IMAGE = "bash:5.2"
+_BASH_CHECK = """find /workspace -type f -name '*.sh' -exec bash -c '
+for f do
+    IFS= read -r first < "$f" || :
+    case "$first" in
+        "#!/bin/bash"|"#!/usr/bin/bash"|"#!/usr/bin/env bash")
+            bash -n "$f" || exit 1 ;;
+    esac
+done
+' bash {} + && echo SNAPSHOT_OK"""
+
 
 def inspect_workspace_in_container(snapshot_dir: str, expected_sha: str, *, check: str = "integrity-v1") -> bool:
     """Check a trusted read-only snapshot marker in rootless Docker."""
     OFFLINE_CHECK_V1.validate()
-    if check not in _FIXED_CHECKS:
+    if check not in _FIXED_CHECKS and check != "bash-syntax-v1":
         raise ValueError("unsupported fixed snapshot check")
     if os.geteuid() != 1004:
         raise PermissionError("worker identity required")
@@ -47,6 +59,8 @@ def inspect_workspace_in_container(snapshot_dir: str, expected_sha: str, *, chec
     name = "solverit-issue88-" + uuid.uuid4().hex
     env = {"PATH": "/usr/bin:/bin", "HOME": "/home/solverit-worker",
            "DOCKER_HOST": "unix://" + ROOTLESS_SOCKET}
+    image = _BASH_IMAGE if check == "bash-syntax-v1" else IMAGE
+    script = _BASH_CHECK if check == "bash-syntax-v1" else _FIXED_CHECKS[check]
     cmd = [
         "/usr/bin/docker", "run", "--rm", "--pull=never", "--name", name,
         "--network", "none", "--memory", "512m", "--memory-swap", "512m",
@@ -55,8 +69,8 @@ def inspect_workspace_in_container(snapshot_dir: str, expected_sha: str, *, chec
         "--security-opt", "no-new-privileges:true",
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
         "--mount", f"type=bind,src={resolved},dst=/workspace,readonly",
-        IMAGE, "sh", "-ec",
-        ('test "$(id -u)" = 65532 && test "$(cat /workspace/.solverit-expected-sha)" = "$1" && cd /workspace && sha256sum -c .solverit-sha256 >/dev/null && ' + _FIXED_CHECKS[check]),
+        image, "sh", "-ec",
+        ('test "$(id -u)" = 65532 && test "$(cat /workspace/.solverit-expected-sha)" = "$1" && cd /workspace && sha256sum -c .solverit-sha256 >/dev/null && ' + script),
         "sh", expected_sha,
     ]
     try:
