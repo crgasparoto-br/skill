@@ -1,6 +1,6 @@
 ---
 name: entregar-issue
-description: "Conduzir a entrega ponta a ponta de issues em repositorios de software com um unico controlador, plano e estado: revisar readiness quando necessario, implementar codigo/testes/schemas/configuracao/documentacao, validar durante a edicao, aplicar higiene limitada ao diff, acionar especialidades condicionais, executar gates finais, congelar o candidato, acompanhar CI ate estado terminal por delegacao automatica a corrigir-ci, remediar falhas sem novo prompt e preparar auditoria independente. Usar quando o usuario informar uma issue, PR, branch ou pendencias e esperar continuidade autonoma. Nunca fazer merge nem declarar auditoria independente no mesmo contexto."
+description: "Conduzir a entrega ponta a ponta de issues em repositorios de software com um unico controlador, plano e estado: revisar readiness quando necessario, implementar codigo/testes/schemas/configuracao/documentacao, validar durante a edicao, aplicar higiene limitada ao diff, acionar especialidades condicionais, executar gates finais, congelar o candidato, acompanhar CI ate estado terminal por delegacao automatica a corrigir-ci, remediar falhas sem novo prompt e preparar auditoria independente. Usar quando o usuario informar uma issue, PR, branch ou pedir 'implementar pendências' (com ou sem 'todas'), incluindo pendências provenientes de auditoria, instruções da issue, checklist, critérios de aceite ou revisão. Exigir fechamento integral verificável na mesma execução, sem encerrar após commits parciais ou CI iniciada. Nunca fazer merge nem declarar auditoria independente no mesmo contexto."
 ---
 
 # Entregar Issue
@@ -90,7 +90,7 @@ Nao carregar referencias condicionais por antecipacao.
 
 ## Gate de completude de remediacao
 
-Para qualquer pedido de implementar todas as pendencias de uma auditoria, aplicar obrigatoriamente `references/finding-completion-gate.md` antes da primeira edicao e antes de declarar resultado. Um commit parcial ou CI iniciado nunca encerram o ledger de achados. Aprovacao independente exige contexto separado.
+Para qualquer pedido de 'implementar pendências', 'implementar todas as pendências' ou equivalente, seja a fonte uma auditoria, issue, PR, comentários, checklist ou critérios de aceite, aplicar obrigatoriamente `references/finding-completion-gate.md` antes da primeira edição e antes de declarar resultado. Unificar todas as fontes em um ledger e executar cada obrigação aplicável até verificação ou impedimento real comprovado. Publicação de commit, CI iniciada ou CI verde isolada não constitui entrega integral. Aprovacao independente exige contexto separado, mas não impede que toda correção executável seja concluída primeiro. Um commit parcial ou CI iniciado nunca encerram o ledger de achados. Aprovacao independente exige contexto separado.
 
 ## Autoridade e invariantes
 
