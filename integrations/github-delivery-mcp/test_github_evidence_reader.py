@@ -1,4 +1,4 @@
-"""Read-only adapter must reject missing authoritative issue linkage."""
+"""Read-only adapter must require a broker-owned job-to-PR binding."""
 import json
 import unittest
 from types import SimpleNamespace
@@ -60,7 +60,8 @@ class ReaderTests(unittest.TestCase):
         with patch("github_evidence_reader._get_json", return_value=pr) as get:
             with self.assertRaisesRegex(GitHubEvidenceRejected, "repository"):
                 fetch_and_validate_github(job=self.job, pr_number=89,
-                                          token="token", required_checks=frozenset({"x"}))
+                                          token="token", required_checks=frozenset({"x"}),
+                                          binding=self.binding)
             get.assert_called_once()
 
     def test_incomplete_check_pagination_denied(self):
@@ -68,4 +69,5 @@ class ReaderTests(unittest.TestCase):
                    side_effect=[self.pr, {"total_count": 101, "check_runs": []}]):
             with self.assertRaisesRegex(GitHubEvidenceRejected, "pagination"):
                 fetch_and_validate_github(job=self.job, pr_number=89,
-                                          token="token", required_checks=frozenset({"x"}))
+                                          token="token", required_checks=frozenset({"x"}),
+                                          binding=self.binding)
