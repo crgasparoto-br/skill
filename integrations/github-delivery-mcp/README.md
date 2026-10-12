@@ -202,3 +202,18 @@ a autorizacao do broker e a finalizacao atomica ainda nao existem.
 A implementacao substitui o bloqueio provisório de `issue_number=None`
 pela correlacao persistente do job. O vinculo **nao e evidencia suficiente**
 para autorizar `succeeded`, e a API de finalizacao continua bloqueada.
+
+## Leitura confiável do vínculo persistido (2026-10-12)
+
+`trusted_github_verification.py` conecta os componentes existentes:
+recupera o job do SQLite, exige estado `prepared`, lê o número da PR
+e SHA pelo `PRBindingStore` usando a identidade do proprietário e chama
+o leitor autenticado do GitHub. Não recebe número de PR ou vínculo como
+argumento externo. Seus testes impedem a consulta de rede quando o job
+não está preparado, não pertence ao ator ou não possui vínculo.
+
+**Ainda não autoriza sucesso:** essa função deve executar apenas em processo
+confiável com banco protegido do worker/MCP. A implantação das permissões,
+obtenção de token de leitura via broker, required checks normativos,
+auditoria independente, serviço autorizado e conclusão atômica estão pendentes.
+Os testes usam simulação da consulta GitHub.
