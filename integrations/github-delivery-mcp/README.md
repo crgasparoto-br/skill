@@ -217,3 +217,21 @@ confiável com banco protegido do worker/MCP. A implantação das permissões,
 obtenção de token de leitura via broker, required checks normativos,
 auditoria independente, serviço autorizado e conclusão atômica estão pendentes.
 Os testes usam simulação da consulta GitHub.
+
+## Broker GitHub App no verificador protegido (2026-10-12)
+
+`trusted_github_verification.verify_with_github_app` reutiliza
+`app_token_broker.mint_token` com operação `read-checks`, somente após
+confirmar repositório na allowlist, job `prepared` e vínculo PR persistido.
+Não aceita token nem número de PR do solicitante; a credencial permanece na
+memória do processo privilegiado durante a consulta. Testes negativos verificam
+que repositórios não permitidos e vínculos ausentes não disparam emissão.
+
+**Ainda não implantado:** este é código de integração, não um serviço seguro
+pronto. A identidade UID 997, permissões de acesso ao SQLite, autenticação
+da chamada ao broker, política de checks obrigatórios e consulta de rede real
+precisam ser homologadas separadamente. `server_authorized=True` só pode ser
+usado após autorização externa efetiva; o parâmetro não implementa autorização.
+Nunca executar o módulo sob a identidade do worker ou em uma rota pública.
+Não habilitar `succeeded` antes de auditoria independente e persistência
+atômica verificadas.
