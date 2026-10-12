@@ -185,3 +185,20 @@ A regressão **239/239** corresponde ao checkout da PR #89 no SHA `3864aeb4bfb55
 A associação SQLite job–PR é apenas um dado correlacionado; ela não comprova publicação GitHub nem autentica o vínculo com a issue. Permanecem bloqueantes: broker confiável, consultas GitHub reais, política de required checks, confirmação independente de issue/PR, auditoria exact-head, finalização atômica, autorização MCP/Keycloak e execução funcional ponta a ponta em sandbox.
 
 **Decisão operacional:** manter a PR #89 em draft para `develop`, sem merge e sem fechar a Issue #88. Não iniciar uma segunda unidade de recuperação em paralelo ao serviço já instalado.
+
+## Vinculo de PR e consulta GitHub (atualizacao de 2026-10-12)
+
+O `github_evidence_reader.fetch_and_validate_github` exige agora um
+`PRBinding` coerente com `job_id`, numero da PR e SHA esperado antes da
+consulta de rede. Depois confere PR real e checks do mesmo SHA atraves da API
+GitHub. O teste usa respostas simuladas; **nao ha homologacao com token real**.
+
+**Restricao crucial:** a funcao nao autentica a origem do objeto `binding`.
+Somente um processo privilegiado separado, com SQLite protegido de escrita
+pelo executor e do MCP, pode recuperar esse vinculo. Entrada do usuario/worker
+nunca pode ocupar esse parametro. A verificacao de auditoria independente,
+a autorizacao do broker e a finalizacao atomica ainda nao existem.
+
+A implementacao substitui o bloqueio provisório de `issue_number=None`
+pela correlacao persistente do job. O vinculo **nao e evidencia suficiente**
+para autorizar `succeeded`, e a API de finalizacao continua bloqueada.
