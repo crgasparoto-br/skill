@@ -11,9 +11,10 @@ from github_evidence_reader import (
 
 class ReaderTests(unittest.TestCase):
     def setUp(self):
-        self.job = SimpleNamespace(repo="crgasparoto-br/skill",
+        self.job = SimpleNamespace(job_id="job-1", repo="crgasparoto-br/skill",
                                    branch="feat/88-delivery", issue_number=88,
                                    base_sha="a"*40, expected_head="b"*40)
+        self.binding = SimpleNamespace(job_id="job-1", pr_number=89, head_sha="b"*40)
         self.pr = {
             "number": 89, "state": "open", "merged": False,
             "head": {"sha": "b"*40, "ref": "feat/88-delivery",
@@ -24,14 +25,22 @@ class ReaderTests(unittest.TestCase):
             {"name": "Validate repository", "head_sha": "b"*40,
              "status": "completed", "conclusion": "success"}]}
 
-    def test_unverified_issue_relation_denied_even_with_green_ci(self):
+    def test_verified_binding_matches_real_pr_identity_and_green_ci(self):
         with patch("github_evidence_reader._get_json",
                    side_effect=[self.pr, self.checks]) as get:
-            with self.assertRaisesRegex(GitHubEvidenceRejected, "PR identity"):
-                fetch_and_validate_github(
-                    job=self.job, pr_number=89, token="read-only-token",
-                    required_checks=frozenset({"Validate repository"}))
+            result = fetch_and_validate_github(
+                job=self.job, pr_number=89, token="read-only-token",
+                required_checks=frozenset({"Validate repository"}),
+                binding=self.binding)
+            self.assertEqual(result, "b"*40)
             self.assertEqual(get.call_count, 2)
+
+    def test_missing_binding_denied_before_network(self):
+        with patch("github_evidence_reader._get_json") as get:
+            with self.assertRaisesRegex(GitHubEvidenceRejected, "binding"):
+                fetch_and_validate_github(job=self.job, pr_number=89,
+                                          token="token", required_checks=frozenset({"x"}))
+            get.assert_not_called()
 
     def test_missing_token_denied_before_network(self):
         with self.assertRaises(GitHubEvidenceRejected):
@@ -41,7 +50,8 @@ class ReaderTests(unittest.TestCase):
         with patch("github_evidence_reader._get_json") as get:
             with self.assertRaises(GitHubEvidenceRejected):
                 fetch_and_validate_github(job=self.job, pr_number=True,
-                                          token="token", required_checks=frozenset({"x"}))
+                                          token="token", required_checks=frozenset({"x"}),
+                                          binding=self.binding)
             get.assert_not_called()
 
     def test_cross_repository_pr_denied(self):
