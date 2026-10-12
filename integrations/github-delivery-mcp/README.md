@@ -235,3 +235,25 @@ usado após autorização externa efetiva; o parâmetro não implementa autoriza
 Nunca executar o módulo sob a identidade do worker ou em uma rota pública.
 Não habilitar `succeeded` antes de auditoria independente e persistência
 atômica verificadas.
+
+## Smoke read-only real da GitHub App (2026-10-12)
+
+`github_app_readonly_smoke.py` é um diagnóstico independente do fluxo de
+finalização. Executado como o usuário dedicado `solverit-github-auth`,
+emite token restrito à operação `read-checks` do repositório
+`crgasparoto-br/training-system`; consulta `develop` e seus check runs.
+Saída permitida: repositório, branch, SHA, quantidade de checks e flag
+`read_only`. Nunca imprime token, chave, cabeçalhos ou exceção original.
+Rejeita paginação incompleta ou SHA inválido. O smoke não cria PR e não
+modifica jobs, branches nem checks.
+
+A preparação requer copiar apenas os quatro arquivos Python de leitura
+(`app_token_broker.py`, `github_evidence_validation.py`,
+`github_evidence_reader.py` e `github_app_readonly_smoke.py`) a um
+diretório de código somente leitura, de propriedade root, acessível à
+identidade autenticadora. Não executar o teste via diretório editável pelo
+worker, não modificar permissões de secrets nem imprimir tokens.
+
+**Estado:** implementação e testes simulados; a consulta GitHub real na VPS
+ainda depende da homologação pelo operador. Este smoke não autentica o vínculo
+job–PR nem constitui entrega fim a fim.
