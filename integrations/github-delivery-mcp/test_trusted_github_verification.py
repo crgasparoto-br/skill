@@ -59,7 +59,9 @@ class TrustedVerificationTests(unittest.TestCase):
                 verify_bound_job(**self.args)
             fetch.assert_not_called()
 
-class AppBrokerIntegrationTests(TrustedVerificationTests):
+class AppBrokerIntegrationTests(unittest.TestCase):
+    setUp = TrustedVerificationTests.setUp
+    prepare = TrustedVerificationTests.prepare
     def test_disallowed_repo_does_not_mint_token(self):
         self.prepare()
         with patch("trusted_github_verification.mint_token") as mint:
