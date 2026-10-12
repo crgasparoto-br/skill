@@ -50,9 +50,13 @@ def _get_json(*, token: str, repo: str, suffix: str) -> dict:
 
 
 def fetch_and_validate_github(*, job, pr_number: int, token: str,
-                              required_checks: frozenset[str]) -> str:
+                              required_checks: frozenset[str], binding=None) -> str:
     if type(pr_number) is not int or pr_number <= 0:
         raise GitHubEvidenceRejected("invalid PR number")
+    if binding is None or (binding.job_id != job.job_id
+                           or binding.pr_number != pr_number
+                           or binding.head_sha != job.expected_head):
+        raise GitHubEvidenceRejected("trusted job-to-PR binding missing or mismatched")
     if not _SHA.fullmatch(job.expected_head):
         raise GitHubEvidenceRejected("expected HEAD must be immutable SHA")
     pr = _get_json(token=token, repo=job.repo, suffix="/pulls/" + str(pr_number))
@@ -65,9 +69,9 @@ def fetch_and_validate_github(*, job, pr_number: int, token: str,
     # Cross-repo PRs are not supported at this trust boundary.
     if head_repo.get("full_name") != job.repo or base_repo.get("full_name") != job.repo:
         raise GitHubEvidenceRejected("unexpected PR repository")
-    # Issue linkage must be retrieved independently from trusted GitHub state.
-    # A title/body containing '#88' is not an authoritative issue relation.
-    issue_number = None
+    # Protected broker-owned binding correlates the job and issue to this PR.
+    # A PR title/body alone never establishes the association.
+    issue_number = job.issue_number
     checks = _get_json(token=token, repo=job.repo,
                        suffix="/commits/" + job.expected_head + "/check-runs?per_page=100")
     if (checks.get("total_count") is None or
