@@ -7,6 +7,8 @@ import json
 import os
 from pathlib import Path
 import struct
+import stat
+from types import SimpleNamespace
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -214,6 +216,29 @@ class ProtectedBrokerTests(unittest.TestCase):
             with self.assertRaises(broker.BrokerDenied):
                 broker._read_persisted_binding(self.job.job_id, actor="oauth-subject")
         self.assertFalse(missing.exists())
+
+    def test_protected_store_rejects_group_access_or_other_owner(self):
+        protected = Path("/var/lib/solverit/issue-delivery/protected/jobs.sqlite3")
+        for file_uid, permissions in ((0, 0o600), (997, 0o640),
+                                      (997, 0o604), (1004, 0o600)):
+            with self.subTest(uid=file_uid, mode=oct(permissions)):
+                def fake_stat(path):
+                    if Path(path) == protected:
+                        return SimpleNamespace(st_uid=file_uid,
+                                               st_mode=stat.S_IFREG | permissions)
+                    return SimpleNamespace(st_uid=0, st_mode=stat.S_IFDIR | 0o755)
+                with patch.object(broker.os, "lstat", side_effect=fake_stat):
+                    with self.assertRaises(broker.BrokerDenied):
+                        broker._protected_path(protected, is_file=True)
+
+    def test_protected_store_accepts_private_authenticator_owned_file(self):
+        protected = Path("/var/lib/solverit/issue-delivery/protected/jobs.sqlite3")
+        def fake_stat(path):
+            if Path(path) == protected:
+                return SimpleNamespace(st_uid=997, st_mode=stat.S_IFREG | 0o600)
+            return SimpleNamespace(st_uid=0, st_mode=stat.S_IFDIR | 0o755)
+        with patch.object(broker.os, "lstat", side_effect=fake_stat):
+            broker._protected_path(protected, is_file=True)
 
     def test_untrusted_temp_storage_rejected_before_sqlite(self):
         # /tmp ancestors are world writable; a temporary DB cannot impersonate
