@@ -1,0 +1,63 @@
+"""Static safety regression for VPS staging: NEVER run the root bootstrap in CI."""
+import shutil
+import subprocess
+import unittest
+from pathlib import Path
+
+
+HERE = Path(__file__).resolve().parent
+SCRIPT = HERE / "ops" / "prepare-broker-staging.sh"
+
+
+class BrokerBootstrapContractTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.contents = SCRIPT.read_text(encoding="utf-8")
+
+    def test_bash_syntax(self):
+        if not shutil.which("bash"):
+            self.skipTest("bash not installed on this test runner")
+        result = subprocess.run(["bash", "-n", str(SCRIPT)], capture_output=True,
+                                text=True, timeout=10, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_full_suite_requires_mcp_sdk_not_skipped(self):
+        self.assertIn("requirements-sdk-pilot.txt", self.contents)
+        self.assertIn("mcp.server.fastmcp", self.contents)
+        self.assertIn("unittest discover", self.contents)
+        self.assertNotIn("test_mcp_sdk_pilot.py' -v", self.contents)
+        self.assertNotIn("skipTest", self.contents)
+
+    def test_all_dependencies_are_isolated_from_production_python(self):
+        self.assertIn('"$STAGE/.venv"', self.contents)
+        self.assertIn('"$STAGE/.venv/bin/python"', self.contents)
+        self.assertIn('"$STAGE/dependencies.log"', self.contents)
+        self.assertNotIn("sudo pip ", self.contents)
+        self.assertNotIn("pip install --break-system-packages", self.contents)
+
+    def test_failed_subshell_propagates_nonzero_exit_status(self):
+        self.assertIn("RC=$?", self.contents)
+        self.assertIn('test "$RC" -eq 0', self.contents)
+        self.assertIn("TERMINAL PRESERVADO", self.contents)
+        self.assertNotIn("exec bash", self.contents)
+        self.assertNotIn("systemctl restart", self.contents)
+        self.assertNotIn("systemctl start", self.contents)
+        self.assertNotIn("systemctl enable", self.contents)
+
+    def test_checks_run_before_any_system_account_changes(self):
+        tests = self.contents.index("unittest discover")
+        groupadd = self.contents.index("sudo groupadd")
+        useradd = self.contents.index("sudo useradd")
+        install = self.contents.index("sudo install -d")
+        self.assertLess(tests, groupadd)
+        self.assertLess(tests, useradd)
+        self.assertLess(tests, install)
+
+    def test_source_commit_is_verified_before_extracting_and_provisioning(self):
+        self.assertIn('ACTUAL="$(git -C "$WORK" rev-parse FETCH_HEAD)"', self.contents)
+        self.assertIn('if [ "$ACTUAL" != "$EXPECTED" ]; then', self.contents)
+        self.assertIn('git -C "$WORK" archive "$EXPECTED"', self.contents)
+
+
+if __name__ == "__main__":
+    unittest.main()
