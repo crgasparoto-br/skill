@@ -55,7 +55,7 @@ class ProtectedBrokerTests(unittest.TestCase):
             branch="feat/88-delivery", base_sha="a" * 40,
             expected_head=HEAD,
         )
-        self.request = {"operation": "verify_bound_ci", "job_id": self.job.job_id}
+        self.request = {"version": 1, "operation": "verify_bound_ci", "job_id": self.job.job_id}
 
     def prepare_and_bind(self):
         self.store.transition(self.job.job_id, "oauth-subject", "queued", "running")
@@ -97,6 +97,17 @@ class ProtectedBrokerTests(unittest.TestCase):
                 with self.subTest(field=field), self.assertRaises(broker.BrokerDenied):
                     broker.dispatch({**self.request, field: "attacker"},
                                     peer_uid=2500, controller_uid=2500)
+            verify.assert_not_called()
+
+    def test_protocol_version_is_mandatory_and_exact(self):
+        with patch.object(broker, "verify_bound_ci") as verify:
+            for invalid in (None, 0, 2, True, "1"):
+                with self.subTest(version=invalid), self.assertRaises(broker.BrokerDenied):
+                    broker.dispatch({**self.request, "version": invalid},
+                                    peer_uid=2500, controller_uid=2500)
+            with self.assertRaises(broker.BrokerDenied):
+                broker.dispatch({"operation": "verify_bound_ci", "job_id": self.job.job_id},
+                                peer_uid=2500, controller_uid=2500)
             verify.assert_not_called()
 
     def test_rejects_invalid_job_ids(self):
