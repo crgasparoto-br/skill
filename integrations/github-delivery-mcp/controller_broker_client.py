@@ -1,0 +1,85 @@
+"""Trusted-controller IPC client for the separate Issue 88 CI evidence broker.
+
+Only call from authenticated MCP server middleware. It passes the original
+Keycloak access token to a Unix peer that independently validates issuer,
+audience, scope and subject. NEVER pass a GitHub token or user-supplied actor.
+This is NOT a public MCP tool or a job success gate.
+"""
+from __future__ import annotations
+
+import json
+import re
+import socket
+import struct
+import uuid
+
+from protected_broker_server import AUTH_UID, MAX_REQUEST_BYTES, PROTOCOL_VERSION, SOCKET
+
+_SHA = re.compile(r"^[0-9a-f]{40}$")
+MAX_RESPONSE_BYTES = 4096
+
+
+class BrokerClientError(RuntimeError):
+    pass
+
+
+def check_job_ci(*, job_id: str, mcp_access_token: str) -> dict[str, object]:
+    if not isinstance(job_id, str) or len(job_id) != 36:
+        raise BrokerClientError("invalid job")
+    try:
+        if str(uuid.UUID(job_id)) != job_id:
+            raise BrokerClientError("invalid job")
+    except ValueError as exc:
+        raise BrokerClientError("invalid job") from exc
+    if (not isinstance(mcp_access_token, str) or not mcp_access_token.isascii()
+            or any(x.isspace() for x in mcp_access_token)
+            or not 10 <= len(mcp_access_token) <= 8192):
+        raise BrokerClientError("invalid MCP authentication")
+    request = json.dumps({
+        "version": PROTOCOL_VERSION,
+        "operation": "verify_bound_ci",
+        "job_id": job_id,
+        "mcp_access_token": mcp_access_token,
+    }, separators=(",", ":")).encode("ascii") + b"\n"
+    if len(request) > MAX_REQUEST_BYTES:
+        raise BrokerClientError("oversized request")
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+            connection.settimeout(5)
+            connection.connect(str(SOCKET))
+            if not hasattr(socket, "SO_PEERCRED"):
+                raise BrokerClientError("peer credentials unavailable")
+            credentials = connection.getsockopt(
+                socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i"))
+            _pid, peer_uid, _gid = struct.unpack("3i", credentials)
+            if peer_uid != AUTH_UID:
+                raise BrokerClientError("broker identity mismatch")
+            connection.sendall(request)
+            buffer = bytearray()
+            while b"\n" not in buffer:
+                fragment = connection.recv(MAX_RESPONSE_BYTES + 1 - len(buffer))
+                if not fragment:
+                    raise BrokerClientError("broker response incomplete")
+                buffer.extend(fragment)
+                if len(buffer) > MAX_RESPONSE_BYTES:
+                    raise BrokerClientError("broker response oversized")
+            payload, _, extra = buffer.partition(b"\n")
+            if extra or not payload:
+                raise BrokerClientError("unexpected broker frame")
+    except (OSError, ValueError, struct.error, BrokerClientError) as exc:
+        raise BrokerClientError("broker unavailable or unauthorized") from exc
+
+    try:
+        response = json.loads(payload)
+    except (ValueError, UnicodeError) as exc:
+        raise BrokerClientError("broker response invalid") from exc
+    if (not isinstance(response, dict)
+            or set(response) != {"ok", "job_id", "verified_head",
+                                "ci_verified", "audit_verified"}
+            or response["ok"] is not True or response["ci_verified"] is not True
+            or response["audit_verified"] is not False
+            or response["job_id"] != job_id
+            or not isinstance(response["verified_head"], str)
+            or not _SHA.fullmatch(response["verified_head"])):
+        raise BrokerClientError("broker denied or returned invalid evidence")
+    return response
