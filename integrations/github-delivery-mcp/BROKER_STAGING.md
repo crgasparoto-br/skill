@@ -8,7 +8,7 @@ executor or an MCP write capability.
 
 - `protected_broker_server.py`: Linux AF_UNIX server, checks actual
   `SO_PEERCRED` UID **before reading a request**, and only accepts
-  `{"operation":"verify_bound_ci","job_id":"<canonical-UUID>"}`.
+  `{"version":1,"operation":"verify_bound_ci","job_id":"<canonical-UUID>"}`.
   The JSON cannot override the OAuth actor, repository, PR, GitHub token,
   required checks, or permission profile. Every error returns
   `{"ok":false,"error":"denied"}` without detailed exceptions or secrets.
