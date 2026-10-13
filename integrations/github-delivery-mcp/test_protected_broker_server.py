@@ -55,7 +55,13 @@ class ProtectedBrokerTests(unittest.TestCase):
             branch="feat/88-delivery", base_sha="a" * 40,
             expected_head=HEAD,
         )
-        self.request = {"version": 1, "operation": "verify_bound_ci", "job_id": self.job.job_id}
+        self.request = {"version": 1, "operation": "verify_bound_ci",
+                        "job_id": self.job.job_id,
+                        "mcp_access_token": "test-signed-mcp-token"}
+        self.verifier = object()
+        oauth_patch = patch.object(broker, "verified_actor", return_value="oauth-subject")
+        oauth_patch.start()
+        self.addCleanup(oauth_patch.stop)
 
     def prepare_and_bind(self):
         self.store.transition(self.job.job_id, "oauth-subject", "queued", "running")
@@ -72,14 +78,14 @@ class ProtectedBrokerTests(unittest.TestCase):
         with patch.object(broker, "verify_bound_ci") as verify:
             for uid in (0, 997, 1004, 2501):
                 with self.subTest(uid=uid), self.assertRaises(broker.BrokerDenied):
-                    broker.dispatch(self.request, peer_uid=uid, controller_uid=2500)
+                    broker.dispatch(self.request, peer_uid=uid, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
 
     def test_cannot_configure_worker_or_authenticator_as_controller(self):
         with patch.object(broker, "verify_bound_ci") as verify:
             for uid in (0, 997, 1004):
                 with self.subTest(uid=uid), self.assertRaises(broker.BrokerDenied):
-                    broker.dispatch(self.request, peer_uid=uid, controller_uid=uid)
+                    broker.dispatch(self.request, peer_uid=uid, controller_uid=uid, verifier=self.verifier)
             verify.assert_not_called()
 
     def test_only_fixed_read_operation_is_supported(self):
@@ -87,7 +93,7 @@ class ProtectedBrokerTests(unittest.TestCase):
             for op in ("mint_token", "publish-pr", "merge", "delete", "write", "open_pull_request"):
                 with self.subTest(op=op), self.assertRaises(broker.BrokerDenied):
                     broker.dispatch({**self.request, "operation": op},
-                                    peer_uid=2500, controller_uid=2500)
+                                    peer_uid=2500, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
 
     def test_rejects_caller_supplied_identity_repository_pr_and_token(self):
@@ -96,7 +102,7 @@ class ProtectedBrokerTests(unittest.TestCase):
                           "required_checks", "branch", "server_authorized"):
                 with self.subTest(field=field), self.assertRaises(broker.BrokerDenied):
                     broker.dispatch({**self.request, field: "attacker"},
-                                    peer_uid=2500, controller_uid=2500)
+                                    peer_uid=2500, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
 
     def test_protocol_version_is_mandatory_and_exact(self):
@@ -104,10 +110,10 @@ class ProtectedBrokerTests(unittest.TestCase):
             for invalid in (None, 0, 2, True, "1"):
                 with self.subTest(version=invalid), self.assertRaises(broker.BrokerDenied):
                     broker.dispatch({**self.request, "version": invalid},
-                                    peer_uid=2500, controller_uid=2500)
+                                    peer_uid=2500, controller_uid=2500, verifier=self.verifier)
             with self.assertRaises(broker.BrokerDenied):
                 broker.dispatch({"operation": "verify_bound_ci", "job_id": self.job.job_id},
-                                peer_uid=2500, controller_uid=2500)
+                                peer_uid=2500, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
 
     def test_rejects_invalid_job_ids(self):
@@ -115,13 +121,13 @@ class ProtectedBrokerTests(unittest.TestCase):
             for bad in (None, 1, "../tmp", "not-a-uuid", self.job.job_id.upper()):
                 with self.subTest(bad=bad), self.assertRaises(broker.BrokerDenied):
                     broker.dispatch({**self.request, "job_id": bad},
-                                    peer_uid=2500, controller_uid=2500)
+                                    peer_uid=2500, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
 
     def test_rejects_worker_peer_before_reading_frame(self):
         fake = FakeConnection(b'{"operation":"verify_bound_ci"}\n', uid=1004)
         with patch.object(broker, "_read_frame") as reader:
-            broker.serve_one(fake, controller_uid=2500)
+            broker.serve_one(fake, controller_uid=2500, verifier=self.verifier)
             reader.assert_not_called()
         self.assertEqual(fake.reads, 0)
         self.assertEqual(fake.response(), {"ok": False, "error": "denied"})
@@ -130,7 +136,7 @@ class ProtectedBrokerTests(unittest.TestCase):
         fake = FakeConnection((json.dumps(self.request) + "\n").encode())
         with patch.object(broker, "verify_bound_ci",
                           side_effect=RuntimeError("SECRET_TOKEN_PRIVATE")):
-            broker.serve_one(fake, controller_uid=2500)
+            broker.serve_one(fake, controller_uid=2500, verifier=self.verifier)
         self.assertEqual(fake.response(), {"ok": False, "error": "denied"})
         self.assertNotIn(b"SECRET_TOKEN_PRIVATE", fake.sent)
 
@@ -138,8 +144,26 @@ class ProtectedBrokerTests(unittest.TestCase):
         with patch.object(broker, "verify_bound_ci") as verify:
             for raw in (b"{" + b"x" * 2048 + b"}\n", b"{}\n{}\n"):
                 fake = FakeConnection(raw)
-                broker.serve_one(fake, controller_uid=2500)
+                broker.serve_one(fake, controller_uid=2500, verifier=self.verifier)
                 self.assertEqual(fake.response(), {"ok": False, "error": "denied"})
+            verify.assert_not_called()
+
+    def test_wrong_signed_subject_cannot_read_another_actors_job(self):
+        self.prepare_and_bind()
+        with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \\
+                patch.object(broker, "verified_actor", return_value="different-subject"), \\
+                patch.object(broker, "mint_token") as mint:
+            with self.assertRaises(broker.BrokerDenied):
+                broker.dispatch(self.request, peer_uid=2500, controller_uid=2500,
+                                verifier=self.verifier)
+            mint.assert_not_called()
+
+    def test_invalid_signed_token_rejected_before_database_read(self):
+        with patch.object(broker, "verified_actor", side_effect=broker.BrokerDenied("invalid")), \\
+                patch.object(broker, "verify_bound_ci") as verify:
+            with self.assertRaises(broker.BrokerDenied):
+                broker.dispatch(self.request, peer_uid=2500, controller_uid=2500,
+                                verifier=self.verifier)
             verify.assert_not_called()
 
     def test_no_binding_does_not_mint_token(self):
@@ -148,14 +172,14 @@ class ProtectedBrokerTests(unittest.TestCase):
         with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \
                 patch.object(broker, "mint_token") as mint:
             with self.assertRaises(broker.BrokerDenied):
-                broker.verify_bound_ci(self.job.job_id)
+                broker.verify_bound_ci(self.job.job_id, actor="oauth-subject")
             mint.assert_not_called()
 
     def test_no_prepared_state_does_not_mint_token(self):
         with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \
                 patch.object(broker, "mint_token") as mint:
             with self.assertRaises(broker.BrokerDenied):
-                broker.verify_bound_ci(self.job.job_id)
+                broker.verify_bound_ci(self.job.job_id, actor="oauth-subject")
             mint.assert_not_called()
 
     def test_successful_read_exposes_no_installation_credential(self):
@@ -163,7 +187,7 @@ class ProtectedBrokerTests(unittest.TestCase):
         with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \
                 patch.object(broker, "mint_token", return_value="SECRET_TOKEN_PRIVATE") as mint, \
                 patch.object(broker, "fetch_and_validate_github", return_value=HEAD) as fetch:
-            result = broker.dispatch(self.request, peer_uid=2500, controller_uid=2500)
+            result = broker.dispatch(self.request, peer_uid=2500, controller_uid=2500, verifier=self.verifier)
         mint.assert_called_once_with(
             repository="crgasparoto-br/training-system", operation="read-checks",
             server_authorized=True)
@@ -181,13 +205,13 @@ class ProtectedBrokerTests(unittest.TestCase):
                 patch.object(broker, "mint_token", return_value="token"), \
                 patch.object(broker, "fetch_and_validate_github", return_value="c" * 40):
             with self.assertRaises(broker.BrokerDenied):
-                broker.verify_bound_ci(self.job.job_id)
+                broker.verify_bound_ci(self.job.job_id, actor="oauth-subject")
 
     def test_store_is_read_only_and_never_created_on_missing_db(self):
         missing = Path(self.temp.name) / "missing.sqlite3"
         with patch.multiple(broker, DATABASE=missing, _protected_path=lambda *_a, **_k: None):
             with self.assertRaises(broker.BrokerDenied):
-                broker._read_persisted_binding(self.job.job_id)
+                broker._read_persisted_binding(self.job.job_id, actor="oauth-subject")
         self.assertFalse(missing.exists())
 
     def test_untrusted_temp_storage_rejected_before_sqlite(self):
@@ -196,7 +220,7 @@ class ProtectedBrokerTests(unittest.TestCase):
         with patch.object(broker, "DATABASE", self.db), \
                 patch.object(broker, "mint_token") as mint:
             with self.assertRaises(broker.BrokerDenied):
-                broker._read_persisted_binding(self.job.job_id)
+                broker._read_persisted_binding(self.job.job_id, actor="oauth-subject")
             mint.assert_not_called()
 
 
