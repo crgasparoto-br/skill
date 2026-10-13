@@ -1,7 +1,8 @@
 """Privileged, read-only CI evidence broker over a local Unix socket.
 
-Staging boundary for Issue #88: no GitHub credential, actor, repository,
-PR number, or required-check list is accepted from the caller. All come
+Staging boundary for Issue #88: the caller provides an OAuth bearer token,
+verified *again* by the broker against pinned Keycloak JWKS. GitHub credentials,
+actor, repository, PR number and required checks are never caller-supplied. All come
 from a protected database or versioned broker policy. No publish operation
 is implemented here. NOT an Internet-facing MCP endpoint.
 """
@@ -20,6 +21,7 @@ import urllib.parse
 import uuid
 
 from app_token_broker import ALLOWED_REPOSITORIES, mint_token
+from broker_oauth import build_broker_verifier, verified_actor
 from github_evidence_reader import fetch_and_validate_github
 from jobs import Job
 from pr_binding import PRBinding
@@ -28,7 +30,7 @@ AUTH_UID = 997
 WORKER_UID = 1004
 DATABASE = Path("/var/lib/solverit/issue-delivery/protected/jobs.sqlite3")
 SOCKET = Path("/run/solverit-issue88-broker/broker.sock")
-MAX_REQUEST_BYTES = 2048
+MAX_REQUEST_BYTES = 12288
 PROTOCOL_VERSION = 1
 
 # Protected code policy; never accept required checks from MCP, worker or issue.
@@ -63,7 +65,7 @@ def _protected_path(path: Path, *, is_file: bool) -> None:
             raise BrokerDenied("untrusted parent directory")
 
 
-def _read_persisted_binding(job_id: str):
+def _read_persisted_binding(job_id: str, *, actor: str):
     """Read only the protected source of truth; never create/modify SQLite."""
     _protected_path(DATABASE, is_file=True)
     uri = "file:" + urllib.parse.quote(str(DATABASE), safe="/") + "?mode=ro"
@@ -81,7 +83,7 @@ def _read_persisted_binding(job_id: str):
             ).fetchone()
     except sqlite3.Error as exc:
         raise BrokerDenied("protected store unavailable") from exc
-    if row is None or not isinstance(row["actor"], str) or not row["actor"]:
+    if row is None or row["actor"] != actor:
         raise BrokerDenied("trusted job binding missing")
     job = Job(**{field: row[field] for field in Job.__dataclass_fields__})
     binding = PRBinding(job_id, row["pr_number"], row["head_sha"],
@@ -95,11 +97,11 @@ def _read_persisted_binding(job_id: str):
     return job, binding
 
 
-def verify_bound_ci(job_id: str) -> dict[str, object]:
+def verify_bound_ci(job_id: str, *, actor: str) -> dict[str, object]:
     """Mint/read inside authenticator process; return only non-secret proof."""
     if os.geteuid() != AUTH_UID:
         raise BrokerDenied("authenticator identity required")
-    job, binding = _read_persisted_binding(job_id)
+    job, binding = _read_persisted_binding(job_id, actor=actor)
     checks = REQUIRED_CHECKS.get(job.repo)
     if (job.repo not in ALLOWED_REPOSITORIES or not checks
             or not isinstance(job.issue_number, int) or job.issue_number <= 0):
@@ -119,14 +121,15 @@ def verify_bound_ci(job_id: str) -> dict[str, object]:
             "audit_verified": False}
 
 
-def dispatch(request: object, *, peer_uid: int, controller_uid: int) -> dict[str, object]:
-    """Peer UID is obtained from SO_PEERCRED, never from JSON."""
+def dispatch(request: object, *, peer_uid: int, controller_uid: int,
+             verifier: object) -> dict[str, object]:
+    """Authenticate peer UID and signed Keycloak identity independently."""
     if (type(controller_uid) is not int or controller_uid <= 0
             or controller_uid in (AUTH_UID, WORKER_UID)
             or peer_uid != controller_uid):
         raise BrokerDenied("caller identity denied")
     if (not isinstance(request, dict)
-            or set(request) != {"version", "operation", "job_id"}
+            or set(request) != {"version", "operation", "job_id", "mcp_access_token"}
             or type(request.get("version")) is not int
             or request["version"] != PROTOCOL_VERSION
             or request.get("operation") != "verify_bound_ci"):
@@ -139,7 +142,8 @@ def dispatch(request: object, *, peer_uid: int, controller_uid: int) -> dict[str
             raise BrokerDenied("invalid job identifier")
     except ValueError as exc:
         raise BrokerDenied("invalid job identifier") from exc
-    return verify_bound_ci(job_id)
+    actor = verified_actor(request["mcp_access_token"], verifier=verifier)
+    return verify_bound_ci(job_id, actor=actor)
 
 
 def _read_frame(connection: socket.socket) -> object:
@@ -160,7 +164,7 @@ def _read_frame(connection: socket.socket) -> object:
         raise BrokerDenied("invalid request") from exc
 
 
-def serve_one(connection: socket.socket, *, controller_uid: int) -> None:
+def serve_one(connection: socket.socket, *, controller_uid: int, verifier: object) -> None:
     """Always redact errors. No request is read from unauthorized peers."""
     response: dict[str, object] = {"ok": False, "error": "denied"}
     try:
@@ -174,7 +178,7 @@ def serve_one(connection: socket.socket, *, controller_uid: int) -> None:
             raise BrokerDenied("unauthorized peer")
         connection.settimeout(5)
         response = dispatch(_read_frame(connection), peer_uid=peer_uid,
-                            controller_uid=controller_uid)
+                            controller_uid=controller_uid, verifier=verifier)
     except Exception:
         # Security boundary: don't expose private exception messages or tokens.
         pass
@@ -191,6 +195,7 @@ def serve(*, controller_uid: int, socket_gid: int) -> None:
         raise BrokerDenied("invalid broker identity configuration")
     _protected_path(DATABASE, is_file=True)
     _protected_path(SOCKET.parent, is_file=False)
+    verifier = build_broker_verifier(os.environ)
     if os.path.lexists(SOCKET):
         raise BrokerDenied("socket path occupied; inspect before retry")
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener:
@@ -202,7 +207,7 @@ def serve(*, controller_uid: int, socket_gid: int) -> None:
             while True:
                 connection, _ = listener.accept()
                 with connection:
-                    serve_one(connection, controller_uid=controller_uid)
+                    serve_one(connection, controller_uid=controller_uid, verifier=verifier)
         finally:
             # Socket directory must be private to the trusted broker account.
             if os.path.lexists(SOCKET) and stat.S_ISSOCK(os.lstat(SOCKET).st_mode):
