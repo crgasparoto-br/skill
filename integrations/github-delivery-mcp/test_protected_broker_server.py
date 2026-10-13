@@ -150,8 +150,8 @@ class ProtectedBrokerTests(unittest.TestCase):
 
     def test_wrong_signed_subject_cannot_read_another_actors_job(self):
         self.prepare_and_bind()
-        with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \\
-                patch.object(broker, "verified_actor", return_value="different-subject"), \\
+        with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \
+                patch.object(broker, "verified_actor", return_value="different-subject"), \
                 patch.object(broker, "mint_token") as mint:
             with self.assertRaises(broker.BrokerDenied):
                 broker.dispatch(self.request, peer_uid=2500, controller_uid=2500,
@@ -159,7 +159,7 @@ class ProtectedBrokerTests(unittest.TestCase):
             mint.assert_not_called()
 
     def test_invalid_signed_token_rejected_before_database_read(self):
-        with patch.object(broker, "verified_actor", side_effect=broker.BrokerDenied("invalid")), \\
+        with patch.object(broker, "verified_actor", side_effect=broker.BrokerDenied("invalid")), \
                 patch.object(broker, "verify_bound_ci") as verify:
             with self.assertRaises(broker.BrokerDenied):
                 broker.dispatch(self.request, peer_uid=2500, controller_uid=2500,
