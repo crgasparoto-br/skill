@@ -307,3 +307,26 @@ ativada**: exige controlador OAuth confiavel, banco protegido (nao o SQLite
 editavel pelo worker), provisionamento de grupo e revisao de isolamento.
 Estes arquivos versionados **nao constituem homologacao VPS** ou prova de CI
 verde no HEAD. A PR #89 segue draft, sem merge automatico.
+
+### Defesa em profundidade do broker — 2026-10-13
+
+O broker IPC de staging passou a exigir duas identidades independentemente:
+(1) UID real do controlador, comprovado por `SO_PEERCRED`; (2) token JWT
+Keycloak revalidado pelo próprio broker, com issuer/JWKS confiáveis,
+audiencia MCP exata, escopo dedicado `solverit:deliver` e allowlist `sub`.
+O `sub` criptograficamente verificado deve corresponder ao `actor`
+do job no SQLite privilegiado. A identidade OAuth **não** vem de um parâmetro
+`actor` enviado pelo MCP. Sem token válido, vínculo PR persistido, HEAD exato
+e check GitHub obrigatório, a operação `verify_bound_ci` falha fechada.
+
+O novo `controller_broker_client.py` valida o UID da outra ponta do socket
+antes de transmitir o token Keycloak e exige resposta sem credenciais,
+`audit_verified=false`. As mensagens são versionadas e rejeitam campos
+JSON duplicados e respostas ambíguas. O SQLite deve pertencer ao UID 997
+com modo privado (0600 ou mais restritivo); nunca reutilizar diretamente
+os bancos editáveis pelo worker. Os testes adicionados exercitam estes gates
+apenas **offline** com mocks; não há homologação real ou CI atestada.
+
+O ambiente Keycloak deve provisionar `solverit:deliver` separadamente de
+`solverit:read` antes de iniciar qualquer serviço novo; consultar
+[BROKER_STAGING.md](./BROKER_STAGING.md). Não foi feito deploy na VPS.
