@@ -11,7 +11,7 @@ The broker requires **both** the actual controller Linux UID via
 containing scope `solverit:deliver`. `broker_oauth.py` uses the existing
 `CachedJWKSVerifier` with a protected issuer, resource audience, JWKS URI and
 subject allowlist; it fails closed when keys are unavailable, claims are
-expired/revoked, `scope` is only `solverit:read`, or the subject is not
+expired or cryptographically invalid, `scope` is only `solverit:read`, or the subject is not
 allowlisted. The signed `sub` MUST equal the owner of the protected job.
 The broker does not accept an actor, repository, required-check list or PR
 number from the caller.
@@ -112,9 +112,10 @@ issues, PRs, test output or chat.
    the controller/worker. Review `systemd` hardening and the exact
    Python interpreter environment used by the GitHub SDK.
 4. Create `/var/lib/solverit/issue-delivery/protected/jobs.sqlite3`
-   as **trusted, separate job metadata**. Its file and ALL parent
-   components must be owned by root or UID 997, and must not be
-   group/world writable. The DB must not be world readable.
+   as **trusted, separate job metadata**. The SQLite file MUST be owned
+   by UID 997 and have no group/world permissions (e.g. mode 0600).
+   All parent components must be owned by root or UID 997 and must not
+   be group/world writable.
    The current worker-owned SQLite staging files **must not be trusted**:
    migrate or recreate jobs only after independent validation of their
    provenance and commit SHAs. Do not copy a worker-controlled DB
