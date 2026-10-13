@@ -59,7 +59,8 @@ def _protected_path(path: Path, *, is_file: bool) -> None:
         if stat.S_ISLNK(info.st_mode):
             raise BrokerDenied("symlink forbidden")
         if part == path and is_file:
-            if not stat.S_ISREG(info.st_mode) or info.st_mode & 0o007:
+            if (not stat.S_ISREG(info.st_mode) or info.st_uid != AUTH_UID
+                    or info.st_mode & 0o077):
                 raise BrokerDenied("untrusted database permissions")
         elif not stat.S_ISDIR(info.st_mode):
             raise BrokerDenied("untrusted parent directory")
