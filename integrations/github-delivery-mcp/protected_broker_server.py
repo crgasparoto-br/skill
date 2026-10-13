@@ -29,6 +29,7 @@ WORKER_UID = 1004
 DATABASE = Path("/var/lib/solverit/issue-delivery/protected/jobs.sqlite3")
 SOCKET = Path("/run/solverit-issue88-broker/broker.sock")
 MAX_REQUEST_BYTES = 2048
+PROTOCOL_VERSION = 1
 
 # Protected code policy; never accept required checks from MCP, worker or issue.
 REQUIRED_CHECKS = {
@@ -125,7 +126,9 @@ def dispatch(request: object, *, peer_uid: int, controller_uid: int) -> dict[str
             or peer_uid != controller_uid):
         raise BrokerDenied("caller identity denied")
     if (not isinstance(request, dict)
-            or set(request) != {"operation", "job_id"}
+            or set(request) != {"version", "operation", "job_id"}
+            or type(request.get("version")) is not int
+            or request["version"] != PROTOCOL_VERSION
             or request.get("operation") != "verify_bound_ci"):
         raise BrokerDenied("operation denied")
     job_id = request["job_id"]
