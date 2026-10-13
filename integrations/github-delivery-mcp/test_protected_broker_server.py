@@ -142,7 +142,8 @@ class ProtectedBrokerTests(unittest.TestCase):
 
     def test_rejects_oversized_and_multiple_request_frames(self):
         with patch.object(broker, "verify_bound_ci") as verify:
-            for raw in (b"{" + b"x" * 2048 + b"}\n", b"{}\n{}\n"):
+            for raw in (b"{" + b"x" * 13000 + b"}\n", b"{}\n{}\n",
+                        b'{"version":1,"version":1,"operation":"verify_bound_ci"}\n'):
                 fake = FakeConnection(raw)
                 broker.serve_one(fake, controller_uid=2500, verifier=self.verifier)
                 self.assertEqual(fake.response(), {"ok": False, "error": "denied"})
