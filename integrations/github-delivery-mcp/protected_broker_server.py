@@ -146,6 +146,15 @@ def dispatch(request: object, *, peer_uid: int, controller_uid: int,
     return verify_bound_ci(job_id, actor=actor)
 
 
+def _unique_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise BrokerDenied("duplicate request field")
+        result[key] = value
+    return result
+
+
 def _read_frame(connection: socket.socket) -> object:
     data = bytearray()
     while b"\n" not in data:
@@ -159,7 +168,7 @@ def _read_frame(connection: socket.socket) -> object:
     if rest or not line:
         raise BrokerDenied("invalid frame")
     try:
-        return json.loads(line.decode("utf-8"))
+        return json.loads(line.decode("utf-8"), object_pairs_hook=_unique_json_keys)
     except (UnicodeError, ValueError) as exc:
         raise BrokerDenied("invalid request") from exc
 
