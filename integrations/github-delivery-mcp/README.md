@@ -330,3 +330,26 @@ apenas **offline** com mocks; não há homologação real ou CI atestada.
 O ambiente Keycloak deve provisionar `solverit:deliver` separadamente de
 `solverit:read` antes de iniciar qualquer serviço novo; consultar
 [BROKER_STAGING.md](./BROKER_STAGING.md). Não foi feito deploy na VPS.
+
+### Correção do bootstrap de staging após execução na VPS — 2026-10-13
+
+O operador executou `ops/prepare-broker-staging.sh` no commit
+`f712d586130b6bbfd3df6d6436211c9c0664cf73`. A suíte tentou executar
+**277 testes**, com um erro de importação: `ModuleNotFoundError: No module
+named 'mcp'` em `test_mcp_sdk_pilot.py`. Isso interrompeu corretamente o
+provisionamento **antes** de criar usuários/grupos ou instalar o broker.
+O relatório final do wrapper exibiu um `RC=0` incorreto porque o script
+terminava em `echo` após capturar `RC=1` do subshell. Não constitui
+comprovação de testes aprovados.
+
+O bootstrap foi corrigido para verificar os módulos `jwt`, `cryptography`
+e `mcp.server.fastmcp`. Na ausência do SDK, cria um ambiente Python isolado
+sob o diretório temporário de staging e instala as dependências declaradas
+em `requirements-sdk-pilot.txt` **sem alterar Python global ou o venv
+preexistente**. O script registra a resolução de dependências em
+`dependencies-resolved.txt` e exige aprovação da suíte completa antes de
+qualquer chamada `sudo`. A linha final agora propaga falha por `test "$RC"
+-eq 0`, sem encerrar o terminal SSH. Foi incluído teste estático do contrato
+de bootstrap. O próximo operador deve executar o novo HEAD exato e enviar
+resultado dos testes; nenhuma ativação/deploy deve ser inferida desta correção
+somente no GitHub.
