@@ -289,3 +289,21 @@ PR; executar auditoria independente nesse SHA; integrar o MCP com OAuth/
 Keycloak e autorização por repo/operação; comprovar execução real de issue,
 publicação de PR, recuperação/retries e conclusão atômica. A entrega permanece
 bloqueada para `succeeded` e a PR #89 segue draft para `develop`, sem merge.
+
+
+## Fronteira IPC privilegiada adicionada em 2026-10-13 (staging)
+
+A implementacao inicial de `protected_broker_server.py` adiciona socket Unix
+local, verificacao de UID por `SO_PEERCRED`, consulta read-only a SQLite
+protegido, token GitHub `read-checks` somente em memoria e unica operacao
+`verify_bound_ci`. Tentativas de publicaçao, merge, exclusao, impersonacao
+e fornecimento de credenciais pelo chamador sao rejeitadas. A resposta
+nunca finaliza jobs nem certifica auditoria independente.
+
+Consultar [BROKER_STAGING.md](./BROKER_STAGING.md) para pre-requisitos de
+identidade, permissao de arquivos e testes de seguranca. A unit
+`systemd/solverit-issue88-github-broker.service` **nao esta instalada ou
+ativada**: exige controlador OAuth confiavel, banco protegido (nao o SQLite
+editavel pelo worker), provisionamento de grupo e revisao de isolamento.
+Estes arquivos versionados **nao constituem homologacao VPS** ou prova de CI
+verde no HEAD. A PR #89 segue draft, sem merge automatico.
