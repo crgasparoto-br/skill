@@ -29,12 +29,30 @@
   echo "Codigo isolado: $STAGE"
 
   echo "=== 2. EXECUTANDO SUITE OFFLINE ANTES DE QUALQUER ALTERACAO NO SISTEMA ==="
+  # Tests include test_mcp_sdk_pilot.py: PyJWT/cryptography alone are NOT enough.
+  # Use the already-available pilot environment when it is complete.
+  # Otherwise create a disposable environment in staging; never modify
+  # system Python, the existing pilot venv or the production services.
   PYTHON="/tmp/issue88-sdk/bin/python"
-  if [ ! -x "$PYTHON" ]; then PYTHON="/usr/bin/python3"; fi
-  if ! "$PYTHON" -c 'import jwt, cryptography' >/dev/null 2>&1; then
-    echo "BLOQUEADO: PyJWT/cryptography ausentes; nada provisionado."
+  if [ ! -x "$PYTHON" ] || ! "$PYTHON" -c 'import jwt, cryptography, mcp.server.fastmcp' >/dev/null 2>&1; then
+    echo "SDK MCP ausente no ambiente anterior; criando venv isolada para os testes."
+    /usr/bin/python3 -m venv "$STAGE/.venv"
+    PYTHON="$STAGE/.venv/bin/python"
+    DEPLOG="$STAGE/dependencies.log"
+    if ! "$PYTHON" -m pip install --disable-pip-version-check --no-input \
+        -r "$CODE/requirements-sdk-pilot.txt" > "$DEPLOG" 2>&1; then
+      echo "BLOQUEADO: falha ao instalar dependencias da suite no staging."
+      echo "Log local: $DEPLOG"
+      false
+    fi
+  fi
+  if ! "$PYTHON" -c 'import jwt, cryptography, mcp.server.fastmcp' >/dev/null 2>&1; then
+    echo "BLOQUEADO: ambiente de teste incompleto; nada provisionado."
     false
   fi
+  "$PYTHON" -m pip freeze > "$STAGE/dependencies-resolved.txt"
+  echo "Ambiente de testes: $PYTHON"
+  echo "Manifesto de dependencias: $STAGE/dependencies-resolved.txt"
   LOG="$STAGE/testes.log"
   if (cd "$CODE" && PYTHONPATH="$CODE" "$PYTHON" -m unittest discover -s . -p 'test_*.py' > "$LOG" 2>&1); then
     tail -n 8 "$LOG"
@@ -110,3 +128,6 @@
 RC=$?
 echo "=== CODIGO DE RETORNO: $RC ==="
 echo "=== TERMINAL PRESERVADO ==="
+# Return failure to the calling wrapper/CI, not a false green from echo.
+# This file is executed by 'bash script', never sourced in the SSH shell.
+test "$RC" -eq 0
