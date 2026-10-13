@@ -23,6 +23,15 @@ class BrokerClientError(RuntimeError):
     pass
 
 
+def _unique_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("ambiguous broker response")
+        result[key] = value
+    return result
+
+
 def check_job_ci(*, job_id: str, mcp_access_token: str) -> dict[str, object]:
     if not isinstance(job_id, str) or len(job_id) != 36:
         raise BrokerClientError("invalid job")
@@ -70,7 +79,7 @@ def check_job_ci(*, job_id: str, mcp_access_token: str) -> dict[str, object]:
         raise BrokerClientError("broker unavailable or unauthorized") from exc
 
     try:
-        response = json.loads(payload)
+        response = json.loads(payload, object_pairs_hook=_unique_json_keys)
     except (ValueError, UnicodeError) as exc:
         raise BrokerClientError("broker response invalid") from exc
     if (not isinstance(response, dict)
