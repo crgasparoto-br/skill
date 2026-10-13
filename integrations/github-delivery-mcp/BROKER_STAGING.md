@@ -4,12 +4,76 @@
 This is the **first security boundary**, not the completed `entregar-issue`
 executor or an MCP write capability.
 
+## OAuth identity binding (implemented in code, not deployed)
+
+The broker requires **both** the actual controller Linux UID via
+`SO_PEERCRED` and a cryptographically verified Keycloak **MCP access token**
+containing scope `solverit:deliver`. `broker_oauth.py` uses the existing
+`CachedJWKSVerifier` with a protected issuer, resource audience, JWKS URI and
+subject allowlist; it fails closed when keys are unavailable, claims are
+expired/revoked, `scope` is only `solverit:read`, or the subject is not
+allowlisted. The signed `sub` MUST equal the owner of the protected job.
+The broker does not accept an actor, repository, required-check list or PR
+number from the caller.
+
+The internal request is protocol version 1, exactly:
+
+```json
+{"version":1,"operation":"verify_bound_ci","job_id":"00000000-0000-4000-8000-000000000000","mcp_access_token":"<short-lived Keycloak JWT>"}
+```
+
+The JWT above is a *placeholder*, not a real credential. The transport
+carries the incoming Keycloak OAuth credential only within the protected
+socket, never through logs or GitHub. The **GitHub App installation token**
+is minted separately under UID 997 and never leaves the broker.
+`controller_broker_client.py` validates broker `SO_PEERCRED` UID 997 and a
+strict versioned success response. Neither module is an MCP tool endpoint;
+public exposure must remain disabled.
+
+Before enabling this mode, configure a distinct Keycloak
+`solverit:deliver` scope and verify it is issued only to appropriately
+authorized users/clients. Existing `solverit:read` users must not
+implicitly gain delivery permissions. Do not change the existing read-only
+auditor role/client. The broker environment, managed by root, must contain:
+
+```text
+SOLVERIT_BROKER_CONTROLLER_UID=<trusted-controller-uid>
+SOLVERIT_BROKER_SOCKET_GID=<trusted-group-gid>
+SOLVERIT_MCP_RESOURCE_URL=https://mcp.solveritconsultoria.com.br/mcp
+SOLVERIT_OAUTH_ISSUER_URL=https://auth.solveritconsultoria.com.br/realms/solverit-delivery
+SOLVERIT_OAUTH_JWKS_URI=https://auth.solveritconsultoria.com.br/realms/solverit-delivery/protocol/openid-connect/certs
+SOLVERIT_MCP_DELIVERY_SUBJECTS=<allowlisted-oidc-sub-values>
+```
+
+The actual resource URL and issuer must match the deployed Keycloak and MCP
+audience claims exactly; verify them rather than assuming the examples are
+still current. Do not paste real JWTs, private keys or tokens into GitHub
+issues, PRs, test output or chat.
+
+### Integration prerequisites
+
+1. Start a **separate trusted controller** running under the configured
+   controller UID, distinct from worker (1004) and authenticator (997).
+   The controller must independently validate HTTP bearer tokens, tool
+   permissions, repo allowlists and rate limits before invoking IPC. It
+   must pass the already received Keycloak access token; never accept
+   identity fields as MCP tool parameters.
+2. Restrict membership of the broker socket group; the worker must never
+   traverse its directory or connect. The broker repeats OAuth validation
+   even after the controller has authorized the user.
+3. Only then test a protected real job→PR binding against a GitHub PR in an
+   expressly authorized sandbox. A passing CI response does **not**
+   authorize `succeeded`; independent audit and exact-HEAD completion
+   remain unimplemented.
+
 ## What has been added
 
 - `protected_broker_server.py`: Linux AF_UNIX server, checks actual
   `SO_PEERCRED` UID **before reading a request**, and only accepts
-  `{"version":1,"operation":"verify_bound_ci","job_id":"<canonical-UUID>"}`.
-  The JSON cannot override the OAuth actor, repository, PR, GitHub token,
+  the versioned `verify_bound_ci` request with a canonical job UUID and
+  a signed Keycloak MCP access token. The broker verifies the subject matches
+  the stored job owner.
+  The JSON cannot override the verified OAuth actor, repository, PR, GitHub token,
   required checks, or permission profile. Every error returns
   `{"ok":false,"error":"denied"}` without detailed exceptions or secrets.
 - Protected, read-only SQLite read (`mode=ro`, no implicit database
@@ -23,7 +87,9 @@ executor or an MCP write capability.
 - The only configured required check is `Validate repository`, from
   protected versioned code. The response explicitly says
   `audit_verified: false`; it never finalizes a job.
-- `test_protected_broker_server.py` covers unauthorized peers, forbidden
+- `test_broker_oauth.py` and `test_controller_broker_client.py` cover
+  issuer/audience/scope policies, invalid tokens, broker peer identity and
+  response framing; `test_protected_broker_server.py` covers unauthorized peers, forbidden
   write operations, fabricated actor/token/PR/repo/checks, malformed IDs,
   framing limits, missing binding, unprepared jobs, HEAD mismatch,
   read-only SQLite and secret-safe failures.
