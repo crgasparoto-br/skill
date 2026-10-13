@@ -70,6 +70,7 @@ class ControllerBrokerClientTests(unittest.TestCase):
                    json.dumps({**GOOD, "verified_head": "x"*40}).encode()+b"\n",
                    json.dumps({**GOOD, "token": "SECRETS"}).encode()+b"\n",
                    json.dumps(GOOD).encode()+b"\n{}\n",
+                   json.dumps(GOOD).encode().replace(b'"ok": true', b'"ok": true, "ok": true')+b"\n",
                    b"a"*5000+b"\n"]
         for raw in samples:
             with self.subTest(value=raw[:30]), self.assertRaises(client.BrokerClientError):
