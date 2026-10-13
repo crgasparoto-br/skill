@@ -254,6 +254,38 @@ diretório de código somente leitura, de propriedade root, acessível à
 identidade autenticadora. Não executar o teste via diretório editável pelo
 worker, não modificar permissões de secrets nem imprimir tokens.
 
-**Estado:** implementação e testes simulados; a consulta GitHub real na VPS
-ainda depende da homologação pelo operador. Este smoke não autentica o vínculo
-job–PR nem constitui entrega fim a fim.
+**Estado atualizado (2026-10-12):** o operador executou o smoke real com sucesso
+na VPS, sob a identidade dedicada. O teste não autentica o vínculo job–PR
+nem constitui entrega fim a fim.
+
+## Evidência de homologação — GitHub App read-only (2026-10-12)
+
+Execução informada pelo operador na VPS, após validação do commit
+`9b6ab6b6e7200c0f035b3cac88d38df662139462`:
+
+| Verificação | Evidência | Resultado |
+| --- | --- | --- |
+| Testes específicos de smoke | 5/5 aprovados | PASS |
+| Regressão completa | 252/252 aprovados, duração 6,660 s | PASS |
+| Processo autenticador | UID 997 `solverit-github-auth`, grupo `solverit-app-key` | Confirmado |
+| Código de leitura | Instalado em `/opt/solverit/github-readonly-smoke`, proprietário `root` | Preparado |
+| Consulta GitHub real | `crgasparoto-br/training-system` / `develop` | PASS |
+| SHA retornado | `fa6b1842e8e30199e3e7efa3b75c47daf7b2abc2` | Observado |
+| Checks retornados | 5 check runs | Contagem, não aprovação |
+| Saída do smoke | `read_only: true` | PASS |
+| Código de saída | `0` | PASS |
+| Sessão SSH | Terminal preservado | Confirmado |
+
+A evidência comprova **autenticação real da GitHub App e leitura de metadados da
+branch `develop` e seus check runs** no momento do teste. Não comprova que os
+cinco checks foram aprovados, não valida uma PR real nem o SHA de sua HEAD, e
+não comprova isolamento efetivo entre broker e worker. Nenhum token, PEM ou
+cabeçalho confidencial foi incluído no resultado apresentado.
+
+**Critérios de liberação ainda pendentes:** estabelecer o processo privilegiado
+com autenticação de chamadas e acesso protegido ao SQLite; vincular publicação
+confiável à issue e PR; avaliar o catálogo normativo de checks no SHA exato da
+PR; executar auditoria independente nesse SHA; integrar o MCP com OAuth/
+Keycloak e autorização por repo/operação; comprovar execução real de issue,
+publicação de PR, recuperação/retries e conclusão atômica. A entrega permanece
+bloqueada para `succeeded` e a PR #89 segue draft para `develop`, sem merge.
