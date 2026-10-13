@@ -78,7 +78,7 @@ class ControllerBrokerClientTests(unittest.TestCase):
 
     def test_bad_user_inputs_refused_before_socket_connect(self):
         with patch.object(client.socket, "socket") as open_socket:
-            for job in ("", "not-a-job", JOB.upper(), "../../../passwd"):
+            for job in ("", "not-a-job", "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA", "../../../passwd"):
                 with self.subTest(job=job), self.assertRaises(client.BrokerClientError):
                     client.check_job_ci(job_id=job, mcp_access_token="signed-keycloak-access")
             for token in (None, "", "short", "bad token", "x"*8193):
