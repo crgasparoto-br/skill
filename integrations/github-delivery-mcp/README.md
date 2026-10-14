@@ -426,3 +426,24 @@ usuário, nem a existência de um token realmente autorizado. Consultar
 `deploy/keycloak/DELIVERY_SCOPE_HOMOLOGATION.md`.
 
 **Não ativar o serviço ou concluir a issue apenas com esse diagnóstico.**
+
+
+### Keycloak OIDC público — execução do operador em 2026-10-14
+
+O operador executou `test_keycloak_public_readiness.py` (**8 testes OK**) e
+`ops/check-keycloak-public-readiness.py` na VPS (**RC=0**). O endpoint
+público respondeu com issuer exato
+`https://auth.solveritconsultoria.com.br/realms/solverit-delivery`,
+audience de referência `https://mcp.solveritconsultoria.com.br/mcp`,
+PKCE S256 suportado e **1 chave RSA/RS256 pública**. A consulta exibiu
+`deliver_scope_advertised: no`. Esse valor **não prova inexistência** do
+escopo em Keycloak: o discovery pode omitir escopos opcionais; tampouco
+comprova associação ao cliente, direito do usuário, emissão de access token
+com `solverit:deliver`, nem correspondência do `sub` à allowlist.
+
+**Status:** transporte OIDC/JWKS público aprovado; broker ainda desligado.
+Permanecem pendentes a conferência administrativa do escopo opcional
+`solverit:deliver` no realm/client, a autorização efetiva por usuário,
+o OIDC `sub` autorizado e o `broker.env` protegido. Não criar o env com
+identidades supostas nem ativar publicação/merge ou o broker antes da
+homologação negativa e positiva real.
