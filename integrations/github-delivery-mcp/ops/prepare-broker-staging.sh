@@ -63,22 +63,27 @@
   fi
 
   echo "=== 3. PROVISIONANDO IDENTIDADE SEGREGADA ==="
-  sudo -v
+  if [ "$(sudo -n /usr/bin/id -u 2>/dev/null || true)" != "0" ]; then
+    echo "BLOQUEADO: usuario ubuntu nao possui sudo -n administrativo nao interativo."
+    echo "Nenhuma identidade, codigo ou banco foi provisionado."
+    false
+  fi
+  echo "Autorizacao sudo -n NOPASSWD confirmada por /usr/bin/id -u."
   test "$(id -u solverit-github-auth)" = 997
   test "$(id -u solverit-worker)" = 1004
   if ! getent group solverit-delivery-control >/dev/null; then
-    sudo groupadd --system solverit-delivery-control
+    sudo -n groupadd --system solverit-delivery-control
   fi
   if ! id solverit-controller >/dev/null 2>&1; then
-    sudo useradd --system --user-group --no-create-home \
+    sudo -n useradd --system --user-group --no-create-home \
       --home-dir /nonexistent --shell /usr/sbin/nologin solverit-controller
   fi
   CONTROLLER_UID="$(id -u solverit-controller)"
   test "$CONTROLLER_UID" != 0
   test "$CONTROLLER_UID" != 997
   test "$CONTROLLER_UID" != 1004
-  sudo usermod -aG solverit-delivery-control solverit-controller
-  sudo usermod -aG solverit-delivery-control solverit-github-auth
+  sudo -n usermod -aG solverit-delivery-control solverit-controller
+  sudo -n usermod -aG solverit-delivery-control solverit-github-auth
   if id -nG solverit-worker | tr ' ' '\n' | grep -qx solverit-delivery-control; then
     echo "BLOQUEADO: worker no grupo privilegiado."
     false
@@ -89,35 +94,35 @@
   fi
 
   echo "=== 4. COPIANDO APENAS CODIGO INERTE, SEM INICIAR SERVICOS ==="
-  sudo install -d -o root -g root -m 0755 "$TARGET"
+  sudo -n install -d -o root -g root -m 0755 "$TARGET"
   for FILE in \
     app_token_broker.py broker_oauth.py controller_broker_client.py \
     github_evidence_reader.py github_evidence_validation.py jobs.py \
     pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \
     protected_broker_server.py; do
-    sudo install -o root -g root -m 0644 "$CODE/$FILE" "$TARGET/$FILE"
+    sudo -n install -o root -g root -m 0644 "$CODE/$FILE" "$TARGET/$FILE"
   done
-  printf '%s\n' "$EXPECTED" | sudo tee "$TARGET/STAGED_COMMIT" >/dev/null
-  sudo chmod 0644 "$TARGET/STAGED_COMMIT"
-  sudo chown root:root "$TARGET/STAGED_COMMIT"
+  printf '%s\n' "$EXPECTED" | sudo -n tee "$TARGET/STAGED_COMMIT" >/dev/null
+  sudo -n chmod 0644 "$TARGET/STAGED_COMMIT"
+  sudo -n chown root:root "$TARGET/STAGED_COMMIT"
 
   echo "=== 5. CRIANDO SQLITE PRIVADO SEM JOBS FICTICIOS ==="
-  sudo install -d -o root -g solverit-github-auth -m 0750 \
+  sudo -n install -d -o root -g solverit-github-auth -m 0750 \
     /var/lib/solverit/issue-delivery
-  sudo install -d -o solverit-github-auth -g solverit-github-auth -m 0700 \
+  sudo -n install -d -o solverit-github-auth -g solverit-github-auth -m 0700 \
     /var/lib/solverit/issue-delivery/protected
-  if sudo test -L "$DB"; then
+  if sudo -n test -L "$DB"; then
     echo "BLOQUEADO: SQLite nao pode ser symlink."
     false
   fi
-  if ! sudo test -e "$DB"; then
-    sudo -u solverit-github-auth env PYTHONPATH="$TARGET" \
+  if ! sudo -n test -e "$DB"; then
+    sudo -n -u solverit-github-auth env PYTHONPATH="$TARGET" \
       /usr/bin/python3 -c \
       'import os; os.umask(0o077); from pr_binding import PRBindingStore; PRBindingStore("/var/lib/solverit/issue-delivery/protected/jobs.sqlite3")'
   fi
-  test "$(sudo stat -c %u "$DB")" = 997
-  test "$(sudo stat -c %a "$DB")" = 600
-  sudo stat -c 'Banco: %U:%G modo=%a %n' "$DB"
+  test "$(sudo -n stat -c %u "$DB")" = 997
+  test "$(sudo -n stat -c %a "$DB")" = 600
+  sudo -n stat -c 'Banco: %U:%G modo=%a %n' "$DB"
   echo "Controller UID: $CONTROLLER_UID"
   getent group solverit-delivery-control
   echo "Codigo staging em: $TARGET"
