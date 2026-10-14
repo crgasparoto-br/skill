@@ -401,3 +401,28 @@ Próxima etapa versionada: executar o script **somente leitura**
 `ops/verify-broker-staging.sh` para confirmar isolamento e dependências
 exatamente sob o usuário do serviço; não ativar o broker antes de resolver
 bloqueadores e verificar política de Keycloak por cliente/usuário.
+
+
+### Verificação estrutural final de staging — 2026-10-14
+
+O operador executou o verificador `ops/verify-broker-staging.sh` com
+**`FAILED=0, PENDING=2, RC=0`**. O resultado não declara o broker
+operacional. Foram confirmados UID 995 (controlador), UID 997
+(autenticador), UID 1004 (worker), GID 984 (IPC), segregação do grupo de
+chaves da App, arquivos de código somente leitura sob root, SQLite
+protegido `997:986:600`, importação de módulos sob
+`/usr/bin/python3` do serviço e leitura da chave GitHub pelo
+autenticador sem exibir seu conteúdo. O broker continua inativo,
+sem socket exposto e sem reinício de serviços.
+
+As duas pendências remanescentes da ativação dessa fronteira são:
+`broker.env` root-managed ainda não provisionado e ausência de
+evidência administrativa de `solverit:deliver` + OIDC `sub`
+autorizado no Keycloak. Há um novo script **somente leitura**
+`ops/check-keycloak-public-readiness.py`, acompanhado de testes offline,
+para validar issuer, JWKS e PKCE S256 sem acessar tokens. Metadados
+públicos **não** provam a configuração administrativa, a permissão por
+usuário, nem a existência de um token realmente autorizado. Consultar
+`deploy/keycloak/DELIVERY_SCOPE_HOMOLOGATION.md`.
+
+**Não ativar o serviço ou concluir a issue apenas com esse diagnóstico.**
