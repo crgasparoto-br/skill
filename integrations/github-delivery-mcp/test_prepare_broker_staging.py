@@ -46,12 +46,24 @@ class BrokerBootstrapContractTests(unittest.TestCase):
 
     def test_checks_run_before_any_system_account_changes(self):
         tests = self.contents.index("unittest discover")
-        groupadd = self.contents.index("sudo groupadd")
-        useradd = self.contents.index("sudo useradd")
-        install = self.contents.index("sudo install -d")
+        groupadd = self.contents.index("sudo -n groupadd")
+        useradd = self.contents.index("sudo -n useradd")
+        install = self.contents.index("sudo -n install -d")
         self.assertLess(tests, groupadd)
         self.assertLess(tests, useradd)
         self.assertLess(tests, install)
+
+    def test_sudo_password_prompts_are_impossible(self):
+        """Even a stale sudo credential must not request input from the operator."""
+        self.assertNotIn("sudo -v", self.contents)
+        self.assertIn('sudo -n /usr/bin/id -u', self.contents)
+        self.assertIn('Autorizacao sudo', self.contents)
+        self.assertLess(self.contents.index('sudo -n /usr/bin/id -u'),
+                        self.contents.index('sudo -n groupadd'))
+        for line in self.contents.splitlines():
+            command = line.strip()
+            if command.startswith("sudo "):
+                self.assertTrue(command.startswith("sudo -n "), command)
 
     def test_source_commit_is_verified_before_extracting_and_provisioning(self):
         self.assertIn('ACTUAL="$(git -C "$WORK" rev-parse FETCH_HEAD)"', self.contents)
