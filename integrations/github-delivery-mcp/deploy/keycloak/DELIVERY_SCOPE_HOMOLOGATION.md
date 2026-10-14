@@ -27,41 +27,68 @@ keys. It never obtains tokens, reads internal secrets or edits Keycloak.
 prove user assignment or authorization, and an omitted value is not proof
 that the scope doesn't exist.
 
-## 2. Administrative Keycloak checks — operator in UI
+## 2. Administrative Keycloak configuration — operator in UI
 
-Open the Keycloak administrative console for realm `solverit-delivery`
-using the operator's existing login; do not copy credentials to a
-terminal, chat, GitHub issue or logs.
+The operator verified that `solverit:deliver` **does not yet exist**
+(2026-10-14). Create it as follows in realm `solverit-delivery`
+using an authorized Keycloak administrator. These administrative changes
+are not performed by public OIDC checks.
 
-1. **Client scopes**: verify a distinct optional OIDC client scope
-   `solverit:deliver` exists. If missing, create it as **Optional**,
-   not Default; do not modify `solverit:read`.
-2. **Delivery scope audience mapper**: verify the access token receives
-   custom audience `https://mcp.solveritconsultoria.com.br/mcp`.
-   Ensure ID tokens are not used as API bearer tokens.
-3. **Clients**: verify only the intended delivery OAuth client (pilot:
-   `solverit-chatgpt-mcp`, after confirming the live client identity)
-   permits requesting `solverit:deliver` as an optional client scope.
-   Do not enable privileged scopes as defaults.
-4. **Users**: find the specifically authorized operator and record the
-   immutable Keycloak **user ID** (JWT `sub`) in the protected VPS
-   configuration, not an email or display name. This subject is
-   referenced only from the broker root-managed allowlist.
-5. **Authorization**: a scoped token is not enough on its own. Restrict
-   the privileged action with the server-side subject allowlist, repo
-   allowlist and `solverit:deliver` JWT scope. A request by another
-   subject, even if they obtain an access token with the scope, must
-   be rejected. Before production, require an independent review of the
-   corresponding user/group/role assignment and per-tool policy.
-6. **Never treat UI settings as a completed E2E test**. Valid test:
-   signed, unexpired **access** token, correct `iss`, `aud`,
-   `sub`, `scope` including `solverit:deliver`; separate negative
-   tests for read-only, wrong-subject, expired and wrong-audience
-   tokens. Never print JWTs or secrets in reports.
+### Step A: dedicated authorization role FIRST
 
-If Keycloak does not implement this scope yet, **do not create
-`broker.env` with invented subject values** or start the broker.
-Changes to the realm require an explicit reviewed administrative action.
+1. Open **Realm roles** and create an isolated role named
+   `solverit-delivery-operator`. If already present, review its existing
+   members before reusing it.
+2. Assign that role **only** to the explicitly approved delivery operator(s)
+   under **Users > [approved user] > Role mapping > Assign role**.
+   Do not assign it as a default realm role or to broad groups.
+3. Keep a reviewed record of the approved users' immutable Keycloak user IDs
+   (the JWT `sub`). Never use email, display name or a tool-provided actor
+   instead of the cryptographically verified `sub`.
+
+### Step B: OIDC client scope and enforceable role constraint
+
+1. Open **Client scopes > Create client scope** and create exactly
+   `solverit:deliver` using **OpenID Connect**. Set **Include in token
+   scope** to **ON**. Do not edit the existing `solverit:read` scope.
+2. Open the new `solverit:deliver` client scope's **Scope** tab and
+   **assign the Realm Role `solverit-delivery-operator` to its role scope
+   mappings**. This is security-critical: Keycloak permits every user to
+   use a client scope when it has *no* role scope mappings; the role
+   intersection restricts the scope to users possessing the role.
+3. Under **Mappers > Configure a new mapper > Audience**, set
+   name `solverit-delivery-mcp-audience`, **Included Custom Audience**
+   `https://mcp.solveritconsultoria.com.br/mcp`,
+   **Add to access token ON**, **Add to ID token OFF**. Do not substitute
+   the client ID for the exact MCP resource audience.
+4. Open **Clients > solverit-chatgpt-mcp > Client scopes** after confirming
+   this is the real ChatGPT OAuth client. Attach `solverit:deliver` as
+   **Optional**, **never Default**; the privilege is requested explicitly
+   by `scope=openid solverit:deliver`, not granted on every login.
+   Do not add it to realm defaults or other clients.
+
+### Step C: verify the *actual* user authorization
+
+Use **Clients > solverit-chatgpt-mcp > Client scopes > Evaluate**
+with `solverit:deliver` selected. Evaluate at least an approved user
+(with `solverit-delivery-operator`) and a different, unapproved user.
+Check the simulated *access* token's `scope` and `aud`. The approved
+user should have `solverit:deliver`, the unapproved user MUST NOT;
+if the unapproved user receives it, stop and correct the role mapping.
+The user `sub` must later match the private broker allowlist.
+No complete positive test is established until a real, signed,
+unexpired access token passes issuer, audience, scope and allowlist
+checks in the actual broker; these checks do not depend on the
+public discovery `scopes_supported` field.
+
+**Defense in depth:** even when Keycloak rejects unauthorized users,
+the broker must independently require the signed `solverit:deliver`
+scope, immutable subject allowlist, repository policy, peer UID and
+job ownership. The existing read-only MCP and auditor stay unchanged.
+
+Do not paste OAuth tokens, client secrets, passwords or private keys into
+GitHub issues, PRs, chat or logs. Never activate the broker before negative
+tests (read-only, wrong user, wrong audience, expired token and worker IPC).
 
 ## 3. Protected broker environment (after user mapping reviewed)
 
