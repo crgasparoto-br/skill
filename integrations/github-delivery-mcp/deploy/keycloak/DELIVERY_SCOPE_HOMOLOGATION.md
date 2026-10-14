@@ -145,3 +145,17 @@ Unix-socket identity tests and independent security review all pass.
 
 No auto merge, no direct write to `develop` or `main`, no changes
 to the existing read-only auditor.
+
+## Progress reported by operator — 2026-10-14 23:53 UTC
+
+The operator confirmed saving the **Audience mapper** configured on the
+`solverit:deliver` client-scope screen, named
+`solverit-delivery-mcp-audience` with custom audience
+`https://mcp.solveritconsultoria.com.br/mcp`. This is **self-reported
+configuration**, not an independent Keycloak admin API audit. The
+following remain **unverified**: role `solverit-delivery-operator`
+creation/assignment, role scope mappings on `solverit:deliver`, the
+scope's optional attachment to `solverit-chatgpt-mcp`, positive and
+negative user evaluation, and issuance of signed access tokens with
+the correct scope and audience. Keep the broker inactive and do not
+create authorization allowlists from guesses.
