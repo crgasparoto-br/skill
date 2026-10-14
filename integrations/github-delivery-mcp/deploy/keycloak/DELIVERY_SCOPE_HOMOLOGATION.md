@@ -34,11 +34,36 @@ The operator verified that `solverit:deliver` **does not yet exist**
 using an authorized Keycloak administrator. These administrative changes
 are not performed by public OIDC checks.
 
+## 2.1. Mandatory object descriptions and traceability (Issue #88)
+
+Whenever a new Keycloak object is created for the delivery workflow,
+specify its **exact technical name, description, intended permissions and
+issue reference before instructing an operator to save it**. If a Keycloak
+object type does not expose a Description field, its documented purpose
+is still mandatory. A screenshot without a description input must not
+be interpreted as an incomplete administrative operation if Keycloak
+does not support that metadata.
+
+| Object | Exact name | Description or documented purpose | Where to record it |
+| --- | --- | --- | --- |
+| Realm Role | `solverit-delivery-operator` | **Issue #88 — Autoriza operadores aprovados a executar entregas controladas de issues via MCP, com autenticação Keycloak, execução isolada na VPS e auditoria independente. Não concede acesso administrativo nem autorização de merge.** | Role **Description** field and this table |
+| Client Scope | `solverit:deliver` | **Issue #88 — Escopo OAuth opcional e restrito à role solverit-delivery-operator. Permite solicitar operações de entrega controlada pelo MCP, sujeitas à validação do token, identidade autorizada e políticas de segurança do servidor.** | Client Scope **Description** field (when available) and this table |
+| Audience Mapper | `solverit-delivery-mcp-audience` | **Issue #88 — Inclui a audiência do recurso MCP SolverIT no access token emitido pelo Keycloak, permitindo que o servidor valide o destinatário do token antes de autorizar operações de entrega.** | This table: the Keycloak Audience Mapper form **does not expose a Description field**; enter the technical name in its mandatory **Name** field |
+| Existing OAuth Client (reference, not a new object) | `solverit-chatgpt-mcp` | **Issue #88 — Cliente OAuth público do ChatGPT para acesso autenticado ao MCP SolverIT, com PKCE S256 e escopos opcionais autorizados pelo servidor.** | Documentation only unless its existing Description may be safely edited after independent review |
+
+Rules: descriptions express **intended authorization**, not proof of
+provisioning or active access. Do not claim a role, scope or mapper has
+been saved until confirmed in the Keycloak administration console.
+Never put user identifiers, access tokens, passwords or PEM keys in
+descriptions. Existing `solverit:read` and auditor permissions remain
+unchanged.
+
 ### Step A: dedicated authorization role FIRST
 
 1. Open **Realm roles** and create an isolated role named
-   `solverit-delivery-operator`. If already present, review its existing
-   members before reusing it.
+   `solverit-delivery-operator`. Fill its **Description** with the exact
+   Issue #88 text in the table above. If already present, review its existing
+   members before reusing it; do not overwrite previously documented metadata blindly.
 2. Assign that role **only** to the explicitly approved delivery operator(s)
    under **Users > [approved user] > Role mapping > Assign role**.
    Do not assign it as a default realm role or to broad groups.
@@ -49,8 +74,10 @@ are not performed by public OIDC checks.
 ### Step B: OIDC client scope and enforceable role constraint
 
 1. Open **Client scopes > Create client scope** and create exactly
-   `solverit:deliver` using **OpenID Connect**. Set **Include in token
-   scope** to **ON**. Do not edit the existing `solverit:read` scope.
+   `solverit:deliver` using **OpenID Connect**. Fill its **Description**
+   with the exact Issue #88 text in the table above when Keycloak provides the
+   field. Set **Include in token scope** to **ON**. Do not edit the existing
+   `solverit:read` scope.
 2. Open the new `solverit:deliver` client scope's **Scope** tab and
    **assign the Realm Role `solverit-delivery-operator` to its role scope
    mappings**. This is security-critical: Keycloak permits every user to
@@ -59,8 +86,11 @@ are not performed by public OIDC checks.
 3. Under **Mappers > Configure a new mapper > Audience**, set
    name `solverit-delivery-mcp-audience`, **Included Custom Audience**
    `https://mcp.solveritconsultoria.com.br/mcp`,
-   **Add to access token ON**, **Add to ID token OFF**. Do not substitute
-   the client ID for the exact MCP resource audience.
+   **Add to access token ON**, **Add to ID token OFF**. Leave **Included Client
+   Audience** empty and **Add to lightweight access token OFF** (as shown
+   in the operator screenshot). The mapper form has no Description field:
+   use the Name exactly as specified and record the purpose in the table above.
+   Do not substitute the client ID for the exact MCP resource audience.
 4. Open **Clients > solverit-chatgpt-mcp > Client scopes** after confirming
    this is the real ChatGPT OAuth client. Attach `solverit:deliver` as
    **Optional**, **never Default**; the privilege is requested explicitly
