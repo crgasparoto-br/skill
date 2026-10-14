@@ -370,3 +370,34 @@ impedindo prompts de senha; há teste estático para exigir esse
 contrato. Os testes offline devem ser reexecutados no HEAD da PR antes
 do provisionamento e serviços continuam desligados. O script nunca
 reinicia serviços ou fecha o terminal SSH.
+
+
+### Homologação da preparação de staging reportada pelo operador — 2026-10-14
+
+**Marco operacional: APROVADO PARA PREPARAÇÃO, NÃO PARA ATIVAÇÃO.** O operador
+executou `ops/prepare-broker-staging.sh` do commit
+`8d849320c85350eb429c9747c5dec41c26ee0ecd` na VPS e reportou:
+
+- Suite offline alcançou o provisionamento (gate de testes aprovado); output
+  publicado não inclui contagem exata, portanto não inferir total de testes.
+- `sudo -n` não interativo confirmou autorização root.
+- `solverit-controller` criado com UID **995**; grupo IPC
+  `solverit-delivery-control` GID **984**, restrito a
+  `solverit-controller` e `solverit-github-auth`.
+- Código inerte em `/opt/solverit/issue-delivery`.
+- SQLite protegido em
+  `/var/lib/solverit/issue-delivery/protected/jobs.sqlite3`,
+  dono `solverit-github-auth:solverit-github-auth`, modo `600`.
+- Saída `PREPARACAO CONCLUIDA`, código de retorno `0`, terminal
+  preservado, nenhum serviço iniciado/reiniciado.
+
+**Limite desta evidência:** não prova que `/usr/bin/python3` usado pela
+futura unit systemd consegue carregar `jwt` ou `cryptography`; o bootstrap
+rodou os testes em um ambiente isolado. Tampouco demonstra escopo Keycloak
+`solverit:deliver`, env de broker, serviço funcionando, permissões negativas
+reais do worker, publicação ou auditoria.
+
+Próxima etapa versionada: executar o script **somente leitura**
+`ops/verify-broker-staging.sh` para confirmar isolamento e dependências
+exatamente sob o usuário do serviço; não ativar o broker antes de resolver
+bloqueadores e verificar política de Keycloak por cliente/usuário.
