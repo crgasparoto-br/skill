@@ -153,9 +153,13 @@ The operator confirmed saving the **Audience mapper** configured on the
 `solverit-delivery-mcp-audience` with custom audience
 `https://mcp.solveritconsultoria.com.br/mcp`. This is **self-reported
 configuration**, not an independent Keycloak admin API audit. The operator subsequently confirmed **creation** of the realm role
-`solverit-delivery-operator` (2026-10-14 23:55 UTC). Its assignment to a
-specifically approved user is **not yet verified**. Also pending verification:
-role scope mapping on `solverit:deliver`, its **Optional** attachment to
-`solverit-chatgpt-mcp`, positive and negative user evaluation, and issuance
-of signed access tokens with correct scope, audience and subject. Keep the broker inactive and do not
+`solverit-delivery-operator` (2026-10-14 23:55 UTC). The operator also confirmed completing both role associations
+(2026-10-14 23:58 UTC): (1) `solverit-delivery-operator` assigned to the
+approved Keycloak user, and (2) the same role assigned under the
+`solverit:deliver` client scope's role scope mappings. These are
+**operator-reported administrative changes**, not independently validated
+through the Keycloak admin API. **Still pending:** attach the scope as
+**Optional** (not Default) to `solverit-chatgpt-mcp`; evaluate the scope for
+both a permitted and a non-permitted user; verify signed access token scope,
+audience, subject and negative authorization paths before any broker start. Keep the broker inactive and do not
 create authorization allowlists from guesses.
