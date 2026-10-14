@@ -353,3 +353,20 @@ qualquer chamada `sudo`. A linha final agora propaga falha por `test "$RC"
 de bootstrap. O próximo operador deve executar o novo HEAD exato e enviar
 resultado dos testes; nenhuma ativação/deploy deve ser inferida desta correção
 somente no GitHub.
+
+### Correção de sudo na VPS — 2026-10-14
+
+O operador comprovou `sudo -n -l` com `(ALL) NOPASSWD: ALL` e
+`sudo -n /usr/bin/id -u` retornando UID 0, embora `sudo -n -v`
+tenha retornado `a password is required`. O comando `sudo -v` no
+bootstrap anterior solicitou senha na etapa 3. Isso é falha do método
+de verificação escolhido pelo script, **não** evidência de perda de
+privilégios do usuário `ubuntu`.
+
+O script de staging passou a verificar o sudo por execução real e não
+interativa de `/usr/bin/id -u`, bloqueando se não retornar exatamente
+`0`. Todas as operações administrativas utilizam `sudo -n`,
+impedindo prompts de senha; há teste estático para exigir esse
+contrato. Os testes offline devem ser reexecutados no HEAD da PR antes
+do provisionamento e serviços continuam desligados. O script nunca
+reinicia serviços ou fecha o terminal SSH.
