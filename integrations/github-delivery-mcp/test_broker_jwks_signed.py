@@ -37,6 +37,7 @@ class RealRS256BrokerVerifierTests(unittest.TestCase):
             jwks_uri=ISSUER + "/protocol/openid-connect/certs",
             allowed_subjects=frozenset({ALLOWED_SUBJECT}),
             required_scope="solverit:deliver",
+            authorized_party="solverit-chatgpt-mcp",
         )
         self.verifier = CachedJWKSVerifier(policy, ttl_seconds=300)
         # Inject a genuine RSA public key derived from an in-memory test
@@ -48,6 +49,7 @@ class RealRS256BrokerVerifierTests(unittest.TestCase):
         now = int(time.time())
         result = {
             "iss": ISSUER, "aud": AUDIENCE, "sub": ALLOWED_SUBJECT,
+            "azp": "solverit-chatgpt-mcp",
             "scope": "openid solverit:deliver", "iat": now - 10,
             "nbf": now - 10, "exp": now + 300,
         }
@@ -68,6 +70,16 @@ class RealRS256BrokerVerifierTests(unittest.TestCase):
     def test_authorized_rs256_access_token_accepted(self):
         self.assertEqual(verified_actor(self.signed(), verifier=self.verifier),
                          ALLOWED_SUBJECT)
+
+    def test_wrong_or_missing_oauth_client_denied(self):
+        for azp in (None, "unknown-client", "solverit-github-auditor"):
+            with self.subTest(azp=azp):
+                claims = self.claims()
+                if azp is None:
+                    del claims["azp"]
+                else:
+                    claims["azp"] = azp
+                self.rejected(self.signed(claims))
 
     def test_read_only_scope_denied(self):
         self.rejected(self.signed(self.claims(scope="openid solverit:read")))
