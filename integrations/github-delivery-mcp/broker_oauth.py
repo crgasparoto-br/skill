@@ -14,6 +14,7 @@ from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
 from mcp_jwt_verifier import MCPTokenRejectedError
 
 DELIVERY_SCOPE = "solverit:deliver"
+DELIVERY_CLIENT = "solverit-chatgpt-mcp"  # Exclusive OAuth azp for delivery
 MAX_OAUTH_TOKEN_BYTES = 8192
 
 
@@ -34,6 +35,7 @@ def build_broker_verifier(env: Mapping[str, str]) -> CachedJWKSVerifier:
     policy = JWKSVerifierPolicy(
         issuer=issuer, audience=resource, jwks_uri=jwks,
         allowed_subjects=subjects, required_scope=DELIVERY_SCOPE,
+        authorized_party=DELIVERY_CLIENT,
     )
     verifier = CachedJWKSVerifier(policy)
     verifier.refresh()  # Fail closed on missing/revoked JWKS at service startup.
