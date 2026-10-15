@@ -46,6 +46,7 @@ class BrokerOAuthTests(unittest.TestCase):
         with patch.object(CachedJWKSVerifier, "refresh", return_value=None):
             verified = auth.build_broker_verifier(POLICY)
         self.assertEqual(verified.policy.required_scope, "solverit:deliver")
+        self.assertEqual(verified.policy.authorized_party, "solverit-chatgpt-mcp")
         self.assertEqual(verified.policy.allowed_subjects, frozenset({"permitted-subject"}))
         self.assertEqual(verified.policy.audience, POLICY["SOLVERIT_MCP_RESOURCE_URL"])
 
