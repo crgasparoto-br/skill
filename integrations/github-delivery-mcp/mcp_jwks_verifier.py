@@ -22,6 +22,7 @@ class JWKSVerifierPolicy:
     jwks_uri: str
     allowed_subjects: frozenset[str]
     required_scope: str = "solverit:read"
+    authorized_party: str | None = None  # Optional exact OAuth client (azp) pin
 
     def __post_init__(self):
         for url in (self.issuer, self.audience, self.jwks_uri):
@@ -30,6 +31,13 @@ class JWKSVerifierPolicy:
                 raise ValueError("trusted URLs must be HTTPS")
         if not self.allowed_subjects:
             raise ValueError("subject allowlist required")
+        if self.authorized_party is not None and (
+            not isinstance(self.authorized_party, str)
+            or not 1 <= len(self.authorized_party) <= 128
+            or not self.authorized_party.isascii()
+            or any(char.isspace() for char in self.authorized_party)
+        ):
+            raise ValueError("invalid OAuth authorized party")
         if not self.jwks_uri.startswith(self.issuer.rstrip("/") + "/"):
             raise ValueError("JWKS must be issuer-relative")
 
@@ -101,6 +109,9 @@ class CachedJWKSVerifier:
                                 issuer=self.policy.issuer, audience=self.policy.audience,
                                 options={"require": ["iss", "aud", "sub", "iat", "exp", "nbf"]},
                                 leeway=0)
+            if (self.policy.authorized_party is not None
+                    and claims.get("azp") != self.policy.authorized_party):
+                raise ValueError("untrusted OAuth client")
             subject = claims["sub"]
             if not isinstance(subject, str) or subject not in self.policy.allowed_subjects:
                 raise ValueError("unauthorized subject")
