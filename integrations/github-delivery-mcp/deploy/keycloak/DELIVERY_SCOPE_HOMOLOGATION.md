@@ -333,3 +333,45 @@ Do not share raw tokens or OIDC `sub` in issue/PR comments or chat.
 Do not run `provision-broker-env.py --apply` or start the broker until
 both cases are confirmed. Passing Evaluate is not a substitute for
 cryptographic broker token verification and negative IPC tests.
+
+
+## Keycloak Evaluate evidence accepted — operator report, 2026-10-15
+
+The operator reported three PASS results after evaluating the **optional**
+`solverit:deliver` scope under client `solverit-chatgpt-mcp`:
+
+1. Authorized `solverit-mcp` received `solverit:deliver` in its
+   simulated access-token scope (**PASS**).
+2. The simulated access token for `solverit-mcp` included exact MCP
+   audience `https://mcp.solveritconsultoria.com.br/mcp` (**PASS**).
+3. Unauthorized `solverit-mcp-test` did **not** receive
+   `solverit:deliver` (**PASS**).
+
+These are operator-affirmed results in ChatGPT, not independently fetched
+Keycloak Admin API evidence and not real signed JWT integration tests.
+The prior effective-role screenshot checks also passed. Absence of the
+optional scope when **not requested** has not been explicitly verified
+and remains a pre-activation negative-test requirement.
+
+**Decision:** allow the operator to **stage the protected policy file**
+using `ops/provision-broker-env.py --apply` ONLY after confirming they
+selected the authorized `solverit-mcp` Keycloak **User ID** (`sub`)
+from the Admin Console **Users > solverit-mcp > Details** view.
+Do **not** use the username, email, a sample UUID, an access token, or
+a guessed value. Never paste the identifier into ChatGPT or GitHub.
+
+The provisioner does not start the broker or change the realm. After a
+successful staging operation, run the independent
+`ops/verify-broker-env.py` as root. This verifies fixed authorization
+fields, owner `root:root`, mode `0600`, no symlinks or injected keys,
+and presence of one canonical nonzero UUID without showing its value.
+Both utilities are offline and require no OAuth credentials. Do NOT
+`cat` or copy the env into chat. Neither tool validates issuance or
+cryptography of a real signed Keycloak JWT.
+
+**Activation remains BLOCKED pending**:
+- real, signed access-token positive and negative validation against the
+  actual broker policy; optional scope absent when not requested;
+- controller identity/authentication and hardened Unix-socket IPC tests;
+- service unit security review, integration workflow and exact-HEAD CI;
+- independent audit. No merge and no impact to the read-only auditor.
