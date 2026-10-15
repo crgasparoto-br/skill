@@ -205,6 +205,11 @@ Testes isolados do resolvedor, executor ou adapter não comprovam a cadeia compl
 - nenhuma conclusão depende apenas de CI verde, nome de teste ou descrição da PR;
 - atividades ainda não executadas foram classificadas como pendência ou limitação;
 - o parecer somente foi definido depois da tentativa explícita de refutação.
+- a matriz de saturacao cobre os requisitos, familias e superficies materiais, inclusive caminhos fora do diff vinculados por dependencias;
+- falhas de uma mesma causa raiz foram consolidadas com variantes, sem teto artificial de quantidade de findings;
+- depois do primeiro blocker, controles baratos restantes foram classificados; provas caras puladas possuem motivo;
+- testes de detectores/gates, quando aplicaveis, variaram origem, alias, escopo, transformacao, fluxo e consumidor com controles negativos;
+- lacunas `not-executed` e `not-applicable` estao justificadas, sem apresentacao de cobertura limitada como exaustiva.
 
 ## Enforcement controller v3
 
