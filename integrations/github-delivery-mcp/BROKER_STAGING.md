@@ -1,6 +1,6 @@
 # Issue #88 — privileged local evidence broker (staging, 2026-10-13)
 
-**Not deployed. Not production ready.** PR #89 targets `develop` and stays draft.
+**Protected code and broker.env staged on VPS, service NOT started; NOT production ready.** PR #89 targets `develop` and stays draft.
 This is the **first security boundary**, not the completed `entregar-issue`
 executor or an MCP write capability.
 
@@ -202,3 +202,34 @@ a signed token, does not test access when only `solverit:read` is
 granted, and does not prove controller socket authorization. These
 and exact-HEAD CI and independent auditing remain activation gates.
 The broker service MUST remain inactive until independently reviewed.
+ 
+
+## 2026-10-15 — Real Keycloak JWKS runtime PASS, signed JWT matrix added
+
+The operator executed `test_broker_jwks_runtime.py` (**8/8 PASS**) and
+`ops/check-broker-jwks-runtime.py` on the VPS (**RC=0**). The
+root-owned broker policy was verified, the runner dropped to UID 997/GID
+986, the **real Keycloak public JWKS** was loaded under the privileged
+broker UID, and three deliberately invalid bearer strings were
+rejected. Broker remained **inactive**, and no service/configuration was
+changed.
+
+After that checkpoint, versioned source code added a **strict broker-only
+OAuth client `azp` check**. Tokens used to authorize delivery must
+originate from `solverit-chatgpt-mcp` in addition to matching the exact
+Keycloak issuer, audience, approved `sub` and `solverit:deliver` scope.
+The read-only auditor uses the verifier's unchanged default (no new
+client pin), so this restriction is **only** active for the new delivery
+broker. The new `test_broker_jwks_signed.py` signs ephemeral RSA
+test tokens in memory (no Keycloak private keys, no saved token) and
+checks allow/deny outcomes for signatures, scopes, subjects, audiences,
+issuers, expiry, missing claims, Key ID, JOSE headers and `azp`.
+
+**Important:** the code staged in `/opt/solverit/issue-delivery` remains
+at the previous approved commit until a separately reviewed deployment
+copies this new broker code. Do not start that old broker or assume the
+VPS is enforcing `azp`. The signed-token matrix is offline and
+requires a new VPS test run; **a real signed Keycloak JWT has still not
+been supplied, authenticated or tested**. Socket security, controller
+operations, CI on exact updated SHA and independent audit remain
+unapproved, and there is no automatic merge.
