@@ -194,3 +194,46 @@ whether the scope is accidentally Default, and other client mappers.
 Do not confuse the Evaluate preview with proof of real token signature
 and expiry. Real JWT issuer, audience, subject, scope, peer-UID checks
 and protected broker configuration remain activation blockers.
+
+
+## Optional scope readiness -> protected broker policy stage (2026-10-15)
+
+The operator confirmed on 2026-10-15 that `solverit:deliver` was
+attached as an **Optional** scope to `solverit-chatgpt-mcp`. This does
+**not** establish an approved `broker.env` or validate the two
+distinct users. Before using the secure environment provisioner:
+
+1. In **Clients -> solverit-chatgpt-mcp -> Client scopes -> Evaluate**,
+   explicitly select `solverit:deliver` and choose the approved user.
+   Its simulated **access token** must contain the delivery scope,
+   `aud` must contain the exact MCP audience and `sub` must be the
+   intended immutable Keycloak User ID.
+2. Repeat for a **different user without** the delivery operator role:
+   the **access token** MUST NOT include `solverit:deliver`.
+   Also test without requesting the optional scope.
+3. Record only PASS/FAIL of each case; do **not** copy any JWT or the
+   approved user's Keycloak ID into GitHub or chat. If the unauthorized
+   user is granted the scope, STOP and inspect Keycloak role scope
+   mapping and client scope defaults.
+4. From the reviewed PR HEAD, run the offline unit test
+   `test_broker_env_provision.py` and the provisioner in default
+   **readiness-only mode** on the VPS (requires root, no password prompts).
+   The default invocation changes nothing.
+5. After both evaluations PASS, execute
+   `sudo -n /usr/bin/python3 ops/provision-broker-env.py --apply`
+   **from the reviewed immutable checkout**. At the interactive prompt,
+   type `CONFIRMADO` only if the operator actually reviewed both
+   cases. Enter the approved immutable Keycloak User ID (`sub`) via
+   the hidden prompt; do not provide a username, email, JWT or password.
+   The utility rejects pre-existing env files and writes only a
+   root-owned `0600` file with fixed issuer/audience/JWKS,
+   controller UID 995, broker group GID 984 and one approved `sub`.
+   It does not start systemd, reach Keycloak or issue GitHub tokens.
+
+**Security limits:** `--apply` records operator attestation rather
+than cryptographic access-token evidence. Never interpret successful
+env creation as authorization approval. Real signed-token positive and
+negative tests, IPC credential checks, effective controller RBAC,
+integration CI and independent audit must still pass before service
+activation. Preserve the existing read-only auditor and leave
+`solverit-issue88-github-broker.service` inactive.
