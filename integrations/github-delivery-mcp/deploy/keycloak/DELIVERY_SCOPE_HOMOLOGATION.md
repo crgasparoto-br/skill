@@ -298,3 +298,38 @@ explicitly selecting `solverit:deliver` as optional:
 positive/negative access-token evaluations remain PENDING.**
 Do not run `ops/provision-broker-env.py --apply`, start broker or
 declare Issue #88 approved before both authorization checks pass.
+
+
+## Keycloak effective role segregation — 2026-10-15, follow-up screenshots
+
+The operator provided **new** Keycloak Admin Console screenshots, now with
+`Hide inherited roles` **unchecked** for both enabled users. The effective
+roles displayed are:
+
+- `solverit-mcp` (authorized control): **7 roles**, including the
+  directly assigned realm role `solverit-delivery-operator` and inherited
+  account/offline/UMA roles.
+- `solverit-mcp-test` (unauthorized control): **6 roles**, with inherited
+  account/offline/UMA roles and `default-roles-solverit-delivery`, **but
+  no `solverit-delivery-operator`** in the full displayed role list.
+
+**Verdict: PASS (visible effective role segregation).** This closes the
+previous caveat about hidden inherited roles in the screenshots. No Keycloak
+configuration mutation occurred as part of the review.
+
+**Still PENDING:** evaluate token issuance with optional
+`solverit:deliver` explicitly requested for both users under
+**Clients -> solverit-chatgpt-mcp -> Client scopes -> Evaluate**.
+
+- Approved `solverit-mcp`: simulated **access token** must have
+  `scope` including `solverit:deliver`, and `aud` including exact
+  `https://mcp.solveritconsultoria.com.br/mcp`.
+- Unauthorized `solverit-mcp-test`: simulated access token must **not**
+  contain `solverit:deliver` even when the optional scope is requested.
+- Without requesting the optional scope: delivery scope should not
+  appear in the access token.
+
+Do not share raw tokens or OIDC `sub` in issue/PR comments or chat.
+Do not run `provision-broker-env.py --apply` or start the broker until
+both cases are confirmed. Passing Evaluate is not a substitute for
+cryptographic broker token verification and negative IPC tests.
