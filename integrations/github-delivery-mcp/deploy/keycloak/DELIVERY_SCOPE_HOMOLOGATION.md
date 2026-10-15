@@ -261,3 +261,40 @@ After both Evaluate cases are confirmed, the operator may execute the
 version-pinned, audited `--apply` mode under `sudo -n` using the hidden
 OIDC `sub` input, and must validate file ownership/mode without printing
 its contents. Actual broker startup and CI/audit E2E remain blocked.
+
+
+## Keycloak two-user screenshots — 2026-10-15 (operator evidence)
+
+The operator provided Keycloak Admin Console screenshots of two **enabled**
+users in realm `solverit-delivery`:
+
+- `solverit-mcp` (intended positive case): `Role mapping` visibly
+  includes `solverit-delivery-operator` and
+  `default-roles-solverit-delivery`.
+- `solverit-mcp-test` (intended negative case): `Role mapping` visibly
+  lists `default-roles-solverit-delivery` only; there is **no direct
+  delivery role visible**.
+
+**Important caveat:** `Hide inherited roles` was **checked** in both
+screenshots. They do NOT establish that the negative test user lacks the
+role by inheritance from a composite role or group. Before claiming
+authorization failure works, uncheck `Hide inherited roles` on the
+negative user, inspect the `Groups` tab and the full effective role
+mapping, and ensure `solverit-delivery-operator` is absent.
+
+Perform **Clients -> solverit-chatgpt-mcp -> Client scopes -> Evaluate**,
+explicitly selecting `solverit:deliver` as optional:
+
+1. `solverit-mcp`: `scope` must include `solverit:deliver`; `aud`
+   must contain exact `https://mcp.solveritconsultoria.com.br/mcp`.
+2. `solverit-mcp-test`: `scope` **must not** include `solverit:deliver`
+   (no delivery role, including inherited); the additional audience
+   mapping must not be granted through the delivery scope.
+3. Repeat without requesting the optional scope; the delivery scope must
+   be absent. Record each result as PASS/FAIL without copying any token,
+   user-ID, account secret or token claim payload into GitHub.
+
+**Status: screenshots verify visible direct role mapping only. The
+positive/negative access-token evaluations remain PENDING.**
+Do not run `ops/provision-broker-env.py --apply`, start broker or
+declare Issue #88 approved before both authorization checks pass.
