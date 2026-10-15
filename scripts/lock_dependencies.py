@@ -238,8 +238,27 @@ def main(argv: list[str] | None = None) -> int:
         current = target.read_text(encoding="utf-8") if target.is_file() else ""
         if args.check:
             where = target.relative_to(root).as_posix()
-            if closure_of(current) != closure_of(content):
+            recorded_versions, recorded_parents = closure_of(current)
+            resolved_versions, resolved_parents = closure_of(content)
+            if (recorded_versions, recorded_parents) != (resolved_versions, resolved_parents):
                 drifted.append(where)
+                # Mostrar a causa material da divergencia, sem ocultar o erro nem a falha
+                # da CI. Isso permite corrigir o lock no fluxo canonico, sem adivinhar.
+                for name in sorted(recorded_versions.keys() | resolved_versions.keys()):
+                    old_version, new_version = recorded_versions.get(name), resolved_versions.get(name)
+                    if old_version != new_version:
+                        print(
+                            f"DRIFT {where}: {name}: "
+                            f"{old_version or '(ausente)'} -> {new_version or '(ausente)'}",
+                            file=sys.stderr,
+                        )
+                    elif recorded_parents.get(name) != resolved_parents.get(name):
+                        print(
+                            f"DRIFT {where}: {name}: via "
+                            f"{sorted(recorded_parents.get(name, frozenset()))} -> "
+                            f"{sorted(resolved_parents.get(name, frozenset()))}",
+                            file=sys.stderr,
+                        )
             elif current != content:
                 # O fechamento coincide e o restante difere: ou o contexto do lockfile é de outro
                 # ambiente, e então o artefato e o digest são verificados por
