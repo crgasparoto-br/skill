@@ -266,3 +266,34 @@ code if tests pass. This script must not touch the protected
 Confirm preserved SQLite ownership and live broker inactive afterward.
 Then plan an independent real signed-token validation procedure and
 separate Unix-socket denial tests before any service startup.
+
+
+## Protected staging refresh after crypto tests — operator procedure (2026-10-15)
+
+The operator ran the pinned `test_broker_jwks_signed.py` (**16/16 PASS**)
+and `test_broker_oauth.py` (**8/8 PASS**) at SHA
+`8e2f2cce61f2f591f7854aab51bd985d1d17406d`, with final `RC=0`.
+Broker remained **inactive**. This certifies offline RS256 policy and
+auditor-regression behavior on that SHA, not CI on subsequent commits.
+
+A reviewed update to `ops/prepare-broker-staging.sh` now **refuses to
+update staging if the broker service is active or the socket exists**;
+rejects a symlink or non-root-owned staging directory; requires the
+full offline test suite; installs only allowlisted inert code as root;
+and writes the `STAGED_COMMIT` marker **last** after SQLite security
+checks and an import test under UID 997 verifying the pinned OAuth
+client `solverit-chatgpt-mcp`.
+
+To refresh the old staging code under `/opt/solverit/issue-delivery`
+the operator must run this revised script from the **exact PR HEAD**.
+It does not edit or reveal the already provisioned root-owned
+`broker.env`, and does not start systemd services, publish to GitHub,
+modify Keycloak or touch the live auditor.
+
+**Caution:** this script provisions/copies code, so it is not a
+read-only diagnostic. Run only once the pinned commit, full suite,
+service inactivity and target ownership have been verified. Successful
+staging is still **not a valid activation approval**; Keycloak
+authorization-code/PKCE *real signed token* acceptance, negative scope
+and subject tests, socket identity, controller MCP and independent
+audit are outstanding. No merge.
