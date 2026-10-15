@@ -163,3 +163,34 @@ through the Keycloak admin API. **Still pending:** attach the scope as
 both a permitted and a non-permitted user; verify signed access token scope,
 audience, subject and negative authorization paths before any broker start. Keep the broker inactive and do not
 create authorization allowlists from guesses.
+
+
+## Operator checkpoint — 2026-10-15 00:01 UTC
+
+The operator reported that the optional client scope `solverit:deliver` was
+successfully attached to OAuth client `solverit-chatgpt-mcp` as
+**Optional**, NOT Default. This is an operator confirmation, **not**
+independent admin-API verification. The previous operator confirmations
+also cover creation of the `solverit-delivery-operator` role, role
+assignment to an approved user, role-scope mapping in `solverit:deliver`,
+and the resource audience mapper.
+
+### Next mandatory security acceptance: evaluate two distinct users
+
+In Keycloak Admin Console: **Clients** -> `solverit-chatgpt-mcp` ->
+**Client scopes** -> **Evaluate**. Explicitly select optional
+`solverit:deliver`. Use the **User** selector for each test and inspect
+the *simulated access token*, **without copying or sharing the raw token**.
+
+| Test case | Required result |
+| --- | --- |
+| Approved user with `solverit-delivery-operator` | `scope` contains `solverit:deliver`, `aud` contains the exact MCP resource `https://mcp.solveritconsultoria.com.br/mcp` |
+| Separate user without `solverit-delivery-operator` (including composite roles) | `scope` **does not** contain `solverit:deliver`; delivery-scope mapper must not grant the MCP audience through this scope |
+| No optional `solverit:deliver` requested | Delivery scope must be absent from the resulting access token |
+
+If the scope is granted to an unauthorized user, **STOP**: inspect the
+role scope mappings, whether the role is assigned through a composite,
+whether the scope is accidentally Default, and other client mappers.
+Do not confuse the Evaluate preview with proof of real token signature
+and expiry. Real JWT issuer, audience, subject, scope, peer-UID checks
+and protected broker configuration remain activation blockers.
