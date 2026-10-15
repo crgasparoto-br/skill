@@ -50,6 +50,16 @@ class BrokerOAuthTests(unittest.TestCase):
         self.assertEqual(verified.policy.allowed_subjects, frozenset({"permitted-subject"}))
         self.assertEqual(verified.policy.audience, POLICY["SOLVERIT_MCP_RESOURCE_URL"])
 
+    def test_read_only_auditor_policy_remains_unpinned_by_default(self):
+        read_policy = JWKSVerifierPolicy(
+            issuer=POLICY["SOLVERIT_OAUTH_ISSUER_URL"],
+            audience=POLICY["SOLVERIT_MCP_RESOURCE_URL"],
+            jwks_uri=POLICY["SOLVERIT_OAUTH_JWKS_URI"],
+            allowed_subjects=frozenset({"permitted-subject"}),
+            required_scope="solverit:read",
+        )
+        self.assertIsNone(read_policy.authorized_party)
+
     def test_invalid_or_absent_access_tokens_fail_before_verify(self):
         verifier = self.verifier()
         with patch.object(verifier, "verify") as check:
