@@ -233,3 +233,36 @@ requires a new VPS test run; **a real signed Keycloak JWT has still not
 been supplied, authenticated or tested**. Socket security, controller
 operations, CI on exact updated SHA and independent audit remain
 unapproved, and there is no automatic merge.
+
+
+## VPS signed RS256 policy suite — 2026-10-15, operator evidence
+
+The operator executed two isolated test suites from the pinned commit
+`8e2f2cce61f2f591f7854aab51bd985d1d17406d` in a temporary VPS
+directory. Reported evidence:
+
+- `test_broker_jwks_signed.py`: **16 tests, all PASS** (0.409 s);
+  authentic RS256 signing with an ephemeral in-memory RSA key, exact
+  issuer/audience/subject/scope/`azp`, rejection of altered signature,
+  alternative algorithms/keys/`kid`, JOSE header injection, missing
+  claims, expiry/nbf/iat, unknown audience and stale JWKS.
+- `test_broker_oauth.py`: **8 tests, all PASS** (0.002 s);
+  mandatory delivery scope, broker client pin, invalid JWT/subject,
+  malformed configuration, and unchanged default verifier behavior
+  for the separate read-only auditor.
+- `systemctl` verification: broker still **inactive**.
+- Overall wrapper `RC=0`; SSH terminal preserved.
+
+**Verdict:** cryptographic offline policy regression PASS (24/24).
+This is operator-supplied VPS evidence, NOT complete CI on the PR HEAD
+and NOT a live Keycloak access token acceptance test.
+
+**Next controlled stage:** the root-owned code on the VPS still points
+at a prior `STAGED_COMMIT`. Re-run the guarded, version-pinned
+`ops/prepare-broker-staging.sh` from an immutable HEAD to execute the
+**complete** offline suite and update only the inoperative staging
+code if tests pass. This script must not touch the protected
+`broker.env`, start services, create fake jobs or merge PRs.
+Confirm preserved SQLite ownership and live broker inactive afterward.
+Then plan an independent real signed-token validation procedure and
+separate Unix-socket denial tests before any service startup.
