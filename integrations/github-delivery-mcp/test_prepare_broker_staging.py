@@ -65,6 +65,23 @@ class BrokerBootstrapContractTests(unittest.TestCase):
             if command.startswith("sudo "):
                 self.assertTrue(command.startswith("sudo -n "), command)
 
+    def test_staging_refuses_active_broker_and_existing_ipc_socket(self):
+        self.assertIn("systemctl is-active --quiet solverit-issue88-github-broker.service",
+                      self.contents)
+        self.assertIn("BLOQUEADO: broker ativo", self.contents)
+        self.assertIn("BLOQUEADO: socket preexistente", self.contents)
+        self.assertIn('sudo -n /usr/bin/test -L "$TARGET"', self.contents)
+        self.assertLess(self.contents.index("BLOQUEADO: broker ativo"),
+                        self.contents.index('sudo -n install -d -o root -g root'))
+
+    def test_staged_commit_marker_written_after_postcopy_checks(self):
+        self.assertIn('broker_oauth.DELIVERY_CLIENT == "solverit-chatgpt-mcp"',
+                      self.contents)
+        self.assertLess(self.contents.index("=== 6. ATTESTANDO"),
+                        self.contents.index('sudo -n tee "$TARGET/STAGED_COMMIT"'))
+        self.assertIn('sudo -n -u solverit-github-auth env PYTHONDONTWRITEBYTECODE=1',
+                      self.contents)
+
     def test_source_commit_is_verified_before_extracting_and_provisioning(self):
         self.assertIn('ACTUAL="$(git -C "$WORK" rev-parse FETCH_HEAD)"', self.contents)
         self.assertIn('if [ "$ACTUAL" != "$EXPECTED" ]; then', self.contents)
