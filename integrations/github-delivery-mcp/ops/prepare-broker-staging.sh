@@ -94,6 +94,26 @@
   fi
 
   echo "=== 4. COPIANDO APENAS CODIGO INERTE, SEM INICIAR SERVICOS ==="
+  # No code replacement is allowed while any broker process is active.
+  if systemctl is-active --quiet solverit-issue88-github-broker.service; then
+    echo "BLOQUEADO: broker ativo; staging nao pode modificar codigo em uso."
+    false
+  fi
+  if sudo -n /usr/bin/test -e /run/solverit-issue88-broker/broker.sock; then
+    echo "BLOQUEADO: socket preexistente; inspecionar antes de atualizar staging."
+    false
+  fi
+  if sudo -n /usr/bin/test -L "$TARGET"; then
+    echo "BLOQUEADO: caminho de staging nao pode ser symlink."
+    false
+  fi
+  if sudo -n /usr/bin/test -e "$TARGET"; then
+    META="$(sudo -n stat -c '%u:%g:%a:%F' "$TARGET")"
+    if [ "$META" != "0:0:755:directory" ]; then
+      echo "BLOQUEADO: staging preexistente nao e root-owned 0755."
+      false
+    fi
+  fi
   sudo -n install -d -o root -g root -m 0755 "$TARGET"
   for FILE in \
     app_token_broker.py broker_oauth.py controller_broker_client.py \
@@ -102,11 +122,7 @@
     protected_broker_server.py; do
     sudo -n install -o root -g root -m 0644 "$CODE/$FILE" "$TARGET/$FILE"
   done
-  printf '%s\n' "$EXPECTED" | sudo -n tee "$TARGET/STAGED_COMMIT" >/dev/null
-  sudo -n chmod 0644 "$TARGET/STAGED_COMMIT"
-  sudo -n chown root:root "$TARGET/STAGED_COMMIT"
-
-  echo "=== 5. CRIANDO SQLITE PRIVADO SEM JOBS FICTICIOS ==="
+  echo "=== 5. VALIDANDO SQLITE PRIVADO SEM JOBS FICTICIOS ==="
   sudo -n install -d -o root -g solverit-github-auth -m 0750 \
     /var/lib/solverit/issue-delivery
   sudo -n install -d -o solverit-github-auth -g solverit-github-auth -m 0700 \
@@ -123,6 +139,24 @@
   test "$(sudo -n stat -c %u "$DB")" = 997
   test "$(sudo -n stat -c %a "$DB")" = 600
   sudo -n stat -c 'Banco: %U:%G modo=%a %n' "$DB"
+  echo "=== 6. ATTESTANDO CODIGO E HEAD DE STAGING ==="
+  if systemctl is-active --quiet solverit-issue88-github-broker.service; then
+    echo "BLOQUEADO: broker inesperadamente ativo apos copia."
+    false
+  fi
+  if sudo -n /usr/bin/test -e /run/solverit-issue88-broker/broker.sock; then
+    echo "BLOQUEADO: socket inesperado; nao publicar marker de commit."
+    false
+  fi
+  sudo -n -u solverit-github-auth env PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH="$TARGET" /usr/bin/python3 -B -c \
+    'import broker_oauth, protected_broker_server; assert broker_oauth.DELIVERY_CLIENT == "solverit-chatgpt-mcp"'
+  # Publish STAGED_COMMIT only after all code imports, DB checks and
+  # inactive service verification pass.
+  printf '%s\n' "$EXPECTED" | sudo -n tee "$TARGET/STAGED_COMMIT" >/dev/null
+  sudo -n chmod 0644 "$TARGET/STAGED_COMMIT"
+  sudo -n chown root:root "$TARGET/STAGED_COMMIT"
+  echo "PASS: staged code imports with pinned delivery client, broker inactive."
   echo "Controller UID: $CONTROLLER_UID"
   getent group solverit-delivery-control
   echo "Codigo staging em: $TARGET"
