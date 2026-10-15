@@ -237,3 +237,27 @@ negative tests, IPC credential checks, effective controller RBAC,
 integration CI and independent audit must still pass before service
 activation. Preserve the existing read-only auditor and leave
 `solverit-issue88-github-broker.service` inactive.
+
+
+## VPS broker.env preflight — 2026-10-15, operator evidence
+
+The operator ran the pinned `ops/provision-broker-env.py` in its
+**non-mutating default mode**, after the isolated unit test command, and
+reported `OK` plus these exact conditions:
+
+- `PASS: root-owned directory, separate identities, env absent`.
+- `PENDING: positive and negative Keycloak Evaluate evidence`.
+- `PENDING: --apply with the approved Keycloak immutable user ID`.
+- `Broker remains stopped; no files modified`.
+- Shell outcome: `RC=0`; terminal preserved.
+
+**Decision: staging preflight PASSED; privileged environment NOT provisioned.**
+This evidence is not a green light to run `--apply`: first inspect two
+distinct Keycloak users in Client scopes > Evaluate and establish the
+positive and negative outcomes documented above. No user identity,
+token, credential or environment value was disclosed.
+
+After both Evaluate cases are confirmed, the operator may execute the
+version-pinned, audited `--apply` mode under `sudo -n` using the hidden
+OIDC `sub` input, and must validate file ownership/mode without printing
+its contents. Actual broker startup and CI/audit E2E remain blocked.
