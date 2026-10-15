@@ -1,6 +1,6 @@
 # Issue #88 — Keycloak delivery scope verification (do not activate writes)
 
-**State: pending operator validation.** The existing `solverit:read` scope
+**State (2026-10-15): Keycloak role segregation and 3/3 Evaluate results operator-confirmed; private broker.env staged; real JWT acceptance, socket security and independent audit PENDING.** The existing `solverit:read` scope
 and the read-only GitHub auditor MUST remain unchanged. This procedure is
 for the new isolated Issue #88 delivery broker, not a declaration of
 production readiness.
@@ -400,3 +400,26 @@ not prove that the configured `sub` equals the live user in a real JWT
 authorization and independent audit remain untested. Do not start
 `solverit-issue88-github-broker.service` or change the existing
 read-only auditor. No merge.
+
+
+## Keycloak identity validation hardening — 2026-10-15
+
+Broker token validation now pins the **`azp` claim** to the exact OAuth
+client `solverit-chatgpt-mcp` in addition to issuer, audience, allowed
+user `sub`, required `solverit:deliver` scope, signature and expiry.
+This rule is broker-specific: existing read-only auditor behavior remains
+unchanged. The updated verifier code has **not yet been deployed** to
+the root-owned staging directory on the VPS.
+
+The operator completed the initial live JWKS runtime check under UID
+997, with **8 offline tests PASS and real public JWKS PASS, RC=0**.
+The subsequently added in-memory RS256 signed-token regression suite
+tests claims cryptographically against an ephemeral test public key;
+it does **not** prove acceptance of a real Keycloak-signed access token
+or validate client-scope restrictions in a live token.
+
+Next: run the signed-token suite on the exact updated PR HEAD, then
+review how to obtain a genuine short-lived authorization-code/PKCE
+OAuth access token for the approved user **without** sharing passwords,
+JWTs or private keys in ChatGPT/GitHub. Only locally and confidentially
+exercise the broker verifier. Keep both broker and auditor unchanged.
