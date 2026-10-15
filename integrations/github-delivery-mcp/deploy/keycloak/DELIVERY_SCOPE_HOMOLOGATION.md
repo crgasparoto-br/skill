@@ -375,3 +375,28 @@ cryptography of a real signed Keycloak JWT.
 - controller identity/authentication and hardened Unix-socket IPC tests;
 - service unit security review, integration workflow and exact-HEAD CI;
 - independent audit. No merge and no impact to the read-only auditor.
+
+
+## VPS broker.env staging completed — 2026-10-15
+
+**Operator evidence: PASS for protected staging only.** The operator ran
+the pinned `ops/provision-broker-env.py --apply` interactively and typed
+`CONFIRMADO`, then entered the immutable Keycloak User ID for
+`solverit-mcp` via hidden input. The provisioner reported successful,
+write-once creation of `/etc/solverit/issue-delivery/broker.env`. The
+independent `ops/verify-broker-env.py` reported:
+
+- `PASS` owner `root:root`, mode `0600`, exact policy keys;
+- `PASS` the configured OIDC subject is a canonical UUID, **value not
+  revealed or included in this record**;
+- `PASS` broker service remains inactive; no services changed;
+- process and wrapper both returned `RC=0`, terminal preserved.
+
+**This is NOT an operational authorization verdict.** The evidence does
+not demonstrate a real signed Keycloak access token with the expected
+`iss`, `aud`, `sub`, `scope`, expiry and signing key. It also does
+not prove that the configured `sub` equals the live user in a real JWT
+(the operator entered it from the Keycloak UI). The broker's Unix-socket
+authorization and independent audit remain untested. Do not start
+`solverit-issue88-github-broker.service` or change the existing
+read-only auditor. No merge.
