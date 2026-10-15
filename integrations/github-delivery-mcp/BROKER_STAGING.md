@@ -168,3 +168,37 @@ issued installation tokens if necessary, and preserve the protected
 SQLite for diagnostics. Do **not** touch auditor MCP, Keycloak,
 Supabase, PostgreSQL, or the rootless worker. No merge/force-push/delete
 is permitted or executed by this component.
+
+
+## VPS staging checkpoint — broker.env verified, prestart JWKS runtime gate (2026-10-15)
+
+Operator executed `ops/provision-broker-env.py --apply`, confirmed the
+two-user Keycloak Evaluate evidence and entered the actual authorized
+`solverit-mcp` Keycloak `sub` via the hidden prompt. The independent
+`ops/verify-broker-env.py` verified that
+`/etc/solverit/issue-delivery/broker.env` is owned by
+`root:root`, mode `0600`, contains only the expected policy keys and
+a canonical nonzero UUID. Overall `RC=0`; broker not started.
+
+**New offline prestart verifier:**
+`ops/check-broker-jwks-runtime.py` first imports the separate protected
+env validator as root and reads the protected env without printing
+its contents. It then **drops all supplemental groups and permanently
+switches to UID 997/GID 986**, imports the actual staged
+`broker_oauth` code from `/opt/solverit/issue-delivery`, fetches the
+**real public Keycloak JWKS** over HTTPS and checks that deliberately
+invalid unsigned bearer strings fail closed. It does not bind sockets,
+write privileged files, create GitHub tokens, change OAuth settings,
+start any service or invoke the protected job/PR store.
+
+Run `test_broker_jwks_runtime.py` offline from the exact PR HEAD and
+then run `check-broker-jwks-runtime.py` as root using `sudo -n`, with
+`python3 -B` to avoid bytecode cache writes. No OAuth token is needed;
+do not paste or log the approved `sub`.
+
+A successful JWKS prestart check is **not** a real signed access-token
+acceptance test, does **not** prove that the configured subject matches
+a signed token, does not test access when only `solverit:read` is
+granted, and does not prove controller socket authorization. These
+and exact-HEAD CI and independent auditing remain activation gates.
+The broker service MUST remain inactive until independently reviewed.
