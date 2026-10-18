@@ -8,6 +8,7 @@ import itertools
 import json
 import os
 import re
+import stat
 import resource
 import shutil
 import subprocess
@@ -71,7 +72,7 @@ sandbox=$(mktemp -d)
 trap 'umount -l "$sandbox" 2>/dev/null || :; rmdir "$sandbox" 2>/dev/null || :' EXIT
 mount -t tmpfs -o size=128m tmpfs "$sandbox"
 mkdir -p "$sandbox/workspace" "$sandbox/dev" "$sandbox/tmp"
-for dirname in usr opt; do
+for dirname in usr; do
     if [ -d "/$dirname" ]; then
         mkdir -p "$sandbox/$dirname"
         mount --rbind "/$dirname" "$sandbox/$dirname"
@@ -87,14 +88,52 @@ for dirname in bin lib lib64; do
         mount -o remount,bind,ro "$sandbox/$dirname"
     fi
 done
+runtime_prefix="$2"
+if [ "$runtime_prefix" != "-" ]; then
+    mkdir -p "$sandbox$runtime_prefix"
+    mount --rbind "$runtime_prefix" "$sandbox$runtime_prefix"
+    mount -o remount,bind,ro "$sandbox$runtime_prefix"
+fi
 touch "$sandbox/dev/null" "$sandbox/dev/urandom"
 mount --bind "$1" "$sandbox/workspace"
 mount -o remount,bind,ro "$sandbox/workspace"
 mount --bind /dev/null "$sandbox/dev/null"
 mount --bind /dev/urandom "$sandbox/dev/urandom"
-shift
+shift 2
 chroot "$sandbox" "$@"
 """
+
+def trusted_host_tool(name: str) -> str | None:
+    """Select only root-controlled host launchers, ignoring caller PATH."""
+    if name not in {"docker", "unshare", "sh"}:
+        return None
+    for directory in ("/usr/bin", "/bin", "/usr/local/bin"):
+        path = Path(directory) / name
+        if not path.is_file():
+            continue
+        resolved = path.resolve()
+        if not any(resolved.is_relative_to(Path(p))
+                   for p in ("/usr/bin", "/bin", "/usr/local/bin")):
+            continue
+        if all(part.stat().st_uid == 0
+               and not part.stat().st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+               for part in (resolved, *resolved.parents)):
+            return str(resolved)
+    return None
+
+
+def runtime_mount_prefix(interpreter: str | None) -> Path | None:
+    """Permit only the interpreter's own installation under /opt."""
+    if not interpreter:
+        return None
+    runtime = Path(interpreter).resolve()
+    if runtime.is_relative_to(Path("/opt")):
+        prefix = runtime.parent.parent
+        if prefix == Path("/opt") or not prefix.is_relative_to(Path("/opt")):
+            return None
+        return prefix
+    return None
+
 
 def trusted_script_interpreter(command: str) -> str | None:
     """Only known language runtimes may execute a hashed script as argv[1].
@@ -121,7 +160,7 @@ def docker_isolated(expanded: list[str], interpreter: str | None,
                     root: Path, clean_env: dict[str, str],
                     limits, label: str, errors: list[str]) -> subprocess.CompletedProcess | None:
     """Use a scratch container with no network, secrets or host-home mounts."""
-    docker = shutil.which("docker")
+    docker = trusted_host_tool("docker")
     if not docker:
         errors.append(f"{label}: isolated replay unavailable (Docker daemon missing)")
         return None
@@ -138,6 +177,9 @@ def docker_isolated(expanded: list[str], interpreter: str | None,
         if imported.returncode:
             errors.append(f"{label}: scratch image preparation failed")
             return None
+    if interpreter and Path(interpreter).is_relative_to(Path("/opt")) and not runtime_mount_prefix(interpreter):
+        errors.append(f"{label}: interpreter installation cannot be isolated")
+        return None
     executable = str(Path(expanded[0]).resolve()) if interpreter else expanded[0]
     command = [
         docker, "run", "--rm", "--pull=never", "--network=none",
@@ -149,7 +191,11 @@ def docker_isolated(expanded: list[str], interpreter: str | None,
         "--env", "PYTHONNOUSERSITE=1", "--env", "PYTHONDONTWRITEBYTECODE=1",
         "--env", "HOME=/workspace", "--env", "LANG=C",
     ]
-    for path in ("/usr", "/opt", "/bin", "/lib", "/lib64"):
+    mounts = ["/usr", "/bin", "/lib", "/lib64"]
+    prefix = runtime_mount_prefix(interpreter)
+    if prefix:
+        mounts.append(str(prefix))
+    for path in mounts:
         if Path(path).exists():
             command.extend(["--volume", f"{path}:{path}:ro"])
     command.extend(["--volume", f"{root}:/workspace:ro",
@@ -174,8 +220,9 @@ def execute_isolated(expanded: list[str], interpreter: str | None,
     # Use a fresh user/mount/network/PID namespace and a read-only
     # chroot that exposes only runtime directories and the probe workspace.
     # Never silently fall back to a privileged or networked subprocess.
-    unshare = shutil.which("unshare")
-    if not unshare:
+    unshare = trusted_host_tool("unshare")
+    shell = trusted_host_tool("sh")
+    if not unshare or not shell:
         return docker_isolated(expanded, interpreter, root, clean_env,
                                limits, label, errors)
     runtime = Path(expanded[0]).resolve() if interpreter else None
@@ -184,10 +231,15 @@ def execute_isolated(expanded: list[str], interpreter: str | None,
         errors.append(f"{label}: interpreter outside isolated runtime mounts")
         return None
     executable = str(runtime) if interpreter else expanded[0]
+    prefix = runtime_mount_prefix(interpreter)
+    if interpreter and runtime.is_relative_to(Path("/opt")) and prefix is None:
+        errors.append(f"{label}: interpreter installation cannot be isolated")
+        return None
     isolated = [
         unshare, "--user", "--map-root-user", "--mount", "--net",
-        "--pid", "--fork", "sh", "-eu", "-c", SANDBOX_SHELL,
-        "audit-replay", str(root), executable, *expanded[1:],
+        "--pid", "--fork", shell, "-eu", "-c", SANDBOX_SHELL,
+        "audit-replay", str(root), str(prefix) if prefix else "-",
+        executable, *expanded[1:],
     ]
     executed = subprocess.run(
         isolated, cwd=root, capture_output=True, timeout=25, check=False,
@@ -398,6 +450,9 @@ def validate_metamorphic_pair(pair: object, tag: str, by_id: dict,
             or source == target):
         errors.append(f"{tag}: invalid metamorphic source and target")
         return
+    if source.read_bytes() == target.read_bytes():
+        errors.append(f"{tag}: metamorphic siblings must have distinct source bytes")
+        return
     outcome = replay(transform.get("argv"), transform.get("entrypoint"),
                      transform.get("entrypoint_sha256"), root, source,
                      tag + " metamorphic", errors)
@@ -542,11 +597,17 @@ def validate_canonical_closure(closure: dict, snapshot_path: Path,
             continue
         source_path = Path(str(source.get("resolved_path") or ""))
         try:
-            has_locator = locator in source_path.read_text(encoding="utf-8")
+            lines = source_path.read_text(encoding="utf-8").splitlines()
         except (OSError, UnicodeError):
-            has_locator = False
-        if not has_locator:
-            errors.append("semantic not-applicable scope locator missing from canonical source")
+            lines = []
+        key = str(obligation.get("candidate_key") or "")
+        pattern = re.compile(
+            r"^SCOPE_DECISION\s+not-applicable\s+" + re.escape(key) +
+            r"\s*:\s*(\S.{19,})$", re.IGNORECASE,
+        )
+        if not any(line.strip() == locator and pattern.fullmatch(line.strip())
+                   for line in lines):
+            errors.append("semantic not-applicable requires explicit candidate-bound canonical decision")
 
 
 def validate_checker_bindings(snapshot_path: Path, manifest: dict,
