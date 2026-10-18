@@ -63,7 +63,8 @@ disposicoes historicas, trabalhos baratos pendentes e consistencia do veredito.
 python <AUDIT_SKILL_ROOT>/scripts/validate_audit_completeness.py \
   --inventory <ephemeral>/inventory.json \
   --report-json <ephemeral>/report.json \
-  --root <ephemeral> --head-sha "$MATERIAL_HEAD_SHA"
+  --root <ephemeral> --git-repo <trusted-git-checkout> \
+  --head-sha "$MATERIAL_HEAD_SHA"
 \`\`\`
 
 Executar **antes** de validar e publicar o parecer com
@@ -82,3 +83,5 @@ rederivar inventario por fontes oficiais, reproduzir provas e fiscalizar
 inaplicabilidades permanece do auditor em contexto separado. Em reauditoria,
 revalidar as familias afetadas, findings anteriores e qualquer novo risco;
 reutilizar apenas provas que continuam validas no HEAD congelado.
+
+O `--git-repo` deve apontar a um checkout obtido de fonte Git confiavel, contendo os commits reais de base e HEAD. A ferramenta calcula independentemente os arquivos de `git diff --name-only --no-renames -z base...head` e reconcilia esses paths com o snapshot JSON, impedindo a omissao simultanea no snapshot e no inventario. Um JSON com hash correto nao substitui a prova Git. Se o runtime nao puder acessar o checkout confiavel, classificar como limitacao do auditor, nao como falha do candidato.
