@@ -378,7 +378,10 @@ def derive_families_from_obligation(obligation: dict) -> set[str]:
 SEMANTIC_MUTATION_RE = re.compile(
     r"\b(parsers?|lexers?|tokenizers?|decoders?|deserialize|"
     r"static\s+(?:verifier|analy[sz]er|checker|gate|detector)|"
-    r"verificador(?:es)?\s+est[aá]tic\w*|detectores?\s+AST|"
+    r"(?:verificador(?:es)?|detectores?|analisador(?:es)?|analy[sz]ers?|checkers?|gates?)\s+"
+    r"(?:(?:est[aá]tic\w*|static)\s+)?(?:de\s+)?AST|"
+    r"AST\s+(?:verifiers?|checkers?|detectors?|analy[sz]ers?|gates?)|"
+    r"gate(?:s)?\s+est[aá]tic\w*|"
     r"semantic\s+mutation|semantic\s+saturation|metamorphic\s+gate|"
     r"rastreador(?:es)?\s+de\s+proveni[eê]ncia)\b", re.IGNORECASE,
 )
