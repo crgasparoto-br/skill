@@ -1,7 +1,7 @@
 """Regressao: exemplos de incidentes nao se tornam politica universal."""
-from pathlib import Path
 import re
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GENERIC_PATHS = (
