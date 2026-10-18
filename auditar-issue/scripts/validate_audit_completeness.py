@@ -112,15 +112,22 @@ def verified_git_paths(git_repo: Path, base_sha: str, head_sha: str) -> set[str]
     return set(paths)
 
 
+def validate_remote_git_anchor(identity: dict, head: str,
+                               trusted_base: str, trusted_head: str,
+                               errors: list[str]) -> None:
+    """Require immutable GitHub PR metadata separately from the candidate ledger."""
+    if (not SHA.fullmatch(trusted_base) or not SHA.fullmatch(trusted_head)
+            or identity.get("base_sha") != trusted_base
+            or identity.get("head_sha") != trusted_head
+            or head != trusted_head):
+        errors.append("inventory Git identity diverges from independent GitHub anchor")
+
+
 def validate_sources(inventory: dict, root: Path, git_repo: Path,
                      trusted_base: str, trusted_head: str,
                      errors: list[str]) -> set[str]:
     sources = indexed(inventory.get("sources"), "sources", errors)
     identity = inventory.get("identity", {})
-    if (not SHA.fullmatch(trusted_base) or not SHA.fullmatch(trusted_head)
-            or identity.get("base_sha") != trusted_base
-            or identity.get("head_sha") != trusted_head):
-        errors.append("inventory Git identity diverges from independent GitHub anchor")
     try:
         authoritative_paths = verified_git_paths(git_repo, identity.get("base_sha"), identity.get("head_sha"))
     except (OSError, ValueError, subprocess.TimeoutExpired, UnicodeError) as exc:
@@ -289,8 +296,8 @@ def validate(inventory: dict, report: dict, root: Path, head: str, git_repo: Pat
     if inventory.get("schema_version") != 1 or report.get("schema_version") != 1:
         errors.append("unsupported schema_version")
     validate_identity(inventory, report, head, errors)
-    if head != trusted_head:
-        errors.append("requested audit HEAD differs from independent GitHub anchor")
+    validate_remote_git_anchor(inventory.get("identity", {}), head,
+                               trusted_base, trusted_head, errors)
     source_ids = validate_sources(inventory, root, git_repo,
                                   trusted_base, trusted_head, errors)
     requirements, surfaces, historical = validate_inventory(inventory, source_ids, errors)
