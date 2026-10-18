@@ -64,6 +64,8 @@ python <AUDIT_SKILL_ROOT>/scripts/validate_audit_completeness.py \
   --inventory <ephemeral>/inventory.json \
   --report-json <ephemeral>/report.json \
   --root <ephemeral> --git-repo <trusted-git-checkout> \
+  --trusted-base-sha "$GITHUB_PR_BASE_SHA" \
+  --trusted-head-sha "$GITHUB_PR_HEAD_SHA" \
   --head-sha "$MATERIAL_HEAD_SHA"
 \`\`\`
 
@@ -85,3 +87,6 @@ revalidar as familias afetadas, findings anteriores e qualquer novo risco;
 reutilizar apenas provas que continuam validas no HEAD congelado.
 
 O `--git-repo` deve apontar a um checkout obtido de fonte Git confiavel, contendo os commits reais de base e HEAD. A ferramenta calcula independentemente os arquivos de `git diff --name-only --no-renames -z base...head` e reconcilia esses paths com o snapshot JSON, impedindo a omissao simultanea no snapshot e no inventario. Um JSON com hash correto nao substitui a prova Git. Se o runtime nao puder acessar o checkout confiavel, classificar como limitacao do auditor, nao como falha do candidato.
+
+
+Os dois SHAs de confianca devem ser obtidos de leitura GitHub independente do inventory.json; o gate rejeita bases alternativas que existam no checkout mas nao correspondam a PR.
