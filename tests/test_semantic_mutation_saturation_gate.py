@@ -483,3 +483,59 @@ def test_replay_isolation_restricts_host_paths(tmp_path):
     assert not errors
     assert result is not None and result.returncode == 2
 
+
+
+def test_identical_metamorphic_siblings_are_rejected(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    left = tmp_path / "probes/direct.txt"
+    right = tmp_path / "probes/alias.txt"
+    right.write_bytes(left.read_bytes())
+    manifest["rules"][0]["cases"][1]["source_sha256"] = hashlib.sha256(
+        right.read_bytes()
+    ).hexdigest()
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "distinct source bytes" in result.stdout
+
+
+def test_plain_locator_is_not_a_canonical_scope_exclusion(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    assert run(tmp_path, manifest, matrix).returncode == 0
+    closure_path = tmp_path / "closure.json"
+    closure = json.loads(closure_path.read_text(encoding="utf-8"))
+    closure["obligations"][0]["disposition"] = "not-applicable"
+    closure["obligations"][0]["requirement_ids"] = []
+    from specification import sha256_file
+    closure["obligations"][0]["scope_decision"] = {
+        "decision_source_id": "SRC-ISSUE",
+        "decision_source_sha256": sha256_file(tmp_path / "source-spec.md"),
+        "decision_locator": "- Static verifier must reject invalid origin",
+        "target_issue": None,
+        "parent_issue_must_remain_open": True,
+    }
+    write(closure_path, closure)
+    result = run(tmp_path, manifest, matrix, preserve_closure=True)
+    assert result.returncode == 2
+    assert "explicit candidate-bound canonical decision" in result.stdout
+
+
+def test_launcher_resolution_ignores_untrusted_path(tmp_path, monkeypatch):
+    sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
+    from validate_semantic_mutation_saturation import trusted_host_tool
+    for name in ("unshare", "docker", "sh"):
+        fake = tmp_path / name
+        fake.write_text("#!/bin/sh\\nexit 0\\n", encoding="utf-8")
+        fake.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    for name in ("unshare", "docker", "sh"):
+        assert trusted_host_tool(name) != str(tmp_path / name)
+
+
+def test_opt_mount_is_limited_to_interpreter_installation():
+    sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
+    from validate_semantic_mutation_saturation import runtime_mount_prefix
+    assert runtime_mount_prefix(None) is None
+    assert runtime_mount_prefix("/usr/bin/python3") is None
+    assert runtime_mount_prefix("/opt/runtime/version/bin/python3") == Path(
+        "/opt/runtime/version"
+    )
