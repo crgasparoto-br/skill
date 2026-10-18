@@ -10,6 +10,7 @@
 - [Gate executavel](#gate-executavel-obrigatorio-no-alvo-aplicavel)
 - [Prova executada](#prova-executada-e-anti-autoatestado-aud100)
 - [Vinculo canonico](#vinculo-canonico-e-dependencia-da-transformacao-aud102)
+- [Replay e contraste anti-metadados](#replay-e-contraste-anti-metadados-aud102)
 
 ## Quando ler este arquivo
 

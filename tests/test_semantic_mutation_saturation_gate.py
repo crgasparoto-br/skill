@@ -393,7 +393,6 @@ def test_metamorphic_contrast_requires_same_length(tmp_path):
 
 
 def test_documented_gate_command_has_all_required_cli_arguments():
-    import argparse
     import ast
     doc = (ROOT / "entregar-issue/references/semantic-mutation-saturation.md").read_text(encoding="utf-8")
     command = doc.split("python entregar-issue/scripts/validate_semantic_mutation_saturation.py", 1)[1].split("```", 1)[0]
