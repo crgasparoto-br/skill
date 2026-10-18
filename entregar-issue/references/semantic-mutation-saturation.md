@@ -140,3 +140,21 @@ usuario, o replay usa um container Docker local construido de um tar vazio
 credenciais ou diretorios pessoais, com limites de memoria/processos e
 mounts somente leitura de runtime e workspace. Nao existe fallback de
 execucao direta; sem namespace nem Docker isolado o replay reprova.
+
+
+## Isolamento e escopo anti-escape
+
+Os launchers `unshare`, `docker` e `sh` devem resolver somente
+executaveis de sistema confiaveis, sem consultar o `PATH` do candidato.
+O replay nao deve montar `/opt` inteiro: somente a instalacao estritamente
+necessaria do interpretador, quando residir em `/opt`, e nenhum caminho
+de credenciais ou configuracoes do host. Falta de backend isolado bloqueia.
+
+Pares metamorfos exigem bytes de origem distintos, alem dos eixos, hashes,
+contraste A-B-A e transformacao executavel.
+
+Para `not-applicable` em obrigacao de saturacao semantica, a fonte canonica
+hasheada deve declarar a linha explicita
+`SCOPE_DECISION not-applicable <candidate_key>: <justificativa de no minimo 20 caracteres>`.
+O campo `scope_decision.decision_locator` deve conter a linha literal;
+mencao incidental ao requisito nao constitui decisao de exclusao.
