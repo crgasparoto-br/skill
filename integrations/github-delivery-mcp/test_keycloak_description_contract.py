@@ -17,14 +17,17 @@ class KeycloakDescriptionContractTests(unittest.TestCase):
         cls.text = DOC.read_text(encoding="utf-8")
 
     def test_all_new_resources_have_purpose_and_issue_reference(self):
-        for name, phrase in (
-            ("solverit-delivery-operator", "Autoriza operadores aprovados"),
-            ("solverit:deliver", "Escopo OAuth opcional"),
-            ("solverit-delivery-mcp-audience", "Inclui a audiência"),
+        for kind, name, phrase in (
+            ("Realm Role", "solverit-delivery-operator", "Autoriza operadores aprovados"),
+            ("Client Scope", "solverit:deliver", "Escopo OAuth opcional"),
+            ("Audience Mapper", "solverit-delivery-mcp-audience", "Inclui a audiência"),
         ):
             with self.subTest(name=name):
+                # Match the exact table cell rather than unrelated test-case
+                # rows that mention the same role or scope in narrative text.
+                prefix = "| " + kind + " | " + chr(96) + name + chr(96) + " |"
                 rows = [line for line in self.text.splitlines()
-                        if line.startswith("| ") and ("\x60" + name + "\x60") in line]
+                        if line.startswith(prefix)]
                 self.assertEqual(len(rows), 1, rows)
                 self.assertIn("Issue #88", rows[0])
                 self.assertIn(phrase, rows[0])
