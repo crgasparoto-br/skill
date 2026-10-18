@@ -106,7 +106,7 @@ def verified_git_paths(git_repo: Path, base_sha: str, head_sha: str) -> set[str]
     )
     if completed.returncode:
         raise ValueError("independent Git changed-path query failed")
-    paths = [part.decode("utf-8") for part in completed.stdout.split(b"\\0") if part]
+    paths = [part.decode("utf-8") for part in completed.stdout.split(b"\0") if part]
     if not paths or len(paths) != len(set(paths)):
         raise ValueError("empty or duplicated Git changed-path inventory")
     return set(paths)
