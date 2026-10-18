@@ -73,7 +73,7 @@ Ler somente quando aplicavel:
 
 - controller: `references/controller-mode.md` e `references/controller-evidence-contract.md`;
 - desenho de controle negativo: `references/adversarial-control-design.md`;
-- detectores, parsers, gates AST e remediacoes recorrentes: `references/semantic-mutation-saturation.md`; aplicar matriz metamorfica/pairwise antes do parecer, e nao encerrar ao encontrar os primeiros 2 ou 3 blockers;
+- detectores, parsers, gates AST e remediacoes recorrentes: `references/semantic-mutation-saturation.md`; aplicar matriz metamorfica/pairwise antes do parecer, sem interromper a colheita barata apos os primeiros blockers;
 - finding contra candidato antes aprovado internamente ou auditorias repetidas: `references/audit-escape-feedback.md`;
 - nova auditoria apos reprovação independente/remediacao: `references/reaudit-readiness.md` e validar `audit-remediation.json`;
 - pacote de entrega antes de gastar auditoria ampla: `references/delivery-saturation-preflight.md`;

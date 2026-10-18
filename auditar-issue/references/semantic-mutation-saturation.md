@@ -26,5 +26,8 @@ O esperado de cada caso deve derivar da ADR, issue e invariantes, nunca do retor
 ## Registro de cobertura sugerido
 Por linha: `requirement_id, risk_family, surface, axis_values, positive_control_id, negative_control_id, mutation_ids, expected, observed, executed, passed, head_sha, evidence_sha256, disposition`. Status ausente ou apenas teste declarado nao satura superficie. Anexar a matriz ao parecer; nao bloquear entrega apenas por casos explicitamente fora da issue.
 
-## Exemplo de classe (Food Architecture)
-Se `rows.find(row => row.name === input)` e bloquear um catalogo JSON, os equivalentes `rows.toSorted().find(...)`, `rows.concat([]).find(...)` e `Array.from(rows).find(...)` nao podem perder proveniencia por mudar a forma de percorrer o mesmo dado. Se `foodName === "pao"` e viola o gate, `const key="pao"; foodName === key` deve ter o mesmo julgamento **quando a constante imutavel e a identidade alimentar forem comprovadas**. `let key` reassigned, objeto fs sombreado e parametro administrativo sao controles negativos distintos.
+## Exemplo transversal (autorizacao)
+Se uma regra deve detectar uso indevido de permissoes a partir de uma fonte estaticamente controlada, `allowedActions.includes(requestedAction)` e os equivalentes `Array.from(allowedActions).includes(requestedAction)` e `allowedActions.slice().includes(requestedAction)` precisam manter o mesmo veredito **quando origem, valor e uso decisorio forem demonstradamente preservados**. Um alias `const` comprovadamente imutavel nao pode ocultar a violacao; uma lista nao consumida, uma variavel sombreada e uma entrada administrativa fora do escopo sao controles negativos distintos.
+
+## Isolamento de estudos de caso
+Incidentes e IDs historicos pertencem a estudos de caso nao normativos, fora do pacote de regras universais. Consultar um estudo de caso apenas quando seu contrato, risco e superficie forem aplicaveis ao alvo atual. Nao importar nomes, identificadores de findings, linguagens, estruturas ou correcoes de um caso historico como condicoes obrigatorias para outras issues.

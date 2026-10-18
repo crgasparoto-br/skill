@@ -22,7 +22,7 @@ fluxo direto, condicional e ramos exaustivos; consumo por operadores/iteradores;
 codigo produtivo, fixture importada, teste isolado e dado administrativo.
 Selecionar combinacoes por pares de eixos e casos de fronteira de maior risco
 em vez de produto cartesiano irrestrito; justificar eixos nao aplicaveis.
-Aplicar a tecnica a outros dominios por semantica, nunca por nomes de alimentos.
+Aplicar a tecnica a qualquer dominio conforme o contrato, sem depender de termos de casos historicos.
 
 ## Condicao de encerramento da colheita barata
 
@@ -46,7 +46,7 @@ do ambiente da auditoria ao candidato.
 
 ## Escapes por equivalencia semantica
 
-Para AST/proveniencia, executar o protocolo `semantic-mutation-saturation.md`: depois de encontrar um contraexemplo, derivar no mesmo SHA equivalentes por transformacao e consumo, controles de origem descartada e familias materiais independentes. Uma bateria que parou em 2 ou 3 findings sem registrar superficie `covered|not-executed|not-applicable` e cobertura limitada, nao colheita abrangente. Guardar hash dos probes e distinguir mutantes nao mortos de falsos positivos.
+Para AST/proveniencia, executar o protocolo `semantic-mutation-saturation.md`: depois de encontrar um contraexemplo, derivar no mesmo SHA equivalentes por transformacao e consumo, controles de origem descartada e familias materiais independentes. Uma bateria que parou nos primeiros findings sem registrar superficie `covered|not-executed|not-applicable` e cobertura limitada, nao colheita abrangente. Guardar hash dos probes e distinguir mutantes nao mortos de falsos positivos.
 
 ## Regra apos primeiro blocker
 
