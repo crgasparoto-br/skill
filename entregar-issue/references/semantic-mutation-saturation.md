@@ -11,6 +11,11 @@
 - [Prova executada](#prova-executada-e-anti-autoatestado-aud100)
 - [Vinculo canonico](#vinculo-canonico-e-dependencia-da-transformacao-aud102)
 
+## Quando ler este arquivo
+
+Ler quando a entrega tocar parser, detector estatico, regra AST, saturacao
+semantica ou controles metamorfos e antes da execucao do gate de handoff.
+
 ## Quando aplicar
 Obrigatorio para detector AST, gate estatico, parser, rastreador de origem, lexicos e suas remediacoes recorrentes. Integra `requirement-attack-matrix.md`, `risk-saturation-gate.md` e `audit-escape-pattern-catalog.md`, sem substituir validadores existentes.
 
