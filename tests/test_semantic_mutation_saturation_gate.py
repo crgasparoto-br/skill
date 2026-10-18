@@ -66,7 +66,7 @@ def fixture(tmp_path):
         "schema_version": 1, "head_sha": HEAD,
         "rules": [{
             "requirement_id": "R-1", "risk_family": "structural-contract",
-            "surface": "static-verifier", "status": "covered",
+            "surface": "semantic-mutation-saturation", "status": "covered",
             "oracle": {"accept_exit_codes": [0], "reject_exit_codes": [2]},
             "axis_variants": variants, "cases": cases,
             "metamorphic_pairs": [{
@@ -97,9 +97,13 @@ def run(tmp_path, manifest, matrix, head=HEAD):
     matrix_path = tmp_path / "matrix.json"
     write(manifest_path, manifest)
     write(matrix_path, matrix)
+    write(tmp_path / "closure.json", {"obligations": [{"id": "O-1",
+        "requirement_ids": ["R-1"], "source_text": "Static verifier must reject invalid origin",
+        "disposition": "covered"}]})
     return subprocess.run([
         sys.executable, str(SCRIPT), "--manifest", str(manifest_path),
-        "--attack-matrix", str(matrix_path), "--head-sha", head,
+        "--attack-matrix", str(matrix_path),
+        "--requirement-closure", str(tmp_path / "closure.json"), "--head-sha", head,
         "--root", str(tmp_path),
     ], capture_output=True, text=True, check=False)
 
@@ -117,6 +121,7 @@ def test_missing_manifest_fails_closed(tmp_path):
     result = subprocess.run([
         sys.executable, str(SCRIPT), "--manifest", str(tmp_path / "manifest.json"),
         "--attack-matrix", str(tmp_path / "matrix.json"),
+        "--requirement-closure", str(tmp_path / "closure.json"),
         "--head-sha", HEAD, "--root", str(tmp_path),
     ], capture_output=True, text=True, check=False)
     assert result.returncode == 2
@@ -206,3 +211,11 @@ def test_oracle_cannot_accept_and_reject_same_exit_code(tmp_path):
     manifest, matrix = fixture(tmp_path)
     manifest["rules"][0]["oracle"]["reject_exit_codes"] = [0]
     assert "must distinguish" in run(tmp_path, manifest, matrix).stdout
+
+
+def test_canonical_parser_surface_cannot_be_disabled(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    matrix["requirements"][0]["risk_surfaces"][0]["semantic_saturation_required"] = False
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "canonical semantic surfaces omitted or disabled" in result.stdout
