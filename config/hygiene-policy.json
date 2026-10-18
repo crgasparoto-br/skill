@@ -79,7 +79,7 @@
     "complexity": {
       "state": "reported",
       "max_complexity": 30,
-      "baseline": 52,
+      "baseline": 54,
       "limits": "Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento entre módulos. Mede só o corpo da própria função: função aninhada é medida por si, ramo de default de parâmetro e de decorator não entra, with não conta como ramo e lambda não é medida.",
       "baseline_history": [
         {
@@ -105,6 +105,10 @@
         {
           "value": 52,
           "reason": "O verificador autenticado GitHub adicionou validacao de completude de reviews e checks; medicao CI 38167497623, mantendo a classe reported e o limite de complexidade existente. O ramo Issue 88 registrou antes valor 51 associado aos controles OAuth/MCP; a base develop ja possuia medicao 52, preservada nesta reconciliacao."
+        },
+        {
+          "value": 54,
+          "reason": "A integracao controlada da Issue 88 no HEAD 05c25db925e3ef2038e989c3d40a82b79e8b2e4b produziu 54 ocorrencias estruturais medidas pelo workflow Validate skills, run 39161114008, contra base anterior de 52. O incremento de 2 e atribuido a verificacoes isoladas de seguranca e autorizacao em runtime; classe permanece reported, sem alterar max_complexity ou dispensar a medicao."
         }
       ]
     }
