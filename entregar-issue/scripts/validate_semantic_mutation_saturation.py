@@ -51,6 +51,47 @@ def check_file(root: Path, relative: object, digest: object, label: str,
     return value
 
 
+
+
+def validate_case(case: object, ci: int, tag: str, variants: dict,
+                  root: Path, head: str, ids: set[str], errors: list[str]) -> tuple[str, dict] | None:
+    label = f"{tag} case {ci}"
+    if not isinstance(case, dict):
+        errors.append(f"{label}: invalid case")
+        return None
+    cid = case.get("id")
+    if not isinstance(cid, str) or not cid or cid in ids:
+        errors.append(f"{label}: missing or duplicated ID")
+        return None
+    ids.add(cid)
+    kind = case.get("kind")
+    verdict = EXPECTED.get(kind) if isinstance(kind, str) else None
+    if verdict is None or case.get("expected") != verdict or case.get("observed") != verdict:
+        errors.append(f"{label}: mutant survivor, false positive or incorrect oracle")
+    if case.get("status") != "passed" or case.get("head_sha") != head:
+        errors.append(f"{label}: not executed on exact head")
+    if kind == "mutation" and not str(case.get("mutation_id") or "").strip():
+        errors.append(f"{label}: missing mutation ID")
+    procedure = case.get("procedure")
+    if not isinstance(procedure, str) or len(procedure.strip()) < 12:
+        errors.append(f"{label}: non-reproducible procedure")
+    axes = case.get("axes")
+    if not isinstance(axes, dict) or set(axes) != set(AXES):
+        errors.append(f"{label}: incomplete axis values")
+        return None
+    if any(axes[a] not in variants[a] for a in AXES):
+        errors.append(f"{label}: undeclared axis value")
+        return None
+    proof = check_file(root, case.get("proof_path"), case.get("proof_sha256"),
+                       label, errors, json_proof=True)
+    if (proof.get("case_id") != cid or proof.get("head_sha") != head
+            or proof.get("observed") != case.get("observed")
+            or proof.get("procedure") != procedure):
+        errors.append(f"{label}: proof contradicts recorded result")
+    check_file(root, case.get("source_path"), case.get("source_sha256"),
+               label, errors, json_proof=False)
+    return kind, axes
+
 def validate(manifest: dict, matrix: dict, root: Path, head: str) -> list[str]:
     errors: list[str] = []
     if not SHA.fullmatch(head):
@@ -73,7 +114,7 @@ def validate(manifest: dict, matrix: dict, root: Path, head: str) -> list[str]:
         errors.append("no semantic saturation surfaces declared in attack matrix")
     rules = manifest.get("rules")
     if not isinstance(rules, list) or not rules:
-        return errors + ["missing semantic saturation evidence rules"]
+        return [*errors, "missing semantic saturation evidence rules"]
     seen = set()
     ids = set()
     for ri, rule in enumerate(rules):
@@ -106,45 +147,14 @@ def validate(manifest: dict, matrix: dict, root: Path, head: str) -> list[str]:
         kinds = set()
         by_id = {}
         for ci, case in enumerate(cases):
-            label = f"{tag} case {ci}"
-            if not isinstance(case, dict):
-                errors.append(f"{label}: invalid case")
+            result = validate_case(case, ci, tag, variants, root, head, ids, errors)
+            if result is None:
                 continue
-            cid = case.get("id")
-            if not isinstance(cid, str) or not cid or cid in ids:
-                errors.append(f"{label}: missing or duplicated ID")
-                continue
-            ids.add(cid)
-            by_id[cid] = case
-            kind = case.get("kind")
+            kind, axes = result
             kinds.add(kind)
-            verdict = EXPECTED.get(kind)
-            if verdict is None or case.get("expected") != verdict or case.get("observed") != verdict:
-                errors.append(f"{label}: mutant survivor, false positive or incorrect oracle")
-            if case.get("status") != "passed" or case.get("head_sha") != head:
-                errors.append(f"{label}: not executed on exact head")
-            if kind == "mutation" and not str(case.get("mutation_id") or "").strip():
-                errors.append(f"{label}: missing mutation ID")
-            procedure = case.get("procedure")
-            if not isinstance(procedure, str) or len(procedure.strip()) < 12:
-                errors.append(f"{label}: non-reproducible procedure")
-            axes = case.get("axes")
-            if not isinstance(axes, dict) or set(axes) != set(AXES):
-                errors.append(f"{label}: incomplete axis values")
-                continue
-            if any(axes[a] not in variants[a] for a in AXES):
-                errors.append(f"{label}: undeclared axis value")
-                continue
+            by_id[case["id"]] = case
             for a, b in itertools.combinations(AXES, 2):
                 covered.add((a, axes[a], b, axes[b]))
-            proof = check_file(root, case.get("proof_path"), case.get("proof_sha256"),
-                               label, errors, json_proof=True)
-            if (proof.get("case_id") != cid or proof.get("head_sha") != head
-                    or proof.get("observed") != case.get("observed")
-                    or proof.get("procedure") != procedure):
-                errors.append(f"{label}: proof contradicts recorded result")
-            check_file(root, case.get("source_path"), case.get("source_sha256"),
-                       label, errors, json_proof=False)
         for kind in EXPECTED:
             if kind not in kinds:
                 errors.append(f"{tag}: missing {kind} control")

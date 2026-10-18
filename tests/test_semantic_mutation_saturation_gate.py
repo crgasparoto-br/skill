@@ -38,7 +38,7 @@ def fixture(tmp_path):
         case = {
             "id": cid, "kind": kind, "expected": observed, "observed": observed,
             "head_sha": HEAD, "status": "passed", "procedure": procedure,
-            "axes": {**{a: "default" for a in AXES}, "transformation": transformation},
+            "axes": {**dict.fromkeys(AXES, "default"), "transformation": transformation},
             "proof_path": f"proofs/{cid}.json",
             "proof_sha256": write(tmp_path / f"proofs/{cid}.json", proof),
             "source_path": f"probes/{cid}.txt",
