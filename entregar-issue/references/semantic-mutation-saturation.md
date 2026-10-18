@@ -1,5 +1,16 @@
 # Saturacao semantica antes do handoff
 
+## Índice
+
+- [Quando aplicar](#quando-aplicar)
+- [Implementacao orientada por familias](#implementacao-orientada-por-familias)
+- [Perfis e limites](#perfis-e-limites)
+- [Exemplo transversal](#exemplo-transversal)
+- [Isolamento de estudos de caso](#isolamento-de-estudos-de-caso)
+- [Gate executavel](#gate-executavel-obrigatorio-no-alvo-aplicavel)
+- [Prova executada](#prova-executada-e-anti-autoatestado-aud100)
+- [Vinculo canonico](#vinculo-canonico-e-dependencia-da-transformacao-aud102)
+
 ## Quando aplicar
 Obrigatorio para detector AST, gate estatico, parser, rastreador de origem, lexicos e suas remediacoes recorrentes. Integra `requirement-attack-matrix.md`, `risk-saturation-gate.md` e `audit-escape-pattern-catalog.md`, sem substituir validadores existentes.
 
