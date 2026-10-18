@@ -92,7 +92,7 @@ mount -o remount,bind,ro "$sandbox/workspace"
 mount --bind /dev/null "$sandbox/dev/null"
 mount --bind /dev/urandom "$sandbox/dev/urandom"
 shift
-exec chroot "$sandbox" "$@"
+chroot "$sandbox" "$@"
 """
 
 def trusted_script_interpreter(command: str) -> str | None:
@@ -193,7 +193,7 @@ def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
         expanded[0] = interpreter
     try:
         # Candidate-controlled scripts must not inherit caller credentials.
-        clean_env = {"PATH": os.defpath, "HOME": str(root), "LANG": "C",
+        clean_env = {"PATH": os.defpath, "HOME": "/workspace", "LANG": "C",
                      "LC_ALL": "C", "PYTHONNOUSERSITE": "1"}
         def limits() -> None:
             resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
