@@ -8,9 +8,9 @@ import itertools
 import json
 import os
 import re
-import stat
 import resource
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -560,26 +560,10 @@ def validate_closure_obligations(closure: dict, candidates: list[dict],
 
 
 
-def validate_canonical_closure(closure: dict, snapshot_path: Path,
-                               errors: list[str]) -> None:
-    """Re-derive obligations from the caller's canonical specification, not the matrix."""
-    if closure.get("schema_version") != 3:
-        errors.append("canonical requirement closure schema_version must be 3")
-        return
-    marker = closure.get("specification_snapshot")
-    if (not isinstance(marker, dict) or not snapshot_path.is_file()
-            or marker.get("sha256") != sha256_file(snapshot_path)):
-        errors.append("canonical specification snapshot is missing or hash-divergent")
-        return
-    source_errors: list[str] = []
-    snapshot, sources, candidates = extract_candidates(snapshot_path, source_errors)
-    errors.extend(source_errors)
-    if source_errors or not candidates:
-        errors.append("canonical specification has no verifiable candidates")
-        return
-    if closure.get("primary_issue_source_id") != snapshot.get("primary_source_id"):
-        errors.append("canonical primary specification source diverges")
-    validate_closure_obligations(closure, candidates, errors)
+
+def validate_semantic_scope_exclusions(closure: dict, sources: dict,
+                                       errors: list[str]) -> None:
+    """Reject incidental requirement mentions presented as canonical exclusions."""
     # A self-assigned not-applicable disposition cannot remove a critical gate.
     for obligation in closure.get("obligations") or []:
         if (not isinstance(obligation, dict)
@@ -608,6 +592,29 @@ def validate_canonical_closure(closure: dict, snapshot_path: Path,
         if not any(line.strip() == locator and pattern.fullmatch(line.strip())
                    for line in lines):
             errors.append("semantic not-applicable requires explicit candidate-bound canonical decision")
+
+def validate_canonical_closure(closure: dict, snapshot_path: Path,
+                               errors: list[str]) -> None:
+    """Re-derive obligations from the caller's canonical specification, not the matrix."""
+    if closure.get("schema_version") != 3:
+        errors.append("canonical requirement closure schema_version must be 3")
+        return
+    marker = closure.get("specification_snapshot")
+    if (not isinstance(marker, dict) or not snapshot_path.is_file()
+            or marker.get("sha256") != sha256_file(snapshot_path)):
+        errors.append("canonical specification snapshot is missing or hash-divergent")
+        return
+    source_errors: list[str] = []
+    snapshot, sources, candidates = extract_candidates(snapshot_path, source_errors)
+    errors.extend(source_errors)
+    if source_errors or not candidates:
+        errors.append("canonical specification has no verifiable candidates")
+        return
+    if closure.get("primary_issue_source_id") != snapshot.get("primary_source_id"):
+        errors.append("canonical primary specification source diverges")
+    validate_closure_obligations(closure, candidates, errors)
+    validate_semantic_scope_exclusions(closure, sources, errors)
+
 
 
 def validate_checker_bindings(snapshot_path: Path, manifest: dict,
