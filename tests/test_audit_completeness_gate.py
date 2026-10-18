@@ -106,6 +106,8 @@ def run(root: Path, inventory: dict, report: dict, head: str | None = None) -> s
         [sys.executable, str(SCRIPT), "--inventory", str(root / "inventory.json"),
          "--report-json", str(root / "report.json"), "--root", str(root),
          "--git-repo", str(root / "gitrepo"),
+         "--trusted-base-sha", git(root / "gitrepo", "rev-parse", "HEAD~1"),
+         "--trusted-head-sha", git(root / "gitrepo", "rev-parse", "HEAD"),
          "--head-sha", head or inventory["identity"]["head_sha"]],
         capture_output=True, text=True, check=False,
     )
@@ -259,3 +261,12 @@ def test_missing_trusted_git_objects_fails_closed(tmp_path: Path) -> None:
         inventory["identity"][key] = "f" * 40
         report["identity"][key] = "f" * 40
     assert "trusted Git changed-path verification failed" in run(tmp_path, inventory, report).stdout
+
+
+def test_existing_but_forged_git_base_rejected_by_remote_anchor(tmp_path: Path) -> None:
+    inventory, report = fixture(tmp_path)
+    inventory["identity"]["base_sha"] = inventory["identity"]["head_sha"]
+    report["identity"]["base_sha"] = report["identity"]["head_sha"]
+    result = run(tmp_path, inventory, report)
+    assert result.returncode == 2
+    assert "independent GitHub anchor" in result.stdout
