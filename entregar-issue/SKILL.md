@@ -329,4 +329,3 @@ Nunca afirmar independencia apenas por trocar de Skill no mesmo contexto. Para q
 ## Contrato canonico
 
 Os artefatos internos legados do controlador continuam usando o contrato declarado em `contracts/version.json`. Em `native-github-audit`, nenhum certificado/handoff `.audit` e emitido. Em `certified-handoff`, para o certificado/handoff consumido por `auditar-issue`, usar `contract_version=2026-08-20.3` (default de `build_handoff_certificate.py`). Nunca emitir handoff com `contract_version` diferente da exigida pelo auditor. Executar `scripts/controller_cli.py validate-contracts` e os testes focados; drift global preexistente deve ser reportado separadamente, nao mascarado por troca de numero.
-
