@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import importlib.util
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
 import termios
+from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SOURCE = Path('/opt/solverit/issue-delivery')
@@ -25,7 +25,7 @@ SHA = re.compile(r'[0-9a-f]{40}\Z')
 MAX_TOKEN = 8192
 
 
-class LiveProbeDenied(RuntimeError):
+class LiveProbeError(RuntimeError):
     pass
 
 
@@ -33,33 +33,33 @@ def validate_staging() -> None:
     """Ensure inactive, root-owned, exact-HEAD code; never change services."""
     expected = os.getenv('ISSUE88_EXPECTED_SHA', '')
     if not SHA.fullmatch(expected):
-        raise LiveProbeDenied('pinned SHA required')
+        raise LiveProbeError('pinned SHA required')
     for path, is_file in ((SOURCE, False), (MARKER, True)):
         metadata = os.lstat(path)
         if (metadata.st_uid != 0 or metadata.st_gid != 0
                 or metadata.st_mode & 0o022 or
                 (not path.is_file() if is_file else not path.is_dir()) or
                 path.is_symlink()):
-            raise LiveProbeDenied('untrusted staging identity')
+            raise LiveProbeError('untrusted staging identity')
     if MARKER.read_text(encoding='ascii').strip() != expected:
-        raise LiveProbeDenied('staging SHA does not match reviewed HEAD')
+        raise LiveProbeError('staging SHA does not match reviewed HEAD')
     if os.path.lexists(SOCKET):
-        raise LiveProbeDenied('broker socket exists')
+        raise LiveProbeError('broker socket exists')
     try:
         check = subprocess.run(
             ['systemctl', 'show', SERVICE, '--property=ActiveState', '--value'],
             capture_output=True, text=True, timeout=5, check=True,
         )
     except (OSError, subprocess.SubprocessError) as exc:
-        raise LiveProbeDenied('broker service state unavailable') from exc
+        raise LiveProbeError('broker service state unavailable') from exc
     if check.stdout.strip() != 'inactive':
-        raise LiveProbeDenied('broker service not inactive')
+        raise LiveProbeError('broker service not inactive')
 
 
 def private_token(label: str) -> str:
     """TTY-only bounded input with echo disabled, no getpass fallback."""
     if not sys.stdin.isatty():
-        raise LiveProbeDenied('interactive TTY required')
+        raise LiveProbeError('interactive TTY required')
     fd = sys.stdin.fileno()
     previous = termios.tcgetattr(fd)
     try:
@@ -70,15 +70,15 @@ def private_token(label: str) -> str:
         raw = sys.stdin.buffer.readline(MAX_TOKEN + 2)
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, previous)
-        print('', flush=True)
+        print(flush=True)
     if not raw.endswith(b'\n') or len(raw) > MAX_TOKEN + 1:
-        raise LiveProbeDenied('invalid private token input')
+        raise LiveProbeError('invalid private token input')
     try:
         token = raw.rstrip(b'\r\n').decode('ascii')
     except UnicodeDecodeError as exc:
-        raise LiveProbeDenied('invalid private token encoding') from exc
+        raise LiveProbeError('invalid private token encoding') from exc
     if not 10 <= len(token) <= MAX_TOKEN or any(c.isspace() for c in token):
-        raise LiveProbeDenied('invalid private token format')
+        raise LiveProbeError('invalid private token format')
     return token
 
 
@@ -93,16 +93,16 @@ def validated_signed_claims(token: str, policy: dict[str, str]) -> dict:
     from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
     claims = jwt.decode(token, options={'verify_signature': False})
     if not isinstance(claims, dict):
-        raise LiveProbeDenied('invalid signed control claims')
+        raise LiveProbeError('invalid signed control claims')
     subject = claims.get('sub')
     scopes = claims.get('scope')
     if (not isinstance(subject, str) or not subject or len(subject) > 256
             or not isinstance(scopes, str)):
-        raise LiveProbeDenied('invalid signed control claims')
+        raise LiveProbeError('invalid signed control claims')
     present = scopes.split()
     neutral = next((s for s in ('solverit:read', 'openid') if s in present), None)
     if neutral is None:
-        raise LiveProbeDenied('negative token missing baseline scope')
+        raise LiveProbeError('negative token missing baseline scope')
     relaxed = JWKSVerifierPolicy(
         issuer=policy['SOLVERIT_OAUTH_ISSUER_URL'],
         audience=policy['SOLVERIT_MCP_RESOURCE_URL'],
@@ -113,7 +113,7 @@ def validated_signed_claims(token: str, policy: dict[str, str]) -> dict:
     verifier = CachedJWKSVerifier(relaxed)
     verifier.refresh()
     if verifier.verify(token) != subject:
-        raise LiveProbeDenied('negative token signature policy failed')
+        raise LiveProbeError('negative token signature policy failed')
     return claims
 
 
@@ -126,34 +126,34 @@ def check_signed_tokens(policy: dict[str, str], positive: str,
     approved = policy['SOLVERIT_MCP_DELIVERY_SUBJECTS']
     verifier = build_broker_verifier(policy)
     if verified_actor(positive, verifier=verifier) != approved:
-        raise LiveProbeDenied('approved signed token was not bound to owner')
+        raise LiveProbeError('approved signed token was not bound to owner')
     for token, reason in ((scope_negative, 'scope'),
                           (subject_negative, 'subject')):
         claims = validated_signed_claims(token, policy)
         scopes = claims['scope'].split()
         if reason == 'scope':
             if claims['sub'] != approved or 'solverit:deliver' in scopes:
-                raise LiveProbeDenied('scope-negative control is not comparable')
+                raise LiveProbeError('scope-negative control is not comparable')
         else:
             if claims['sub'] == approved:
-                raise LiveProbeDenied('subject-negative control is not comparable')
+                raise LiveProbeError('subject-negative control is not comparable')
         try:
             verified_actor(token, verifier=verifier)
         except BrokerOAuthDenied:
             continue
-        raise LiveProbeDenied('negative signed token was accepted')
+        raise LiveProbeError('negative signed token was accepted')
 
 
 def main() -> int:
     print('=== ISSUE88: REAL KEYCLOAK TOKEN PREFLIGHT (READ-ONLY) ===')
     try:
         if os.geteuid() != 0:
-            raise LiveProbeDenied('run with sudo -n on the VPS')
+            raise LiveProbeError('run with sudo -n on the VPS')
         validate_staging()
         spec = importlib.util.spec_from_file_location(
             'issue88_jwks_preflight', HERE / 'check-broker-jwks-runtime.py')
         if spec is None or spec.loader is None:
-            raise LiveProbeDenied('trusted JWKS preflight missing')
+            raise LiveProbeError('trusted JWKS preflight missing')
         runtime = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(runtime)
         policy = runtime.read_trusted_policy()
@@ -163,7 +163,7 @@ def main() -> int:
         scope_negative = private_token('Same subject WITHOUT solverit:deliver')
         subject_negative = private_token('Other subject, without delivery access')
         if len({positive, scope_negative, subject_negative}) != 3:
-            raise LiveProbeDenied('distinct OAuth tokens required')
+            raise LiveProbeError('distinct OAuth tokens required')
         runtime.drop_to_authenticator()
         check_signed_tokens(policy, positive, scope_negative, subject_negative)
         print('PASS: genuine signed authorized OAuth token accepted')
