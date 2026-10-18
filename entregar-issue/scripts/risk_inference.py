@@ -375,9 +375,32 @@ def derive_families_from_obligation(obligation: dict) -> set[str]:
     return families
 
 
+SEMANTIC_MUTATION_RE = re.compile(
+    r"\b(parsers?|lexers?|tokenizers?|decoders?|deserialize|"
+    r"static\s+(?:verifier|analy[sz]er|checker|gate|detector)|"
+    r"(?:verificador(?:es)?|detector(?:es)?|analisador(?:es)?|analy[sz]ers?|checkers?|gates?)\s+"
+    r"(?:(?:est[aá]tic\w*|static)\s+)?(?:de\s+)?AST|"
+    r"AST\s+(?:verifiers?|checkers?|detectors?|analy[sz]ers?|gates?)|"
+    r"(?:gate(?:s)?|verificador(?:es)?|detector(?:es)?|analisador(?:es)?)\s+est[aá]tic\w*|"
+    r"semantic\s+mutation|semantic\s+saturation|metamorphic\s+gate|"
+    r"rastreador(?:es)?\s+de\s+proveni[eê]ncia)\b", re.IGNORECASE,
+)
+
+
+def requires_semantic_mutation_saturation(source_texts: list[str]) -> bool:
+    return bool(SEMANTIC_MUTATION_RE.search(compact_source_texts(source_texts)))
+
+
 def derive_surfaces(source_texts: list[str]) -> list[dict]:
     text = compact_source_texts(source_texts)
     surfaces: list[dict] = []
+    if requires_semantic_mutation_saturation(source_texts):
+        surfaces.append({
+            "risk_family": "structural-contract",
+            "surface": "semantic-mutation-saturation",
+            "reason": "Static verifiers and parsers require executable real-gate mutation and metamorphic coverage.",
+            "semantic_saturation_required": True,
+        })
     if PERFORMANCE_STAGE_RE.search(text):
         surfaces.append({
             "risk_family": "structural-contract",
