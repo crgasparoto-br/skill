@@ -36,6 +36,7 @@ Executar antes do handoff, no proprio workspace e SHA congelado, inclusive para 
 python entregar-issue/scripts/validate_semantic_mutation_saturation.py \
   --manifest .audit/entregar-issue/semantic-mutation-saturation.json \
   --attack-matrix .audit/entregar-issue/requirement-attack-matrix.json \
+  --requirement-closure .audit/entregar-issue/requirement-closure.json \
   --head-sha "$MATERIAL_HEAD_SHA" --root .
 ```
 
