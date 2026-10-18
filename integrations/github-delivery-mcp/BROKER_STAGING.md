@@ -297,3 +297,66 @@ staging is still **not a valid activation approval**; Keycloak
 authorization-code/PKCE *real signed token* acceptance, negative scope
 and subject tests, socket identity, controller MCP and independent
 audit are outstanding. No merge.
+
+
+## Pre-activation signed Keycloak OAuth access-token proof (Issue #88)
+
+The new ops/check-broker-live-access.py is a **read-only operator preflight**,
+not a production MCP endpoint. Unlike the ephemeral-key RS256 unit tests and
+the public JWKS probe, it validates **three genuine Keycloak access tokens**
+without putting credentials in shell arguments, environment variables, files,
+issues, PRs, chat, or logs. The interactive terminal disables echo for each
+token, imposes an 8192-byte bound, and fails closed without printing claims,
+subjects, JWTs, private policy values or Python exceptions.
+
+Prerequisites, all mandatory:
+
+1. Independently review the exact PR #89 HEAD and refresh inactive, root-owned
+   staging using the existing pinned ops/prepare-broker-staging.sh (full
+   suite must pass). Verify protected STAGED_COMMIT matches that HEAD.
+2. Confirm the broker service is **inactive**, its socket absent, and the
+   protected broker.env has passed ops/verify-broker-env.py.
+3. Obtain short-lived, real OAuth **access tokens** through the existing
+   authorized Keycloak PKCE/client flow: (a) approved solverit-mcp subject
+   with solverit:deliver; (b) same subject without that optional scope;
+   (c) other subject (solverit-mcp-test) with no delivery permission.
+   All three must target the exact MCP audience and originate from the
+   solverit-chatgpt-mcp OAuth client. Do **not** use ID tokens, example JWTs,
+   fixture-signed tokens or an administrator's broad token. Never post
+   tokens or decoded claims to ChatGPT.
+
+On the VPS, extract the **reviewed immutable commit** into a disposable
+operator directory; do not execute a mutable checkout with different bytes:
+
+```bash
+WORK="$HOME/projetos/skill-issue88-jobs"
+git -C "$WORK" fetch --no-tags origin refs/heads/feat/88-controlled-issue-delivery
+HEAD_SHA="$(git -C "$WORK" rev-parse FETCH_HEAD)"
+# Compare HEAD_SHA with the reviewed PR HEAD before executing.
+PROBE_DIR="$(mktemp -d "$HOME/projetos/issue88-probe.XXXXXX")"
+git -C "$WORK" archive "$HEAD_SHA" integrations/github-delivery-mcp/ops |
+  tar -x -C "$PROBE_DIR"
+SCRIPT_DIR="$PROBE_DIR/integrations/github-delivery-mcp/ops"
+ISSUE88_EXPECTED_SHA="$HEAD_SHA" bash "$SCRIPT_DIR/prepare-broker-staging.sh"
+# Next command prompts for three hidden, genuinely signed access tokens.
+sudo -n env ISSUE88_EXPECTED_SHA="$HEAD_SHA" /usr/bin/python3 -B \
+  "$SCRIPT_DIR/check-broker-live-access.py"
+```
+
+Do not run the live-token preflight until the revised staging script reports
+success at the same SHA. The script verifies the trusted env as root, securely
+prompts for the tokens, **drops permanently to authenticator UID 997/GID 986**
+and uses the staged broker's real JWKS verifier. Negative controls must first
+pass **genuine RS256 signature, expiry, issuer, audience and client validation**
+under a narrowly relaxed *test-only* policy; invalid/unsigned tokens cannot
+satisfy a negative-control result. The normal delivery verifier must accept
+the positive token and reject both negatives. A token from the second subject
+without delivery scope exercises two restrictions together; the independent
+subject-specific deny gate remains covered by the signed offline matrix.
+No job, PR, GitHub write, socket binding, service enablement or restart occurs.
+
+Read-only verifier results can authorize **further isolated tests**, not
+activate the production delivery MCP. A positive live-token proof still leaves
+broker peer-UID/socket tests, trusted job→PR intake, isolated executor clone,
+patch/check/publish, exact-HEAD GitHub CI and **separate independent audit**
+outstanding. A failed preflight is a hard stop; retain the broker inactive.
