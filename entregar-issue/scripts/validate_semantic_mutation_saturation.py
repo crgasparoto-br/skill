@@ -116,6 +116,43 @@ def trusted_script_interpreter(command: str) -> str | None:
     return str(binary)
 
 
+def execute_isolated(expanded: list[str], interpreter: str | None,
+                     root: Path, clean_env: dict[str, str],
+                     limits, label: str, errors: list[str]) -> subprocess.CompletedProcess | None:
+    """Fail closed without an isolated user, network, PID and mount namespace."""
+    # Use a fresh user/mount/network/PID namespace and a read-only
+    # chroot that exposes only runtime directories and the probe workspace.
+    # Never silently fall back to a privileged or networked subprocess.
+    unshare = shutil.which("unshare")
+    if not unshare:
+        errors.append(f"{label}: isolated replay unavailable (unshare missing)")
+        return None
+    runtime = Path(expanded[0]).resolve() if interpreter else None
+    if interpreter and not any(runtime.is_relative_to(Path(p))
+                               for p in ("/usr", "/opt")):
+        errors.append(f"{label}: interpreter outside isolated runtime mounts")
+        return None
+    executable = str(runtime) if interpreter else expanded[0]
+    isolated = [
+        unshare, "--user", "--map-root-user", "--mount", "--net",
+        "--pid", "--fork", "sh", "-eu", "-c", SANDBOX_SHELL,
+        "audit-replay", str(root), executable, *expanded[1:],
+    ]
+    executed = subprocess.run(
+        isolated, cwd=root, capture_output=True, timeout=25, check=False,
+        env=clean_env, close_fds=True, start_new_session=True,
+        preexec_fn=limits,
+    )
+    if executed.returncode != 0 and (
+            b"unshare failed" in executed.stderr
+            or b"Operation not permitted" in executed.stderr
+            or b"mount:" in executed.stderr
+            or b"chroot:" in executed.stderr):
+        errors.append(f"{label}: isolated replay could not establish sandbox")
+        return None
+    return executed
+
+
 def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
            root: Path, source: Path,
            label: str, errors: list[str]) -> subprocess.CompletedProcess | None:
@@ -163,37 +200,8 @@ def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
             resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
             resource.setrlimit(resource.RLIMIT_FSIZE, (2 * 1024 * 1024, 2 * 1024 * 1024))
             resource.setrlimit(resource.RLIMIT_CPU, (15, 15))
-        # Use a fresh user/mount/network/PID namespace and a read-only
-        # chroot that exposes only runtime directories and the probe workspace.
-        # Never silently fall back to a privileged or networked subprocess.
-        unshare = shutil.which("unshare")
-        if not unshare:
-            errors.append(f"{label}: isolated replay unavailable (unshare missing)")
-            return None
-        runtime = Path(expanded[0]).resolve() if interpreter else None
-        if interpreter and not any(runtime.is_relative_to(Path(p))
-                                   for p in ("/usr", "/opt")):
-            errors.append(f"{label}: interpreter outside isolated runtime mounts")
-            return None
-        executable = str(runtime) if interpreter else expanded[0]
-        isolated = [
-            unshare, "--user", "--map-root-user", "--mount", "--net",
-            "--pid", "--fork", "sh", "-eu", "-c", SANDBOX_SHELL,
-            "audit-replay", str(root), executable, *expanded[1:],
-        ]
-        executed = subprocess.run(
-            isolated, cwd=root, capture_output=True, timeout=25, check=False,
-            env=clean_env, close_fds=True, start_new_session=True,
-            preexec_fn=limits,
-        )
-        if executed.returncode != 0 and (
-                b"unshare failed" in executed.stderr
-                or b"Operation not permitted" in executed.stderr
-                or b"mount:" in executed.stderr
-                or b"chroot:" in executed.stderr):
-            errors.append(f"{label}: isolated replay could not establish sandbox")
-            return None
-        return executed
+        return execute_isolated(expanded, interpreter, root, clean_env,
+                                limits, label, errors)
     except (OSError, subprocess.TimeoutExpired) as exc:
         errors.append(f"{label}: replay could not execute: {exc}")
         return None
