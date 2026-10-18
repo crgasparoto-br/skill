@@ -12,7 +12,7 @@ GENERIC_PATHS = (
     "entregar-issue/references/semantic-mutation-saturation.md",
 )
 CASE_PATH = "docs/case-studies/issue-1300-semantic-saturation.md"
-CASE_ONLY = re.compile(r"(?i)\\b(?:F41|F42|foodName|controle_calorias)\\b|issue\\s*#?\\s*1300|\\baliment(?:o|os|ar|ares)\\b")
+CASE_ONLY = re.compile(r"(?i)\b(?:F41|F42|foodName|controle_calorias)\b|issue\s*#?\s*1300|\baliment(?:o|os|ar|ares)\b")
 
 class SemanticSaturationDomainNeutralTests(unittest.TestCase):
     def test_normative_skills_do_not_require_case_specific_findings(self):
