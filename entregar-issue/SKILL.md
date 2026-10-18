@@ -19,7 +19,7 @@ A verificacao executada no mesmo contexto e interna. Somente `auditar-issue` em 
 
 1. Criar inventário de cada finding com ID, evidência, escopo, critério de aceite, estado, bloqueio e dependências. Conciliar duplicatas sem perder requisitos.
 2. Executar bloqueadores P0/P1 antes dos demais, processando todos os casos em lotes rastreáveis quando necessário. A cada rodada implementar, testar, conferir comportamento real, checar CI no HEAD exato e atualizar o inventário. Repetir enquanto houver itens acionáveis.
-3. Pendências que exigem verdade independente (ex.: oráculos semânticos alimentares) requerem fonte primária ou evidência histórica específica por caso, com procedência e teste verificável. Nunca tratar fixture, saída do próprio resolvedor, teste autorreferente, comentário ou CI verde como certificação independente.
+3. Pendências que exigem verdade independente (ex.: classificacoes que exigem oraculo externo ao sistema) requerem fonte primária ou evidência histórica específica por caso, com procedência e teste verificável. Nunca tratar fixture, saída do próprio resolvedor, teste autorreferente, comentário ou CI verde como certificação independente.
 4. Em conjuntos com dezenas de casos, tentar revisar **cada caso**, registrando evidência e decisão por caso, em vez de revisar somente exemplos. Se faltar fonte acessível, marcar o caso como bloqueado e continuar nos demais; não mascarar a pendência nem alterar artificialmente o oráculo para passar.
 5. Distinguir implementação, verificação automática e revisão independente. Reconsultar issue, diff, testes, CI e auditoria no último HEAD antes da resposta final. Declarar entrega integral somente com zero pendências acionáveis não validadas. Reportar total, concluídas, bloqueadas e prova para cada ID.
 6. Se um bloqueio externo real impedir conclusão, registrar motivo preciso e requisito de desbloqueio na PR, sem pedir outra vez para o usuário emitir o mesmo comando, nem prometer trabalho assíncrono.
@@ -79,8 +79,9 @@ Ler somente quando aplicavel:
 - codigo executavel tocado (criar, usar ou substituir simbolo, API, dependencia ou caminho): `references/codebase-grounding-gate.md`;
 - arquivo de codigo novo ou ampliado: `references/code-growth-gate.md`;
 - matriz requisito -> ataque: `references/requirement-attack-matrix.md`;
+- parsers/gates: `references/semantic-mutation-saturation.md`; executar `semantic-mutation-saturation` com pairwise e SHA exato antes do handoff;
 - referencias persistidas entre etapas: `references/reference-liveness-gate.md`;
-- saturacao de familias de risco: `references/risk-saturation-gate.md`;
+- saturacao e readiness da auditoria: `references/risk-saturation-gate.md` e `references/audit-readiness-exhaustive.md`;
 - controles herdados de auditorias anteriores: `references/cumulative-audit-controls.md`;
 - evidencia/revisao/aprovacao que restringe efeitos, operacoes ou recursos posteriores: `references/evidence-effect-scope-gate.md`;
 - catalogo reutilizavel de escapes: `references/audit-escape-pattern-catalog.md`;

@@ -73,6 +73,7 @@ Ler somente quando aplicavel:
 
 - controller: `references/controller-mode.md` e `references/controller-evidence-contract.md`;
 - desenho de controle negativo: `references/adversarial-control-design.md`;
+- detectores, parsers, gates AST e remediacoes recorrentes: `references/semantic-mutation-saturation.md`; aplicar matriz metamorfica/pairwise antes do parecer, sem interromper a colheita barata apos os primeiros blockers;
 - finding contra candidato antes aprovado internamente ou auditorias repetidas: `references/audit-escape-feedback.md`;
 - nova auditoria apos reprovação independente/remediacao: `references/reaudit-readiness.md` e validar `audit-remediation.json`;
 - pacote de entrega antes de gastar auditoria ampla: `references/delivery-saturation-preflight.md`;
@@ -84,7 +85,7 @@ Ler somente quando aplicavel:
 - diff com codigo executavel adicionado, referencia nova ou comportamento substituido: `references/codebase-grounding-audit.md`;
 - resolucao de scripts/artefatos no runtime: `references/runtime-resource-resolution.md`;
 - manifesto `base64-shards-v1`, artefato grande ou handoff transport-sharded: `references/large-artifact-consumption.md`;
-- auditoria `independent` ampla: `references/audit-checklist.md` como roteiro de cobertura (item nao aplicavel exige justificativa);
+- gate de auditoria ampla: `scripts/validate_audit_completeness.py` e `references/audit-completeness-gate.md`;
 - apos primeiro blocker: `references/blocker-harvest.md`;
 - provider, retry/fallback, ferramenta externa ou workflow com credenciais: `references/provider-call-and-secret-audit.md`;
 - `input-parser`: `references/input-parser-audit.md`;

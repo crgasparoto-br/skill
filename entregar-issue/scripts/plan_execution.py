@@ -25,6 +25,7 @@ SIGNAL_KEYWORDS = {
     'migration': ('migration', 'backfill', 'schema change', 'migracao'),
     'concurrency': ('concurrency', 'race', 'lock', 'atomic', 'concorrencia', 'atomico'),
     'parser': ('parser', 'parse', 'decoder', 'deserialize', 'lexer', 'tokenizer', 'decodificador'),
+    'semantic-saturation': ('static verifier', 'static analyzer', 'static checker', 'static gate', 'ast detector', 'verificador estatico', 'gate estatico', 'semantic mutation', 'metamorphic gate', 'rastreador de proveniencia'),
     'retry': ('retry', 'retries', 'retentativa'),
     'fallback': ('fallback',),
     'cancellation': ('cancel', 'cancellation', 'cancelamento'),
