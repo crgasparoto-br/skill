@@ -1,6 +1,6 @@
 """Issue 88: independent signed OAuth enforcement at private broker."""
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import broker_oauth as auth
 from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy

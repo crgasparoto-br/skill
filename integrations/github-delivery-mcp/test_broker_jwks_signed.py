@@ -12,11 +12,9 @@ import unittest
 from unittest.mock import patch
 
 import jwt
-from cryptography.hazmat.primitives.asymmetric import rsa
-
 from broker_oauth import BrokerOAuthDenied, verified_actor
+from cryptography.hazmat.primitives.asymmetric import rsa
 from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
-from mcp_jwt_verifier import MCPTokenRejectedError
 
 ISSUER = "https://auth.solveritconsultoria.com.br/realms/solverit-delivery"
 AUDIENCE = "https://mcp.solveritconsultoria.com.br/mcp"

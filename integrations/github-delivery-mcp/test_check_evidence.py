@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from check_evidence import CheckEvidenceStore, _IMAGES, _CHECKS
+from check_evidence import _CHECKS, _IMAGES, CheckEvidenceStore
 
 
 class EvidenceTests(unittest.TestCase):

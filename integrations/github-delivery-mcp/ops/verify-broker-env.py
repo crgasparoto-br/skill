@@ -7,10 +7,10 @@ read Keycloak tokens, or print the approved OIDC subject.
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import stat
 import sys
 import uuid
+from pathlib import Path
 
 POLICY = Path("/etc/solverit/issue-delivery/broker.env")
 FIXED = {

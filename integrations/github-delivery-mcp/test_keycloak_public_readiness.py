@@ -1,7 +1,7 @@
 """Offline contract tests for the public OIDC readiness diagnostics."""
 import importlib.util
-from pathlib import Path
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parent / "ops" / "check-keycloak-public-readiness.py"

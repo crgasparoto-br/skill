@@ -1,6 +1,5 @@
 """Bounded snapshot export denies unsafe Git trees and verifies pinned HEAD."""
 import hashlib
-import os
 import subprocess
 import tempfile
 import unittest

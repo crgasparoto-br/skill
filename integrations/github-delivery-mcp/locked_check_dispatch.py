@@ -8,8 +8,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from controller_lock import controller_lock
 from check_evidence import CheckEvidenceStore
+from controller_lock import controller_lock
 from verified_check_runner import run_and_record_checks
 
 

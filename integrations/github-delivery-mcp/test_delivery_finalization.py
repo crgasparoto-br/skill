@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from jobs import JobStore
 from delivery_finalization import DeliveryNotVerified, require_verified_delivery
+from jobs import JobStore
 
 
 class FinalizationTests(unittest.TestCase):

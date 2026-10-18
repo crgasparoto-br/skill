@@ -9,13 +9,12 @@ import os
 from urllib.parse import urlsplit
 
 import jwt
-from mcp.server.fastmcp import FastMCP
 from mcp.server.auth.provider import AccessToken
 from mcp.server.auth.settings import AuthSettings
-from pydantic import AnyHttpUrl
-
+from mcp.server.fastmcp import FastMCP
 from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
 from mcp_jwt_verifier import MCPTokenRejectedError
+from pydantic import AnyHttpUrl
 
 
 class KeycloakVerifier:

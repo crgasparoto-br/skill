@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from github_evidence_reader import fetch_and_validate_github
 from app_token_broker import ALLOWED_REPOSITORIES, mint_token
+from github_evidence_reader import fetch_and_validate_github
 from jobs import JobStore
 from pr_binding import PRBindingStore
 

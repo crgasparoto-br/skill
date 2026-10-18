@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 
-from check_evidence import CheckEvidenceStore, _IMAGES, _CHECKS
+from check_evidence import _CHECKS, _IMAGES, CheckEvidenceStore
 from workspace_container_check import inspect_workspace_in_container
 
 

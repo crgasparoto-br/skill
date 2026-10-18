@@ -8,10 +8,8 @@ is implemented here. NOT an Internet-facing MCP endpoint.
 """
 from __future__ import annotations
 
-from contextlib import closing
 import json
 import os
-from pathlib import Path
 import re
 import socket
 import sqlite3
@@ -19,6 +17,8 @@ import stat
 import struct
 import urllib.parse
 import uuid
+from contextlib import closing
+from pathlib import Path
 
 from app_token_broker import ALLOWED_REPOSITORIES, mint_token
 from broker_oauth import build_broker_verifier, verified_actor

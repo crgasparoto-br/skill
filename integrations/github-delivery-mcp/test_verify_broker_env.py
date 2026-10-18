@@ -1,7 +1,7 @@
 """Offline security tests for non-disclosing broker.env verification."""
 import importlib.util
-from pathlib import Path
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parent / "ops" / "verify-broker-env.py"

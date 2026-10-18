@@ -5,7 +5,9 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from github_evidence_reader import (
-    GitHubEvidenceRejected, fetch_and_validate_github, _get_json,
+    GitHubEvidenceRejected,
+    _get_json,
+    fetch_and_validate_github,
 )
 
 

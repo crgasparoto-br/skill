@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import importlib.util
 import os
-from pathlib import Path
 import pwd
 import sys
+from pathlib import Path
 
 CODE_DIR = Path("/opt/solverit/issue-delivery")
 ENV = Path("/etc/solverit/issue-delivery/broker.env")
@@ -68,7 +68,11 @@ def verify_public_jwks_runtime(policy: dict[str, str]) -> None:
     if str(CODE_DIR) not in sys.path:
         sys.path.insert(0, str(CODE_DIR))
     try:
-        from broker_oauth import BrokerOAuthDenied, build_broker_verifier, verified_actor
+        from broker_oauth import (
+            BrokerOAuthDenied,
+            build_broker_verifier,
+            verified_actor,
+        )
         validator = build_broker_verifier(policy)  # HTTPS JWKS, RS256 public keys
         for fake in ("unsigned.payload.fake", "Bearer", "solverit:read"):
             try:

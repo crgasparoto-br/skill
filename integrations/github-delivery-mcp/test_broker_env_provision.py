@@ -1,9 +1,8 @@
 """Offline acceptance for broker.env staging; never modify real /etc."""
 import importlib.util
-import os
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 SCRIPT = (Path(__file__).resolve().parent / "ops" /

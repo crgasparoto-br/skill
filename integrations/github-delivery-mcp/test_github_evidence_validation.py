@@ -3,7 +3,8 @@ import unittest
 from types import SimpleNamespace
 
 from github_evidence_validation import (
-    GitHubEvidenceRejected, require_github_evidence,
+    GitHubEvidenceRejected,
+    require_github_evidence,
 )
 
 

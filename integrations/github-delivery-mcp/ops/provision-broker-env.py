@@ -12,11 +12,11 @@ import argparse
 import getpass
 import grp
 import os
-from pathlib import Path
 import pwd
 import stat
 import sys
 import uuid
+from pathlib import Path
 
 ENV_DIR = Path("/etc/solverit/issue-delivery")
 ENV_PATH = ENV_DIR / "broker.env"

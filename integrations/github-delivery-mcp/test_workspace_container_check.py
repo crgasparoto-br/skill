@@ -31,6 +31,7 @@ class SnapshotTests(unittest.TestCase):
 
     def test_fixed_check_is_really_in_docker_command(self):
         from types import SimpleNamespace
+
         from workspace_container_check import _FIXED_CHECKS
         self.dir.chmod(0o755)
         with patch("workspace_container_check.os.geteuid", return_value=1004), \

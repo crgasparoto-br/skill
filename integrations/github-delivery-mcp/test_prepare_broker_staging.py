@@ -4,7 +4,6 @@ import subprocess
 import unittest
 from pathlib import Path
 
-
 HERE = Path(__file__).resolve().parent
 SCRIPT = HERE / "ops" / "prepare-broker-staging.sh"
 

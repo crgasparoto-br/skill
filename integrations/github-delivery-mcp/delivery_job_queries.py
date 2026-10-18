@@ -9,7 +9,7 @@ import sqlite3
 from dataclasses import asdict
 
 from jobs import Job
-from policy import DeliveryPolicy, PolicyDeniedError, VerifiedPrincipal
+from policy import PolicyDeniedError, VerifiedPrincipal
 
 
 def get_authorized_job_status(
@@ -31,8 +31,8 @@ def get_authorized_job_status(
         raise PolicyDeniedError("invalid job identifier") from exc
     # Read-only SQLite URI: no implicit DB creation, schema mutations or
     # recovery side effects from a public status request.
-    from pathlib import Path
     import urllib.parse
+    from pathlib import Path
     path = Path(database_path).resolve(strict=True)
     uri = "file:" + urllib.parse.quote(str(path)) + "?mode=ro"
     try:

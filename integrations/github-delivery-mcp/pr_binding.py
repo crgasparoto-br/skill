@@ -9,7 +9,7 @@ import re
 import time
 from dataclasses import dataclass
 
-from jobs import JobStore, JobConflictError
+from jobs import JobConflictError, JobStore
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 

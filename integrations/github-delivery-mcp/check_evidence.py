@@ -6,7 +6,6 @@ This module does not authorize execution or publication on its own.
 from __future__ import annotations
 
 import re
-import sqlite3
 import time
 from dataclasses import dataclass
 

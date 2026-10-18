@@ -3,7 +3,6 @@
 import runpy
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 INSTANCE_HOST = "https://" + "auth.tenant-domain.org"
 VALIDATOR = runpy.run_path(

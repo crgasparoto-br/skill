@@ -2,8 +2,8 @@
 import io
 import json
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from unittest.mock import patch
-from contextlib import redirect_stdout, redirect_stderr
 
 import github_app_readonly_smoke as target
 

@@ -1,5 +1,4 @@
 """Trusted ref lookup: repository allowlist, exact develop ref and failures."""
-import io
 import json
 import unittest
 from unittest.mock import Mock

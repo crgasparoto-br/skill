@@ -13,7 +13,12 @@ import socket
 import struct
 import uuid
 
-from protected_broker_server import AUTH_UID, MAX_REQUEST_BYTES, PROTOCOL_VERSION, SOCKET
+from protected_broker_server import (
+    AUTH_UID,
+    MAX_REQUEST_BYTES,
+    PROTOCOL_VERSION,
+    SOCKET,
+)
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 MAX_RESPONSE_BYTES = 4096

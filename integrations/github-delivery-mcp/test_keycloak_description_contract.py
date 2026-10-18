@@ -6,7 +6,6 @@ exist in Keycloak or that their permissions have been validated.
 import unittest
 from pathlib import Path
 
-
 DOC = (Path(__file__).resolve().parent / "deploy" / "keycloak" /
        "DELIVERY_SCOPE_HOMOLOGATION.md")
 

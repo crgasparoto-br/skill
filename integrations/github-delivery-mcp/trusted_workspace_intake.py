@@ -7,7 +7,7 @@ No GitHub credential, token, or resolver is exposed to MCP tool arguments.
 from __future__ import annotations
 
 import re
-from typing import Callable
+from collections.abc import Callable
 
 from delivery_job_submission import enqueue_prepare_workspace
 from policy import PolicyDeniedError, VerifiedPrincipal

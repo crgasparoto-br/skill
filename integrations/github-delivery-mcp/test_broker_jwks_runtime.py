@@ -1,12 +1,12 @@
 """Issue 88: no-service broker runtime security preflight tests."""
 import importlib.util
-from contextlib import redirect_stdout
-from io import StringIO
-from pathlib import Path
 import sys
 import types
 import unittest
-from unittest.mock import Mock, call, patch
+from contextlib import redirect_stdout
+from io import StringIO
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 SCRIPT = Path(__file__).resolve().parent / "ops" / "check-broker-jwks-runtime.py"
 SPEC = importlib.util.spec_from_file_location("issue88_broker_runtime", SCRIPT)

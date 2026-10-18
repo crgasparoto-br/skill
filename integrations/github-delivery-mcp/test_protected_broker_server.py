@@ -4,13 +4,12 @@ Offline only: all GitHub calls and installation-token minting are mocked.
 """
 import hashlib
 import json
-import os
-from pathlib import Path
-import struct
 import stat
-from types import SimpleNamespace
+import struct
 import tempfile
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import protected_broker_server as broker

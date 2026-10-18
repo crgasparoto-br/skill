@@ -1,6 +1,5 @@
 """Local IPC client never trusts Unix socket path or unsourced CI evidence."""
 import json
-import socket
 import struct
 import unittest
 from unittest.mock import patch
