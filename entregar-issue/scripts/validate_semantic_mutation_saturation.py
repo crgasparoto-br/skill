@@ -11,8 +11,8 @@ import re
 import resource
 import shutil
 import subprocess
-import tarfile
 import sys
+import tarfile
 import tempfile
 from pathlib import Path
 
