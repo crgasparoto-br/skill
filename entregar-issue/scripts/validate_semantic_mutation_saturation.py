@@ -11,8 +11,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from specification import extract_candidates, sha256_file
 from risk_inference import requires_semantic_mutation_saturation
+from specification import extract_candidates, sha256_file
 
 AXES = ("origin", "binding", "transformation", "control_flow", "consumption", "boundary")
 EXPECTED = {"violation": "reject", "benign": "accept", "mutation": "reject"}
@@ -161,6 +161,39 @@ def validate_case(case: object, ci: int, tag: str, variants: dict,
     return kind, axes
 
 
+def validate_transform_contrast(transform: dict, root: Path, source: Path,
+                                tag: str, errors: list[str]) -> None:
+    # A constant-output or source-ignoring transformer is not metamorphic evidence.
+    contrast_path = transform.get("contrast_source_path")
+    contrast_digest = transform.get("contrast_source_sha256")
+    check_file(root, contrast_path, contrast_digest, tag + " contrast",
+               errors, json_proof=False)
+    if not isinstance(contrast_path, str) or not contrast_path or Path(contrast_path).is_absolute():
+        return
+    contrast = (root / contrast_path).resolve()
+    if (not contrast.is_relative_to(root) or not contrast.is_file()
+            or contrast == source or contrast.read_bytes() == source.read_bytes()):
+        errors.append(f"{tag}: metamorphic contrast must be a distinct source")
+        return
+    # Keep the *same source pathname* for both inputs: a path-based switch
+    # must not pass as evidence that the transformer actually reads the bytes.
+    with tempfile.TemporaryDirectory(prefix=".semantic-probe-", dir=source.parent) as work:
+        probe = Path(work) / source.name
+        probe.write_bytes(source.read_bytes())
+        first = replay(transform.get("argv"), transform.get("entrypoint"),
+                       transform.get("entrypoint_sha256"), root, probe,
+                       tag + " original probe", errors)
+        probe.write_bytes(contrast.read_bytes())
+        second = replay(transform.get("argv"), transform.get("entrypoint"),
+                        transform.get("entrypoint_sha256"), root, probe,
+                        tag + " contrast probe", errors)
+    if first is None or second is None or first.returncode != 0 or second.returncode != 0:
+        errors.append(f"{tag}: metamorphic contrast could not be transformed")
+    elif first.stdout == second.stdout:
+        errors.append(f"{tag}: metamorphic transform does not depend on source bytes")
+
+
+
 def validate_metamorphic_pair(pair: object, tag: str, by_id: dict,
                               root: Path, errors: list[str]) -> None:
     if not isinstance(pair, dict):
@@ -199,35 +232,7 @@ def validate_metamorphic_pair(pair: object, tag: str, by_id: dict,
     if outcome.returncode != 0 or outcome.stdout != target.read_bytes():
         errors.append(f"{tag}: transformed bytes do not reproduce the sibling")
 
-    # A constant-output or source-ignoring transformer is not metamorphic evidence.
-    contrast_path = transform.get("contrast_source_path")
-    contrast_digest = transform.get("contrast_source_sha256")
-    check_file(root, contrast_path, contrast_digest, tag + " contrast",
-               errors, json_proof=False)
-    if not isinstance(contrast_path, str) or not contrast_path or Path(contrast_path).is_absolute():
-        return
-    contrast = (root / contrast_path).resolve()
-    if (not contrast.is_relative_to(root) or not contrast.is_file()
-            or contrast == source or contrast.read_bytes() == source.read_bytes()):
-        errors.append(f"{tag}: metamorphic contrast must be a distinct source")
-        return
-    # Keep the *same source pathname* for both inputs: a path-based switch
-    # must not pass as evidence that the transformer actually reads the bytes.
-    with tempfile.TemporaryDirectory(prefix=".semantic-probe-", dir=source.parent) as work:
-        probe = Path(work) / source.name
-        probe.write_bytes(source.read_bytes())
-        first = replay(transform.get("argv"), transform.get("entrypoint"),
-                       transform.get("entrypoint_sha256"), root, probe,
-                       tag + " original probe", errors)
-        probe.write_bytes(contrast.read_bytes())
-        second = replay(transform.get("argv"), transform.get("entrypoint"),
-                        transform.get("entrypoint_sha256"), root, probe,
-                        tag + " contrast probe", errors)
-    if first is None or second is None or first.returncode != 0 or second.returncode != 0:
-        errors.append(f"{tag}: metamorphic contrast could not be transformed")
-    elif first.stdout == second.stdout:
-        errors.append(f"{tag}: metamorphic transform does not depend on source bytes")
-
+    validate_transform_contrast(transform, root, source, tag, errors)
 
 def validate_comparisons(tag: str, rule: dict, variants: dict, covered: set,
                          kinds: set, by_id: dict, root: Path, errors: list[str]) -> None:
@@ -297,25 +302,8 @@ def validate_rule(rule: object, ri: int, required: set[tuple[str, str, str]],
     validate_comparisons(tag, rule, variants, covered, kinds, by_id, root, errors)
 
 
-def validate_canonical_closure(closure: dict, snapshot_path: Path,
-                               errors: list[str]) -> None:
-    """Re-derive obligations from the caller's canonical specification, not the matrix."""
-    if closure.get("schema_version") != 3:
-        errors.append("canonical requirement closure schema_version must be 3")
-        return
-    marker = closure.get("specification_snapshot")
-    if (not isinstance(marker, dict) or not snapshot_path.is_file()
-            or marker.get("sha256") != sha256_file(snapshot_path)):
-        errors.append("canonical specification snapshot is missing or hash-divergent")
-        return
-    source_errors: list[str] = []
-    snapshot, _, candidates = extract_candidates(snapshot_path, source_errors)
-    errors.extend(source_errors)
-    if source_errors or not candidates:
-        errors.append("canonical specification has no verifiable candidates")
-        return
-    if closure.get("primary_issue_source_id") != snapshot.get("primary_source_id"):
-        errors.append("canonical primary specification source diverges")
+def validate_closure_obligations(closure: dict, candidates: list[dict],
+                                 errors: list[str]) -> None:
     expected = {c["candidate_key"]: c for c in candidates}
     actual: dict[str, dict] = {}
     obligations = closure.get("obligations")
@@ -341,6 +329,28 @@ def validate_canonical_closure(closure: dict, snapshot_path: Path,
         if obligation.get("disposition") != "not-applicable" and not obligation.get("requirement_ids"):
             errors.append(f"canonical obligation has no bound requirement: {key}")
 
+
+
+def validate_canonical_closure(closure: dict, snapshot_path: Path,
+                               errors: list[str]) -> None:
+    """Re-derive obligations from the caller's canonical specification, not the matrix."""
+    if closure.get("schema_version") != 3:
+        errors.append("canonical requirement closure schema_version must be 3")
+        return
+    marker = closure.get("specification_snapshot")
+    if (not isinstance(marker, dict) or not snapshot_path.is_file()
+            or marker.get("sha256") != sha256_file(snapshot_path)):
+        errors.append("canonical specification snapshot is missing or hash-divergent")
+        return
+    source_errors: list[str] = []
+    snapshot, _, candidates = extract_candidates(snapshot_path, source_errors)
+    errors.extend(source_errors)
+    if source_errors or not candidates:
+        errors.append("canonical specification has no verifiable candidates")
+        return
+    if closure.get("primary_issue_source_id") != snapshot.get("primary_source_id"):
+        errors.append("canonical primary specification source diverges")
+    validate_closure_obligations(closure, candidates, errors)
 
 def validate(manifest: dict, matrix: dict, closure: dict, root: Path,
              head: str, specification_snapshot: Path) -> list[str]:
