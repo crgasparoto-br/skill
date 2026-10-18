@@ -52,7 +52,9 @@ def fixture(tmp_path):
         case = {
             "id": cid, "kind": kind, "expected": observed, "observed": observed,
             "head_sha": HEAD, "status": "passed", "procedure": procedure,
-            "run": {"entrypoint": "gate.py", "argv": [sys.executable, "gate.py", "{source}"]},
+            "run": {"entrypoint": "gate.py",
+                    "entrypoint_sha256": hashlib.sha256(gate.read_bytes()).hexdigest(),
+                    "argv": [sys.executable, "gate.py", "{source}"]},
             "axes": {**dict.fromkeys(AXES, "default"), "transformation": transformation},
             "proof_path": f"proofs/{cid}.json",
             "proof_sha256": write(tmp_path / f"proofs/{cid}.json", proof),
@@ -75,6 +77,7 @@ def fixture(tmp_path):
                 "invariant": "Renaming direct to alias does not change rule violation",
                 "transform": {
                     "entrypoint": "transform.py",
+                    "entrypoint_sha256": hashlib.sha256(transform.read_bytes()).hexdigest(),
                     "argv": [sys.executable, "transform.py", "{source}"],
                 },
             }],
