@@ -124,7 +124,6 @@ def validate_remote_git_anchor(identity: dict, head: str,
 
 
 def validate_sources(inventory: dict, root: Path, git_repo: Path,
-                     trusted_base: str, trusted_head: str,
                      errors: list[str]) -> set[str]:
     sources = indexed(inventory.get("sources"), "sources", errors)
     identity = inventory.get("identity", {})
@@ -298,8 +297,7 @@ def validate(inventory: dict, report: dict, root: Path, head: str, git_repo: Pat
     validate_identity(inventory, report, head, errors)
     validate_remote_git_anchor(inventory.get("identity", {}), head,
                                trusted_base, trusted_head, errors)
-    source_ids = validate_sources(inventory, root, git_repo,
-                                  trusted_base, trusted_head, errors)
+    source_ids = validate_sources(inventory, root, git_repo, errors)
     requirements, surfaces, historical = validate_inventory(inventory, source_ids, errors)
     validate_changed_paths(inventory, report, surfaces, root, errors)
     blockers = validate_findings(report, requirements, surfaces, root, errors)
