@@ -11,6 +11,7 @@ import re
 import resource
 import shutil
 import subprocess
+import tarfile
 import sys
 import tempfile
 from pathlib import Path
@@ -116,6 +117,56 @@ def trusted_script_interpreter(command: str) -> str | None:
     return str(binary)
 
 
+def docker_isolated(expanded: list[str], interpreter: str | None,
+                    root: Path, clean_env: dict[str, str],
+                    limits, label: str, errors: list[str]) -> subprocess.CompletedProcess | None:
+    """Use a scratch container with no network, secrets or host-home mounts."""
+    docker = shutil.which("docker")
+    if not docker:
+        errors.append(f"{label}: isolated replay unavailable (Docker daemon missing)")
+        return None
+    image = "solverit-audit-replay-scratch:local"
+    inspect = subprocess.run([docker, "image", "inspect", image],
+                             capture_output=True, check=False, timeout=20)
+    if inspect.returncode:
+        with tempfile.NamedTemporaryFile(suffix=".tar") as archive:
+            with tarfile.open(fileobj=archive, mode="w"):
+                pass
+            archive.flush()
+            imported = subprocess.run([docker, "import", archive.name, image],
+                                      capture_output=True, check=False, timeout=40)
+        if imported.returncode:
+            errors.append(f"{label}: scratch image preparation failed")
+            return None
+    executable = str(Path(expanded[0]).resolve()) if interpreter else expanded[0]
+    command = [
+        docker, "run", "--rm", "--pull=never", "--network=none",
+        "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges",
+        "--pids-limit=32", "--memory=512m", "--cpus=1",
+        "--user", f"{os.getuid()}:{os.getgid()}",
+        "--workdir", "/workspace",
+        "--tmpfs", "/tmp:rw,nosuid,nodev,size=128m",
+        "--env", "PYTHONNOUSERSITE=1", "--env", "PYTHONDONTWRITEBYTECODE=1",
+        "--env", "HOME=/workspace", "--env", "LANG=C",
+    ]
+    for path in ("/usr", "/opt", "/bin", "/lib", "/lib64"):
+        if Path(path).exists():
+            command.extend(["--volume", f"{path}:{path}:ro"])
+    command.extend(["--volume", f"{root}:/workspace:ro",
+                    "--entrypoint", executable, image, *expanded[1:]])
+    finished = subprocess.run(
+        command, cwd=root, capture_output=True, timeout=25, check=False,
+        env=clean_env, close_fds=True, start_new_session=True, preexec_fn=limits,
+    )
+    if finished.returncode and (
+            b"docker: Error" in finished.stderr
+            or b"Error response from daemon" in finished.stderr
+            or b"permission denied" in finished.stderr.lower()):
+        errors.append(f"{label}: Docker replay isolation failed")
+        return None
+    return finished
+
+
 def execute_isolated(expanded: list[str], interpreter: str | None,
                      root: Path, clean_env: dict[str, str],
                      limits, label: str, errors: list[str]) -> subprocess.CompletedProcess | None:
@@ -125,8 +176,8 @@ def execute_isolated(expanded: list[str], interpreter: str | None,
     # Never silently fall back to a privileged or networked subprocess.
     unshare = shutil.which("unshare")
     if not unshare:
-        errors.append(f"{label}: isolated replay unavailable (unshare missing)")
-        return None
+        return docker_isolated(expanded, interpreter, root, clean_env,
+                               limits, label, errors)
     runtime = Path(expanded[0]).resolve() if interpreter else None
     if interpreter and not any(runtime.is_relative_to(Path(p))
                                for p in ("/usr", "/opt")):
@@ -148,8 +199,8 @@ def execute_isolated(expanded: list[str], interpreter: str | None,
             or b"Operation not permitted" in executed.stderr
             or b"mount:" in executed.stderr
             or b"chroot:" in executed.stderr):
-        errors.append(f"{label}: isolated replay could not establish sandbox")
-        return None
+        return docker_isolated(expanded, interpreter, root, clean_env,
+                               limits, label, errors)
     return executed
 
 
