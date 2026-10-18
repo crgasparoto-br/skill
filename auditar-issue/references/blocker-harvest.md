@@ -48,6 +48,23 @@ do ambiente da auditoria ao candidato.
 
 Para AST/proveniencia, executar o protocolo `semantic-mutation-saturation.md`: depois de encontrar um contraexemplo, derivar no mesmo SHA equivalentes por transformacao e consumo, controles de origem descartada e familias materiais independentes. Uma bateria que parou nos primeiros findings sem registrar superficie `covered|not-executed|not-applicable` e cobertura limitada, nao colheita abrangente. Guardar hash dos probes e distinguir mutantes nao mortos de falsos positivos.
 
+
+
+## Gate de completude auditavel (obrigatorio)
+
+Antes de emitir o parecer, rederivar inventario proprio a partir das fontes
+e comparar os requisitos, superficies e **todos** os achados anteriores
+contra o resultado consolidado por meio de
+\`scripts/validate_audit_completeness.py\`, conforme
+\`references/audit-completeness-gate.md\`. Classificar **todas** as
+superficies baratas mesmo apos blocker; nao limitar a descoberta a uma
+quantidade de findings. Aprovacao exige cobertura comprehensive,
+evidencia independente e gates satisfeitos; reprovacao pode declarar
+limited somente se experimentos caros nao relacionados foram omitidos
+apos blockers comprovados. Falha do gate impede publicar um parecer
+considerado completo; incapacidade exclusiva do runtime nao e defeito
+do candidato.
+
 ## Regra apos primeiro blocker
 
 Quando o primeiro blocker torna o candidato nao aprovavel:
