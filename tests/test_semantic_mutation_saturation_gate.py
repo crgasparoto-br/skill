@@ -106,8 +106,8 @@ def run(tmp_path, manifest, matrix, head=HEAD, preserve_closure=False):
     sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
     from specification import extract_candidates, sha256_file
     specification = tmp_path / "source-spec.md"
-    specification.write_text("# Requirements\\n- Static verifier must reject invalid origin\\n".replace(
-        "\\\\n", "\\n"), encoding="utf-8")
+    specification.write_text("# Requirements\n- Static verifier must reject invalid origin\n",
+                             encoding="utf-8")
     snapshot = tmp_path / "specification-snapshot.json"
     write(snapshot, {"schema_version": 1, "primary_source_id": "SRC-ISSUE",
                      "sources": [{"id": "SRC-ISSUE", "kind": "issue-body",
