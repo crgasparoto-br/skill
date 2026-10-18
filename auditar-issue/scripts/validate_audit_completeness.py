@@ -100,7 +100,11 @@ def validate_sources(inventory: dict, root: Path, errors: list[str]) -> set[str]
     else:
         diff_source = diff_sources[0]
         try:
-            snapshot = read_json(root / str(diff_source["evidence_path"]))
+            relative = Path(str(diff_source["evidence_path"]))
+            safe_path = (root / relative).resolve()
+            if relative.is_absolute() or not safe_path.is_relative_to(root):
+                raise ValueError("Git diff source path escapes workspace")
+            snapshot = read_json(safe_path)
             identity = inventory.get("identity", {})
             paths = snapshot.get("changed_paths")
             if (snapshot.get("base_sha") != identity.get("base_sha")
@@ -257,6 +261,13 @@ def validate(inventory: dict, report: dict, root: Path, head: str) -> list[str]:
     limited_surface = validate_rows("surfaces", surfaces, report.get("surfaces"),
                                     root, errors, allow_skipped_expensive=can_skip)
     validate_history(historical, report.get("previous_findings"), root, errors)
+    current_findings = indexed(report.get("findings"), "report findings", errors)
+    for item in report.get("previous_findings", []):
+        if not isinstance(item, dict) or item.get("disposition") not in {"still-open", "regressed"}:
+            continue
+        linked = current_findings.get(item.get("id"))
+        if not linked or linked.get("disposition") != "blocking":
+            errors.append(f"historical blocker is not in current finding ledger: {item.get('id')}")
     expected_coverage = "limited" if limited_req or limited_surface else "comprehensive"
     if report.get("coverage") != expected_coverage:
         errors.append("coverage declaration does not match executed inventory")

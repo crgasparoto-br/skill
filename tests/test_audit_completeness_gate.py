@@ -117,6 +117,20 @@ def test_previously_reported_finding_cannot_disappear(tmp_path: Path) -> None:
     assert "silently dropped" in run(tmp_path, inv, report).stdout
 
 
+def test_unresolved_historical_blocker_requires_a_current_finding(tmp_path: Path) -> None:
+    inv, report = fixture(tmp_path)
+    report["previous_findings"][0]["disposition"] = "still-open"
+    assert "historical blocker" in run(tmp_path, inv, report).stdout
+
+
+def test_unchanged_evidence_cannot_fake_historical_resolution(tmp_path: Path) -> None:
+    inv, report = fixture(tmp_path)
+    report["previous_findings"][0]["disposition"] = "regressed"
+    report["findings"][0]["id"] = "OLD-1"
+    report["blocking_ids"] = ["OLD-1"]
+    assert run(tmp_path, inv, report).returncode == 0
+
+
 def test_cheap_surface_must_be_checked_after_first_blocker(tmp_path: Path) -> None:
     inv, report = fixture(tmp_path)
     report["surfaces"][0] = {
