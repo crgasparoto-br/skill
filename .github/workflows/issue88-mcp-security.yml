@@ -39,3 +39,11 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python -B -m unittest discover -s . -p 'test_*.py' -v
+      - name: Preview safe Ruff fixes for tracked delivery code
+        if: always()
+        run: |
+          python -m pip install --disable-pip-version-check ruff==0.14.1
+          ruff check --fix --exit-zero --select I,F401,C408,SIM117,UP035,RUF005,PTH108,PTH101,SIM105,SIM108,TC003,B023,B904 integrations/github-delivery-mcp tests/test_skill_genericity_integration_scope.py
+          echo '=== ISSUE88_RUFF_PATCH_BEGIN ==='
+          git diff -- integrations/github-delivery-mcp tests/test_skill_genericity_integration_scope.py
+          echo '=== ISSUE88_RUFF_PATCH_END ==='
