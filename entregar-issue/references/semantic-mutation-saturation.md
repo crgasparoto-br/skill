@@ -49,3 +49,23 @@ Para cada regra, declarar `oracle.accept_exit_codes` e `oracle.reject_exit_codes
 Cada `metamorphic_pairs[]` deve ser objeto com `left`, `right`, `relation_id`, `invariant` (explicacao verificavel do significado preservado) e `transform` com `entrypoint`, `entrypoint_sha256` e `argv` contendo `{source}`. O comando deve produzir exatamente os bytes do caso irmao e ambos os probes devem ser rejeitados pelo gate real. O auditor independente julga a validade do invariante; nao aceitar so dois resultados identicos como prova de equivalencia semantica.
 
 `--requirement-closure` e obrigatorio e leva a closure canonica; o validador exige a superficie `semantic-mutation-saturation` quando a obrigacao descreve parser, lexer, verificador AST/estatico ou rastreador de proveniencia. A geracao de matriz deve manter `semantic_saturation_required: true` para tais superficies; nao desativar sinal para evitar o gate.
+
+## Vinculo canonico e dependencia da transformacao (AUD102)
+
+O validador exige `--specification-snapshot` como input independente da closure
+e reextrai todas as obrigacoes das fontes hasheadas do snapshot. A closure
+deve preservar `candidate_key`, fonte, hash, linha, texto e flags de cada
+candidato e corresponder ao SHA-256 do snapshot. Contrato/HEAD e proveniencia
+das fontes devem ser certificados no handoff: um snapshot fornecido pelo
+proprio candidato nao e por si so fonte externa confiavel.
+
+O replay deve invocar o arquivo cujo SHA-256 foi conferido como primeiro
+argumento (executavel direto) ou como script imediatamente depois do
+interpretador. Flags anteriores ao script e interpretacao de codigo inline
+nao comprovam execucao do entrypoint declarado.
+
+Cada `metamorphic_pairs[].transform` informa tambem
+`contrast_source_path` e `contrast_source_sha256`. Executar a mesma
+transformacao sobre uma fonte contrastante distinta deve produzir bytes
+diferentes. Transformadores constantes ou que ignoram a origem nao sao
+prova metamorfica; a validacao semantica do invariante continua independente.
