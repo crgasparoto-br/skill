@@ -8,6 +8,7 @@ import itertools
 import json
 import re
 import subprocess
+import tempfile
 from pathlib import Path
 
 from specification import extract_candidates, sha256_file
@@ -210,12 +211,21 @@ def validate_metamorphic_pair(pair: object, tag: str, by_id: dict,
             or contrast == source or contrast.read_bytes() == source.read_bytes()):
         errors.append(f"{tag}: metamorphic contrast must be a distinct source")
         return
-    alternative = replay(transform.get("argv"), transform.get("entrypoint"),
-                         transform.get("entrypoint_sha256"), root, contrast,
-                         tag + " contrast replay", errors)
-    if alternative is None or alternative.returncode != 0:
+    # Keep the *same source pathname* for both inputs: a path-based switch
+    # must not pass as evidence that the transformer actually reads the bytes.
+    with tempfile.TemporaryDirectory(prefix=".semantic-probe-", dir=source.parent) as work:
+        probe = Path(work) / source.name
+        probe.write_bytes(source.read_bytes())
+        first = replay(transform.get("argv"), transform.get("entrypoint"),
+                       transform.get("entrypoint_sha256"), root, probe,
+                       tag + " original probe", errors)
+        probe.write_bytes(contrast.read_bytes())
+        second = replay(transform.get("argv"), transform.get("entrypoint"),
+                        transform.get("entrypoint_sha256"), root, probe,
+                        tag + " contrast probe", errors)
+    if first is None or second is None or first.returncode != 0 or second.returncode != 0:
         errors.append(f"{tag}: metamorphic contrast could not be transformed")
-    elif alternative.stdout == outcome.stdout:
+    elif first.stdout == second.stdout:
         errors.append(f"{tag}: metamorphic transform does not depend on source bytes")
 
 
