@@ -263,7 +263,7 @@ def test_replay_rejects_interpreter_wrapper_instead_of_hashed_gate(tmp_path):
 def test_constant_metamorphic_transform_fails_source_dependency(tmp_path):
     manifest, matrix = fixture(tmp_path)
     transformer = tmp_path / "transform.py"
-    transformer.write_text("import sys\\nsys.stdout.write('independent alias source fixture')\\n",
+    transformer.write_text("import sys\nsys.stdout.write('independent alias source fixture')\n",
                            encoding="utf-8")
     manifest["rules"][0]["metamorphic_pairs"][0]["transform"]["entrypoint_sha256"] = (
         hashlib.sha256(transformer.read_bytes()).hexdigest()
@@ -308,9 +308,9 @@ def test_path_only_transform_cannot_fake_byte_sensitivity(tmp_path):
     manifest, matrix = fixture(tmp_path)
     transformer = tmp_path / "transform.py"
     transformer.write_text(
-        "import sys\\nfrom pathlib import Path\\n"
+        "import sys\nfrom pathlib import Path\n"
         "sys.stdout.write('independent alias source fixture' "
-        "if Path(sys.argv[1]).name == 'direct.txt' else 'other')\\n",
+        "if Path(sys.argv[1]).name == 'direct.txt' else 'other')\n",
         encoding="utf-8",
     )
     manifest["rules"][0]["metamorphic_pairs"][0]["transform"]["entrypoint_sha256"] = (
@@ -324,7 +324,7 @@ def test_direct_executable_replay_uses_hashed_path_not_search_path(tmp_path):
     sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
     from validate_semantic_mutation_saturation import replay
     gate = tmp_path / "direct-gate.sh"
-    gate.write_text("#!/bin/sh\\nexit 2\\n", encoding="utf-8")
+    gate.write_text("#!/bin/sh\nexit 2\n", encoding="utf-8")
     gate.chmod(0o755)
     source = tmp_path / "input.txt"
     source.write_text("violation", encoding="utf-8")
