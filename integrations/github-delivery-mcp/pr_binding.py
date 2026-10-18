@@ -25,7 +25,7 @@ class PRBinding:
 class PRBindingStore:
     def __init__(self, database_path: str):
         self.jobs = JobStore(database_path)
-        with self.jobs._connect() as db:
+        with self.jobs.connect() as db:
             db.execute("""CREATE TABLE IF NOT EXISTS job_pr_bindings (
                 job_id TEXT PRIMARY KEY REFERENCES jobs(job_id),
                 pr_number INTEGER NOT NULL,
@@ -43,7 +43,7 @@ class PRBindingStore:
                 or head_sha != job.expected_head or head_sha == job.base_sha
                 or job.branch in ("develop", "main")):
             raise ValueError("invalid PR binding identity")
-        with self.jobs._connect() as db:
+        with self.jobs.connect() as db:
             row = db.execute("SELECT pr_number, head_sha, recorded_at FROM job_pr_bindings WHERE job_id=?",
                              (job_id,)).fetchone()
             if row is not None:
@@ -57,7 +57,7 @@ class PRBindingStore:
 
     def read(self, *, job_id: str, actor: str) -> PRBinding:
         self.jobs.read(job_id, actor)
-        with self.jobs._connect() as db:
+        with self.jobs.connect() as db:
             row = db.execute("SELECT * FROM job_pr_bindings WHERE job_id=?",
                              (job_id,)).fetchone()
         if row is None:

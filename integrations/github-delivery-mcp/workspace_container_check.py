@@ -76,9 +76,9 @@ def inspect_workspace_in_container(snapshot_dir: str, expected_sha: str, *, chec
     try:
         result = subprocess.run(cmd, env=env, capture_output=True, text=True,
                                 timeout=60, check=False)
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as exc:
         cleanup_container(name, env)
-        raise RuntimeError("snapshot inspection timed out")
+        raise RuntimeError("snapshot inspection timed out") from exc
     if result.returncode != 0 or result.stdout.strip() != "SNAPSHOT_OK":
         raise RuntimeError("snapshot inspection failed")
     return True

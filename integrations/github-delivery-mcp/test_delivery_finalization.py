@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from delivery_finalization import DeliveryNotVerified, require_verified_delivery
+from delivery_finalization import DeliveryNotVerifiedError, require_verified_delivery
 from jobs import JobStore
 
 
@@ -22,13 +22,13 @@ class FinalizationTests(unittest.TestCase):
         )
 
     def test_queued_denied(self):
-        with self.assertRaises(DeliveryNotVerified):
+        with self.assertRaises(DeliveryNotVerifiedError):
             require_verified_delivery(self.db, job_id=self.job.job_id, actor="operator")
 
     def test_prepared_still_denied_without_external_evidence(self):
         self.jobs.transition(self.job.job_id, "operator", "queued", "running")
         self.jobs.transition(self.job.job_id, "operator", "running", "prepared")
-        with self.assertRaisesRegex(DeliveryNotVerified, "independent audit"):
+        with self.assertRaisesRegex(DeliveryNotVerifiedError, "independent audit"):
             require_verified_delivery(self.db, job_id=self.job.job_id, actor="operator")
         self.assertEqual(self.jobs.read(self.job.job_id, "operator").status, "prepared")
 

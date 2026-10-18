@@ -34,7 +34,7 @@ class CheckEvidenceStore:
     def __init__(self, database_path: str):
         self.jobs = JobStore(database_path)
         self.path = database_path
-        with self.jobs._connect() as db:
+        with self.jobs.connect() as db:
             db.execute("""CREATE TABLE IF NOT EXISTS check_evidence (
                 job_id TEXT NOT NULL,
                 actor TEXT NOT NULL,
@@ -58,7 +58,7 @@ class CheckEvidenceStore:
                 or base_sha != job.base_sha or type(passed) is not bool
                 or type(timed_out) is not bool or (passed and timed_out)):
             raise ValueError("invalid verification evidence")
-        with self.jobs._connect() as db:
+        with self.jobs.connect() as db:
             if db.execute("SELECT 1 FROM check_evidence WHERE job_id=? AND check_name=?",
                           (job_id, check)).fetchone():
                 raise PermissionError("check evidence is immutable")
@@ -71,7 +71,7 @@ class CheckEvidenceStore:
 
     def list_for_owner(self, job_id: str, actor: str) -> tuple[CheckEvidence, ...]:
         self.jobs.read(job_id, actor)
-        with self.jobs._connect() as db:
+        with self.jobs.connect() as db:
             rows = db.execute("""SELECT check_name, base_sha, image, passed,
                 timed_out, recorded_at FROM check_evidence
                 WHERE job_id=? AND actor=? ORDER BY check_name""",

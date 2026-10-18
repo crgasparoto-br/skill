@@ -122,7 +122,7 @@ def check_signed_tokens(policy: dict[str, str], positive: str,
     """Verify genuine positive and two independently meaningful negatives."""
     if str(SOURCE) not in sys.path:
         sys.path.insert(0, str(SOURCE))
-    from broker_oauth import BrokerOAuthDenied, build_broker_verifier, verified_actor
+    from broker_oauth import BrokerOAuthError, build_broker_verifier, verified_actor
     approved = policy['SOLVERIT_MCP_DELIVERY_SUBJECTS']
     verifier = build_broker_verifier(policy)
     if verified_actor(positive, verifier=verifier) != approved:
@@ -139,7 +139,7 @@ def check_signed_tokens(policy: dict[str, str], positive: str,
                 raise LiveProbeError('subject-negative control is not comparable')
         try:
             verified_actor(token, verifier=verifier)
-        except BrokerOAuthDenied:
+        except BrokerOAuthError:
             continue
         raise LiveProbeError('negative signed token was accepted')
 

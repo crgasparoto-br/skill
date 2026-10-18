@@ -11,7 +11,7 @@ import re
 import urllib.error
 import urllib.request
 
-from github_evidence_validation import GitHubEvidenceRejected, require_github_evidence
+from github_evidence_validation import GitHubEvidenceRejectedError, require_github_evidence
 
 _REPO = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 _SHA = re.compile(r"^[a-f0-9]{40}$")
@@ -19,12 +19,12 @@ _SHA = re.compile(r"^[a-f0-9]{40}$")
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, request, fp, code, msg, headers, newurl):
-        raise GitHubEvidenceRejected("GitHub redirect refused")
+        raise GitHubEvidenceRejectedError("GitHub redirect refused")
 
 
 def _get_json(*, token: str, repo: str, suffix: str) -> dict:
     if not token or not _REPO.fullmatch(repo):
-        raise GitHubEvidenceRejected("missing credential or invalid repository")
+        raise GitHubEvidenceRejectedError("missing credential or invalid repository")
     url = "https://api.github.com/repos/" + repo + suffix
     request = urllib.request.Request(
         url, method="GET",
@@ -37,38 +37,38 @@ def _get_json(*, token: str, repo: str, suffix: str) -> dict:
         with urllib.request.build_opener(_NoRedirect).open(request, timeout=15) as response:
             payload = response.read(1024 * 1024 + 1)
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        raise GitHubEvidenceRejected("GitHub evidence retrieval failed") from exc
+        raise GitHubEvidenceRejectedError("GitHub evidence retrieval failed") from exc
     if len(payload) > 1024 * 1024:
-        raise GitHubEvidenceRejected("GitHub response too large")
+        raise GitHubEvidenceRejectedError("GitHub response too large")
     try:
         result = json.loads(payload)
     except (UnicodeError, ValueError) as exc:
-        raise GitHubEvidenceRejected("invalid GitHub response") from exc
+        raise GitHubEvidenceRejectedError("invalid GitHub response") from exc
     if not isinstance(result, dict):
-        raise GitHubEvidenceRejected("invalid GitHub response type")
+        raise GitHubEvidenceRejectedError("invalid GitHub response type")
     return result
 
 
 def fetch_and_validate_github(*, job, pr_number: int, token: str,
                               required_checks: frozenset[str], binding=None) -> str:
     if type(pr_number) is not int or pr_number <= 0:
-        raise GitHubEvidenceRejected("invalid PR number")
+        raise GitHubEvidenceRejectedError("invalid PR number")
     if binding is None or (binding.job_id != job.job_id
                            or binding.pr_number != pr_number
                            or binding.head_sha != job.expected_head):
-        raise GitHubEvidenceRejected("trusted job-to-PR binding missing or mismatched")
+        raise GitHubEvidenceRejectedError("trusted job-to-PR binding missing or mismatched")
     if not _SHA.fullmatch(job.expected_head):
-        raise GitHubEvidenceRejected("expected HEAD must be immutable SHA")
+        raise GitHubEvidenceRejectedError("expected HEAD must be immutable SHA")
     pr = _get_json(token=token, repo=job.repo, suffix="/pulls/" + str(pr_number))
     if pr.get("number") != pr_number:
-        raise GitHubEvidenceRejected("PR number mismatch")
+        raise GitHubEvidenceRejectedError("PR number mismatch")
     branch = pr.get("head") or {}
     base = pr.get("base") or {}
     head_repo = branch.get("repo") or {}
     base_repo = base.get("repo") or {}
     # Cross-repo PRs are not supported at this trust boundary.
     if head_repo.get("full_name") != job.repo or base_repo.get("full_name") != job.repo:
-        raise GitHubEvidenceRejected("unexpected PR repository")
+        raise GitHubEvidenceRejectedError("unexpected PR repository")
     # Protected broker-owned binding correlates the job and issue to this PR.
     # A PR title/body alone never establishes the association.
     issue_number = job.issue_number
@@ -79,11 +79,11 @@ def fetch_and_validate_github(*, job, pr_number: int, token: str,
             checks["total_count"] > 100 or
             not isinstance(checks.get("check_runs"), list) or
             len(checks["check_runs"]) != checks["total_count"]):
-        raise GitHubEvidenceRejected("check runs pagination incomplete")
+        raise GitHubEvidenceRejectedError("check runs pagination incomplete")
     runs = []
     for item in checks.get("check_runs", []):
         if not isinstance(item, dict):
-            raise GitHubEvidenceRejected("invalid check run")
+            raise GitHubEvidenceRejectedError("invalid check run")
         runs.append({"name": item.get("name"), "head_sha": item.get("head_sha"),
                      "status": item.get("status"), "conclusion": item.get("conclusion"),
                      "source": "github-check-runs"})

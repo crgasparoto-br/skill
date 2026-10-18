@@ -28,9 +28,8 @@ class ReadonlySmokeTests(unittest.TestCase):
         with patch.object(target, "mint_token", return_value="SECRET"), patch.object(
                 target, "_get_json", side_effect=[
                     {"commit": {"sha": "a"*40}},
-                    {"total_count": 2, "check_runs": [{}]}]):
-            with self.assertRaises(RuntimeError):
-                target.smoke()
+                    {"total_count": 2, "check_runs": [{}]}]), self.assertRaises(RuntimeError):
+            target.smoke()
 
     def test_invalid_branch_sha_rejected_before_checks(self):
         with patch.object(target, "mint_token", return_value="SECRET"), patch.object(

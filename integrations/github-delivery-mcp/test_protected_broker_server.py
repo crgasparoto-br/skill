@@ -78,21 +78,21 @@ class ProtectedBrokerTests(unittest.TestCase):
     def test_caller_must_be_exact_authenticated_controller_uid(self):
         with patch.object(broker, "verify_bound_ci") as verify:
             for uid in (0, 997, 1004, 2501):
-                with self.subTest(uid=uid), self.assertRaises(broker.BrokerDenied):
+                with self.subTest(uid=uid), self.assertRaises(broker.BrokerDeniedError):
                     broker.dispatch(self.request, peer_uid=uid, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
 
     def test_cannot_configure_worker_or_authenticator_as_controller(self):
         with patch.object(broker, "verify_bound_ci") as verify:
             for uid in (0, 997, 1004):
-                with self.subTest(uid=uid), self.assertRaises(broker.BrokerDenied):
+                with self.subTest(uid=uid), self.assertRaises(broker.BrokerDeniedError):
                     broker.dispatch(self.request, peer_uid=uid, controller_uid=uid, verifier=self.verifier)
             verify.assert_not_called()
 
     def test_only_fixed_read_operation_is_supported(self):
         with patch.object(broker, "verify_bound_ci") as verify:
             for op in ("mint_token", "publish-pr", "merge", "delete", "write", "open_pull_request"):
-                with self.subTest(op=op), self.assertRaises(broker.BrokerDenied):
+                with self.subTest(op=op), self.assertRaises(broker.BrokerDeniedError):
                     broker.dispatch({**self.request, "operation": op},
                                     peer_uid=2500, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
@@ -101,7 +101,7 @@ class ProtectedBrokerTests(unittest.TestCase):
         with patch.object(broker, "verify_bound_ci") as verify:
             for field in ("actor", "repository", "pr_number", "token",
                           "required_checks", "branch", "server_authorized"):
-                with self.subTest(field=field), self.assertRaises(broker.BrokerDenied):
+                with self.subTest(field=field), self.assertRaises(broker.BrokerDeniedError):
                     broker.dispatch({**self.request, field: "attacker"},
                                     peer_uid=2500, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
@@ -109,10 +109,10 @@ class ProtectedBrokerTests(unittest.TestCase):
     def test_protocol_version_is_mandatory_and_exact(self):
         with patch.object(broker, "verify_bound_ci") as verify:
             for invalid in (None, 0, 2, True, "1"):
-                with self.subTest(version=invalid), self.assertRaises(broker.BrokerDenied):
+                with self.subTest(version=invalid), self.assertRaises(broker.BrokerDeniedError):
                     broker.dispatch({**self.request, "version": invalid},
                                     peer_uid=2500, controller_uid=2500, verifier=self.verifier)
-            with self.assertRaises(broker.BrokerDenied):
+            with self.assertRaises(broker.BrokerDeniedError):
                 broker.dispatch({"operation": "verify_bound_ci", "job_id": self.job.job_id},
                                 peer_uid=2500, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
@@ -120,7 +120,7 @@ class ProtectedBrokerTests(unittest.TestCase):
     def test_rejects_invalid_job_ids(self):
         with patch.object(broker, "verify_bound_ci") as verify:
             for bad in (None, 1, "../tmp", "not-a-uuid", self.job.job_id.upper()):
-                with self.subTest(bad=bad), self.assertRaises(broker.BrokerDenied):
+                with self.subTest(bad=bad), self.assertRaises(broker.BrokerDeniedError):
                     broker.dispatch({**self.request, "job_id": bad},
                                     peer_uid=2500, controller_uid=2500, verifier=self.verifier)
             verify.assert_not_called()
@@ -155,15 +155,15 @@ class ProtectedBrokerTests(unittest.TestCase):
         with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \
                 patch.object(broker, "verified_actor", return_value="different-subject"), \
                 patch.object(broker, "mint_token") as mint:
-            with self.assertRaises(broker.BrokerDenied):
+            with self.assertRaises(broker.BrokerDeniedError):
                 broker.dispatch(self.request, peer_uid=2500, controller_uid=2500,
                                 verifier=self.verifier)
             mint.assert_not_called()
 
     def test_invalid_signed_token_rejected_before_database_read(self):
-        with patch.object(broker, "verified_actor", side_effect=broker.BrokerDenied("invalid")), \
+        with patch.object(broker, "verified_actor", side_effect=broker.BrokerDeniedError("invalid")), \
                 patch.object(broker, "verify_bound_ci") as verify:
-            with self.assertRaises(broker.BrokerDenied):
+            with self.assertRaises(broker.BrokerDeniedError):
                 broker.dispatch(self.request, peer_uid=2500, controller_uid=2500,
                                 verifier=self.verifier)
             verify.assert_not_called()
@@ -173,14 +173,14 @@ class ProtectedBrokerTests(unittest.TestCase):
         self.store.transition(self.job.job_id, "oauth-subject", "running", "prepared")
         with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \
                 patch.object(broker, "mint_token") as mint:
-            with self.assertRaises(broker.BrokerDenied):
+            with self.assertRaises(broker.BrokerDeniedError):
                 broker.verify_bound_ci(self.job.job_id, actor="oauth-subject")
             mint.assert_not_called()
 
     def test_no_prepared_state_does_not_mint_token(self):
         with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \
                 patch.object(broker, "mint_token") as mint:
-            with self.assertRaises(broker.BrokerDenied):
+            with self.assertRaises(broker.BrokerDeniedError):
                 broker.verify_bound_ci(self.job.job_id, actor="oauth-subject")
             mint.assert_not_called()
 
@@ -205,15 +205,13 @@ class ProtectedBrokerTests(unittest.TestCase):
         self.prepare_and_bind()
         with self.read_protected(), patch.object(broker.os, "geteuid", return_value=997), \
                 patch.object(broker, "mint_token", return_value="token"), \
-                patch.object(broker, "fetch_and_validate_github", return_value="c" * 40):
-            with self.assertRaises(broker.BrokerDenied):
-                broker.verify_bound_ci(self.job.job_id, actor="oauth-subject")
+                patch.object(broker, "fetch_and_validate_github", return_value="c" * 40), self.assertRaises(broker.BrokerDeniedError):
+            broker.verify_bound_ci(self.job.job_id, actor="oauth-subject")
 
     def test_store_is_read_only_and_never_created_on_missing_db(self):
         missing = Path(self.temp.name) / "missing.sqlite3"
-        with patch.multiple(broker, DATABASE=missing, _protected_path=lambda *_a, **_k: None):
-            with self.assertRaises(broker.BrokerDenied):
-                broker._read_persisted_binding(self.job.job_id, actor="oauth-subject")
+        with patch.multiple(broker, DATABASE=missing, _protected_path=lambda *_a, **_k: None), self.assertRaises(broker.BrokerDeniedError):
+            broker._read_persisted_binding(self.job.job_id, actor="oauth-subject")  # noqa: SLF001 - regression security test intentionally validates internal access boundary
         self.assertFalse(missing.exists())
 
     def test_protected_store_rejects_group_access_or_other_owner(self):
@@ -221,14 +219,13 @@ class ProtectedBrokerTests(unittest.TestCase):
         for file_uid, permissions in ((0, 0o600), (997, 0o640),
                                       (997, 0o604), (1004, 0o600)):
             with self.subTest(uid=file_uid, mode=oct(permissions)):
-                def fake_stat(path):
+                def fake_stat(path, file_uid=file_uid, permissions=permissions):
                     if Path(path) == protected:
                         return SimpleNamespace(st_uid=file_uid,
                                                st_mode=stat.S_IFREG | permissions)
                     return SimpleNamespace(st_uid=0, st_mode=stat.S_IFDIR | 0o755)
-                with patch.object(broker.os, "lstat", side_effect=fake_stat):
-                    with self.assertRaises(broker.BrokerDenied):
-                        broker._protected_path(protected, is_file=True)
+                with patch.object(broker.os, "lstat", side_effect=fake_stat), self.assertRaises(broker.BrokerDeniedError):
+                    broker._protected_path(protected, is_file=True)  # noqa: SLF001 - regression security test intentionally validates internal access boundary
 
     def test_protected_store_accepts_private_authenticator_owned_file(self):
         protected = Path("/var/lib/solverit/issue-delivery/protected/jobs.sqlite3")
@@ -237,15 +234,15 @@ class ProtectedBrokerTests(unittest.TestCase):
                 return SimpleNamespace(st_uid=997, st_mode=stat.S_IFREG | 0o600)
             return SimpleNamespace(st_uid=0, st_mode=stat.S_IFDIR | 0o755)
         with patch.object(broker.os, "lstat", side_effect=fake_stat):
-            broker._protected_path(protected, is_file=True)
+            broker._protected_path(protected, is_file=True)  # noqa: SLF001 - regression security test intentionally validates internal access boundary
 
     def test_untrusted_temp_storage_rejected_before_sqlite(self):
         # /tmp ancestors are world writable; a temporary DB cannot impersonate
         # root-controlled production state.
         with patch.object(broker, "DATABASE", self.db), \
                 patch.object(broker, "mint_token") as mint:
-            with self.assertRaises(broker.BrokerDenied):
-                broker._read_persisted_binding(self.job.job_id, actor="oauth-subject")
+            with self.assertRaises(broker.BrokerDeniedError):
+                broker._read_persisted_binding(self.job.job_id, actor="oauth-subject")  # noqa: SLF001 - regression security test intentionally validates internal access boundary
             mint.assert_not_called()
 
 

@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import patch
 
 import jwt
-from broker_oauth import BrokerOAuthDenied, verified_actor
+from broker_oauth import BrokerOAuthError, verified_actor
 from cryptography.hazmat.primitives.asymmetric import rsa
 from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
 
@@ -40,8 +40,8 @@ class RealRS256BrokerVerifierTests(unittest.TestCase):
         self.verifier = CachedJWKSVerifier(policy, ttl_seconds=300)
         # Inject a genuine RSA public key derived from an in-memory test
         # private key; NO network calls, NO production trust anchor.
-        self.verifier._keys = {KID: self.key.public_key()}
-        self.verifier._expiry = time.monotonic() + 300
+        self.verifier._keys = {KID: self.key.public_key()}  # noqa: SLF001 - regression security test intentionally validates internal access boundary
+        self.verifier._expiry = time.monotonic() + 300  # noqa: SLF001 - regression security test intentionally validates internal access boundary
 
     def claims(self, **changes):
         now = int(time.time())
@@ -62,7 +62,7 @@ class RealRS256BrokerVerifierTests(unittest.TestCase):
         )
 
     def rejected(self, token):
-        with self.assertRaises(BrokerOAuthDenied):
+        with self.assertRaises(BrokerOAuthError):
             verified_actor(token, verifier=self.verifier)
 
     def test_authorized_rs256_access_token_accepted(self):
@@ -142,11 +142,11 @@ class RealRS256BrokerVerifierTests(unittest.TestCase):
             algorithm="HS256"))
 
     def test_failed_key_refresh_never_silently_accepts_old_key(self):
-        self.verifier._expiry = time.monotonic() - 1
+        self.verifier._expiry = time.monotonic() - 1  # noqa: SLF001 - regression security test intentionally validates internal access boundary
         with patch.object(self.verifier, "refresh",
                           side_effect=OSError("fake JWKS outage")):
             self.rejected(self.signed())
-        self.assertEqual(self.verifier._keys, {})
+        self.assertEqual(self.verifier._keys, {})  # noqa: SLF001 - regression security test intentionally validates internal access boundary
 
     def test_empty_and_malformed_bearers_denied(self):
         for value in (None, "", "x.y.z", "Bearer token", "a" * 9000):

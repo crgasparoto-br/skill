@@ -25,9 +25,8 @@ class WorkspaceDispatchTests(unittest.TestCase):
                          "mirror_path": "/unavailable/mirror", "workspace_root": "/unavailable/jobs"}
 
     def test_worker_only(self):
-        with patch("worker_workspace_dispatch.os.geteuid", return_value=1000):
-            with self.assertRaises(PermissionError):
-                dispatch_queued_workspace(**self.args)
+        with patch("worker_workspace_dispatch.os.geteuid", return_value=1000), self.assertRaises(PermissionError):
+            dispatch_queued_workspace(**self.args)
         self.assertEqual(self.store.read(self.job.job_id, "operator").status, "queued")
 
     def test_success_transitions_and_replay_no_op(self):
@@ -54,14 +53,12 @@ class WorkspaceDispatchTests(unittest.TestCase):
         prepare.assert_called_once()
 
     def test_cross_repository_denied(self):
-        with patch("worker_workspace_dispatch.os.geteuid", return_value=1004):
-            with self.assertRaises(PermissionError):
-                dispatch_queued_workspace(**(self.args | {"repository":"other/unknown"}))
+        with patch("worker_workspace_dispatch.os.geteuid", return_value=1004), self.assertRaises(PermissionError):
+            dispatch_queued_workspace(**(self.args | {"repository":"other/unknown"}))
         self.assertEqual(self.store.read(self.job.job_id, "operator").status, "queued")
 
     def test_missing_db_denied_without_creation(self):
         missing = str(Path(self.temp.name) / "missing.db")
-        with patch("worker_workspace_dispatch.os.geteuid", return_value=1004):
-            with self.assertRaises(FileNotFoundError):
-                dispatch_queued_workspace(**(self.args | {"database_path":missing}))
+        with patch("worker_workspace_dispatch.os.geteuid", return_value=1004), self.assertRaises(FileNotFoundError):
+            dispatch_queued_workspace(**(self.args | {"database_path":missing}))
         self.assertFalse(Path(missing).exists())

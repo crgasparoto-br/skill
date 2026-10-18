@@ -68,21 +68,18 @@ class SnapshotTests(unittest.TestCase):
             self.assertIn("readonly", next(x for x in cmd if x.startswith("type=bind,")))
 
     def test_reject_worker_mismatch(self):
-        with patch("workspace_container_check.os.geteuid", return_value=1000):
-            with self.assertRaises(PermissionError):
-                inspect_workspace_in_container(str(self.dir), self.sha)
+        with patch("workspace_container_check.os.geteuid", return_value=1000), self.assertRaises(PermissionError):
+            inspect_workspace_in_container(str(self.dir), self.sha)
 
     def test_reject_sha(self):
-        with patch("workspace_container_check.os.geteuid", return_value=1004):
-            with self.assertRaises(ValueError):
-                inspect_workspace_in_container(str(self.dir), "develop")
+        with patch("workspace_container_check.os.geteuid", return_value=1004), self.assertRaises(ValueError):
+            inspect_workspace_in_container(str(self.dir), "develop")
 
     def test_reject_symlink(self):
         link = Path(self.tmp.name) / "alias"
         link.symlink_to(self.dir, target_is_directory=True)
-        with patch("workspace_container_check.os.geteuid", return_value=1004):
-            with self.assertRaises(PermissionError):
-                inspect_workspace_in_container(str(link), self.sha)
+        with patch("workspace_container_check.os.geteuid", return_value=1004), self.assertRaises(PermissionError):
+            inspect_workspace_in_container(str(link), self.sha)
 
     def test_reject_worker_private_directory(self):
         self.dir.chmod(0o700)

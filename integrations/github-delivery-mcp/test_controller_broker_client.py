@@ -57,9 +57,8 @@ class ControllerBrokerClientTests(unittest.TestCase):
 
     def test_other_peer_uid_refused_before_request_sends(self):
         sock = SocketStub(json.dumps(GOOD).encode() + b"\n", uid=1004)
-        with patch.object(client.socket, "socket", return_value=sock):
-            with self.assertRaises(client.BrokerClientError):
-                client.check_job_ci(job_id=JOB, mcp_access_token="signed-keycloak-access")
+        with patch.object(client.socket, "socket", return_value=sock), self.assertRaises(client.BrokerClientError):
+            client.check_job_ci(job_id=JOB, mcp_access_token="signed-keycloak-access")
         self.assertEqual(sock.sent, [])
 
     def test_ambiguous_invalid_or_missing_reply_rejected(self):

@@ -29,14 +29,13 @@ class BrokerOAuthTests(unittest.TestCase):
             with self.subTest(field=field):
                 bad = dict(POLICY)
                 bad.pop(field)
-                with self.assertRaises(auth.BrokerOAuthDenied):
+                with self.assertRaises(auth.BrokerOAuthError):
                     auth.build_broker_verifier(bad)
 
     def test_must_be_mcp_resource_and_pinned_issuer_jwks(self):
         for bad_value in ("https://delivery.example.test/anything", "http://delivery.example.test/mcp"):
-            with self.subTest(bad_value=bad_value):
-                with self.assertRaises((ValueError, auth.BrokerOAuthDenied)):
-                    auth.build_broker_verifier({**POLICY, "SOLVERIT_MCP_RESOURCE_URL": bad_value})
+            with self.subTest(bad_value=bad_value), self.assertRaises((ValueError, auth.BrokerOAuthError)):
+                auth.build_broker_verifier({**POLICY, "SOLVERIT_MCP_RESOURCE_URL": bad_value})
         with self.assertRaises(ValueError):
             auth.build_broker_verifier({
                 **POLICY, "SOLVERIT_OAUTH_JWKS_URI": "https://attacker.example.test/keys",
@@ -65,20 +64,18 @@ class BrokerOAuthTests(unittest.TestCase):
         with patch.object(verifier, "verify") as check:
             for token in (None, 1, "", "short", "a b c", "x" * 8193, "x\n" * 100,
                           "\u2603" * 200):
-                with self.subTest(value=repr(token)[:40]):
-                    with self.assertRaises(auth.BrokerOAuthDenied):
-                        auth.verified_actor(token, verifier=verifier)
+                with self.subTest(value=repr(token)[:40]), self.assertRaises(auth.BrokerOAuthError):
+                    auth.verified_actor(token, verifier=verifier)
             check.assert_not_called()
 
     def test_wrong_verifier_type_denied(self):
-        with self.assertRaises(auth.BrokerOAuthDenied):
+        with self.assertRaises(auth.BrokerOAuthError):
             auth.verified_actor("validity-can-be-checked", verifier=Mock())
 
     def test_invalid_signature_subject_expiry_or_scope_fails_closed(self):
         verifier = self.verifier()
-        with patch.object(verifier, "verify", side_effect=MCPTokenRejectedError("bad")):
-            with self.assertRaises(auth.BrokerOAuthDenied):
-                auth.verified_actor("signed-looking-token", verifier=verifier)
+        with patch.object(verifier, "verify", side_effect=MCPTokenRejectedError("bad")), self.assertRaises(auth.BrokerOAuthError):
+            auth.verified_actor("signed-looking-token", verifier=verifier)
 
     def test_verified_subject_returned_only_after_crypto_verification(self):
         verifier = self.verifier()

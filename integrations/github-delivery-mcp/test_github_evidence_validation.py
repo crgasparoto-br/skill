@@ -3,7 +3,7 @@ import unittest
 from types import SimpleNamespace
 
 from github_evidence_validation import (
-    GitHubEvidenceRejected,
+    GitHubEvidenceRejectedError,
     require_github_evidence,
 )
 
@@ -33,37 +33,36 @@ class GitHubEvidenceTests(unittest.TestCase):
         self.assertEqual(self.check(), self.head)
 
     def test_wrong_base_rejected(self):
-        with self.assertRaises(GitHubEvidenceRejected):
+        with self.assertRaises(GitHubEvidenceRejectedError):
             self.check(pull_request=self.pr | {"base_branch": "main"})
 
     def test_wrong_issue_rejected(self):
-        with self.assertRaises(GitHubEvidenceRejected):
+        with self.assertRaises(GitHubEvidenceRejectedError):
             self.check(pull_request=self.pr | {"issue_number": 99})
 
     def test_stale_check_rejected(self):
         runs = [self.runs[0] | {"head_sha": self.base}, self.runs[1]]
-        with self.assertRaises(GitHubEvidenceRejected):
+        with self.assertRaises(GitHubEvidenceRejectedError):
             self.check(check_runs=runs)
 
     def test_pending_or_failed_rejected(self):
         for status, conclusion in (("in_progress", None), ("completed", "failure")):
-            with self.subTest(status=status, conclusion=conclusion):
-                with self.assertRaises(GitHubEvidenceRejected):
-                    self.check(check_runs=[self.runs[0] | {
-                        "status": status, "conclusion": conclusion}, self.runs[1]])
+            with self.subTest(status=status, conclusion=conclusion), self.assertRaises(GitHubEvidenceRejectedError):
+                self.check(check_runs=[self.runs[0] | {
+                    "status": status, "conclusion": conclusion}, self.runs[1]])
 
     def test_missing_check_rejected(self):
-        with self.assertRaises(GitHubEvidenceRejected):
+        with self.assertRaises(GitHubEvidenceRejectedError):
             self.check(check_runs=self.runs[:1])
 
     def test_duplicate_check_rejected(self):
-        with self.assertRaises(GitHubEvidenceRejected):
+        with self.assertRaises(GitHubEvidenceRejectedError):
             self.check(check_runs=[*self.runs, self.runs[0]])
 
     def test_empty_required_check_policy_rejected(self):
-        with self.assertRaises(GitHubEvidenceRejected):
+        with self.assertRaises(GitHubEvidenceRejectedError):
             self.check(required_checks=frozenset())
 
     def test_same_base_and_head_rejected(self):
-        with self.assertRaises(GitHubEvidenceRejected):
+        with self.assertRaises(GitHubEvidenceRejectedError):
             self.check(job=SimpleNamespace(**(vars(self.job) | {"base_sha": self.head})))

@@ -32,10 +32,9 @@ class RecoveryLoopTests(unittest.TestCase):
             recover.assert_not_called()
 
     def test_rejects_unsafe_poll_frequency(self):
-        with patch("controller_loop.os.geteuid", return_value=1004):
-            with self.assertRaises(ValueError):
-                run_recovery_loop(database_path="db", lock_path="lock",
-                                  interval_seconds=0)
+        with patch("controller_loop.os.geteuid", return_value=1004), self.assertRaises(ValueError):
+            run_recovery_loop(database_path="db", lock_path="lock",
+                              interval_seconds=0)
 
     def test_does_not_reconcile_after_stop(self):
         stop = threading.Event()

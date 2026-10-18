@@ -29,9 +29,8 @@ class RunnerTests(unittest.TestCase):
 
     def test_worker_identity_required(self):
         self.prepare()
-        with patch("verified_check_runner.os.geteuid", return_value=1000):
-            with self.assertRaises(PermissionError):
-                run_and_record_checks(**self.args)
+        with patch("verified_check_runner.os.geteuid", return_value=1000), self.assertRaises(PermissionError):
+            run_and_record_checks(**self.args)
 
     def test_success_is_durable_but_not_delivery_success(self):
         self.prepare()
@@ -42,9 +41,8 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(run.call_count, 3)
         self.assertEqual(self.store.jobs.read(self.job_id, "operator").status, "prepared")
         CheckEvidenceStore(self.database).require_checks(self.job_id, "operator")
-        with patch("verified_check_runner.os.geteuid", return_value=1004):
-            with self.assertRaises(PermissionError):
-                run_and_record_checks(**self.args)
+        with patch("verified_check_runner.os.geteuid", return_value=1004), self.assertRaises(PermissionError):
+            run_and_record_checks(**self.args)
 
     def test_failed_check_is_recorded_and_blocks_gate(self):
         self.prepare()
@@ -69,6 +67,5 @@ class RunnerTests(unittest.TestCase):
 
     def test_actor_isolation(self):
         self.prepare()
-        with patch("verified_check_runner.os.geteuid", return_value=1004):
-            with self.assertRaises(KeyError):
-                run_and_record_checks(**(self.args | {"actor": "stranger"}))
+        with patch("verified_check_runner.os.geteuid", return_value=1004), self.assertRaises(KeyError):
+            run_and_record_checks(**(self.args | {"actor": "stranger"}))

@@ -44,9 +44,8 @@ class LockedDispatchTests(unittest.TestCase):
             return SimpleNamespace(st_uid=1004, st_mode=stat.st_mode)
 
         def check(**kwargs):
-            with self.assertRaises(RuntimeError):
-                with controller_lock(self.lock):
-                    pass
+            with self.assertRaises(RuntimeError), controller_lock(self.lock):
+                pass
             return ("verified",)
         with patch("locked_check_dispatch.os.geteuid", return_value=1004), patch(
             "locked_check_dispatch.run_and_record_checks", side_effect=check
@@ -85,6 +84,5 @@ class LockedDispatchTests(unittest.TestCase):
             run.assert_not_called()
 
     def test_non_worker_denied(self):
-        with patch("locked_check_dispatch.os.geteuid", return_value=1000):
-            with self.assertRaises(PermissionError):
-                dispatch_locked_checks(**self.args)
+        with patch("locked_check_dispatch.os.geteuid", return_value=1000), self.assertRaises(PermissionError):
+            dispatch_locked_checks(**self.args)

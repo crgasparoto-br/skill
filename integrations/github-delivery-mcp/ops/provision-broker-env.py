@@ -30,7 +30,7 @@ JWKS = ISSUER + "/protocol/openid-connect/certs"
 APPROVAL = "CONFIRMADO"
 
 
-class ProvisionDenied(ValueError):
+class ProvisionDeniedError(ValueError):
     """Generic failure: never include the sensitive approved subject."""
 
 
@@ -53,35 +53,35 @@ def assert_unchanged_service_identities() -> None:
     }
     for name, uid in expected.items():
         if pwd.getpwnam(name).pw_uid != uid:
-            raise ProvisionDenied("service UID mismatch")
+            raise ProvisionDeniedError("service UID mismatch")
     group = grp.getgrnam("solverit-delivery-control")
     if group.gr_gid != BROKER_GID or set(group.gr_mem) != {
         "solverit-controller", "solverit-github-auth"
     }:
-        raise ProvisionDenied("broker group mismatch")
+        raise ProvisionDeniedError("broker group mismatch")
     app_group = grp.getgrnam("solverit-app-key")
     if ("solverit-controller" in app_group.gr_mem
             or "solverit-worker" in app_group.gr_mem):
-        raise ProvisionDenied("untrusted account in application key group")
+        raise ProvisionDeniedError("untrusted account in application key group")
 
 
 def assert_secure_dir(path: Path) -> None:
     """Root-owned, no symlink or group/world write on path and ancestors."""
     if not path.is_absolute():
-        raise ProvisionDenied("env directory must be absolute")
+        raise ProvisionDeniedError("env directory must be absolute")
     for ancestor in (path, *path.parents):
         try:
             mode = os.lstat(ancestor)
         except OSError as exc:
-            raise ProvisionDenied("environment directory unavailable") from exc
+            raise ProvisionDeniedError("environment directory unavailable") from exc
         if (not stat.S_ISDIR(mode.st_mode) or mode.st_uid != 0
                 or mode.st_mode & 0o022):
-            raise ProvisionDenied("unsafe environment directory")
+            raise ProvisionDeniedError("unsafe environment directory")
 
 
 def make_content(subject: str) -> bytes:
     if not subject_is_canonical(subject):
-        raise ProvisionDenied("approved OIDC subject must be canonical UUID")
+        raise ProvisionDeniedError("approved OIDC subject must be canonical UUID")
     lines = (
         f"SOLVERIT_BROKER_CONTROLLER_UID={CONTROLLER_UID}",
         f"SOLVERIT_BROKER_SOCKET_GID={BROKER_GID}",
@@ -96,7 +96,7 @@ def make_content(subject: str) -> bytes:
 def write_exclusive(path: Path, content: bytes) -> None:
     """Fail closed if a policy file exists, including symlinks."""
     if os.geteuid() != 0:
-        raise ProvisionDenied("root identity required")
+        raise ProvisionDeniedError("root identity required")
     assert_secure_dir(path.parent)
     fd = None
     made = False
@@ -115,8 +115,8 @@ def write_exclusive(path: Path, content: bytes) -> None:
         if fd is not None:
             os.close(fd)
         if made:
-            os.unlink(path)
-        raise ProvisionDenied("broker environment creation refused") from exc
+            path.unlink()
+        raise ProvisionDeniedError("broker environment creation refused") from exc
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -129,11 +129,11 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if os.geteuid() != 0:
-            raise ProvisionDenied("run with sudo -n after review")
+            raise ProvisionDeniedError("run with sudo -n after review")
         assert_unchanged_service_identities()
         assert_secure_dir(ENV_DIR)
         if os.path.lexists(ENV_PATH):
-            raise ProvisionDenied("broker.env already exists; refusing overwrite")
+            raise ProvisionDeniedError("broker.env already exists; refusing overwrite")
         if not args.apply:
             print("PASS: root-owned directory, separate identities, env absent")
             print("PENDING: positive and negative Keycloak Evaluate evidence")
@@ -147,10 +147,10 @@ def main(argv: list[str] | None = None) -> int:
         print("  delivery scope: Optional, not Default")
         print("  existing auditor and read scope unchanged")
         if input("Were BOTH user evaluations checked? Type CONFIRMADO: ").strip() != APPROVAL:
-            raise ProvisionDenied("authorization evaluation not confirmed")
+            raise ProvisionDeniedError("authorization evaluation not confirmed")
         subject = getpass.getpass("Approved Keycloak User ID (sub, hidden): ")
         if not subject_is_canonical(subject):
-            raise ProvisionDenied("invalid immutable Keycloak user ID")
+            raise ProvisionDeniedError("invalid immutable Keycloak user ID")
         # Run validation before any write; no direct keys/tokens go to env.
         content = make_content(subject)
         write_exclusive(ENV_PATH, content)
@@ -158,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
         print("PENDING: signed-token positive/negative tests and security review")
         print("Broker NOT started; no services changed")
         return 0
-    except (KeyError, ProvisionDenied, EOFError, KeyboardInterrupt) as exc:
+    except (KeyError, ProvisionDeniedError, EOFError, KeyboardInterrupt) as exc:
         # No sensitive values are interpolated into error messages.
         print("BLOCKED: " + (str(exc) if not isinstance(exc, KeyError)
                               else "identity unavailable"))

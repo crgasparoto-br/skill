@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from github_evidence_reader import (
-    GitHubEvidenceRejected,
+    GitHubEvidenceRejectedError,
     _get_json,
     fetch_and_validate_github,
 )
@@ -39,18 +39,18 @@ class ReaderTests(unittest.TestCase):
 
     def test_missing_binding_denied_before_network(self):
         with patch("github_evidence_reader._get_json") as get:
-            with self.assertRaisesRegex(GitHubEvidenceRejected, "binding"):
+            with self.assertRaisesRegex(GitHubEvidenceRejectedError, "binding"):
                 fetch_and_validate_github(job=self.job, pr_number=89,
                                           token="token", required_checks=frozenset({"x"}))
             get.assert_not_called()
 
     def test_missing_token_denied_before_network(self):
-        with self.assertRaises(GitHubEvidenceRejected):
+        with self.assertRaises(GitHubEvidenceRejectedError):
             _get_json(token="", repo="crgasparoto-br/skill", suffix="/pulls/89")
 
     def test_invalid_pr_id_denied_before_network(self):
         with patch("github_evidence_reader._get_json") as get:
-            with self.assertRaises(GitHubEvidenceRejected):
+            with self.assertRaises(GitHubEvidenceRejectedError):
                 fetch_and_validate_github(job=self.job, pr_number=True,
                                           token="token", required_checks=frozenset({"x"}),
                                           binding=self.binding)
@@ -60,7 +60,7 @@ class ReaderTests(unittest.TestCase):
         pr = json.loads(json.dumps(self.pr))
         pr["head"]["repo"]["full_name"] = "other/fork"
         with patch("github_evidence_reader._get_json", return_value=pr) as get:
-            with self.assertRaisesRegex(GitHubEvidenceRejected, "repository"):
+            with self.assertRaisesRegex(GitHubEvidenceRejectedError, "repository"):
                 fetch_and_validate_github(job=self.job, pr_number=89,
                                           token="token", required_checks=frozenset({"x"}),
                                           binding=self.binding)
@@ -68,8 +68,7 @@ class ReaderTests(unittest.TestCase):
 
     def test_incomplete_check_pagination_denied(self):
         with patch("github_evidence_reader._get_json",
-                   side_effect=[self.pr, {"total_count": 101, "check_runs": []}]):
-            with self.assertRaisesRegex(GitHubEvidenceRejected, "pagination"):
-                fetch_and_validate_github(job=self.job, pr_number=89,
-                                          token="token", required_checks=frozenset({"x"}),
-                                          binding=self.binding)
+                   side_effect=[self.pr, {"total_count": 101, "check_runs": []}]), self.assertRaisesRegex(GitHubEvidenceRejectedError, "pagination"):
+            fetch_and_validate_github(job=self.job, pr_number=89,
+                                      token="token", required_checks=frozenset({"x"}),
+                                      binding=self.binding)

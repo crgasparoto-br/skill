@@ -10,7 +10,7 @@ from __future__ import annotations
 from jobs import JobStore
 
 
-class DeliveryNotVerified(PermissionError):
+class DeliveryNotVerifiedError(PermissionError):
     pass
 
 
@@ -18,10 +18,10 @@ def require_verified_delivery(database_path: str, *, job_id: str, actor: str) ->
     """Read a persisted job, then deny until trusted external verification exists."""
     job = JobStore(database_path).read(job_id, actor)
     if job.status not in ("prepared", "running"):
-        raise DeliveryNotVerified("job not ready for delivery verification")
+        raise DeliveryNotVerifiedError("job not ready for delivery verification")
     if job.repo == "" or job.issue_number <= 0:
-        raise DeliveryNotVerified("invalid delivery identity")
+        raise DeliveryNotVerifiedError("invalid delivery identity")
     # Intentionally no trusted GitHub/auditor verification adapter yet.
-    raise DeliveryNotVerified(
+    raise DeliveryNotVerifiedError(
         "trusted PR publication, exact-HEAD CI and independent audit not verified"
     )

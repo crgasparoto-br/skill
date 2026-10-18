@@ -24,14 +24,12 @@ class OfflineWorkspaceTests(unittest.TestCase):
         }
 
     def test_refuses_non_worker_identity(self):
-        with patch("offline_workspace.os.geteuid", return_value=1000):
-            with self.assertRaises(PermissionError):
-                prepare_offline_workspace(**self.params)
+        with patch("offline_workspace.os.geteuid", return_value=1000), self.assertRaises(PermissionError):
+            prepare_offline_workspace(**self.params)
 
     def test_refuses_invalid_repo_before_fs(self):
-        with patch("offline_workspace.os.geteuid", return_value=1004):
-            with self.assertRaises(ValueError):
-                prepare_offline_workspace(**(self.params | {"repository": "../unsafe"}))
+        with patch("offline_workspace.os.geteuid", return_value=1004), self.assertRaises(ValueError):
+            prepare_offline_workspace(**(self.params | {"repository": "../unsafe"}))
 
     def test_refuses_dot_path_components(self):
         with patch("offline_workspace.os.geteuid", return_value=1004):
@@ -40,18 +38,15 @@ class OfflineWorkspaceTests(unittest.TestCase):
                     prepare_offline_workspace(**(self.params | {"repository": value}))
 
     def test_refuses_non_commit_sha(self):
-        with patch("offline_workspace.os.geteuid", return_value=1004):
-            with self.assertRaises(ValueError):
-                prepare_offline_workspace(**(self.params | {"expected_sha": "develop"}))
+        with patch("offline_workspace.os.geteuid", return_value=1004), self.assertRaises(ValueError):
+            prepare_offline_workspace(**(self.params | {"expected_sha": "develop"}))
 
     def test_refuses_non_worker_owned_root(self):
-        with patch("offline_workspace.os.geteuid", return_value=1004):
-            with self.assertRaises(PermissionError):
-                prepare_offline_workspace(**self.params)
+        with patch("offline_workspace.os.geteuid", return_value=1004), self.assertRaises(PermissionError):
+            prepare_offline_workspace(**self.params)
 
     def test_refuses_symlink_mirror(self):
         alias = self.root / "alias.git"
         alias.symlink_to(self.mirror, target_is_directory=True)
-        with patch("offline_workspace.os.geteuid", return_value=1004):
-            with self.assertRaises(PermissionError):
-                prepare_offline_workspace(**(self.params | {"mirror_path": str(alias)}))
+        with patch("offline_workspace.os.geteuid", return_value=1004), self.assertRaises(PermissionError):
+            prepare_offline_workspace(**(self.params | {"mirror_path": str(alias)}))

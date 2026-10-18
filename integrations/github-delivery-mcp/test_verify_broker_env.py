@@ -26,7 +26,7 @@ class BrokerEnvReadbackTests(unittest.TestCase):
         for raw in (make_raw() + b"UNEXPECTED=true\n",
                     make_raw() + b"SOLVERIT_BROKER_CONTROLLER_UID=1\n",
                     make_raw().replace(b"SOLVERIT_BROKER_SOCKET_GID=984\n", b"")):
-            with self.subTest(rawlen=len(raw)), self.assertRaises(verify.InvalidBrokerPolicy):
+            with self.subTest(rawlen=len(raw)), self.assertRaises(verify.InvalidBrokerPolicyError):
                 verify.check_contents(raw)
 
     def test_wrong_issuer_audience_or_group_denied(self):
@@ -35,37 +35,35 @@ class BrokerEnvReadbackTests(unittest.TestCase):
             (b"mcp.solveritconsultoria.com.br", b"attacker.invalid"),
             (b"SOLVERIT_BROKER_SOCKET_GID=984", b"SOLVERIT_BROKER_SOCKET_GID=0"),
         ):
-            with self.subTest(original=original), self.assertRaises(verify.InvalidBrokerPolicy):
+            with self.subTest(original=original), self.assertRaises(verify.InvalidBrokerPolicyError):
                 verify.check_contents(make_raw().replace(original, replacement))
 
     def test_bad_subject_and_payload_injection_denied(self):
         for sub in ("admin", "", GOOD_SUB.upper(),
                     "00000000-0000-0000-0000-000000000000",
                     GOOD_SUB + "\nEXTRA=malicious"):
-            with self.subTest(sub=sub), self.assertRaises(verify.InvalidBrokerPolicy):
+            with self.subTest(sub=sub), self.assertRaises(verify.InvalidBrokerPolicyError):
                 verify.check_contents(make_raw(sub))
 
     def test_unsafe_syntax_and_size_denied(self):
         for raw in (b"", b"A=" * 3000, make_raw() + b"\xff",
                     make_raw().rstrip(b"\n"), make_raw().replace(b"=995", b"==995")):
-            with self.subTest(length=len(raw)), self.assertRaises(verify.InvalidBrokerPolicy):
+            with self.subTest(length=len(raw)), self.assertRaises(verify.InvalidBrokerPolicyError):
                 verify.check_contents(raw)
 
     def test_nonroot_refused_without_reading_config(self):
-        with patch.object(verify.os, "geteuid", return_value=1004):
-            with patch.object(verify.os, "lstat") as lstat:
-                with self.assertRaises(verify.InvalidBrokerPolicy):
-                    verify.inspect(Path("/etc/solverit/issue-delivery/broker.env"))
-                lstat.assert_not_called()
+        with patch.object(verify.os, "geteuid", return_value=1004), patch.object(verify.os, "lstat") as lstat:
+            with self.assertRaises(verify.InvalidBrokerPolicyError):
+                verify.inspect(Path("/etc/solverit/issue-delivery/broker.env"))
+            lstat.assert_not_called()
 
     def test_error_output_never_prints_user_identifier(self):
         from contextlib import redirect_stdout
         from io import StringIO
-        for result in (None, verify.InvalidBrokerPolicy("redacted")):
+        for result in (None, verify.InvalidBrokerPolicyError("redacted")):
             output = StringIO()
-            with patch.object(verify, "inspect", side_effect=result):
-                with redirect_stdout(output):
-                    code = verify.main()
+            with patch.object(verify, "inspect", side_effect=result), redirect_stdout(output):
+                code = verify.main()
             self.assertEqual(code, 0 if result is None else 1)
             self.assertNotIn(GOOD_SUB, output.getvalue())
             self.assertNotIn("SOLVERIT_MCP_DELIVERY_SUBJECTS=", output.getvalue())

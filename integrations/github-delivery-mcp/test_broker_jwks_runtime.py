@@ -16,7 +16,7 @@ SPEC.loader.exec_module(runtime)
 
 class BrokerRuntimeTests(unittest.TestCase):
     def test_nonroot_refused_before_policy_is_read(self):
-        with patch.object(runtime.os, "geteuid", return_value=1000), self.assertRaises(runtime.RuntimeDenied):
+        with patch.object(runtime.os, "geteuid", return_value=1000), self.assertRaises(runtime.RuntimeDeniedError):
             runtime.read_trusted_policy()
 
     def test_uid_gid_and_supplementary_groups_restricted(self):
@@ -35,17 +35,16 @@ class BrokerRuntimeTests(unittest.TestCase):
 
     def test_unexpected_authenticator_identity_fails_closed(self):
         account = Mock(pw_uid=1004, pw_gid=986)
-        with patch.object(runtime.pwd, "getpwnam", return_value=account):
-            with self.assertRaises(runtime.RuntimeDenied):
-                runtime.drop_to_authenticator()
+        with patch.object(runtime.pwd, "getpwnam", return_value=account), self.assertRaises(runtime.RuntimeDeniedError):
+            runtime.drop_to_authenticator()
 
     def test_invalid_tokens_must_be_rejected_under_public_jwks(self):
         fake = types.ModuleType("broker_oauth")
-        class Denied(PermissionError):
+        class DeniedError(PermissionError):
             pass
-        fake.BrokerOAuthDenied = Denied
+        fake.BrokerOAuthError = DeniedError
         fake.build_broker_verifier = Mock(return_value=object())
-        fake.verified_actor = Mock(side_effect=Denied("fake rejected"))
+        fake.verified_actor = Mock(side_effect=DeniedError("fake rejected"))
         with patch.dict(sys.modules, {"broker_oauth": fake}):
             runtime.verify_public_jwks_runtime({"nonsecret": "value"})
         self.assertEqual(fake.verified_actor.call_count, 3)
@@ -55,12 +54,11 @@ class BrokerRuntimeTests(unittest.TestCase):
 
     def test_fake_bearer_never_accepted(self):
         fake = types.ModuleType("broker_oauth")
-        fake.BrokerOAuthDenied = PermissionError
+        fake.BrokerOAuthError = PermissionError
         fake.build_broker_verifier = Mock(return_value=object())
         fake.verified_actor = Mock(return_value="unexpected")
-        with patch.dict(sys.modules, {"broker_oauth": fake}):
-            with self.assertRaises(runtime.RuntimeDenied):
-                runtime.verify_public_jwks_runtime({})
+        with patch.dict(sys.modules, {"broker_oauth": fake}), self.assertRaises(runtime.RuntimeDeniedError):
+            runtime.verify_public_jwks_runtime({})
 
     def test_success_does_not_log_subject_or_activate_service(self):
         output = StringIO()
@@ -68,9 +66,8 @@ class BrokerRuntimeTests(unittest.TestCase):
         with (patch.object(runtime, "read_trusted_policy",
                            return_value={"SOLVERIT_MCP_DELIVERY_SUBJECTS": secret}),
               patch.object(runtime, "drop_to_authenticator"),
-              patch.object(runtime, "verify_public_jwks_runtime")):
-            with redirect_stdout(output):
-                self.assertEqual(runtime.main(), 0)
+              patch.object(runtime, "verify_public_jwks_runtime"), redirect_stdout(output)):
+            self.assertEqual(runtime.main(), 0)
         self.assertNotIn(secret, output.getvalue())
         self.assertIn("NO SERVICES STARTED", output.getvalue())
 
@@ -79,9 +76,8 @@ class BrokerRuntimeTests(unittest.TestCase):
         with (patch.object(runtime, "read_trusted_policy", return_value={}),
               patch.object(runtime, "drop_to_authenticator"),
               patch.object(runtime, "verify_public_jwks_runtime",
-                           side_effect=runtime.RuntimeDenied("Keycloak JWKS or negative token check failed"))):
-            with redirect_stdout(output):
-                self.assertEqual(runtime.main(), 1)
+                           side_effect=runtime.RuntimeDeniedError("Keycloak JWKS or negative token check failed")), redirect_stdout(output)):
+            self.assertEqual(runtime.main(), 1)
         self.assertIn("BROKER MUST REMAIN STOPPED", output.getvalue())
 
     def test_script_does_not_modify_service_or_config(self):

@@ -37,25 +37,23 @@ class BrokerEnvProvisionTests(unittest.TestCase):
 
     def test_bad_subject_does_not_create_content(self):
         for bad in ("realmadmin", "abc\nSOLVERIT_BROKER_CONTROLLER_UID=0"):
-            with self.assertRaises(provision.ProvisionDenied):
+            with self.assertRaises(provision.ProvisionDeniedError):
                 provision.make_content(bad)
 
     def test_secure_dir_rejects_world_or_group_writable(self):
         with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaises(provision.ProvisionDenied):
+            with self.assertRaises(provision.ProvisionDeniedError):
                 provision.assert_secure_dir(Path(tmp))
             # Any temporary tree under /tmp is not root-owned by default.
             with patch.object(provision.os, "lstat") as get_stat:
                 get_stat.return_value.st_uid = 0
                 get_stat.return_value.st_mode = 0o40777
-                with self.assertRaises(provision.ProvisionDenied):
+                with self.assertRaises(provision.ProvisionDeniedError):
                     provision.assert_secure_dir(Path(tmp))
 
     def test_non_root_refused_before_write(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with patch.object(provision.os, "geteuid", return_value=1000):
-                with self.assertRaises(provision.ProvisionDenied):
-                    provision.write_exclusive(Path(tmp) / "broker.env", b"x")
+        with tempfile.TemporaryDirectory() as tmp, patch.object(provision.os, "geteuid", return_value=1000), self.assertRaises(provision.ProvisionDeniedError):
+            provision.write_exclusive(Path(tmp) / "broker.env", b"x")
 
     def test_atomic_create_no_overwrite_and_no_symlink_follow(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -66,7 +64,7 @@ class BrokerEnvProvisionTests(unittest.TestCase):
                 provision.write_exclusive(path, provision.make_content(GOOD_SUB))
                 self.assertEqual(path.stat().st_mode & 0o777, 0o600)
                 self.assertIn(GOOD_SUB.encode(), path.read_bytes())
-                with self.assertRaises(provision.ProvisionDenied):
+                with self.assertRaises(provision.ProvisionDeniedError):
                     provision.write_exclusive(path, b"different")
             self.assertEqual(path.read_bytes(), provision.make_content(GOOD_SUB))
 

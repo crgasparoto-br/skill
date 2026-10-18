@@ -46,7 +46,7 @@ class Job:
 class JobStore:
     def __init__(self, database_path: str):
         self.path = database_path
-        with self._connect() as db:
+        with self.connect() as db:
             db.execute("""CREATE TABLE IF NOT EXISTS jobs (
               job_id TEXT PRIMARY KEY, actor TEXT NOT NULL,
               idempotency_key TEXT NOT NULL, payload_hash TEXT NOT NULL,
@@ -58,7 +58,7 @@ class JobStore:
               UNIQUE(actor, idempotency_key)
             )""")
 
-    def _connect(self):
+    def connect(self):
         db = sqlite3.connect(self.path, timeout=10, isolation_level="IMMEDIATE")
         db.row_factory = sqlite3.Row
         return db
@@ -75,7 +75,7 @@ class JobStore:
         if issue_number <= 0:
             raise ValueError("invalid issue number")
         now = int(time.time())
-        with self._connect() as db:
+        with self.connect() as db:
             existing = db.execute(
                 "SELECT * FROM jobs WHERE actor=? AND idempotency_key=?",
                 (actor, key),
@@ -95,7 +95,7 @@ class JobStore:
             ).fetchone())
 
     def read(self, job_id: str, actor: str) -> Job:
-        with self._connect() as db:
+        with self.connect() as db:
             row = db.execute(
                 "SELECT * FROM jobs WHERE job_id=? AND actor=?", (job_id, actor)
             ).fetchone()
@@ -107,7 +107,7 @@ class JobStore:
         if target == "succeeded":
             # Real deliveries must wait for verified publication, CI and audit.
             # Only the established fixed offline smoke is allowed to finish.
-            with self._connect() as db:
+            with self.connect() as db:
                 row = db.execute(
                     "SELECT actor, repo, issue_number, branch, base_sha, expected_head FROM jobs WHERE job_id=? AND actor=?",
                     (job_id, actor),
@@ -122,7 +122,7 @@ class JobStore:
                 )
         if target not in TRANSITIONS.get(expected, ()):
             raise JobConflictError("invalid job transition")
-        with self._connect() as db:
+        with self.connect() as db:
             updated = db.execute(
                 """UPDATE jobs SET status=?, updated_at=?
                 WHERE job_id=? AND actor=? AND status=?""",
@@ -136,7 +136,7 @@ class JobStore:
 
     def recover_interrupted(self) -> int:
         """Mark interrupted running jobs timed_out; keep prepared jobs pending."""
-        with self._connect() as db:
+        with self.connect() as db:
             cursor = db.execute(
                 "UPDATE jobs SET status='timed_out', updated_at=? WHERE status='running'",
                 (int(time.time()),),

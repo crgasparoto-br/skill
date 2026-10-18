@@ -23,19 +23,19 @@ AUTH_UID = 997
 AUTH_GID = 986
 
 
-class RuntimeDenied(RuntimeError):
+class RuntimeDeniedError(RuntimeError):
     pass
 
 
 def read_trusted_policy() -> dict[str, str]:
     """Validate with root-only policy reader and parse exact controlled keys."""
     if os.geteuid() != 0:
-        raise RuntimeDenied("root required to attest protected config")
+        raise RuntimeDeniedError("root required to attest protected config")
     spec = importlib.util.spec_from_file_location(
         "issue88_independent_policy", Path(__file__).with_name("verify-broker-env.py")
     )
     if spec is None or spec.loader is None:
-        raise RuntimeDenied("independent policy verifier missing")
+        raise RuntimeDeniedError("independent policy verifier missing")
     verifier = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(verifier)
     try:
@@ -45,22 +45,22 @@ def read_trusted_policy() -> dict[str, str]:
         verifier.check_contents(data)
         return dict(line.split("=", 1) for line in data.decode("ascii").splitlines())
     except (OSError, ValueError) as exc:
-        raise RuntimeDenied("protected config invalid") from exc
+        raise RuntimeDeniedError("protected config invalid") from exc
 
 
 def drop_to_authenticator() -> None:
     try:
         identity = pwd.getpwnam(AUTH_USER)
         if identity.pw_uid != AUTH_UID or identity.pw_gid != AUTH_GID:
-            raise RuntimeDenied("unexpected authenticator identity")
+            raise RuntimeDeniedError("unexpected authenticator identity")
         os.setgroups([])
         os.setgid(AUTH_GID)
         os.setuid(AUTH_UID)
     except OSError as exc:
-        raise RuntimeDenied("unable to drop privileges") from exc
+        raise RuntimeDeniedError("unable to drop privileges") from exc
     if (os.geteuid() != AUTH_UID or os.getegid() != AUTH_GID
             or os.getgroups()):
-        raise RuntimeDenied("broker identity not established")
+        raise RuntimeDeniedError("broker identity not established")
 
 
 def verify_public_jwks_runtime(policy: dict[str, str]) -> None:
@@ -69,7 +69,7 @@ def verify_public_jwks_runtime(policy: dict[str, str]) -> None:
         sys.path.insert(0, str(CODE_DIR))
     try:
         from broker_oauth import (
-            BrokerOAuthDenied,
+            BrokerOAuthError,
             build_broker_verifier,
             verified_actor,
         )
@@ -77,14 +77,14 @@ def verify_public_jwks_runtime(policy: dict[str, str]) -> None:
         for fake in ("unsigned.payload.fake", "Bearer", "solverit:read"):
             try:
                 verified_actor(fake, verifier=validator)
-            except BrokerOAuthDenied:
+            except BrokerOAuthError:
                 continue
-            raise RuntimeDenied("invalid bearer unexpectedly accepted")
-    except RuntimeDenied:
+            raise RuntimeDeniedError("invalid bearer unexpectedly accepted")
+    except RuntimeDeniedError:
         raise
     except Exception as exc:
         # No JWTs, JWT claims, OIDC subjects or network responses in errors.
-        raise RuntimeDenied("Keycloak JWKS or negative token check failed") from exc
+        raise RuntimeDeniedError("Keycloak JWKS or negative token check failed") from exc
 
 
 def main() -> int:
@@ -101,7 +101,7 @@ def main() -> int:
         print("PENDING: broker Unix-socket and controller security integration")
         print("NO SERVICES STARTED; NO CONFIGURATION MODIFIED")
         return 0
-    except (RuntimeDenied, ValueError, OSError) as exc:
+    except (RuntimeDeniedError, ValueError, OSError) as exc:
         print("BLOCKED: " + str(exc))
         print("BROKER MUST REMAIN STOPPED")
         return 1

@@ -35,7 +35,7 @@ class LiveAccessPreflightTests(unittest.TestCase):
         fake = types.ModuleType('broker_oauth')
         class DeniedError(Exception):
             pass
-        fake.BrokerOAuthDenied = DeniedError
+        fake.BrokerOAuthError = DeniedError
         fake.build_broker_verifier = Mock(return_value='verifier')
         fake.verified_actor = Mock(side_effect=['approved-uuid', DeniedError(), DeniedError()])
         with (patch.dict(sys.modules, {'broker_oauth': fake}),
@@ -47,7 +47,7 @@ class LiveAccessPreflightTests(unittest.TestCase):
 
     def test_wrong_scope_negative_not_accepted_as_evidence(self):
         fake = types.ModuleType('broker_oauth')
-        fake.BrokerOAuthDenied = PermissionError
+        fake.BrokerOAuthError = PermissionError
         fake.build_broker_verifier = Mock(return_value='verifier')
         fake.verified_actor = Mock(return_value='approved-uuid')
         with (patch.dict(sys.modules, {'broker_oauth': fake}),
@@ -58,7 +58,7 @@ class LiveAccessPreflightTests(unittest.TestCase):
 
     def test_wrong_subject_negative_not_accepted_as_evidence(self):
         fake = types.ModuleType('broker_oauth')
-        fake.BrokerOAuthDenied = PermissionError
+        fake.BrokerOAuthError = PermissionError
         fake.build_broker_verifier = Mock(return_value='verifier')
         fake.verified_actor = Mock(side_effect=['approved-uuid', PermissionError()])
         with (patch.dict(sys.modules, {'broker_oauth': fake}),
@@ -70,7 +70,7 @@ class LiveAccessPreflightTests(unittest.TestCase):
 
     def test_negative_broker_acceptance_is_fatal(self):
         fake = types.ModuleType('broker_oauth')
-        fake.BrokerOAuthDenied = PermissionError
+        fake.BrokerOAuthError = PermissionError
         fake.build_broker_verifier = Mock(return_value='verifier')
         fake.verified_actor = Mock(return_value='approved-uuid')
         with (patch.dict(sys.modules, {'broker_oauth': fake}),
