@@ -196,7 +196,10 @@ def test_registry_activates_semantic_gate_for_parser_and_static_checker():
 
 def test_fake_successful_transcript_cannot_replace_replay(tmp_path):
     manifest, matrix = fixture(tmp_path)
-    (tmp_path / "gate.py").write_text("import sys\nsys.exit(0)\n", encoding="utf-8")
+    gate = tmp_path / "gate.py"
+    gate.write_text("import sys\nsys.exit(0)\n", encoding="utf-8")
+    for case in manifest["rules"][0]["cases"]:
+        case["run"]["entrypoint_sha256"] = hashlib.sha256(gate.read_bytes()).hexdigest()
     output = run(tmp_path, manifest, matrix)
     assert output.returncode == 2
     assert "actual gate replay" in output.stdout or "disagrees" in output.stdout
@@ -204,7 +207,9 @@ def test_fake_successful_transcript_cannot_replace_replay(tmp_path):
 
 def test_metamorphic_transform_must_reproduce_real_source(tmp_path):
     manifest, matrix = fixture(tmp_path)
-    (tmp_path / "transform.py").write_text("print('unrelated')\n", encoding="utf-8")
+    transformer = tmp_path / "transform.py"
+    transformer.write_text("print('unrelated')\n", encoding="utf-8")
+    manifest["rules"][0]["metamorphic_pairs"][0]["transform"]["entrypoint_sha256"] = hashlib.sha256(transformer.read_bytes()).hexdigest()
     output = run(tmp_path, manifest, matrix)
     assert output.returncode == 2
     assert "transformed bytes do not reproduce" in output.stdout
