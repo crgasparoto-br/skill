@@ -88,6 +88,25 @@ def sha256(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def validate_replay(case: dict, proof: dict, root: Path, verdict: str,
+                    oracle: dict, label: str, errors: list[str]) -> None:
+    source = (root / str(case.get("source_path") or "")).resolve()
+    run = case.get("run")
+    if not isinstance(run, dict):
+        errors.append(f"{label}: executable replay is mandatory")
+        return
+    executed = replay(run.get("argv"), run.get("entrypoint"), root, source, label, errors)
+    if executed is None:
+        return
+    expected_codes = oracle.get(verdict + "_exit_codes", [])
+    if executed.returncode not in expected_codes:
+        errors.append(f"{label}: observed gate behavior disagrees with {verdict}")
+    if (proof.get("exit_code") != executed.returncode
+            or proof.get("stdout_sha256") != sha256(executed.stdout)
+            or proof.get("stderr_sha256") != sha256(executed.stderr)):
+        errors.append(f"{label}: proof transcript does not match actual gate replay")
+
+
 def validate_case(case: object, ci: int, tag: str, variants: dict,
                   root: Path, head: str, ids: set[str], oracle: dict,
                   errors: list[str]) -> tuple[str, dict] | None:
@@ -126,23 +145,44 @@ def validate_case(case: object, ci: int, tag: str, variants: dict,
         errors.append(f"{label}: proof contradicts recorded result")
     check_file(root, case.get("source_path"), case.get("source_sha256"),
                label, errors, json_proof=False)
-    source = (root / str(case.get("source_path") or "")).resolve()
-    run = case.get("run")
-    if not isinstance(run, dict):
-        errors.append(f"{label}: executable replay is mandatory")
-    else:
-        executed = replay(run.get("argv"), run.get("entrypoint"), root, source, label, errors)
-        if executed is not None:
-            expected_codes = oracle.get(verdict + "_exit_codes", [])
-            if (not isinstance(expected_codes, list) or not expected_codes
-                    or any(type(n) is not int for n in expected_codes)
-                    or executed.returncode not in expected_codes):
-                errors.append(f"{label}: observed gate behavior disagrees with {verdict}")
-            if (proof.get("exit_code") != executed.returncode
-                    or proof.get("stdout_sha256") != sha256(executed.stdout)
-                    or proof.get("stderr_sha256") != sha256(executed.stderr)):
-                errors.append(f"{label}: proof transcript does not match actual gate replay")
+    validate_replay(case, proof, root, verdict, oracle, label, errors)
     return kind, axes
+
+
+def validate_metamorphic_pair(pair: object, tag: str, by_id: dict,
+                              root: Path, errors: list[str]) -> None:
+    if not isinstance(pair, dict):
+        errors.append(f"{tag}: metamorphic pair needs explicit transformation contract")
+        return
+    left, right = by_id.get(pair.get("left")), by_id.get(pair.get("right"))
+    if not left or not right or left is right:
+        errors.append(f"{tag}: invalid metamorphic pair")
+        return
+    if (left.get("axes") == right.get("axes")
+            or any(c.get("observed") != "reject"
+                   or c.get("kind") not in ("violation", "mutation")
+                   for c in (left, right))):
+        errors.append(f"{tag}: metamorphic pair not discriminating")
+    invariant = pair.get("invariant")
+    if (not isinstance(invariant, str) or len(invariant.strip()) < 25
+            or not isinstance(pair.get("relation_id"), str)
+            or not pair["relation_id"].strip()):
+        errors.append(f"{tag}: missing semantic invariant or relation identity")
+    transform = pair.get("transform")
+    if not isinstance(transform, dict):
+        errors.append(f"{tag}: metamorphic transformation replay required")
+        return
+    source = (root / str(left.get("source_path") or "")).resolve()
+    target = (root / str(right.get("source_path") or "")).resolve()
+    if (not source.is_relative_to(root) or not target.is_relative_to(root)
+            or not source.is_file() or not target.is_file()
+            or source == target):
+        errors.append(f"{tag}: invalid metamorphic source and target")
+        return
+    outcome = replay(transform.get("argv"), transform.get("entrypoint"),
+                     root, source, tag + " metamorphic", errors)
+    if outcome is not None and (outcome.returncode != 0 or outcome.stdout != target.read_bytes()):
+        errors.append(f"{tag}: transformed bytes do not reproduce the sibling")
 
 
 def validate_comparisons(tag: str, rule: dict, variants: dict, covered: set,
@@ -157,42 +197,9 @@ def validate_comparisons(tag: str, rule: dict, variants: dict, covered: set,
     pairs = rule.get("metamorphic_pairs")
     if not isinstance(pairs, list) or not pairs:
         errors.append(f"{tag}: metamorphic pairs missing")
-    else:
-        for pair in pairs:
-            if not isinstance(pair, dict):
-                errors.append(f"{tag}: metamorphic pair needs explicit transformation contract")
-                continue
-            left, right = by_id.get(pair.get("left")), by_id.get(pair.get("right"))
-            if not left or not right or left is right:
-                errors.append(f"{tag}: invalid metamorphic pair")
-                continue
-            if (left.get("axes") == right.get("axes")
-                    or any(c.get("observed") != "reject"
-                           or c.get("kind") not in ("violation", "mutation")
-                           for c in (left, right))):
-                errors.append(f"{tag}: metamorphic pair not discriminating")
-            invariant = pair.get("invariant")
-            if (not isinstance(invariant, str) or len(invariant.strip()) < 25
-                    or not isinstance(pair.get("relation_id"), str)
-                    or not pair["relation_id"].strip()):
-                errors.append(f"{tag}: missing semantic invariant or relation identity")
-            transform = pair.get("transform")
-            if not isinstance(transform, dict):
-                errors.append(f"{tag}: metamorphic transformation replay required")
-                continue
-            source = (root / str(left.get("source_path") or "")).resolve()
-            target = (root / str(right.get("source_path") or "")).resolve()
-            if (not source.is_relative_to(root) or not target.is_relative_to(root)
-                    or not source.is_file() or not target.is_file()
-                    or source == target):
-                errors.append(f"{tag}: invalid metamorphic source and target")
-                continue
-            outcome = replay(transform.get("argv"), transform.get("entrypoint"),
-                             root, source, tag + " metamorphic", errors)
-            if outcome is None:
-                continue
-            if outcome.returncode != 0 or outcome.stdout != target.read_bytes():
-                errors.append(f"{tag}: transformed bytes do not reproduce the sibling")
+        return
+    for pair in pairs:
+        validate_metamorphic_pair(pair, tag, by_id, root, errors)
 
 
 def validate_rule(rule: object, ri: int, required: set[tuple[str, str, str]],
