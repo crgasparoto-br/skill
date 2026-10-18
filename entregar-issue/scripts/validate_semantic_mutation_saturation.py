@@ -6,8 +6,11 @@ import argparse
 import hashlib
 import itertools
 import json
+import os
 import re
+import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -59,19 +62,45 @@ def check_file(root: Path, relative: object, digest: object, label: str,
 
 
 
+def trusted_script_interpreter(command: str) -> str | None:
+    """Only known language runtimes may execute a hashed script as argv[1].
+
+    The resolved executable must be the running Python interpreter or an
+    installed system runtime, not a same-named wrapper from the workspace.
+    """
+    resolved = shutil.which(command)
+    if not resolved:
+        return None
+    binary = Path(resolved).resolve()
+    if binary == Path(sys.executable).resolve():
+        return str(binary)
+    permitted = {"sh", "bash", "node", "ruby", "perl", "php", "pwsh"}
+    if binary.name not in permitted and not re.fullmatch(r"python3?(?:\\.\\d+)?", binary.name):
+        return None
+    if not any(binary.is_relative_to(Path(directory))
+               for directory in ("/usr/bin", "/usr/local/bin", "/bin")):
+        return None
+    return str(binary)
+
+
 def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
            root: Path, source: Path,
            label: str, errors: list[str]) -> subprocess.CompletedProcess | None:
     """Run the actual gate/transformer without a shell in a bounded workspace."""
     if (not isinstance(argv, list) or len(argv) < 2
             or any(not isinstance(a, str) or not a for a in argv)
-            or "{source}" not in argv):
-        errors.append(f"{label}: replay argv must include executable and {{source}}")
+            or argv.count("{source}") != 1):
+        errors.append(f"{label}: replay argv must include executable and {{source}} exactly once")
         return None
     if (not isinstance(entrypoint, str) or not entrypoint
-            or Path(entrypoint).is_absolute()
-            or not (argv[0] == entrypoint or argv[1] == entrypoint)):
-        errors.append(f"{label}: replay must invoke declared gate entrypoint directly")
+            or Path(entrypoint).is_absolute()):
+        errors.append(f"{label}: replay entrypoint must be a workspace-relative file")
+        return None
+    direct = argv[0] == entrypoint
+    interpreted = len(argv) >= 3 and argv[1] == entrypoint and not direct
+    interpreter = trusted_script_interpreter(argv[0]) if interpreted else None
+    if not direct and not interpreter:
+        errors.append(f"{label}: replay must invoke declared gate entrypoint directly or via a trusted interpreter")
         return None
     if not source.is_relative_to(root) or not source.is_file():
         errors.append(f"{label}: replay source escapes workspace or is missing")
@@ -86,9 +115,11 @@ def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
         errors.append(f"{label}: replay gate hash missing or stale")
         return None
     expanded = [str(source) if item == "{source}" else item for item in argv]
-    # Execute the exact hashed file, never an unrelated same-name binary in PATH.
-    entrypoint_index = 0 if argv[0] == entrypoint else 1
+    # The checked file is executed, never bypassed by /bin/true, -c or a PATH shim.
+    entrypoint_index = 0 if direct else 1
     expanded[entrypoint_index] = str(gate)
+    if interpreter:
+        expanded[0] = interpreter
     try:
         return subprocess.run(
             expanded, cwd=root, capture_output=True, timeout=20, check=False,
@@ -178,21 +209,32 @@ def validate_transform_contrast(transform: dict, root: Path, source: Path,
             or contrast == source or contrast.read_bytes() == source.read_bytes()):
         errors.append(f"{tag}: metamorphic contrast must be a distinct source")
         return
-    # Keep the *same source pathname* for both inputs: a path-based switch
-    # must not pass as evidence that the transformer actually reads the bytes.
+    original_bytes, contrast_bytes = source.read_bytes(), contrast.read_bytes()
+    if len(original_bytes) != len(contrast_bytes):
+        errors.append(f"{tag}: metamorphic contrast must preserve byte length to exclude size-only transforms")
+        return
+    # ABA on the same inode/path, stable size and mtime. A metadata-only,
+    # time-dependent or path-dependent transform cannot establish this proof.
+    stable_ns = 1_700_000_000_000_000_000
     with tempfile.TemporaryDirectory(prefix=".semantic-probe-", dir=source.parent) as work:
         probe = Path(work) / source.name
-        probe.write_bytes(source.read_bytes())
-        first = replay(transform.get("argv"), transform.get("entrypoint"),
-                       transform.get("entrypoint_sha256"), root, probe,
-                       tag + " original probe", errors)
-        probe.write_bytes(contrast.read_bytes())
-        second = replay(transform.get("argv"), transform.get("entrypoint"),
-                        transform.get("entrypoint_sha256"), root, probe,
-                        tag + " contrast probe", errors)
-    if first is None or second is None or first.returncode != 0 or second.returncode != 0:
+        outcomes = []
+        for step, payload in (("original", original_bytes),
+                              ("contrast", contrast_bytes),
+                              ("restored", original_bytes)):
+            probe.write_bytes(payload)
+            os.utime(probe, ns=(stable_ns, stable_ns))
+            outcomes.append(replay(transform.get("argv"), transform.get("entrypoint"),
+                                   transform.get("entrypoint_sha256"), root, probe,
+                                   tag + " " + step + " probe", errors))
+    if (any(result is None for result in outcomes)
+            or any(result.returncode != 0 for result in outcomes if result is not None)):
         errors.append(f"{tag}: metamorphic contrast could not be transformed")
-    elif first.stdout == second.stdout:
+    elif (outcomes[0].stdout != outcomes[2].stdout
+          or outcomes[0].stderr != outcomes[2].stderr
+          or outcomes[0].returncode != outcomes[2].returncode):
+        errors.append(f"{tag}: metamorphic transform depends on changing metadata or non-deterministic state")
+    elif outcomes[0].stdout == outcomes[1].stdout:
         errors.append(f"{tag}: metamorphic transform does not depend on source bytes")
 
 

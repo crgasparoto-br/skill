@@ -53,6 +53,7 @@ python entregar-issue/scripts/validate_semantic_mutation_saturation.py \
   --manifest .audit/entregar-issue/semantic-mutation-saturation.json \
   --attack-matrix .audit/entregar-issue/requirement-attack-matrix.json \
   --requirement-closure .audit/entregar-issue/requirement-closure.json \
+  --specification-snapshot .audit/entregar-issue/specification-snapshot.json \
   --head-sha "$MATERIAL_HEAD_SHA" --root .
 ```
 
@@ -85,3 +86,20 @@ Cada `metamorphic_pairs[].transform` informa tambem
 contrastante, usando exatamente o mesmo pathname temporario e alterando
 apenas os bytes, deve produzir resultados diferentes. Transformadores constantes ou que ignoram a origem nao sao
 prova metamorfica; a validacao semantica do invariante continua independente.
+
+
+## Replay e contraste anti-metadados (AUD102)
+
+No modo de script, o primeiro argumento deve resolver para um interpretador
+confiavel instalado no sistema (ou o proprio Python em execucao), seguido
+**imediatamente** do entrypoint cujo SHA-256 foi conferido. Em modo direto,
+o arquivo hasheado deve ser o proprio executavel. Um comando arbitario como
+`/bin/true`, `/bin/false`, um wrapper via PATH ou codigo inline nao substitui
+o gate efetivo. A origem exige somente uma ocorrencia de `{source}`.
+
+O `contrast_source_path` tem bytes diferentes e **o mesmo comprimento** da
+origem. O verificador executa A-B-A no mesmo pathname/inode, com mesmo tamanho
+e mtime estabilizado: A repetido deve ser identico, B deve produzir outros
+bytes. Comportamentos baseados em horario, tamanho, pathname ou outros
+metadados nao constituem prova de sensibilidade ao conteudo. A invariancia
+semantica continua sujeita a auditoria independente.

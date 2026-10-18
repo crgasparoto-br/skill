@@ -48,7 +48,7 @@ def fixture(tmp_path):
         }
         src = tmp_path / f"probes/{cid}.txt"
         src.parent.mkdir(parents=True, exist_ok=True)
-        src.write_text(f"independent {cid} source fixture", encoding="utf-8")
+        src.write_text(f"independent {'xxsafe' if cid == 'safe' else cid} source fixture", encoding="utf-8")
         case = {
             "id": cid, "kind": kind, "expected": observed, "observed": observed,
             "head_sha": HEAD, "status": "passed", "procedure": procedure,
@@ -334,3 +334,76 @@ def test_direct_executable_replay_uses_hashed_path_not_search_path(tmp_path):
                     tmp_path, source, "direct", errors)
     assert not errors
     assert result is not None and result.returncode == 2
+
+
+def test_interpreter_must_not_be_unrelated_success_or_failure_command(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    for executable in ("/bin/true", "/bin/false"):
+        manifest["rules"][0]["cases"][0]["run"]["argv"] = [
+            executable, "gate.py", "{source}",
+        ]
+        result = run(tmp_path, manifest, matrix)
+        assert result.returncode == 2
+        assert "trusted interpreter" in result.stdout
+
+
+def test_metadata_only_transform_is_rejected_even_with_distinct_outputs(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    transformer = tmp_path / "transform.py"
+    transformer.write_text(
+        "import sys\nfrom pathlib import Path\n"
+        "p = Path(sys.argv[1])\n"
+        "print(p.stat().st_ctime_ns)\n",
+        encoding="utf-8",
+    )
+    manifest["rules"][0]["metamorphic_pairs"][0]["transform"]["entrypoint_sha256"] = (
+        hashlib.sha256(transformer.read_bytes()).hexdigest()
+    )
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert ("changing metadata" in result.stdout
+            or "does not depend on source bytes" in result.stdout)
+
+
+def test_size_only_transform_cannot_pass_contrast(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    transformer = tmp_path / "transform.py"
+    transformer.write_text(
+        "import sys\nfrom pathlib import Path\n"
+        "print(Path(sys.argv[1]).stat().st_size)\n",
+        encoding="utf-8",
+    )
+    manifest["rules"][0]["metamorphic_pairs"][0]["transform"]["entrypoint_sha256"] = (
+        hashlib.sha256(transformer.read_bytes()).hexdigest()
+    )
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "does not depend on source bytes" in result.stdout
+
+
+def test_metamorphic_contrast_requires_same_length(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    contrast = tmp_path / "probes/safe.txt"
+    contrast.write_text("short safe", encoding="utf-8")
+    transform = manifest["rules"][0]["metamorphic_pairs"][0]["transform"]
+    transform["contrast_source_sha256"] = hashlib.sha256(contrast.read_bytes()).hexdigest()
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "must preserve byte length" in result.stdout
+
+
+def test_documented_gate_command_has_all_required_cli_arguments():
+    import argparse
+    import ast
+    doc = (ROOT / "entregar-issue/references/semantic-mutation-saturation.md").read_text(encoding="utf-8")
+    command = doc.split("python entregar-issue/scripts/validate_semantic_mutation_saturation.py", 1)[1].split("```", 1)[0]
+    options = set(__import__("re").findall(r"--[a-z][a-z-]+", command))
+    tree = ast.parse(SCRIPT.read_text(encoding="utf-8"))
+    cli_options = {
+        a.value
+        for node in ast.walk(tree) if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute) and node.func.attr == "add_argument"
+        for a in node.args[:1] if isinstance(a, ast.Constant)
+        and isinstance(a.value, str) and a.value.startswith("--")
+    }
+    assert cli_options <= options
