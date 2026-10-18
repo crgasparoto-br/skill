@@ -21,7 +21,10 @@ Aplicar tambem `references/audit-checklist.md` como roteiro de descoberta.
    obrigatorios). Registrar o procedimento de descoberta e os changed paths.
    Resolver historico por comentarios/reviews autenticados, mesmo que o autor
    diga que todos os findings foram resolvidos.
-4. Executar primeiro controles baratos de **todas** as familias materiais
+4. Conferir cada changed path com o snapshot JSON imutavel do GitHub (base_sha,
+   head_sha, changed_paths[]), e registrar changed_path_reviews[] com evidencia
+   e ligacao as superficies; arquivo inteiro nao pode desaparecer da auditoria.
+5. Executar primeiro controles baratos de **todas** as familias materiais
    independentes. Um blocker limita apenas experimentos caros nao relacionados.
    Variar casos irmaos, transformacoes, escopos e controles benignos aplicaveis.
 5. Marcar cada requisito/superficie como covered, not-applicable (com evidencia
@@ -46,7 +49,7 @@ Materializar os dois arquivos separados fora do repositorio sob auditoria:
   requirements[] (id, source_id), surfaces[] (id, requirement_id, risk_family,
   boundary, cost=cheap|expensive), previous_findings[] (id, source_url).
 - report.json: mesma identity/schema_version, verdict, coverage
-  comprehensive|limited, discovery_closed=true, requirements[] e surfaces[]
+  comprehensive|limited, discovery_closed=true, changed_path_reviews[], requirements[] e surfaces[]
   (id, status, reason quando exigida, evidence_path/evidence_sha256 quando
   executado ou declarado inaplicavel), previous_findings[] (id, disposition,
   reason, evidence), findings[] (id, requirement_id, surface_id, root_cause,

@@ -94,6 +94,23 @@ def validate_sources(inventory: dict, root: Path, errors: list[str]) -> set[str]
         check_evidence(root, source, f"source {key}", errors)
     if not {"specification", "diff"} <= kinds:
         errors.append("independent specification and diff sources required")
+    diff_sources = [s for s in sources.values() if s.get("kind") == "diff"]
+    if len(diff_sources) != 1:
+        errors.append("exactly one immutable Git diff inventory is required")
+    else:
+        diff_source = diff_sources[0]
+        try:
+            snapshot = read_json(root / str(diff_source["evidence_path"]))
+            identity = inventory.get("identity", {})
+            paths = snapshot.get("changed_paths")
+            if (snapshot.get("base_sha") != identity.get("base_sha")
+                    or snapshot.get("head_sha") != identity.get("head_sha")
+                    or not isinstance(paths, list) or not paths
+                    or len(set(paths)) != len(paths)
+                    or set(paths) != set(inventory.get("discovery", {}).get("changed_paths", []))):
+                errors.append("changed-path inventory diverges from immutable Git diff")
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            errors.append(f"invalid immutable Git diff inventory: {exc}")
     discovery = inventory.get("discovery")
     if not isinstance(discovery, dict):
         errors.append("independent discovery is required")
@@ -157,6 +174,29 @@ def validate_rows(name: str, expected: dict, actual: object, root: Path,
     return limited
 
 
+def validate_changed_paths(inventory: dict, report: dict, surfaces: dict,
+                           root: Path, errors: list[str]) -> None:
+    discovery = inventory.get("discovery", {})
+    expected = set(discovery.get("changed_paths", []))
+    reviews = indexed(report.get("changed_path_reviews"), "report changed_path_reviews", errors)
+    for key in sorted(expected - reviews.keys()):
+        errors.append(f"changed path not reviewed: {key}")
+    for key in sorted(reviews.keys() - expected):
+        errors.append(f"unexpected reviewed path: {key}")
+    for key, row in reviews.items():
+        status = row.get("status")
+        if status not in {"covered", "not-applicable"}:
+            errors.append(f"changed path {key}: requires completed review")
+            continue
+        if status == "not-applicable":
+            require_reason(row, f"changed path {key}", errors)
+        else:
+            affected = row.get("surface_ids")
+            if not isinstance(affected, list) or not affected or set(affected) - surfaces.keys():
+                errors.append(f"changed path {key}: known surfaces not linked")
+        check_evidence(root, row, f"changed path {key}", errors)
+
+
 def validate_history(expected: dict, reported: object, root: Path,
                      errors: list[str]) -> None:
     rows = indexed(reported, "report previous_findings", errors)
@@ -202,6 +242,7 @@ def validate(inventory: dict, report: dict, root: Path, head: str) -> list[str]:
     validate_identity(inventory, report, head, errors)
     source_ids = validate_sources(inventory, root, errors)
     requirements, surfaces, historical = validate_inventory(inventory, source_ids, errors)
+    validate_changed_paths(inventory, report, surfaces, root, errors)
     blockers = validate_findings(report, requirements, surfaces, root, errors)
     verdict = report.get("verdict")
     if verdict not in VERDICTS:

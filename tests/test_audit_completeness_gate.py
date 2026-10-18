@@ -41,9 +41,19 @@ def fixture(root: Path) -> tuple[dict, dict]:
         ],
         "previous_findings": [{"id": "OLD-1", "source_url": "https://example.org/review/1"}],
     }
+    diff_path = root / "proofs" / "diff.txt"
+    diff_path.write_text(
+        json.dumps({"base_sha": BASE, "head_sha": HEAD,
+                    "changed_paths": ["src/detector.py"]}), encoding="utf-8"
+    )
+    inventory["sources"][1]["evidence_sha256"] = hashlib.sha256(diff_path.read_bytes()).hexdigest()
     report = {
         "schema_version": 1, "identity": identity, "verdict": "REPROVADA",
         "coverage": "comprehensive", "discovery_closed": True,
+        "changed_path_reviews": [
+            {"id": "src/detector.py", "status": "covered", "surface_ids": ["S1"],
+             **proof(root, "changed-path.txt")},
+        ],
         "requirements": [{"id": "REQ-1", "status": "covered", **proof(root, "req.txt")}],
         "surfaces": [
             {"id": "S1", "status": "covered", **proof(root, "s1.txt")},
@@ -86,6 +96,19 @@ def test_missing_requirement_or_surface_is_blocked(tmp_path: Path) -> None:
     _, report = fixture(tmp_path)
     report["surfaces"].pop()
     assert "omitted S2" in run(tmp_path, inv, report).stdout
+
+
+
+def test_changed_path_is_not_silently_skipped(tmp_path: Path) -> None:
+    inventory, report = fixture(tmp_path)
+    report["changed_path_reviews"] = []
+    assert "changed path not reviewed" in run(tmp_path, inventory, report).stdout
+
+
+def test_diff_source_is_not_self_reported(tmp_path: Path) -> None:
+    inventory, report = fixture(tmp_path)
+    inventory["discovery"]["changed_paths"] = ["other/path.py"]
+    assert "diverges from immutable Git diff" in run(tmp_path, inventory, report).stdout
 
 
 def test_previously_reported_finding_cannot_disappear(tmp_path: Path) -> None:
