@@ -13,6 +13,7 @@
 - [Replay e contraste anti-metadados](#replay-e-contraste-anti-metadados-aud102)
 - [Vinculo de checker e higiene do replay](#vinculo-de-checker-e-higiene-do-replay)
 - [Sandbox obrigatorio para o replay](#sandbox-obrigatorio-para-o-replay)
+- [Isolamento e escopo anti-escape](#isolamento-e-escopo-anti-escape)
 
 ## Quando ler este arquivo
 
