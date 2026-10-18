@@ -104,3 +104,21 @@ e mtime estabilizado: A repetido deve ser identico, B deve produzir outros
 bytes. Comportamentos baseados em horario, tamanho, pathname ou outros
 metadados nao constituem prova de sensibilidade ao conteudo. A invariancia
 semantica continua sujeita a auditoria independente.
+
+## Vinculo de checker e higiene do replay
+
+A especificacao canonica deve fornecer `canonical_gate_bindings[]`,
+com `requirement_id`, `risk_family`, `surface`, `entrypoint` e
+`entrypoint_sha256`. Os cases devem usar a identidade de checker vinculada,
+nunca uma identidade escolhida isoladamente pelo proprio caso.
+O handoff certificado e a auditoria independente precisam provar que o
+binding pertence ao checker efetivamente usado em producao; a coincidencia
+de hashes declarados pelo candidato nao comprova essa procedencia.
+
+Uma exclusao semantica `not-applicable` exige `scope_decision` com fonte
+canonica hasheada e locator existente nessa fonte.
+
+O replay limpa variaveis herdadas do processo, desabilita core dumps e
+impoe limites a CPU, descritores e arquivos. Isso NAO e sandbox de rede
+ou filesystem: a execucao deve ocorrer em worker isolado, sem secrets e
+sem rede. Sem essa garantia operacional, nao declarar handoff READY.

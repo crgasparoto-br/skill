@@ -109,10 +109,16 @@ def run(tmp_path, manifest, matrix, head=HEAD, preserve_closure=False):
     specification.write_text("# Requirements\n- Static verifier must reject invalid origin\n",
                              encoding="utf-8")
     snapshot = tmp_path / "specification-snapshot.json"
+    gate = tmp_path / "gate.py"
     write(snapshot, {"schema_version": 1, "primary_source_id": "SRC-ISSUE",
                      "sources": [{"id": "SRC-ISSUE", "kind": "issue-body",
                                   "textual": True, "path": "source-spec.md",
-                                  "sha256": sha256_file(specification)}]})
+                                  "sha256": sha256_file(specification)}],
+                     "canonical_gate_bindings": [{
+                         "requirement_id": "R-1", "risk_family": "structural-contract",
+                         "surface": "semantic-mutation-saturation",
+                         "entrypoint": "gate.py", "entrypoint_sha256": sha256_file(gate),
+                     }]})
     errors = []
     _, _, candidates = extract_candidates(snapshot, errors)
     assert not errors
@@ -406,3 +412,51 @@ def test_documented_gate_command_has_all_required_cli_arguments():
         and isinstance(a.value, str) and a.value.startswith("--")
     }
     assert cli_options <= options
+
+def test_substitute_checker_cannot_replace_canonical_gate(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    assert run(tmp_path, manifest, matrix).returncode == 0
+    for case in manifest["rules"][0]["cases"]:
+        case["run"]["entrypoint"] = "transform.py"
+        case["run"]["entrypoint_sha256"] = hashlib.sha256(
+            (tmp_path / "transform.py").read_bytes()
+        ).hexdigest()
+        case["run"]["argv"] = [sys.executable, "transform.py", "{source}"]
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "differs from canonical binding" in result.stdout
+
+
+def test_semantic_not_applicable_needs_canonical_source_decision(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    assert run(tmp_path, manifest, matrix).returncode == 0
+    closure_path = tmp_path / "closure.json"
+    closure = json.loads(closure_path.read_text(encoding="utf-8"))
+    closure["obligations"][0]["disposition"] = "not-applicable"
+    closure["obligations"][0]["requirement_ids"] = []
+    write(closure_path, closure)
+    result = run(tmp_path, manifest, matrix, preserve_closure=True)
+    assert result.returncode == 2
+    assert "requires canonical scope decision" in result.stdout
+
+
+def test_replay_scrubs_caller_credentials(tmp_path, monkeypatch):
+    script = tmp_path / "environment-gate.py"
+    script.write_text(
+        "import os,sys\n"
+        "sys.exit(2 if 'GITHUB_TOKEN' not in os.environ else 0)\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_TOKEN", "should-not-reach-child")
+    source = tmp_path / "source.txt"
+    source.write_text("probe", encoding="utf-8")
+    sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
+    from validate_semantic_mutation_saturation import replay
+    errors = []
+    outcome = replay(
+        [sys.executable, "environment-gate.py", "{source}"],
+        "environment-gate.py", hashlib.sha256(script.read_bytes()).hexdigest(),
+        tmp_path, source, "environment-probe", errors,
+    )
+    assert not errors
+    assert outcome is not None and outcome.returncode == 2

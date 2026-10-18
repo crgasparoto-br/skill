@@ -8,6 +8,7 @@ import itertools
 import json
 import os
 import re
+import resource
 import shutil
 import subprocess
 import sys
@@ -121,8 +122,17 @@ def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
     if interpreter:
         expanded[0] = interpreter
     try:
+        # Candidate-controlled scripts must not inherit caller credentials.
+        clean_env = {"PATH": os.defpath, "HOME": str(root), "LANG": "C",
+                     "LC_ALL": "C", "PYTHONNOUSERSITE": "1"}
+        def limits() -> None:
+            resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+            resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
+            resource.setrlimit(resource.RLIMIT_FSIZE, (2 * 1024 * 1024, 2 * 1024 * 1024))
+            resource.setrlimit(resource.RLIMIT_CPU, (15, 15))
         return subprocess.run(
             expanded, cwd=root, capture_output=True, timeout=20, check=False,
+            env=clean_env, close_fds=True, start_new_session=True, preexec_fn=limits,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         errors.append(f"{label}: replay could not execute: {exc}")
@@ -396,11 +406,81 @@ def validate_canonical_closure(closure: dict, snapshot_path: Path,
     if closure.get("primary_issue_source_id") != snapshot.get("primary_source_id"):
         errors.append("canonical primary specification source diverges")
     validate_closure_obligations(closure, candidates, errors)
+    # A self-assigned not-applicable disposition cannot remove a critical gate.
+    for obligation in closure.get("obligations") or []:
+        if (not isinstance(obligation, dict)
+                or obligation.get("disposition") != "not-applicable"
+                or not requires_semantic_mutation_saturation(
+                    [str(obligation.get("source_text") or "")])):
+            continue
+        decision = obligation.get("scope_decision")
+        source = sources.get(decision.get("decision_source_id")) if isinstance(decision, dict) else None
+        locator = str(decision.get("decision_locator") or "") if isinstance(decision, dict) else ""
+        if (not isinstance(source, dict)
+                or decision.get("decision_source_sha256") != source.get("sha256")
+                or len(locator.strip()) < 4):
+            errors.append("semantic not-applicable requires canonical scope decision")
+            continue
+        source_path = Path(str(source.get("resolved_path") or ""))
+        try:
+            has_locator = locator in source_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            has_locator = False
+        if not has_locator:
+            errors.append("semantic not-applicable scope locator missing from canonical source")
+
+
+def validate_checker_bindings(snapshot_path: Path, manifest: dict,
+                              root: Path, errors: list[str]) -> None:
+    """Require replay gate identity from the canonical specification, not each case."""
+    try:
+        snapshot = load(snapshot_path)
+    except (OSError, ValueError, TypeError) as exc:
+        errors.append(f"unreadable checker binding source: {exc}")
+        return
+    bindings = snapshot.get("canonical_gate_bindings")
+    if not isinstance(bindings, list):
+        errors.append("canonical specification checker bindings are required")
+        return
+    keyed: dict[tuple, dict] = {}
+    for binding in bindings:
+        if not isinstance(binding, dict):
+            errors.append("invalid canonical checker binding")
+            continue
+        key = tuple(binding.get(k) for k in ("requirement_id", "risk_family", "surface"))
+        if any(not isinstance(v, str) or not v for v in key) or key in keyed:
+            errors.append("duplicate or incomplete canonical checker binding")
+            continue
+        keyed[key] = binding
+    for rule in manifest.get("rules") or []:
+        if not isinstance(rule, dict):
+            continue
+        key = tuple(rule.get(k) for k in ("requirement_id", "risk_family", "surface"))
+        binding = keyed.get(key)
+        if binding is None:
+            errors.append(f"missing canonical checker binding: {key}")
+            continue
+        gate_path, gate_hash = binding.get("entrypoint"), binding.get("entrypoint_sha256")
+        if (not isinstance(gate_path, str) or not gate_path
+                or Path(gate_path).is_absolute()
+                or not isinstance(gate_hash, str) or not DIGEST.fullmatch(gate_hash)):
+            errors.append(f"invalid canonical checker identity: {key}")
+            continue
+        check_file(root, gate_path, gate_hash, f"canonical checker {key}",
+                   errors, json_proof=False)
+        for case in rule.get("cases") or []:
+            run = case.get("run") if isinstance(case, dict) else None
+            if (not isinstance(run, dict)
+                    or run.get("entrypoint") != gate_path
+                    or run.get("entrypoint_sha256") != gate_hash):
+                errors.append(f"actual replay checker differs from canonical binding: {key}")
+
 
 def validate(manifest: dict, matrix: dict, closure: dict, root: Path,
              head: str, specification_snapshot: Path) -> list[str]:
     errors: list[str] = []
     validate_canonical_closure(closure, specification_snapshot, errors)
+    validate_checker_bindings(specification_snapshot, manifest, root, errors)
     if not SHA.fullmatch(head):
         errors.append("invalid current head SHA")
     if manifest.get("schema_version") != 1 or manifest.get("head_sha") != head:
