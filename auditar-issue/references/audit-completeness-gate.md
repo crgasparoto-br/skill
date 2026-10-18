@@ -6,6 +6,8 @@ Impedir auditorias em series nas quais cada rodada publica dois ou tres achados
 enquanto outros blockers baratos do mesmo HEAD permanecem nao examinados.
 O contrato vale para qualquer repositorio, dominio, linguagem ou interface de teste.
 
+Aplicar tambem `references/audit-checklist.md` como roteiro de descoberta.
+
 ## Ordem obrigatoria
 
 1. Resolver identidade remota e transporte da auditoria; concluir os preflights

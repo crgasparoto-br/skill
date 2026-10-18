@@ -79,7 +79,7 @@ Ler somente quando aplicavel:
 - codigo executavel tocado (criar, usar ou substituir simbolo, API, dependencia ou caminho): `references/codebase-grounding-gate.md`;
 - arquivo de codigo novo ou ampliado: `references/code-growth-gate.md`;
 - matriz requisito -> ataque: `references/requirement-attack-matrix.md`;
-- verificadores AST, parsers, gates e escapes recorrentes: `references/semantic-mutation-saturation.md`; executar gate `semantic-mutation-saturation` com matriz pairwise e validador exact-SHA (fail-closed) antes do handoff;
+- parsers/gates: `references/semantic-mutation-saturation.md`; executar `semantic-mutation-saturation` com pairwise e SHA exato antes do handoff;
 - referencias persistidas entre etapas: `references/reference-liveness-gate.md`;
 - saturacao e readiness da auditoria: `references/risk-saturation-gate.md` e `references/audit-readiness-exhaustive.md`;
 - controles herdados de auditorias anteriores: `references/cumulative-audit-controls.md`;
