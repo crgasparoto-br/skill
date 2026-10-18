@@ -98,7 +98,7 @@ def fixture(tmp_path):
     return manifest, matrix
 
 
-def run(tmp_path, manifest, matrix, head=HEAD):
+def run(tmp_path, manifest, matrix, head=HEAD, preserve_closure=False):
     manifest_path = tmp_path / "manifest.json"
     matrix_path = tmp_path / "matrix.json"
     write(manifest_path, manifest)
@@ -121,7 +121,8 @@ def run(tmp_path, manifest, matrix, head=HEAD):
                "specification_snapshot": {"sha256": sha256_file(snapshot)},
                "obligations": [{"id": "O-1", **candidates[0],
                                  "requirement_ids": ["R-1"], "disposition": "covered"}]}
-    write(tmp_path / "closure.json", closure)
+    if not preserve_closure:
+        write(tmp_path / "closure.json", closure)
     return subprocess.run([
         sys.executable, str(SCRIPT), "--manifest", str(manifest_path),
         "--attack-matrix", str(matrix_path),
@@ -278,7 +279,7 @@ def test_canonical_closure_omission_cannot_disable_semantic_gate(tmp_path):
     closure = json.loads(closure_path.read_text(encoding="utf-8"))
     closure["obligations"] = []
     write(closure_path, closure)
-    result = run(tmp_path, manifest, matrix)
+    result = run(tmp_path, manifest, matrix, preserve_closure=True)
     assert result.returncode == 2
     assert "omitted or invented specification obligations" in result.stdout
 
@@ -289,7 +290,7 @@ def test_canonical_closure_rejects_forged_source_evidence(tmp_path):
     closure = json.loads(closure_path.read_text(encoding="utf-8"))
     closure["obligations"][0]["source_text"] = "unrelated source"
     write(closure_path, closure)
-    result = run(tmp_path, manifest, matrix)
+    result = run(tmp_path, manifest, matrix, preserve_closure=True)
     assert result.returncode == 2
     assert "changed source evidence" in result.stdout
 
