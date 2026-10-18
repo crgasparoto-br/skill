@@ -34,7 +34,12 @@ def validate_staging() -> None:
     expected = os.getenv('ISSUE88_EXPECTED_SHA', '')
     if not SHA.fullmatch(expected):
         raise LiveProbeError('pinned SHA required')
-    for path, is_file in ((SOURCE, False), (MARKER, True)):
+    if HERE != SOURCE / 'ops':
+        raise LiveProbeError('privileged preflight must run from protected staging')
+    for path, is_file in ((SOURCE, False), (MARKER, True), (HERE, False),
+                          (HERE / 'check-broker-live-access.py', True),
+                          (HERE / 'check-broker-jwks-runtime.py', True),
+                          (HERE / 'verify-broker-env.py', True)):
         metadata = os.lstat(path)
         if (metadata.st_uid != 0 or metadata.st_gid != 0
                 or metadata.st_mode & 0o022 or

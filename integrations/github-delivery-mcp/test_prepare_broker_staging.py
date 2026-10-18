@@ -81,6 +81,16 @@ class BrokerBootstrapContractTests(unittest.TestCase):
         self.assertIn('sudo -n -u solverit-github-auth env PYTHONDONTWRITEBYTECODE=1',
                       self.contents)
 
+    def test_operator_scripts_are_root_owned_and_byte_attested(self):
+        self.assertIn('"$TARGET/ops"', self.contents)
+        self.assertIn('OPS_META', self.contents)
+        self.assertIn('0:0:755:directory', self.contents)
+        self.assertIn('check-broker-live-access.py check-broker-jwks-runtime.py verify-broker-env.py', self.contents)
+        self.assertIn('git -C "$WORK" show "$EXPECTED:integrations/github-delivery-mcp/ops/$FILE"', self.contents)
+        self.assertIn('sudo -n cmp - "$TARGET/ops/$FILE"', self.contents)
+        self.assertLess(self.contents.index('sudo -n cmp - "$TARGET/ops/$FILE"'),
+                        self.contents.index('sudo -n tee "$TARGET/STAGED_COMMIT"'))
+
     def test_source_commit_is_verified_before_extracting_and_provisioning(self):
         self.assertIn('ACTUAL="$(git -C "$WORK" rev-parse FETCH_HEAD)"', self.contents)
         self.assertIn('if [ "$ACTUAL" != "$EXPECTED" ]; then', self.contents)

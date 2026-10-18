@@ -26,6 +26,12 @@ class LiveAccessPreflightTests(unittest.TestCase):
         with patch.dict(probe.os.environ, {}, clear=True), self.assertRaises(probe.LiveProbeError):
             probe.validate_staging()
 
+    def test_untrusted_operator_checkout_cannot_be_live_preflight(self):
+        with (patch.dict(probe.os.environ, {'ISSUE88_EXPECTED_SHA': 'a' * 40}),
+              patch.object(probe, 'HERE', Path('/home/ubuntu/projetos/issue88-probe/ops')),
+              self.assertRaises(probe.LiveProbeError)):
+            probe.validate_staging()
+
     def test_no_noninteractive_secret_input(self):
         with (patch.object(probe.sys.stdin, 'isatty', return_value=False),
               self.assertRaises(probe.LiveProbeError)):

@@ -340,7 +340,7 @@ SCRIPT_DIR="$PROBE_DIR/integrations/github-delivery-mcp/ops"
 ISSUE88_EXPECTED_SHA="$HEAD_SHA" bash "$SCRIPT_DIR/prepare-broker-staging.sh"
 # Next command prompts for three hidden, genuinely signed access tokens.
 sudo -n env ISSUE88_EXPECTED_SHA="$HEAD_SHA" /usr/bin/python3 -B \
-  "$SCRIPT_DIR/check-broker-live-access.py"
+  "/opt/solverit/issue-delivery/ops/check-broker-live-access.py"
 ```
 
 Do not run the live-token preflight until the revised staging script reports
@@ -360,3 +360,16 @@ activate the production delivery MCP. A positive live-token proof still leaves
 broker peer-UID/socket tests, trusted job→PR intake, isolated executor clone,
 patch/check/publish, exact-HEAD GitHub CI and **separate independent audit**
 outstanding. A failed preflight is a hard stop; retain the broker inactive.
+
+### Root-owned real-token preflight hardening (2026-10-18)
+
+The guarded staging refresh additionally installs the three strictly allowlisted
+read-only OAuth verification scripts in `/opt/solverit/issue-delivery/ops`
+(owner `root:root`, directory `0755`, files `0644`). The staging commit
+marker is written only after byte-for-byte comparison of every staged module
+and privileged script against the immutable Git commit. A previously existing
+symlink or non-root-owned scripts directory blocks refresh. Real signed-token
+preflight must be executed **only from that protected directory**, never from
+the operator-writable extracted checkout; the script rejects other source
+locations before soliciting credentials. No daemon is started and the auditor
+remains read-only.

@@ -122,6 +122,24 @@
     protected_broker_server.py; do
     sudo -n install -o root -g root -m 0644 "$CODE/$FILE" "$TARGET/$FILE"
   done
+  # Privileged OAuth preflights must never run from the operator's writable
+  # extraction directory. Only install reviewed, inert scripts under root.
+  if sudo -n /usr/bin/test -L "$TARGET/ops"; then
+    echo "BLOQUEADO: diretorio protegido ops e symlink."
+    false
+  fi
+  if sudo -n /usr/bin/test -e "$TARGET/ops"; then
+    OPS_META="$(sudo -n stat -c '%u:%g:%a:%F' "$TARGET/ops")"
+    if [ "$OPS_META" != "0:0:755:directory" ]; then
+      echo "BLOQUEADO: scripts privilegiados fora de diretorio root-owned."
+      false
+    fi
+  fi
+  sudo -n install -d -o root -g root -m 0755 "$TARGET/ops"
+  for FILE in check-broker-live-access.py check-broker-jwks-runtime.py verify-broker-env.py; do
+    test -f "$CODE/ops/$FILE"
+    sudo -n install -o root -g root -m 0644 "$CODE/ops/$FILE" "$TARGET/ops/$FILE"
+  done
   echo "=== 5. VALIDANDO SQLITE PRIVADO SEM JOBS FICTICIOS ==="
   sudo -n install -d -o root -g solverit-github-auth -m 0750 \
     /var/lib/solverit/issue-delivery
@@ -151,6 +169,21 @@
   sudo -n -u solverit-github-auth env PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="$TARGET" /usr/bin/python3 -B -c \
     'import broker_oauth, protected_broker_server; assert broker_oauth.DELIVERY_CLIENT == "solverit-chatgpt-mcp"'
+  # Verify deployed bytes against immutable Git objects, not only a marker
+  # or the operator-writable extracted workspace. No secrets are read.
+  for FILE in \
+    app_token_broker.py broker_oauth.py controller_broker_client.py \
+    github_evidence_reader.py github_evidence_validation.py jobs.py \
+    pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \
+    protected_broker_server.py; do
+    git -C "$WORK" show "$EXPECTED:integrations/github-delivery-mcp/$FILE" |
+      sudo -n cmp - "$TARGET/$FILE" >/dev/null
+  done
+  for FILE in check-broker-live-access.py check-broker-jwks-runtime.py verify-broker-env.py; do
+    test "$(sudo -n stat -c '%u:%g:%a:%F' "$TARGET/ops/$FILE")" = "0:0:644:regular file"
+    git -C "$WORK" show "$EXPECTED:integrations/github-delivery-mcp/ops/$FILE" |
+      sudo -n cmp - "$TARGET/ops/$FILE" >/dev/null
+  done
   # Publish STAGED_COMMIT only after all code imports, DB checks and
   # inactive service verification pass.
   printf '%s\n' "$EXPECTED" | sudo -n tee "$TARGET/STAGED_COMMIT" >/dev/null
