@@ -135,5 +135,8 @@ montado em `/workspace` tambem como somente leitura. Nenhum `/home`,
 falha fechado caso nao consiga estabelecer essas garantias; nao deve
 executar diretamente como fallback. Manter os limites de recursos e o ambiente
 sanitizado como defesas adicionais. Quando o host proibir namespaces de
-usuario, habilitar um executor isolado confiavel em vez de desabilitar a
-restricao.
+usuario, o replay usa um container Docker local construido de um tar vazio
+(`scratch`), sem rede, sem capacidades, somente leitura, sem mounts de
+credenciais ou diretorios pessoais, com limites de memoria/processos e
+mounts somente leitura de runtime e workspace. Nao existe fallback de
+execucao direta; sem namespace nem Docker isolado o replay reprova.
