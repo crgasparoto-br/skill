@@ -75,7 +75,7 @@ def trusted_script_interpreter(command: str) -> str | None:
     if binary == Path(sys.executable).resolve():
         return str(binary)
     permitted = {"sh", "bash", "node", "ruby", "perl", "php", "pwsh"}
-    if binary.name not in permitted and not re.fullmatch(r"python3?(?:\\.\\d+)?", binary.name):
+    if binary.name not in permitted and not re.fullmatch(r"python3?(?:\.\d+)?", binary.name):
         return None
     if not any(binary.is_relative_to(Path(directory))
                for directory in ("/usr/bin", "/usr/local/bin", "/bin")):
