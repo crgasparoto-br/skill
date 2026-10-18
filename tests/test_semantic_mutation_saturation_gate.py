@@ -87,7 +87,7 @@ def fixture(tmp_path):
         "head_sha": HEAD,
         "requirements": [{
             "requirement_id": "R-1", "risk_surfaces": [{
-                "risk_family": "structural-contract", "surface": "static-verifier",
+                "risk_family": "structural-contract", "surface": "semantic-mutation-saturation",
                 "semantic_saturation_required": True,
             }],
         }],
