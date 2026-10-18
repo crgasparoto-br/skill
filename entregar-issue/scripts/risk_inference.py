@@ -381,7 +381,7 @@ SEMANTIC_MUTATION_RE = re.compile(
     r"(?:verificador(?:es)?|detectores?|analisador(?:es)?|analy[sz]ers?|checkers?|gates?)\s+"
     r"(?:(?:est[aá]tic\w*|static)\s+)?(?:de\s+)?AST|"
     r"AST\s+(?:verifiers?|checkers?|detectors?|analy[sz]ers?|gates?)|"
-    r"gate(?:s)?\s+est[aá]tic\w*|"
+    r"(?:gate(?:s)?|verificador(?:es)?|detectores?|analisador(?:es)?)\s+est[aá]tic\w*|"
     r"semantic\s+mutation|semantic\s+saturation|metamorphic\s+gate|"
     r"rastreador(?:es)?\s+de\s+proveni[eê]ncia)\b", re.IGNORECASE,
 )
