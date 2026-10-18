@@ -10,6 +10,7 @@ import re
 import subprocess
 from pathlib import Path
 
+from specification import extract_candidates, sha256_file
 from risk_inference import requires_semantic_mutation_saturation
 
 AXES = ("origin", "binding", "transformation", "control_flow", "consumption", "boundary")
@@ -68,8 +69,8 @@ def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
         return None
     if (not isinstance(entrypoint, str) or not entrypoint
             or Path(entrypoint).is_absolute()
-            or entrypoint not in argv[:3]):
-        errors.append(f"{label}: replay must invoke declared gate entrypoint")
+            or not (argv[0] == entrypoint or argv[1] == entrypoint)):
+        errors.append(f"{label}: replay must invoke declared gate entrypoint directly")
         return None
     if not source.is_relative_to(root) or not source.is_file():
         errors.append(f"{label}: replay source escapes workspace or is missing")
@@ -192,8 +193,30 @@ def validate_metamorphic_pair(pair: object, tag: str, by_id: dict,
     outcome = replay(transform.get("argv"), transform.get("entrypoint"),
                      transform.get("entrypoint_sha256"), root, source,
                      tag + " metamorphic", errors)
-    if outcome is not None and (outcome.returncode != 0 or outcome.stdout != target.read_bytes()):
+    if outcome is None:
+        return
+    if outcome.returncode != 0 or outcome.stdout != target.read_bytes():
         errors.append(f"{tag}: transformed bytes do not reproduce the sibling")
+
+    # A constant-output or source-ignoring transformer is not metamorphic evidence.
+    contrast_path = transform.get("contrast_source_path")
+    contrast_digest = transform.get("contrast_source_sha256")
+    check_file(root, contrast_path, contrast_digest, tag + " contrast",
+               errors, json_proof=False)
+    if not isinstance(contrast_path, str) or not contrast_path or Path(contrast_path).is_absolute():
+        return
+    contrast = (root / contrast_path).resolve()
+    if (not contrast.is_relative_to(root) or not contrast.is_file()
+            or contrast == source or contrast.read_bytes() == source.read_bytes()):
+        errors.append(f"{tag}: metamorphic contrast must be a distinct source")
+        return
+    alternative = replay(transform.get("argv"), transform.get("entrypoint"),
+                         transform.get("entrypoint_sha256"), root, contrast,
+                         tag + " contrast replay", errors)
+    if alternative is None or alternative.returncode != 0:
+        errors.append(f"{tag}: metamorphic contrast could not be transformed")
+    elif alternative.stdout == outcome.stdout:
+        errors.append(f"{tag}: metamorphic transform does not depend on source bytes")
 
 
 def validate_comparisons(tag: str, rule: dict, variants: dict, covered: set,
@@ -264,8 +287,55 @@ def validate_rule(rule: object, ri: int, required: set[tuple[str, str, str]],
     validate_comparisons(tag, rule, variants, covered, kinds, by_id, root, errors)
 
 
-def validate(manifest: dict, matrix: dict, closure: dict, root: Path, head: str) -> list[str]:
+def validate_canonical_closure(closure: dict, snapshot_path: Path,
+                               errors: list[str]) -> None:
+    """Re-derive obligations from the caller's canonical specification, not the matrix."""
+    if closure.get("schema_version") != 3:
+        errors.append("canonical requirement closure schema_version must be 3")
+        return
+    marker = closure.get("specification_snapshot")
+    if (not isinstance(marker, dict) or not snapshot_path.is_file()
+            or marker.get("sha256") != sha256_file(snapshot_path)):
+        errors.append("canonical specification snapshot is missing or hash-divergent")
+        return
+    source_errors: list[str] = []
+    snapshot, _, candidates = extract_candidates(snapshot_path, source_errors)
+    errors.extend(source_errors)
+    if source_errors or not candidates:
+        errors.append("canonical specification has no verifiable candidates")
+        return
+    if closure.get("primary_issue_source_id") != snapshot.get("primary_source_id"):
+        errors.append("canonical primary specification source diverges")
+    expected = {c["candidate_key"]: c for c in candidates}
+    actual: dict[str, dict] = {}
+    obligations = closure.get("obligations")
+    if not isinstance(obligations, list):
+        errors.append("canonical closure must have an obligation list")
+        return
+    for obligation in obligations:
+        if not isinstance(obligation, dict):
+            errors.append("canonical closure obligation is invalid")
+            continue
+        key = obligation.get("candidate_key")
+        if not isinstance(key, str) or key in actual:
+            errors.append("canonical closure has invalid or duplicate candidate key")
+            continue
+        actual[key] = obligation
+    if expected.keys() != actual.keys():
+        errors.append("canonical closure omitted or invented specification obligations")
+    for key in expected.keys() & actual.keys():
+        for field in ("source_id", "source_sha256", "source_line", "source_text", "flags"):
+            if expected[key][field] != actual[key].get(field):
+                errors.append(f"canonical closure changed source evidence: {key} {field}")
+        obligation = actual[key]
+        if obligation.get("disposition") != "not-applicable" and not obligation.get("requirement_ids"):
+            errors.append(f"canonical obligation has no bound requirement: {key}")
+
+
+def validate(manifest: dict, matrix: dict, closure: dict, root: Path,
+             head: str, specification_snapshot: Path) -> list[str]:
     errors: list[str] = []
+    validate_canonical_closure(closure, specification_snapshot, errors)
     if not SHA.fullmatch(head):
         errors.append("invalid current head SHA")
     if manifest.get("schema_version") != 1 or manifest.get("head_sha") != head:
@@ -317,12 +387,14 @@ def main() -> int:
     p.add_argument("--manifest", required=True)
     p.add_argument("--attack-matrix", required=True)
     p.add_argument("--requirement-closure", required=True)
+    p.add_argument("--specification-snapshot", required=True)
     p.add_argument("--head-sha", required=True)
     p.add_argument("--root", default=".")
     a = p.parse_args()
     try:
         errors = validate(load(Path(a.manifest)), load(Path(a.attack_matrix)),
-                          load(Path(a.requirement_closure)), Path(a.root).resolve(), a.head_sha)
+                          load(Path(a.requirement_closure)), Path(a.root).resolve(),
+                          a.head_sha, Path(a.specification_snapshot).resolve())
     except (OSError, ValueError, TypeError) as exc:
         errors = [f"missing or invalid evidence: {exc}"]
     if errors:
