@@ -9,7 +9,7 @@ Reduzir ciclos em que cada auditoria independente devolve apenas um defeito mate
 Derivar do contrato atomizado, diff, caminhos reais de execucao e rejeicoes anteriores
 uma lista de `requisito -> familia -> superficie -> dimensoes de ataque`.
 Para cada superficie material, confrontar a implementacao errada plausivel com
-um controle positivo, um negativo discriminante e um caso irmao quando houver
+um ataque adversarial (`negative_control`), um controle benigno anti-falso-positivo e um caso irmao quando houver
 alternativa relevante. Nao escolher a quantidade de achados como meta ou criterio
 de encerramento. A matriz e uma ferramenta de cobertura, nao prova automatica
 de completude.
