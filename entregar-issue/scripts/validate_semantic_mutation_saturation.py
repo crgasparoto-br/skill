@@ -420,6 +420,22 @@ def validate_transform_contrast(transform: dict, root: Path, source: Path,
 
 
 
+def metamorphic_sources(left: dict, right: dict, root: Path,
+                       tag: str, errors: list[str]) -> tuple[Path, Path] | None:
+    """Reject identity transformations before running expensive replay."""
+    source = (root / str(left.get("source_path") or "")).resolve()
+    target = (root / str(right.get("source_path") or "")).resolve()
+    if (not source.is_relative_to(root) or not target.is_relative_to(root)
+            or not source.is_file() or not target.is_file()
+            or source == target):
+        errors.append(f"{tag}: invalid metamorphic source and target")
+        return None
+    if source.read_bytes() == target.read_bytes():
+        errors.append(f"{tag}: metamorphic siblings must have distinct source bytes")
+        return None
+    return source, target
+
+
 def validate_metamorphic_pair(pair: object, tag: str, by_id: dict,
                               root: Path, errors: list[str]) -> None:
     if not isinstance(pair, dict):
@@ -443,16 +459,10 @@ def validate_metamorphic_pair(pair: object, tag: str, by_id: dict,
     if not isinstance(transform, dict):
         errors.append(f"{tag}: metamorphic transformation replay required")
         return
-    source = (root / str(left.get("source_path") or "")).resolve()
-    target = (root / str(right.get("source_path") or "")).resolve()
-    if (not source.is_relative_to(root) or not target.is_relative_to(root)
-            or not source.is_file() or not target.is_file()
-            or source == target):
-        errors.append(f"{tag}: invalid metamorphic source and target")
+    paths = metamorphic_sources(left, right, root, tag, errors)
+    if paths is None:
         return
-    if source.read_bytes() == target.read_bytes():
-        errors.append(f"{tag}: metamorphic siblings must have distinct source bytes")
-        return
+    source, target = paths
     outcome = replay(transform.get("argv"), transform.get("entrypoint"),
                      transform.get("entrypoint_sha256"), root, source,
                      tag + " metamorphic", errors)
