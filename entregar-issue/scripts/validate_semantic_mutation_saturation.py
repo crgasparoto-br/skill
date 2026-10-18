@@ -398,7 +398,7 @@ def validate_canonical_closure(closure: dict, snapshot_path: Path,
         errors.append("canonical specification snapshot is missing or hash-divergent")
         return
     source_errors: list[str] = []
-    snapshot, _, candidates = extract_candidates(snapshot_path, source_errors)
+    snapshot, sources, candidates = extract_candidates(snapshot_path, source_errors)
     errors.extend(source_errors)
     if source_errors or not candidates:
         errors.append("canonical specification has no verifiable candidates")
