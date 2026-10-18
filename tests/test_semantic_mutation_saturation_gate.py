@@ -301,3 +301,19 @@ def test_ast_linguistic_variants_activate_semantic_saturation():
     variants = ("verificador AST", "detector AST", "analisador estatico",
                 "AST verifier", "gate estatico", "static checker")
     assert all(requires_semantic_mutation_saturation([term]) for term in variants)
+
+def test_path_only_transform_cannot_fake_byte_sensitivity(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    transformer = tmp_path / "transform.py"
+    transformer.write_text(
+        "import sys\\nfrom pathlib import Path\\n"
+        "sys.stdout.write('independent alias source fixture' "
+        "if Path(sys.argv[1]).name == 'direct.txt' else 'other')\\n",
+        encoding="utf-8",
+    )
+    manifest["rules"][0]["metamorphic_pairs"][0]["transform"]["entrypoint_sha256"] = (
+        hashlib.sha256(transformer.read_bytes()).hexdigest()
+    )
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "does not depend on source bytes" in result.stdout
