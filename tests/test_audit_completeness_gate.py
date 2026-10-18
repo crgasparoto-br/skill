@@ -16,6 +16,8 @@ def git(root: Path, *args: str) -> str:
 
 def create_git_fixture(root: Path) -> tuple[str, str]:
     checkout = root / "gitrepo"
+    if checkout.exists():
+        return git(checkout, "rev-parse", "HEAD~1"), git(checkout, "rev-parse", "HEAD")
     checkout.mkdir()
     git(checkout, "init", "-q")
     git(checkout, "config", "user.name", "Audit Fixture")
