@@ -20,6 +20,14 @@ def write(path, payload):
 
 
 def fixture(tmp_path):
+    gate = tmp_path / "gate.py"
+    gate.write_text("import sys\nfrom pathlib import Path\n"
+                    "source = Path(sys.argv[1]).read_text()\n"
+                    "sys.exit(0 if 'safe' in source else 2)\n", encoding="utf-8")
+    transform = tmp_path / "transform.py"
+    transform.write_text("import sys\nfrom pathlib import Path\n"
+                         "source = Path(sys.argv[1]).read_text()\n"
+                         "sys.stdout.write(source.replace('direct', 'alias'))\n", encoding="utf-8")
     variants = {axis: ["default"] for axis in AXES}
     variants["transformation"] = ["direct", "alias"]
     cases = []
@@ -31,13 +39,20 @@ def fixture(tmp_path):
     ):
         observed = "accept" if kind == "benign" else "reject"
         procedure = f"Execute isolated {cid} fixture through the gate"
-        proof = {"case_id": cid, "head_sha": HEAD, "observed": observed, "procedure": procedure}
+        proof = {
+            "case_id": cid, "head_sha": HEAD,
+            "observed": observed, "procedure": procedure,
+            "exit_code": 0 if kind == "benign" else 2,
+            "stdout_sha256": hashlib.sha256(b"").hexdigest(),
+            "stderr_sha256": hashlib.sha256(b"").hexdigest(),
+        }
         src = tmp_path / f"probes/{cid}.txt"
         src.parent.mkdir(parents=True, exist_ok=True)
         src.write_text(f"independent {cid} source fixture", encoding="utf-8")
         case = {
             "id": cid, "kind": kind, "expected": observed, "observed": observed,
             "head_sha": HEAD, "status": "passed", "procedure": procedure,
+            "run": {"entrypoint": "gate.py", "argv": [sys.executable, "gate.py", "{source}"]},
             "axes": {**dict.fromkeys(AXES, "default"), "transformation": transformation},
             "proof_path": f"proofs/{cid}.json",
             "proof_sha256": write(tmp_path / f"proofs/{cid}.json", proof),
@@ -52,8 +67,17 @@ def fixture(tmp_path):
         "rules": [{
             "requirement_id": "R-1", "risk_family": "structural-contract",
             "surface": "static-verifier", "status": "covered",
+            "oracle": {"accept_exit_codes": [0], "reject_exit_codes": [2]},
             "axis_variants": variants, "cases": cases,
-            "metamorphic_pairs": [["direct", "alias"]],
+            "metamorphic_pairs": [{
+                "left": "direct", "right": "alias",
+                "relation_id": "transparent-alias-rewrite",
+                "invariant": "Renaming direct to alias does not change rule violation",
+                "transform": {
+                    "entrypoint": "transform.py",
+                    "argv": [sys.executable, "transform.py", "{source}"],
+                },
+            }],
         }],
     }
     matrix = {
@@ -160,3 +184,25 @@ def test_registry_activates_semantic_gate_for_parser_and_static_checker():
         signals=set(),
     )
     assert "semantic-mutation-saturation" not in ordinary
+
+
+def test_fake_successful_transcript_cannot_replace_replay(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    (tmp_path / "gate.py").write_text("import sys\nsys.exit(0)\n", encoding="utf-8")
+    output = run(tmp_path, manifest, matrix)
+    assert output.returncode == 2
+    assert "actual gate replay" in output.stdout or "disagrees" in output.stdout
+
+
+def test_metamorphic_transform_must_reproduce_real_source(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    (tmp_path / "transform.py").write_text("print('unrelated')\n", encoding="utf-8")
+    output = run(tmp_path, manifest, matrix)
+    assert output.returncode == 2
+    assert "transformed bytes do not reproduce" in output.stdout
+
+
+def test_oracle_cannot_accept_and_reject_same_exit_code(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    manifest["rules"][0]["oracle"]["reject_exit_codes"] = [0]
+    assert "must distinguish" in run(tmp_path, manifest, matrix).stdout
