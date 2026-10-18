@@ -112,9 +112,15 @@ def verified_git_paths(git_repo: Path, base_sha: str, head_sha: str) -> set[str]
     return set(paths)
 
 
-def validate_sources(inventory: dict, root: Path, git_repo: Path, errors: list[str]) -> set[str]:
+def validate_sources(inventory: dict, root: Path, git_repo: Path,
+                     trusted_base: str, trusted_head: str,
+                     errors: list[str]) -> set[str]:
     sources = indexed(inventory.get("sources"), "sources", errors)
     identity = inventory.get("identity", {})
+    if (not SHA.fullmatch(trusted_base) or not SHA.fullmatch(trusted_head)
+            or identity.get("base_sha") != trusted_base
+            or identity.get("head_sha") != trusted_head):
+        errors.append("inventory Git identity diverges from independent GitHub anchor")
     try:
         authoritative_paths = verified_git_paths(git_repo, identity.get("base_sha"), identity.get("head_sha"))
     except (OSError, ValueError, subprocess.TimeoutExpired, UnicodeError) as exc:
@@ -277,12 +283,16 @@ def validate_findings(report: dict, requirements: dict, surfaces: dict,
     return len(blocking)
 
 
-def validate(inventory: dict, report: dict, root: Path, head: str, git_repo: Path) -> list[str]:
+def validate(inventory: dict, report: dict, root: Path, head: str, git_repo: Path,
+             trusted_base: str, trusted_head: str) -> list[str]:
     errors: list[str] = []
     if inventory.get("schema_version") != 1 or report.get("schema_version") != 1:
         errors.append("unsupported schema_version")
     validate_identity(inventory, report, head, errors)
-    source_ids = validate_sources(inventory, root, git_repo, errors)
+    if head != trusted_head:
+        errors.append("requested audit HEAD differs from independent GitHub anchor")
+    source_ids = validate_sources(inventory, root, git_repo,
+                                  trusted_base, trusted_head, errors)
     requirements, surfaces, historical = validate_inventory(inventory, source_ids, errors)
     validate_changed_paths(inventory, report, surfaces, root, errors)
     blockers = validate_findings(report, requirements, surfaces, root, errors)
@@ -324,10 +334,15 @@ def main() -> int:
     parser.add_argument("--head-sha", required=True)
     parser.add_argument("--git-repo", type=Path, required=True,
                         help="Trusted Git checkout containing frozen base and HEAD commits")
+    parser.add_argument("--trusted-base-sha", required=True,
+                        help="Immutable PR base SHA independently read from GitHub")
+    parser.add_argument("--trusted-head-sha", required=True,
+                        help="Immutable PR head SHA independently read from GitHub")
     args = parser.parse_args()
     try:
         errors = validate(read_json(args.inventory), read_json(args.report_json),
-                          args.root.resolve(), args.head_sha, args.git_repo.resolve())
+                          args.root.resolve(), args.head_sha, args.git_repo.resolve(),
+                          args.trusted_base_sha, args.trusted_head_sha)
     except (OSError, ValueError, TypeError) as exc:
         errors = [f"unreadable or invalid audit inputs: {exc}"]
     if errors:
