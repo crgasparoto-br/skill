@@ -11,6 +11,8 @@
 - [Prova executada](#prova-executada-e-anti-autoatestado-aud100)
 - [Vinculo canonico](#vinculo-canonico-e-dependencia-da-transformacao-aud102)
 - [Replay e contraste anti-metadados](#replay-e-contraste-anti-metadados-aud102)
+- [Vinculo de checker e higiene do replay](#vinculo-de-checker-e-higiene-do-replay)
+- [Sandbox obrigatorio para o replay](#sandbox-obrigatorio-para-o-replay)
 
 ## Quando ler este arquivo
 
@@ -119,17 +121,17 @@ Uma exclusao semantica `not-applicable` exige `scope_decision` com fonte
 canonica hasheada e locator existente nessa fonte.
 
 O replay limpa variaveis herdadas do processo, desabilita core dumps e
-impoe limites a CPU, descritores e arquivos. Isso NAO e sandbox de rede
-ou filesystem: a execucao deve ocorrer em worker isolado, sem secrets e
-sem rede. Sem essa garantia operacional, nao declarar handoff READY.
+impoe limites a CPU, descritores e arquivos. O isolamento de rede e
+filesystem e obrigatorio conforme a secao seguinte; sem essas garantias
+nao declarar handoff READY.
 
 ## Sandbox obrigatorio para o replay
 
-Cada execucao do checker e da transformacao exige \`unshare\` com namespaces
-de usuario, rede, montagem e PID, um \`chroot\` temporario com \`tmpfs\`, os
+Cada execucao do checker e da transformacao exige `unshare` com namespaces
+de usuario, rede, montagem e PID, um `chroot` temporario com `tmpfs`, os
 runtimes do sistema montados como somente leitura, e o workspace do probe
-montado em \`/workspace\` tambem como somente leitura. Nenhum \`/home\`,
-\`/root\`, \`/etc\` ou rede do host e exposto ao processo isolado. O launcher
+montado em `/workspace` tambem como somente leitura. Nenhum `/home`,
+`/root`, `/etc` ou rede do host e exposto ao processo isolado. O launcher
 falha fechado caso nao consiga estabelecer essas garantias; nao deve
 executar diretamente como fallback. Manter os limites de recursos e o ambiente
 sanitizado como defesas adicionais. Quando o host proibir namespaces de
