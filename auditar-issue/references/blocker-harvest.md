@@ -44,6 +44,10 @@ restante de forma proporcional. Em `blocker-bounded`, cancelar provas caras
 nao relacionadas, nunca a varredura estatica barata. Nao atribuir limitacao
 do ambiente da auditoria ao candidato.
 
+## Escapes por equivalencia semantica
+
+Para AST/proveniencia, executar o protocolo `semantic-mutation-saturation.md`: depois de encontrar um contraexemplo, derivar no mesmo SHA equivalentes por transformacao e consumo, controles de origem descartada e familias materiais independentes. Uma bateria que parou em 2 ou 3 findings sem registrar superficie `covered|not-executed|not-applicable` e cobertura limitada, nao colheita abrangente. Guardar hash dos probes e distinguir mutantes nao mortos de falsos positivos.
+
 ## Regra apos primeiro blocker
 
 Quando o primeiro blocker torna o candidato nao aprovavel:
