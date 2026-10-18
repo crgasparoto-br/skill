@@ -92,6 +92,70 @@ def validate_case(case: object, ci: int, tag: str, variants: dict,
                label, errors, json_proof=False)
     return kind, axes
 
+
+def validate_rule(rule: object, ri: int, required: set[tuple[str, str, str]],
+                  seen: set[tuple[str, str, str]], ids: set[str], root: Path,
+                  head: str, errors: list[str]) -> None:
+    tag = f"rule {ri}"
+    if not isinstance(rule, dict):
+        errors.append(f"{tag}: invalid rule")
+        return
+    identity = tuple(str(rule.get(k) or "") for k in ("requirement_id", "risk_family", "surface"))
+    if identity in seen or identity not in required:
+        errors.append(f"{tag}: duplicate or undeclared semantic surface")
+    seen.add(identity)
+    if rule.get("status") != "covered":
+        errors.append(f"{tag}: required surface not covered")
+    variants = rule.get("axis_variants")
+    if not isinstance(variants, dict) or set(variants) != set(AXES):
+        errors.append(f"{tag}: missing six axis variants")
+        return
+    if any(not isinstance(variants[a], list) or not variants[a]
+           or any(not isinstance(v, str) or not v.strip() for v in variants[a])
+           or len(set(variants[a])) != len(variants[a]) for a in AXES):
+        errors.append(f"{tag}: invalid axis variants")
+        return
+    if all(len(variants[a]) == 1 for a in AXES):
+        errors.append(f"{tag}: missing metamorphic variation")
+    cases = rule.get("cases")
+    if not isinstance(cases, list) or not cases:
+        errors.append(f"{tag}: cases missing")
+        return
+    covered = set()
+    kinds = set()
+    by_id = {}
+    for ci, case in enumerate(cases):
+        result = validate_case(case, ci, tag, variants, root, head, ids, errors)
+        if result is None:
+            continue
+        kind, axes = result
+        kinds.add(kind)
+        by_id[case["id"]] = case
+        for a, b in itertools.combinations(AXES, 2):
+            covered.add((a, axes[a], b, axes[b]))
+    for kind in EXPECTED:
+        if kind not in kinds:
+            errors.append(f"{tag}: missing {kind} control")
+    for a, b in itertools.combinations(AXES, 2):
+        for va, vb in itertools.product(variants[a], variants[b]):
+            if (a, va, b, vb) not in covered:
+                errors.append(f"{tag}: uncovered pairwise {a}={va} x {b}={vb}")
+    pairs = rule.get("metamorphic_pairs")
+    if not isinstance(pairs, list) or not pairs:
+        errors.append(f"{tag}: metamorphic pairs missing")
+    else:
+        for pair in pairs:
+            if (not isinstance(pair, list) or len(pair) != 2
+                    or pair[0] not in by_id or pair[1] not in by_id or pair[0] == pair[1]):
+                errors.append(f"{tag}: invalid metamorphic pair")
+                continue
+            left, right = by_id[pair[0]], by_id[pair[1]]
+            if (left.get("axes") == right.get("axes")
+                    or any(case.get("observed") != "reject"
+                           or case.get("kind") not in ("violation", "mutation")
+                           for case in (left, right))):
+                errors.append(f"{tag}: metamorphic pair not discriminating")
+
 def validate(manifest: dict, matrix: dict, root: Path, head: str) -> list[str]:
     errors: list[str] = []
     if not SHA.fullmatch(head):
@@ -118,65 +182,7 @@ def validate(manifest: dict, matrix: dict, root: Path, head: str) -> list[str]:
     seen = set()
     ids = set()
     for ri, rule in enumerate(rules):
-        tag = f"rule {ri}"
-        if not isinstance(rule, dict):
-            errors.append(f"{tag}: invalid rule")
-            continue
-        identity = tuple(str(rule.get(k) or "") for k in ("requirement_id", "risk_family", "surface"))
-        if identity in seen or identity not in required:
-            errors.append(f"{tag}: duplicate or undeclared semantic surface")
-        seen.add(identity)
-        if rule.get("status") != "covered":
-            errors.append(f"{tag}: required surface not covered")
-        variants = rule.get("axis_variants")
-        if not isinstance(variants, dict) or set(variants) != set(AXES):
-            errors.append(f"{tag}: missing six axis variants")
-            continue
-        if any(not isinstance(variants[a], list) or not variants[a]
-               or any(not isinstance(v, str) or not v.strip() for v in variants[a])
-               or len(set(variants[a])) != len(variants[a]) for a in AXES):
-            errors.append(f"{tag}: invalid axis variants")
-            continue
-        if all(len(variants[a]) == 1 for a in AXES):
-            errors.append(f"{tag}: missing metamorphic variation")
-        cases = rule.get("cases")
-        if not isinstance(cases, list) or not cases:
-            errors.append(f"{tag}: cases missing")
-            continue
-        covered = set()
-        kinds = set()
-        by_id = {}
-        for ci, case in enumerate(cases):
-            result = validate_case(case, ci, tag, variants, root, head, ids, errors)
-            if result is None:
-                continue
-            kind, axes = result
-            kinds.add(kind)
-            by_id[case["id"]] = case
-            for a, b in itertools.combinations(AXES, 2):
-                covered.add((a, axes[a], b, axes[b]))
-        for kind in EXPECTED:
-            if kind not in kinds:
-                errors.append(f"{tag}: missing {kind} control")
-        for a, b in itertools.combinations(AXES, 2):
-            for va, vb in itertools.product(variants[a], variants[b]):
-                if (a, va, b, vb) not in covered:
-                    errors.append(f"{tag}: uncovered pairwise {a}={va} x {b}={vb}")
-        pairs = rule.get("metamorphic_pairs")
-        if not isinstance(pairs, list) or not pairs:
-            errors.append(f"{tag}: metamorphic pairs missing")
-        else:
-            for pair in pairs:
-                if (not isinstance(pair, list) or len(pair) != 2
-                        or pair[0] not in by_id or pair[1] not in by_id or pair[0] == pair[1]):
-                    errors.append(f"{tag}: invalid metamorphic pair")
-                    continue
-                left, right = by_id[pair[0]], by_id[pair[1]]
-                if (left.get("axes") == right.get("axes")
-                        or any(case.get("observed") != "reject"
-                               or case.get("kind") not in ("violation", "mutation")
-                               for case in (left, right))):
-                    errors.append(f"{tag}: metamorphic pair not discriminating")
+        validate_rule(rule, ri, required, seen, ids, root, head, errors)
     if required - seen:
         errors.append(f"omitted semantic surfaces: {sorted(required - seen)}")
     return errors
