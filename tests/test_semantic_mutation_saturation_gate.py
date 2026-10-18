@@ -319,3 +319,18 @@ def test_path_only_transform_cannot_fake_byte_sensitivity(tmp_path):
     result = run(tmp_path, manifest, matrix)
     assert result.returncode == 2
     assert "does not depend on source bytes" in result.stdout
+
+def test_direct_executable_replay_uses_hashed_path_not_search_path(tmp_path):
+    sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
+    from validate_semantic_mutation_saturation import replay
+    gate = tmp_path / "direct-gate.sh"
+    gate.write_text("#!/bin/sh\\nexit 2\\n", encoding="utf-8")
+    gate.chmod(0o755)
+    source = tmp_path / "input.txt"
+    source.write_text("violation", encoding="utf-8")
+    errors = []
+    result = replay(["direct-gate.sh", "{source}"], "direct-gate.sh",
+                    hashlib.sha256(gate.read_bytes()).hexdigest(),
+                    tmp_path, source, "direct", errors)
+    assert not errors
+    assert result is not None and result.returncode == 2
