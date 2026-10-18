@@ -1,11 +1,11 @@
 """Offline fail-closed regressions for the Issue #88 live OAuth preflight."""
-from contextlib import redirect_stdout
-from io import StringIO
 import importlib.util
-from pathlib import Path
 import sys
 import types
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 SCRIPT = Path(__file__).parent / 'ops/check-broker-live-access.py'
@@ -23,21 +23,21 @@ POLICY = {
 
 class LiveAccessPreflightTests(unittest.TestCase):
     def test_requires_exact_pinned_sha(self):
-        with patch.dict(probe.os.environ, {}, clear=True), self.assertRaises(probe.LiveProbeDenied):
+        with patch.dict(probe.os.environ, {}, clear=True), self.assertRaises(probe.LiveProbeError):
             probe.validate_staging()
 
     def test_no_noninteractive_secret_input(self):
-        with patch.object(probe.sys.stdin, 'isatty', return_value=False):
-            with self.assertRaises(probe.LiveProbeDenied):
-                probe.private_token('hidden')
+        with (patch.object(probe.sys.stdin, 'isatty', return_value=False),
+              self.assertRaises(probe.LiveProbeError)):
+            probe.private_token('hidden')
 
     def test_verifies_positive_then_both_negatives(self):
         fake = types.ModuleType('broker_oauth')
-        class Denied(Exception):
+        class DeniedError(Exception):
             pass
-        fake.BrokerOAuthDenied = Denied
+        fake.BrokerOAuthDenied = DeniedError
         fake.build_broker_verifier = Mock(return_value='verifier')
-        fake.verified_actor = Mock(side_effect=['approved-uuid', Denied(), Denied()])
+        fake.verified_actor = Mock(side_effect=['approved-uuid', DeniedError(), DeniedError()])
         with (patch.dict(sys.modules, {'broker_oauth': fake}),
               patch.object(probe, 'validated_signed_claims', side_effect=[
                   {'sub': 'approved-uuid', 'scope': 'openid solverit:read'},
@@ -53,7 +53,7 @@ class LiveAccessPreflightTests(unittest.TestCase):
         with (patch.dict(sys.modules, {'broker_oauth': fake}),
               patch.object(probe, 'validated_signed_claims', return_value={
                   'sub': 'approved-uuid', 'scope': 'openid solverit:deliver'}),
-              self.assertRaises(probe.LiveProbeDenied)):
+              self.assertRaises(probe.LiveProbeError)):
             probe.check_signed_tokens(POLICY, 'positive', 'readonly', 'other')
 
     def test_wrong_subject_negative_not_accepted_as_evidence(self):
@@ -65,7 +65,7 @@ class LiveAccessPreflightTests(unittest.TestCase):
               patch.object(probe, 'validated_signed_claims', side_effect=[
                   {'sub': 'approved-uuid', 'scope': 'openid'},
                   {'sub': 'approved-uuid', 'scope': 'openid'}]),
-              self.assertRaises(probe.LiveProbeDenied)):
+              self.assertRaises(probe.LiveProbeError)):
             probe.check_signed_tokens(POLICY, 'positive', 'readonly', 'other')
 
     def test_negative_broker_acceptance_is_fatal(self):
@@ -76,7 +76,7 @@ class LiveAccessPreflightTests(unittest.TestCase):
         with (patch.dict(sys.modules, {'broker_oauth': fake}),
               patch.object(probe, 'validated_signed_claims', return_value={
                   'sub': 'approved-uuid', 'scope': 'openid'}),
-              self.assertRaises(probe.LiveProbeDenied)):
+              self.assertRaises(probe.LiveProbeError)):
             probe.check_signed_tokens(POLICY, 'positive', 'readonly', 'other')
 
     def test_unsigned_negative_control_cannot_pass(self):
@@ -87,9 +87,9 @@ class LiveAccessPreflightTests(unittest.TestCase):
         verifier = Mock()
         verifier.verify.side_effect = PermissionError('invalid signature')
         fakejwks.CachedJWKSVerifier = Mock(return_value=verifier)
-        with patch.dict(sys.modules, {'jwt': fakejwt, 'mcp_jwks_verifier': fakejwks}):
-            with self.assertRaises(PermissionError):
-                probe.validated_signed_claims('fake.unsigned.jwt', POLICY)
+        with (patch.dict(sys.modules, {'jwt': fakejwt, 'mcp_jwks_verifier': fakejwks}),
+              self.assertRaises(PermissionError)):
+            probe.validated_signed_claims('fake.unsigned.jwt', POLICY)
 
     def test_main_never_logs_token_or_exception(self):
         output = StringIO()
