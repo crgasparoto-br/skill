@@ -39,3 +39,17 @@ Para cada regra, declarar `oracle.accept_exit_codes` e `oracle.reject_exit_codes
 Cada `metamorphic_pairs[]` deve ser objeto com `left`, `right`, `relation_id`, `invariant` (explicacao verificavel do significado preservado) e `transform` com `entrypoint` e `argv` contendo `{source}`. O comando deve produzir exatamente os bytes do caso irmao e ambos os probes devem ser rejeitados pelo gate real. O auditor independente julga a validade do invariante; nao aceitar so dois resultados identicos como prova de equivalencia semantica.
 
 `--requirement-closure` e obrigatorio e leva a closure canonica; o validador exige a superficie `semantic-mutation-saturation` quando a obrigacao descreve parser, lexer, verificador AST/estatico ou rastreador de proveniencia. A geracao de matriz deve manter `semantic_saturation_required: true` para tais superficies; nao desativar sinal para evitar o gate.
+
+## Controles contra falso replay e falsas closures (AUD102)
+
+O replay so conta quando o script/entrypoint efetivamente executado e o
+mesmo arquivo cujo hash foi validado, sem `-c` ou wrappers que substituam
+o codigo. Conferir que a closure foi rederivada do snapshot canonico externo
+fornecido ao gate e que cada candidato da fonte integra o inventario com
+`candidate_key`, hash, linha e texto intactos; um JSON autoconsistente
+nao e ancora externa.
+
+Cada transformacao de par metamorfos inclui fonte contrastante hasheada,
+cuja execucao real deve alterar os bytes transformados. Isso impede
+transformacoes constantes, mas nao comprova equivalencia semantica:
+o auditor avalia independentemente os invariantes e as familias irmas.
