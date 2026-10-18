@@ -21,9 +21,9 @@ class TrustedVerificationTests(unittest.TestCase):
             repo="crgasparoto-br/skill", issue_number=88, branch="feat/88-controlled",
             base_sha="a"*40, expected_head="b"*40,
         )
-        self.args = dict(database_path=self.database, job_id=self.job.job_id,
-                         actor="operator", token="read-token",
-                         required_checks=frozenset({"Validate repository"}))
+        self.args = {"database_path": self.database, "job_id": self.job.job_id,
+                         "actor": "operator", "token": "read-token",
+                         "required_checks": frozenset({"Validate repository"})}
 
     def prepare(self):
         self.jobs.transition(self.job.job_id, "operator", "queued", "running")

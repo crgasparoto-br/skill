@@ -20,8 +20,8 @@ class RunnerTests(unittest.TestCase):
             repo="crgasparoto-br/skill", issue_number=88,
             branch="feat/88-test", base_sha="a"*40, expected_head="a"*40)
         self.job_id = job.job_id
-        self.args = dict(database_path=self.database, job_id=job.job_id,
-                         actor="operator", snapshot_dir="/trusted/snapshot")
+        self.args = {"database_path": self.database, "job_id": job.job_id,
+                         "actor": "operator", "snapshot_dir": "/trusted/snapshot"}
 
     def prepare(self):
         self.store.jobs.transition(self.job_id, "operator", "queued", "running")

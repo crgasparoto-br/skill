@@ -44,8 +44,8 @@ class SnapshotExportTests(unittest.TestCase):
                                         "rev-parse", "refs/heads/develop"], text=True).strip()
 
     def export(self, **overrides):
-        args = dict(mirror_path=str(self.mirror), root_path=str(self.root),
-                    expected_sha=self.sha())
+        args = {"mirror_path": str(self.mirror), "root_path": str(self.root),
+                    "expected_sha": self.sha()}
         args.update(overrides)
         # Test uses a real local Git mirror; only filesystem identity is simulated.
         original = Path.stat

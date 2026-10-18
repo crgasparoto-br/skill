@@ -14,15 +14,15 @@ class TrustedWorkspaceIntakeTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.database = str(Path(self.directory.name) / "jobs.db")
         self.resolve = Mock(return_value="a" * 40)
-        self.params = dict(
-            database_path=self.database,
-            principal=VerifiedPrincipal("operator", frozenset({"entregar-issue"}), True),
-            allowed_subjects=frozenset({"operator"}),
-            allowed_repositories=frozenset({"crgasparoto-br/training-system"}),
-            repository="crgasparoto-br/training-system",
-            issue_number=499, idempotency_key="request-499",
-            trusted_develop_head=self.resolve,
-        )
+        self.params = {
+            "database_path": self.database,
+            "principal": VerifiedPrincipal("operator", frozenset({"entregar-issue"}), True),
+            "allowed_subjects": frozenset({"operator"}),
+            "allowed_repositories": frozenset({"crgasparoto-br/training-system"}),
+            "repository": "crgasparoto-br/training-system",
+            "issue_number": 499, "idempotency_key": "request-499",
+            "trusted_develop_head": self.resolve,
+        }
 
     def test_accepted_request_resolves_develop_and_queues(self):
         result = intake_prepare_workspace(**self.params)

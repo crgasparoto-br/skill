@@ -14,13 +14,13 @@ class EnqueueTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.database = str(Path(self.temp.name) / "jobs.db")
         self.owner = VerifiedPrincipal("allowed", frozenset({"entregar-issue"}), True)
-        self.params = dict(
-            database_path=self.database, principal=self.owner,
-            allowed_subjects=frozenset({"allowed"}),
-            allowed_repositories=frozenset({"crgasparoto-br/training-system"}),
-            repository="crgasparoto-br/training-system", issue_number=499,
-            base_sha="a" * 40, idempotency_key="attempt-1",
-        )
+        self.params = {
+            "database_path": self.database, "principal": self.owner,
+            "allowed_subjects": frozenset({"allowed"}),
+            "allowed_repositories": frozenset({"crgasparoto-br/training-system"}),
+            "repository": "crgasparoto-br/training-system", "issue_number": 499,
+            "base_sha": "a" * 40, "idempotency_key": "attempt-1",
+        }
 
     def test_authorized_enqueue_is_queued_not_executed(self):
         job = enqueue_prepare_workspace(**self.params)

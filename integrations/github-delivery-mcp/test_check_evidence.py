@@ -17,8 +17,8 @@ class EvidenceTests(unittest.TestCase):
             actor="operator", key="one", payload_hash=hashlib.sha256(b"one").hexdigest(),
             repo="crgasparoto-br/skill", issue_number=88,
             branch="feat/88-delivery", base_sha="a" * 40, expected_head="a" * 40)
-        self.kwargs = dict(job_id=self.job.job_id, actor="operator",
-                           base_sha="a" * 40)
+        self.kwargs = {"job_id": self.job.job_id, "actor": "operator",
+                           "base_sha": "a" * 40}
 
     def prepare(self):
         self.store.jobs.transition(self.job.job_id, "operator", "queued", "running")

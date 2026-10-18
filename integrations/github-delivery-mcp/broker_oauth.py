@@ -7,11 +7,14 @@ Keycloak scope (solverit:deliver) is mandatory; read-only tokens are denied.
 """
 from __future__ import annotations
 
-from collections.abc import Mapping
+from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
 
 from mcp_jwks_verifier import CachedJWKSVerifier, JWKSVerifierPolicy
 from mcp_jwt_verifier import MCPTokenRejectedError
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 DELIVERY_SCOPE = "solverit:deliver"
 DELIVERY_CLIENT = "solverit-chatgpt-mcp"  # Exclusive OAuth azp for delivery

@@ -7,10 +7,13 @@ No GitHub credential, token, or resolver is exposed to MCP tool arguments.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from delivery_job_submission import enqueue_prepare_workspace
 from policy import PolicyDeniedError, VerifiedPrincipal
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 

@@ -16,12 +16,12 @@ class OfflineWorkspaceTests(unittest.TestCase):
         self.mirror.mkdir()
         self.work = self.root / "jobs"
         self.work.mkdir()
-        self.params = dict(
-            repository="crgasparoto-br/training-system",
-            expected_sha="a" * 40,
-            mirror_path=str(self.mirror),
-            workspace_root=str(self.work),
-        )
+        self.params = {
+            "repository": "crgasparoto-br/training-system",
+            "expected_sha": "a" * 40,
+            "mirror_path": str(self.mirror),
+            "workspace_root": str(self.work),
+        }
 
     def test_refuses_non_worker_identity(self):
         with patch("offline_workspace.os.geteuid", return_value=1000):

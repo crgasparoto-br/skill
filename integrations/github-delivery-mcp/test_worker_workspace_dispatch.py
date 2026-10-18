@@ -20,9 +20,9 @@ class WorkspaceDispatchTests(unittest.TestCase):
             repo="crgasparoto-br/training-system", issue_number=499,
             branch="feat/499-delivery", base_sha="a"*40, expected_head="a"*40,
         )
-        self.args = dict(database_path=self.database, job_id=self.job.job_id,
-                         actor="operator", repository="crgasparoto-br/training-system",
-                         mirror_path="/unavailable/mirror", workspace_root="/unavailable/jobs")
+        self.args = {"database_path": self.database, "job_id": self.job.job_id,
+                         "actor": "operator", "repository": "crgasparoto-br/training-system",
+                         "mirror_path": "/unavailable/mirror", "workspace_root": "/unavailable/jobs"}
 
     def test_worker_only(self):
         with patch("worker_workspace_dispatch.os.geteuid", return_value=1000):

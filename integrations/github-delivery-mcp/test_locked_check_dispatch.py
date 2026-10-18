@@ -30,9 +30,9 @@ class LockedDispatchTests(unittest.TestCase):
             branch="feat/88-test", base_sha="a"*40, expected_head="a"*40,
         )
         self.id = job.job_id
-        self.args = dict(database_path=self.db, lock_path=self.lock,
-                         job_id=self.id, actor="operator",
-                         snapshot_dir=str(self.snapshot))
+        self.args = {"database_path": self.db, "lock_path": self.lock,
+                         "job_id": self.id, "actor": "operator",
+                         "snapshot_dir": str(self.snapshot)}
         (self.snapshot / ".solverit-expected-sha").write_text("a"*40 + "\n")
         self.store.jobs.transition(self.id, "operator", "queued", "running")
         self.store.jobs.transition(self.id, "operator", "running", "prepared")

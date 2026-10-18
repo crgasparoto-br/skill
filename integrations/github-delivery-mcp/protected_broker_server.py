@@ -17,7 +17,7 @@ import stat
 import struct
 import urllib.parse
 import uuid
-from contextlib import closing
+from contextlib import closing, suppress
 from pathlib import Path
 
 from app_token_broker import ALLOWED_REPOSITORIES, mint_token
@@ -192,10 +192,8 @@ def serve_one(connection: socket.socket, *, controller_uid: int, verifier: objec
     except Exception:
         # Security boundary: don't expose private exception messages or tokens.
         pass
-    try:
+    with suppress(OSError):
         connection.sendall((json.dumps(response, sort_keys=True) + "\n").encode())
-    except OSError:
-        pass
 
 
 def serve(*, controller_uid: int, socket_gid: int) -> None:

@@ -15,17 +15,17 @@ class GitHubEvidenceTests(unittest.TestCase):
         self.job = SimpleNamespace(
             repo="crgasparoto-br/skill", branch="feat/88-delivery",
             issue_number=88, base_sha=self.base, expected_head=self.head)
-        self.pr = dict(repository=self.job.repo, head_branch=self.job.branch,
-                       base_branch="develop", state="open", merged=False,
-                       issue_number=88, head_sha=self.head)
+        self.pr = {"repository": self.job.repo, "head_branch": self.job.branch,
+                       "base_branch": "develop", "state": "open", "merged": False,
+                       "issue_number": 88, "head_sha": self.head}
         self.required = frozenset({"Validate repository", "Tests"})
-        self.runs = [dict(name=name, head_sha=self.head, status="completed",
-                          conclusion="success", source="github-check-runs")
+        self.runs = [{"name": name, "head_sha": self.head, "status": "completed",
+                          "conclusion": "success", "source": "github-check-runs"}
                      for name in sorted(self.required)]
 
     def check(self, **changes):
-        args = dict(job=self.job, pull_request=self.pr,
-                    check_runs=self.runs, required_checks=self.required)
+        args = {"job": self.job, "pull_request": self.pr,
+                    "check_runs": self.runs, "required_checks": self.required}
         args.update(changes)
         return require_github_evidence(**args)
 
@@ -58,7 +58,7 @@ class GitHubEvidenceTests(unittest.TestCase):
 
     def test_duplicate_check_rejected(self):
         with self.assertRaises(GitHubEvidenceRejected):
-            self.check(check_runs=self.runs + [self.runs[0]])
+            self.check(check_runs=[*self.runs, self.runs[0]])
 
     def test_empty_required_check_policy_rejected(self):
         with self.assertRaises(GitHubEvidenceRejected):

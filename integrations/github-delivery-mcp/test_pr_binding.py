@@ -20,8 +20,8 @@ class PRBindingTests(unittest.TestCase):
             branch="feat/88-delivery", base_sha="a"*40, expected_head="b"*40,
         )
         self.store = PRBindingStore(self.db)
-        self.args = dict(job_id=self.job.job_id, actor="authorized",
-                         pr_number=89, head_sha="b"*40)
+        self.args = {"job_id": self.job.job_id, "actor": "authorized",
+                         "pr_number": 89, "head_sha": "b"*40}
 
     def prepare(self):
         self.jobs.transition(self.job.job_id, "authorized", "queued", "running")

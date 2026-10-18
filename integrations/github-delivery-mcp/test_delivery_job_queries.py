@@ -26,11 +26,11 @@ class JobQueryTests(unittest.TestCase):
         )
 
     def query(self, principal, **changes):
-        args = dict(
-            database_path=self.database, job_id=self.job.job_id, principal=principal,
-            allowed_subjects=frozenset({"allowed-user", "different-user"}),
-            allowed_repositories=frozenset({"crgasparoto-br/training-system"}),
-        )
+        args = {
+            "database_path": self.database, "job_id": self.job.job_id, "principal": principal,
+            "allowed_subjects": frozenset({"allowed-user", "different-user"}),
+            "allowed_repositories": frozenset({"crgasparoto-br/training-system"}),
+        }
         args.update(changes)
         return get_authorized_job_status(**args)
 
