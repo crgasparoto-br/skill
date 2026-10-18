@@ -10,6 +10,8 @@ import re
 import subprocess
 from pathlib import Path
 
+from risk_inference import requires_semantic_mutation_saturation
+
 AXES = ("origin", "binding", "transformation", "control_flow", "consumption", "boundary")
 EXPECTED = {"violation": "reject", "benign": "accept", "mutation": "reject"}
 SHA = re.compile(r"^[0-9a-f]{40,64}$")
@@ -244,7 +246,7 @@ def validate_rule(rule: object, ri: int, required: set[tuple[str, str, str]],
     validate_comparisons(tag, rule, variants, covered, kinds, by_id, root, errors)
 
 
-def validate(manifest: dict, matrix: dict, root: Path, head: str) -> list[str]:
+def validate(manifest: dict, matrix: dict, closure: dict, root: Path, head: str) -> list[str]:
     errors: list[str] = []
     if not SHA.fullmatch(head):
         errors.append("invalid current head SHA")
@@ -262,6 +264,22 @@ def validate(manifest: dict, matrix: dict, root: Path, head: str) -> list[str]:
                 required.add((str(req.get("requirement_id") or ""),
                               str(surface.get("risk_family") or ""),
                               str(surface.get("surface") or "")))
+    canonical: set[tuple[str, str, str]] = set()
+    obligations = closure.get("obligations")
+    if not isinstance(obligations, list):
+        errors.append("canonical requirement closure has no obligations")
+    else:
+        for obligation in obligations:
+            if not isinstance(obligation, dict):
+                errors.append("invalid canonical closure obligation")
+                continue
+            if obligation.get("disposition") == "not-applicable":
+                continue
+            if requires_semantic_mutation_saturation([str(obligation.get("source_text") or "")]):
+                for rid in obligation.get("requirement_ids") or []:
+                    canonical.add((str(rid), "structural-contract", "semantic-mutation-saturation"))
+    if canonical - required:
+        errors.append(f"canonical semantic surfaces omitted or disabled: {sorted(canonical - required)}")
     if not required:
         errors.append("no semantic saturation surfaces declared in attack matrix")
     rules = manifest.get("rules")
@@ -280,12 +298,13 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--manifest", required=True)
     p.add_argument("--attack-matrix", required=True)
+    p.add_argument("--requirement-closure", required=True)
     p.add_argument("--head-sha", required=True)
     p.add_argument("--root", default=".")
     a = p.parse_args()
     try:
         errors = validate(load(Path(a.manifest)), load(Path(a.attack_matrix)),
-                          Path(a.root).resolve(), a.head_sha)
+                          load(Path(a.requirement_closure)), Path(a.root).resolve(), a.head_sha)
     except (OSError, ValueError, TypeError) as exc:
         errors = [f"missing or invalid evidence: {exc}"]
     if errors:
