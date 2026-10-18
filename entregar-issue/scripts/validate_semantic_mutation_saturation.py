@@ -93,6 +93,32 @@ def validate_case(case: object, ci: int, tag: str, variants: dict,
     return kind, axes
 
 
+def validate_comparisons(tag: str, rule: dict, variants: dict, covered: set,
+                         kinds: set, by_id: dict, errors: list[str]) -> None:
+    for kind in EXPECTED:
+        if kind not in kinds:
+            errors.append(f"{tag}: missing {kind} control")
+    for a, b in itertools.combinations(AXES, 2):
+        for va, vb in itertools.product(variants[a], variants[b]):
+            if (a, va, b, vb) not in covered:
+                errors.append(f"{tag}: uncovered pairwise {a}={va} x {b}={vb}")
+    pairs = rule.get("metamorphic_pairs")
+    if not isinstance(pairs, list) or not pairs:
+        errors.append(f"{tag}: metamorphic pairs missing")
+    else:
+        for pair in pairs:
+            if (not isinstance(pair, list) or len(pair) != 2
+                    or pair[0] not in by_id or pair[1] not in by_id or pair[0] == pair[1]):
+                errors.append(f"{tag}: invalid metamorphic pair")
+                continue
+            left, right = by_id[pair[0]], by_id[pair[1]]
+            if (left.get("axes") == right.get("axes")
+                    or any(case.get("observed") != "reject"
+                           or case.get("kind") not in ("violation", "mutation")
+                           for case in (left, right))):
+                errors.append(f"{tag}: metamorphic pair not discriminating")
+
+
 def validate_rule(rule: object, ri: int, required: set[tuple[str, str, str]],
                   seen: set[tuple[str, str, str]], ids: set[str], root: Path,
                   head: str, errors: list[str]) -> None:
@@ -133,28 +159,8 @@ def validate_rule(rule: object, ri: int, required: set[tuple[str, str, str]],
         by_id[case["id"]] = case
         for a, b in itertools.combinations(AXES, 2):
             covered.add((a, axes[a], b, axes[b]))
-    for kind in EXPECTED:
-        if kind not in kinds:
-            errors.append(f"{tag}: missing {kind} control")
-    for a, b in itertools.combinations(AXES, 2):
-        for va, vb in itertools.product(variants[a], variants[b]):
-            if (a, va, b, vb) not in covered:
-                errors.append(f"{tag}: uncovered pairwise {a}={va} x {b}={vb}")
-    pairs = rule.get("metamorphic_pairs")
-    if not isinstance(pairs, list) or not pairs:
-        errors.append(f"{tag}: metamorphic pairs missing")
-    else:
-        for pair in pairs:
-            if (not isinstance(pair, list) or len(pair) != 2
-                    or pair[0] not in by_id or pair[1] not in by_id or pair[0] == pair[1]):
-                errors.append(f"{tag}: invalid metamorphic pair")
-                continue
-            left, right = by_id[pair[0]], by_id[pair[1]]
-            if (left.get("axes") == right.get("axes")
-                    or any(case.get("observed") != "reject"
-                           or case.get("kind") not in ("violation", "mutation")
-                           for case in (left, right))):
-                errors.append(f"{tag}: metamorphic pair not discriminating")
+    validate_comparisons(tag, rule, variants, covered, kinds, by_id, errors)
+
 
 def validate(manifest: dict, matrix: dict, root: Path, head: str) -> list[str]:
     errors: list[str] = []
