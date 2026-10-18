@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 
 SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -84,8 +85,41 @@ def validate_identity(inventory: dict, report: dict, head: str, errors: list[str
         errors.append("invalid immutable SHA")
 
 
-def validate_sources(inventory: dict, root: Path, errors: list[str]) -> set[str]:
+
+def verified_git_paths(git_repo: Path, base_sha: str, head_sha: str) -> set[str]:
+    """Derive changed files directly from trusted Git objects, not a JSON assertion."""
+    if not git_repo.is_dir():
+        raise ValueError("trusted Git checkout missing")
+    for sha in (base_sha, head_sha):
+        if not isinstance(sha, str) or not SHA.fullmatch(sha):
+            raise ValueError("invalid Git commit identity")
+        checked = subprocess.run(
+            ["git", "-C", str(git_repo), "cat-file", "-e", sha + "^{commit}"],
+            capture_output=True, timeout=15, check=False,
+        )
+        if checked.returncode:
+            raise ValueError("Git commit unavailable in trusted checkout: " + sha)
+    completed = subprocess.run(
+        ["git", "-C", str(git_repo), "diff", "--name-only", "--no-renames", "-z",
+         base_sha + "..." + head_sha],
+        capture_output=True, timeout=30, check=False,
+    )
+    if completed.returncode:
+        raise ValueError("independent Git changed-path query failed")
+    paths = [part.decode("utf-8") for part in completed.stdout.split(b"\\0") if part]
+    if not paths or len(paths) != len(set(paths)):
+        raise ValueError("empty or duplicated Git changed-path inventory")
+    return set(paths)
+
+
+def validate_sources(inventory: dict, root: Path, git_repo: Path, errors: list[str]) -> set[str]:
     sources = indexed(inventory.get("sources"), "sources", errors)
+    identity = inventory.get("identity", {})
+    try:
+        authoritative_paths = verified_git_paths(git_repo, identity.get("base_sha"), identity.get("head_sha"))
+    except (OSError, ValueError, subprocess.TimeoutExpired, UnicodeError) as exc:
+        errors.append(f"trusted Git changed-path verification failed: {exc}")
+        authoritative_paths = set()
     kinds = set()
     for key, source in sources.items():
         if source.get("kind") not in {"specification", "diff", "contract"}:
@@ -107,6 +141,8 @@ def validate_sources(inventory: dict, root: Path, errors: list[str]) -> set[str]
             snapshot = read_json(safe_path)
             identity = inventory.get("identity", {})
             paths = snapshot.get("changed_paths")
+            if authoritative_paths and set(paths or []) != authoritative_paths:
+                errors.append("changed-path inventory diverges from independently read Git objects")
             if (snapshot.get("base_sha") != identity.get("base_sha")
                     or snapshot.get("head_sha") != identity.get("head_sha")
                     or not isinstance(paths, list) or not paths
@@ -125,6 +161,8 @@ def validate_sources(inventory: dict, root: Path, errors: list[str]) -> set[str]
             errors.append("discovery procedure must be reproducible")
         if not discovery.get("changed_paths") or not isinstance(discovery["changed_paths"], list):
             errors.append("changed-path inventory is required")
+        elif authoritative_paths and set(discovery["changed_paths"]) != authoritative_paths:
+            errors.append("independent discovery omitted or invented Git changed paths")
     return set(sources)
 
 
@@ -239,12 +277,12 @@ def validate_findings(report: dict, requirements: dict, surfaces: dict,
     return len(blocking)
 
 
-def validate(inventory: dict, report: dict, root: Path, head: str) -> list[str]:
+def validate(inventory: dict, report: dict, root: Path, head: str, git_repo: Path) -> list[str]:
     errors: list[str] = []
     if inventory.get("schema_version") != 1 or report.get("schema_version") != 1:
         errors.append("unsupported schema_version")
     validate_identity(inventory, report, head, errors)
-    source_ids = validate_sources(inventory, root, errors)
+    source_ids = validate_sources(inventory, root, git_repo, errors)
     requirements, surfaces, historical = validate_inventory(inventory, source_ids, errors)
     validate_changed_paths(inventory, report, surfaces, root, errors)
     blockers = validate_findings(report, requirements, surfaces, root, errors)
@@ -284,10 +322,12 @@ def main() -> int:
     parser.add_argument("--report-json", type=Path, required=True)
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--head-sha", required=True)
+    parser.add_argument("--git-repo", type=Path, required=True,
+                        help="Trusted Git checkout containing frozen base and HEAD commits")
     args = parser.parse_args()
     try:
         errors = validate(read_json(args.inventory), read_json(args.report_json),
-                          args.root.resolve(), args.head_sha)
+                          args.root.resolve(), args.head_sha, args.git_repo.resolve())
     except (OSError, ValueError, TypeError) as exc:
         errors = [f"unreadable or invalid audit inputs: {exc}"]
     if errors:
