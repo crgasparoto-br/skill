@@ -23,9 +23,9 @@ jsonschema-specifications==2025.9.1 \
 packaging==26.3 \
     --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
 # via pytest
-# arquivo: pluggy-1.6.0-py3-none-any.whl
-pluggy==1.6.0 \
-    --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
+# arquivo: pluggy-1.7.0-py3-none-any.whl
+pluggy==1.7.0 \
+    --hash=sha256:7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec
 # via pytest
 # arquivo: pygments-2.21.0-py3-none-any.whl
 pygments==2.21.0 \

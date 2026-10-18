@@ -98,6 +98,24 @@ Preencher quando houver CI/status remoto relevante, suite abortada ou `blocker-b
 |---|---|---:|---:|---:|---|
 | `...` | green/red-candidate-caused/red-inherited-or-infra/not-reached/missing/unknown | sim/nao | sim/nao | sim/nao | ... |
 
+### Cobertura e saturacao adversarial
+
+Registrar a colheita proporcional antes de afirmar que os blockers conhecidos
+representam as lacunas materiais da entrega. Um parecer reprovado tambem exige
+transparencia sobre o que foi e nao foi investigado; nao limitar o resultado a
+dois findings nem inflar a contagem por variacoes da mesma causa raiz.
+
+| Requisito | Familia / superficie | Dimensoes adversariais | Status | Evidencia e limites |
+|---|---|---|---|---|
+| `R-...` | `...` | `origem / escopo / transformacao / consumidor` ou dominio equivalente | `covered / not-applicable / not-executed` | `SHA, procedimento, esperado, observado, evidencia` ou justificativa |
+
+- Cobertura declarada: `[abrangente | limitada]`, com motivo e superficies em aberto.
+- Variantes consolidadas por causa raiz: `[IDs + dimensoes]`.
+- Superficies remanescentes e riscos residuais: `[lista; vazio somente se confirmado]`.
+- Provas caras omitidas apos blocker: `[procedimento + justificativa]`.
+- Em reauditoria com preflight deterministico ainda aberto: classificar
+  `preflight-bounded` sem alegar que a matriz ampla foi reexecutada.
+
 - `blocker_bounded`: `[true|false]`
 - provas caras puladas: `[lista + skip_reason]`
 - evidencias verdes reutilizadas: `[run/job + escopo comprovado]`

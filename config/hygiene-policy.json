@@ -62,7 +62,8 @@
       "state": "gated",
       "import_name_map": {
         "pyyaml": "yaml",
-        "pip-audit": "pip_audit"
+        "pip-audit": "pip_audit",
+        "pyjwt": "jwt"
       },
       "tool_dependencies": [
         "ruff",
@@ -78,7 +79,7 @@
     "complexity": {
       "state": "reported",
       "max_complexity": 30,
-      "baseline": 51,
+      "baseline": 52,
       "limits": "Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento entre módulos. Mede só o corpo da própria função: função aninhada é medida por si, ramo de default de parâmetro e de decorator não entra, with não conta como ramo e lambda não é medida.",
       "baseline_history": [
         {
@@ -99,7 +100,11 @@
         },
         {
           "value": 51,
-          "reason": "A entrega da Issue 88 introduziu verificacoes de autorizacao e transporte MCP com ramificacoes fail-closed; a medicao estrutural real subiu de 50 para 51. O limite de complexidade e a cobertura permanecem inalterados, com revisao independente antes da integracao."
+          "reason": "O validador deterministico de completude adicionou um ramo de rejeicao para manifests e atestacoes incompletas; medicao CI 38167388012, sem alterar o limiar max_complexity."
+        },
+        {
+          "value": 52,
+          "reason": "O verificador autenticado GitHub adicionou validacao de completude de reviews e checks; medicao CI 38167497623, mantendo a classe reported e o limite de complexidade existente. O ramo Issue 88 registrou antes valor 51 associado aos controles OAuth/MCP; a base develop ja possuia medicao 52, preservada nesta reconciliacao."
         }
       ]
     }

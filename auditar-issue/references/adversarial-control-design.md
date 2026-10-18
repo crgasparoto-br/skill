@@ -15,6 +15,34 @@ Para cada requisito implementado, produzir `negative_controls` e `negative_contr
 5. Variar ao menos um caso irmao para evitar ajuste ao exemplo literal.
 6. Registrar evidencia bruta; nome de teste ou CI verde nao basta.
 
+## Matriz de mutacoes semanticas para detectores
+
+Quando o objeto auditado e um **detector, parser, compilador, gate estatico ou
+rastreador de proveniencia**, nao parar na primeira variante do escape. Derivar
+eixos do fluxo real, somente onde aplicaveis:
+
+| Eixo | Variantes discriminantes |
+| --- | --- |
+| Origem | import direto/reexportado, CommonJS, arquivo, fornecedor dinamico ou ausente |
+| Identidade e escopo | alias `const`/`let`, desestruturacao, parametro homonimo, shadowing, mutacao e ordem de escrita |
+| Transformacao | projecao escalar/registro, encadeamento, chamada transparente/opaca, agregacao |
+| Fluxo | caminho direto, `if` opcional, `if/else` exaustivo, alternativas logicas/ternarias, loop |
+| Consumo | comparacao, busca, predicado, indexacao, iterador ou operacao equivalente do dominio |
+| Fronteira | producao, fixture carregada, teste isolado, apresentacao inerte, dominio nao relacionado |
+
+Para cada novo escape, partir da mesma causa raiz e procurar pelo menos
+uma variante irma estrutural e um controle benigno anti-falso-positivo que prove ausencia de
+bloqueio indevido; depois testar outros eixos materiais que ainda nao foram
+observados. Cruzar pares de eixos relevantes (especialmente origem x escopo,
+transformacao x consumo, fluxo x mutacao) para detectar interacoes sem exigir
+todas as combinacoes possiveis. Um caso por metodo conhecido nao prova a
+familia; uma lista extensa de casos equivalentes tambem nao prova eixos novos.
+
+Diferenciar `executed`, `static-inference` e `not-executed`.
+Um reproducer inferido pela leitura e hipotese, nao resultado observado.
+Registrar matriz resumida no parecer via `blocker-harvest.md`, com a
+justificativa de superficies nao exercitadas.
+
 ## Entradas estruturadas
 
 Para parsers, decoders, desserializadores e adaptadores de entrada nao confiavel, verificar dimensoes adequadas ao formato:

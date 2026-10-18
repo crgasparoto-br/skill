@@ -77,6 +77,14 @@ Não colocar cada campo, métrica ou parágrafo em um card. Preferir seções, l
 - Evitar truncar dado essencial sem tooltip, expansão ou acesso ao detalhe.
 - No mobile, priorizar colunas essenciais, cartões de linha ou scroll horizontal deliberado; não esmagar todas as colunas.
 
+## Golden Screens e controles de escolha
+
+- Antes de criar ou alterar botao, combobox, opcao de menu, radiogroup ou modal, identificar o modelo executavel da Golden Screen aprovada do projeto e reutilizar variante/estados e tokens. A aparencia neutra tambem faz parte do contrato, nao so o grid.
+- Opcao de escolha e acao de confirmar sao responsabilidades diferentes. Alternativas equivalentes devem ter o **mesmo estilo neutro**, com texto legivel, sem fundo de acao primaria ou selecao implicita antes do clique. Reservar `primary` para confirmacao final.
+- Conferir a cascata CSS global e local, especialmente regras genericas como `button:hover:not(:disabled)`. O componente deve manter o contraste correto de background, foreground e border em **repouso, hover, focus-visible, active e disabled**; nao confiar apenas na presenca de classes ou propriedades estaticas.
+- No SolverFin, consultar `docs/DESIGN_SYSTEM.md`, `docs/GOLDEN_STATEMENT.md` e `docs/UI_PRIMITIVES.md`. Para opcoes operacionais no SSR, reutilizar `button[data-button-variant="neutral"]`, seus tokens `--sf-*` e aliases; nunca criar botao escuro de escolha com texto escuro.
+- Bloquear o aceite de mudanca visual quando um unico estado de hover/foco divergir da Golden Screen ou tiver contraste insuficiente. Validar o estado real no navegador com ponteiro e teclado; conferir o HEAD exato, desktop e mobile e registrar evidencia.
+
 ## Botões e ícones
 
 - Reutilizar biblioteca de ícones do projeto.

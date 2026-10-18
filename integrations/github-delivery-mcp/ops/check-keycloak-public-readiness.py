@@ -89,10 +89,7 @@ def validate_document(discovery: dict, jwks: dict) -> dict[str, str | int]:
     if not signing or len(signing) != len(set(signing)):
         raise ReadinessError("no unique RS256 verification keys")
     scopes = discovery.get("scopes_supported")
-    if isinstance(scopes, list):
-        advertised = "yes" if SCOPE in scopes else "no"
-    else:
-        advertised = "unspecified"
+    advertised = ("yes" if SCOPE in scopes else "no") if isinstance(scopes, list) else "unspecified"
     return {
         "issuer": ISSUER,
         "resource": RESOURCE,

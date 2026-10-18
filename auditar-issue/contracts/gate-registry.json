@@ -177,6 +177,27 @@
       ]
     },
     {
+      "id": "semantic-mutation-saturation",
+      "activate_when": {
+        "kind": "signal-any",
+        "values": [
+          "parser",
+          "semantic-saturation"
+        ]
+      },
+      "controls": [
+        "SEMANTIC-MUTATION-EXACT-HEAD"
+      ],
+      "invalidates": [
+        "domain-validation",
+        "final-gate",
+        "internal-adversarial-gate",
+        "freeze",
+        "remote-gate",
+        "decision"
+      ]
+    },
+    {
       "id": "input-parser-controls",
       "activate_when": {
         "kind": "signal-any",
