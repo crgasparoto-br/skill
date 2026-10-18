@@ -57,7 +57,8 @@ def check_file(root: Path, relative: object, digest: object, label: str,
 
 
 
-def replay(argv: object, entrypoint: object, root: Path, source: Path,
+def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
+           root: Path, source: Path,
            label: str, errors: list[str]) -> subprocess.CompletedProcess | None:
     """Run the actual gate/transformer without a shell in a bounded workspace."""
     if (not isinstance(argv, list) or len(argv) < 2
@@ -67,12 +68,20 @@ def replay(argv: object, entrypoint: object, root: Path, source: Path,
         return None
     if (not isinstance(entrypoint, str) or not entrypoint
             or Path(entrypoint).is_absolute()
-            or entrypoint not in argv):
+            or entrypoint not in argv[:3]):
         errors.append(f"{label}: replay must invoke declared gate entrypoint")
+        return None
+    if not source.is_relative_to(root) or not source.is_file():
+        errors.append(f"{label}: replay source escapes workspace or is missing")
         return None
     gate = (root / entrypoint).resolve()
     if not gate.is_relative_to(root) or not gate.is_file():
         errors.append(f"{label}: replay gate entrypoint missing or escapes workspace")
+        return None
+    if (not isinstance(entrypoint_sha256, str)
+            or not DIGEST.fullmatch(entrypoint_sha256)
+            or sha256(gate.read_bytes()) != entrypoint_sha256):
+        errors.append(f"{label}: replay gate hash missing or stale")
         return None
     expanded = [str(source) if item == "{source}" else item for item in argv]
     try:
@@ -95,7 +104,8 @@ def validate_replay(case: dict, proof: dict, root: Path, verdict: str,
     if not isinstance(run, dict):
         errors.append(f"{label}: executable replay is mandatory")
         return
-    executed = replay(run.get("argv"), run.get("entrypoint"), root, source, label, errors)
+    executed = replay(run.get("argv"), run.get("entrypoint"),
+                      run.get("entrypoint_sha256"), root, source, label, errors)
     if executed is None:
         return
     expected_codes = oracle.get(verdict + "_exit_codes", [])
@@ -180,7 +190,8 @@ def validate_metamorphic_pair(pair: object, tag: str, by_id: dict,
         errors.append(f"{tag}: invalid metamorphic source and target")
         return
     outcome = replay(transform.get("argv"), transform.get("entrypoint"),
-                     root, source, tag + " metamorphic", errors)
+                     transform.get("entrypoint_sha256"), root, source,
+                     tag + " metamorphic", errors)
     if outcome is not None and (outcome.returncode != 0 or outcome.stdout != target.read_bytes()):
         errors.append(f"{tag}: transformed bytes do not reproduce the sibling")
 
