@@ -29,9 +29,9 @@ independente de si propria.
    baseline e gates obrigatorios sobre o HEAD; nenhum deles pode ser ignorado
    por CI de outro projeto ou por um teste isolado. Recongelar apos escrita.
 7. Entregar ao auditor em contexto separado os paths e SHAs como indice.
-   O auditor deve fazer uma descoberta propria e executar o gate de completude
-   auditar-issue/scripts/validate_audit_completeness.py. Nao afirmar
-   independencia do controlador ou autor da implementacao.
+   O auditor deve fazer uma descoberta propria e executar o portao de
+   completude da Skill auditar-issue, disponibilizado apenas no pacote do
+   auditor independente. Nao afirmar independencia do implementador.
 
 ## Resultado esperado
 
