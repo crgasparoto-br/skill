@@ -9,8 +9,30 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "auditar-issue/scripts/validate_audit_completeness.py"
-HEAD = "a" * 40
-BASE = "b" * 40
+def git(root: Path, *args: str) -> str:
+    return subprocess.run(["git", "-C", str(root), *args],
+                          capture_output=True, text=True, check=True).stdout.strip()
+
+
+def create_git_fixture(root: Path) -> tuple[str, str]:
+    checkout = root / "gitrepo"
+    checkout.mkdir()
+    git(checkout, "init", "-q")
+    git(checkout, "config", "user.name", "Audit Fixture")
+    git(checkout, "config", "user.email", "audit@example.invalid")
+    candidate = checkout / "src/detector.py"
+    candidate.parent.mkdir(parents=True)
+    candidate.write_text("value = 1\n", encoding="utf-8")
+    git(checkout, "add", ".")
+    git(checkout, "commit", "-qm", "base")
+    base = git(checkout, "rev-parse", "HEAD")
+    candidate.write_text("value = 2\n", encoding="utf-8")
+    git(checkout, "add", ".")
+    git(checkout, "commit", "-qm", "candidate")
+    head = git(checkout, "rev-parse", "HEAD")
+    return base, head
+
+
 
 
 def proof(root: Path, name: str) -> dict:
@@ -22,7 +44,8 @@ def proof(root: Path, name: str) -> dict:
 
 
 def fixture(root: Path) -> tuple[dict, dict]:
-    identity = {"repository": "org/test", "base_sha": BASE, "head_sha": HEAD}
+    base, head = create_git_fixture(root)
+    identity = {"repository": "org/test", "base_sha": base, "head_sha": head}
     inventory = {
         "schema_version": 1, "identity": identity,
         "discovery": {"mode": "independent-rederivation",
@@ -43,7 +66,7 @@ def fixture(root: Path) -> tuple[dict, dict]:
     }
     diff_path = root / "proofs" / "diff.txt"
     diff_path.write_text(
-        json.dumps({"base_sha": BASE, "head_sha": HEAD,
+        json.dumps({"base_sha": base, "head_sha": head,
                     "changed_paths": ["src/detector.py"]}), encoding="utf-8"
     )
     inventory["sources"][1]["evidence_sha256"] = hashlib.sha256(diff_path.read_bytes()).hexdigest()
@@ -74,12 +97,14 @@ def fixture(root: Path) -> tuple[dict, dict]:
     return inventory, report
 
 
-def run(root: Path, inventory: dict, report: dict, head: str = HEAD) -> subprocess.CompletedProcess:
+def run(root: Path, inventory: dict, report: dict, head: str | None = None) -> subprocess.CompletedProcess:
     (root / "inventory.json").write_text(json.dumps(inventory), encoding="utf-8")
     (root / "report.json").write_text(json.dumps(report), encoding="utf-8")
     return subprocess.run(
         [sys.executable, str(SCRIPT), "--inventory", str(root / "inventory.json"),
-         "--report-json", str(root / "report.json"), "--root", str(root), "--head-sha", head],
+         "--report-json", str(root / "report.json"), "--root", str(root),
+         "--git-repo", str(root / "gitrepo"),
+         "--head-sha", head or inventory["identity"]["head_sha"]],
         capture_output=True, text=True, check=False,
     )
 
@@ -208,3 +233,27 @@ def test_entrypoint_requires_completeness_gate() -> None:
     assert "validate_audit_completeness.py" in reference
     delivery = (ROOT / "entregar-issue/SKILL.md").read_text(encoding="utf-8")
     assert "references/audit-readiness-exhaustive.md" in delivery
+
+
+def test_self_consistent_forged_snapshot_cannot_hide_real_git_file(tmp_path: Path) -> None:
+    inventory, report = fixture(tmp_path)
+    inventory["discovery"]["changed_paths"] = ["src/decoy.py"]
+    diff_path = tmp_path / "proofs/diff.txt"
+    diff_path.write_text(json.dumps({
+        "base_sha": inventory["identity"]["base_sha"],
+        "head_sha": inventory["identity"]["head_sha"],
+        "changed_paths": ["src/decoy.py"],
+    }), encoding="utf-8")
+    inventory["sources"][1]["evidence_sha256"] = hashlib.sha256(diff_path.read_bytes()).hexdigest()
+    report["changed_path_reviews"][0]["id"] = "src/decoy.py"
+    result = run(tmp_path, inventory, report)
+    assert result.returncode == 2
+    assert "independently read Git objects" in result.stdout
+
+
+def test_missing_trusted_git_objects_fails_closed(tmp_path: Path) -> None:
+    inventory, report = fixture(tmp_path)
+    for key in ("base_sha", "head_sha"):
+        inventory["identity"][key] = "f" * 40
+        report["identity"][key] = "f" * 40
+    assert "trusted Git changed-path verification failed" in run(tmp_path, inventory, report).stdout
