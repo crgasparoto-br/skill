@@ -275,6 +275,7 @@ def test_constant_metamorphic_transform_fails_source_dependency(tmp_path):
 
 def test_canonical_closure_omission_cannot_disable_semantic_gate(tmp_path):
     manifest, matrix = fixture(tmp_path)
+    assert run(tmp_path, manifest, matrix).returncode == 0
     closure_path = tmp_path / "closure.json"
     closure = json.loads(closure_path.read_text(encoding="utf-8"))
     closure["obligations"] = []
@@ -286,6 +287,7 @@ def test_canonical_closure_omission_cannot_disable_semantic_gate(tmp_path):
 
 def test_canonical_closure_rejects_forged_source_evidence(tmp_path):
     manifest, matrix = fixture(tmp_path)
+    assert run(tmp_path, manifest, matrix).returncode == 0
     closure_path = tmp_path / "closure.json"
     closure = json.loads(closure_path.read_text(encoding="utf-8"))
     closure["obligations"][0]["source_text"] = "unrelated source"
