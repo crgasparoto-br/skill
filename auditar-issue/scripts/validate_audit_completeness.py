@@ -230,7 +230,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inventory", type=Path, required=True)
     parser.add_argument("--report-json", type=Path, required=True)
-    parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--head-sha", required=True)
     args = parser.parse_args()
     try:

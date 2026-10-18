@@ -1,7 +1,6 @@
 """Adversarial proof that no known risk surface or historical finding disappears."""
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import subprocess
@@ -145,12 +144,9 @@ def test_incomplete_discovery_and_fake_exemption_are_blocked(tmp_path: Path) -> 
     inv, report = fixture(tmp_path)
     report["surfaces"][0] = {
         "id": "S1", "status": "not-applicable",
-        "reason": "Surface is declared in the contract but skipped for convenience",
-        **proof(tmp_path, "na.txt"),
+        "reason": "Only a verified independent exemption is acceptable",
     }
-    assert run(tmp_path, inv, report).returncode == 0
-    # Static equality cannot establish the truth of an exemption; the independent
-    # auditor must verify the actual applicability before signing its inventory.
+    assert "evidence path" in run(tmp_path, inv, report).stdout
 
 
 def test_no_unreported_blocker_and_no_premature_closure(tmp_path: Path) -> None:
@@ -173,3 +169,5 @@ def test_entrypoint_requires_completeness_gate() -> None:
     assert "validate_audit_completeness.py" in entry
     reference = (ROOT / "auditar-issue/references/blocker-harvest.md").read_text(encoding="utf-8")
     assert "validate_audit_completeness.py" in reference
+    delivery = (ROOT / "entregar-issue/SKILL.md").read_text(encoding="utf-8")
+    assert "references/audit-readiness-exhaustive.md" in delivery

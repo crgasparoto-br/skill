@@ -81,7 +81,7 @@ Ler somente quando aplicavel:
 - matriz requisito -> ataque: `references/requirement-attack-matrix.md`;
 - verificadores AST, parsers, gates e escapes recorrentes: `references/semantic-mutation-saturation.md`; executar gate `semantic-mutation-saturation` com matriz pairwise e validador exact-SHA (fail-closed) antes do handoff;
 - referencias persistidas entre etapas: `references/reference-liveness-gate.md`;
-- saturacao de familias de risco: `references/risk-saturation-gate.md`;
+- saturacao e readiness da auditoria: `references/risk-saturation-gate.md` e `references/audit-readiness-exhaustive.md`;
 - controles herdados de auditorias anteriores: `references/cumulative-audit-controls.md`;
 - evidencia/revisao/aprovacao que restringe efeitos, operacoes ou recursos posteriores: `references/evidence-effect-scope-gate.md`;
 - catalogo reutilizavel de escapes: `references/audit-escape-pattern-catalog.md`;

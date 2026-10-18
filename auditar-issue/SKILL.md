@@ -85,7 +85,7 @@ Ler somente quando aplicavel:
 - diff com codigo executavel adicionado, referencia nova ou comportamento substituido: `references/codebase-grounding-audit.md`;
 - resolucao de scripts/artefatos no runtime: `references/runtime-resource-resolution.md`;
 - manifesto `base64-shards-v1`, artefato grande ou handoff transport-sharded: `references/large-artifact-consumption.md`;
-- auditoria `independent` ampla: `references/audit-checklist.md`; gate de completude `references/audit-completeness-gate.md` e `scripts/validate_audit_completeness.py` obrigatorios antes do parecer;
+- auditoria `independent` ampla: `references/audit-checklist.md`, `references/audit-completeness-gate.md`; executar `scripts/validate_audit_completeness.py`;
 - apos primeiro blocker: `references/blocker-harvest.md`;
 - provider, retry/fallback, ferramenta externa ou workflow com credenciais: `references/provider-call-and-secret-audit.md`;
 - `input-parser`: `references/input-parser-audit.md`;
