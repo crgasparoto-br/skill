@@ -86,6 +86,9 @@ def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
         errors.append(f"{label}: replay gate hash missing or stale")
         return None
     expanded = [str(source) if item == "{source}" else item for item in argv]
+    # Execute the exact hashed file, never an unrelated same-name binary in PATH.
+    entrypoint_index = 0 if argv[0] == entrypoint else 1
+    expanded[entrypoint_index] = str(gate)
     try:
         return subprocess.run(
             expanded, cwd=root, capture_output=True, timeout=20, check=False,
