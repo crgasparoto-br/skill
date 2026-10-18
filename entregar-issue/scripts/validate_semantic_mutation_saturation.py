@@ -63,6 +63,38 @@ def check_file(root: Path, relative: object, digest: object, label: str,
 
 
 
+
+SANDBOX_SHELL = """\
+mount --make-rprivate /
+sandbox=$(mktemp -d)
+trap 'umount -l "$sandbox" 2>/dev/null || :; rmdir "$sandbox" 2>/dev/null || :' EXIT
+mount -t tmpfs -o size=128m tmpfs "$sandbox"
+mkdir -p "$sandbox/workspace" "$sandbox/dev" "$sandbox/tmp"
+for dirname in usr opt; do
+    if [ -d "/$dirname" ]; then
+        mkdir -p "$sandbox/$dirname"
+        mount --rbind "/$dirname" "$sandbox/$dirname"
+        mount -o remount,bind,ro "$sandbox/$dirname"
+    fi
+done
+for dirname in bin lib lib64; do
+    if [ -L "/$dirname" ]; then
+        ln -s "$(readlink "/$dirname")" "$sandbox/$dirname"
+    elif [ -d "/$dirname" ]; then
+        mkdir -p "$sandbox/$dirname"
+        mount --rbind "/$dirname" "$sandbox/$dirname"
+        mount -o remount,bind,ro "$sandbox/$dirname"
+    fi
+done
+touch "$sandbox/dev/null" "$sandbox/dev/urandom"
+mount --bind "$1" "$sandbox/workspace"
+mount -o remount,bind,ro "$sandbox/workspace"
+mount --bind /dev/null "$sandbox/dev/null"
+mount --bind /dev/urandom "$sandbox/dev/urandom"
+shift
+exec chroot "$sandbox" "$@"
+"""
+
 def trusted_script_interpreter(command: str) -> str | None:
     """Only known language runtimes may execute a hashed script as argv[1].
 
@@ -115,10 +147,11 @@ def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
             or sha256(gate.read_bytes()) != entrypoint_sha256):
         errors.append(f"{label}: replay gate hash missing or stale")
         return None
-    expanded = [str(source) if item == "{source}" else item for item in argv]
+    expanded = [("/workspace/" + source.relative_to(root).as_posix())
+                if item == "{source}" else item for item in argv]
     # The checked file is executed, never bypassed by /bin/true, -c or a PATH shim.
     entrypoint_index = 0 if direct else 1
-    expanded[entrypoint_index] = str(gate)
+    expanded[entrypoint_index] = "/workspace/" + gate.relative_to(root).as_posix()
     if interpreter:
         expanded[0] = interpreter
     try:
@@ -130,10 +163,37 @@ def replay(argv: object, entrypoint: object, entrypoint_sha256: object,
             resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
             resource.setrlimit(resource.RLIMIT_FSIZE, (2 * 1024 * 1024, 2 * 1024 * 1024))
             resource.setrlimit(resource.RLIMIT_CPU, (15, 15))
-        return subprocess.run(
-            expanded, cwd=root, capture_output=True, timeout=20, check=False,
-            env=clean_env, close_fds=True, start_new_session=True, preexec_fn=limits,
+        # Use a fresh user/mount/network/PID namespace and a read-only
+        # chroot that exposes only runtime directories and the probe workspace.
+        # Never silently fall back to a privileged or networked subprocess.
+        unshare = shutil.which("unshare")
+        if not unshare:
+            errors.append(f"{label}: isolated replay unavailable (unshare missing)")
+            return None
+        runtime = Path(expanded[0]).resolve() if interpreter else None
+        if interpreter and not any(runtime.is_relative_to(Path(p))
+                                   for p in ("/usr", "/opt")):
+            errors.append(f"{label}: interpreter outside isolated runtime mounts")
+            return None
+        executable = str(runtime) if interpreter else expanded[0]
+        isolated = [
+            unshare, "--user", "--map-root-user", "--mount", "--net",
+            "--pid", "--fork", "sh", "-eu", "-c", SANDBOX_SHELL,
+            "audit-replay", str(root), executable, *expanded[1:],
+        ]
+        executed = subprocess.run(
+            isolated, cwd=root, capture_output=True, timeout=25, check=False,
+            env=clean_env, close_fds=True, start_new_session=True,
+            preexec_fn=limits,
         )
+        if executed.returncode != 0 and (
+                b"unshare failed" in executed.stderr
+                or b"Operation not permitted" in executed.stderr
+                or b"mount:" in executed.stderr
+                or b"chroot:" in executed.stderr):
+            errors.append(f"{label}: isolated replay could not establish sandbox")
+            return None
+        return executed
     except (OSError, subprocess.TimeoutExpired) as exc:
         errors.append(f"{label}: replay could not execute: {exc}")
         return None

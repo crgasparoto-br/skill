@@ -460,3 +460,26 @@ def test_replay_scrubs_caller_credentials(tmp_path, monkeypatch):
     )
     assert not errors
     assert outcome is not None and outcome.returncode == 2
+
+def test_replay_isolation_restricts_host_paths(tmp_path):
+    script = tmp_path / "isolation-gate.py"
+    script.write_text(
+        "import os,sys\n"
+        "sys.exit(2 if not os.path.exists('/etc/passwd') "
+        "and not os.path.exists('/root') else 0)\n",
+        encoding="utf-8",
+    )
+    source = tmp_path / "source.txt"
+    source.write_text("probe", encoding="utf-8")
+    sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
+    from validate_semantic_mutation_saturation import replay
+    errors = []
+    result = replay(
+        [sys.executable, "isolation-gate.py", "{source}"],
+        "isolation-gate.py",
+        hashlib.sha256(script.read_bytes()).hexdigest(),
+        tmp_path, source, "isolation", errors,
+    )
+    assert not errors
+    assert result is not None and result.returncode == 2
+

@@ -122,3 +122,16 @@ O replay limpa variaveis herdadas do processo, desabilita core dumps e
 impoe limites a CPU, descritores e arquivos. Isso NAO e sandbox de rede
 ou filesystem: a execucao deve ocorrer em worker isolado, sem secrets e
 sem rede. Sem essa garantia operacional, nao declarar handoff READY.
+
+## Sandbox obrigatorio para o replay
+
+Cada execucao do checker e da transformacao exige \`unshare\` com namespaces
+de usuario, rede, montagem e PID, um \`chroot\` temporario com \`tmpfs\`, os
+runtimes do sistema montados como somente leitura, e o workspace do probe
+montado em \`/workspace\` tambem como somente leitura. Nenhum \`/home\`,
+\`/root\`, \`/etc\` ou rede do host e exposto ao processo isolado. O launcher
+falha fechado caso nao consiga estabelecer essas garantias; nao deve
+executar diretamente como fallback. Manter os limites de recursos e o ambiente
+sanitizado como defesas adicionais. Quando o host proibir namespaces de
+usuario, habilitar um executor isolado confiavel em vez de desabilitar a
+restricao.
