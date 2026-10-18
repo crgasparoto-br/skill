@@ -79,6 +79,9 @@ def fixture(tmp_path):
                     "entrypoint": "transform.py",
                     "entrypoint_sha256": hashlib.sha256(transform.read_bytes()).hexdigest(),
                     "argv": [sys.executable, "transform.py", "{source}"],
+                    "contrast_source_path": "probes/safe.txt",
+                    "contrast_source_sha256": hashlib.sha256(
+                        (tmp_path / "probes/safe.txt").read_bytes()).hexdigest(),
                 },
             }],
         }],
@@ -100,13 +103,31 @@ def run(tmp_path, manifest, matrix, head=HEAD):
     matrix_path = tmp_path / "matrix.json"
     write(manifest_path, manifest)
     write(matrix_path, matrix)
-    write(tmp_path / "closure.json", {"obligations": [{"id": "O-1",
-        "requirement_ids": ["R-1"], "source_text": "Static verifier must reject invalid origin",
-        "disposition": "covered"}]})
+    sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
+    from specification import extract_candidates, sha256_file
+    specification = tmp_path / "source-spec.md"
+    specification.write_text("# Requirements\\n- Static verifier must reject invalid origin\\n".replace(
+        "\\\\n", "\\n"), encoding="utf-8")
+    snapshot = tmp_path / "specification-snapshot.json"
+    write(snapshot, {"schema_version": 1, "primary_source_id": "SRC-ISSUE",
+                     "sources": [{"id": "SRC-ISSUE", "kind": "issue-body",
+                                  "textual": True, "path": "source-spec.md",
+                                  "sha256": sha256_file(specification)}]})
+    errors = []
+    _, _, candidates = extract_candidates(snapshot, errors)
+    assert not errors
+    closure = {"schema_version": 3,
+               "primary_issue_source_id": "SRC-ISSUE",
+               "specification_snapshot": {"sha256": sha256_file(snapshot)},
+               "obligations": [{"id": "O-1", **candidates[0],
+                                 "requirement_ids": ["R-1"], "disposition": "covered"}]}
+    write(tmp_path / "closure.json", closure)
     return subprocess.run([
         sys.executable, str(SCRIPT), "--manifest", str(manifest_path),
         "--attack-matrix", str(matrix_path),
-        "--requirement-closure", str(tmp_path / "closure.json"), "--head-sha", head,
+        "--requirement-closure", str(tmp_path / "closure.json"),
+        "--specification-snapshot", str(tmp_path / "specification-snapshot.json"),
+        "--head-sha", head,
         "--root", str(tmp_path),
     ], capture_output=True, text=True, check=False)
 
@@ -227,3 +248,55 @@ def test_canonical_parser_surface_cannot_be_disabled(tmp_path):
     result = run(tmp_path, manifest, matrix)
     assert result.returncode == 2
     assert "canonical semantic surfaces omitted or disabled" in result.stdout
+
+def test_replay_rejects_interpreter_wrapper_instead_of_hashed_gate(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    manifest["rules"][0]["cases"][0]["run"]["argv"] = [
+        sys.executable, "-c", "gate.py", "{source}",
+    ]
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "invoke declared gate entrypoint directly" in result.stdout
+
+
+def test_constant_metamorphic_transform_fails_source_dependency(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    transformer = tmp_path / "transform.py"
+    transformer.write_text("import sys\\nsys.stdout.write('independent alias source fixture')\\n",
+                           encoding="utf-8")
+    manifest["rules"][0]["metamorphic_pairs"][0]["transform"]["entrypoint_sha256"] = (
+        hashlib.sha256(transformer.read_bytes()).hexdigest()
+    )
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "does not depend on source bytes" in result.stdout
+
+
+def test_canonical_closure_omission_cannot_disable_semantic_gate(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    closure_path = tmp_path / "closure.json"
+    closure = json.loads(closure_path.read_text(encoding="utf-8"))
+    closure["obligations"] = []
+    write(closure_path, closure)
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "omitted or invented specification obligations" in result.stdout
+
+
+def test_canonical_closure_rejects_forged_source_evidence(tmp_path):
+    manifest, matrix = fixture(tmp_path)
+    closure_path = tmp_path / "closure.json"
+    closure = json.loads(closure_path.read_text(encoding="utf-8"))
+    closure["obligations"][0]["source_text"] = "unrelated source"
+    write(closure_path, closure)
+    result = run(tmp_path, manifest, matrix)
+    assert result.returncode == 2
+    assert "changed source evidence" in result.stdout
+
+
+def test_ast_linguistic_variants_activate_semantic_saturation():
+    sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
+    from risk_inference import requires_semantic_mutation_saturation
+    variants = ("verificador AST", "detector AST", "analisador estatico",
+                "AST verifier", "gate estatico", "static checker")
+    assert all(requires_semantic_mutation_saturation([term]) for term in variants)
