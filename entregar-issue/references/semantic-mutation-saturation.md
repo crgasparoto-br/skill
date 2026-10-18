@@ -40,3 +40,11 @@ python entregar-issue/scripts/validate_semantic_mutation_saturation.py \
 ```
 
 O validador e **fail-closed**: dados ausentes, SHA stale, superficie omitida, prova adulterada, falso positivo, mutante sobrevivente, par metamorfica invalida ou combinacao pairwise nao coberta bloqueiam `READY` e handoff. CI verde de outro projeto nao substitui replay dos controles nem auditoria independente.
+
+## Prova executada e anti-autoatestado (AUD100)
+
+Para cada regra, declarar `oracle.accept_exit_codes` e `oracle.reject_exit_codes` disjuntos, e para cada caso declarar `run.entrypoint` e `run.argv` (vetor de argumentos sem shell, contendo o proprio entrypoint e o marcador literal `{source}`). O validador reproduz a execucao real, confere o exit code do oracle e compara os hashes de stdout/stderr mais `exit_code` da prova JSON hasheada. Declaracoes `observed=reject` ou `passed` sem reproducao efetiva nao passam.
+
+Cada `metamorphic_pairs[]` deve ser objeto com `left`, `right`, `relation_id`, `invariant` (explicacao verificavel do significado preservado) e `transform` com `entrypoint` e `argv` contendo `{source}`. O comando deve produzir exatamente os bytes do caso irmao e ambos os probes devem ser rejeitados pelo gate real. O auditor independente julga a validade do invariante; nao aceitar so dois resultados identicos como prova de equivalencia semantica.
+
+`--requirement-closure` e obrigatorio e leva a closure canonica; o validador exige a superficie `semantic-mutation-saturation` quando a obrigacao descreve parser, lexer, verificador AST/estatico ou rastreador de proveniencia. A geracao de matriz deve manter `semantic_saturation_required: true` para tais superficies; nao desativar sinal para evitar o gate.
