@@ -76,7 +76,7 @@ interpretador. Flags anteriores ao script e interpretacao de codigo inline
 nao comprovam execucao do entrypoint declarado.
 
 Cada `metamorphic_pairs[].transform` informa tambem
-`contrast_source_path` e `contrast_source_sha256`. Executar a mesma
-transformacao sobre uma fonte contrastante distinta deve produzir bytes
-diferentes. Transformadores constantes ou que ignoram a origem nao sao
+`contrast_source_path` e `contrast_source_sha256`. Executar a mesma transformacao sobre a fonte original e a fonte
+contrastante, usando exatamente o mesmo pathname temporario e alterando
+apenas os bytes, deve produzir resultados diferentes. Transformadores constantes ou que ignoram a origem nao sao
 prova metamorfica; a validacao semantica do invariante continua independente.
