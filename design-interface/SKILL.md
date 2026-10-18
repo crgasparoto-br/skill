@@ -34,6 +34,8 @@ Aplicar somente para efeito percebido ou operado pelo usuario: texto, icone, ord
 ## Implementar
 
 1. Inspecionar somente componentes, tokens, icones e breakpoints relacionados.
+   - Antes de editar qualquer componente visivel, identificar Golden Screen ou referencia visual oficialmente aprovada, quando existir, e ler seu contrato e tokens executaveis.
+   - No SolverFin, consultar `docs/DESIGN_SYSTEM.md`, `docs/GOLDEN_STATEMENT.md`, `docs/UI_PRIMITIVES.md` e o CSS compartilhado, tomando o Extrato aprovado como referencia de componentes, **inclusive estados de hover, foco e escolha em dialogs**. Aplicar em todos os modais/telas relacionados, nao somente na tela principal.
 2. Definir hierarquia, ordem, acao primaria, estados e estrategia responsiva.
 3. Reutilizar componentes existentes e alterar o menor conjunto coeso.
 4. Tratar loading, vazio, erro, sucesso, indisponibilidade, permissao, teclado, foco, contraste e overflow quando aplicaveis.

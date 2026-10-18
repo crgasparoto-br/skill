@@ -31,7 +31,7 @@ eixos do fluxo real, somente onde aplicaveis:
 | Fronteira | producao, fixture carregada, teste isolado, apresentacao inerte, dominio nao relacionado |
 
 Para cada novo escape, partir da mesma causa raiz e procurar pelo menos
-uma variante irma estrutural e um controle negativo que prove ausencia de
+uma variante irma estrutural e um controle benigno anti-falso-positivo que prove ausencia de
 bloqueio indevido; depois testar outros eixos materiais que ainda nao foram
 observados. Cruzar pares de eixos relevantes (especialmente origem x escopo,
 transformacao x consumo, fluxo x mutacao) para detectar interacoes sem exigir
