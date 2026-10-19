@@ -152,7 +152,7 @@ def apply_prepared_file_edit(
                 stream.flush()
                 os.fchmod(stream.fileno(), stat.S_IMODE(metadata.st_mode))
                 os.fsync(stream.fileno())
-            os.replace(tmp_name, target)
+            Path(tmp_name).replace(target)
             dir_fd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY)
             try:
                 os.fsync(dir_fd)
@@ -160,5 +160,5 @@ def apply_prepared_file_edit(
                 os.close(dir_fd)
         finally:
             if os.path.lexists(tmp_name):
-                os.unlink(tmp_name)
+                Path(tmp_name).unlink()
         return EditResult(job.job_id, relative_path, old_digest, new_digest, True)
