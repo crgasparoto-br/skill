@@ -550,3 +550,13 @@ job creation. The adapter is loopback-only on port `8771`, **not yet installed
 as a systemd service or reverse-proxied**, and lacks the pinned production
 SDK runtime. It must remain inactive until independent authorization,
 ownership, OCI/rootless and end-to-end operational validation passes.
+
+### Non-forwarding GitHub REST boundary
+
+The authenticator's read-only GitHub client now uses
+`trusted_github_http.safe_open` for both issue existence checks and the
+`develop` ref: only HTTPS GET requests to `api.github.com` are accepted,
+environment proxies are ignored and HTTP redirects cannot forward the short-lived
+installation bearer to another domain. The token never reaches MCP or worker
+outputs. These checks are unit-tested, but the live GitHub read/OAuth roundtrip
+still requires VPS staging homologation.

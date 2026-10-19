@@ -26,7 +26,8 @@ class BrokerDevelopIntakeTests(unittest.TestCase):
         check.assert_called_once_with(
             repository=REPO, issue_number=499, token="SECRET_GITHUB_TOKEN")
         resolver.assert_called_once_with(
-            token="SECRET_GITHUB_TOKEN", allowed_repositories=frozenset({REPO}))
+            token="SECRET_GITHUB_TOKEN", allowed_repositories=frozenset({REPO}),
+            opener=intake.safe_open)
 
     def test_repo_actor_number_rejected_before_secret_read(self):
         with patch.object(intake, "mint_token") as mint:

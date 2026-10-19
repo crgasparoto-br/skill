@@ -118,6 +118,7 @@
   for FILE in \
     app_token_broker.py broker_oauth.py controller_broker_client.py \
     broker_develop_intake.py github_develop_resolver.py github_issue_reader.py \
+    trusted_github_http.py \
     delivery_controller_intake.py delivery_job_submission.py delivery_job_queries.py \
     github_evidence_reader.py github_evidence_validation.py jobs.py policy.py \
     mcp_delivery_entrypoint.py pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \
@@ -204,6 +205,7 @@
   for FILE in \
     app_token_broker.py broker_oauth.py controller_broker_client.py \
     broker_develop_intake.py github_develop_resolver.py github_issue_reader.py \
+    trusted_github_http.py \
     delivery_controller_intake.py delivery_job_submission.py delivery_job_queries.py \
     github_evidence_reader.py github_evidence_validation.py jobs.py policy.py \
     mcp_delivery_entrypoint.py pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \

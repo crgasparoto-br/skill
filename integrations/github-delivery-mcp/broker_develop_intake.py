@@ -8,6 +8,7 @@ from __future__ import annotations
 from app_token_broker import ALLOWED_REPOSITORIES, mint_token
 from github_develop_resolver import GitHubDevelopResolver
 from github_issue_reader import ISSUE_LIMIT, require_open_issue
+from trusted_github_http import safe_open
 
 PILOT_REPOSITORY = "crgasparoto-br/training-system"
 
@@ -26,7 +27,8 @@ def inspect_issue_develop(*, actor: str, repository: str, issue_number: int) -> 
     token = mint_token(repository=repository, operation="inspect-issue-develop",
                        server_authorized=True)
     require_open_issue(repository=repository, issue_number=issue_number, token=token)
-    resolver = GitHubDevelopResolver(token=token, allowed_repositories=frozenset({repository}))
+    resolver = GitHubDevelopResolver(token=token, allowed_repositories=frozenset({repository}),
+                                     opener=safe_open)
     sha = resolver(repository)
     return {"ok": True, "repository": repository, "issue_number": issue_number,
             "develop_sha": sha, "verified_actor": actor}

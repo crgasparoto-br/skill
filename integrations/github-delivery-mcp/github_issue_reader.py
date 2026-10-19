@@ -9,7 +9,9 @@ import json
 import re
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
-from urllib.request import Request, urlopen
+from urllib.request import Request
+
+from trusted_github_http import safe_open
 
 ISSUE_LIMIT = 2_147_483_647
 _REPO = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
@@ -20,7 +22,7 @@ class GitHubIssueLookupError(RuntimeError):
 
 
 def require_open_issue(*, repository: str, issue_number: int,
-                       token: str, opener=urlopen) -> None:
+                       token: str, opener=safe_open) -> None:
     if (not isinstance(repository, str) or not _REPO.fullmatch(repository)
             or type(issue_number) is not int or not 1 <= issue_number <= ISSUE_LIMIT
             or not isinstance(token, str) or not token or "\n" in token or "\r" in token):
