@@ -19,6 +19,7 @@ import workspace_file_edit as editor
 from controller_lock import controller_lock
 from jobs import JobStore
 from policy import DeliveryPolicy
+from workspace_file_edit import _assert_owned_dir, _read_head
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
@@ -74,12 +75,12 @@ def _names(workspace: Path, *args: str) -> set[str]:
 
 def _verify_files(workspace: Path, expected: dict[str, str]) -> None:
     for relative, digest in expected.items():
-        editor._read_head(workspace, branch=_git_text(
+        _read_head(workspace, branch=_git_text(
             workspace, "symbolic-ref", "--short", "HEAD"), tracked_path=relative)
         target = workspace
         for part in relative.split("/")[:-1]:
             target = target / part
-            editor._assert_owned_dir(target)
+            _assert_owned_dir(target)
         target = target / relative.split("/")[-1]
         try:
             file = os.open(target, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -120,7 +121,7 @@ def commit_prepared_workspace(
     root = Path(workspace_root)
     if not root.is_absolute():
         raise PermissionError("workspace root must be absolute")
-    editor._assert_owned_dir(root, require_private=True)
+    _assert_owned_dir(root, require_private=True)
     with controller_lock(lock_path):
         store = JobStore(database_path)
         job = store.read(job_id, actor)
@@ -131,9 +132,9 @@ def commit_prepared_workspace(
         if identity.version != 4 or str(identity) != job.job_id:
             raise PermissionError("invalid job identity")
         workspace = root / ("solverit-issue88-" + identity.hex)
-        editor._assert_owned_dir(workspace, require_private=True)
-        editor._assert_owned_dir(workspace / ".git")
-        head = editor._read_head(workspace, branch=job.branch)
+        _assert_owned_dir(workspace, require_private=True)
+        _assert_owned_dir(workspace / ".git")
+        head = _read_head(workspace, branch=job.branch)
         allowed = set(approved_files)
         if head != expected_head:
             # A previous invocation may have committed before the SQLite CAS.
@@ -159,12 +160,12 @@ def commit_prepared_workspace(
         _git(workspace, "add", "--", *sorted(allowed))
         if _names(workspace, "diff", "--cached", "--name-only", "-z") != allowed:
             raise PermissionError("staged file set changed")
-        if editor._read_head(workspace, branch=job.branch) != expected_head:
+        if _read_head(workspace, branch=job.branch) != expected_head:
             raise PermissionError("local HEAD changed before commit")
         _git(workspace, "-c", "user.name=SolverIT Issue Delivery",
              "-c", "user.email=delivery@example.invalid",
              "commit", "-m", f"feat(issue #{job.issue_number}): controlled local changes")
-        new_head = editor._read_head(workspace, branch=job.branch)
+        new_head = _read_head(workspace, branch=job.branch)
         if (new_head == expected_head
                 or _git_text(workspace, "rev-parse", "HEAD^") != expected_head
                 or _names(workspace, "diff-tree", "--no-commit-id",

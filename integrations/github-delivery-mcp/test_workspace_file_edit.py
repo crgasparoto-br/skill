@@ -178,7 +178,6 @@ class PreparedFileEditTests(unittest.TestCase):
 
     def test_commit_recovers_crash_between_git_and_database_cas(self):
         from jobs import JobStore as Store
-        original = Store.record_local_head
         with patch.object(Store, "record_local_head", side_effect=RuntimeError("offline crash")):
             self.edit()
             with self.assertRaises(RuntimeError):
