@@ -23,6 +23,7 @@ from pathlib import Path
 from app_token_broker import ALLOWED_REPOSITORIES, mint_token
 from broker_oauth import build_broker_verifier, verified_actor
 from github_evidence_reader import fetch_and_validate_github
+from broker_develop_intake import inspect_issue_develop
 from jobs import Job
 from pr_binding import PRBinding
 
@@ -130,10 +131,22 @@ def dispatch(request: object, *, peer_uid: int, controller_uid: int,
             or peer_uid != controller_uid):
         raise BrokerDeniedError("caller identity denied")
     if (not isinstance(request, dict)
-            or set(request) != {"version", "operation", "job_id", "mcp_access_token"}
             or type(request.get("version")) is not int
-            or request["version"] != PROTOCOL_VERSION
-            or request.get("operation") != "verify_bound_ci"):
+            or request["version"] != PROTOCOL_VERSION):
+        raise BrokerDeniedError("operation denied")
+    operation = request.get("operation")
+    if operation == "inspect_issue_develop":
+        if set(request) != {"version", "operation", "repository",
+                            "issue_number", "mcp_access_token"}:
+            raise BrokerDeniedError("operation denied")
+        # Verify the original Keycloak token before minting a GitHub token.
+        actor = verified_actor(request["mcp_access_token"], verifier=verifier)
+        return inspect_issue_develop(
+            actor=actor, repository=request["repository"],
+            issue_number=request["issue_number"],
+        )
+    if (operation != "verify_bound_ci"
+            or set(request) != {"version", "operation", "job_id", "mcp_access_token"}):
         raise BrokerDeniedError("operation denied")
     job_id = request["job_id"]
     if not isinstance(job_id, str) or len(job_id) != 36:

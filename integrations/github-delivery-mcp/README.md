@@ -484,3 +484,30 @@ its parent, file set, branch and hashes match the original intent. A committed
 workspace remains prepared, not succeeded. CI, PR publication and independent
 audit continue to be mandatory and must be performed by separate trusted
 components before delivery completion.
+
+## Keycloak-bound, read-only GitHub intake IPC (19/10/2026)
+
+The separate authenticator broker supports exactly one additional IPC operation:
+`inspect_issue_develop`. It **does not create a job, branch, commit or PR**.
+The request contains a repository and issue number, plus the original OAuth
+access token passed over the broker-only Unix socket. The broker checks the
+controller's kernel peer UID and independently validates the original Keycloak
+access token against the delivery-only subject/scope/client/JWKS policy before
+any GitHub API request. The permitted repository is pinned to
+`crgasparoto-br/training-system`; malicious caller-supplied actor, branch,
+file path, URL, remote command, PR or GitHub access token fields are refused.
+
+The authenticator mints a single, short-lived installation token scoped only
+to `issues:read` and `contents:read`, and verifies that the selected issue
+is an **open issue, not a pull request**, before reading
+`refs/heads/develop` from GitHub. The response returns the verified OAuth
+subject, approved repository, issue number and SHA; never GitHub tokens or
+issue text. The controller IPC client requires exact request-response binding,
+including the already verified OAuth subject from its own middleware.
+
+**Further integration pending:** the actual MCP tool must obtain a verified
+principal server-side, pass the *original* token to this broker, and persist
+jobs only in an authorized controller job store after verifying the returned
+SHA. This step is a read-only intake primitive, not a production-active write
+tool. All new broker modules are allowlisted and byte-attested by protected
+staging. Broker remains inactive pending VPS homologation.

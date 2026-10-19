@@ -17,6 +17,7 @@ KEY = "/etc/solverit/issue-delivery/secrets/github-app.pem"
 ALLOWED_REPOSITORIES = frozenset({"crgasparoto-br/training-system"})
 OPERATION_PERMISSIONS = {
     "read-issue": {"issues": "read"},
+    "inspect-issue-develop": {"issues": "read", "contents": "read"},
     "read-checks": {"checks": "read", "actions": "read"},
     "publish-pr": {"contents": "write", "pull_requests": "write"},
 }

@@ -117,6 +117,7 @@
   sudo -n install -d -o root -g root -m 0755 "$TARGET"
   for FILE in \
     app_token_broker.py broker_oauth.py controller_broker_client.py \
+    broker_develop_intake.py github_develop_resolver.py github_issue_reader.py \
     github_evidence_reader.py github_evidence_validation.py jobs.py \
     pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \
     protected_broker_server.py; do
@@ -173,6 +174,7 @@
   # or the operator-writable extracted workspace. No secrets are read.
   for FILE in \
     app_token_broker.py broker_oauth.py controller_broker_client.py \
+    broker_develop_intake.py github_develop_resolver.py github_issue_reader.py \
     github_evidence_reader.py github_evidence_validation.py jobs.py \
     pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \
     protected_broker_server.py; do
