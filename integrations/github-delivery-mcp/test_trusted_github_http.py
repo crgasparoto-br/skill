@@ -1,5 +1,4 @@
 """GitHub reader denies redirects, environment proxies and foreign hosts."""
-import urllib.error
 import unittest
 from unittest.mock import Mock, patch
 from urllib.request import Request
