@@ -447,3 +447,25 @@ Permanecem pendentes a conferência administrativa do escopo opcional
 o OIDC `sub` autorizado e o `broker.env` protegido. Não criar o env com
 identidades supostas nem ativar publicação/merge ou o broker antes da
 homologação negativa e positiva real.
+
+### Controlled tracked-file replacement (Issue #88, 19 Oct 2026)
+
+`offline_workspace.prepare_offline_workspace` now binds an individual worker-owned
+checkout to the canonical persisted UUID of its job and switches to a feature
+branch created from the verified `develop` commit. It is not yet a network-facing
+executor.
+
+`workspace_file_edit.apply_prepared_file_edit` is a worker-only primitive for
+**replacing an existing tracked regular file** in a prepared job. It requires the
+persisted actor/job/branch/base SHA, a shared exclusive controller lock,
+SHA-256 optimistic content check, no symlink/hardlink or group-writable paths,
+and a bounded atomic write. A repeat with identical resulting bytes is a no-op.
+A stale modification and requests for creating, deleting or changing sensitive
+paths fail closed. Commands and paths are never delegated to a shell. The
+function does not accept credentials, provide network access or mark delivery
+complete.
+
+This isolated operation is not yet exposed as an MCP write tool, and it must
+not be considered production-enabled until the authenticated controller,
+privilege-separated workspace dispatch, editing journal, publishing broker,
+exact-HEAD CI, recovery and independent audit are integrated and homologated.
