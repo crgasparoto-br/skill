@@ -528,3 +528,25 @@ directly with principal/profile fields from MCP tool parameters.
 The authenticator keeps its existing protected database read-only; controller
 queue storage remains a **separate persistence boundary** that requires
 operational UID/permission design before enabling the server.
+
+### Controller state must be outside the authenticator's protected DB
+
+The next staging refresh provisions a separate **controller-owned** SQLite
+database at `/var/lib/solverit/issue88-controller/jobs.sqlite3`: directory
+owned by `solverit-controller` with mode `0700`, regular DB owned by that
+identity with mode `0600`. Existing nonconforming directory/file or any
+symlink fails closed, without changing owner or permissions to silence errors.
+The broker's protected SQLite remains a different owner/location and is still
+read-only from the broker service. The staging refresh never starts a service,
+publishes a GitHub ref, or installs a Caddy route.
+
+The FastMCP delivery adapter `mcp_delivery_entrypoint.py` registers exactly
+`prepare_workspace` and `get_job_status` for the **separate** deliver-only
+OAuth scope. These functions resolve their subject via the official MCP SDK
+`get_access_token()` request context, never from tool arguments, and deny
+missing/stdio/in-memory unverified contexts. The bearer is independently
+revalidated by the authenticator broker before issue/develop inspection and
+job creation. The adapter is loopback-only on port `8771`, **not yet installed
+as a systemd service or reverse-proxied**, and lacks the pinned production
+SDK runtime. It must remain inactive until independent authorization,
+ownership, OCI/rootless and end-to-end operational validation passes.

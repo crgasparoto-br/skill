@@ -25,7 +25,7 @@ from mcp_jwt_verifier import MCPTokenRejectedError
 from policy import PolicyDeniedError, VerifiedPrincipal
 from pydantic import AnyHttpUrl
 
-CONTROLLER_DB_DIRECTORY = Path("/var/lib/solverit/issue-delivery/controller")
+CONTROLLER_DB_DIRECTORY = Path("/var/lib/solverit/issue88-controller")
 CONTROLLER_DATABASE = CONTROLLER_DB_DIRECTORY / "jobs.sqlite3"
 
 

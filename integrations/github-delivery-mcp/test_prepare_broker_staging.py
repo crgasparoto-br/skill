@@ -91,6 +91,25 @@ class BrokerBootstrapContractTests(unittest.TestCase):
         self.assertLess(self.contents.index('sudo -n cmp - "$TARGET/ops/$FILE"'),
                         self.contents.index('sudo -n tee "$TARGET/STAGED_COMMIT"'))
 
+    def test_controller_state_separate_and_symlinks_fail_closed(self):
+        self.assertIn('CTRL_ROOT="/var/lib/solverit/issue88-controller"', self.contents)
+        self.assertIn('"$CONTROLLER_UID:$CTRL_GID:700:directory"', self.contents)
+        self.assertIn('"$CONTROLLER_UID:$CTRL_GID:600:regular file"', self.contents)
+        self.assertIn('sudo -n -u solverit-controller env PYTHONPATH="$TARGET"', self.contents)
+        self.assertIn('sudo -n /usr/bin/test -L "$CTRL_DB"', self.contents)
+        self.assertNotIn('systemctl start', self.contents)
+        self.assertLess(
+            self.contents.index("=== 5B. ISOLANDO"),
+            self.contents.index('sudo -n tee "$TARGET/STAGED_COMMIT"'),
+        )
+
+    def test_controller_sdk_and_credential_broker_files_are_attested(self):
+        for name in ("broker_develop_intake.py", "github_issue_reader.py",
+                     "mcp_delivery_entrypoint.py", "delivery_controller_intake.py",
+                     "delivery_job_submission.py", "delivery_job_queries.py"):
+            self.assertEqual(self.contents.count(name), 2)
+        self.assertIn('sudo -n cmp - "$TARGET/$FILE"', self.contents)
+
     def test_source_commit_is_verified_before_extracting_and_provisioning(self):
         self.assertIn('ACTUAL="$(git -C "$WORK" rev-parse FETCH_HEAD)"', self.contents)
         self.assertIn('if [ "$ACTUAL" != "$EXPECTED" ]; then', self.contents)

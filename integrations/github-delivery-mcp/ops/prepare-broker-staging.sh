@@ -118,8 +118,9 @@
   for FILE in \
     app_token_broker.py broker_oauth.py controller_broker_client.py \
     broker_develop_intake.py github_develop_resolver.py github_issue_reader.py \
-    github_evidence_reader.py github_evidence_validation.py jobs.py \
-    pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \
+    delivery_controller_intake.py delivery_job_submission.py delivery_job_queries.py \
+    github_evidence_reader.py github_evidence_validation.py jobs.py policy.py \
+    mcp_delivery_entrypoint.py pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \
     protected_broker_server.py; do
     sudo -n install -o root -g root -m 0644 "$CODE/$FILE" "$TARGET/$FILE"
   done
@@ -158,6 +159,34 @@
   test "$(sudo -n stat -c %u "$DB")" = 997
   test "$(sudo -n stat -c %a "$DB")" = 600
   sudo -n stat -c 'Banco: %U:%G modo=%a %n' "$DB"
+  echo "=== 5B. ISOLANDO O ESTADO DO CONTROLADOR (SEM ATIVAR SERVICO) ==="
+  CTRL_ROOT="/var/lib/solverit/issue88-controller"
+  CTRL_DB="$CTRL_ROOT/jobs.sqlite3"
+  CTRL_GID="$(id -g solverit-controller)"
+  if sudo -n /usr/bin/test -L "$CTRL_ROOT" || sudo -n /usr/bin/test -L "$CTRL_DB"; then
+    echo "BLOQUEADO: armazenamento do controlador nao pode conter symlinks."
+    false
+  fi
+  if sudo -n /usr/bin/test -e "$CTRL_ROOT"; then
+    CTRL_META="$(sudo -n stat -c '%u:%g:%a:%F' "$CTRL_ROOT")"
+    if [ "$CTRL_META" != "$CONTROLLER_UID:$CTRL_GID:700:directory" ]; then
+      echo "BLOQUEADO: diretorio do controlador preexistente fora de politica."
+      false
+    fi
+  else
+    sudo -n install -d -o solverit-controller -g solverit-controller -m 0700 "$CTRL_ROOT"
+  fi
+  if ! sudo -n /usr/bin/test -e "$CTRL_DB"; then
+    sudo -n -u solverit-controller env PYTHONPATH="$TARGET" \
+      /usr/bin/python3 -B -c \
+      'import os; os.umask(0o077); from jobs import JobStore; JobStore("/var/lib/solverit/issue88-controller/jobs.sqlite3")'
+  fi
+  CTRL_DB_META="$(sudo -n stat -c '%u:%g:%a:%F' "$CTRL_DB")"
+  if [ "$CTRL_DB_META" != "$CONTROLLER_UID:$CTRL_GID:600:regular file" ]; then
+    echo "BLOQUEADO: estado do controlador sem isolamento."
+    false
+  fi
+  echo "PASS: banco do controlador privado, independente do banco do autenticador."
   echo "=== 6. ATTESTANDO CODIGO E HEAD DE STAGING ==="
   if systemctl is-active --quiet solverit-issue88-github-broker.service; then
     echo "BLOQUEADO: broker inesperadamente ativo apos copia."
@@ -175,8 +204,9 @@
   for FILE in \
     app_token_broker.py broker_oauth.py controller_broker_client.py \
     broker_develop_intake.py github_develop_resolver.py github_issue_reader.py \
-    github_evidence_reader.py github_evidence_validation.py jobs.py \
-    pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \
+    delivery_controller_intake.py delivery_job_submission.py delivery_job_queries.py \
+    github_evidence_reader.py github_evidence_validation.py jobs.py policy.py \
+    mcp_delivery_entrypoint.py pr_binding.py mcp_jwks_verifier.py mcp_jwt_verifier.py \
     protected_broker_server.py; do
     git -C "$WORK" show "$EXPECTED:integrations/github-delivery-mcp/$FILE" |
       sudo -n cmp - "$TARGET/$FILE" >/dev/null
