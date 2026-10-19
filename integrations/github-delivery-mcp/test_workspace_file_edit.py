@@ -134,6 +134,72 @@ class PreparedFileEditTests(unittest.TestCase):
             with self.subTest(overrides=str(overrides)[:70]), self.assertRaises(ValueError):
                 self.edit(**overrides)
 
+    def commit(self, **changes):
+        from workspace_commit import commit_prepared_workspace
+        intent = {
+            "database_path": self.db, "lock_path": self.lock,
+            "workspace_root": str(self.work), "job_id": self.job.job_id,
+            "actor": self.actor, "expected_head": self.sha,
+            "approved_files": {"README.md": hashlib.sha256(b"changed\\n").hexdigest()},
+        }
+        return commit_prepared_workspace(**(intent | changes))
+
+    def test_real_local_commit_updates_persisted_head_and_replays(self):
+        self.edit()
+        committed = self.commit()
+        self.assertFalse(committed.replayed)
+        self.assertNotEqual(committed.head_sha, self.sha)
+        self.assertEqual(self.store.read(self.job.job_id, self.actor).expected_head,
+                         committed.head_sha)
+        self.assertTrue(self.commit().replayed)
+        self.assertEqual(subprocess.check_output([
+            "git", "-C", str(self.workspace), "rev-parse", "HEAD"
+        ], text=True).strip(), committed.head_sha)
+
+    def test_commit_rejects_extra_unapproved_edits(self):
+        self.edit()
+        (self.workspace / "unexpected").write_text("untracked", encoding="utf-8")
+        with self.assertRaises(PermissionError):
+            self.commit()
+        self.assertEqual(self.store.read(self.job.job_id, self.actor).expected_head, self.sha)
+
+    def test_commit_rejects_stale_file_bytes_without_git_effect(self):
+        self.edit()
+        with self.assertRaises(PermissionError):
+            self.commit(approved_files={"README.md": "a" * 64})
+        self.assertEqual(self.store.read(self.job.job_id, self.actor).expected_head, self.sha)
+
+    def test_commit_rejects_unapproved_staged_changes(self):
+        self.edit()
+        (self.workspace / "other.txt").write_text("other", encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.workspace), "add", "other.txt"], check=True)
+        with self.assertRaises(PermissionError):
+            self.commit()
+
+    def test_commit_recovers_crash_between_git_and_database_cas(self):
+        from jobs import JobStore as Store
+        original = Store.record_local_head
+        with patch.object(Store, "record_local_head", side_effect=RuntimeError("offline crash")):
+            self.edit()
+            with self.assertRaises(RuntimeError):
+                self.commit()
+        self.assertEqual(self.store.read(self.job.job_id, self.actor).expected_head, self.sha)
+        recovered = self.commit()
+        self.assertTrue(recovered.replayed)
+        self.assertEqual(self.store.read(self.job.job_id, self.actor).expected_head,
+                         recovered.head_sha)
+
+    def test_edit_after_commit_uses_current_persisted_head(self):
+        self.edit()
+        published = self.commit()
+        result = self.edit(
+            expected_head=published.head_sha,
+            expected_sha256=hashlib.sha256(b"changed\\n").hexdigest(),
+            content=b"second\\n",
+        )
+        self.assertTrue(result.changed)
+        self.assertEqual(self.file.read_bytes(), b"second\\n")
+
     def test_worker_uid_enforced_before_write(self):
         with patch("workspace_file_edit.WORKER_UID", 999999), self.assertRaises(PermissionError):
             self.edit()

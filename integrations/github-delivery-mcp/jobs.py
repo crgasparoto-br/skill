@@ -5,6 +5,7 @@ Caller must enforce OAuth authorization on *every* read and write before use.
 """
 from __future__ import annotations
 
+import re
 import sqlite3
 import time
 import uuid
@@ -132,6 +133,42 @@ class JobStore:
                 raise JobConflictError("job transition conflict")
             return self._public(db.execute(
                 "SELECT * FROM jobs WHERE job_id=?", (job_id,)
+            ).fetchone())
+
+    def record_local_head(self, *, job_id: str, actor: str,
+                          expected_head: str, new_head: str) -> Job:
+        """Persist a trusted Git commit observation using actor-bound CAS.
+
+        This method does not establish Git provenance: a privileged worker must
+        verify the local commit's parent, tree, branch and exact file set first.
+        """
+        if (not isinstance(expected_head, str)
+                or not re.fullmatch(r"[0-9a-f]{40}", expected_head)
+                or not isinstance(new_head, str)
+                or not re.fullmatch(r"[0-9a-f]{40}", new_head)
+                or expected_head == new_head):
+            raise JobConflictError("invalid commit identity")
+        with self.connect() as db:
+            row = db.execute(
+                "SELECT * FROM jobs WHERE job_id=? AND actor=? AND status='prepared'",
+                (job_id, actor),
+            ).fetchone()
+            if row is None:
+                raise JobConflictError("prepared job unavailable")
+            if row["expected_head"] == new_head:
+                return self._public(row)
+            if row["expected_head"] != expected_head:
+                raise JobConflictError("stale local HEAD")
+            updated = db.execute(
+                """UPDATE jobs SET expected_head=?, updated_at=?
+                   WHERE job_id=? AND actor=? AND status='prepared'
+                     AND expected_head=?""",
+                (new_head, int(time.time()), job_id, actor, expected_head),
+            )
+            if updated.rowcount != 1:
+                raise JobConflictError("local HEAD compare-and-swap failed")
+            return self._public(db.execute(
+                "SELECT * FROM jobs WHERE job_id=? AND actor=?", (job_id, actor)
             ).fetchone())
 
     def recover_interrupted(self) -> int:

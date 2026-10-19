@@ -95,7 +95,7 @@ def apply_prepared_file_edit(
     _assert_owned_dir(root, require_private=True)
     with controller_lock(lock_path):
         job = JobStore(database_path).read(job_id, actor)
-        if job.status != "prepared" or expected_head != job.base_sha:
+        if job.status != "prepared" or expected_head != job.expected_head:
             raise PermissionError("job not prepared at expected base HEAD")
         DeliveryPolicy.validate_branch(job.branch)
         try:
@@ -108,7 +108,7 @@ def apply_prepared_file_edit(
         _assert_owned_dir(workspace, require_private=True)
         git_directory = workspace / ".git"
         _assert_owned_dir(git_directory)
-        if _read_head(workspace, branch=job.branch, tracked_path=relative_path) != job.base_sha:
+        if _read_head(workspace, branch=job.branch, tracked_path=relative_path) != job.expected_head:
             raise PermissionError("stale or changed workspace HEAD")
         parts = relative_path.split("/")
         parent = workspace

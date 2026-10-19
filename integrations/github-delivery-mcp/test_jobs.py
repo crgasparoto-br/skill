@@ -51,6 +51,29 @@ class JobStoreTests(unittest.TestCase):
         reopened.transition(job.job_id, "trusted", "prepared", "running")
         reopened.transition(job.job_id, "trusted", "running", "failed")
 
+    def test_local_commit_cas_actor_status_and_replay(self):
+        job = self.create()
+        with self.assertRaises(JobConflictError):
+            self.store.record_local_head(job_id=job.job_id, actor="trusted",
+                                         expected_head=SHA, new_head="b" * 40)
+        self.store.transition(job.job_id, "trusted", "queued", "running")
+        self.store.transition(job.job_id, "trusted", "running", "prepared")
+        first = self.store.record_local_head(job_id=job.job_id, actor="trusted",
+                                             expected_head=SHA, new_head="b" * 40)
+        self.assertEqual(first.expected_head, "b" * 40)
+        self.assertEqual(self.store.record_local_head(
+            job_id=job.job_id, actor="trusted", expected_head=SHA,
+            new_head="b" * 40).expected_head, "b" * 40)
+        for wrong_actor, wrong_base, new in (
+            ("intruder", SHA, "c" * 40),
+            ("trusted", SHA, "c" * 40),
+            ("trusted", "b" * 40, "bad")):
+            with self.subTest(actor=wrong_actor, head=new), self.assertRaises(JobConflictError):
+                self.store.record_local_head(
+                    job_id=job.job_id, actor=wrong_actor,
+                    expected_head=wrong_base, new_head=new)
+        self.assertEqual(self.store.read(job.job_id, "trusted").expected_head, "b" * 40)
+
     def test_legacy_smoke_still_can_finish(self):
         job = self.create(actor="local-smoke-operator",
                           repo="crgasparoto-br/training-system",

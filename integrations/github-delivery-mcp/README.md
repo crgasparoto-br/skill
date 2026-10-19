@@ -469,3 +469,18 @@ This isolated operation is not yet exposed as an MCP write tool, and it must
 not be considered production-enabled until the authenticated controller,
 privilege-separated workspace dispatch, editing journal, publishing broker,
 exact-HEAD CI, recovery and independent audit are integrated and homologated.
+
+### Trusted local commit boundary (19 Oct 2026)
+
+`workspace_commit.commit_prepared_workspace` is a credential-free worker
+primitive. Under the same persistent controller lock, it requires an exact
+allowlist of at most 20 tracked changed paths and their SHA-256 digests, denies
+extra staged/unstaged/untracked files, validates the job actor, branch and HEAD,
+and creates a local commit with hooks and signing disabled. There is **no push,
+GitHub credential, merge or network access**. The resulting HEAD is stored by
+`JobStore.record_local_head` with actor-bound SQLite compare-and-swap, and a
+retry can reconcile a commit created before an interrupted database update if
+its parent, file set, branch and hashes match the original intent. A committed
+workspace remains prepared, not succeeded. CI, PR publication and independent
+audit continue to be mandatory and must be performed by separate trusted
+components before delivery completion.
