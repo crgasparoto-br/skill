@@ -43,7 +43,7 @@ def _assert_owned_dir(directory: Path, *, require_private: bool = False) -> None
         raise PermissionError("untrusted workspace directory")
 
 
-def _read_head(workspace: Path, *, branch: str) -> str:
+def _read_head(workspace: Path, *, branch: str, tracked_path: str | None = None) -> str:
     env = {
         "PATH": "/usr/bin:/bin", "HOME": "/home/solverit-worker",
         "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null",
@@ -64,6 +64,8 @@ def _read_head(workspace: Path, *, branch: str) -> str:
         actual_sha = git("rev-parse", "--verify", "HEAD^{commit}")
         if actual_branch != branch:
             raise PermissionError("workspace is not on the authorized branch")
+        if tracked_path is not None:
+            git("ls-files", "--error-unmatch", "--", tracked_path)
         return actual_sha
     except (OSError, subprocess.SubprocessError) as exc:
         raise PermissionError("workspace Git identity unavailable") from exc
@@ -106,7 +108,7 @@ def apply_prepared_file_edit(
         _assert_owned_dir(workspace, require_private=True)
         git_directory = workspace / ".git"
         _assert_owned_dir(git_directory)
-        if _read_head(workspace, branch=job.branch) != job.base_sha:
+        if _read_head(workspace, branch=job.branch, tracked_path=relative_path) != job.base_sha:
             raise PermissionError("stale or changed workspace HEAD")
         parts = relative_path.split("/")
         parent = workspace
