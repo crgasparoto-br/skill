@@ -21,9 +21,9 @@ from contextlib import closing, suppress
 from pathlib import Path
 
 from app_token_broker import ALLOWED_REPOSITORIES, mint_token
+from broker_develop_intake import inspect_issue_develop
 from broker_oauth import build_broker_verifier, verified_actor
 from github_evidence_reader import fetch_and_validate_github
-from broker_develop_intake import inspect_issue_develop
 from jobs import Job
 from pr_binding import PRBinding
 
