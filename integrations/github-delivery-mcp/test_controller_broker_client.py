@@ -44,6 +44,63 @@ class ControllerBrokerClientTests(unittest.TestCase):
                 job_id=JOB, mcp_access_token="signed-keycloak-access")
         return result, sock
 
+    def test_issue_inspection_requires_verifier_bound_sha_and_actor(self):
+        answer = {
+            "ok": True, "repository": "crgasparoto-br/training-system",
+            "issue_number": 499, "develop_sha": "a" * 40,
+            "verified_actor": "approved-sub",
+        }
+        sock = SocketStub(json.dumps(answer).encode() + b"\n")
+        with patch.object(client.socket, "socket", return_value=sock):
+            actual = client.inspect_authorized_issue(
+                repository=answer["repository"], issue_number=499,
+                verified_actor="approved-sub",
+                mcp_access_token="signed-keycloak-access")
+        self.assertEqual(actual, "a" * 40)
+        sent = json.loads(sock.sent[0].decode())
+        self.assertEqual(sent["operation"], "inspect_issue_develop")
+        self.assertNotIn("expected_head", sent)
+
+    def test_issue_intake_mismatches_and_untrusted_peer_rejected(self):
+        good = {
+            "ok": True, "repository": "crgasparoto-br/training-system",
+            "issue_number": 499, "develop_sha": "a" * 40,
+            "verified_actor": "approved-sub",
+        }
+        for changed in (
+            {"verified_actor": "another-user"}, {"develop_sha": "develop"},
+            {"issue_number": 500}, {"repository": "other/private"},
+            {"token": "SECRET"}, {"ok": False},
+        ):
+            with self.subTest(changed=changed), patch.object(
+                client.socket, "socket",
+                return_value=SocketStub(json.dumps(good | changed).encode() + b"\n"),
+            ), self.assertRaises(client.BrokerClientError):
+                client.inspect_authorized_issue(
+                    repository=good["repository"], issue_number=499,
+                    verified_actor="approved-sub", mcp_access_token="signed-keycloak-access")
+        blocked = SocketStub(json.dumps(good).encode() + b"\n", uid=1004)
+        with (patch.object(client.socket, "socket", return_value=blocked),
+              self.assertRaises(client.BrokerClientError)):
+            client.inspect_authorized_issue(
+                repository=good["repository"], issue_number=499,
+                verified_actor="approved-sub", mcp_access_token="signed-keycloak-access")
+        self.assertEqual(blocked.sent, [])
+
+    def test_issue_intake_denies_invalid_input_before_socket(self):
+        with patch.object(client.socket, "socket") as connect:
+            for kw in (
+                {"repository": "other/repo"}, {"issue_number": True},
+                {"verified_actor": " " * 257}, {"mcp_access_token": "bad token"},
+            ):
+                with self.subTest(kw=kw), self.assertRaises(client.BrokerClientError):
+                    client.inspect_authorized_issue(**({
+                        "repository": "crgasparoto-br/training-system",
+                        "issue_number": 499, "verified_actor": "approved-sub",
+                        "mcp_access_token": "signed-keycloak-access",
+                    } | kw))
+            connect.assert_not_called()
+
     def test_success_returns_only_unprivileged_evidence(self):
         result, sock = self.check(json.dumps(GOOD).encode() + b"\n")
         self.assertEqual(result, GOOD)

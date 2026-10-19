@@ -75,6 +75,55 @@ class ProtectedBrokerTests(unittest.TestCase):
     def read_protected(self):
         return patch.multiple(broker, DATABASE=self.db, _protected_path=lambda *_a, **_k: None)
 
+    def test_authenticated_read_only_develop_intake_dispatch(self):
+        request = {
+            "version": 1, "operation": "inspect_issue_develop",
+            "repository": "crgasparoto-br/training-system", "issue_number": 499,
+            "mcp_access_token": "test-signed-mcp-token",
+        }
+        with patch.object(broker, "inspect_issue_develop", return_value={
+            "ok": True, "repository": request["repository"],
+            "issue_number": 499, "develop_sha": "a" * 40,
+            "verified_actor": "oauth-subject",
+        }) as inspect:
+            result = broker.dispatch(request, peer_uid=2500, controller_uid=2500,
+                                     verifier=self.verifier)
+        inspect.assert_called_once_with(
+            actor="oauth-subject", repository=request["repository"], issue_number=499)
+        self.assertEqual(result["develop_sha"], "a" * 40)
+
+    def test_broker_inspection_requires_signed_token_before_github(self):
+        request = {
+            "version": 1, "operation": "inspect_issue_develop",
+            "repository": "crgasparoto-br/training-system", "issue_number": 499,
+            "mcp_access_token": "invalid",
+        }
+        with (patch.object(broker, "verified_actor", side_effect=broker.BrokerDeniedError),
+              patch.object(broker, "inspect_issue_develop") as inspect,
+              self.assertRaises(broker.BrokerDeniedError)):
+            broker.dispatch(request, peer_uid=2500, controller_uid=2500,
+                            verifier=self.verifier)
+        inspect.assert_not_called()
+
+    def test_intake_blocks_caller_actor_url_branch_and_extra_fields(self):
+        req = {
+            "version": 1, "operation": "inspect_issue_develop",
+            "repository": "crgasparoto-br/training-system", "issue_number": 499,
+            "mcp_access_token": "test-signed-mcp-token",
+        }
+        with patch.object(broker, "inspect_issue_develop") as inspect:
+            for extra in ("actor", "url", "branch", "token", "job_id",
+                          "expected_head", "profile", "shell", "server_authorized"):
+                with self.subTest(extra=extra), self.assertRaises(broker.BrokerDeniedError):
+                    broker.dispatch({**req, extra: "attacker"},
+                                    peer_uid=2500, controller_uid=2500,
+                                    verifier=self.verifier)
+            for peer_uid in (0, 997, 1004, 2501):
+                with self.subTest(peer_uid=peer_uid), self.assertRaises(broker.BrokerDeniedError):
+                    broker.dispatch(req, peer_uid=peer_uid, controller_uid=2500,
+                                    verifier=self.verifier)
+            inspect.assert_not_called()
+
     def test_caller_must_be_exact_authenticated_controller_uid(self):
         with patch.object(broker, "verify_bound_ci") as verify:
             for uid in (0, 997, 1004, 2501):
