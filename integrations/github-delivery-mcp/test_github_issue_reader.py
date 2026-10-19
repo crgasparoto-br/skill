@@ -49,7 +49,7 @@ class GitHubIssueReaderTests(unittest.TestCase):
             {"issue_number": -1},
             {"issue_number": 2_147_483_648},
             {"token": ""},
-            {"token": "unsafe\\rheader"},
+            {"token": "unsafe\rheader"},
         ):
             with self.subTest(kwargs=kwargs), self.assertRaises(GitHubIssueLookupError):
                 require_open_issue(**({
