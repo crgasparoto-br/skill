@@ -169,6 +169,16 @@ class PreparedFileEditTests(unittest.TestCase):
             self.commit(approved_files={"README.md": "a" * 64})
         self.assertEqual(self.store.read(self.job.job_id, self.actor).expected_head, self.sha)
 
+    def test_git_clean_filter_cannot_change_approved_bytes(self):
+        self.edit(content=b"changed\\r\\n")
+        subprocess.run(["git", "-C", str(self.workspace), "config", "core.autocrlf", "input"],
+                       check=True)
+        with self.assertRaises(PermissionError):
+            self.commit(approved_files={
+                "README.md": hashlib.sha256(b"changed\\r\\n").hexdigest(),
+            })
+        self.assertEqual(self.store.read(self.job.job_id, self.actor).expected_head, self.sha)
+
     def test_commit_rejects_unapproved_staged_changes(self):
         self.edit()
         (self.workspace / "other.txt").write_text("other", encoding="utf-8")

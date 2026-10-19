@@ -101,6 +101,14 @@ def _verify_files(workspace: Path, expected: dict[str, str]) -> None:
             raise PermissionError("candidate file digest changed")
 
 
+def _verify_git_blobs(workspace: Path, expected: dict[str, str], revision: str) -> None:
+    """Git's stage filters may change bytes: validate the real Git object."""
+    for relative, digest in expected.items():
+        raw = _git(workspace, "show", f"{revision}:{relative}")
+        if hashlib.sha256(raw).hexdigest() != digest:
+            raise PermissionError("staged or committed blob differs from approval")
+
+
 def commit_prepared_workspace(
     *, database_path: str, lock_path: str, workspace_root: str, job_id: str,
     actor: str, expected_head: str, approved_files: dict[str, str],
@@ -145,6 +153,11 @@ def commit_prepared_workspace(
                     or job.expected_head not in (expected_head, head)):
                 raise PermissionError("stale or unrelated local commit")
             _verify_files(workspace, approved_files)
+            if (_names(workspace, "diff", "--name-only", "-z")
+                    or _names(workspace, "diff", "--cached", "--name-only", "-z")
+                    or _names(workspace, "ls-files", "--others", "--exclude-standard", "-z")):
+                raise PermissionError("recovered checkout is not clean")
+            _verify_git_blobs(workspace, approved_files, "HEAD")
             store.record_local_head(job_id=job_id, actor=actor,
                                     expected_head=expected_head, new_head=head)
             return CommitResult(job_id, head, expected_head, job.branch,
@@ -160,6 +173,7 @@ def commit_prepared_workspace(
         _git(workspace, "add", "--", *sorted(allowed))
         if _names(workspace, "diff", "--cached", "--name-only", "-z") != allowed:
             raise PermissionError("staged file set changed")
+        _verify_git_blobs(workspace, approved_files, ":")
         if _read_head(workspace, branch=job.branch) != expected_head:
             raise PermissionError("local HEAD changed before commit")
         _git(workspace, "-c", "user.name=SolverIT Issue Delivery",
@@ -171,6 +185,7 @@ def commit_prepared_workspace(
                 or _names(workspace, "diff-tree", "--no-commit-id",
                           "--name-only", "-r", "-z", "HEAD") != allowed):
             raise PermissionError("local commit provenance invalid")
+        _verify_git_blobs(workspace, approved_files, "HEAD")
         store.record_local_head(job_id=job_id, actor=actor,
                                 expected_head=expected_head, new_head=new_head)
         return CommitResult(job_id, new_head, expected_head, job.branch,
