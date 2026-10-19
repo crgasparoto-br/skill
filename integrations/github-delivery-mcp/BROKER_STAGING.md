@@ -373,3 +373,26 @@ preflight must be executed **only from that protected directory**, never from
 the operator-writable extracted checkout; the script rejects other source
 locations before soliciting credentials. No daemon is started and the auditor
 remains read-only.
+
+### Read-only controller staging check (2026-10-19)
+
+After staging an exact, reviewed commit with `ops/prepare-broker-staging.sh`,
+the operator may independently run the **read-only** verifier below from the
+immutable Git archive under an unprivileged SSH shell, with the expected full
+PR commit hash pinned. Do not paste tokens or private configuration contents.
+
+```bash
+ISSUE88_EXPECTED_SHA="<40-hex-reviewed-commit>" \
+  bash integrations/github-delivery-mcp/ops/verify-controller-staging.sh
+```
+
+It verifies that the approved root-owned broker and controller modules were
+copied, the marker matches the reviewed commit, the three identities remain
+separated, the controller SQLite exists with `0700/0600` owner-only access,
+the authenticator private database has not changed ownership, and no broker
+socket/service is running. A missing controller Python MCP SDK is reported
+as `PENDING`, which blocks readiness. It prints no token, secret, private
+OIDC subject or issue content and preserves the SSH terminal. Even a fully
+passing structural check does **not** authorize activating the MCP or imply
+real Keycloak signed-token, public OAuth, sandbox egress, PR publication,
+exact-head CI per job or independent audit approval.
