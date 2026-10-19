@@ -511,3 +511,20 @@ jobs only in an authorized controller job store after verifying the returned
 SHA. This step is a read-only intake primitive, not a production-active write
 tool. All new broker modules are allowlisted and byte-attested by protected
 staging. Broker remains inactive pending VPS homologation.
+
+### Controller-side job intent persistence (19 Oct 2026)
+
+`delivery_controller_intake.enqueue_verified_delivery` links an already
+authenticated controller principal with `inspect_authorized_issue` through the
+privileged IPC peer. It refuses unverified users, missing delivery profile,
+wrong repository, invalid issue or idempotency key **before calling the broker**.
+It compares the independently verified Keycloak subject in the broker response
+to the controller's authenticated principal, and only then persists the
+resolved GitHub `develop` SHA as an actor-bound, idempotent SQLite job with
+status `queued`. It does not run a workspace or publish any Git branch or PR.
+The module must only be invoked by trusted transport middleware, **never**
+directly with principal/profile fields from MCP tool parameters.
+
+The authenticator keeps its existing protected database read-only; controller
+queue storage remains a **separate persistence boundary** that requires
+operational UID/permission design before enabling the server.

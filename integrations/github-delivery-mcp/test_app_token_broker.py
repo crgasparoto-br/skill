@@ -32,6 +32,14 @@ class BrokerTests(unittest.TestCase):
                               operation="read-issue", server_authorized=True)
         sign.assert_not_called()
 
+    def test_develop_inspection_token_has_no_write_capabilities(self):
+        self.assertEqual(
+            broker.OPERATION_PERMISSIONS["inspect-issue-develop"],
+            {"issues": "read", "contents": "read"},
+        )
+        self.assertNotIn("administration", broker.OPERATION_PERMISSIONS["inspect-issue-develop"])
+        self.assertNotIn("pull_requests", broker.OPERATION_PERMISSIONS["inspect-issue-develop"])
+
     def test_minimal_read_token(self):
         class Response:
             def __enter__(self):
