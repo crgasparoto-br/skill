@@ -6,9 +6,8 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
-from policy import PolicyDeniedError
-
 from offline_workspace import prepare_offline_workspace
+from policy import PolicyDeniedError
 
 
 class OfflineWorkspaceTests(unittest.TestCase):
