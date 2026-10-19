@@ -59,10 +59,10 @@ class ControllerIntakeTests(unittest.TestCase):
             self.assertFalse(Path(self.db).exists())
 
     def test_broker_denial_does_not_create_job(self):
-        with patch.object(controller, "inspect_authorized_issue",
-                          side_effect=PermissionError("broker rejected token")):
-            with self.assertRaises(PermissionError):
-                controller.enqueue_verified_delivery(**self.params)
+        with (patch.object(controller, "inspect_authorized_issue",
+                           side_effect=PermissionError("broker rejected token")),
+              self.assertRaises(PermissionError)):
+            controller.enqueue_verified_delivery(**self.params)
         self.assertFalse(Path(self.db).exists())
 
     def test_reused_key_after_branch_head_change_fails_closed(self):
