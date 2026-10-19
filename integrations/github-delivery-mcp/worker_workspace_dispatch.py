@@ -42,6 +42,7 @@ def dispatch_queued_workspace(
         workspace = prepare_offline_workspace(
             repository=job.repo, expected_sha=job.base_sha,
             mirror_path=mirror_path, workspace_root=workspace_root,
+            job_id=job.job_id, branch=job.branch,
         )
     except Exception:
         # Failed workspace remains available for controller-led reconciliation.

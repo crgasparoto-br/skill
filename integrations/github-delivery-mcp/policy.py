@@ -50,14 +50,18 @@ class DeliveryPolicy:
             raise PolicyDeniedError("operation not allowed")
         if not _REPO.fullmatch(repo) or repo not in self.allowed_repos:
             raise PolicyDeniedError("repository not allowed")
-        if not _BRANCH.fullmatch(branch):
-            raise PolicyDeniedError("work branch not allowed")
+        self.validate_branch(branch)
         if expected_head is None or not _SHA.fullmatch(expected_head):
             raise PolicyDeniedError("verified HEAD SHA required")
         if path is not None:
             self.validate_path(path)
         if size is not None and (size < 0 or size > self.max_file_bytes):
             raise PolicyDeniedError("content size exceeds limit")
+
+    @staticmethod
+    def validate_branch(branch: str) -> None:
+        if not isinstance(branch, str) or not _BRANCH.fullmatch(branch):
+            raise PolicyDeniedError("work branch not allowed")
 
     @staticmethod
     def validate_path(path: str) -> None:

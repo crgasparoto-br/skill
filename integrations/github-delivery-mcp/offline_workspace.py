@@ -12,18 +12,27 @@ import subprocess
 import uuid
 from pathlib import Path
 
+from policy import DeliveryPolicy
+
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 _REPO = re.compile(r"^(?!\.{1,2}/)[A-Za-z0-9_.-]+/(?!\.{1,2}$)[A-Za-z0-9_.-]+$")
 
 
 def prepare_offline_workspace(
     *, repository: str, expected_sha: str, mirror_path: str,
-    workspace_root: str,
+    workspace_root: str, job_id: str, branch: str,
 ) -> str:
     if os.geteuid() != 1004:
         raise PermissionError("dedicated solverit-worker identity required")
     if not _REPO.fullmatch(repository) or not _SHA.fullmatch(expected_sha):
         raise ValueError("invalid repository or pinned SHA")
+    DeliveryPolicy.validate_branch(branch)
+    try:
+        job_identity = uuid.UUID(job_id)
+    except (ValueError, AttributeError, TypeError) as exc:
+        raise ValueError("invalid job identity") from exc
+    if str(job_identity) != job_id or job_identity.version != 4:
+        raise ValueError("invalid job identity")
     if Path(workspace_root).is_symlink() or Path(mirror_path).is_symlink():
         raise PermissionError("symlink workspace or mirror path forbidden")
     root = Path(workspace_root).resolve(strict=True)
@@ -57,15 +66,19 @@ def prepare_offline_workspace(
     ref = run("--git-dir", str(mirror), "rev-parse", "--verify", "refs/heads/develop^{commit}")
     if ref != expected_sha:
         raise ValueError("develop SHA changed or mirror not synchronized")
-    folder = root / ("solverit-issue88-" + uuid.uuid4().hex)
+    # The canonical job UUID binds the directory to one persistent job.
+    # Re-entry cannot silently reuse an earlier worktree.
+    folder = root / ("solverit-issue88-" + job_identity.hex)
     folder.mkdir(mode=0o700)
     try:
         run("clone", "--no-checkout", "--no-hardlinks", "--", str(mirror), str(folder))
         # Explicit pinned SHA, never checkout arbitrary branch supplied by caller.
         run("-C", str(folder), "checkout", "--detach", "--force", expected_sha)
+        run("-C", str(folder), "switch", "--no-track", "-c", branch, expected_sha)
         actual = run("-C", str(folder), "rev-parse", "HEAD")
-        if actual != expected_sha:
-            raise RuntimeError("pinned checkout mismatch")
+        active_branch = run("-C", str(folder), "symbolic-ref", "--short", "HEAD")
+        if actual != expected_sha or active_branch != branch:
+            raise RuntimeError("pinned branch checkout mismatch")
         return str(folder)
     except Exception:
         # Preserve failed workspaces for a trusted reconciler; do not delete

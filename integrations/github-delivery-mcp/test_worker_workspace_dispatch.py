@@ -40,6 +40,8 @@ class WorkspaceDispatchTests(unittest.TestCase):
         self.assertEqual(replay.status, "prepared")
         self.assertIsNone(replay.workspace)
         prepare.assert_called_once()
+        self.assertEqual(prepare.call_args.kwargs["job_id"], self.job.job_id)
+        self.assertEqual(prepare.call_args.kwargs["branch"], self.job.branch)
         self.assertEqual(JobStore(self.database).read(self.job.job_id, "operator").status, "prepared")
 
     def test_failed_workspace_does_not_replay(self):
