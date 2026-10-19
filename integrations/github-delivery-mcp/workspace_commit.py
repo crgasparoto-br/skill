@@ -173,7 +173,7 @@ def commit_prepared_workspace(
         _git(workspace, "add", "--", *sorted(allowed))
         if _names(workspace, "diff", "--cached", "--name-only", "-z") != allowed:
             raise PermissionError("staged file set changed")
-        _verify_git_blobs(workspace, approved_files, ":")
+        _verify_git_blobs(workspace, approved_files, "")
         if _read_head(workspace, branch=job.branch) != expected_head:
             raise PermissionError("local HEAD changed before commit")
         _git(workspace, "-c", "user.name=SolverIT Issue Delivery",
