@@ -17,6 +17,8 @@ PART = r"[\w.@+\[\]{}()~-]+"
 PATH = rf"(?:(?:\./)?(?:{PART}/)*{PART}\.{EXT}|(?:\./)?(?:{PART}/)+{PART})"
 CANDIDATE = re.compile(rf"(?<![\w./@+-])(?P<path>{PATH}):(?P<ranges>[^\s\"'<>\x60]+)")
 RANGES = re.compile(r"\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*")
+# Fail closed when prose abbreviates a second file:line anchor.
+ABBREVIATED = re.compile(r"(?:\b(?:and|or|e|ou)\b|[,;])\s+:(?P<range>\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)(?![\w-])", re.IGNORECASE)
 IGNORED_FIELDS = {"stderr", "stdout", "log", "logs", "diagnostic", "diagnostics", "error_message", "warning_message", "transcript"}
 SKIP_DIRS = {".git", "node_modules", "dist", "build", "coverage", ".next", ".audit", ".venv", "venv"}
 
@@ -37,6 +39,15 @@ def strings(value: Any):
             yield from strings(item)
 
 
+def abbreviated_locations(value: str):
+    """Yield shorthand ranges following a qualified path in the same evidence string."""
+    anchors = list(CANDIDATE.finditer(value))
+    for index, anchor in enumerate(anchors):
+        end = anchors[index + 1].start() if index + 1 < len(anchors) else len(value)
+        for short in ABBREVIATED.finditer(value, anchor.end(), end):
+            yield anchor.group("path"), short.group("range")
+
+
 def candidate_locations(evidence_files: list[Path]) -> int:
     """Count lexical location candidates without requiring a source checkout."""
     total = 0
@@ -44,6 +55,7 @@ def candidate_locations(evidence_files: list[Path]) -> int:
         from audit_artifact_io import load_json_artifact
         evidence = load_json_artifact(path)
         total += sum(1 for value in strings(evidence) for _ in CANDIDATE.finditer(value))
+        total += sum(1 for value in strings(evidence) for _ in abbreviated_locations(value))
     return total
 
 
@@ -70,6 +82,11 @@ def validate(root: Path, evidence_files: list[Path], *, require_qualified_paths:
             errors.append(f"{evidence_path}: invalid evidence JSON: {exc}")
             continue
         for value in strings(evidence):
+            for name, segment in abbreviated_locations(value):
+                errors.append(
+                    f"{evidence_path.name}: {name} and :{segment} abbreviated line reference; "
+                    "repeat the complete source path"
+                )
             for match in CANDIDATE.finditer(value):
                 name = match.group("path")
                 segment_text = match.group("ranges").rstrip(".,;)}]")
