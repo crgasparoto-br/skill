@@ -62,6 +62,9 @@ def validate(root: Path, evidence_files: list[Path]) -> tuple[list[str], int]:
                     errors.append(f"{evidence_path.name}: {name}: {cause}")
                     continue
                 target = root / candidates[0]
+                if target.is_symlink() or target.resolve() != target or not target.resolve().is_relative_to(root):
+                    errors.append(f"{evidence_path.name}: {name}: symlink or path escapes repository root")
+                    continue
                 if target not in line_counts:
                     try:
                         with target.open(encoding="utf-8") as handle:
