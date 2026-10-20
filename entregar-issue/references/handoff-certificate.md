@@ -114,6 +114,10 @@ Quando `corrigir-ci` alterar o head material depois de um handoff:
 Um commit que seja comprovadamente o result-only child autorizado nao e drift material e nao exige refazer os gates de produto vinculados ao parent material.
 
 
+## Integridade dos enderecos de evidencia
+
+Quando o perfil tiver localizacoes de codigo em `requirement-closure.json`, `standard-evidence.json` ou artefatos equivalentes, executar `scripts/validate_evidence_source_locations.py --repository-root <checkout-material> --evidence <requirement-closure.json> --evidence <standard-evidence.json>` (omitir apenas artefatos nao aplicaveis). O checkout/materializacao deve corresponder exatamente ao `material_head_sha` certificado; em `connector-only`, materializar os arquivos de codigo e o JSON desse mesmo SHA antes de validar. O controle rejeita caminho inexistente, nome basico ambiguo e intervalo fora da extensao do arquivo; nao atesta a semantica do trecho. Refatorar ou extrair modulos exige atualizar todas as localizacoes nas evidencias e repetir o gate antes do freeze. Nao editar um `result-only-child` diretamente para corrigir referencias stale: simular e substituir apenas o filho certificado com parent material identico segundo `references/result-only-pr-recovery.md`, ou aplicar `post-write-refreeze` quando houver mudanca material.
+
 ## Gate pre-publicacao do produtor
 
 Antes de mover o ref remoto para um filho de resultados, gerar o certificado final e montar localmente o commit/arvore exatos, inclusive manifests/shards. Executar `validate_terminal_handoff.py` contra esse filho local sintetico com `published_head_sha == current_head_sha`, parent igual ao material e changed paths prospectivos. A simulacao deve usar os mesmos snapshots historicos e do material parent exigidos no guard real. Falha local nao autoriza publicacao parcial nem abertura de outra PR: corrigir o pacote localmente e repetir a simulacao.
