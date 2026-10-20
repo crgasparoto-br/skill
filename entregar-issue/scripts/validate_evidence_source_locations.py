@@ -7,7 +7,6 @@ Run before material freeze; for connector-only sessions materialize the same SHA
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 from pathlib import Path
@@ -17,7 +16,7 @@ EXT = r"[\w][\w+-]*"  # independente de linguagem e Unicode
 PART = r"[\w.@+\[\]{}()~-]+"
 PATH = rf"(?:(?:\./)?(?:{PART}/)*{PART}\.{EXT}|(?:\./)?(?:{PART}/)+{PART})"
 CANDIDATE = re.compile(rf"(?<![\w./@+-])(?P<path>{PATH}):(?P<ranges>[^\s\"'<>\x60]+)")
-RANGES = re.compile(r"\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)")
+RANGES = re.compile(r"\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*")
 IGNORED_FIELDS = {"stderr", "stdout", "log", "logs", "diagnostic", "diagnostics", "error_message", "warning_message", "transcript"}
 SKIP_DIRS = {".git", "node_modules", "dist", "build", "coverage", ".next", ".audit", ".venv", "venv"}
 
