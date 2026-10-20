@@ -89,6 +89,30 @@ def test_partial_checkout_requires_qualified_paths(tmp_path: Path) -> None:
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
 
 
+def test_framework_routes_and_extensionless_build_files(tmp_path: Path) -> None:
+    proc = run(
+        tmp_path,
+        ["src/routes/[user]/page.tsx:1", "infra/Dockerfile:1", "./Makefile:1", "packages/@widgets/adapter.ts:1"],
+        {
+            "src/routes/[user]/page.tsx": "page\n",
+            "infra/Dockerfile": "build\n",
+            "Makefile": "rule\n",
+            "packages/@widgets/adapter.ts": "adapter\n",
+        },
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "validated 4" in proc.stdout
+
+
+def test_dynamic_route_stale_anchor_must_fail(tmp_path: Path) -> None:
+    proc = run(
+        tmp_path, ["src/entry.ts:1", "src/routes/[user]/page.tsx:9"],
+        {"src/entry.ts": "ok\n", "src/routes/[user]/page.tsx": "short\n"},
+    )
+    assert proc.returncode == 2
+    assert "src/routes/[user]/page.tsx:9 outside 1-1" in proc.stdout
+
+
 def test_unrecognized_language_anchor_fails_instead_of_being_skipped(tmp_path: Path) -> None:
     proc = run(
         tmp_path, ["src/entry.ts:1", "src/other.go:25"],
