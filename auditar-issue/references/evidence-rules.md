@@ -123,6 +123,8 @@ Cada evidência deve indicar, quando disponível:
 - para interface: rota, perfil, dados, viewport e interação executada.
 
 
+Para toda referencia versionada `arquivo:linha[-linha]` usada como prova, abrir o arquivo real no SHA material auditado e verificar nome, desambiguacao e limite de linhas, inclusive depois de extrair funcoes/testes para novos modulos. Uma referencia que aponta para linha inexistente nao prova o requisito e precisa ser corrigida no pacote antes da certificacao; nao converter isso automaticamente em falha do comportamento do produto. O auditor deve fazer a verificacao de forma independente e distinguir limitacao de acesso a fonte de contradicao efetivamente observada. Quando houver arvore material completa, usar o validador compartilhado `scripts/validate_evidence_source_locations.py` da propria Skill auditora, com `--repository-root` vinculado ao SHA exato; em arvore parcial exigir `--require-qualified-paths`.
+
 ## Evidência discriminante
 
 Quando o requisito escolher entre duas ou mais fontes possíveis, não aceitar fixtures em que todas produzam o mesmo resultado.

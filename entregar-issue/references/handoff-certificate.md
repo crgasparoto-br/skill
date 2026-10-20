@@ -15,6 +15,7 @@ Ler quando for produzir ou consumir o certificado de handoff independente, inclu
 - [Regra de consumo](#regra-de-consumo)
 - [Runtime connector-only](#runtime-connector-only)
 - [Drift pos-freeze e remediacao de CI](#drift-pos-freeze-e-remediacao-de-ci)
+- [Integridade dos enderecos de evidencia](#integridade-dos-enderecos-de-evidencia)
 - [Gate pre-publicacao do produtor](#gate-pre-publicacao-do-produtor)
 - [Gate terminal do produtor](#gate-terminal-do-produtor)
 - [Transporte de artefatos grandes](#transporte-de-artefatos-grandes)
@@ -114,6 +115,10 @@ Quando `corrigir-ci` alterar o head material depois de um handoff:
 Um commit que seja comprovadamente o result-only child autorizado nao e drift material e nao exige refazer os gates de produto vinculados ao parent material.
 
 
+## Integridade dos enderecos de evidencia
+
+Quando o perfil tiver localizacoes de codigo em `requirement-closure.json`, `standard-evidence.json` ou artefatos equivalentes, executar `scripts/validate_evidence_source_locations.py --repository-root <checkout-material> --evidence <requirement-closure.json> --evidence <standard-evidence.json>` (omitir apenas artefatos nao aplicaveis). O checkout/materializacao deve corresponder exatamente ao `material_head_sha` certificado; em `connector-only`, materializar os arquivos de codigo e o JSON desse mesmo SHA antes de validar, confirmando a procedencia do SHA por fonte remota independente. Se a materializacao nao contiver a arvore inteira, usar `--require-qualified-paths` e citacoes relativas com diretorio, pois uma busca por basename no subconjunto nao prova unicidade no repositorio. Sem localizacoes de codigo exigidas pelo perfil, registrar `not-applicable` justificado e nao executar o gate com exemplos inventados. O controle rejeita caminho inexistente, nome basico ambiguo e intervalo fora da extensao do arquivo; nao atesta a semantica do trecho. Refatorar ou extrair modulos exige atualizar todas as localizacoes nas evidencias e repetir o gate antes do freeze. Nao editar um `result-only-child` diretamente para corrigir referencias stale: simular e substituir apenas o filho certificado com parent material identico segundo `references/result-only-pr-recovery.md`, ou aplicar `post-write-refreeze` quando houver mudanca material.
+
 ## Gate pre-publicacao do produtor
 
 Antes de mover o ref remoto para um filho de resultados, gerar o certificado final e montar localmente o commit/arvore exatos, inclusive manifests/shards. Executar `validate_terminal_handoff.py` contra esse filho local sintetico com `published_head_sha == current_head_sha`, parent igual ao material e changed paths prospectivos. A simulacao deve usar os mesmos snapshots historicos e do material parent exigidos no guard real. Falha local nao autoriza publicacao parcial nem abertura de outra PR: corrigir o pacote localmente e repetir a simulacao.
@@ -128,3 +133,8 @@ Gerar o certificado localmente nao basta. Em reauditoria apos rejeicao independe
 ## Transporte de artefatos grandes
 
 O certificado schema v2 pode registrar `artifact_transport.version=1`. Cada entrada de `artifacts` deve manter `sha256` do arquivo fisico e `logical_sha256`/`logical_size` do JSON reconstruido. Para `base64-shards-v1`, registrar tambem compression, sizes, decoded hash e parts; todas as parts entram automaticamente em `certificate_commit_policy.allowed_paths`. Em reauditoria, certificar tambem `audit-remediation.json` e `audit-source-result.json`.
+
+
+### Integracao deterministica
+
+O builder de certificados executa o validador sobre os artefatos aplicaveis e exige `--source-repository-root` materializado no SHA exato quando encontrar enderecos. Em checkouts incompletos, acrescentar `--source-checkout-partial`. Caso o contrato exija referencias explicitas, informar `--require-source-locations` (zero referencias bloqueia). O certificado registra `controls.source_locations` com aplicabilidade, resultado, contagem e SHA material; o validador de certificados exige esta declaracao para certificados emitidos pelo builder atualizado e confronta os artefatos certificados. Quando o auditor tiver a arvore exata, `validate_handoff_certificate.py --source-repository-root` reexecuta o gate independentemente. Ausencia de fontes exigidas nunca se converte em aprovacao automatica.
