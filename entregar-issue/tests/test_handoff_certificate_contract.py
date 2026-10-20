@@ -318,7 +318,9 @@ def test_certified_codebase_grounding_resists_downgrade_and_staleness() -> None:
         proc, cert = build_scoped_certificate(base, "server/issue-42.ts", *code_evidence(base))
         assert proc.returncode == 0, proc.stdout
         payload = json.loads(cert.read_text(encoding="utf-8"))
-        assert payload["controls"] == {"codebase_grounding": {"applicable": True}, "code_growth": {"applicable": True}}
+        assert payload["controls"]["codebase_grounding"] == {"applicable": True}
+        assert payload["controls"]["code_growth"] == {"applicable": True}
+        assert payload["controls"]["source_locations"]["status"] == "not-applicable"
         assert validate_certificate(cert, base).returncode == 0
 
         for key in ("codebase_grounding", "code_growth"):
@@ -342,7 +344,9 @@ def test_documentation_only_scope_does_not_require_codebase_grounding() -> None:
         proc, cert = build_scoped_certificate(base, "docs/guide.md")
         assert proc.returncode == 0, proc.stdout
         payload = json.loads(cert.read_text(encoding="utf-8"))
-        assert payload["controls"] == {"codebase_grounding": {"applicable": False}, "code_growth": {"applicable": False}}
+        assert payload["controls"]["codebase_grounding"] == {"applicable": False}
+        assert payload["controls"]["code_growth"] == {"applicable": False}
+        assert payload["controls"]["source_locations"]["status"] == "not-applicable"
         assert not {"codebase_grounding", "code_growth"} & set(payload["artifacts"])
         assert validate_certificate(cert, base).returncode == 0
 
