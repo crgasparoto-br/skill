@@ -10,7 +10,7 @@ SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "validate_evidence_so
 
 def run(tmp_path: Path, snippets: list[str], files: dict[str, str], *, require_qualified_paths: bool = False) -> subprocess.CompletedProcess[str]:
     root = tmp_path / "repo"
-    root.mkdir()
+    root.mkdir(exist_ok=True)
     for name, text in files.items():
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -72,7 +72,7 @@ def test_cross_language_paths_are_validated(tmp_path: Path) -> None:
         },
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert "validated 4" in proc.stdout
+    assert "validated 5" in proc.stdout
 
 
 def test_partial_checkout_requires_qualified_paths(tmp_path: Path) -> None:
