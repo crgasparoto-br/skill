@@ -171,3 +171,32 @@ def test_diagnostics_not_evidence(tmp_path: Path) -> None:
 def test_qualified_paths_with_dot_prefix_partial_checkout(tmp_path: Path) -> None:
     proc = run(tmp_path, ["./src/page.ts:1"], {"src/page.ts": "ok\n"}, require_qualified_paths=True)
     assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_shorthand_stale_anchor_after_refactor_fails_closed(tmp_path: Path) -> None:
+    proc = run(
+        tmp_path,
+        ["src/tree.ts:1-2 and :919-945", "src/desktop.mjs:1-3 search and :473-635 CRUD"],
+        {"src/tree.ts": "a\nb\nc\n", "src/desktop.mjs": "a\nb\nc\n"},
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert proc.stdout.count("abbreviated line reference") == 2
+    assert "tree.ts and :919-945" in proc.stdout
+    assert "desktop.mjs and :473-635" in proc.stdout
+
+
+def test_shorthand_in_bounds_is_still_ambiguous(tmp_path: Path) -> None:
+    proc = run(tmp_path, ["src/page.ts:1 and :2"], {"src/page.ts": "a\nb\n"})
+    assert proc.returncode == 2
+    assert "repeat the complete source path" in proc.stdout
+    accepted = run(tmp_path, ["src/page.ts:1 and src/page.ts:2"], {"src/page.ts": "a\nb\n"})
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+
+
+def test_unrelated_colon_and_multiple_files_do_not_false_positive(tmp_path: Path) -> None:
+    proc = run(
+        tmp_path,
+        ["src/a.py:1 plus prose and value :5; src/b.py:1", "src/a.py:1 and src/b.py:1"],
+        {"src/a.py": "a\n", "src/b.py": "b\n"},
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
