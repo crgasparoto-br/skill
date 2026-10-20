@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-EXT = r"(?:ts|tsx|js|jsx|mjs|cjs|py|md|json|ya?ml|css|html|sql)"
+EXT = r"[A-Za-z][A-Za-z0-9_+-]*"  # extensoes de linguagem/artefato sem lista fixa
 ANCHOR = re.compile(
     rf"(?<![\w./-])(?P<path>(?:[A-Za-z0-9_.-]+/)*[A-Za-z0-9_.-]+\.{EXT}):"
     r"(?P<ranges>\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)"
@@ -42,7 +42,7 @@ def source_index(root: Path) -> dict[str, list[str]]:
     return result
 
 
-def validate(root: Path, evidence_files: list[Path]) -> tuple[list[str], int]:
+def validate(root: Path, evidence_files: list[Path], *, require_qualified_paths: bool = False) -> tuple[list[str], int]:
     errors: list[str] = []
     index = source_index(root)
     checked = 0
@@ -56,6 +56,9 @@ def validate(root: Path, evidence_files: list[Path]) -> tuple[list[str], int]:
         for value in strings(evidence):
             for match in ANCHOR.finditer(value):
                 name = match.group("path")
+                if require_qualified_paths and "/" not in name:
+                    errors.append(f"{evidence_path.name}: {name}: unqualified source path in partial checkout")
+                    continue
                 candidates = [name] if (root / name).is_file() else ([] if "/" in name else index.get(name, []))
                 if len(candidates) != 1:
                     cause = "missing source" if not candidates else "ambiguous basename: " + ", ".join(candidates)
@@ -87,12 +90,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository-root", required=True)
     parser.add_argument("--evidence", action="append", required=True, help="JSON evidence file, repeatable")
+    parser.add_argument("--require-qualified-paths", action="store_true", help="Reject bare basenames when using a partial materialization")
     args = parser.parse_args()
     root = Path(args.repository_root).resolve()
     if not root.is_dir():
         print(f"BLOCK: repository root unavailable: {root}")
         return 2
-    errors, checked = validate(root, [Path(p) for p in args.evidence])
+    errors, checked = validate(root, [Path(p) for p in args.evidence], require_qualified_paths=args.require_qualified_paths)
     if checked == 0:
         errors.append("no source locations found in evidence; cannot attest source traceability")
     for error in errors:
