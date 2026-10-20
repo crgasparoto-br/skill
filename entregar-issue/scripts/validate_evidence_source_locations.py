@@ -13,24 +13,39 @@ import re
 from pathlib import Path
 from typing import Any
 
-EXT = r"[A-Za-z][A-Za-z0-9_+-]*"  # extensoes sem lista fixa
-PART = r"[A-Za-z0-9_.@+\[\]{}()~-]+"
-ANCHOR = re.compile(
-    rf"(?<![\w./@+-])(?P<path>(?:(?:{PART}/)*{PART}\.{EXT}|(?:{PART}/)+{PART})):"
-    r"(?P<ranges>\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)"
-)
+EXT = r"[\w][\w+-]*"  # independente de linguagem e Unicode
+PART = r"[\w.@+\[\]{}()~-]+"
+PATH = rf"(?:(?:\./)?(?:{PART}/)*{PART}\.{EXT}|(?:\./)?(?:{PART}/)+{PART})"
+CANDIDATE = re.compile(rf"(?<![\w./@+-])(?P<path>{PATH}):(?P<ranges>[^\s\"'<>\x60]+)")
+RANGES = re.compile(r"\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)")
+IGNORED_FIELDS = {"stderr", "stdout", "log", "logs", "diagnostic", "diagnostics", "error_message", "warning_message", "transcript"}
 SKIP_DIRS = {".git", "node_modules", "dist", "build", "coverage", ".next", ".audit", ".venv", "venv"}
 
 
 def strings(value: Any):
+    """Walk evidence-bearing content including JSON keys, not diagnostic output."""
     if isinstance(value, str):
         yield value
     elif isinstance(value, dict):
-        for item in value.values():
+        for key, item in value.items():
+            if isinstance(key, str):
+                yield key
+                if key.casefold() in IGNORED_FIELDS:
+                    continue
             yield from strings(item)
     elif isinstance(value, list):
         for item in value:
             yield from strings(item)
+
+
+def candidate_locations(evidence_files: list[Path]) -> int:
+    """Count lexical location candidates without requiring a source checkout."""
+    total = 0
+    for path in evidence_files:
+        from audit_artifact_io import load_json_artifact
+        evidence = load_json_artifact(path)
+        total += sum(1 for value in strings(evidence) for _ in CANDIDATE.finditer(value))
+    return total
 
 
 def source_index(root: Path) -> dict[str, list[str]]:
@@ -50,13 +65,18 @@ def validate(root: Path, evidence_files: list[Path], *, require_qualified_paths:
     line_counts: dict[Path, int] = {}
     for evidence_path in evidence_files:
         try:
-            evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+            from audit_artifact_io import load_json_artifact
+            evidence = load_json_artifact(evidence_path)
         except (ValueError, OSError) as exc:
             errors.append(f"{evidence_path}: invalid evidence JSON: {exc}")
             continue
         for value in strings(evidence):
-            for match in ANCHOR.finditer(value):
+            for match in CANDIDATE.finditer(value):
                 name = match.group("path")
+                segment_text = match.group("ranges").rstrip(".,;)}]")
+                if not RANGES.fullmatch(segment_text):
+                    errors.append(f"{evidence_path.name}: {name}:{segment_text} malformed line range")
+                    continue
                 if require_qualified_paths and "/" not in name:
                     errors.append(f"{evidence_path.name}: {name}: unqualified source path in partial checkout")
                     continue
@@ -77,7 +97,7 @@ def validate(root: Path, evidence_files: list[Path], *, require_qualified_paths:
                         errors.append(f"{evidence_path.name}: {name}: cannot read: {exc}")
                         continue
                 maximum = line_counts[target]
-                for segment in match.group("ranges").split(","):
+                for segment in segment_text.split(","):
                     start, _, end_string = segment.partition("-")
                     first = int(start)
                     last = int(end_string or start)

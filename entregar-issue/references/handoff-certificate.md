@@ -133,3 +133,8 @@ Gerar o certificado localmente nao basta. Em reauditoria apos rejeicao independe
 ## Transporte de artefatos grandes
 
 O certificado schema v2 pode registrar `artifact_transport.version=1`. Cada entrada de `artifacts` deve manter `sha256` do arquivo fisico e `logical_sha256`/`logical_size` do JSON reconstruido. Para `base64-shards-v1`, registrar tambem compression, sizes, decoded hash e parts; todas as parts entram automaticamente em `certificate_commit_policy.allowed_paths`. Em reauditoria, certificar tambem `audit-remediation.json` e `audit-source-result.json`.
+
+
+### Integracao deterministica
+
+O builder de certificados executa o validador sobre os artefatos aplicaveis e exige `--source-repository-root` materializado no SHA exato quando encontrar enderecos. Em checkouts incompletos, acrescentar `--source-checkout-partial`. Caso o contrato exija referencias explicitas, informar `--require-source-locations` (zero referencias bloqueia). O certificado registra `controls.source_locations` com aplicabilidade, resultado, contagem e SHA material; o validador de certificados exige esta declaracao para certificados emitidos pelo builder atualizado e confronta os artefatos certificados. Quando o auditor tiver a arvore exata, `validate_handoff_certificate.py --source-repository-root` reexecuta o gate independentemente. Ausencia de fontes exigidas nunca se converte em aprovacao automatica.

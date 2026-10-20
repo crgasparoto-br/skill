@@ -138,3 +138,36 @@ def test_symlink_outside_repository_fails(tmp_path: Path) -> None:
     proc = subprocess.run([sys.executable, str(SCRIPT), "--repository-root", str(root), "--evidence", str(evidence)], capture_output=True, text=True, check=False)
     assert proc.returncode == 2
     assert "symlink or path escapes" in proc.stdout
+
+
+def test_malformed_suffix_and_non_numeric_lines_fail(tmp_path: Path) -> None:
+    proc = run(tmp_path, ["src/module.ts:1-INVALID", "src/module.ts:not-a-line", "src/module.ts:1-"], {"src/module.ts": "line\n"})
+    assert proc.returncode == 2
+    assert proc.stdout.count("malformed line range") == 3
+
+
+def test_unicode_filename_and_json_key_both_checked(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    (root / "src").mkdir(parents=True)
+    (root / "src" / "café.py").write_text("line\n", encoding="utf-8")
+    evidence = tmp_path / "evidence.json"
+    evidence.write_text(json.dumps({"src/café.py:9": "code location", "references": ["src/café.py:1"]}), encoding="utf-8")
+    proc = subprocess.run([sys.executable, str(SCRIPT), "--repository-root", str(root), "--evidence", str(evidence)], capture_output=True, text=True, check=False)
+    assert proc.returncode == 2
+    assert "outside 1-1" in proc.stdout
+
+
+def test_diagnostics_not_evidence(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    root.mkdir()
+    evidence = tmp_path / "evidence.json"
+    evidence.write_text(json.dumps({"stderr": "unrelated.ts:999", "references": ["src/app.ts:1"]}), encoding="utf-8")
+    (root / "src").mkdir()
+    (root / "src" / "app.ts").write_text("line\n", encoding="utf-8")
+    proc = subprocess.run([sys.executable, str(SCRIPT), "--repository-root", str(root), "--evidence", str(evidence)], capture_output=True, text=True, check=False)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_qualified_paths_with_dot_prefix_partial_checkout(tmp_path: Path) -> None:
+    proc = run(tmp_path, ["./src/page.ts:1"], {"src/page.ts": "ok\n"}, require_qualified_paths=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
