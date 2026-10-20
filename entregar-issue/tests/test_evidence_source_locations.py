@@ -63,3 +63,16 @@ def test_empty_evidence_fails_closed(tmp_path: Path) -> None:
 def test_ignores_urls_without_line_anchors(tmp_path: Path) -> None:
     proc = run(tmp_path, ["https://github.com/a/b", "CI run 123", "src/page.ts:1"], {"src/page.ts": "line\n"})
     assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_symlink_outside_repository_fails(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    root.mkdir()
+    secret = tmp_path / "outside.ts"
+    secret.write_text("private\n", encoding="utf-8")
+    (root / "link.ts").symlink_to(secret)
+    evidence = tmp_path / "evidence.json"
+    evidence.write_text(json.dumps({"references": ["link.ts:1"]}), encoding="utf-8")
+    proc = subprocess.run([sys.executable, str(SCRIPT), "--repository-root", str(root), "--evidence", str(evidence)], capture_output=True, text=True, check=False)
+    assert proc.returncode == 2
+    assert "symlink or path escapes" in proc.stdout
