@@ -19,6 +19,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_json_artifact
+from validate_evidence_source_locations import candidate_locations
+from validate_evidence_source_locations import validate as validate_source_locations
 from validate_handoff_certificate import scope_touches_code
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -89,6 +91,9 @@ def main() -> int:
     parser.add_argument("--evidence-provenance")
     parser.add_argument("--codebase-grounding", help="codebase-grounding.json; mandatory when the issue-local scope touches code")
     parser.add_argument("--code-growth", help="CODE-GROWTH-001 report; mandatory when the issue-local scope touches code")
+    parser.add_argument("--source-repository-root", help="Materialized repository at the exact --head-sha, required for code citations")
+    parser.add_argument("--source-checkout-partial", action="store_true", help="Disallow bare basenames in incomplete materializations")
+    parser.add_argument("--require-source-locations", action="store_true", help="Block missing source anchors when the evidence profile requires them")
     parser.add_argument("--audit-escape-closure")
     parser.add_argument("--learning-closure")
     parser.add_argument("--audit-remediation")
@@ -285,6 +290,28 @@ def main() -> int:
         if "learning_closure" in files:
             handoff_args.extend(["--learning-closure", str(files["learning_closure"])])
         run(handoff_args)
+        source_paths = [files[k] for k in ("requirement_closure", "standard_evidence", "requirement_attack_matrix", "risk_saturation", "inherited_controls") if k in files]
+        declared = candidate_locations(source_paths)
+        if declared or args.require_source_locations:
+            if not args.source_repository_root:
+                raise ValueError("source references require --source-repository-root for the exact material SHA")
+            source_root = Path(args.source_repository_root).resolve()
+            if not source_root.is_dir():
+                raise ValueError("source repository root does not exist")
+            errors, checked = validate_source_locations(source_root, source_paths, require_qualified_paths=args.source_checkout_partial)
+            if errors or not checked:
+                raise ValueError("source location gate failed: " + "; ".join(errors or ["zero required source anchors"]))
+            source_control = {
+                "applicable": True, "status": "passed", "checked": checked,
+                "subject_sha": args.head_sha,
+                "evidence_artifacts": [k for k in ("requirement_closure", "standard_evidence", "requirement_attack_matrix", "risk_saturation", "inherited_controls") if k in files],
+            }
+        else:
+            source_control = {
+                "applicable": False, "status": "not-applicable", "checked": 0,
+                "subject_sha": args.head_sha,
+                "reason": "Applicable evidence artifacts contain no code source locations; no synthetic anchors generated.",
+            }
     except Exception as exc:
         print(f"BLOCK: handoff certificate not created: {exc}")
         return 2
@@ -330,6 +357,7 @@ def main() -> int:
         ROOT / "scripts" / "validate_learning_closure.py",
         ROOT / "scripts" / "validate_independent_rejection_closure.py",
         ROOT / "scripts" / "validate_audit_remediation.py",
+        ROOT / "scripts" / "validate_evidence_source_locations.py",
     ]
     payload = {
         "schema_version": 2,
@@ -376,6 +404,7 @@ def main() -> int:
         "controls": {
             "codebase_grounding": {"applicable": code_scope},
             "code_growth": {"applicable": code_scope},
+            "source_locations": source_control,
         },
         "previous_independent_rejection": bool(args.previous_independent_rejection),
     }

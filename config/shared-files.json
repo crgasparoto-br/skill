@@ -39,6 +39,12 @@
       ]
     },
     {
+      "canonical": "entregar-issue/scripts/validate_evidence_source_locations.py",
+      "copies": [
+        "auditar-issue/scripts/validate_evidence_source_locations.py"
+      ]
+    },
+    {
       "canonical": "entregar-issue/scripts/validate_handoff_certificate.py",
       "copies": [
         "auditar-issue/scripts/validate_handoff_certificate.py"
