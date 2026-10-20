@@ -9,6 +9,7 @@ import posixpath
 from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, load_json_artifact
+from validate_evidence_source_locations import candidate_locations, validate as validate_source_locations
 
 # Must stay equal to plan_execution.CODE_SUFFIXES; the auditor copy of this file has no planner to import.
 CODE_SUFFIXES = (
@@ -68,6 +69,8 @@ def main() -> int:
     parser.add_argument("--merge-preview-sha", help="Current published candidate merge preview")
     parser.add_argument("--candidate-parent-sha")
     parser.add_argument("--candidate-changed-path", action="append", default=[])
+    parser.add_argument("--source-repository-root", help="Optional independent material checkout for recomputing the certified source anchors")
+    parser.add_argument("--source-checkout-partial", action="store_true")
     parser.add_argument("--contract-version")
     parser.add_argument("--repository")
     parser.add_argument("--issue-number", type=int, help="Canonical issue delivered by the audited PR")
@@ -251,6 +254,41 @@ def main() -> int:
                 target_mismatch |= compare_target("specification snapshot repository", snapshot.get("repository"), args.repository, errors)
                 if expected_issue_number is not None:
                     target_mismatch |= compare_target("specification snapshot issue", snapshot.get("issue"), expected_issue_number, errors)
+
+    source_control = (cert.get("controls") or {}).get("source_locations")
+    certified_source_gate = "validate_evidence_source_locations.py" in (cert.get("validators") or {})
+    source_keys = ("requirement_closure", "standard_evidence", "requirement_attack_matrix", "risk_saturation", "inherited_controls")
+    source_paths = [artifact_paths[key] for key in source_keys if key in artifact_paths and artifact_paths[key].is_file()]
+    if certified_source_gate:
+        if not isinstance(source_control, dict):
+            errors.append("certificate lacks source location control")
+        else:
+            try:
+                candidate_count = candidate_locations(source_paths)
+            except Exception as exc:
+                errors.append(f"cannot inspect certified source references: {exc}")
+                candidate_count = 0
+            applicable = source_control.get("applicable") is True
+            if source_control.get("subject_sha") != material_head:
+                errors.append("source location control is stale for material SHA")
+            if applicable:
+                if source_control.get("status") != "passed" or not isinstance(source_control.get("checked"), int) or source_control["checked"] < 1:
+                    errors.append("source location control is not passed")
+                if not candidate_count:
+                    errors.append("source location control claims anchors but none are certified")
+                if args.source_repository_root:
+                    source_errors, counted = validate_source_locations(
+                        Path(args.source_repository_root).resolve(), source_paths,
+                        require_qualified_paths=args.source_checkout_partial,
+                    )
+                    errors.extend(f"source location revalidation: {e}" for e in source_errors)
+                    if counted != source_control.get("checked"):
+                        errors.append("source location anchor count changed")
+            else:
+                if source_control.get("status") != "not-applicable" or source_control.get("checked") != 0 or len(str(source_control.get("reason") or "")) < 20:
+                    errors.append("invalid source locations not-applicable justification")
+                if candidate_count:
+                    errors.append("source anchors exist but certificate marked them not-applicable")
 
     for key in ("codebase_grounding", "code_growth"):
         if key not in artifact_paths or not artifact_paths[key].is_file():
