@@ -542,3 +542,59 @@ def test_handoff_certificate_supports_sharded_large_artifacts() -> None:
         )
         assert proc.returncode == 2
         assert "transport validation failed" in proc.stdout
+
+
+def test_source_location_gate_blocks_stale_evidence_and_certifies_valid_range() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        files = build_valid_delivery(base)
+        closure = json.loads(files["closure"].read_text(encoding="utf-8"))
+        closure["pass_c"]["evidence"].append("src/logic.go:6")
+        files["closure"].write_text(json.dumps(closure), encoding="utf-8")
+        checkout = base / "checkout"
+        (checkout / "src").mkdir(parents=True)
+        target = checkout / "src" / "logic.go"
+        target.write_text("line\n", encoding="utf-8")
+        cert = base / "handoff-ready.json"
+        arguments = [
+            "--specification-snapshot", str(files["snapshot"]),
+            "--repository", "owner/repo", "--work-item-kind", "issue", "--work-item-number", "42",
+            "--requirement-closure", str(files["closure"]),
+            "--attack-matrix", str(files["attack"]),
+            "--risk-saturation", str(files["risk"]),
+            "--inherited-controls", str(files["inherited"]),
+            "--head-sha", HEAD, "--base-sha", BASE, "--out", str(cert),
+        ]
+
+        missing_checkout = run("build_handoff_certificate.py", *arguments)
+        assert missing_checkout.returncode == 2
+        assert "source references require --source-repository-root" in missing_checkout.stdout
+
+        stale = run("build_handoff_certificate.py", *arguments, "--source-repository-root", str(checkout))
+        assert stale.returncode == 2
+        assert "outside 1-1" in stale.stdout
+
+        target.write_text("line\n" * 6, encoding="utf-8")
+        valid = run("build_handoff_certificate.py", *arguments, "--source-repository-root", str(checkout))
+        assert valid.returncode == 0, valid.stdout
+        payload = json.loads(cert.read_text(encoding="utf-8"))
+        assert payload["controls"]["source_locations"]["status"] == "passed"
+        assert payload["controls"]["source_locations"]["checked"] >= 1
+
+        proof = run(
+            "validate_handoff_certificate.py",
+            "--certificate", str(cert), "--artifacts-dir", str(base),
+            "--head-sha", HEAD, "--base-sha", BASE,
+            "--source-repository-root", str(checkout),
+        )
+        assert proof.returncode == 0, proof.stdout
+
+        payload["controls"]["source_locations"]["status"] = "not-applicable"
+        cert.write_text(json.dumps(payload), encoding="utf-8")
+        forged = run(
+            "validate_handoff_certificate.py",
+            "--certificate", str(cert), "--artifacts-dir", str(base),
+            "--head-sha", HEAD, "--base-sha", BASE,
+        )
+        assert forged.returncode == 2
+        assert "source location control is not passed" in forged.stdout
