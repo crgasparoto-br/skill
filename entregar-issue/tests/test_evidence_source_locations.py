@@ -177,7 +177,7 @@ def test_shorthand_stale_anchor_after_refactor_fails_closed(tmp_path: Path) -> N
     proc = run(
         tmp_path,
         ["src/tree.ts:1-2 and :919-945", "src/desktop.mjs:1-3 search and :473-635 CRUD"],
-        {"src/tree.ts": "a\\nb\\nc\\n", "src/desktop.mjs": "a\\nb\\nc\\n"},
+        {"src/tree.ts": "a\nb\nc\n", "src/desktop.mjs": "a\nb\nc\n"},
     )
     assert proc.returncode == 2, proc.stdout + proc.stderr
     assert proc.stdout.count("abbreviated line reference") == 2
@@ -186,10 +186,10 @@ def test_shorthand_stale_anchor_after_refactor_fails_closed(tmp_path: Path) -> N
 
 
 def test_shorthand_in_bounds_is_still_ambiguous(tmp_path: Path) -> None:
-    proc = run(tmp_path, ["src/page.ts:1 and :2"], {"src/page.ts": "a\\nb\\n"})
+    proc = run(tmp_path, ["src/page.ts:1 and :2"], {"src/page.ts": "a\nb\n"})
     assert proc.returncode == 2
     assert "repeat the complete source path" in proc.stdout
-    accepted = run(tmp_path, ["src/page.ts:1 and src/page.ts:2"], {"src/page.ts": "a\\nb\\n"})
+    accepted = run(tmp_path, ["src/page.ts:1 and src/page.ts:2"], {"src/page.ts": "a\nb\n"})
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
 
 
@@ -197,6 +197,6 @@ def test_unrelated_colon_and_multiple_files_do_not_false_positive(tmp_path: Path
     proc = run(
         tmp_path,
         ["src/a.py:1 plus prose and value :5; src/b.py:1", "src/a.py:1 and src/b.py:1"],
-        {"src/a.py": "a\\n", "src/b.py": "b\\n"},
+        {"src/a.py": "a\n", "src/b.py": "b\n"},
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
