@@ -19,7 +19,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_json_artifact
-from validate_evidence_source_locations import candidate_locations, validate as validate_source_locations
+from validate_evidence_source_locations import (
+    candidate_locations,
+    validate as validate_source_locations,
+)
 from validate_handoff_certificate import scope_touches_code
 
 ROOT = Path(__file__).resolve().parents[1]
