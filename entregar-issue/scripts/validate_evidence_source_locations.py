@@ -13,9 +13,10 @@ import re
 from pathlib import Path
 from typing import Any
 
-EXT = r"[A-Za-z][A-Za-z0-9_+-]*"  # extensoes de linguagem/artefato sem lista fixa
+EXT = r"[A-Za-z][A-Za-z0-9_+-]*"  # extensoes sem lista fixa
+PART = r"[A-Za-z0-9_.@+\[\]{}()~-]+"
 ANCHOR = re.compile(
-    rf"(?<![\w./-])(?P<path>(?:[A-Za-z0-9_.-]+/)*[A-Za-z0-9_.-]+\.{EXT}):"
+    rf"(?<![\w./@+-])(?P<path>(?:(?:{PART}/)*{PART}\.{EXT}|(?:{PART}/)+{PART})):"
     r"(?P<ranges>\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)"
 )
 SKIP_DIRS = {".git", "node_modules", "dist", "build", "coverage", ".next", ".audit", ".venv", "venv"}
