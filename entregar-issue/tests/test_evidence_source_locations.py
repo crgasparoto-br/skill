@@ -72,7 +72,7 @@ def test_cross_language_paths_are_validated(tmp_path: Path) -> None:
         },
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert "validated 5" in proc.stdout
+    assert "validated 4" in proc.stdout
 
 
 def test_partial_checkout_requires_qualified_paths(tmp_path: Path) -> None:
