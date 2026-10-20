@@ -15,6 +15,7 @@ Ler quando for produzir ou consumir o certificado de handoff independente, inclu
 - [Regra de consumo](#regra-de-consumo)
 - [Runtime connector-only](#runtime-connector-only)
 - [Drift pos-freeze e remediacao de CI](#drift-pos-freeze-e-remediacao-de-ci)
+- [Integridade dos enderecos de evidencia](#integridade-dos-enderecos-de-evidencia)
 - [Gate pre-publicacao do produtor](#gate-pre-publicacao-do-produtor)
 - [Gate terminal do produtor](#gate-terminal-do-produtor)
 - [Transporte de artefatos grandes](#transporte-de-artefatos-grandes)
