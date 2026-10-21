@@ -118,7 +118,7 @@ def test_rejects_zip_slip_and_additional_members(tmp_path: Path) -> None:
 
 
 def test_rejects_existing_checkout_without_overwriting(tmp_path: Path) -> None:
-    bundle, base, head, manifest = fixture(tmp_path)
+    bundle, base, _head, manifest = fixture(tmp_path)
     checkout = tmp_path / "restored.git"
     checkout.mkdir()
     sentinel = checkout / "keep.txt"
@@ -136,7 +136,7 @@ def test_rejects_wrong_trusted_head_independent_of_manifest(tmp_path: Path) -> N
 
 
 def test_rejects_unexpected_bundle_format(tmp_path: Path) -> None:
-    bundle, base, head, manifest = fixture(tmp_path)
+    _bundle, base, head, manifest = fixture(tmp_path)
     artifact = tmp_path / "artifact.zip"
     with zipfile.ZipFile(artifact, "w") as zf:
         zf.writestr("manifest.json", json.dumps(manifest))
