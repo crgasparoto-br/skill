@@ -118,7 +118,7 @@ def test_rejects_zip_slip_and_additional_members(tmp_path: Path) -> None:
 
 
 def test_rejects_existing_checkout_without_overwriting(tmp_path: Path) -> None:
-    bundle, base, _head, manifest = fixture(tmp_path)
+    bundle, base, head, manifest = fixture(tmp_path)
     checkout = tmp_path / "restored.git"
     checkout.mkdir()
     sentinel = checkout / "keep.txt"
@@ -129,7 +129,7 @@ def test_rejects_existing_checkout_without_overwriting(tmp_path: Path) -> None:
 
 
 def test_rejects_wrong_trusted_head_independent_of_manifest(tmp_path: Path) -> None:
-    bundle, base, head, manifest = fixture(tmp_path)
+    bundle, base, _head, manifest = fixture(tmp_path)
     result = restore(tmp_path, archive(tmp_path, bundle, manifest), base, "c" * 40)
     assert result.returncode == 2
     assert "headSha" in result.stdout
