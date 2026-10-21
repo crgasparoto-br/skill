@@ -90,3 +90,7 @@ O `--git-repo` deve apontar a um checkout obtido de fonte Git confiavel, contend
 
 
 Os dois SHAs de confianca devem ser obtidos de leitura GitHub independente do inventory.json; o gate rejeita bases alternativas que existam no checkout mas nao correspondam a PR.
+
+## Checkout offline sem DNS
+
+Se o ambiente nao conseguir resolver o GitHub para `git clone/fetch`, nao substituir a prova independente de diff por `inventory.json` nem concluir `INCONCLUSIVA` sem tentar um artefato Git confiavel ja publicado pelo CI. Seguir `references/offline-git-bundle.md` e executar `scripts/restore_ci_git_bundle.py` com base, HEAD e run ID conferidos pelo conector GitHub fora do ZIP. Passar o `git_repo` bare restaurado a `--git-repo` do validador original, sem alterar a matriz, a exigencia de todas as surfaces nem as regras de independência. Se nao houver bytes ou autoridade para validar o bundle, registrar apenas `audit-runtime-limitation`.
