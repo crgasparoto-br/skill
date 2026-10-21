@@ -84,6 +84,7 @@ Ler somente quando aplicavel:
 - `CODE-GROWTH-001` aplicavel ou artefato `code_growth` certificado: `references/code-growth-audit.md`;
 - diff com codigo executavel adicionado, referencia nova ou comportamento substituido: `references/codebase-grounding-audit.md`;
 - resolucao de scripts/artefatos no runtime: `references/runtime-resource-resolution.md`;
+- DNS/checkout Git indisponivel com bundle oficial do CI: `references/offline-git-bundle.md`; executar `scripts/restore_ci_git_bundle.py` antes de declarar `audit-runtime-limitation` por ausencia de Git local.
 - manifesto `base64-shards-v1`, artefato grande ou handoff transport-sharded: `references/large-artifact-consumption.md`;
 - gate de auditoria ampla: `scripts/validate_audit_completeness.py` e `references/audit-completeness-gate.md`;
 - apos primeiro blocker: `references/blocker-harvest.md`;
@@ -122,11 +123,14 @@ Aplicar `references/finding-disposition-contract.md` a todos os findings e recom
 19. Tratar liveness de referencias e coerencia temporal de destino como familias canonicas: validade em T1 nao prova uso seguro em T3, e data sintaticamente valida nao prova destino futuro/periodo coerente.
 20. Interpretar caminhos `scripts/...`, `references/...`, `schemas/...` e `tests/...` como relativos ao pacote instalado da Skill `auditar-issue`, nunca ao repositorio auditado. Nao exigir que o repositorio versione, copie ou venda esses recursos internos.
 21. Quando a Skill estiver exposta apenas por resource URI, materializar seus recursos internos necessarios em diretorio efemero antes de executar; quando o repositorio estiver apenas em connector remoto, materializar somente os artefatos de entrada necessarios preservando os bytes exatos. Nunca alterar o repositorio para viabilizar a auditoria.
+21.1. Para `validate_audit_completeness.py`, se nao houver checkout confiavel por DNS/egress, consultar o run CI exact-SHA autenticado via GitHub, baixar artefato `manifest.json` + `repository.bundle` ja existente e executar `scripts/restore_ci_git_bundle.py` com base/head/ref/run coletados **fora** do ZIP. Reconciliar diff Git restaurado, fonte remota e inventario independente. Ausencia de bundle ou falha de transporte do auditor nao altera modo, nao dispensa gate e nao reprova candidato.
 22. Se o runtime/connector impedir a materializacao exata ou a execucao de recurso interno da Skill apos tentativas razoaveis, classificar `audit-runtime-limitation`: resultado humano `INCONCLUSIVA`, `Libera merge/release: NAO`, `findings=[]` para essa causa, `requires_refreeze=false` salvo mudanca real de identidade. Nao usar `delivery-not-ready`, `red-candidate-caused`, `missing` ou `not-reached` para uma incapacidade exclusiva do ambiente do auditor. Nao propor commit, issue corretiva, workflow ou mudanca no produto para corrigir infraestrutura da auditoria.
 
 ## Fluxo
 
 ### 0. Preflight de readiness e reauditoria
+
+**Restauracao de checkout no runtime:** quando o acesso direto ao Git falhar (DNS/egress), usar `references/offline-git-bundle.md` para recuperar objetos de um artefato CI autenticado no SHA exato e passar seu repositorio bare a `validate_audit_completeness.py`. Nao confundir o sucesso dessa restauracao com auditoria concluida, nem marcar `INCONCLUSIVA` por DNS antes dessa tentativa quando o CI disponibilizar bundle completo.
 
 **Gate de precedencia (obrigatorio antes de qualquer finding):** executar o classificador de `audit_transport` contra o contrato no base SHA imutavel, registrar no resultado modo, base/head SHA e evidencia do classificador. Com `native-github-audit`, handoffs legados (inclusive stale, herdados ou ligados a outro SHA) nao sao pre-requisitos nem fundamento de `REPROVADA`; nao solicitar `post-write-refreeze` apenas por eles. Com `certified-handoff`, aplicar integralmente o preflight do certificado. Se nao for possivel executar ou observar o classificador por limitacao exclusiva do auditor, apos fallbacks, marcar `INCONCLUSIVA` e nao atribuir finding ao candidato. Revalidar base/head ao final e reclassificar findings historicos quando um contrato confiavel alterar o modo. Ver `references/native-github-audit-contract.md` para a regressao da PR #1316.
 
