@@ -74,6 +74,7 @@ ALLOWED_USES = (
 NON_VALIDATION_STEPS = (
     # Produz o artefato de release; não prova estado do repositório, então não entra na comparação.
     "python scripts/package_chatgpt_skill.py entregar-issue --output dist/skill.zip",
+    "python scripts/package_chatgpt_skill.py auditar-issue --output dist/auditar-issue-skill.zip",
 )
 # Módulos que a sequência executa com `python -m`. Qualquer outro módulo é passo não classificado.
 ALLOWED_MODULES = ("pip", "pytest")
