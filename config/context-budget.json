@@ -27,9 +27,9 @@
       "reason": "Control plane mais crítico do catálogo: define os gates de ancoragem no código, crescimento de código, fechamento de requisitos e handoff. Reduzir exige mover conteúdo para referências já carregadas, o que é uma entrega própria. Exceção medida em 2026-10-11 para o contrato de execução exaustiva de pendências, sem remoção de controles. Inclui ponteiro condicional para saturacao semantica, com exemplos historicos desacoplados em 2026-10-18. Gate de saturacao executavel e ativado pelo registry em 2026-10-18. Mantida palavra-chave pairwise exigida no regression gate. Medicao exata apos protocolo de readiness abrangente em 2026-10-18. Medicao exata atualizada para incluir gate de endereco de evidencias em 2026-10-20."
     },
     "auditar-issue/SKILL.md": {
-      "max_bytes": 37328,
+      "max_bytes": 38464,
       "max_line_chars": 1974,
-      "reason": "Control plane da auditoria independente, com o contrato de rederivação, os gates de refutação e o bloco obrigatório de conclusão do parecer. Reduzir depende de separar o preflight proporcional em referência carregada condicionalmente. Inclui ponteiro condicional para mutacoes semanticas, com exemplos historicos isolados em 2026-10-18. Medicao exata apos gate de completude em 2026-10-18. Medicao exata atualizada para revalidacao independente de enderecos em 2026-10-20."
+      "reason": "Control plane da auditoria independente, com o contrato de rederivação, os gates de refutação e o bloco obrigatório de conclusão do parecer. Reduzir depende de separar o preflight proporcional em referência carregada condicionalmente. Inclui ponteiro condicional para mutacoes semanticas, com exemplos historicos isolados em 2026-10-18. Medicao exata apos gate de completude em 2026-10-18. Medicao exata atualizada para revalidacao independente de enderecos em 2026-10-20. Atualizada para incluir fallback auditavel por Git Bundle do CI quando o runtime nao tem DNS, mantendo o script e o procedimento extenso em referencia sob demanda."
     },
     "corrigir-ci/SKILL.md": {
       "max_line_chars": 749,
