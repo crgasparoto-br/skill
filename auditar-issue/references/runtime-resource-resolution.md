@@ -15,6 +15,7 @@ Ler quando houver resolução de scripts ou artefatos no runtime, inclusive fall
 - [Classificacao de falhas](#classificacao-de-falhas)
 - [Regra fail-closed correta](#regra-fail-closed-correta)
 - [Fallback connector-native por snapshot Git imutavel](#fallback-connector-native-por-snapshot-git-imutavel)
+- [Checkout Git offline via artefato CI](#checkout-git-offline-via-artefato-ci)
 
 ## Objetivo
 
@@ -88,3 +89,7 @@ Requisitos do fallback:
 - rederivar `head_sha`, target, `specification-snapshot.repository/issue`, saturacao, controles herdados e closure a partir do conteudo consultado;
 - registrar que a integridade foi estabelecida por identidade de objeto Git, nao por SHA-256 recalculado localmente;
 - se um artefato certificado usar shards e as partes puderem ser obtidas integralmente, preferir materializa-las e executar o preflight por bytes; nao usar o fallback semantico apenas para evitar baixar varias partes pequenas.
+
+## Checkout Git offline via artefato CI
+
+Quando o unico impedimento de `validate_audit_completeness.py` for ausência de checkout Git confiavel por DNS/egress, seguir `references/offline-git-bundle.md`: obter o bundle publicado por workflow CI official em run `completed/success` exact-SHA pelo conector autenticado, restaurar objetos com `scripts/restore_ci_git_bundle.py` e executar o validador normal. O fallback semantico de objetos individuais nao substitui esse portao que precisa de objetos Git para recomputar o diff. Se nao houver bundle/transferencia suficiente, manter `audit-runtime-limitation`, sem erro atribuido ao candidato.
