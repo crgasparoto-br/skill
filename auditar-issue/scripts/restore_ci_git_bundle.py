@@ -31,7 +31,7 @@ class BundleError(Exception):
 def git(*args: str, cwd: Path | None = None) -> str:
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_ALLOW_PROTOCOL="file")
     result = subprocess.run(["git", *args], cwd=cwd, env=env, text=True,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+                            capture_output=True, check=False)
     if result.returncode:
         raise BundleError(f"git {' '.join(args[:3])} failed: {result.stderr.strip()[:500]}")
     return result.stdout.strip()
