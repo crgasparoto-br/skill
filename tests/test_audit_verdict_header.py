@@ -595,3 +595,22 @@ def test_short_or_generic_revision_reason_is_not_substantiation():
         "- **Motivo da retificacao:** novo controle demonstrou que o achado nao pertence ao candidato\n",
     )
     assert module.validate_revision(new + context, old) == []
+
+
+def test_list_nested_section_cannot_authorize_outside_blocker():
+    # H2 is inside the list; H3 is a real heading outside that list.
+    text = report("REPROVADA", blockers=1, merge="NAO", sections=(
+        "## Exemplos\n- agrupamento\n\n"
+        "  ## Achados bloqueantes\n" + blocker()
+    ))
+    errors = module.validate(text)
+    assert any("A-001" in error and "fora da secao" in error for error in errors)
+    assert any("contagem declarada 1, itens verificaveis 0" in error for error in errors)
+
+
+def test_list_nested_h1_does_not_close_its_outer_canonical_section():
+    text = report("REPROVADA", blockers=1, merge="NAO", sections=(
+        "## Achados bloqueantes\n- agrupamento\n\n"
+        "  # Titulo dentro da lista\n" + blocker()
+    ))
+    assert module.validate(text) == []
