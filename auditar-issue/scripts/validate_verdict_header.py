@@ -81,7 +81,7 @@ CATEGORIES = {
     ),
 }
 PLACEHOLDER = re.compile(r"^(?:[.\-? ]+|unknown|todo|tbd|n/?a|\[[^]]*\])$", re.IGNORECASE)
-SHA = re.compile(r"^[0-9a-f]{40}$", re.I)
+SHA = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 
 
 def visible_lines(lines):
