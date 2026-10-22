@@ -50,7 +50,7 @@ Imediatamente abaixo dessa linha, abrir o parecer com o bloco de conclusao em de
 **Triagem:** bloqueadores comprovados: `[n]` | riscos inferidos: `[n]` | limitacoes do auditor: `[n]`
 ```
 
-Validar **todo** parecer antes de publicar: executar `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>` sobre cabecalho, itens estruturados e triagem. Em retificacao, comparar com o parecer anterior usando `--previous <anterior>` e exigir prova para cada bloqueador removido; nao trocar apenas a conclusao verbal. O validador verifica coerencia de campos, nao substitui verificacao independente das provas. Seguir `references/report-template.md`.
+Validar **todo** parecer antes de publicar: executar `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>` sobre cabecalho, itens estruturados e triagem. Em retificacao, usar `--previous <anterior>` e exigir prova de cada item alterado ou removido, mesmo sob o mesmo ID; nunca retificar so verbalmente. O validador verifica coerencia de campos, nao substitui verificacao independente das provas. Seguir `references/report-template.md`.
 
 O bloco deixa a conclusao visivel nas primeiras linhas e nao substitui o motivo determinante, a matriz, os achados nem o resultado estruturado; divergencia entre eles e defeito do parecer. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato.
 
