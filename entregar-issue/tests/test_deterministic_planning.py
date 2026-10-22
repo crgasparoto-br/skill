@@ -358,8 +358,8 @@ def test_planner_classifies_test_only_and_preserves_gate_contract():
 
 
 def test_historical_v2_plan_schema_and_runtime_compatible():
-    from planning_contract_runtime import validate_execution_plan
     from jsonschema import Draft202012Validator
+    from planning_contract_runtime import validate_execution_plan
     with tempfile.TemporaryDirectory() as dirname:
         temp = Path(dirname)
         planner = PlanningTests()
