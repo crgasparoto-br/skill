@@ -26,6 +26,7 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 - [Achados bloqueantes](#achados-bloqueantes)
 - [Riscos inferidos nao confirmados](#riscos-inferidos-nao-confirmados)
 - [Limitacoes exclusivas do auditor](#limitacoes-exclusivas-do-auditor)
+- [Retificacao do parecer](#retificacao-do-parecer)
 - [Recomendacoes opcionais](#recomendacoes-opcionais)
 - [Testes e validações](#testes-e-validações)
 - [Fronteira pública, privacidade e autorização](#fronteira-pública-privacidade-e-autorização)
@@ -57,6 +58,8 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 ### Triagem do resultado
 
 Preencher as tres contagens da linha **Triagem** antes de decidir o veredito. `bloqueadores comprovados` e exatamente o total do bloco de conclusao, sempre respaldado por evidencia do candidato/entrega (analise estatica conclusiva pode servir como prova; hipotese sem prova discriminante nao serve). `riscos inferidos` representa suspeitas nao confirmadas, fora da contagem de blockers. `limitacoes do auditor` registra incapacidade exclusiva do runtime/conector para executar um gate obrigatorio, sem encontrar defeito na entrega.
+
+Validar registros concretos no corpo: um titulo de secao, exemplo entre cercas de codigo, placeholder ou resumo livre nao satisfaz uma contagem positiva. Cada item usa ID unico com campos obrigatorios abaixo; secao com contagem zero fica omitida ou contem apenas Nenhum. O validador confere estrutura e coerencia, nunca autentica sozinho a veracidade da evidencia. Aplicar o gate independente de completude normalmente.
 
 A precedencia e: bloqueador comprovado > limitacao do auditor. Com ambos, `REPROVADA`, limitacao registrada e merge bloqueado; sem bloqueador e com limitacao obrigatoria, `INCONCLUSIVA`; aprovacao exige zero bloqueadores e zero limitacoes materiais. Nunca marcar ausencia de Git Bundle/DNS como falha de produto. Em toda retificacao do parecer, atualizar o artefato integral e repetir `validate_verdict_header.py` antes da mensagem; nunca substituir apenas a conclusao verbal.
 
@@ -143,18 +146,17 @@ Usar uma linha por requisito. Não combinar requisitos diferentes para aparentar
 
 Incluir apenas observacoes com `disposition=blocking`.
 
-### Modelo de achado
-
-### [BLOQUEADOR/ALTO/MÉDIO/BAIXO] A-001 — [título objetivo]
+### [ALTO] A-001 — [titulo objetivo do achado comprovado]
 
 - **Requisitos afetados:** REQ-...
+- **Origem comprovada:** candidato
+- **Evidência:** arquivo:linha, SHA e observacao independente reproduzivel
 - **Categoria de escape:** `execution-state-gap | control-propagation-gap | capability-operation-drift | adapter-support-drift | silent-translation-loss | legacy-variant-gap | documentation-claim-drift | other`
 - **Portão requerido:** `F28` a `F33` quando aplicável
 - **Caso literal:** ...
 - **Casos irmãos:** pelo menos dois cenários de famílias ou superfícies distintas
 - **Solicitado:** ...
 - **Encontrado:** ...
-- **Evidência:** ...
 - **Impacto:** ...
 - **Lacuna a corrigir:** ...
 
@@ -163,11 +165,40 @@ Repetir por achado, em ordem decrescente de severidade.
 
 ## Riscos inferidos nao confirmados
 
-[Preencher quando riscos inferidos > 0: caso hipotetico, arquivo/fluxo, limite da prova, experimento discriminante e motivo pelo qual ainda nao e finding blocking. Um risco nao confirmado nao pode ser contado como bloqueador comprovado.]
+Cada risco contabilizado exige um item separado com ID RISK-001, sem ser convertido em bloqueador:
+
+### RISK-001 — [titulo do risco inferido]
+
+- **Cenário hipotético:** [condicao e resultado possivel]
+- **Base da inferência:** [fonte ou trecho que sustenta suspeita e limite da prova]
+- **Grau de certeza:** baixo
+- **Prova discriminante pendente:** [experimento concreto para confirmar ou afastar]
+
+Nao incluir meras sugestoes sem impacto no contrato.
 
 ## Limitacoes exclusivas do auditor
 
-[Preencher quando limitacoes do auditor > 0: recurso indisponivel, tentativas e fallbacks feitos, gate obrigatorio afetado e evidencia em falta. Nao criar finding da issue nem solicitar alteracao do produto para resolver DNS, bundle indisponivel ou falha do runtime do auditor.]
+Cada limitacao contabilizada exige um item separado com ID LIM-001, sem virar finding da issue:
+
+### LIM-001 — [titulo da limitacao exclusiva do auditor]
+
+- **Recurso indisponível:** [recurso de runtime/connector]
+- **Gate obrigatório afetado:** [nome e obrigacao nao coberta]
+- **Tentativas e fallbacks:** [passos de recuperacao, inclusive bundle CI quando aplicavel]
+- **Prova indisponível:** [evidencia obrigatoria que nao foi obtida]
+
+Nao propor alteracao no candidato para corrigir o ambiente do auditor.
+
+## Retificacao do parecer
+
+Incluir somente em retificacao com veredito/triagem alterado. Validar contra o parecer anterior usando o mesmo validador com --previous; nao basta anunciar outro veredito em prosa. Para cada A-001 removido, incluir campo Prova de reclassificacao A-001. Preservar o historico, o SHA e evidencias em artefato verificavel.
+
+- **Veredito anterior:** [veredito original]
+- **Veredito atual:** [veredito novo]
+- **Motivo da retificacao:** [razao especifica]
+- **Nova evidencia:** [origem, procedimento e observacao]
+- **HEAD auditado:** [SHA Git completo]
+- **Prova de reclassificacao A-001:** [prova independente se A-001 foi removido]
 
 ## Recomendacoes opcionais
 
