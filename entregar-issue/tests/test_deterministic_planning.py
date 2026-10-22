@@ -337,3 +337,21 @@ class PlanningTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_planner_classifies_test_only_and_preserves_gate_contract():
+    with tempfile.TemporaryDirectory() as temp_value:
+        temp = Path(temp_value)
+        planner = PlanningTests()
+        context = planner.init_context(temp)
+        changed = temp / "changed.json"
+        changed.write_text(json.dumps(["features/checkout.feature"]))
+        payload = planner.run_plan(context, changed, temp / "plan.json")
+        classification = payload["change_classification"]
+        assert classification["tests_touched"] is True
+        assert classification["test_only"] is True
+        assert classification["code_touched"] is False
+        assert classification["hygiene_applicable"] is False
+        assert "codebase-grounding" in payload["required_gates"]
+        schema = json.loads((ROOT / "schemas" / "execution-plan.schema.json").read_text())
+        assert list(Draft202012Validator(schema).iter_errors(payload)) == []

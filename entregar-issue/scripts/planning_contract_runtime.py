@@ -196,7 +196,7 @@ def validate_execution_plan(payload: dict[str, Any]) -> None:
         _fail('context_fingerprints values must be lowercase SHA-256')
     classification = payload['change_classification']
     classification_fields = {
-        'docs_only', 'assets_only', 'generated_only', 'test_only',
+        'docs_only', 'assets_only', 'generated_only', 'test_only', 'tests_touched',
         'code_touched', 'runtime_config_touched', 'behavioral_change',
         'hygiene_applicable',
     }

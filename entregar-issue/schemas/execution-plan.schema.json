@@ -269,6 +269,7 @@
         "assets_only",
         "generated_only",
         "test_only",
+        "tests_touched",
         "code_touched",
         "runtime_config_touched",
         "behavioral_change",
@@ -297,6 +298,9 @@
           "type": "boolean"
         },
         "hygiene_applicable": {
+          "type": "boolean"
+        },
+        "tests_touched": {
           "type": "boolean"
         }
       },
