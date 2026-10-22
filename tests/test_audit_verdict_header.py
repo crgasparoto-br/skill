@@ -184,7 +184,7 @@ def revision(previous, current, with_proof=True):
 def test_revision_demands_documented_reclassification():
     old = report("REPROVADA", blockers=1, merge="NAO", limitations=1)
     new = report("INCONCLUSIVA", merge="NAO", limitations=1)
-    assert revision(old, new)  # header changes alone are not enough
+    assert module.validate_revision(new, old)  # header changes alone are not enough
     assert revision(old, new, with_proof=False)
     assert revision(old, new, with_proof=True) == []
 
