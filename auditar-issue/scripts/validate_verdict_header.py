@@ -165,6 +165,26 @@ def parse_evidence(lines, expected_counts):
     plain = visible_lines(lines)
     items = {}
     sections = [(index, line) for index, line in enumerate(plain) if line.startswith("## ")]
+    section_for_prefix = {prefix: section for section, (prefix, _) in CATEGORIES.items()}
+    current_section = None
+    all_ids = set()
+    for line in plain:
+        if line.startswith("## "):
+            current_section = line
+        if not line.startswith("### "):
+            continue
+        # Detect candidate records across the *entire* visible body, not only
+        # inside a canonical section. A misplaced record must never hide at zero.
+        match = re.match(r"^###\\s+(?:\\[[^\\]]+\\]\\s+)?((?:A|RISK|LIM)-[0-9]{3,})\\b", line)
+        if not match:
+            continue
+        identifier = match.group(1)
+        prefix = identifier.split("-", 1)[0]
+        if current_section != section_for_prefix[prefix]:
+            errors.append(f"{identifier}: item fora da secao {section_for_prefix[prefix]}")
+        if identifier in all_ids:
+            errors.append(f"ID duplicado na triagem: {identifier}")
+        all_ids.add(identifier)
     for section, (prefix, required) in CATEGORIES.items():
         found = [index for index, name in sections if name == section]
         entries = {}
@@ -197,7 +217,13 @@ def parse_evidence(lines, expected_counts):
                     if len(values) != 1 or not non_placeholder(values[0]):
                         errors.append(f"{identifier}: campo {field} ausente, duplicado ou placeholder")
                 errors.extend(validate_record(prefix, identifier, fields))
-                entries[identifier] = fields
+                # Preserve the complete record, including its title and free
+                # text. Changing an existing ID is still a material revision.
+                entries[identifier] = {
+                    "title": match.group(2).strip(),
+                    "fields": fields,
+                    "body": tuple(content[position + 1:until]),
+                }
             if not headers and not any(line.strip() for line in content):
                 errors.append(f"{section}: secao vazia")
             if not headers and any(
@@ -268,8 +294,9 @@ def validate_revision(current_text, previous_text):
     _, old_items = parse_evidence(old_lines, old_expected)
     _, new_items = parse_evidence(new_lines, new_expected)
     changed_items = changed_evidence_items(old_items, new_items)
-    if (old_lines[0] == new_lines[0] and
-            old_triage.groups() == new_triage.groups() and not changed_items):
+    # Any edited report, including a changed reason or a same-ID title,
+    # must carry an explicit, independently reviewable revision record.
+    if current_text == previous_text:
         return []
     plain = visible_lines(new_lines)
     section = "## Retificacao do parecer"
@@ -325,9 +352,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("report", type=Path, help="parecer humano em Markdown, nao o template")
     parser.add_argument("--previous", type=Path, help="parecer anterior para retificacao")
+    parser.add_argument("--revision", action="store_true", help="exigir comparacao com parecer anterior")
     args = parser.parse_args()
     current = args.report.read_text(encoding="utf-8")
     errors = validate(current)
+    if args.revision and not args.previous:
+        errors.append("modo --revision exige --previous para comparar o parecer anterior")
     if "## Retificacao do parecer" in visible_lines(current.splitlines()) and not args.previous:
         errors.append("retificacao exige --previous para confrontar parecer anterior")
     if not errors and args.previous:

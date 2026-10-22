@@ -251,3 +251,77 @@ def test_revision_requires_previous_file_on_cli(tmp_path):
                           capture_output=True, text=True, check=False)
     assert proc.returncode != 0
     assert "--previous" in proc.stdout
+
+
+@pytest.mark.parametrize("hidden", [
+    blocker(), risk(), limitation(),
+    "## Achados bloqueantes\\nNenhum\\n## Outra secao\\n" + blocker(),
+])
+def test_stray_structured_records_never_hide_under_zero_counts(hidden):
+    text = report("APROVADA", sections="## Evidencia complementar\\n" + hidden)
+    assert module.validate(text), "every triage item must be in its own counted section"
+
+
+def test_misplaced_extra_record_cannot_hide_behind_correct_blocker_count():
+    sections = ("## Achados bloqueantes\\n" + blocker()
+                + "## Evidencias adicionais\\n" + blocker("A-002"))
+    text = report("REPROVADA", blockers=1, merge="NAO", sections=sections)
+    assert module.validate(text)
+
+
+def test_duplicate_id_outside_its_section_is_rejected():
+    sections = ("## Achados bloqueantes\\n" + blocker()
+                + "## Evidencias adicionais\\n" + blocker())
+    text = report("REPROVADA", blockers=1, merge="NAO", sections=sections)
+    assert module.validate(text)
+
+
+def test_fenced_example_outside_sections_does_not_count_as_a_finding():
+    text = report("APROVADA", sections="## Referencias\\n" + chr(96)*3
+                  + "\\n" + blocker() + chr(96)*3 + "\\n")
+    assert module.validate(text) == []
+
+
+def test_same_id_title_change_requires_revision_and_individual_proof():
+    old = report("REPROVADA", blockers=1, merge="NAO")
+    new = old.replace("Falha confirmada no candidato", "Falha de outra natureza")
+    assert module.validate(new) == []
+    assert module.validate_revision(new, old)
+    rectification = (
+        "\\n## Retificacao do parecer\\n"
+        "- **Veredito anterior:** REPROVADA\\n"
+        "- **Veredito atual:** REPROVADA\\n"
+        "- **Motivo da retificacao:** o achado foi reavaliado sob novo contexto\\n"
+        "- **Nova evidencia:** services/workout.py:104 demonstra o contexto adicional\\n"
+        "- **HEAD auditado:** " + "a" * 40 + "\\n"
+    )
+    assert module.validate_revision(new + rectification, old)
+    assert module.validate_revision(
+        new + rectification
+        + "- **Prova de reclassificacao A-001:** services/workout.py:104 e teste discriminante do novo titulo\\n",
+        old,
+    ) == []
+
+
+def test_reason_only_change_also_requires_revision():
+    old = report("APROVADA")
+    new = old.replace(
+        "Evidencias e gates obrigatorios foram verificados.",
+        "Nova analise examinou evidencias adicionais sobre a mesma entrega.",
+    )
+    assert module.validate(new) == []
+    assert module.validate_revision(new, old)
+
+
+def test_explicit_revision_flag_fails_closed_without_previous(tmp_path):
+    import subprocess
+    import sys
+
+    path = tmp_path / "report.md"
+    path.write_text(report("APROVADA"), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), str(path), "--revision"],
+        capture_output=True, text=True, check=False,
+    )
+    assert proc.returncode != 0
+    assert "--previous" in proc.stdout
