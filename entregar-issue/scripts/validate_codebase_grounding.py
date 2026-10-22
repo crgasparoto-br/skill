@@ -9,10 +9,10 @@ import argparse
 import configparser
 import hashlib
 import json
-import tomllib
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -144,9 +144,9 @@ def changed_tests(repo: Path, base: str, head: str, errors: list[str], unknown: 
                 or (previous and (is_test_path(previous, pytest_configs=base_configs)
                                   or is_test_path(previous, pytest_configs=head_configs)))):
             continue
-        if Path(path).name.lower() in {'package.json', 'pyproject.toml'}:
-            if not runner_manifest_affects_tests(repo, base, head, path):
-                continue
+        if (Path(path).name.lower() in {'package.json', 'pyproject.toml'}
+                and not runner_manifest_affects_tests(repo, base, head, path)):
+            continue
         operation = {"A": "added", "M": "modified", "D": "deleted", "R": "renamed", "C": "renamed"}.get(status)
         if operation is None:
             errors.append(f"unhandled test diff operation {columns[0]} for {path}")
