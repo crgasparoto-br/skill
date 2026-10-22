@@ -11,8 +11,9 @@ import subprocess
 import tomllib
 import unicodedata
 from datetime import UTC, datetime
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from planning_contract_runtime import CONTRACT_VERSION, validate_controller_context, validate_execution_plan
 
@@ -287,9 +288,9 @@ def matches_pytest_discovery(path: str, configs: dict[str, tuple[str, ...]]) -> 
             continue
         relative = normalized[len(root) + 1:] if root else normalized
         for pattern in patterns:
-            pattern = pattern.lower()
-            target = relative if '/' in pattern else relative.rsplit('/', 1)[-1]
-            if fnmatch.fnmatchcase(target, pattern):
+            match_pattern = pattern.lower()
+            target = relative if '/' in match_pattern else relative.rsplit('/', 1)[-1]
+            if fnmatch.fnmatchcase(target, match_pattern):
                 return True
     return False
 
