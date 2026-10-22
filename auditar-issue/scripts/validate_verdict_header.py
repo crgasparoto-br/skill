@@ -85,43 +85,83 @@ PLACEHOLDER = re.compile(r"^(?:[.\-? ]+|unknown|todo|tbd|n/?a|\[[^]]*\])$", re.I
 SHA = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 
 
+QUOTE_PREFIX = re.compile(r"^ {0,3}>[ \t]?")
+LIST_PREFIX = re.compile(r"^ {0,3}(?:[-+*]|\d{1,9}[.)])[ \t]+")
+FENCE_MARKER = re.compile(r"^ {0,3}(~{3,}|"+chr(96)+r"{3,})(.*)$")
+
+
+def line_context(line, previous_indent, previous_quote_depth):
+    """Resolve fence scope and list continuations without erasing visible headings."""
+    quote_depth = 0
+    candidate = line
+    while (match := QUOTE_PREFIX.match(candidate)):
+        quote_depth += 1
+        candidate = candidate[match.end():]
+    if quote_depth != previous_quote_depth:
+        previous_indent = 0
+    list_match = LIST_PREFIX.match(candidate)
+    if list_match:
+        list_indent = len(list_match.group())
+        candidate = candidate[list_match.end():]
+        in_list = True
+    else:
+        indent = len(candidate) - len(candidate.lstrip(" "))
+        list_indent = previous_indent if (not candidate.strip() or indent >= previous_indent) else 0
+        in_list = bool(list_indent)
+        if in_list and candidate.strip():
+            candidate = candidate[list_indent:]
+    return candidate, quote_depth, list_indent, in_list
+
+
 def visible_lines(lines):
-    """Filter fenced examples, including fenced blocks inside quotes and lists."""
+    """Ignore inert Markdown without letting a nested fence hide visible findings."""
     output = []
     fence = None
+    fence_quote = 0
+    fence_list = 0
     list_indent = 0
-    container = re.compile(r"^ {0,3}(?:>[ \t]?|(?:[-+*]|\d{1,9}[.)])[ \t]+)")
+    previous_quote_depth = 0
+    html_comment = False
     for line in lines:
-        candidate = line
-        while (match := container.match(candidate)):
-            candidate = candidate[match.end():]
-        marker = re.match(r"^ {0,3}(~{3,}|"+chr(96)+r"{3,})(.*)$", candidate)
+        candidate, quote_depth, current_indent, in_list = line_context(
+            line, list_indent, previous_quote_depth,
+        )
+        # A quote/list fence closes when its container ends. A bare following
+        # heading is then visible; it must not be swallowed as an example.
+        if fence and (quote_depth != fence_quote or (fence_list and not in_list and candidate.strip())):
+            fence = None
+        list_indent = current_indent
+        previous_quote_depth = quote_depth
+        if html_comment:
+            if "-->" in candidate:
+                html_comment = False
+            continue
+        marker = FENCE_MARKER.match(candidate)
         if marker:
             mark, suffix = marker.groups()
             if fence is None:
-                fence = mark
-                continue
-            if mark[0] == fence[0] and len(mark) >= len(fence) and not suffix.strip():
+                if mark[0] == "~" or chr(96) not in suffix:
+                    fence = mark
+                    fence_quote = quote_depth
+                    fence_list = list_indent if in_list else 0
+                    continue
+            elif mark[0] == fence[0] and len(mark) >= len(fence) and not suffix.strip():
                 fence = None
                 continue
         if fence is not None:
             continue
-        if marker:
+        # CommonMark comments are inert even when they contain ATX-looking IDs.
+        if re.match(r"^ {0,3}<!--", candidate):
+            if "-->" not in candidate:
+                html_comment = True
             continue
-        list_marker = re.match(r"^ {0,3}(?:[-+*]|\d{1,9}[.)])[ \t]+", line)
-        indent = len(line) - len(line.lstrip(" "))
-        if not line.strip():
-            list_indent = 0
-        elif list_marker:
-            list_indent = len(list_marker.group())
-        elif indent < list_indent:
-            list_indent = 0
-        if list_indent and indent >= list_indent and line.lstrip().startswith("#"):
-            output.append("- " + line.lstrip())
+        # Preserve the list container across blank lines. A heading continuing
+        # a list is never a canonical evidence record, even if indented <= 3.
+        if in_list and re.match(r"^ {0,3}#{3}(?:[ \t]+|$)", candidate):
+            output.append("- " + candidate.lstrip())
         else:
             output.append(line)
     return output
-
 
 def markdown_heading(line):
     """Recognize CommonMark ATX headings, not four-space indented code."""
@@ -408,6 +448,8 @@ def validate_revision(current_text, previous_text):
         values = fields.get(key, [])
         if len(values) != 1 or not non_placeholder(values[0]):
             errors.append(f"retificacao sem {key}")
+        elif key == "Motivo da retificacao" and not contextual_detail(values[0], minimum=28):
+            errors.append("retificacao: motivo sem fundamentacao contextual")
     if fields.get("Veredito anterior") != [old_lines[0].removeprefix("# RESULTADO: ")]:
         errors.append("retificacao: veredito anterior divergente")
     if fields.get("Veredito atual") != [new_lines[0].removeprefix("# RESULTADO: ")]:
