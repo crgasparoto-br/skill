@@ -316,7 +316,10 @@ def is_generated_path(path: str) -> bool:
     return any(marker in normalized for marker in GENERATED_MARKERS)
 
 
-def classify_changes(\n    changed: list[str], signals: set[str], *,\n    pytest_configs: dict[str, tuple[str, ...]] | None = None,\n) -> dict[str, bool]:
+def classify_changes(
+    changed: list[str], signals: set[str], *,
+    pytest_configs: dict[str, tuple[str, ...]] | None = None,
+) -> dict[str, bool]:
     lower_paths = [item.lower() for item in changed]
     docs_only = bool(changed) and all(
         path.endswith(DOC_SUFFIXES) or '/docs/' in f'/{path}' for path in lower_paths
