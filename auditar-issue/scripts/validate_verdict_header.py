@@ -122,6 +122,8 @@ def visible_lines(lines):
     list_indent = 0
     previous_quote_depth = 0
     html_comment = False
+    comment_quote = 0
+    comment_list = 0
     for line in lines:
         candidate, quote_depth, current_indent, in_list = line_context(
             line, list_indent, previous_quote_depth,
@@ -130,6 +132,8 @@ def visible_lines(lines):
         # heading is then visible; it must not be swallowed as an example.
         if fence and (quote_depth != fence_quote or (fence_list and not in_list and candidate.strip())):
             fence = None
+        if html_comment and (quote_depth != comment_quote or (comment_list and not in_list and candidate.strip())):
+            html_comment = False
         list_indent = current_indent
         previous_quote_depth = quote_depth
         if html_comment:
@@ -154,6 +158,8 @@ def visible_lines(lines):
         if re.match(r"^ {0,3}<!--", candidate):
             if "-->" not in candidate:
                 html_comment = True
+                comment_quote = quote_depth
+                comment_list = list_indent if in_list else 0
             continue
         # Preserve the list container across blank lines. A heading continuing
         # a list is never a canonical evidence record, even if indented <= 3.
