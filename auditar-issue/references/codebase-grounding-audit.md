@@ -10,6 +10,8 @@ O validador da entrega confere registro, cobertura formal do diff, SHA e paths; 
 
 ## Refutacao independente
 
+Refazer a classificacao de testes contra as configuracoes reais do runner nas revisoes base/HEAD, nao apenas caminhos convencionais. Para pytest verificar `python_files` em pytest.ini, pyproject.toml, tox.ini e setup.cfg; executar controle de coleta independente quando o padrao nao for convencional. Distinguir manifestos com mudanca no teste de metadata ordinaria. Plugins e descoberta dinamica que nao puderem ser inspecionados permanecem `UNKNOWN`, nao `not-applicable`. Refutar regressao de removidos/renomeados e autenticidade do log antes de marcar cobertura.
+
 Com checkout e base disponiveis, usando buscas proprias sobre o `material_head_sha`:
 
 1. **Duplicidade:** para cada arquivo, simbolo publico, endpoint, tabela ou dependencia adicionada no diff da issue, buscar por comportamento equivalente ja existente com termos diferentes dos registrados pela entrega. Equivalente nao citado como candidato e finding.
