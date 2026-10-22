@@ -59,9 +59,9 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 
 Preencher as tres contagens da linha **Triagem** antes de decidir o veredito. `bloqueadores comprovados` e exatamente o total do bloco de conclusao, sempre respaldado por evidencia do candidato/entrega (analise estatica conclusiva pode servir como prova; hipotese sem prova discriminante nao serve). `riscos inferidos` representa suspeitas nao confirmadas, fora da contagem de blockers. `limitacoes do auditor` registra incapacidade exclusiva do runtime/conector para executar um gate obrigatorio, sem encontrar defeito na entrega.
 
-Rejeitar secoes vazias, placeholders e provas genericas. IDs A-*, RISK-* e LIM-* sao unicos e contados mesmo sob zero declarado. ATX recuado 0-3, tab e `#` final valem; H1 encerra H2. IDs em listas/citacoes (ate apos linha vazia) nao sao canonicos. Fence so oculta exemplo enquanto durar seu container; comentarios HTML e codigo indentado 4 sao inertes. Prova exige fonte tecnica localizavel; `pytest` isolado nao basta. Preservar gate independente de completude.
+Rejeitar secoes vazias, placeholders e prova generica. IDs A/RISK/LIM reais nao somem sob contagem zero: H4-H6 e itens em negrito nao sao registros canonicos H3. Fences e blocos HTML raw (`pre`, `script`, `style`, `textarea`) tornam exemplos inertes apenas em seu escopo; H1 encerra H2. Prova exige fonte localizavel; `pytest` isolado nao basta. Preservar o gate de completude.
 
-A precedencia e: bloqueador comprovado > limitacao do auditor. Com ambos, `REPROVADA`, limitacao registrada e merge bloqueado; sem bloqueador e com limitacao obrigatoria, `INCONCLUSIVA`; aprovacao exige zero bloqueadores e zero limitacoes materiais. Nunca marcar ausencia de Git Bundle/DNS como falha de produto. Em toda retificacao do parecer, atualizar o artefato integral e repetir `validate_verdict_header.py` antes da mensagem; nunca substituir apenas a conclusao verbal.
+Precedencia: blocker comprovado > limitacao do auditor. Ambos: `REPROVADA`; so limitacao material: `INCONCLUSIVA`; aprovacao: nenhum dos dois. DNS ou bundle ausente no auditor nunca e falha do candidato. Em retificacao, revalidar todo o artefato, nao apenas o veredito verbal.
 
 ### Regras do cabecalho
 
@@ -191,14 +191,15 @@ Nao propor alteracao no candidato para corrigir o ambiente do auditor.
 
 ## Retificacao do parecer
 
-Qualquer edicao do parecer (inclusive titulo, texto livre e motivo) exige `--revision --previous <anterior>`, registro de retificacao e comparacao integral. O modo inicial isolado nao detecta historico. Para cada ID alterado/removido exigir prova contextual, preservando historico e SHA.
+Toda edicao exige `--revision --previous <anterior>` e prova contextual por ID alterado/removido. Manter as provas de reclassificacao anteriores, sem alterar texto ou ordem; anexar nova prova quando o mesmo ID mudar de novo. A partir da segunda retificacao, registrar SHA-256 do parecer anterior inteiro para preservar o encadeamento.
 
 - **Veredito anterior:** [veredito original]
 - **Veredito atual:** [veredito novo]
 - **Motivo da retificacao:** [razao especifica]
 - **Nova evidencia:** [origem, procedimento e observacao]
 - **HEAD auditado:** [SHA Git completo]
-- **Prova de reclassificacao A-001:** [fonte e prova se A-001 mudou ou foi removido]
+- **Prova de reclassificacao A-001:** [fonte e prova se A-001 mudou ou foi removido; repetir em ordem a cada nova prova]
+- **SHA-256 do parecer anterior:** [hash exato obrigatorio se o parecer anterior ja tiver Retificacao do parecer]
 
 ## Recomendacoes opcionais
 
