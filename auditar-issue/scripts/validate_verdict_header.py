@@ -105,11 +105,11 @@ def visible_lines(lines):
 
 def markdown_heading(line):
     """Recognize CommonMark ATX headings, not four-space indented code."""
-    match = re.match(r"^ {0,3}(#{2,3})(?:[ \\t]+|$)(.*)$", line)
+    match = re.match(r"^ {0,3}(#{2,3})(?:[ \t]+|$)(.*)$", line)
     if not match:
         return None
     # Closing hashes are optional when preceded by horizontal whitespace.
-    title = re.sub(r"[ \\t]+#+[ \\t]*$", "", match.group(2)).strip()
+    title = re.sub(r"[ \t]+#+[ \t]*$", "", match.group(2)).strip()
     return len(match.group(1)), title
 
 
@@ -193,7 +193,7 @@ def detect_misplaced_records(plain):
             current_section = "## " + title
         if level != 3:
             continue
-        match = re.match(r"^(?:\\[[^\\]]+\\][ \\t]+)?((?:A|RISK|LIM)-[0-9]{3,})\\b", title)
+        match = re.match(r"^(?:\[[^\]]+\][ \t]+)?((?:A|RISK|LIM)-[0-9]{3,})\b", title)
         if not match:
             continue
         identifier = match.group(1)
