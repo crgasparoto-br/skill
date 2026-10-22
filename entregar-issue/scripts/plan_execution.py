@@ -59,7 +59,8 @@ RUNTIME_CONFIG_NAMES = {
 GENERATED_MARKERS = ('/generated/', '/dist/', '/build/', '/coverage/', '.generated.', '.g.')
 TEST_DIR_MARKERS = {'test', 'tests', '__tests__', 'spec', 'specs', 'fixtures'}
 TEST_FILE_SUFFIXES = ('.feature', '.robot', '.bats', '.test.json', '.spec.json')
-TEST_RUNNER_CONFIGS = ('pytest.ini', 'tox.ini', 'conftest.py', 'jest.config.', 'vitest.config.', 'playwright.config.', 'cypress.config.')
+TEST_RUNNER_CONFIGS = ('pytest.ini', 'tox.ini', 'conftest.py')
+TEST_RUNNER_CONFIG_PREFIXES = ('jest.config.', 'vitest.config.', 'playwright.config.', 'cypress.config.')
 
 
 def now() -> str:
@@ -236,7 +237,8 @@ def is_test_path(path: str) -> bool:
         or '.spec.' in name
         or name.endswith('_test.py')
         or name.endswith(TEST_FILE_SUFFIXES)
-        or any(name == marker or name.startswith(marker) for marker in TEST_RUNNER_CONFIGS)
+        or name in TEST_RUNNER_CONFIGS
+        or name.startswith(TEST_RUNNER_CONFIG_PREFIXES)
     )
 
 

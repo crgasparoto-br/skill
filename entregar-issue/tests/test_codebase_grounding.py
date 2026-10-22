@@ -289,3 +289,25 @@ def test_test_only_feature_diff_triggers_gate_without_global_hygiene():
     assert classification["tests_touched"]
     assert not classification["hygiene_applicable"]
     assert not classification["code_touched"]
+
+
+def test_test_scope_and_handoff_match_for_non_code_conventions():
+    from plan_execution import is_test_path
+    from validate_handoff_certificate import scope_touches_tests, scope_touches_code
+
+    examples = [
+        "spec/cases.json",
+        "tests/fixtures/report.json",
+        "features/payment.feature",
+        "e2e/smoke.robot",
+        "pytest.ini",
+        "vitest.config.ts",
+        "src/report.test.json",
+    ]
+    for path in examples:
+        assert is_test_path(path), path
+        assert scope_touches_tests([path]), path
+    for path in ("docs/guide.md", "src/README.txt", "pytest.ini.backup"):
+        assert not is_test_path(path)
+        assert not scope_touches_tests([path])
+    assert not scope_touches_code(["spec/cases.json"])
