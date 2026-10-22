@@ -325,3 +325,68 @@ def test_explicit_revision_flag_fails_closed_without_previous(tmp_path):
     )
     assert proc.returncode != 0
     assert "--previous" in proc.stdout
+
+
+@pytest.mark.parametrize("indent", [" ", "  ", "   "])
+@pytest.mark.parametrize("identifier,record", [
+    ("A-001", blocker()),
+    ("RISK-001", risk()),
+    ("LIM-001", limitation()),
+])
+def test_indented_visible_records_cannot_hide_outside_canonical_sections(indent, identifier, record):
+    # CommonMark permits up to three spaces before an ATX heading.
+    text = report("APROVADA", sections="## Evidencias complementares\\n" + indent + record)
+    errors = module.validate(text)
+    assert errors
+    assert any(identifier in error and "fora da secao" in error for error in errors)
+
+
+@pytest.mark.parametrize("separator", ["  ", "\\t"])
+def test_atx_whitespace_and_closing_hashes_do_not_hide_blockers(separator):
+    record = blocker().replace("### [ALTO] ", "###" + separator + "[ALTO] ", 1)
+    record = record.replace("Falha confirmada no candidato\\n", "Falha confirmada no candidato ###\\n", 1)
+    text = report("APROVADA", sections="## Evidencias complementares\\n" + record)
+    errors = module.validate(text)
+    assert any("A-001" in error and "fora da secao" in error for error in errors)
+
+
+@pytest.mark.parametrize("indent", [" ", "  ", "   "])
+def test_indented_canonical_section_and_record_are_counted(indent):
+    sections = indent + "## Achados bloqueantes\\n" + indent + blocker()
+    text = report("REPROVADA", blockers=1, merge="NAO", sections=sections)
+    assert module.validate(text) == []
+
+
+def test_tab_separator_in_canonical_heading_does_not_hide_record():
+    text = report("REPROVADA", blockers=1, merge="NAO",
+                  sections="##\\tAchados bloqueantes\\n" + blocker().replace("### ", "###\\t", 1))
+    assert module.validate(text) == []
+
+
+def test_four_space_indented_code_remains_inert():
+    text = report("APROVADA", sections="## Referencias\\n    ### A-001 — exemplo de codigo\\n")
+    assert module.validate(text) == []
+
+
+def test_indented_revision_section_is_verified_against_previous(tmp_path):
+    import subprocess
+    import sys
+
+    old = report("REPROVADA", blockers=1, merge="NAO", limitations=1)
+    new = report("INCONCLUSIVA", merge="NAO", limitations=1)
+    current = new + (
+        "\\n  ## Retificacao do parecer\\n"
+        "- **Veredito anterior:** REPROVADA\\n"
+        "- **Veredito atual:** INCONCLUSIVA\\n"
+        "- **Motivo da retificacao:** teste externo demonstrou a causa diferente\\n"
+        "- **Nova evidencia:** services/workout.py:104; evidencia adicional reproduzida\\n"
+        "- **HEAD auditado:** " + "a" * 40 + "\\n"
+        "- **Prova de reclassificacao A-001:** services/workout.py:104; leitura confirmou origem distinta\\n"
+    )
+    assert module.validate_revision(current, old) == []
+    path = tmp_path / "changed.md"
+    path.write_text(current, encoding="utf-8")
+    proc = subprocess.run([sys.executable, str(SCRIPT), str(path)],
+                          capture_output=True, text=True, check=False)
+    assert proc.returncode != 0
+    assert "--previous" in proc.stdout

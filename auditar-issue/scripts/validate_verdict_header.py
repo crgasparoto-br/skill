@@ -60,11 +60,12 @@ def validate_triage(verdict, summary, lines):
         errors.append("limitacao material do auditor impede aprovacao")
     if verdict == "INCONCLUSIVA" and not limitations:
         errors.append("INCONCLUSIVA exige limitacao do auditor")
-    if confirmed and "## Achados bloqueantes" not in lines:
+    sections = canonical_sections(lines)
+    if confirmed and "## Achados bloqueantes" not in sections:
         errors.append("bloqueadores comprovados exigem secao de achados bloqueantes")
-    if risks and "## Riscos inferidos nao confirmados" not in lines:
+    if risks and "## Riscos inferidos nao confirmados" not in sections:
         errors.append("riscos inferidos exigem secao propria")
-    if limitations and "## Limitacoes exclusivas do auditor" not in lines:
+    if limitations and "## Limitacoes exclusivas do auditor" not in sections:
         errors.append("limitacoes do auditor exigem secao propria")
     return errors
 
@@ -100,6 +101,24 @@ def visible_lines(lines):
         if fence is None:
             output.append(line)
     return output
+
+
+def markdown_heading(line):
+    """Recognize CommonMark ATX headings, not four-space indented code."""
+    match = re.match(r"^ {0,3}(#{2,3})(?:[ \\t]+|$)(.*)$", line)
+    if not match:
+        return None
+    # Closing hashes are optional when preceded by horizontal whitespace.
+    title = re.sub(r"[ \\t]+#+[ \\t]*$", "", match.group(2)).strip()
+    return len(match.group(1)), title
+
+
+def canonical_sections(lines):
+    return {
+        "## " + heading[1]
+        for line in visible_lines(lines)
+        if (heading := markdown_heading(line)) and heading[0] == 2
+    }
 
 
 def non_placeholder(value):
@@ -160,19 +179,21 @@ def validate_record(prefix, identifier, fields):
 
 
 def detect_misplaced_records(plain):
-    """Reject records outside their canonical section, even with zero counts."""
+    """Reject visible ATX evidence headings outside their canonical section."""
     errors = []
     section_for_prefix = {prefix: section for section, (prefix, _) in CATEGORIES.items()}
     current_section = None
     all_ids = set()
     for line in plain:
-        if line.startswith("## "):
-            current_section = line
-        if not line.startswith("### "):
+        heading = markdown_heading(line)
+        if heading is None:
             continue
-        # Detect candidate records across the *entire* visible body, not only
-        # inside a canonical section. A misplaced record must never hide at zero.
-        match = re.match(r"^###\s+(?:\[[^\]]+\]\s+)?((?:A|RISK|LIM)-[0-9]{3,})\b", line)
+        level, title = heading
+        if level == 2:
+            current_section = "## " + title
+        if level != 3:
+            continue
+        match = re.match(r"^(?:\\[[^\\]]+\\][ \\t]+)?((?:A|RISK|LIM)-[0-9]{3,})\\b", title)
         if not match:
             continue
         identifier = match.group(1)
@@ -184,13 +205,16 @@ def detect_misplaced_records(plain):
         all_ids.add(identifier)
     return errors
 
-
 def parse_evidence(lines, expected_counts):
     """Reconcile declared triage with structured, evidence-bearing body records."""
     errors = []
     plain = visible_lines(lines)
     items = {}
-    sections = [(index, line) for index, line in enumerate(plain) if line.startswith("## ")]
+    sections = [
+        (index, "## " + heading[1])
+        for index, line in enumerate(plain)
+        if (heading := markdown_heading(line)) and heading[0] == 2
+    ]
     errors.extend(detect_misplaced_records(plain))
     for section, (prefix, required) in CATEGORIES.items():
         found = [index for index, name in sections if name == section]
@@ -201,7 +225,11 @@ def parse_evidence(lines, expected_counts):
             start = found[0]
             end = next((index for index, _ in sections if index > start), len(plain))
             content = plain[start + 1:end]
-            headers = [(index, line) for index, line in enumerate(content) if line.startswith("### ")]
+            headers = [
+                (index, "### " + heading[1])
+                for index, line in enumerate(content)
+                if (heading := markdown_heading(line)) and heading[0] == 3
+            ]
             for index, (position, heading) in enumerate(headers):
                 pattern = r"### (?:\[[^\]]+\] )?(" + prefix + r"-[0-9]{3,}) [—-] (\S.+)"
                 match = re.fullmatch(pattern, heading)
@@ -307,10 +335,16 @@ def validate_revision(current_text, previous_text):
         return []
     plain = visible_lines(new_lines)
     section = "## Retificacao do parecer"
-    if section not in plain:
-        return ["mudanca de veredito/triagem exige Retificacao do parecer"]
-    start = plain.index(section)
-    end = next((index for index in range(start + 1, len(plain)) if plain[index].startswith("## ")), len(plain))
+    headings = [
+        (index, heading[1])
+        for index, line in enumerate(plain)
+        if (heading := markdown_heading(line)) and heading[0] == 2
+    ]
+    starts = [index for index, title in headings if "## " + title == section]
+    if len(starts) != 1:
+        return ["mudanca de veredito/triagem exige Retificacao do parecer unica"]
+    start = starts[0]
+    end = next((index for index, _ in headings if index > start), len(plain))
     fields = {}
     for line in plain[start + 1:end]:
         match = re.fullmatch(r"- \*\*(.+?):\*\*\s*(.*)", line)
@@ -365,7 +399,7 @@ def main() -> int:
     errors = validate(current)
     if args.revision and not args.previous:
         errors.append("modo --revision exige --previous para comparar o parecer anterior")
-    if "## Retificacao do parecer" in visible_lines(current.splitlines()) and not args.previous:
+    if "## Retificacao do parecer" in canonical_sections(current.splitlines()) and not args.previous:
         errors.append("retificacao exige --previous para confrontar parecer anterior")
     if not errors and args.previous:
         errors.extend(validate_revision(current, args.previous.read_text(encoding="utf-8")))
