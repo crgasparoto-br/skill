@@ -9,6 +9,7 @@ SUMMARY = re.compile(r"^> \*\*Conclusao:\*\* \`([^\`]+)\` — achados bloqueante
 REASON = re.compile(r"^> \*\*Motivo determinante:\*\* \S.+$")
 MERGE = re.compile(r"^> \*\*Libera merge/release:\*\* (SIM|NAO)$")
 VALIDITY = re.compile(r"^\*\*Validade:\*\* (Independente|Controller-adversarial|Pre-auditoria)$")
+TRIAGE = re.compile(r"^\*\*Triagem:\*\* bloqueadores comprovados: `([0-9]+)` \| riscos inferidos: `([0-9]+)` \| limitacoes do auditor: `([0-9]+)`$")
 
 
 def validate(text: str) -> list[str]:
@@ -37,11 +38,22 @@ def validate(text: str) -> list[str]:
     validity = VALIDITY.fullmatch(lines[6]) if len(lines) > 6 else None
     if validity is None:
         errors.append("validade ausente ou invalida")
-    errors.extend(validate_decision(verdict, summary, merge, validity))
+    triage = TRIAGE.fullmatch(lines[7]) if len(lines) > 7 else None
+    if triage is None:
+        errors.append("triagem factual ausente ou invalida")
+    errors.extend(validate_decision(verdict, summary, merge, validity, triage))
+    if triage:
+        blockers_confirmed, risks, limitations = (int(value) for value in triage.groups())
+        if blockers_confirmed and "## Achados bloqueantes" not in lines:
+            errors.append("bloqueadores comprovados exigem secao de achados bloqueantes")
+        if risks and "## Riscos inferidos nao confirmados" not in lines:
+            errors.append("riscos inferidos exigem secao propria")
+        if limitations and "## Limitacoes exclusivas do auditor" not in lines:
+            errors.append("limitacoes do auditor exigem secao propria")
     return errors
 
 
-def validate_decision(verdict, summary, merge, validity):
+def validate_decision(verdict, summary, merge, validity, triage):
     errors = []
     blockers = int(summary.group(2)) if summary else None
     if blockers is not None:
@@ -49,6 +61,18 @@ def validate_decision(verdict, summary, merge, validity):
             errors.append("reprovada exige ao menos um achado bloqueante")
         if verdict != "REPROVADA" and blockers != 0:
             errors.append("achados bloqueantes exigem resultado REPROVADA")
+    if triage:
+        confirmed, risks, limitations = (int(value) for value in triage.groups())
+        if blockers is not None and confirmed != blockers:
+            errors.append("triagem diverge do numero de achados bloqueantes")
+        if confirmed and verdict != "REPROVADA":
+            errors.append("bloqueador comprovado exige REPROVADA, mesmo com limitacao do auditor")
+        if verdict == "REPROVADA" and not confirmed:
+            errors.append("REPROVADA sem bloqueador comprovado")
+        if limitations and verdict in ("APROVADA", "APROVADA COM RESSALVAS", "APROVADA INTERNAMENTE"):
+            errors.append("limitacao material do auditor impede aprovacao")
+        if verdict == "INCONCLUSIVA" and not limitations:
+            errors.append("INCONCLUSIVA exige limitacao do auditor")
     if validity:
         independent = validity.group(1) == "Independente"
         if verdict in ("APROVADA", "APROVADA COM RESSALVAS") and not independent:
