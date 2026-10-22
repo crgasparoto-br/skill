@@ -58,7 +58,11 @@ RUNTIME_CONFIG_NAMES = {
 }
 GENERATED_MARKERS = ('/generated/', '/dist/', '/build/', '/coverage/', '.generated.', '.g.')
 TEST_DIR_MARKERS = {'test', 'tests', '__tests__', 'spec', 'specs', 'fixtures', 'e2e', 'cypress'}
-TEST_FILE_SUFFIXES = ('.feature', '.robot', '.bats', '.test.json', '.spec.json')
+TEST_FILE_SUFFIXES = (
+    '.feature', '.robot', '.bats', '.test.json', '.spec.json',
+    '.cy.ts', '.cy.tsx', '.cy.js', '.cy.jsx',
+    '.e2e.ts', '.e2e.tsx', '.e2e.js', '.e2e.jsx',
+)
 TEST_RUNNER_CONFIGS = ('pytest.ini', 'tox.ini', 'conftest.py')
 TEST_RUNNER_MANIFESTS = {'package.json', 'pyproject.toml'}
 TEST_RUNNER_CONFIG_PREFIXES = ('jest.config.', 'vitest.config.', 'playwright.config.', 'cypress.config.')

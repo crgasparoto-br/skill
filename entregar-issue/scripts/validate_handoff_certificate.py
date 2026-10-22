@@ -36,7 +36,9 @@ def scope_touches_tests(paths: list[str]) -> bool:
             return True
         if (name.startswith(("test_", "jest.config.", "vitest.config.",
                                     "playwright.config.", "cypress.config.")) or "_test." in name or ".test." in name
-                or ".spec." in name or name.endswith((".feature", ".robot", ".bats", "_test.go"))
+                or ".spec." in name or name.endswith((".feature", ".robot", ".bats", "_test.go",
+                                  ".cy.ts", ".cy.tsx", ".cy.js", ".cy.jsx",
+                                  ".e2e.ts", ".e2e.tsx", ".e2e.js", ".e2e.jsx"))
                 or name in {"pytest.ini", "tox.ini", "conftest.py", "package.json", "pyproject.toml"}
                 ):
             return True
