@@ -173,11 +173,11 @@ def revision(previous, current, with_proof=True):
         "- **Veredito anterior:** REPROVADA\n"
         "- **Veredito atual:** INCONCLUSIVA\n"
         "- **Motivo da retificacao:** analise externa eliminou o achado anterior\n"
-        "- **Nova evidencia:** reproduzido em ambiente autenticado no mesmo SHA\n"
+        "- **Nova evidencia:** services/workout.py:104; resultado reproduzido no mesmo SHA\n"
         "- **HEAD auditado:** " + "a" * 40 + "\n"
     )
     if with_proof:
-        fragment += "- **Prova de reclassificacao A-001:** leitura de origem confirmou caminho inacessivel\n"
+        fragment += "- **Prova de reclassificacao A-001:** services/workout.py:104; leitura confirmou caminho inacessivel\n"
     return module.validate_revision(current + fragment, previous)
 
 
@@ -192,3 +192,62 @@ def test_revision_demands_documented_reclassification():
 def test_same_verdict_and_records_do_not_require_revision_section():
     old = report("INCONCLUSIVA", merge="NAO", limitations=1)
     assert module.validate_revision(old, old) == []
+
+
+@pytest.mark.parametrize("case", [
+    report("APROVADA", sections="## Achados bloqueantes\n"),
+    report("APROVADA", sections="## Riscos inferidos nao confirmados\n"),
+    report("APROVADA", sections="## Limitacoes exclusivas do auditor\n"),
+    report("REPROVADA", blockers=1, merge="NAO",
+           sections="## Achados bloqueantes\n" + blocker().replace(
+               "services/workout.py:104 e teste de regressao reproduzivel no SHA fixo",
+               "Nenhuma evidencia")),
+    report("REPROVADA", blockers=1, merge="NAO",
+           sections="## Achados bloqueantes\n" + blocker().replace(
+               "services/workout.py:104 e teste de regressao reproduzivel no SHA fixo",
+               "prova de codigo sem localizacao verificavel")),
+    report("APROVADA", risks=1, sections="## Riscos inferidos nao confirmados\n"
+           + risk().replace("trecho estatico nao exercitado pelo teste existente", "texto")),
+    report("INCONCLUSIVA", merge="NAO", limitations=1,
+           sections="## Limitacoes exclusivas do auditor\n"
+           + limitation().replace(
+               "clone DNS falhou; Git Bundle do CI nao foi disponibilizado", "tentamos resolver")),
+])
+def test_reject_empty_sections_and_non_contextual_evidence(case):
+    assert module.validate(case)
+
+
+def test_zero_count_can_explicitly_say_none():
+    assert module.validate(report("APROVADA", sections="## Achados bloqueantes\nNenhum\n")) == []
+
+
+def test_revision_demands_proof_even_when_blocker_id_and_count_are_unchanged():
+    old = report("REPROVADA", blockers=1, merge="NAO")
+    new = old.replace("services/workout.py:104", "services/workout.py:105")
+    assert module.validate(new) == []
+    assert module.validate_revision(new, old)
+    assert module.validate_revision(new + "\n## Retificacao do parecer\n", old)
+
+
+def test_revision_checks_current_body_and_other_category_reclassifications():
+    old = report("INCONCLUSIVA", merge="NAO", risks=1, limitations=1)
+    new = old.replace("RISK-001", "RISK-002")
+    assert module.validate(new) == []
+    assert module.validate_revision(new, old)
+    invalid = old.replace("Git checkout local do commit imutavel", "TODO")
+    assert module.validate_revision(invalid, old)
+
+
+def test_revision_requires_previous_file_on_cli(tmp_path):
+    import subprocess
+    import sys
+
+    old = report("REPROVADA", blockers=1, merge="NAO", limitations=1)
+    new = report("INCONCLUSIVA", merge="NAO", limitations=1)
+    assert revision(old, new, with_proof=True) == []
+    path = tmp_path / "revised.md"
+    path.write_text(new + "\n## Retificacao do parecer\n", encoding="utf-8")
+    proc = subprocess.run([sys.executable, str(SCRIPT), str(path)],
+                          capture_output=True, text=True, check=False)
+    assert proc.returncode != 0
+    assert "--previous" in proc.stdout
