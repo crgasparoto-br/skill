@@ -459,6 +459,40 @@
                 }
               }
             }
+          },
+          {
+            "if": {
+              "properties": {
+                "verification": {
+                  "properties": {
+                    "status": {
+                      "const": "passed"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              },
+              "required": [
+                "verification"
+              ]
+            },
+            "then": {
+              "properties": {
+                "verification": {
+                  "required": [
+                    "status",
+                    "command",
+                    "exit_code",
+                    "subject_sha",
+                    "reached_tests",
+                    "evidence_path",
+                    "evidence_sha256"
+                  ]
+                }
+              }
+            }
           }
         ]
       }

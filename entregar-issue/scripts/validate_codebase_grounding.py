@@ -103,29 +103,50 @@ def check_deleted_test_decision(
     for replacement in replacements:
         if replacement == path or not is_test_path(replacement) or read_at(repo, head, replacement) is None:
             errors.append(f"GROUND-TEST-001: replacement not found as test at head: {replacement}")
-    evidence = item["verification"]
-    if evidence.get("subject_sha") != head:
-        errors.append(f"GROUND-TEST-001: replacement execution not bound to head: {path}")
-    reached = evidence.get("reached_tests") or []
-    if not replacements or not set(replacements).issubset(set(reached)):
-        errors.append(f"GROUND-TEST-001: replacement tests not recorded as reached: {path}")
-    command = evidence.get("command") or ""
+    command = item["verification"].get("command") or ""
     if path in command and not any(replacement in command for replacement in replacements):
         errors.append(f"GROUND-TEST-001: command targets only deleted test: {path}")
-    proof_path = evidence.get("evidence_path")
-    proof_sha = evidence.get("evidence_sha256")
+
+
+def check_passed_test_evidence(
+    item: dict[str, Any], repo: Path, head: str, errors: list[str],
+) -> None:
+    """Verify formal execution identity; only independent audit proves runner provenance."""
+    proof = item["verification"]
+    if proof["status"] != "passed":
+        return
+    path = item["path"]
+    if proof.get("subject_sha") != head:
+        errors.append(f"GROUND-TEST-001: execution not bound to head: {path}")
+    command = proof.get("command") or ""
+    reached = proof.get("reached_tests") or []
+    expected = (item.get("replacement_tests") or []) if item["operation"] == "deleted" else [path]
+    for test_path in expected:
+        if not any(case == test_path or case.startswith(test_path + "::") for case in reached):
+            detail = ("replacement tests not recorded as reached"
+                      if item["operation"] == "deleted" else "changed test not recorded as reached")
+            errors.append(f"GROUND-TEST-001: {detail}: {path}")
+    if not reached:
+        errors.append(f"GROUND-TEST-001: passed test has no reached cases: {path}")
+    proof_path = proof.get("evidence_path")
+    proof_sha = proof.get("evidence_sha256")
     if not proof_path or not proof_sha:
-        errors.append(f"GROUND-TEST-001: deletion lacks raw execution evidence: {path}")
-    else:
-        location = (repo / proof_path).resolve()
-        if not location.is_relative_to(repo.resolve()) or not location.is_file():
-            errors.append(f"GROUND-TEST-001: execution evidence file unavailable: {path}")
-        else:
-            raw = location.read_bytes()
-            if hashlib.sha256(raw).hexdigest() != proof_sha:
-                errors.append(f"GROUND-TEST-001: execution evidence hash mismatch: {path}")
-            elif not all(replacement.encode() in raw for replacement in replacements):
-                errors.append(f"GROUND-TEST-001: raw evidence does not identify replacement: {path}")
+        errors.append(f"GROUND-TEST-001: execution lacks raw hashed evidence: {path}")
+        return
+    location = (repo / proof_path).resolve()
+    if not location.is_relative_to(repo.resolve()) or not location.is_file():
+        errors.append(f"GROUND-TEST-001: execution evidence file unavailable: {path}")
+        return
+    raw = location.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != proof_sha:
+        errors.append(f"GROUND-TEST-001: evidence hash mismatch: {path}")
+        return
+    markers = [f"HEAD: {head}", f"COMMAND: {command}", "EXIT_CODE: 0"]
+    markers.extend(f"REACHED: {case}" for case in reached)
+    lines = raw.splitlines()
+    if not all(marker.encode("utf-8") in lines for marker in markers):
+        errors.append(f"GROUND-TEST-001: raw evidence missing exact head/command/exit/reach: {path}")
+
 
 
 def check_test_decisions(
@@ -161,6 +182,7 @@ def check_test_decisions(
             check = item["verification"]
             if check["status"] == "passed" and (not check.get("command") or check.get("exit_code") != 0):
                 errors.append(f"GROUND-TEST-001: passed check lacks command/exit_code=0: {path}")
+            check_passed_test_evidence(item, repo, head, errors)
             if check["status"] != "passed":
                 if not check.get("reason"):
                     errors.append(f"GROUND-TEST-001: {check['status']} lacks reason: {path}")
