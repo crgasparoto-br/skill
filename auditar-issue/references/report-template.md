@@ -5,6 +5,7 @@
 > **Libera merge/release:** [SIM | NAO]
 
 **Validade:** [Independente | Controller-adversarial | Pre-auditoria]
+**Triagem:** bloqueadores comprovados: `[n]` | riscos inferidos: `[n]` | limitacoes do auditor: `[n]`
 
 **Rejection ID:** `[audit-rejection:...]` — incluir somente em auditoria `Independente` com `RESULTADO: REPROVADA`; reutilizar exatamente o mesmo ID no resultado estruturado e no `external-audit.json` quando existir.
 
@@ -23,6 +24,8 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 - [Estado dos gates e alcance de testes](#estado-dos-gates-e-alcance-de-testes)
 - [Matriz de requisitos](#matriz-de-requisitos)
 - [Achados bloqueantes](#achados-bloqueantes)
+- [Riscos inferidos nao confirmados](#riscos-inferidos-nao-confirmados)
+- [Limitacoes exclusivas do auditor](#limitacoes-exclusivas-do-auditor)
 - [Recomendacoes opcionais](#recomendacoes-opcionais)
 - [Testes e validações](#testes-e-validações)
 - [Fronteira pública, privacidade e autorização](#fronteira-pública-privacidade-e-autorização)
@@ -51,9 +54,15 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 - SHA da base antes/depois: `[...]` / `[...]`
 - merge preview antes/depois: `[...]` / `[...]`
 
+### Triagem do resultado
+
+Preencher as tres contagens da linha **Triagem** antes de decidir o veredito. `bloqueadores comprovados` e exatamente o total do bloco de conclusao, sempre respaldado por evidencia do candidato/entrega (analise estatica conclusiva pode servir como prova; hipotese sem prova discriminante nao serve). `riscos inferidos` representa suspeitas nao confirmadas, fora da contagem de blockers. `limitacoes do auditor` registra incapacidade exclusiva do runtime/conector para executar um gate obrigatorio, sem encontrar defeito na entrega.
+
+A precedencia e: bloqueador comprovado > limitacao do auditor. Com ambos, `REPROVADA`, limitacao registrada e merge bloqueado; sem bloqueador e com limitacao obrigatoria, `INCONCLUSIVA`; aprovacao exige zero bloqueadores e zero limitacoes materiais. Nunca marcar ausencia de Git Bundle/DNS como falha de produto. Em toda retificacao do parecer, atualizar o artefato integral e repetir `validate_verdict_header.py` antes da mensagem; nunca substituir apenas a conclusao verbal.
+
 ### Regras do cabecalho
 
-A primeira linha continua sendo o titulo do resultado. Imediatamente abaixo dele vem o bloco de conclusao em destaque, que repete o veredito e o resume, antes de qualquer outro metadado. Ele nao substitui o motivo determinante, os achados nem a matriz: resume o veredito, a contagem de achados bloqueantes e recomendacoes, o motivo em uma frase e a liberacao de merge/release. Manter o bloco consistente com o corpo do relatorio; divergencia entre o bloco e o corpo e defeito do proprio relatorio. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato.
+A primeira linha continua sendo o titulo do resultado. Imediatamente abaixo dele vem o bloco de conclusao em destaque, que repete o veredito e o resume, antes de qualquer outro metadado. Ele nao substitui o motivo determinante, os achados nem a matriz: resume o veredito, a contagem de achados bloqueantes e recomendacoes, o motivo em uma frase e a liberacao de merge/release. Manter o bloco consistente com o corpo do relatorio; divergencia entre o bloco e o corpo e defeito do proprio relatorio. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato. A triagem e obrigatoria mesmo com todos os contadores em zero.
 
 - `APROVADA`: apenas auditoria independente com portao de release satisfeito.
 - `APROVADA COM RESSALVAS`: apenas auditoria independente, sem bloqueio, com ressalva material nao bloqueante.
@@ -151,6 +160,14 @@ Incluir apenas observacoes com `disposition=blocking`.
 
 Repetir por achado, em ordem decrescente de severidade.
 
+
+## Riscos inferidos nao confirmados
+
+[Preencher quando riscos inferidos > 0: caso hipotetico, arquivo/fluxo, limite da prova, experimento discriminante e motivo pelo qual ainda nao e finding blocking. Um risco nao confirmado nao pode ser contado como bloqueador comprovado.]
+
+## Limitacoes exclusivas do auditor
+
+[Preencher quando limitacoes do auditor > 0: recurso indisponivel, tentativas e fallbacks feitos, gate obrigatorio afetado e evidencia em falta. Nao criar finding da issue nem solicitar alteracao do produto para resolver DNS, bundle indisponivel ou falha do runtime do auditor.]
 
 ## Recomendacoes opcionais
 
