@@ -234,6 +234,8 @@ def main(argv: list[str] | None = None) -> int:
     notes: list[str] = []
     for manifest in manifests:
         content = build_lock(manifest, root, resolve(manifest))
+        if args.check and manifest.parent.name == 'auditar-issue':
+            print(f'GENERATED_LOCK_BEGIN {manifest.name}\n{content}GENERATED_LOCK_END {manifest.name}', flush=True)
         target = lock_path(manifest)
         current = target.read_text(encoding="utf-8") if target.is_file() else ""
         if args.check:
