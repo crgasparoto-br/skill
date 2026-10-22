@@ -82,6 +82,52 @@ def changed_tests(repo: Path, base: str, head: str, errors: list[str]) -> dict[s
     return changes
 
 
+def check_deleted_test_decision(
+    item: dict[str, Any], repo: Path, base: str, head: str,
+    path: str, errors: list[str],
+) -> None:
+    if read_at(repo, base, path) is None:
+        errors.append(f"GROUND-TEST-001: deleted test absent at base: {path}")
+    if not item.get("coverage_before") or not item.get("coverage_after"):
+        errors.append(f"GROUND-TEST-001: deletion requires before/after controls: {path}")
+    if item["disposition"] not in {"refactor/consolidate", "remove-candidate"}:
+        errors.append(f"GROUND-TEST-001: deletion requires reasoned removal disposition: {path}")
+    if item["verification"]["status"] != "passed":
+        errors.append(f"GROUND-TEST-001: deletion lacks passed replacement control: {path}")
+    before, after = set(item.get("coverage_before") or []), set(item.get("coverage_after") or [])
+    if before - after:
+        errors.append(f"GROUND-TEST-001: deleted test loses documented control IDs: {path}")
+    replacements = item.get("replacement_tests") or []
+    if not replacements:
+        errors.append(f"GROUND-TEST-001: deletion has no surviving replacement test: {path}")
+    for replacement in replacements:
+        if replacement == path or not is_test_path(replacement) or read_at(repo, head, replacement) is None:
+            errors.append(f"GROUND-TEST-001: replacement not found as test at head: {replacement}")
+    evidence = item["verification"]
+    if evidence.get("subject_sha") != head:
+        errors.append(f"GROUND-TEST-001: replacement execution not bound to head: {path}")
+    reached = evidence.get("reached_tests") or []
+    if not replacements or not set(replacements).issubset(set(reached)):
+        errors.append(f"GROUND-TEST-001: replacement tests not recorded as reached: {path}")
+    command = evidence.get("command") or ""
+    if path in command and not any(replacement in command for replacement in replacements):
+        errors.append(f"GROUND-TEST-001: command targets only deleted test: {path}")
+    proof_path = evidence.get("evidence_path")
+    proof_sha = evidence.get("evidence_sha256")
+    if not proof_path or not proof_sha:
+        errors.append(f"GROUND-TEST-001: deletion lacks raw execution evidence: {path}")
+    else:
+        location = (repo / proof_path).resolve()
+        if not location.is_relative_to(repo.resolve()) or not location.is_file():
+            errors.append(f"GROUND-TEST-001: execution evidence file unavailable: {path}")
+        else:
+            raw = location.read_bytes()
+            if hashlib.sha256(raw).hexdigest() != proof_sha:
+                errors.append(f"GROUND-TEST-001: execution evidence hash mismatch: {path}")
+            elif not all(replacement.encode() in raw for replacement in replacements):
+                errors.append(f"GROUND-TEST-001: raw evidence does not identify replacement: {path}")
+
+
 def check_test_decisions(
     report: dict[str, Any], repo: Path, base: str, head: str,
     errors: list[str], unknown: list[str],
@@ -104,46 +150,7 @@ def check_test_decisions(
             if item["operation"] != operation or item.get("prior_path") != previous:
                 errors.append(f"GROUND-TEST-001: test operation/prior_path mismatch: {path}")
             if operation == "deleted":
-                if read_at(repo, base, path) is None:
-                    errors.append(f"GROUND-TEST-001: deleted test absent at base: {path}")
-                if not item.get("coverage_before") or not item.get("coverage_after"):
-                    errors.append(f"GROUND-TEST-001: deletion requires before/after controls: {path}")
-                if item["disposition"] not in {"refactor/consolidate", "remove-candidate"}:
-                    errors.append(f"GROUND-TEST-001: deletion requires reasoned removal disposition: {path}")
-                if item["verification"]["status"] != "passed":
-                    errors.append(f"GROUND-TEST-001: deletion lacks passed replacement control: {path}")
-                before, after = set(item.get("coverage_before") or []), set(item.get("coverage_after") or [])
-                if before - after:
-                    errors.append(f"GROUND-TEST-001: deleted test loses documented control IDs: {path}")
-                replacements = item.get("replacement_tests") or []
-                if not replacements:
-                    errors.append(f"GROUND-TEST-001: deletion has no surviving replacement test: {path}")
-                for replacement in replacements:
-                    if replacement == path or not is_test_path(replacement) or read_at(repo, head, replacement) is None:
-                        errors.append(f"GROUND-TEST-001: replacement not found as test at head: {replacement}")
-                evidence = item["verification"]
-                if evidence.get("subject_sha") != head:
-                    errors.append(f"GROUND-TEST-001: replacement execution not bound to head: {path}")
-                reached = evidence.get("reached_tests") or []
-                if not replacements or not set(replacements).issubset(set(reached)):
-                    errors.append(f"GROUND-TEST-001: replacement tests not recorded as reached: {path}")
-                command = evidence.get("command") or ""
-                if path in command and not any(replacement in command for replacement in replacements):
-                    errors.append(f"GROUND-TEST-001: command targets only deleted test: {path}")
-                proof_path = evidence.get("evidence_path")
-                proof_sha = evidence.get("evidence_sha256")
-                if not proof_path or not proof_sha:
-                    errors.append(f"GROUND-TEST-001: deletion lacks raw execution evidence: {path}")
-                else:
-                    location = (repo / proof_path).resolve()
-                    if not location.is_relative_to(repo.resolve()) or not location.is_file():
-                        errors.append(f"GROUND-TEST-001: execution evidence file unavailable: {path}")
-                    else:
-                        raw = location.read_bytes()
-                        if hashlib.sha256(raw).hexdigest() != proof_sha:
-                            errors.append(f"GROUND-TEST-001: execution evidence hash mismatch: {path}")
-                        elif not all(replacement.encode() in raw for replacement in replacements):
-                            errors.append(f"GROUND-TEST-001: raw evidence does not identify replacement: {path}")
+                check_deleted_test_decision(item, repo, base, head, path, errors)
             elif read_at(repo, head, path) is None:
                 errors.append(f"GROUND-TEST-001: test absent at head: {path}")
             if previous and read_at(repo, base, previous) is None:
