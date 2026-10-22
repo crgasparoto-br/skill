@@ -463,6 +463,13 @@ def test_configured_pytest_filename_is_a_test(candidate, config_path, config_bod
     assert classified["tests_touched"] and classified["test_only"]
     assert not classified["hygiene_applicable"]
 
+    collection = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q", "checks"],
+        cwd=repo, capture_output=True, text=True, check=False,
+    )
+    assert collection.returncode == 0, collection.stdout + collection.stderr
+    assert "smoke.py::test_smoke" in collection.stdout
+
     scenario = {**candidate, "base": base, "head": head}
     report = copy.deepcopy(candidate["report"])
     report.update(subject_sha=head, base_sha=base, creations=[], references=[], replacements=[])
@@ -528,3 +535,22 @@ def test_runner_pattern_is_scoped_to_config_directory():
     )
     assert is_test_path("checks/smoke.py", pytest_configs=configs)
     assert not is_test_path("src/smoke.py", pytest_configs=configs)
+
+
+def test_unparseable_pytest_discovery_is_unknown(candidate):
+    repo = candidate["repo"]
+    write(repo, "pytest.ini", "[pytest\\npython_files = smoke.py\\n".replace("\\n", "\n"))
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "seed invalid test config")
+    base = git(repo, "rev-parse", "HEAD")
+    write(repo, "src/money.py", "def format_money(value):\\n    return f'{value:.3f}'\\n".replace("\\n", "\n"))
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "change implementation with unknown test discovery")
+    head = git(repo, "rev-parse", "HEAD")
+    report = {
+        "schema_version": 1, "subject_sha": head, "base_sha": base,
+        "creations": [], "references": [], "replacements": [],
+    }
+    result = run({**candidate, "base": base, "head": head}, report)
+    assert result.returncode == 3, result.stdout
+    assert "runner discovery UNKNOWN" in result.stdout
