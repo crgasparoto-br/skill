@@ -264,7 +264,7 @@ def pytest_discovery_configs(
     """Discover runner settings only in affected paths' ancestor directories."""
     config_paths: set[str] = set()
     for path in paths:
-        parents = Path(path.replace('\\\\', '/')).parts[:-1]
+        parents = Path(path.replace('\\', '/')).parts[:-1]
         for depth in range(len(parents) + 1):
             prefix = '/'.join(parents[:depth])
             for name in ('pytest.ini', 'pyproject.toml', 'tox.ini', 'setup.cfg'):
@@ -280,7 +280,7 @@ def pytest_discovery_configs(
 
 
 def matches_pytest_discovery(path: str, configs: dict[str, tuple[str, ...]]) -> bool:
-    normalized = path.replace('\\\\', '/').lower()
+    normalized = path.replace('\\', '/').lower()
     for config_path, patterns in configs.items():
         root = config_path.rpartition('/')[0].lower()
         if root and not normalized.startswith(root + '/'):
