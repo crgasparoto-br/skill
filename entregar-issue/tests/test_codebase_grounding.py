@@ -432,3 +432,99 @@ def test_test_only_cypress_outside_conventional_folder_triggers_gate(candidate):
     result = run(scenario, report)
     assert result.returncode == 3
     assert "src/payment.cy.ts" in result.stdout
+
+
+@pytest.mark.parametrize("config_path,config_body", [
+    ("pytest.ini", "[pytest]\\npython_files = smoke.py\\n"),
+    ("pyproject.toml", '[tool.pytest.ini_options]\\npython_files = ["smoke.py"]\\n'),
+    ("tox.ini", "[pytest]\\npython_files = smoke.py\\n"),
+    ("setup.cfg", "[tool:pytest]\\npython_files = smoke.py\\n"),
+    ("checks/pytest.ini", "[pytest]\\npython_files = smoke.py\\n"),
+])
+def test_configured_pytest_filename_is_a_test(candidate, config_path, config_body):
+    from plan_execution import classify_changes, is_test_path, pytest_discovery_configs
+
+    repo = candidate["repo"]
+    write(repo, config_path, config_body.replace("\\n", "\n"))
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "configure pytest filename discovery")
+    base = git(repo, "rev-parse", "HEAD")
+    write(repo, "checks/smoke.py", "def test_smoke():\\n    assert 2 + 2 == 4\\n".replace("\\n", "\n"))
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "add discovered test")
+    head = git(repo, "rev-parse", "HEAD")
+
+    pytest_configs = pytest_discovery_configs(
+        ["checks/smoke.py"],
+        lambda path: (repo / path).read_text() if (repo / path).is_file() else None,
+    )
+    assert is_test_path("checks/smoke.py", pytest_configs=pytest_configs)
+    classified = classify_changes(["checks/smoke.py"], set(), pytest_configs=pytest_configs)
+    assert classified["tests_touched"] and classified["test_only"]
+    assert not classified["hygiene_applicable"]
+
+    scenario = {**candidate, "base": base, "head": head}
+    report = copy.deepcopy(candidate["report"])
+    report.update(subject_sha=head, base_sha=base, creations=[], references=[], replacements=[])
+    report["test_decisions"][0].update(
+        path="checks/smoke.py", operation="added", scenario="runner configured filename",
+        requirement="configured test discovery", search={
+            "queries": ["pytest --collect-only -q checks/smoke.py"], "scope": "checks/",
+            "runner": "pytest", "candidates": [],
+        },
+        verification=passed_verification(repo, head, "checks/smoke.py"),
+    )
+    assert run(scenario, report).returncode == 0
+    report["test_decisions"] = []
+    result = run(scenario, report)
+    assert result.returncode == 2
+    assert "test diff lacks decision: checks/smoke.py" in result.stdout
+
+
+def test_non_test_package_metadata_change_does_not_require_test_decision(candidate):
+    repo = candidate["repo"]
+    write(repo, "package.json", '{"name":"sample","version":"1.0.0","scripts":{"test":"vitest"}}\\n'.replace("\\n", "\n"))
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "seed package manifest")
+    base = git(repo, "rev-parse", "HEAD")
+    write(repo, "package.json", '{"name":"sample","version":"1.0.1","scripts":{"test":"vitest"}}\\n'.replace("\\n", "\n"))
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "change unrelated package metadata")
+    head = git(repo, "rev-parse", "HEAD")
+    report = {
+        "schema_version": 1,
+        "subject_sha": head, "base_sha": base,
+        "creations": [], "references": [], "replacements": [],
+    }
+    result = run({**candidate, "base": base, "head": head}, report)
+    assert result.returncode == 0, result.stdout
+
+
+def test_package_test_script_change_requires_decision(candidate):
+    repo = candidate["repo"]
+    write(repo, "package.json", '{"scripts":{"test":"vitest"}}\\n'.replace("\\n", "\n"))
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "seed test command")
+    base = git(repo, "rev-parse", "HEAD")
+    write(repo, "package.json", '{"scripts":{"test":"vitest run"}}\\n'.replace("\\n", "\n"))
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "modify test command")
+    head = git(repo, "rev-parse", "HEAD")
+    report = {
+        "schema_version": 2, "subject_sha": head, "base_sha": base,
+        "creations": [], "references": [], "replacements": [], "test_decisions": [],
+    }
+    result = run({**candidate, "base": base, "head": head}, report)
+    assert result.returncode == 2
+    assert "test diff lacks decision: package.json" in result.stdout
+
+
+def test_runner_pattern_is_scoped_to_config_directory():
+    from plan_execution import is_test_path, pytest_discovery_configs
+    configs = pytest_discovery_configs(
+        ["checks/smoke.py", "src/smoke.py"],
+        lambda path: "[pytest]\\npython_files = smoke.py\\n".replace("\\n", "\n")
+        if path == "checks/pytest.ini" else None,
+    )
+    assert is_test_path("checks/smoke.py", pytest_configs=configs)
+    assert not is_test_path("src/smoke.py", pytest_configs=configs)
