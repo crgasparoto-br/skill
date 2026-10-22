@@ -124,6 +124,41 @@ def source_anchor(value):
     ))
 
 
+def validate_record(prefix, identifier, fields):
+    """Validate contextual fields, not the independent truth of their contents."""
+    errors = []
+    if prefix == "A":
+        if fields.get("Origem comprovada") not in (["candidato"], ["entrega"]):
+            errors.append(f"{identifier}: origem deve ser candidato ou entrega")
+        if fields.get("Requisitos afetados") and not contextual_detail(
+            fields["Requisitos afetados"][0], minimum=6
+        ):
+            errors.append(f"{identifier}: requisito afetado sem identificacao suficiente")
+        if fields.get("Evidência") and (
+            not contextual_detail(fields["Evidência"][0], minimum=28)
+            or not source_anchor(fields["Evidência"][0])
+        ):
+            errors.append(f"{identifier}: evidencia sem artefato/localizacao reproduzivel")
+    elif prefix == "RISK":
+        if fields.get("Grau de certeza") not in (["baixo"], ["medio"], ["alto"]):
+            errors.append(f"{identifier}: grau de certeza invalido")
+        for key in ("Cenário hipotético", "Base da inferência", "Prova discriminante pendente"):
+            if fields.get(key) and not contextual_detail(fields[key][0]):
+                errors.append(f"{identifier}: {key} sem contexto discriminante")
+    elif prefix == "LIM":
+        for key in ("Recurso indisponível", "Gate obrigatório afetado",
+                    "Tentativas e fallbacks", "Prova indisponível"):
+            if fields.get(key) and not contextual_detail(fields[key][0], minimum=15):
+                errors.append(f"{identifier}: {key} sem contexto verificavel")
+        attempts = fields.get("Tentativas e fallbacks", [""])[0]
+        if attempts and not (
+            ";" in attempts or "fallback" in attempts.lower()
+            or "bundle" in attempts.lower()
+        ):
+            errors.append(f"{identifier}: tentativas e fallbacks nao discriminados")
+    return errors
+
+
 def parse_evidence(lines, expected_counts):
     """Reconcile declared triage with structured, evidence-bearing body records."""
     errors = []
@@ -161,35 +196,7 @@ def parse_evidence(lines, expected_counts):
                     values = fields.get(field, [])
                     if len(values) != 1 or not non_placeholder(values[0]):
                         errors.append(f"{identifier}: campo {field} ausente, duplicado ou placeholder")
-                if prefix == "A":
-                    if fields.get("Origem comprovada") not in (["candidato"], ["entrega"]):
-                        errors.append(f"{identifier}: origem deve ser candidato ou entrega")
-                    if fields.get("Requisitos afetados") and not contextual_detail(
-                        fields["Requisitos afetados"][0], minimum=6
-                    ):
-                        errors.append(f"{identifier}: requisito afetado sem identificacao suficiente")
-                    if fields.get("Evidência") and (
-                        not contextual_detail(fields["Evidência"][0], minimum=28)
-                        or not source_anchor(fields["Evidência"][0])
-                    ):
-                        errors.append(f"{identifier}: evidencia sem artefato/localizacao reproduzivel")
-                elif prefix == "RISK":
-                    if fields.get("Grau de certeza") not in (["baixo"], ["medio"], ["alto"]):
-                        errors.append(f"{identifier}: grau de certeza invalido")
-                    for key in ("Cenário hipotético", "Base da inferência", "Prova discriminante pendente"):
-                        if fields.get(key) and not contextual_detail(fields[key][0]):
-                            errors.append(f"{identifier}: {key} sem contexto discriminante")
-                elif prefix == "LIM":
-                    for key in ("Recurso indisponível", "Gate obrigatório afetado",
-                                "Tentativas e fallbacks", "Prova indisponível"):
-                        if fields.get(key) and not contextual_detail(fields[key][0], minimum=15):
-                            errors.append(f"{identifier}: {key} sem contexto verificavel")
-                    attempts = fields.get("Tentativas e fallbacks", [""])[0]
-                    if attempts and not (
-                        ";" in attempts or "fallback" in attempts.lower()
-                        or "bundle" in attempts.lower()
-                    ):
-                        errors.append(f"{identifier}: tentativas e fallbacks nao discriminados")
+                errors.extend(validate_record(prefix, identifier, fields))
                 entries[identifier] = fields
             if not headers and not any(line.strip() for line in content):
                 errors.append(f"{section}: secao vazia")
@@ -217,6 +224,31 @@ def validate_body(lines):
     return errors
 
 
+def changed_evidence_items(old_items, new_items):
+    return {
+        identifier
+        for prefix in ("A", "RISK", "LIM")
+        for identifier, prior_fields in old_items[prefix].items()
+        if identifier not in new_items[prefix]
+        or prior_fields != new_items[prefix][identifier]
+    }
+
+
+def validate_reclassification_proofs(fields, changed_items):
+    errors = []
+    if fields.get("Nova evidencia") and (
+        not contextual_detail(fields["Nova evidencia"][0], minimum=28)
+        or not source_anchor(fields["Nova evidencia"][0])
+    ):
+        errors.append("retificacao: nova evidencia sem fonte verificavel")
+    for identifier in sorted(changed_items):
+        values = fields.get(f"Prova de reclassificacao {identifier}", [])
+        if (len(values) != 1 or not contextual_detail(values[0], minimum=28)
+                or not source_anchor(values[0])):
+            errors.append(f"retificacao: item {identifier} alterado/retirado sem prova contextual")
+    return errors
+
+
 def validate_revision(current_text, previous_text):
     """Compare entire reports and track removal or material revision of every item."""
     current_errors = validate(current_text)
@@ -235,13 +267,7 @@ def validate_revision(current_text, previous_text):
     new_expected = dict(zip(CATEGORIES, (int(value) for value in new_triage.groups()), strict=True))
     _, old_items = parse_evidence(old_lines, old_expected)
     _, new_items = parse_evidence(new_lines, new_expected)
-    changed_items = {
-        identifier
-        for prefix in ("A", "RISK", "LIM")
-        for identifier, prior_fields in old_items[prefix].items()
-        if identifier not in new_items[prefix]
-        or prior_fields != new_items[prefix][identifier]
-    }
+    changed_items = changed_evidence_items(old_items, new_items)
     if (old_lines[0] == new_lines[0] and
             old_triage.groups() == new_triage.groups() and not changed_items):
         return []
@@ -268,16 +294,7 @@ def validate_revision(current_text, previous_text):
     head = fields.get("HEAD auditado", [""])[0].strip(chr(96))
     if not SHA.fullmatch(head):
         errors.append("retificacao: HEAD auditado deve ser SHA completo")
-    if fields.get("Nova evidencia") and (
-        not contextual_detail(fields["Nova evidencia"][0], minimum=28)
-        or not source_anchor(fields["Nova evidencia"][0])
-    ):
-        errors.append("retificacao: nova evidencia sem fonte verificavel")
-    for identifier in sorted(changed_items):
-        values = fields.get(f"Prova de reclassificacao {identifier}", [])
-        if (len(values) != 1 or not contextual_detail(values[0], minimum=28)
-                or not source_anchor(values[0])):
-            errors.append(f"retificacao: item {identifier} alterado/retirado sem prova contextual")
+    errors.extend(validate_reclassification_proofs(fields, changed_items))
     return errors
 
 
