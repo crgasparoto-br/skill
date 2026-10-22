@@ -56,6 +56,82 @@ def check_creations(report: dict[str, Any], repo: Path, base: str, head: str, er
                 errors.append(f"GROUND-REUSE-001: candidate does not exist at head: {candidate['path']}")
 
 
+def changed_tests(repo: Path, base: str, head: str, errors: list[str]) -> dict[str, tuple[str, str | None]]:
+    """Git name-status covers additions, modifications, deletions and detected renames."""
+    diff = git(repo, "diff", "--name-status", "--find-renames", "--no-ext-diff", base, head, "--")
+    if diff.returncode != 0:
+        errors.append(f"cannot inspect test diff {base}..{head}: {diff.stderr.strip()}")
+        return {}
+    changes: dict[str, tuple[str, str | None]] = {}
+    for line in diff.stdout.splitlines():
+        columns = line.split("\t")
+        if len(columns) < 2:
+            errors.append(f"invalid git name-status record: {line}")
+            continue
+        status = columns[0][:1]
+        path = columns[-1]
+        previous = columns[1] if status in {"R", "C"} and len(columns) == 3 else None
+        if not (is_test_path(path) or (previous and is_test_path(previous))):
+            continue
+        operation = {"A": "added", "M": "modified", "D": "deleted", "R": "renamed", "C": "renamed"}.get(status)
+        if operation is None:
+            errors.append(f"unhandled test diff operation {columns[0]} for {path}")
+            continue
+        changes[path] = (operation, previous)
+    return changes
+
+
+def check_test_decisions(
+    report: dict[str, Any], repo: Path, base: str, head: str,
+    errors: list[str], unknown: list[str],
+) -> None:
+    changes = changed_tests(repo, base, head, errors)
+    if not changes:
+        if report.get("test_decisions"):
+            errors.append("GROUND-TEST-001: test_decisions without test changes in issue-local diff")
+        return
+    if report["schema_version"] == 1:
+        errors.append("GROUND-TEST-001: test diff needs schema_version 2 and test_decisions; legacy v1 accepted only without test changes")
+        return
+    records: dict[str, list[dict[str, Any]]] = {}
+    for item in report["test_decisions"]:
+        records.setdefault(item["path"], []).append(item)
+    for path, (operation, previous) in changes.items():
+        if path not in records:
+            errors.append(f"GROUND-TEST-001: test diff lacks decision: {path}")
+        for item in records.get(path, []):
+            if item["operation"] != operation or item.get("prior_path") != previous:
+                errors.append(f"GROUND-TEST-001: test operation/prior_path mismatch: {path}")
+            if operation == "deleted":
+                if read_at(repo, base, path) is None:
+                    errors.append(f"GROUND-TEST-001: deleted test absent at base: {path}")
+                if not item.get("coverage_before") or not item.get("coverage_after"):
+                    errors.append(f"GROUND-TEST-001: deletion requires before/after controls: {path}")
+                if item["disposition"] not in {"refactor/consolidate", "remove-candidate"}:
+                    errors.append(f"GROUND-TEST-001: deletion requires reasoned removal disposition: {path}")
+                if item["verification"]["status"] != "passed":
+                    errors.append(f"GROUND-TEST-001: deletion lacks passed replacement control: {path}")
+            elif read_at(repo, head, path) is None:
+                errors.append(f"GROUND-TEST-001: test absent at head: {path}")
+            if previous and read_at(repo, base, previous) is None:
+                errors.append(f"GROUND-TEST-001: renamed source absent at base: {previous}")
+            for candidate in item["search"]["candidates"]:
+                if read_at(repo, head, candidate["path"]) is None and read_at(repo, base, candidate["path"]) is None:
+                    errors.append(f"GROUND-TEST-001: candidate absent in both revisions: {candidate['path']}")
+            check = item["verification"]
+            if check["status"] == "passed" and (not check.get("command") or check.get("exit_code") != 0):
+                errors.append(f"GROUND-TEST-001: passed check lacks command/exit_code=0: {path}")
+            if check["status"] != "passed":
+                if not check.get("reason"):
+                    errors.append(f"GROUND-TEST-001: {check['status']} lacks reason: {path}")
+                else:
+                    unknown.append(f"GROUND-TEST-001: {path} {check['status']}: {check['reason']}")
+            if item["decision"] == "not-testable/blocked" and not check.get("reason"):
+                errors.append(f"GROUND-TEST-001: blocked scenario needs alternative/limitation: {path}")
+    for path in records.keys() - changes.keys():
+        errors.append(f"GROUND-TEST-001: decision path not changed in test diff: {path}")
+
+
 def check_references(report: dict[str, Any], repo: Path, head: str, errors: list[str]) -> None:
     for item in report["references"]:
         symbol = item["symbol"]
@@ -116,6 +192,7 @@ def main() -> int:
         return 2
 
     errors: list[str] = []
+    unknown: list[str] = []
     validate_against_schema(report, SCHEMA, "codebase-grounding", errors)
     if not errors:
         if report["subject_sha"] != args.head_sha:
@@ -123,12 +200,17 @@ def main() -> int:
         if report["base_sha"] != args.base_sha:
             errors.append("codebase-grounding base does not match work item start")
         check_creations(report, repo, args.base_sha, args.head_sha, errors)
+        check_test_decisions(report, repo, args.base_sha, args.head_sha, errors, unknown)
         check_references(report, repo, args.head_sha, errors)
         check_replacements(report, repo, args.head_sha, errors)
     if errors:
         for error in errors:
             print(f"BLOCK: {error}")
         return 2
+    if unknown:
+        for item in unknown:
+            print(f"UNKNOWN: {item}")
+        return 3
     print(f"READY: codebase grounding verified at {args.head_sha}")
     return 0
 

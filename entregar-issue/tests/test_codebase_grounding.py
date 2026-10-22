@@ -45,7 +45,7 @@ def candidate(tmp_path: Path) -> dict:
     head = git(repo, "rev-parse", "HEAD")
     check = {"command": "pytest tests/test_report.py", "exit_code": 0}
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "subject_sha": head,
         "base_sha": base,
         "creations": [{
@@ -66,6 +66,15 @@ def candidate(tmp_path: Path) -> dict:
              "manifest": {"path": "requirements.txt", "name": "requests"}, "verified_by": check},
         ],
         "replacements": [{"old_path": "src/legacy_report.py", "old_symbol": "old_total", "disposition": "removed"}],
+        "test_decisions": [{
+            "path": "tests/test_report.py", "operation": "added",
+            "scenario": "formatacao de somatorio", "requirement": "somatorio formatado",
+            "search": {"queries": ["rg -n total tests"], "scope": "tests/",
+                       "runner": "pytest", "candidates": []},
+            "decision": "new-test-required", "justification": "novo comportamento agregado sem cenario previo",
+            "disposition": "keep",
+            "verification": {"status": "passed", "command": "pytest tests/test_report.py", "exit_code": 0},
+        }],
     }
     return {"repo": repo, "base": base, "head": head, "report": report, "tmp": tmp_path}
 
@@ -184,8 +193,9 @@ def test_missing_commit_is_unknown_not_approval(candidate):
 def test_gate_is_registered_and_loaded_progressively():
     registry = json.loads((ROOT / "contracts" / "gate-registry.json").read_text(encoding="utf-8"))
     gate = next(item for item in registry["gates"] if item["id"] == "codebase-grounding")
-    assert gate["activate_when"] == {"kind": "classification", "field": "code_touched", "equals": True}
-    assert gate["controls"] == ["GROUND-REUSE-001", "GROUND-EXIST-001", "GROUND-DEAD-001"]
+    assert gate["activate_when"]["kind"] == "any"
+    assert {rule["field"] for rule in gate["activate_when"]["rules"]} == {"code_touched", "tests_touched"}
+    assert gate["controls"] == ["GROUND-REUSE-001", "GROUND-EXIST-001", "GROUND-DEAD-001", "GROUND-TEST-001"]
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
     assert "references/codebase-grounding-gate.md" in skill
     assert "scripts/validate_codebase_grounding.py" in skill
@@ -194,13 +204,88 @@ def test_gate_is_registered_and_loaded_progressively():
         assert control in reference
 
 
-def test_planner_requires_gate_only_when_code_is_touched():
+def test_planner_requires_gate_for_code_or_test_changes():
     from plan_execution import required_gates_from_registry
     registry = json.loads((ROOT / "contracts" / "gate-registry.json").read_text(encoding="utf-8"))
-    def gates(code_touched):
+    def gates(code_touched, tests_touched=False):
         return required_gates_from_registry(
             registry, profile="standard", signals=set(),
-            classification={"code_touched": code_touched, "behavioral_change": code_touched},
+            classification={"code_touched": code_touched, "tests_touched": tests_touched, "behavioral_change": code_touched},
         )
     assert "codebase-grounding" in gates(True)
     assert "codebase-grounding" not in gates(False)
+    assert "codebase-grounding" in gates(False, True)
+
+
+def test_missing_test_decision_blocks_even_for_test_only_diff(candidate):
+    result = run(candidate, mutated(candidate, lambda r: r["test_decisions"].clear()))
+    assert result.returncode == 2
+    assert "test diff lacks decision: tests/test_report.py" in result.stdout
+
+
+def test_legacy_v1_is_explicitly_rejected_for_test_diff(candidate):
+    def change(report):
+        report["schema_version"] = 1
+        report.pop("test_decisions")
+    result = run(candidate, mutated(candidate, change))
+    assert result.returncode == 2
+    assert "legacy v1 accepted only without test changes" in result.stdout
+
+
+def test_distinct_oracle_is_not_rejected_by_nominal_similarity(candidate):
+    def change(report):
+        record = report["test_decisions"][0]
+        record["search"]["candidates"] = [{
+            "path": "src/money.py", "case": "unit formatting",
+            "oracle": "format_money decimals", "comparison": "unit does not cover aggregate"
+        }]
+        record["justification"] = "independent integration oracle"
+    result = run(candidate, mutated(candidate, change))
+    assert result.returncode == 0, result.stdout
+
+
+def test_dynamic_runner_unavailable_is_unknown_not_ready(candidate):
+    def change(report):
+        record = report["test_decisions"][0]
+        record["search"]["runner"] = "dynamic plugin discovery"
+        record["verification"] = {"status": "unknown", "reason": "runtime runner not accessible"}
+    result = run(candidate, mutated(candidate, change))
+    assert result.returncode == 3
+    assert "UNKNOWN" in result.stdout
+
+
+def test_deleted_test_requires_preserved_controls(candidate):
+    repo = candidate["repo"]
+    git(repo, "rm", "-q", "tests/test_report.py")
+    git(repo, "commit", "-q", "-m", "remove test")
+    new_head = git(repo, "rev-parse", "HEAD")
+    scenario = {**candidate, "base": candidate["head"], "head": new_head}
+    report = copy.deepcopy(candidate["report"])
+    report.update(subject_sha=new_head, base_sha=candidate["head"], creations=[], references=[], replacements=[])
+    record = report["test_decisions"][0]
+    record.update(operation="deleted", decision="covered-by-existing", disposition="remove-candidate")
+    assert "deletion requires before/after controls" in run(scenario, report).stdout
+    record.update(coverage_before=["positive", "negative"], coverage_after=["positive", "negative"])
+    assert run(scenario, report).returncode == 0
+
+
+def test_renamed_test_requires_source_at_base(candidate):
+    repo = candidate["repo"]
+    git(repo, "mv", "tests/test_report.py", "tests/test_totals.py")
+    git(repo, "commit", "-q", "-m", "rename test")
+    head = git(repo, "rev-parse", "HEAD")
+    scenario = {**candidate, "base": candidate["head"], "head": head}
+    report = copy.deepcopy(candidate["report"])
+    report.update(subject_sha=head, base_sha=candidate["head"], creations=[], references=[], replacements=[])
+    record = report["test_decisions"][0]
+    record.update(path="tests/test_totals.py", operation="renamed", prior_path="tests/test_report.py",
+                  decision="covered-by-existing", justification="only renamed, assertions unchanged")
+    assert run(scenario, report).returncode == 0
+
+
+def test_test_only_feature_diff_triggers_gate_without_global_hygiene():
+    from plan_execution import classify_changes
+    classification = classify_changes(["features/checkout.feature"], set())
+    assert classification["tests_touched"]
+    assert not classification["hygiene_applicable"]
+    assert not classification["code_touched"]

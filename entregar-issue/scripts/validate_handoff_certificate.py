@@ -24,6 +24,24 @@ def scope_touches_code(paths: list[str]) -> bool:
     return any(str(path).lower().endswith(CODE_SUFFIXES) for path in paths)
 
 
+
+
+def scope_touches_tests(paths: list[str]) -> bool:
+    """Conventions and runner config are signals, not proof of complete discovery."""
+    for original in paths:
+        path = str(original).lower().replace("\\", "/")
+        parts = path.split("/")
+        name = parts[-1]
+        if any(p in {"tests", "test", "__tests__", "specs", "fixtures"} for p in parts[:-1]):
+            return True
+        if (name.startswith("test_") or "_test." in name or ".test." in name
+                or ".spec." in name or name.endswith((".feature", ".robot", ".bats"))
+                or name in {"pytest.ini", "tox.ini", "conftest.py"}
+                or name.startswith(("jest.config.", "vitest.config.", "playwright.config.",
+                                    "cypress.config."))):
+            return True
+    return False
+
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -171,11 +189,14 @@ def main() -> int:
             required.update({"audit_escape_closure", "learning_closure", "inherited_controls"})
     declared_optional = {"evidence_provenance", "code_growth", "codebase_grounding"} & set(artifacts)
     certified_scope = cert.get("scope") if isinstance(cert.get("scope"), dict) else {}
-    code_scope = scope_touches_code(certified_scope.get("issue_changed_paths") or [])
+    paths = certified_scope.get("issue_changed_paths") or []
+    code_scope = scope_touches_code(paths)
+    test_scope = scope_touches_tests(paths)
     for key in ("codebase_grounding", "code_growth"):
         control = (cert.get("controls") or {}).get(key) or {}
-        if code_scope and control.get("applicable") is not True:
-            errors.append(f"certificate omits {key} control although issue-local scope touches code")
+        relevant_scope = code_scope or (key == "codebase_grounding" and test_scope)
+        if relevant_scope and control.get("applicable") is not True:
+            errors.append(f"certificate omits {key} control although issue-local scope touches code/tests")
         if control.get("applicable") is True:
             required.add(key)
     artifact_paths: dict[str, Path] = {}

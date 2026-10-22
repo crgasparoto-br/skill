@@ -90,6 +90,7 @@ Depois de resolver, capturar pelo menos:
 
 5. Remediar todas as causas `actionable-delivery` da rodada.
    - Preferir o menor patch coeso e corrigir diretamente dentro desta Skill seguindo as convencoes do repositorio.
+   - Quando a correção altera/adiciona/renomeia/exclui testes ou descoberta do runner, aplicar o preflight GROUND-TEST-001 da fonte canonica `entregar-issue/references/codebase-grounding-gate.md`: buscar candidatos, justificar reaproveitar/estender/criar, preservar oraculos e controles, registrar UNKNOWN se runner indisponivel. Nao abrir controlador, gate ou relatorio paralelo e nunca excluir/afrouxar testes para verde artificial.
    - Nunca invocar `entregar-issue` para executar a remediacao; esta Skill ja possui o recorte de implementacao necessario para corrigir a causa da CI e deve preservar o caller original.
    - Usar `revisar-issue` somente se uma ambiguidade material impedir a correcao.
    - Usar `design-interface`, `fluxos-conversacionais` ou `documentacao-repositorio` apenas quando a falha exigir a especialidade correspondente, sem transferir ownership global ou criar novo fluxo de entrega.

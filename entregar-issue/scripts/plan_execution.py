@@ -58,6 +58,8 @@ RUNTIME_CONFIG_NAMES = {
 }
 GENERATED_MARKERS = ('/generated/', '/dist/', '/build/', '/coverage/', '.generated.', '.g.')
 TEST_DIR_MARKERS = {'test', 'tests', '__tests__', 'spec', 'specs', 'fixtures'}
+TEST_FILE_SUFFIXES = ('.feature', '.robot', '.bats', '.test.json', '.spec.json')
+TEST_RUNNER_CONFIGS = ('pytest.ini', 'tox.ini', 'conftest.py', 'jest.config.', 'vitest.config.', 'playwright.config.', 'cypress.config.')
 
 
 def now() -> str:
@@ -233,6 +235,8 @@ def is_test_path(path: str) -> bool:
         or '.test.' in name
         or '.spec.' in name
         or name.endswith('_test.py')
+        or name.endswith(TEST_FILE_SUFFIXES)
+        or any(name == marker or name.startswith(marker) for marker in TEST_RUNNER_CONFIGS)
     )
 
 
@@ -251,6 +255,7 @@ def classify_changes(changed: list[str], signals: set[str]) -> dict[str, bool]:
     assets_only = bool(changed) and all(path.endswith(ASSET_SUFFIXES) for path in lower_paths)
     generated_only = bool(changed) and all(is_generated_path(path) for path in lower_paths)
     test_only = bool(changed) and all(is_test_path(path) for path in lower_paths)
+    tests_touched = any(is_test_path(path) for path in lower_paths)
     code_touched = any(path.endswith(CODE_SUFFIXES) for path in lower_paths)
     runtime_config_touched = any(
         path.endswith(CONFIG_SUFFIXES)
@@ -268,6 +273,7 @@ def classify_changes(changed: list[str], signals: set[str]) -> dict[str, bool]:
         'assets_only': assets_only,
         'generated_only': generated_only,
         'test_only': test_only,
+        'tests_touched': tests_touched,
         'code_touched': code_touched,
         'runtime_config_touched': runtime_config_touched,
         'behavioral_change': behavioral_change,
@@ -353,6 +359,12 @@ def evaluate_gate_rule(rule: dict[str, Any], *, profile: str, classification: di
     if kind == 'signal-any':
         values = set(rule.get('values', []))
         return bool(signals & values)
+    if kind == 'any':
+        rules = rule.get('rules', [])
+        return bool(rules) and any(
+            evaluate_gate_rule(item, profile=profile, classification=classification, signals=signals)
+            for item in rules
+        )
     if kind == 'all':
         rules = rule.get('rules', [])
         return bool(rules) and all(

@@ -101,6 +101,10 @@ A leitura de texto para citacao fica contida na raiz, e o mesmo vale para manife
 
 A regra existe porque cobertura que encolhe em silêncio é indistinguível de aprovação. Um arquivo que sai do conjunto analisado sem aparecer no relatório faz o número melhorar sem que a árvore melhore.
 
+## Diagnostico de testes (sob demanda)
+
+As cinco classes de divida estrutural NAO constituem medida de cobertura nem certificacao de obsolescencia de testes. Em particular, dead-module com exclude_tests pode ignorar suites descobertas dinamicamente; ausencia de import, similaridade AST, nomes e contagem nao autorizam remover teste. Um pedido explicito de higiene de testes usa diagnostico dirigido ao runner (configuracao, descoberta estatica/dinamica quando acessivel), requisitos/oraculos, testes parametrizados, fixtures/mocks, skips permanentes, cenarios removidos e consumidores legados. Para cada candidato usar keep, refactor/consolidate, remove-candidate ou needs-investigation; documentar provas de equivalencia material, controles positivos/negativos/limites/historicos antes/depois, checks reais e UNKNOWN para descoberta incompleta. Gerar findings acionaveis na forma de work item ja existente, sem alterar a politica de higiene global ou acrescentar uma sexta classe numerica. Nao fazer varredura global de testes durante entrega comum nem excluir automaticamente.
+
 ## Work items
 A varredura produz um work item por classe com achado, não um por achado. A classe é a unidade de decisão: corrigir, aceitar com justificativa ou rebaixar o limiar. Dezenas de ocorrências da mesma dívida viram uma linha cada dentro de um work item, e não dezenas de issues.
 

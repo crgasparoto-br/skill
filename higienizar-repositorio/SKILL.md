@@ -131,4 +131,4 @@ Para restringir a varredura, acrescentar `--paths <caminho> ...` ao passo 2. O m
 - `schemas/subskill-result.schema.json`: contrato de resultado de subskill compartilhado com o catalogo.
 
 ## Referencias
-Ler `references/global-hygiene-profile.md` para metodo, limites de precisao por classe, forma de tratar cada achado e o que fazer quando a varredura acusa a propria entrega.
+Ler `references/global-hygiene-profile.md` para metodo, limites de precisao por classe, forma de tratar cada achado e o que fazer quando a varredura acusa a propria entrega. Diagnostico de testes redundantes/obsoletos ocorre somente sob demanda, com candidatos e work items existentes; o scanner estrutural nao mede cobertura, nao prova obsolescencia e nunca apaga testes.

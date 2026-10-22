@@ -6,7 +6,7 @@ Impedir que a entrega crie o que ja existe, use o que nao existe ou deixe para t
 
 ## Quando aplicar
 
-O planner ativa `codebase-grounding` por `contracts/gate-registry.json` sempre que `code_touched=true`. Registrar o resultado em `codebase-grounding.json` (`schemas/codebase-grounding.schema.json`).
+O planner ativa `codebase-grounding` por `contracts/gate-registry.json` quando `code_touched=true` ou `tests_touched=true`, inclusive diff somente de testes segundo convencoes detectaveis. Registrar em `codebase-grounding.json` (`schemas/codebase-grounding.schema.json`). Arquivo descoberto exclusivamente por runner dinamico exige declaracao de limite UNKNOWN se a arvore/runner nao forem acessiveis; heuristica de nome nao prova completude.
 
 ## Controles
 
@@ -18,7 +18,15 @@ Antes de criar arquivo de codigo, funcao/classe/componente publico, endpoint, ta
 2. listar os candidatos encontrados;
 3. decidir `reuse`, `extend` ou `create`. `create` com candidato equivalente exige o motivo objetivo de nao reutilizar cada candidato.
 
-Arquivo de codigo adicionado sem registro de busca bloqueia. Teste e arquivo gerado nao exigem registro.
+Arquivo de codigo adicionado sem registro de busca bloqueia. Arquivo gerado fica isento; teste afetado segue o controle GROUND-TEST-001 especifico abaixo, inclusive quando nenhuma producao foi modificada.
+
+### GROUND-TEST-001 — ciclo de vida dos testes
+
+Antes de adicionar, editar, renomear ou excluir testes e configuracoes de descoberta do runner, inventariar casos, fixtures, parametrizacoes, helpers e niveis no escopo do requisito/risco, incluindo consumidores diretos. Para cada cenario registrar requirement, oracle discriminante, consultas reais, candidatos com comparacao de oraculos, runner e decisao covered-by-existing, extend-existing, new-test-required ou not-testable/blocked. A disposicao e keep, refactor/consolidate, remove-candidate ou needs-investigation. Preferir reaproveitar/estender, salvo necessidade objetiva de setup, nivel, independencia, isolamento ou novo oraculo. Controles historicos positivos, negativos, limites, ataques e gates permanecem.
+
+Registrar uma entrada test_decisions por arquivo de teste alterado (e por cenario quando necessario) no mesmo codebase-grounding.json. Diffs apenas de testes acionam o gate; renomeacoes incluem prior_path. Excluir exige mapa coverage_before/coverage_after, verificacao executada e autorizacao/aviso de operacao destrutiva do repositorio; sinal de duplicacao/obsolescencia nao e prova. Sem runner/checkout, registrar status unknown/blocked e escopo nao verificado; nao declarar READY. A deteccao considera convencoes/runner, incluindo suites dinamicas quando conhecidas, mas extensoes e nomes sao apenas indicios.
+
+O formato v2 do relatorio exige test_decisions e o validador o confronta com o git diff --name-status -M do base/head. Formato v1 segue aceito apenas se nao houver diff de testes; para diff de testes legado, migrar explicitamente para v2 (rejeicao explicita, nunca compatibilidade silenciosa). O validador confere campos, paths/candidatos, operacoes e verificacao declarada no SHA exato; nao comprova equivalencia semantica, qualidade do oraculo, descoberta dinamica completa ou autorizacao de exclusao. Essas provas pertencem a inspecao independente.
 
 ### GROUND-EXIST-001 — provar antes de usar
 
@@ -44,7 +52,7 @@ python scripts/validate_codebase_grounding.py \
   --base-sha <work_item_start_sha> --head-sha <material_head_sha>
 ```
 
-O validador confere contra o Git: SHA exato, registro de busca para todo arquivo de codigo adicionado, existencia dos candidatos citados, presenca do simbolo na linha declarada, presenca da dependencia no manifesto, consumidor que realmente contem o simbolo e disposicao de cada substituicao. Sem checkout executavel o resultado e `UNKNOWN`, nao aprovacao.
+O validador confere contra o Git: SHA exato, registro de busca para todo arquivo de codigo adicionado, diff de testes (A/M/R/D), decisoes e evidencia formal de preservacao, existencia dos candidatos citados, presenca de simbolos/dependencias e disposicao de cada substituicao. Similaridade nominal nunca basta para bloquear novo teste legitimo. Sem checkout executavel o resultado e `UNKNOWN`, nao aprovacao.
 
 Em `certified-handoff`, passar o relatorio ao builder com `--codebase-grounding`. Quando o escopo local da issue toca codigo, o builder bloqueia sem o relatorio ou com `subject_sha` stale, e `validate_handoff_certificate.py` (entrega e auditoria) recalcula a aplicabilidade a partir do escopo certificado.
 
