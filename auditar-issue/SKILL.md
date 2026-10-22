@@ -47,6 +47,7 @@ Imediatamente abaixo dessa linha, abrir o parecer com o bloco de conclusao em de
 > **Libera merge/release:** [SIM | NAO]
 
 **Validade:** [Independente | Controller-adversarial | Pre-auditoria]
+**Triagem:** bloqueadores comprovados: `[n]` | riscos inferidos: `[n]` | limitacoes do auditor: `[n]`
 ```
 
 Validar **todo** parecer e toda retificacao conversacional do veredito antes de publicar: atualizar primeiro o relatorio e executar `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>`; nao trocar a conclusao so em prosa. A triagem obrigatoria separa bloqueador comprovado, risco inferido e limitacao exclusiva do auditor; seguir `references/report-template.md`.
