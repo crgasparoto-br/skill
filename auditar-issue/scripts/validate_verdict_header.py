@@ -115,6 +115,24 @@ def line_context(line, previous_indent, previous_quote_depth):
     return candidate, quote_depth, list_indent, in_list
 
 
+def raw_html_line(candidate, state, quote_depth, in_list, list_indent):
+    """Track CommonMark raw HTML without treating inner headings as records."""
+    tag, old_quote, old_list = state
+    if tag and (quote_depth != old_quote or (old_list and not in_list and candidate.strip())):
+        tag = None
+    if tag:
+        if re.search(rf"</{tag}\s*>", candidate, re.IGNORECASE):
+            tag = None
+        return True, (tag, old_quote, old_list)
+    opened = HTML_RAW_OPEN.match(candidate)
+    if not opened:
+        return False, (None, 0, 0)
+    tag = opened.group(1)
+    if re.search(rf"</{tag}\s*>", candidate, re.IGNORECASE):
+        return True, (None, 0, 0)
+    return True, (tag, quote_depth, list_indent if in_list else 0)
+
+
 def visible_lines(lines):
     """Ignore inert Markdown without letting a nested fence hide visible findings."""
     output = []
@@ -126,9 +144,7 @@ def visible_lines(lines):
     html_comment = False
     comment_quote = 0
     comment_list = 0
-    raw_tag = None
-    raw_quote = 0
-    raw_list = 0
+    raw_state = (None, 0, 0)
     for line in lines:
         candidate, quote_depth, current_indent, in_list = line_context(
             line, list_indent, previous_quote_depth,
@@ -139,26 +155,16 @@ def visible_lines(lines):
             fence = None
         if html_comment and (quote_depth != comment_quote or (comment_list and not in_list and candidate.strip())):
             html_comment = False
-        if raw_tag and (quote_depth != raw_quote or (raw_list and not in_list and candidate.strip())):
-            raw_tag = None
         list_indent = current_indent
         previous_quote_depth = quote_depth
         if html_comment:
             if "-->" in candidate:
                 html_comment = False
             continue
-        if raw_tag:
-            if re.search(rf"</{raw_tag}\s*>", candidate, re.IGNORECASE):
-                raw_tag = None
-            continue
-        raw_start = HTML_RAW_OPEN.match(candidate)
-        if raw_start and fence is None:
-            tag = raw_start.group(1)
-            if not re.search(rf"</{tag}\s*>", candidate, re.IGNORECASE):
-                raw_tag = tag
-                raw_quote = quote_depth
-                raw_list = current_indent if in_list else 0
-            continue
+        if fence is None:
+            inert, raw_state = raw_html_line(candidate, raw_state, quote_depth, in_list, current_indent)
+            if inert:
+                continue
         marker = FENCE_MARKER.match(candidate)
         if marker:
             mark, suffix = marker.groups()
