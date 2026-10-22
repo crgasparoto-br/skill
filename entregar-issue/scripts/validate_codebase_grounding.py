@@ -6,6 +6,7 @@ Exit codes: 0 READY, 2 BLOCK, 3 UNKNOWN (no usable checkout; never an approval).
 from __future__ import annotations
 
 import argparse
+import configparser
 import hashlib
 import json
 import tomllib
@@ -98,7 +99,7 @@ def load_pytest_configs(
 ) -> dict[str, tuple[str, ...]]:
     try:
         return pytest_discovery_configs(paths, lambda path: read_at(repo, sha, path))
-    except (ValueError, TypeError) as exc:
+    except (ValueError, TypeError, configparser.Error) as exc:
         unknown.append(f'GROUND-TEST-001: runner discovery UNKNOWN at {sha}: {exc}')
         return {}
 
