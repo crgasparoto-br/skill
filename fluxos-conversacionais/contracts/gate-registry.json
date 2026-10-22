@@ -265,14 +265,25 @@
     {
       "id": "codebase-grounding",
       "activate_when": {
-        "kind": "classification",
-        "field": "code_touched",
-        "equals": true
+        "kind": "any",
+        "rules": [
+          {
+            "kind": "classification",
+            "field": "code_touched",
+            "equals": true
+          },
+          {
+            "kind": "classification",
+            "field": "tests_touched",
+            "equals": true
+          }
+        ]
       },
       "controls": [
         "GROUND-REUSE-001",
         "GROUND-EXIST-001",
-        "GROUND-DEAD-001"
+        "GROUND-DEAD-001",
+        "GROUND-TEST-001"
       ],
       "invalidates": [
         "hygiene",

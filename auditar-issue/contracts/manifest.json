@@ -4,7 +4,7 @@
   "files": {
     "ci-ownership.json": "a536241bd6ac79e0fdea218af5096b61a7b5d20de01219e46ddc221b81c09b65",
     "controller-context.schema.json": "3ddb928348759f813878a55090587e840c2b5a953a21663ca6f757c195a8da72",
-    "gate-registry.json": "200d814e445203a8c4934b9f5ed8b4574546f93e76880442c370065353a30a03",
+    "gate-registry.json": "e274100074ef23e112031a6eb583f6858473da9390e19598e3b2769380e9c0ce",
     "github-actions-policy.md": "b5905ac68ca183f3abbf8619535b80216a7791b1275cc22497c307bc7e8a0235",
     "stage-dependencies.json": "69026570a5f1b67c7fe9b429ced850d679d8175da499f70479380a6dce58a8fc",
     "subskill-result.schema.json": "9528205ebefb167ca0120ca7250d2dc29786426918f7d0c3c5deeb0212c4b259"
