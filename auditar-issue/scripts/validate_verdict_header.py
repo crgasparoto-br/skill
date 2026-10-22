@@ -159,12 +159,9 @@ def validate_record(prefix, identifier, fields):
     return errors
 
 
-def parse_evidence(lines, expected_counts):
-    """Reconcile declared triage with structured, evidence-bearing body records."""
+def detect_misplaced_records(plain):
+    """Reject records outside their canonical section, even with zero counts."""
     errors = []
-    plain = visible_lines(lines)
-    items = {}
-    sections = [(index, line) for index, line in enumerate(plain) if line.startswith("## ")]
     section_for_prefix = {prefix: section for section, (prefix, _) in CATEGORIES.items()}
     current_section = None
     all_ids = set()
@@ -185,6 +182,16 @@ def parse_evidence(lines, expected_counts):
         if identifier in all_ids:
             errors.append(f"ID duplicado na triagem: {identifier}")
         all_ids.add(identifier)
+    return errors
+
+
+def parse_evidence(lines, expected_counts):
+    """Reconcile declared triage with structured, evidence-bearing body records."""
+    errors = []
+    plain = visible_lines(lines)
+    items = {}
+    sections = [(index, line) for index, line in enumerate(plain) if line.startswith("## ")]
+    errors.extend(detect_misplaced_records(plain))
     for section, (prefix, required) in CATEGORIES.items():
         found = [index for index, name in sections if name == section]
         entries = {}
