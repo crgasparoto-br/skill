@@ -110,9 +110,11 @@ def visible_lines(lines):
             continue
         list_marker = re.match(r"^ {0,3}(?:[-+*]|\d{1,9}[.)])[ \t]+", line)
         indent = len(line) - len(line.lstrip(" "))
-        if list_marker:
+        if not line.strip():
+            list_indent = 0
+        elif list_marker:
             list_indent = len(list_marker.group())
-        elif line.strip() and indent < list_indent:
+        elif indent < list_indent:
             list_indent = 0
         if list_indent and indent >= list_indent and line.lstrip().startswith("#"):
             output.append("- " + line.lstrip())
