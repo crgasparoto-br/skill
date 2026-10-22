@@ -293,7 +293,7 @@ def test_test_only_feature_diff_triggers_gate_without_global_hygiene():
 
 def test_test_scope_and_handoff_match_for_non_code_conventions():
     from plan_execution import is_test_path
-    from validate_handoff_certificate import scope_touches_tests, scope_touches_code
+    from validate_handoff_certificate import scope_touches_code, scope_touches_tests
 
     examples = [
         "spec/cases.json",
