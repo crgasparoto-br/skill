@@ -735,3 +735,69 @@ def test_issue110_second_revision_preserves_historical_proofs_and_hash():
     assert any("SHA-256 do parecer anterior" in error for error in
                module.validate_revision(second.replace(
                    "- **SHA-256 do parecer anterior:** " + digest + "\n", ""), first))
+
+
+@pytest.mark.parametrize("identifier,entry", [
+    ("A-001", blocker()),
+    ("RISK-001", risk()),
+    ("LIM-001", limitation()),
+])
+@pytest.mark.parametrize("emphasis", ["**", "*", "__", "_", chr(96)])
+@pytest.mark.parametrize("prefix", ["### ", "#### ", "- ", "> ### ", "1. "])
+def test_issue110_styled_visible_identifiers_cannot_escape_triage(identifier, entry, emphasis, prefix):
+    first_line = entry.splitlines()[0]
+    first_line = first_line.replace(identifier, emphasis + identifier + emphasis)
+    first_line = first_line.replace("### ", prefix, 1)
+    errors = module.validate(report("APROVADA", sections="## Evidencias extras\n" + first_line + "\n"))
+    assert any(identifier in error for error in errors), (first_line, errors)
+
+
+@pytest.mark.parametrize("tag", [
+    "div", "section", "article", "table", "blockquote", "ul",
+    "main", "footer", "aside", "figure", "form", "details",
+])
+@pytest.mark.parametrize("kind,entry,section,verdict,counts", [
+    ("A", blocker(), "## Achados bloqueantes", "REPROVADA", (1, 0, 0)),
+    ("RISK", risk(), "## Riscos inferidos nao confirmados", "APROVADA", (0, 1, 0)),
+    ("LIM", limitation(), "## Limitacoes exclusivas do auditor", "INCONCLUSIVA", (0, 0, 1)),
+])
+def test_issue110_commonmark_type6_html_does_not_supply_evidence(
+    tag, kind, entry, section, verdict, counts,
+):
+    html = f"<{tag}>\n{entry}</{tag}>\n"
+    assert module.validate(report("APROVADA", sections="## Exemplos\n" + html)) == []
+    declared = report(
+        verdict, blockers=counts[0], risks=counts[1], limitations=counts[2],
+        merge="SIM" if verdict == "APROVADA" else "NAO",
+        sections=section + "\n" + html,
+    )
+    assert any("itens verificaveis 0" in error for error in module.validate(declared))
+
+
+def test_issue110_raw_html_type6_closes_on_blank_line_not_closing_tag():
+    content = (
+        "## Evidencia adicional\n<div>\n### A-001 — exemplo em HTML\n"
+        "</div>\n### A-002 — ainda dentro de bloco HTML\n"
+        "\n### A-003 — registro externo real\n"
+    )
+    errors = module.validate(report("APROVADA", sections=content))
+    assert any("A-003" in error and "fora da secao" in error for error in errors)
+    assert all("A-001" not in error and "A-002" not in error for error in errors)
+
+
+def test_issue110_real_record_after_raw_html_blank_line_still_counts():
+    content = (
+        "## Achados bloqueantes\n<div>\n### A-002 — exemplo HTML inerte\n"
+        "</div>\n\n" + blocker()
+    )
+    assert module.validate(report("REPROVADA", blockers=1, merge="NAO", sections=content)) == []
+
+
+@pytest.mark.parametrize("reference", [
+    "- Consulte A-001 na revisao anterior\n",
+    "- **Prova de reclassificacao A-001:** arquivo.py:123\n",
+    "- "+chr(96)+"A-001 — exemplo inline"+chr(96)+"\n",
+    "### Exemplo mencionando RISK-001 sem declarar item\n",
+])
+def test_issue110_styled_ids_are_not_inferred_from_incidental_references(reference):
+    assert module.validate(report("APROVADA", sections="## Exemplos\n" + reference)) == []

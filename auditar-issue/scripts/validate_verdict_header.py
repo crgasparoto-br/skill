@@ -90,6 +90,35 @@ QUOTE_PREFIX = re.compile(r"^ {0,3}>[ \t]?")
 LIST_PREFIX = re.compile(r"^ {0,3}(?:[-+*]|\d{1,9}[.)])[ \t]+")
 FENCE_MARKER = re.compile(r"^ {0,3}(~{3,}|"+chr(96)+r"{3,})(.*)$")
 HTML_RAW_OPEN = re.compile(r"^ {0,3}<(pre|script|style|textarea)(?:[ \t>])", re.IGNORECASE)
+# CommonMark HTML blocks of type 6 terminate at a blank line, not at the
+# closing tag. Recognize the full standard block-tag list to avoid mistaking
+# illustrative HTML content for evidence headings in Markdown.
+HTML_BLOCK_TAGS = (
+    "address", "article", "aside", "base", "basefont", "blockquote", "body",
+    "caption", "center", "col", "colgroup", "dd", "details", "dialog",
+    "dir", "div", "dl", "dt", "fieldset", "figcaption", "figure",
+    "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4",
+    "h5", "h6", "head", "header", "hr", "html", "iframe", "legend",
+    "li", "link", "main", "menu", "menuitem", "meta", "nav",
+    "noframes", "ol", "optgroup", "option", "output", "p", "param",
+    "search", "section", "summary", "table", "tbody", "td", "tfoot",
+    "th", "thead", "title", "tr", "track", "ul",
+)
+HTML_BLOCK_OPEN = re.compile(
+    r"^ {0,3}</?(?:" + "|".join(HTML_BLOCK_TAGS) + r")(?=[ \t/>])",
+    re.IGNORECASE,
+)
+# Only an evidence-shaped identifier at the start of a visible record counts.
+# Inline emphasis/code may decorate the ID, but cannot conceal it.
+VISIBLE_RECORD_ID = re.compile(
+    r"^(?:\[[^\]]+\][ \t]+)?(?:"
+    r"(?:\*\*|__|\*|_)?((?:A|RISK|LIM)-[0-9]{3,})(?:\*\*|__|\*|_)?"
+    r"|`{1,3}((?:A|RISK|LIM)-[0-9]{3,})`{1,3})"
+    r"(?=[ \t]+[—-]|[ \t]*:|$)"
+)
+RECORD_LIST_PREFIX = re.compile(
+    r"^ {0,3}(?:(?:>[ \t]?|(?:[-+*]|\d{1,9}[.)])[ \t]+)[ \t]*)*"
+)
 
 
 def line_context(line, previous_indent, previous_quote_depth):
@@ -120,17 +149,24 @@ def raw_html_line(candidate, state, quote_depth, in_list, list_indent):
     tag, old_quote, old_list = state
     if tag and (quote_depth != old_quote or (old_list and not in_list and candidate.strip())):
         tag = None
+    if tag == "html-block":
+        # CommonMark type 6: the raw block ends only at a blank line.
+        if not candidate.strip():
+            return False, (None, 0, 0)
+        return True, (tag, old_quote, old_list)
     if tag:
         if re.search(rf"</{tag}\s*>", candidate, re.IGNORECASE):
             tag = None
         return True, (tag, old_quote, old_list)
     opened = HTML_RAW_OPEN.match(candidate)
-    if not opened:
-        return False, (None, 0, 0)
-    tag = opened.group(1)
-    if re.search(rf"</{tag}\s*>", candidate, re.IGNORECASE):
-        return True, (None, 0, 0)
-    return True, (tag, quote_depth, list_indent if in_list else 0)
+    if opened:
+        tag = opened.group(1)
+        if re.search(rf"</{tag}\s*>", candidate, re.IGNORECASE):
+            return True, (None, 0, 0)
+        return True, (tag, quote_depth, list_indent if in_list else 0)
+    if HTML_BLOCK_OPEN.match(candidate):
+        return True, ("html-block", quote_depth, list_indent if in_list else 0)
+    return False, (None, 0, 0)
 
 
 def visible_lines(lines):
@@ -308,24 +344,23 @@ def detect_misplaced_records(plain):
                 current_section = None
             elif not nested and level == 2:
                 current_section = "## " + title
-            identifier_match = re.match(
-                r"^(?:\[[^\]]+\][ \t]+)?((?:A|RISK|LIM)-[0-9]{3,})\b", title,
-            )
+            identifier_match = VISIBLE_RECORD_ID.match(title)
         else:
             level = 0
-            identifier_match = re.match(
-                r"^ {0,3}(?:>[ \t]?)*(?:(?:[-+*]|\d{1,9}[.)])[ \t]+)*"
-                r"(?:\*\*)?((?:A|RISK|LIM)-[0-9]{3,})(?:\*\*)?"
-                r"(?:[ \t]+[—-](?:[ \t]+|$)|[ \t]*:)",
-                line,
+            # Strip container markers only at line start; prose mentioning
+            # A-001 incidentally must not become a new evidence record.
+            identifier_match = VISIBLE_RECORD_ID.match(
+                RECORD_LIST_PREFIX.sub("", line).lstrip(" ")
             )
         if not identifier_match:
             continue
-        identifier = identifier_match.group(1)
+        identifier = identifier_match.group(1) or identifier_match.group(2)
         prefix = identifier.split("-", 1)[0]
         if nested and heading:
             errors.append(f"{identifier}: item aninhado fora da secao canonica")
-        elif level != 3:
+        elif level != 3 or not re.match(
+            r"^(?:\[[^\]]+\] )?(?:A|RISK|LIM)-[0-9]{3,} [—-] \S", title,
+        ):
             errors.append(f"{identifier}: item em formato nao canonico (H3 obrigatorio)")
         elif current_section != section_for_prefix[prefix]:
             errors.append(f"{identifier}: item fora da secao {section_for_prefix[prefix]}")
