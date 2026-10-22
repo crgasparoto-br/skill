@@ -49,6 +49,7 @@ def candidate(tmp_path: Path) -> dict:
     write(repo, "src/money.py", "def format_money(value):\n    return f'{value:.2f}'\n")
     write(repo, "src/legacy_report.py", "def old_total(rows):\n    return sum(rows)\n")
     write(repo, "requirements.txt", "requests>=2\n")
+    write(repo, ".gitignore", "__pycache__/\n*.pyc\nverification.log\n")
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "base")
     base = git(repo, "rev-parse", "HEAD")
