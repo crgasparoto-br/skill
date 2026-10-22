@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fail-closed validation of the user-visible audit verdict header."""
 import argparse
+import hashlib
 import re
 from pathlib import Path
 
@@ -88,6 +89,7 @@ SHA = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 QUOTE_PREFIX = re.compile(r"^ {0,3}>[ \t]?")
 LIST_PREFIX = re.compile(r"^ {0,3}(?:[-+*]|\d{1,9}[.)])[ \t]+")
 FENCE_MARKER = re.compile(r"^ {0,3}(~{3,}|"+chr(96)+r"{3,})(.*)$")
+HTML_RAW_OPEN = re.compile(r"^ {0,3}<(pre|script|style|textarea)(?:[ \t>])", re.IGNORECASE)
 
 
 def line_context(line, previous_indent, previous_quote_depth):
@@ -124,6 +126,9 @@ def visible_lines(lines):
     html_comment = False
     comment_quote = 0
     comment_list = 0
+    raw_tag = None
+    raw_quote = 0
+    raw_list = 0
     for line in lines:
         candidate, quote_depth, current_indent, in_list = line_context(
             line, list_indent, previous_quote_depth,
@@ -134,11 +139,25 @@ def visible_lines(lines):
             fence = None
         if html_comment and (quote_depth != comment_quote or (comment_list and not in_list and candidate.strip())):
             html_comment = False
+        if raw_tag and (quote_depth != raw_quote or (raw_list and not in_list and candidate.strip())):
+            raw_tag = None
         list_indent = current_indent
         previous_quote_depth = quote_depth
         if html_comment:
             if "-->" in candidate:
                 html_comment = False
+            continue
+        if raw_tag:
+            if re.search(rf"</{raw_tag}\s*>", candidate, re.IGNORECASE):
+                raw_tag = None
+            continue
+        raw_start = HTML_RAW_OPEN.match(candidate)
+        if raw_start and fence is None:
+            tag = raw_start.group(1)
+            if not re.search(rf"</{tag}\s*>", candidate, re.IGNORECASE):
+                raw_tag = tag
+                raw_quote = quote_depth
+                raw_list = current_indent if in_list else 0
             continue
         marker = FENCE_MARKER.match(candidate)
         if marker:
@@ -258,16 +277,16 @@ def nested_audit_heading(line):
     container = r"(?:>[ \t]?|(?:[-+*]|\d{1,9}[.)])[ \t]+)"
     match = re.match(
         r"^ {0,3}" + container + r"(?: {0,3}" + container
-        + r")* {0,3}#{3}(?:[ \t]+|$)(.*)$", line,
+        + r")* {0,3}(#{1,6})(?:[ \t]+|$)(.*)$", line,
     )
     if not match:
         return None
-    title = re.sub(r"[ \t]+#+[ \t]*$", "", match.group(1)).strip()
-    return 3, title
+    title = re.sub(r"[ \t]+#+[ \t]*$", "", match.group(2)).strip()
+    return len(match.group(1)), title
 
 
 def detect_misplaced_records(plain):
-    """Reject visible ATX evidence headings outside their canonical section."""
+    """Reject evidence-shaped records in any visible noncanonical Markdown form."""
     errors = []
     section_for_prefix = {prefix: section for section, (prefix, _) in CATEGORIES.items()}
     current_section = None
@@ -277,22 +296,30 @@ def detect_misplaced_records(plain):
         nested = heading is None
         if nested:
             heading = nested_audit_heading(line)
-        if heading is None:
+        if heading:
+            level, title = heading
+            if not nested and level == 1:
+                current_section = None
+            elif not nested and level == 2:
+                current_section = "## " + title
+            identifier_match = re.match(
+                r"^(?:\[[^\]]+\][ \t]+)?((?:A|RISK|LIM)-[0-9]{3,})\b", title,
+            )
+        else:
+            level = 0
+            identifier_match = re.match(
+                r"^ {0,3}(?:>[ \t]?)*(?:(?:[-+*]|\d{1,9}[.)])[ \t]+)?"
+                r"\*\*((?:A|RISK|LIM)-[0-9]{3,})(?:[ \t]+[—-]|[ \t]*:)",
+                line,
+            )
+        if not identifier_match:
             continue
-        level, title = heading
-        if level == 1:
-            current_section = None
-        elif level == 2:
-            current_section = "## " + title
-        if level != 3:
-            continue
-        match = re.match(r"^(?:\[[^\]]+\][ \t]+)?((?:A|RISK|LIM)-[0-9]{3,})\b", title)
-        if not match:
-            continue
-        identifier = match.group(1)
+        identifier = identifier_match.group(1)
         prefix = identifier.split("-", 1)[0]
-        if nested:
+        if nested and heading:
             errors.append(f"{identifier}: item aninhado fora da secao canonica")
+        elif level != 3:
+            errors.append(f"{identifier}: item em formato nao canonico (H3 obrigatorio)")
         elif current_section != section_for_prefix[prefix]:
             errors.append(f"{identifier}: item fora da secao {section_for_prefix[prefix]}")
         if identifier in all_ids:
@@ -394,19 +421,46 @@ def changed_evidence_items(old_items, new_items):
     }
 
 
-def validate_reclassification_proofs(fields, changed_items):
+def validate_reclassification_proofs(fields, changed_items, previous_fields):
+    """Preserve all former blocker proofs and require new proof for each edit."""
     errors = []
     if fields.get("Nova evidencia") and (
         not contextual_detail(fields["Nova evidencia"][0], minimum=28)
         or not source_anchor(fields["Nova evidencia"][0])
     ):
         errors.append("retificacao: nova evidencia sem fonte verificavel")
+    proof_prefix = "Prova de reclassificacao "
+    for key, historical in previous_fields.items():
+        if key.startswith(proof_prefix) and fields.get(key, [])[:len(historical)] != historical:
+            errors.append(f"retificacao: historico de {key.removeprefix(proof_prefix)} perdido ou alterado")
     for identifier in sorted(changed_items):
-        values = fields.get(f"Prova de reclassificacao {identifier}", [])
-        if (len(values) != 1 or not contextual_detail(values[0], minimum=28)
-                or not source_anchor(values[0])):
-            errors.append(f"retificacao: item {identifier} alterado/retirado sem prova contextual")
+        key = f"{proof_prefix}{identifier}"
+        values = fields.get(key, [])
+        historical_count = len(previous_fields.get(key, []))
+        if len(values) <= historical_count:
+            errors.append(f"retificacao: item {identifier} alterado/retirado sem nova prova contextual")
+        for value in values[historical_count:]:
+            if not contextual_detail(value, minimum=28) or not source_anchor(value):
+                errors.append(f"retificacao: item {identifier} alterado/retirado sem prova contextual")
     return errors
+
+def revision_fields(lines):
+    """Read the single revision ledger without interpreting unrelated sections."""
+    plain = visible_lines(lines)
+    headings = atx_heading_positions(plain, 2)
+    starts = [i for i, heading in headings if heading == "## Retificacao do parecer"]
+    if len(starts) != 1:
+        return {}
+    start = starts[0]
+    boundaries = sorted(i for level in (1, 2)
+                        for i, _ in atx_heading_positions(plain, level))
+    end = next((i for i in boundaries if i > start), len(plain))
+    fields = {}
+    for line in plain[start + 1:end]:
+        match = re.fullmatch(r"- \*\*(.+?):\*\*\s*(.*)", line)
+        if match:
+            fields.setdefault(match.group(1), []).append(match.group(2))
+    return fields
 
 
 def validate_revision(current_text, previous_text):
@@ -442,13 +496,7 @@ def validate_revision(current_text, previous_text):
     starts = [index for index, title in headings if "## " + title == section]
     if len(starts) != 1:
         return ["mudanca de veredito/triagem exige Retificacao do parecer unica"]
-    start = starts[0]
-    end = next((index for index, _ in headings if index > start), len(plain))
-    fields = {}
-    for line in plain[start + 1:end]:
-        match = re.fullmatch(r"- \*\*(.+?):\*\*\s*(.*)", line)
-        if match:
-            fields.setdefault(match.group(1), []).append(match.group(2))
+    fields = revision_fields(new_lines)
     errors = []
     for key in ("Veredito anterior", "Veredito atual", "Motivo da retificacao", "Nova evidencia", "HEAD auditado"):
         values = fields.get(key, [])
@@ -463,7 +511,13 @@ def validate_revision(current_text, previous_text):
     head = fields.get("HEAD auditado", [""])[0].strip(chr(96))
     if not SHA.fullmatch(head):
         errors.append("retificacao: HEAD auditado deve ser SHA completo")
-    errors.extend(validate_reclassification_proofs(fields, changed_items))
+    previous_fields = {}
+    if "## Retificacao do parecer" in canonical_sections(old_lines):
+        previous_fields = revision_fields(old_lines)
+        expected_digest = hashlib.sha256(previous_text.encode("utf-8")).hexdigest()
+        if fields.get("SHA-256 do parecer anterior") != [expected_digest]:
+            errors.append("retificacao: SHA-256 do parecer anterior ausente ou divergente")
+    errors.extend(validate_reclassification_proofs(fields, changed_items, previous_fields))
     return errors
 
 
