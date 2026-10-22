@@ -175,7 +175,7 @@ def parse_evidence(lines, expected_counts):
             continue
         # Detect candidate records across the *entire* visible body, not only
         # inside a canonical section. A misplaced record must never hide at zero.
-        match = re.match(r"^###\\s+(?:\\[[^\\]]+\\]\\s+)?((?:A|RISK|LIM)-[0-9]{3,})\\b", line)
+        match = re.match(r"^###\s+(?:\[[^\]]+\]\s+)?((?:A|RISK|LIM)-[0-9]{3,})\b", line)
         if not match:
             continue
         identifier = match.group(1)

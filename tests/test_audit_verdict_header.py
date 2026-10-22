@@ -255,30 +255,30 @@ def test_revision_requires_previous_file_on_cli(tmp_path):
 
 @pytest.mark.parametrize("hidden", [
     blocker(), risk(), limitation(),
-    "## Achados bloqueantes\\nNenhum\\n## Outra secao\\n" + blocker(),
+    "## Achados bloqueantes\nNenhum\n## Outra secao\n" + blocker(),
 ])
 def test_stray_structured_records_never_hide_under_zero_counts(hidden):
-    text = report("APROVADA", sections="## Evidencia complementar\\n" + hidden)
+    text = report("APROVADA", sections="## Evidencia complementar\n" + hidden)
     assert module.validate(text), "every triage item must be in its own counted section"
 
 
 def test_misplaced_extra_record_cannot_hide_behind_correct_blocker_count():
-    sections = ("## Achados bloqueantes\\n" + blocker()
-                + "## Evidencias adicionais\\n" + blocker("A-002"))
+    sections = ("## Achados bloqueantes\n" + blocker()
+                + "## Evidencias adicionais\n" + blocker("A-002"))
     text = report("REPROVADA", blockers=1, merge="NAO", sections=sections)
     assert module.validate(text)
 
 
 def test_duplicate_id_outside_its_section_is_rejected():
-    sections = ("## Achados bloqueantes\\n" + blocker()
-                + "## Evidencias adicionais\\n" + blocker())
+    sections = ("## Achados bloqueantes\n" + blocker()
+                + "## Evidencias adicionais\n" + blocker())
     text = report("REPROVADA", blockers=1, merge="NAO", sections=sections)
     assert module.validate(text)
 
 
 def test_fenced_example_outside_sections_does_not_count_as_a_finding():
-    text = report("APROVADA", sections="## Referencias\\n" + chr(96)*3
-                  + "\\n" + blocker() + chr(96)*3 + "\\n")
+    text = report("APROVADA", sections="## Referencias\n" + chr(96)*3
+                  + "\n" + blocker() + chr(96)*3 + "\n")
     assert module.validate(text) == []
 
 
@@ -288,17 +288,17 @@ def test_same_id_title_change_requires_revision_and_individual_proof():
     assert module.validate(new) == []
     assert module.validate_revision(new, old)
     rectification = (
-        "\\n## Retificacao do parecer\\n"
-        "- **Veredito anterior:** REPROVADA\\n"
-        "- **Veredito atual:** REPROVADA\\n"
-        "- **Motivo da retificacao:** o achado foi reavaliado sob novo contexto\\n"
-        "- **Nova evidencia:** services/workout.py:104 demonstra o contexto adicional\\n"
-        "- **HEAD auditado:** " + "a" * 40 + "\\n"
+        "\n## Retificacao do parecer\n"
+        "- **Veredito anterior:** REPROVADA\n"
+        "- **Veredito atual:** REPROVADA\n"
+        "- **Motivo da retificacao:** o achado foi reavaliado sob novo contexto\n"
+        "- **Nova evidencia:** services/workout.py:104 demonstra o contexto adicional\n"
+        "- **HEAD auditado:** " + "a" * 40 + "\n"
     )
     assert module.validate_revision(new + rectification, old)
     assert module.validate_revision(
         new + rectification
-        + "- **Prova de reclassificacao A-001:** services/workout.py:104 e teste discriminante do novo titulo\\n",
+        + "- **Prova de reclassificacao A-001:** services/workout.py:104 e teste discriminante do novo titulo\n",
         old,
     ) == []
 
