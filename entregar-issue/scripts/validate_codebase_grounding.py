@@ -17,7 +17,10 @@ from pathlib import Path
 from typing import Any
 
 from plan_execution import (
-    CODE_SUFFIXES, is_generated_path, is_test_path, pytest_discovery_configs,
+    CODE_SUFFIXES,
+    is_generated_path,
+    is_test_path,
+    pytest_discovery_configs,
 )
 from schema_validation import validate_against_schema
 
