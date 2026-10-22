@@ -80,7 +80,7 @@ CATEGORIES = {
         "LIM", ("Recurso indisponível", "Gate obrigatório afetado", "Tentativas e fallbacks", "Prova indisponível")
     ),
 }
-PLACEHOLDER = re.compile(r"^(?:[.\-? ]+|unknown|todo|tbd|n/?a|\[[^]]*\])$", re.I)
+PLACEHOLDER = re.compile(r"^(?:[.\-? ]+|unknown|todo|tbd|n/?a|\[[^]]*\])$", re.IGNORECASE)
 SHA = re.compile(r"^[0-9a-f]{40}$", re.I)
 
 
@@ -166,7 +166,7 @@ def validate_body(lines):
     triage = TRIAGE.fullmatch(lines[7]) if len(lines) > 7 else None
     if triage is None:
         return []
-    expected = dict(zip(CATEGORIES, (int(value) for value in triage.groups())))
+    expected = dict(zip(CATEGORIES, (int(value) for value in triage.groups()), strict=True))
     errors, _ = parse_evidence(lines, expected)
     return errors
 
@@ -182,8 +182,8 @@ def validate_revision(current_text, previous_text):
     new_triage = TRIAGE.fullmatch(new_lines[7]) if len(new_lines) > 7 else None
     if new_triage is None:
         return ["nova triagem invalida"]
-    old_expected = dict(zip(CATEGORIES, (int(value) for value in old_triage.groups())))
-    new_expected = dict(zip(CATEGORIES, (int(value) for value in new_triage.groups())))
+    old_expected = dict(zip(CATEGORIES, (int(value) for value in old_triage.groups()), strict=True))
+    new_expected = dict(zip(CATEGORIES, (int(value) for value in new_triage.groups()), strict=True))
     _, old_items = parse_evidence(old_lines, old_expected)
     _, new_items = parse_evidence(new_lines, new_expected)
     removed = set(old_items["A"]) - set(new_items["A"])
