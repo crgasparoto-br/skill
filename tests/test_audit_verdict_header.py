@@ -512,3 +512,86 @@ def test_specific_reproducible_anchors_remain_valid(anchored):
         sections="## Achados bloqueantes\n" + entry,
     )
     assert module.validate(text) == []
+
+
+@pytest.mark.parametrize("container", ["> ", "- "])
+@pytest.mark.parametrize("category", ["A", "RISK", "LIM"])
+def test_escaped_container_fence_cannot_hide_visible_triage_item(container, category):
+    # An uncontained ATX heading terminates the quoted/list fenced example.
+    record = {"A": blocker(), "RISK": risk(), "LIM": limitation()}[category]
+    text = report(
+        "APROVADA",
+        sections="## Evidencias complementares\n" + container + chr(96)*3 + "markdown\n" + record,
+    )
+    errors = module.validate(text)
+    assert errors
+    assert any(category + "-001" in error and "fora da secao" in error for error in errors)
+
+
+@pytest.mark.parametrize("category", ["A", "RISK", "LIM"])
+def test_blank_line_does_not_promote_list_continuation_to_canonical_item(category):
+    record = {"A": blocker(), "RISK": risk(), "LIM": limitation()}[category]
+    section = {
+        "A": "## Achados bloqueantes",
+        "RISK": "## Riscos inferidos nao confirmados",
+        "LIM": "## Limitacoes exclusivas do auditor",
+    }[category]
+    # CommonMark keeps the indented heading inside the list, even after a blank.
+    sections = section + "\n- Item de exemplo\n\n  " + record
+    text = report(
+        "REPROVADA" if category == "A" else "INCONCLUSIVA" if category == "LIM" else "APROVADA",
+        blockers=1 if category == "A" else 0,
+        merge="NAO" if category != "RISK" else "SIM",
+        risks=1 if category == "RISK" else 0,
+        limitations=1 if category == "LIM" else 0,
+        sections=sections,
+    )
+    errors = module.validate(text)
+    assert any(category + "-001" in error and "aninhado" in error for error in errors)
+    assert any("itens verificaveis 0" in error for error in errors)
+
+
+@pytest.mark.parametrize("container,continuation", [
+    ("> ", "> "),
+    ("- ", "  "),
+    ("> - ", ">   "),
+])
+def test_nested_fence_remains_inert_in_its_own_container(container, continuation):
+    text = report("APROVADA", sections=(
+        "## Exemplos\n" + container + chr(96)*3 + "markdown\n"
+        + continuation + "### A-001 — texto apenas ilustrativo\n"
+        + continuation + chr(96)*3 + "\n"
+    ))
+    assert module.validate(text) == []
+
+
+def test_html_comment_is_inert_and_following_real_heading_is_visible():
+    inert = report("APROVADA", sections=(
+        "## Exemplos\n<!--\n" + blocker() + "-->\n"
+    ))
+    assert module.validate(inert) == []
+    active = report("APROVADA", sections=(
+        "## Exemplos\n<!--\n" + blocker() + "-->\n" + blocker()
+    ))
+    assert any("A-001" in error and "fora da secao" in error for error in module.validate(active))
+
+
+def test_short_or_generic_revision_reason_is_not_substantiation():
+    old = report("REPROVADA", blockers=1, merge="NAO", limitations=1)
+    new = report("INCONCLUSIVA", merge="NAO", limitations=1)
+    fragment = (
+        "\n## Retificacao do parecer\n"
+        "- **Veredito anterior:** REPROVADA\n"
+        "- **Veredito atual:** INCONCLUSIVA\n"
+        "- **Motivo da retificacao:** ok\n"
+        "- **Nova evidencia:** services/workout.py:104; teste discriminante reproduzido\n"
+        "- **HEAD auditado:** " + "a" * 40 + "\n"
+        "- **Prova de reclassificacao A-001:** services/workout.py:104; reanalise documentou a origem\n"
+    )
+    errors = module.validate_revision(new + fragment, old)
+    assert any("motivo sem fundamentacao contextual" in error for error in errors)
+    context = fragment.replace(
+        "- **Motivo da retificacao:** ok\n",
+        "- **Motivo da retificacao:** novo controle demonstrou que o achado nao pertence ao candidato\n",
+    )
+    assert module.validate_revision(new + context, old) == []
