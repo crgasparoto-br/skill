@@ -11,11 +11,13 @@ import subprocess
 import tomllib
 import unicodedata
 from datetime import UTC, datetime
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from planning_contract_runtime import CONTRACT_VERSION, validate_controller_context, validate_execution_plan
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 ROOT = Path(__file__).resolve().parents[1]
 CRITICAL = {
