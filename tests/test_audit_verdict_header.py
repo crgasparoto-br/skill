@@ -632,3 +632,73 @@ def test_html_comment_stops_at_the_container_boundary(container, continuation):
         "## Exemplos\n" + container + "<!--\n" + blocker()
     ))
     assert any("A-001" in error and "fora da secao" in error for error in module.validate(exposed))
+
+@pytest.mark.parametrize("item", [
+    "#### A-001 — Bloqueador oculto sob H4\n",
+    "##### RISK-001 — Risco oculto sob H5\n",
+    "###### LIM-001 — Limitacao oculta sob H6\n",
+    "- **A-001 — Bloqueador oculto em lista**\n",
+    "1. **RISK-001 — Risco oculto em lista numerada**\n",
+    "**LIM-001 — Limitacao oculta em negrito**\n",
+])
+def test_issue110_visible_noncanonical_records_never_escape_zero_count(item):
+    errors = module.validate(report("APROVADA", sections="## Evidencia adicional\n" + item))
+    assert errors
+    assert any("formato nao canonico" in error for error in errors)
+
+
+@pytest.mark.parametrize("tag", ["pre", "script", "style", "textarea"])
+def test_issue110_raw_html_headings_are_not_a_confirmed_blocker(tag):
+    example = f"<{tag}>\n" + blocker() + f"</{tag}>\n"
+    text = report("REPROVADA", blockers=1, merge="NAO",
+                  sections="## Achados bloqueantes\n" + example)
+    assert any("itens verificaveis 0" in error for error in module.validate(text))
+    assert module.validate(report("APROVADA", sections="## Exemplos\n" + example)) == []
+
+
+def test_issue110_raw_html_container_does_not_hide_following_real_finding():
+    text = report("APROVADA", sections="## Exemplos\n<pre>\n"
+                  + blocker() + "</pre>\n" + blocker())
+    assert any("A-001" in error and "fora da secao" in error
+               for error in module.validate(text))
+
+
+def test_issue110_second_revision_preserves_historical_proofs_and_hash():
+    import hashlib
+
+    original = report("REPROVADA", blockers=1, merge="NAO", limitations=1)
+    no_blocker = report("INCONCLUSIVA", merge="NAO", limitations=1)
+    proof = "services/workout.py:104; leitura independente demonstrou causa externa ao candidato"
+    first = no_blocker + (
+        "\n## Retificacao do parecer\n"
+        "- **Veredito anterior:** REPROVADA\n"
+        "- **Veredito atual:** INCONCLUSIVA\n"
+        "- **Motivo da retificacao:** nova execucao demonstrou que a falha nao esta no candidato\n"
+        "- **Nova evidencia:** services/workout.py:104; resultado reproduzido no SHA imutavel\n"
+        "- **HEAD auditado:** " + "a" * 40 + "\n"
+        "- **Prova de reclassificacao A-001:** " + proof + "\n"
+    )
+    assert module.validate_revision(first, original) == []
+
+    digest = hashlib.sha256(first.encode("utf-8")).hexdigest()
+    second = no_blocker + (
+        "\n## Retificacao do parecer\n"
+        "- **Veredito anterior:** INCONCLUSIVA\n"
+        "- **Veredito atual:** INCONCLUSIVA\n"
+        "- **Motivo da retificacao:** revisao de contexto apos verificacao independente do gate\n"
+        "- **Nova evidencia:** services/workout.py:104; exame complementar do mesmo SHA\n"
+        "- **HEAD auditado:** " + "a" * 40 + "\n"
+        "- **Prova de reclassificacao A-001:** " + proof + "\n"
+        "- **SHA-256 do parecer anterior:** " + digest + "\n"
+    )
+    assert module.validate_revision(second, first) == []
+    assert any("historico de A-001 perdido" in error for error in
+               module.validate_revision(second.replace(
+                   "- **Prova de reclassificacao A-001:** " + proof + "\n", ""), first))
+    assert any("historico de A-001 perdido" in error for error in
+               module.validate_revision(second.replace(proof, proof + " adulterado"), first))
+    assert any("SHA-256 do parecer anterior" in error for error in
+               module.validate_revision(second.replace(digest, "0" * 64), first))
+    assert any("SHA-256 do parecer anterior" in error for error in
+               module.validate_revision(second.replace(
+                   "- **SHA-256 do parecer anterior:** " + digest + "\n", ""), first))
