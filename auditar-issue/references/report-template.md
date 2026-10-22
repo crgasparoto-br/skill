@@ -57,6 +57,11 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 
 ### Triagem do resultado
 
+Registros `A-*`, `RISK-*` e `LIM-*` em listas simples/numeradas, citacoes,
+paragrafos ou negrito fora do H3 canonico devem ser rejeitados, inclusive com
+contagem zero. Referencias incidentais e exemplos inertes nao sao findings.
+
+
 Preencher as tres contagens da linha **Triagem** antes de decidir o veredito. `bloqueadores comprovados` e exatamente o total do bloco de conclusao, sempre respaldado por evidencia do candidato/entrega (analise estatica conclusiva pode servir como prova; hipotese sem prova discriminante nao serve). `riscos inferidos` representa suspeitas nao confirmadas, fora da contagem de blockers. `limitacoes do auditor` registra incapacidade exclusiva do runtime/conector para executar um gate obrigatorio, sem encontrar defeito na entrega.
 
 Rejeitar secoes vazias, placeholders e prova generica. IDs A/RISK/LIM reais nao somem sob contagem zero: H4-H6 e itens em negrito nao sao registros canonicos H3. Fences e blocos HTML raw (`pre`, `script`, `style`, `textarea`) tornam exemplos inertes apenas em seu escopo; H1 encerra H2. Prova exige fonte localizavel; `pytest` isolado nao basta. Preservar o gate de completude.

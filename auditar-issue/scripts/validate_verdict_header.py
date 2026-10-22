@@ -314,8 +314,9 @@ def detect_misplaced_records(plain):
         else:
             level = 0
             identifier_match = re.match(
-                r"^ {0,3}(?:>[ \t]?)*(?:(?:[-+*]|\d{1,9}[.)])[ \t]+)?"
-                r"\*\*((?:A|RISK|LIM)-[0-9]{3,})(?:[ \t]+[—-]|[ \t]*:)",
+                r"^ {0,3}(?:>[ \t]?)*(?:(?:[-+*]|\d{1,9}[.)])[ \t]+)*"
+                r"(?:\*\*)?((?:A|RISK|LIM)-[0-9]{3,})(?:\*\*)?"
+                r"(?:[ \t]+[—–-](?:[ \t]+|$)|[ \t]*:)",
                 line,
             )
         if not identifier_match:

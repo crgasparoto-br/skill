@@ -634,6 +634,39 @@ def test_html_comment_stops_at_the_container_boundary(container, continuation):
     assert any("A-001" in error and "fora da secao" in error for error in module.validate(exposed))
 
 @pytest.mark.parametrize("item", [
+    "- A-001 — Bloqueador fora da secao canonica\n",
+    "* RISK-001 — Risco ainda nao comprovado\n",
+    "1. LIM-001 — Limitacao exclusiva do auditor\n",
+    "> - A-001 — Bloqueador aninhado em citacao\n",
+    "- - RISK-001 — Risco em sublista visivel\n",
+    "A-001 — Registro em paragrafo simples\n",
+    "- **LIM-001** — Registro com identificador em negrito\n",
+])
+def test_issue110_plain_visible_records_rejected_even_when_declared_zero(item):
+    errors = module.validate(report("APROVADA", sections="## Evidencias extras\n" + item))
+    assert any("formato nao canonico" in error for error in errors)
+
+
+@pytest.mark.parametrize("inert", [
+    "- Consulte A-001 na revisao anterior\n",
+    "- **Prova de reclassificacao A-001:** ver arquivo.py:123\n",
+    "- `A-001 — exemplo inline`\n",
+    "    - A-001 — trecho indentado como codigo\n",
+    "```markdown\n- A-001 — exemplo cercado\n```\n",
+    "<pre>\n- A-001 — exemplo HTML\n</pre>\n",
+])
+def test_issue110_plain_id_references_and_inert_examples_not_findings(inert):
+    assert module.validate(report("APROVADA", sections="## Exemplos\n" + inert)) == []
+
+
+def test_issue110_plain_list_extra_record_rejected_with_correct_count():
+    sections = ("## Achados bloqueantes\n" + blocker()
+                + "## Evidencias complementares\n- A-002 — Achado extra nao contabilizado\n")
+    errors = module.validate(report("REPROVADA", blockers=1, merge="NAO", sections=sections))
+    assert any("A-002" in error and "formato nao canonico" in error for error in errors)
+
+
+@pytest.mark.parametrize("item", [
     "#### A-001 — Bloqueador oculto sob H4\n",
     "##### RISK-001 — Risco oculto sob H5\n",
     "###### LIM-001 — Limitacao oculta sob H6\n",
