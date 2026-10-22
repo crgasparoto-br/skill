@@ -86,26 +86,44 @@ SHA = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 
 
 def visible_lines(lines):
-    """Do not allow example records in fenced code blocks to satisfy evidence."""
+    """Filter fenced examples, including fenced blocks inside quotes and lists."""
     output = []
     fence = None
+    list_indent = 0
+    container = re.compile(r"^ {0,3}(?:>[ \t]?|(?:[-+*]|\d{1,9}[.)])[ \t]+)")
     for line in lines:
-        marker = re.match(r"^ {0,3}(~{3,}|"+chr(96)+r"{3,})", line)
+        candidate = line
+        while (match := container.match(candidate)):
+            candidate = candidate[match.end():]
+        marker = re.match(r"^ {0,3}(~{3,}|"+chr(96)+r"{3,})(.*)$", candidate)
         if marker:
-            mark = marker.group(1)
+            mark, suffix = marker.groups()
             if fence is None:
                 fence = mark
-            elif mark[0] == fence[0] and len(mark) >= len(fence):
+                continue
+            if mark[0] == fence[0] and len(mark) >= len(fence) and not suffix.strip():
                 fence = None
+                continue
+        if fence is not None:
             continue
-        if fence is None:
+        if marker:
+            continue
+        list_marker = re.match(r"^ {0,3}(?:[-+*]|\d{1,9}[.)])[ \t]+", line)
+        indent = len(line) - len(line.lstrip(" "))
+        if list_marker:
+            list_indent = len(list_marker.group())
+        elif line.strip() and indent < list_indent:
+            list_indent = 0
+        if list_indent and indent >= list_indent and line.lstrip().startswith("#"):
+            output.append("- " + line.lstrip())
+        else:
             output.append(line)
     return output
 
 
 def markdown_heading(line):
     """Recognize CommonMark ATX headings, not four-space indented code."""
-    match = re.match(r"^ {0,3}(#{2,3})(?:[ \t]+|$)(.*)$", line)
+    match = re.match(r"^ {0,3}(#{1,6})(?:[ \t]+|$)(.*)$", line)
     if not match:
         return None
     # Closing hashes are optional when preceded by horizontal whitespace.
@@ -136,11 +154,17 @@ def contextual_detail(value, minimum=20):
 
 def source_anchor(value):
     """Require a locatable artifact or command for a confirmed blocker."""
-    return bool(re.search(
-        r"(?:\b[\w./-]+:\d+\b|https?://\S+|\b[0-9a-f]{40}\b|"
-        r"\b(?:git show|pytest|python -m|CI run)\b)",
+    artifact = re.search(
+        r"(?:\b[\w./-]+:\d+(?:-\d+)?\b|https?://\S+|\b[0-9a-f]{40}\b|"
+        r"\bCI run\s+#?\d{5,}\b)", value, re.IGNORECASE,
+    )
+    command = re.search(
+        r"\b(?:python3?\s+-m\s+pytest|pytest)\s+"
+        r"(?:-[\w-]+\s+)*[\w./-]+\.py\b[^\n]*?"
+        r"\b(?:passed|failed|errors?|falhou|passou|reproduzido)\b",
         value, re.IGNORECASE,
-    ))
+    )
+    return bool(artifact or command)
 
 
 def validate_record(prefix, identifier, fields):
@@ -208,7 +232,9 @@ def detect_misplaced_records(plain):
         if heading is None:
             continue
         level, title = heading
-        if level == 2:
+        if level == 1:
+            current_section = None
+        elif level == 2:
             current_section = "## " + title
         if level != 3:
             continue
@@ -242,6 +268,8 @@ def parse_evidence(lines, expected_counts):
     plain = visible_lines(lines)
     items = {}
     sections = atx_heading_positions(plain, 2)
+    boundaries = sorted(index for level in (1, 2)
+                        for index, _ in atx_heading_positions(plain, level))
     errors.extend(detect_misplaced_records(plain))
     for section, (prefix, required) in CATEGORIES.items():
         found = [index for index, name in sections if name == section]
@@ -250,7 +278,7 @@ def parse_evidence(lines, expected_counts):
             errors.append(f"secao de triagem repetida: {section}")
         if found:
             start = found[0]
-            end = next((index for index, _ in sections if index > start), len(plain))
+            end = next((index for index in boundaries if index > start), len(plain))
             content = plain[start + 1:end]
             headers = atx_heading_positions(content, 3)
             for index, (position, heading) in enumerate(headers):
