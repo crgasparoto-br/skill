@@ -157,7 +157,7 @@ def visible_lines(lines):
             continue
         # Preserve the list container across blank lines. A heading continuing
         # a list is never a canonical evidence record, even if indented <= 3.
-        if in_list and re.match(r"^ {0,3}#{3}(?:[ \t]+|$)", candidate):
+        if in_list and re.match(r"^ {0,3}#{1,6}(?:[ \t]+|$)", candidate):
             output.append("- " + candidate.lstrip())
         else:
             output.append(line)
