@@ -90,7 +90,7 @@ def visible_lines(lines):
     output = []
     fence = None
     for line in lines:
-        marker = re.match(r"^\s*(~{3,}|"+chr(96)+r"{3,})", line)
+        marker = re.match(r"^ {0,3}(~{3,}|"+chr(96)+r"{3,})", line)
         if marker:
             mark = marker.group(1)
             if fence is None:
@@ -178,6 +178,22 @@ def validate_record(prefix, identifier, fields):
     return errors
 
 
+def nested_audit_heading(line):
+    """Recognize evidence headings inside Markdown quotes or list items.
+
+    Nested headings are visible, but cannot satisfy canonical section records.
+    """
+    container = r"(?:>[ \t]?|(?:[-+*]|\d{1,9}[.)])[ \t]+)"
+    match = re.match(
+        r"^ {0,3}" + container + r"(?: {0,3}" + container
+        + r")* {0,3}#{3}(?:[ \t]+|$)(.*)$", line,
+    )
+    if not match:
+        return None
+    title = re.sub(r"[ \t]+#+[ \t]*$", "", match.group(1)).strip()
+    return 3, title
+
+
 def detect_misplaced_records(plain):
     """Reject visible ATX evidence headings outside their canonical section."""
     errors = []
@@ -186,6 +202,9 @@ def detect_misplaced_records(plain):
     all_ids = set()
     for line in plain:
         heading = markdown_heading(line)
+        nested = heading is None
+        if nested:
+            heading = nested_audit_heading(line)
         if heading is None:
             continue
         level, title = heading
@@ -198,7 +217,9 @@ def detect_misplaced_records(plain):
             continue
         identifier = match.group(1)
         prefix = identifier.split("-", 1)[0]
-        if current_section != section_for_prefix[prefix]:
+        if nested:
+            errors.append(f"{identifier}: item aninhado fora da secao canonica")
+        elif current_section != section_for_prefix[prefix]:
             errors.append(f"{identifier}: item fora da secao {section_for_prefix[prefix]}")
         if identifier in all_ids:
             errors.append(f"ID duplicado na triagem: {identifier}")

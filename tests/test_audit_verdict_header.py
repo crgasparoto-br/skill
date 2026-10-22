@@ -390,3 +390,42 @@ def test_indented_revision_section_is_verified_against_previous(tmp_path):
                           capture_output=True, text=True, check=False)
     assert proc.returncode != 0
     assert "--previous" in proc.stdout
+
+
+@pytest.mark.parametrize("container", [
+    "> ", "- ", "* ", "+ ", "1. ", "> - ",
+])
+def test_nested_visible_records_do_not_escape_the_count(container):
+    text = report("APROVADA", sections="## Evidencia complementar\n" + container + blocker())
+    errors = module.validate(text)
+    assert any("A-001" in error and "aninhado" in error for error in errors)
+
+
+def test_indented_code_fence_cannot_hide_real_heading():
+    # A fence indented four spaces is a code line, not a Markdown fence.
+    fence = chr(96) * 3
+    text = report("APROVADA", sections=(
+        "## Evidencia complementar\n"
+        "    " + fence + "\n"
+        "### A-001 — Registro visivel posterior\n"
+        "    " + fence + "\n"
+    ))
+    errors = module.validate(text)
+    assert any("A-001" in error and "fora da secao" in error for error in errors)
+
+
+def test_nested_record_in_correct_section_is_still_invalid():
+    text = report("APROVADA", sections="## Achados bloqueantes\n> " + blocker())
+    errors = module.validate(text)
+    assert any("A-001" in error and "aninhado" in error for error in errors)
+
+
+def test_real_fenced_code_keeps_embedded_indented_records_inert():
+    fence = chr(96) * 3
+    text = report("APROVADA", sections=(
+        "## Referencias\n"
+        "  " + fence + "markdown\n"
+        "   ### A-001 — Codigo, nao achado\n"
+        "  " + fence + "\n"
+    ))
+    assert module.validate(text) == []
