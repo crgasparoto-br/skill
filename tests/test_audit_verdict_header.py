@@ -374,8 +374,10 @@ def test_indented_revision_section_is_verified_against_previous(tmp_path):
 
     old = report("REPROVADA", blockers=1, merge="NAO", limitations=1)
     new = report("INCONCLUSIVA", merge="NAO", limitations=1)
+    # A top-level H1 closes the preceding list. Without it the indented H2
+    # would remain inside the last list item and cannot be canonical.
     current = new + (
-        "\n  ## Retificacao do parecer\n"
+        "\n# Encerramento do bloco anterior\n\n  ## Retificacao do parecer\n"
         "- **Veredito anterior:** REPROVADA\n"
         "- **Veredito atual:** INCONCLUSIVA\n"
         "- **Motivo da retificacao:** teste externo demonstrou a causa diferente\n"
