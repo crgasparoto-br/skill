@@ -429,3 +429,86 @@ def test_real_fenced_code_keeps_embedded_indented_records_inert():
         "  " + fence + "\n"
     ))
     assert module.validate(text) == []
+
+
+def test_h1_closes_canonical_evidence_section():
+    text = report(
+        "REPROVADA", blockers=1, merge="NAO",
+        sections="## Achados bloqueantes\n# Contexto diferente\n" + blocker(),
+    )
+    errors = module.validate(text)
+    assert any("A-001" in error and "fora da secao" in error for error in errors)
+    assert any("contagem declarada 1, itens verificaveis 0" in error for error in errors)
+
+
+def test_h1_excludes_extra_record_after_valid_blocker():
+    text = report(
+        "REPROVADA", blockers=1, merge="NAO",
+        sections="## Achados bloqueantes\n" + blocker()
+        + "# Novo capitulo\n" + blocker("A-002"),
+    )
+    errors = module.validate(text)
+    assert any("A-002" in error and "fora da secao" in error for error in errors)
+
+
+@pytest.mark.parametrize("container,continuation", [
+    ("> ", "> "),
+    ("> - ", ">   "),
+    ("- ", "  "),
+])
+def test_fenced_examples_inside_markdown_containers_are_inert(container, continuation):
+    fence = chr(96) * 3
+    sections = (
+        "## Achados bloqueantes\n" + blocker()
+        + container + fence + "markdown\n"
+        + continuation + "### A-002 — Codigo de exemplo, nao um achado\n"
+        + continuation + fence + "\n"
+    )
+    assert module.validate(report(
+        "REPROVADA", blockers=1, merge="NAO", sections=sections,
+    )) == []
+
+
+def test_nested_list_continuation_is_not_a_canonical_finding():
+    text = report(
+        "APROVADA",
+        sections="## Evidencia adicional\n- Registro de exemplo\n"
+        "  ### A-001 — Finding aninhado e indevido\n",
+    )
+    assert any("A-001" in error and "aninhado" in error for error in module.validate(text))
+
+
+@pytest.mark.parametrize("unanchored", [
+    "pytest nao foi executado, sem artefato verificavel para o achado",
+    "python -m pytest foi somente mencionado, sem parametros nem saida do teste",
+    "git show foi mencionado, sem commit ou arquivo especificado como prova",
+    "CI run citado sem numero, URL, arquivo ou resultado reproduzivel",
+    "pytest -q tests/test_workout.py sem execucao ou resultado registrado",
+])
+def test_generic_tool_mentions_do_not_qualify_as_evidence(unanchored):
+    entry = blocker().replace(
+        "services/workout.py:104 e teste de regressao reproduzivel no SHA fixo",
+        unanchored,
+    )
+    text = report(
+        "REPROVADA", blockers=1, merge="NAO",
+        sections="## Achados bloqueantes\n" + entry,
+    )
+    assert any("evidencia sem artefato" in error for error in module.validate(text))
+
+
+@pytest.mark.parametrize("anchored", [
+    "services/workout.py:104 demonstra caminho incorreto no commit auditado",
+    "CI run #39802655582 registra teste falho no SHA completo da entrega",
+    "pytest -q tests/test_workout.py -> 2 failed no checkout auditado",
+])
+def test_specific_reproducible_anchors_remain_valid(anchored):
+    entry = blocker().replace(
+        "services/workout.py:104 e teste de regressao reproduzivel no SHA fixo",
+        anchored,
+    )
+    text = report(
+        "REPROVADA", blockers=1, merge="NAO",
+        sections="## Achados bloqueantes\n" + entry,
+    )
+    assert module.validate(text) == []
