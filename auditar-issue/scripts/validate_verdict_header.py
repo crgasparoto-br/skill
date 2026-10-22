@@ -316,7 +316,7 @@ def detect_misplaced_records(plain):
             identifier_match = re.match(
                 r"^ {0,3}(?:>[ \t]?)*(?:(?:[-+*]|\d{1,9}[.)])[ \t]+)*"
                 r"(?:\*\*)?((?:A|RISK|LIM)-[0-9]{3,})(?:\*\*)?"
-                r"(?:[ \t]+[—–-](?:[ \t]+|$)|[ \t]*:)",
+                r"(?:[ \t]+[—-](?:[ \t]+|$)|[ \t]*:)",
                 line,
             )
         if not identifier_match:
