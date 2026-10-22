@@ -614,3 +614,19 @@ def test_list_nested_h1_does_not_close_its_outer_canonical_section():
         "  # Titulo dentro da lista\n" + blocker()
     ))
     assert module.validate(text) == []
+
+
+@pytest.mark.parametrize("container,continuation", [
+    ("> ", "> "),
+    ("- ", "  "),
+])
+def test_html_comment_stops_at_the_container_boundary(container, continuation):
+    hidden = report("APROVADA", sections=(
+        "## Exemplos\n" + container + "<!--\n"
+        + continuation + blocker() + continuation + "-->\n"
+    ))
+    assert module.validate(hidden) == []
+    exposed = report("APROVADA", sections=(
+        "## Exemplos\n" + container + "<!--\n" + blocker()
+    ))
+    assert any("A-001" in error and "fora da secao" in error for error in module.validate(exposed))
