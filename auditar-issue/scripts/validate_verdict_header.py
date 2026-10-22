@@ -226,16 +226,22 @@ def detect_misplaced_records(plain):
         all_ids.add(identifier)
     return errors
 
+def atx_heading_positions(lines, level):
+    """Collect canonical ATX headings without inflating record-parser complexity."""
+    prefix = "#" * level + " "
+    return [
+        (index, prefix + heading[1])
+        for index, line in enumerate(lines)
+        if (heading := markdown_heading(line)) and heading[0] == level
+    ]
+
+
 def parse_evidence(lines, expected_counts):
     """Reconcile declared triage with structured, evidence-bearing body records."""
     errors = []
     plain = visible_lines(lines)
     items = {}
-    sections = [
-        (index, "## " + heading[1])
-        for index, line in enumerate(plain)
-        if (heading := markdown_heading(line)) and heading[0] == 2
-    ]
+    sections = atx_heading_positions(plain, 2)
     errors.extend(detect_misplaced_records(plain))
     for section, (prefix, required) in CATEGORIES.items():
         found = [index for index, name in sections if name == section]
@@ -246,11 +252,7 @@ def parse_evidence(lines, expected_counts):
             start = found[0]
             end = next((index for index, _ in sections if index > start), len(plain))
             content = plain[start + 1:end]
-            headers = [
-                (index, "### " + heading[1])
-                for index, line in enumerate(content)
-                if (heading := markdown_heading(line)) and heading[0] == 3
-            ]
+            headers = atx_heading_positions(content, 3)
             for index, (position, heading) in enumerate(headers):
                 pattern = r"### (?:\[[^\]]+\] )?(" + prefix + r"-[0-9]{3,}) [—-] (\S.+)"
                 match = re.fullmatch(pattern, heading)
