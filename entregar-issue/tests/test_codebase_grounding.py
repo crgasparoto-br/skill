@@ -27,6 +27,20 @@ def write(repo: Path, path: str, text: str) -> None:
     target.write_text(text, encoding="utf-8")
 
 
+def passed_verification(repo: Path, head: str, test_path: str) -> dict:
+    command = f"python -m pytest -q {test_path}"
+    check = subprocess.run([sys.executable, "-m", "pytest", "-q", test_path],
+                           cwd=repo, capture_output=True, text=True, check=False)
+    assert check.returncode == 0, check.stdout + check.stderr
+    proof = (f"HEAD: {head}\nCOMMAND: {command}\nEXIT_CODE: 0\n"
+             f"REACHED: {test_path}\n" + check.stdout + check.stderr)
+    write(repo, "verification.log", proof)
+    return {"status": "passed", "command": command, "exit_code": 0,
+            "subject_sha": head, "reached_tests": [test_path],
+            "evidence_path": "verification.log",
+            "evidence_sha256": hashlib.sha256(proof.encode()).hexdigest()}
+
+
 @pytest.fixture()
 def candidate(tmp_path: Path) -> dict:
     repo = tmp_path / "repo"
@@ -39,7 +53,12 @@ def candidate(tmp_path: Path) -> dict:
     git(repo, "commit", "-q", "-m", "base")
     base = git(repo, "rev-parse", "HEAD")
     write(repo, "src/report.py", "import requests\nfrom money import format_money\n\n\ndef total(rows):\n    return format_money(sum(rows))\n")
-    write(repo, "tests/test_report.py", "from report import total\n")
+    write(repo, "tests/test_report.py",
+          "import sys, types\nfrom pathlib import Path\n"
+          "sys.modules.setdefault('requests', types.ModuleType('requests'))\n"
+          "sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))\n"
+          "from report import total\n\ndef test_formatted_total():\n"
+          "    assert total([1, 2]) == '3.00'\n")
     git(repo, "rm", "-q", "src/legacy_report.py")
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "candidate")
@@ -74,7 +93,7 @@ def candidate(tmp_path: Path) -> dict:
                        "runner": "pytest", "candidates": []},
             "decision": "new-test-required", "justification": "novo comportamento agregado sem cenario previo",
             "disposition": "keep",
-            "verification": {"status": "passed", "command": "pytest tests/test_report.py", "exit_code": 0},
+            "verification": passed_verification(repo, head, "tests/test_report.py"),
         }],
     }
     return {"repo": repo, "base": base, "head": head, "report": report, "tmp": tmp_path}
@@ -272,17 +291,7 @@ def test_deleted_test_requires_preserved_controls(candidate):
     assert "coverage_before" in run(scenario, report).stdout
     record.update(coverage_before=["positive", "negative"], coverage_after=["positive", "negative"],
                   replacement_tests=["tests/test_replacement.py"])
-    command = "python -m pytest -q tests/test_replacement.py"
-    check = subprocess.run([sys.executable, "-m", "pytest", "-q", "tests/test_replacement.py"],
-                           cwd=repo, capture_output=True, text=True, check=False)
-    assert check.returncode == 0, check.stdout + check.stderr
-    proof = "COMMAND: " + command + "\nHEAD: " + new_head + "\n" + check.stdout + check.stderr
-    evidence_path = repo / "verification.log"
-    evidence_path.write_text(proof, encoding="utf-8")
-    record["verification"] = {"status": "passed", "command": command, "exit_code": 0,
-                              "subject_sha": new_head, "reached_tests": ["tests/test_replacement.py"],
-                              "evidence_path": "verification.log",
-                              "evidence_sha256": hashlib.sha256(proof.encode()).hexdigest()}
+    record["verification"] = passed_verification(repo, new_head, "tests/test_replacement.py")
     assert run(scenario, report).returncode == 0
     invalid = copy.deepcopy(report)
     invalid["test_decisions"][0]["verification"]["command"] = "pytest tests/test_report.py"
@@ -309,6 +318,7 @@ def test_renamed_test_requires_source_at_base(candidate):
     record = report["test_decisions"][0]
     record.update(path="tests/test_totals.py", operation="renamed", prior_path="tests/test_report.py",
                   decision="covered-by-existing", justification="only renamed, assertions unchanged")
+    record["verification"] = passed_verification(repo, head, "tests/test_totals.py")
     assert run(scenario, report).returncode == 0
 
 
@@ -332,6 +342,8 @@ def test_test_scope_and_handoff_match_for_non_code_conventions():
         "pytest.ini",
         "vitest.config.ts",
         "src/report.test.json",
+        "src/payment.cy.ts",
+        "src/login.e2e.ts",
     ]
     for path in examples:
         assert is_test_path(path), path
@@ -344,7 +356,8 @@ def test_test_scope_and_handoff_match_for_non_code_conventions():
 
 def test_go_test_only_and_runner_manifests_activate_gate():
     from plan_execution import classify_changes, is_test_path
-    for filename in ("pkg/payment_test.go", "pkg/payment_test.py", "e2e/smoke.ts", "cypress/login.cy.ts"):
+    for filename in ("pkg/payment_test.go", "pkg/payment_test.py", "e2e/smoke.ts",
+                     "cypress/login.cy.ts", "src/payment.cy.ts", "src/login.e2e.ts"):
         classification = classify_changes([filename], set())
         assert is_test_path(filename)
         assert classification["tests_touched"]
@@ -365,3 +378,56 @@ def test_blocked_scenario_cannot_report_passed(candidate):
     result = run(candidate, report)
     assert result.returncode == 2
     assert "blocked scenario cannot claim passed" in result.stdout
+
+
+@pytest.mark.parametrize("field", ["subject_sha", "reached_tests", "evidence_path", "evidence_sha256"])
+def test_passed_test_requires_execution_proof_fields(candidate, field):
+    report = copy.deepcopy(candidate["report"])
+    report["test_decisions"][0]["verification"].pop(field)
+    assert run(candidate, report).returncode == 2
+
+
+def test_non_deleted_test_rejects_stale_head_even_with_valid_log_hash(candidate):
+    report = copy.deepcopy(candidate["report"])
+    report["test_decisions"][0]["verification"]["subject_sha"] = candidate["base"]
+    result = run(candidate, report)
+    assert result.returncode == 2
+    assert "execution not bound to head" in result.stdout
+
+
+def test_non_deleted_test_rejects_unreached_case(candidate):
+    report = copy.deepcopy(candidate["report"])
+    report["test_decisions"][0]["verification"]["reached_tests"] = ["tests/test_other.py"]
+    result = run(candidate, report)
+    assert result.returncode == 2
+    assert "changed test not recorded as reached" in result.stdout
+
+
+def test_non_deleted_test_rejects_rehashed_log_with_stale_head(candidate):
+    report = copy.deepcopy(candidate["report"])
+    record = report["test_decisions"][0]["verification"]
+    proof = (candidate["repo"] / "verification.log").read_text()
+    proof = proof.replace(f"HEAD: {candidate['head']}", "HEAD: " + candidate["base"])
+    write(candidate["repo"], "verification.log", proof)
+    record["evidence_sha256"] = hashlib.sha256(proof.encode()).hexdigest()
+    result = run(candidate, report)
+    assert result.returncode == 2
+    assert "raw evidence missing exact head" in result.stdout
+
+
+def test_test_only_cypress_outside_conventional_folder_triggers_gate(candidate):
+    repo = candidate["repo"]
+    write(repo, "src/payment.cy.ts", "describe('payment', () => { it('works', () => {}) })\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "test-only custom location")
+    head = git(repo, "rev-parse", "HEAD")
+    scenario = {**candidate, "base": candidate["head"], "head": head}
+    report = copy.deepcopy(candidate["report"])
+    report.update(subject_sha=head, base_sha=candidate["head"], creations=[],
+                  references=[], replacements=[])
+    record = report["test_decisions"][0]
+    record.update(path="src/payment.cy.ts", operation="added",
+                  verification={"status": "unknown", "reason": "Cypress runner unavailable"})
+    result = run(scenario, report)
+    assert result.returncode == 3
+    assert "src/payment.cy.ts" in result.stdout
