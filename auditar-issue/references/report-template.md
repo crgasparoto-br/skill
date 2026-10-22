@@ -59,7 +59,7 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 
 Preencher as tres contagens da linha **Triagem** antes de decidir o veredito. `bloqueadores comprovados` e exatamente o total do bloco de conclusao, sempre respaldado por evidencia do candidato/entrega (analise estatica conclusiva pode servir como prova; hipotese sem prova discriminante nao serve). `riscos inferidos` representa suspeitas nao confirmadas, fora da contagem de blockers. `limitacoes do auditor` registra incapacidade exclusiva do runtime/conector para executar um gate obrigatorio, sem encontrar defeito na entrega.
 
-Rejeitar secao vazia, exemplo em codigo, placeholder e texto generico como prova. Cada item exige ID unico e evidencia contextual localizavel; secao com contagem zero fica omitida ou contem apenas Nenhum. Verificar registros estruturados A-*, RISK-* e LIM-* em todo o corpo visivel, inclusive fora das secoes canonicas; qualquer item extraviado deve reprovar mesmo com contagem zero. Exemplos em blocos de codigo nao sao achados. O validador confere estrutura e coerencia, nunca autentica sozinho a veracidade da evidencia. Aplicar o gate independente de completude normalmente.
+Rejeitar secao vazia, placeholder e prova generica. Exigir ID unico e fonte localizavel. Contabilizar A-*, RISK-* e LIM-* de todo o corpo visivel somente na secao canonica, mesmo com contagem zero; ignorar exemplos em codigo. O validador confere estrutura, nao veracidade. Preservar o gate independente de completude.
 
 A precedencia e: bloqueador comprovado > limitacao do auditor. Com ambos, `REPROVADA`, limitacao registrada e merge bloqueado; sem bloqueador e com limitacao obrigatoria, `INCONCLUSIVA`; aprovacao exige zero bloqueadores e zero limitacoes materiais. Nunca marcar ausencia de Git Bundle/DNS como falha de produto. Em toda retificacao do parecer, atualizar o artefato integral e repetir `validate_verdict_header.py` antes da mensagem; nunca substituir apenas a conclusao verbal.
 
@@ -191,7 +191,7 @@ Nao propor alteracao no candidato para corrigir o ambiente do auditor.
 
 ## Retificacao do parecer
 
-Incluir quando mudar veredito, triagem ou campos de item. Exigir `--revision --previous <anterior>` e validar o novo parecer completo. Toda mudanca do texto, ainda que apenas titulo de item, motivo determinante ou campo nao obrigatorio, precisa da secao de retificacao; a validacao isolada de um parecer inicial nao consegue conhecer versoes anteriores e nunca substitui esse confronto. Para cada ID removido/alterado, mesmo com ID preservado, exigir Prova de reclassificacao <ID> com fonte localizavel. Preservar historico e SHA; nao basta mudar o cabecalho.
+Qualquer edicao do parecer (inclusive titulo, texto livre e motivo) exige `--revision --previous <anterior>`, registro de retificacao e comparacao integral. O modo inicial isolado nao detecta historico. Para cada ID alterado/removido exigir prova contextual, preservando historico e SHA.
 
 - **Veredito anterior:** [veredito original]
 - **Veredito atual:** [veredito novo]

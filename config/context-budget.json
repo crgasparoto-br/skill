@@ -46,10 +46,6 @@
     "higienizar-repositorio/references/global-hygiene-profile.md": {
       "max_bytes": 22408,
       "reason": "Referencia do perfil de higienizacao global, que declara o que cada classe mede, o que nao ve, os limites e o contrato da politica. Cresceu com as precisoes de normalizacao, cobertura, manifest e supressor declarativo exigidas pelas rodadas de auditoria; reduzir exige mover conteudo para referencia carregada sob demanda, o que e entrega propria."
-    },
-    "auditar-issue/references/report-template.md": {
-      "max_bytes": 17778,
-      "reason": "Modelo de parecer ampliado na issue #110 para rejeitar registros fora das secoes canonicas e exigir historico integral em retificacoes. Excecao medida para o formato verificavel; manter carregamento progressivo da referencia."
     }
   }
 }

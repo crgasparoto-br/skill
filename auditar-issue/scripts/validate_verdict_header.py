@@ -229,7 +229,7 @@ def parse_evidence(lines, expected_counts):
                 entries[identifier] = {
                     "title": match.group(2).strip(),
                     "fields": fields,
-                    "body": tuple(content[position + 1:until]),
+                    "body": "\n".join(content[position + 1:until]).strip(),
                 }
             if not headers and not any(line.strip() for line in content):
                 errors.append(f"{section}: secao vazia")
