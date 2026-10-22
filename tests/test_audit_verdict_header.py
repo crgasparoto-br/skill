@@ -63,7 +63,7 @@ def report(verdict="APROVADA", summary=None, blockers=0, merge="SIM",
     return (
         f"# RESULTADO: {verdict}\n\n"
         "> **Conclusao:** " + chr(96) + f"{summary or verdict}" + chr(96)
-        + f" — achados bloqueantes: " + chr(96) + f"{blockers}" + chr(96)
+        + " — achados bloqueantes: " + chr(96) + f"{blockers}" + chr(96)
         + " — recomendacoes opcionais: " + chr(96) + "0" + chr(96) + "\n"
         f"> **Motivo determinante:** {reason}\n"
         f"> **Libera merge/release:** {merge}\n\n"
