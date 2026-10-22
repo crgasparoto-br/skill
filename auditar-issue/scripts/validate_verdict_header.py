@@ -39,6 +39,7 @@ def validate(text: str) -> list[str]:
     if validity is None:
         errors.append("validade ausente ou invalida")
     errors.extend(validate_triage(verdict, summary, lines))
+    errors.extend(validate_body(lines))
     errors.extend(validate_decision(verdict, summary, merge, validity))
     return errors
 
@@ -68,6 +69,156 @@ def validate_triage(verdict, summary, lines):
     return errors
 
 
+
+# Validate concrete records, rather than trusting the section titles alone.
+CATEGORIES = {
+    "## Achados bloqueantes": ("A", ("Requisitos afetados", "Origem comprovada", "Evidência")),
+    "## Riscos inferidos nao confirmados": (
+        "RISK", ("Cenário hipotético", "Base da inferência", "Grau de certeza", "Prova discriminante pendente")
+    ),
+    "## Limitacoes exclusivas do auditor": (
+        "LIM", ("Recurso indisponível", "Gate obrigatório afetado", "Tentativas e fallbacks", "Prova indisponível")
+    ),
+}
+PLACEHOLDER = re.compile(r"^(?:[.\-? ]+|unknown|todo|tbd|n/?a|\[[^]]*\])$", re.I)
+SHA = re.compile(r"^[0-9a-f]{40}$", re.I)
+
+
+def visible_lines(lines):
+    """Do not allow example records in fenced code blocks to satisfy evidence."""
+    output = []
+    fence = None
+    for line in lines:
+        marker = re.match(r"^\s*(~{3,}|"+chr(96)+r"{3,})", line)
+        if marker:
+            mark = marker.group(1)
+            if fence is None:
+                fence = mark
+            elif mark[0] == fence[0] and len(mark) >= len(fence):
+                fence = None
+            continue
+        if fence is None:
+            output.append(line)
+    return output
+
+
+def non_placeholder(value):
+    value = value.strip().strip(chr(96)).strip()
+    return bool(value) and not PLACEHOLDER.fullmatch(value)
+
+
+def parse_evidence(lines, expected_counts):
+    """Reconcile declared triage with structured, evidence-bearing body records."""
+    errors = []
+    plain = visible_lines(lines)
+    items = {}
+    sections = [(index, line) for index, line in enumerate(plain) if line.startswith("## ")]
+    for section, (prefix, required) in CATEGORIES.items():
+        found = [index for index, name in sections if name == section]
+        entries = {}
+        if len(found) > 1:
+            errors.append(f"secao de triagem repetida: {section}")
+        if found:
+            start = found[0]
+            end = next((index for index, _ in sections if index > start), len(plain))
+            content = plain[start + 1:end]
+            headers = [(index, line) for index, line in enumerate(content) if line.startswith("### ")]
+            for index, (position, heading) in enumerate(headers):
+                pattern = r"### (?:\[[^\]]+\] )?(" + prefix + r"-[0-9]{3,}) [—-] (\S.+)"
+                match = re.fullmatch(pattern, heading)
+                if match is None:
+                    errors.append(f"item malformado em {section}: {heading}")
+                    continue
+                identifier = match.group(1)
+                if identifier in entries:
+                    errors.append(f"ID duplicado na triagem: {identifier}")
+                until = headers[index + 1][0] if index + 1 < len(headers) else len(content)
+                fields = {}
+                for line in content[position + 1:until]:
+                    field_match = re.fullmatch(r"- \*\*(.+?):\*\*\s*(.*)", line)
+                    if field_match:
+                        fields.setdefault(field_match.group(1), []).append(field_match.group(2))
+                for field in required:
+                    values = fields.get(field, [])
+                    if len(values) != 1 or not non_placeholder(values[0]):
+                        errors.append(f"{identifier}: campo {field} ausente, duplicado ou placeholder")
+                if prefix == "A" and fields.get("Origem comprovada") not in (["candidato"], ["entrega"]):
+                    errors.append(f"{identifier}: origem deve ser candidato ou entrega")
+                if prefix == "RISK" and fields.get("Grau de certeza") not in (["baixo"], ["medio"], ["alto"]):
+                    errors.append(f"{identifier}: grau de certeza invalido")
+                entries[identifier] = fields
+            if not headers and any(
+                line.strip() and not re.fullmatch(
+                    r"(?i)(?:nenhum[ao]?|sem (?:achados|riscos|limitacoes))\.?", line.strip()
+                )
+                for line in content
+            ):
+                errors.append(f"{section}: conteudo sem itens estruturados")
+        if len(entries) != expected_counts[section]:
+            errors.append(
+                f"{section}: contagem declarada {expected_counts[section]}, itens verificaveis {len(entries)}"
+            )
+        items[prefix] = entries
+    return errors, items
+
+
+def validate_body(lines):
+    triage = TRIAGE.fullmatch(lines[7]) if len(lines) > 7 else None
+    if triage is None:
+        return []
+    expected = dict(zip(CATEGORIES, (int(value) for value in triage.groups())))
+    errors, _ = parse_evidence(lines, expected)
+    return errors
+
+
+def validate_revision(current_text, previous_text):
+    """Compare prior verdict and require proof for every removed confirmed blocker."""
+    previous_errors = validate(previous_text)
+    if previous_errors:
+        return ["parecer anterior invalido: " + "; ".join(previous_errors)]
+    old_lines = previous_text.splitlines()
+    new_lines = current_text.splitlines()
+    old_triage = TRIAGE.fullmatch(old_lines[7])
+    new_triage = TRIAGE.fullmatch(new_lines[7]) if len(new_lines) > 7 else None
+    if new_triage is None:
+        return ["nova triagem invalida"]
+    old_expected = dict(zip(CATEGORIES, (int(value) for value in old_triage.groups())))
+    new_expected = dict(zip(CATEGORIES, (int(value) for value in new_triage.groups())))
+    _, old_items = parse_evidence(old_lines, old_expected)
+    _, new_items = parse_evidence(new_lines, new_expected)
+    removed = set(old_items["A"]) - set(new_items["A"])
+    if old_lines[0] == new_lines[0] and old_triage.groups() == new_triage.groups() and not removed:
+        return []
+    plain = visible_lines(new_lines)
+    section = "## Retificacao do parecer"
+    if section not in plain:
+        return ["mudanca de veredito/triagem exige Retificacao do parecer"]
+    start = plain.index(section)
+    end = next((index for index in range(start + 1, len(plain)) if plain[index].startswith("## ")), len(plain))
+    fields = {}
+    for line in plain[start + 1:end]:
+        match = re.fullmatch(r"- \*\*(.+?):\*\*\s*(.*)", line)
+        if match:
+            fields.setdefault(match.group(1), []).append(match.group(2))
+    errors = []
+    for key in ("Veredito anterior", "Veredito atual", "Motivo da retificacao", "Nova evidencia", "HEAD auditado"):
+        values = fields.get(key, [])
+        if len(values) != 1 or not non_placeholder(values[0]):
+            errors.append(f"retificacao sem {key}")
+    if fields.get("Veredito anterior") != [old_lines[0].removeprefix("# RESULTADO: ")]:
+        errors.append("retificacao: veredito anterior divergente")
+    if fields.get("Veredito atual") != [new_lines[0].removeprefix("# RESULTADO: ")]:
+        errors.append("retificacao: veredito atual divergente")
+    head = fields.get("HEAD auditado", [""])[0].strip(chr(96))
+    if not SHA.fullmatch(head):
+        errors.append("retificacao: HEAD auditado deve ser SHA completo")
+    for identifier in removed:
+        values = fields.get(f"Prova de reclassificacao {identifier}", [])
+        if len(values) != 1 or not non_placeholder(values[0]):
+            errors.append(f"retificacao: bloqueador {identifier} removido sem prova independente")
+    return errors
+
+
 def validate_decision(verdict, summary, merge, validity):
     errors = []
     blockers = int(summary.group(2)) if summary else None
@@ -94,13 +245,17 @@ def validate_decision(verdict, summary, merge, validity):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("report", type=Path, help="parecer humano em Markdown, nao o template")
+    parser.add_argument("--previous", type=Path, help="parecer anterior para retificacao")
     args = parser.parse_args()
-    errors = validate(args.report.read_text(encoding="utf-8"))
+    current = args.report.read_text(encoding="utf-8")
+    errors = validate(current)
+    if not errors and args.previous:
+        errors.extend(validate_revision(current, args.previous.read_text(encoding="utf-8")))
     for error in errors:
         print(f"FAIL: {error}")
     if errors:
         return 1
-    print("PASS: cabecalho de auditoria valido")
+    print("PASS: cabecalho, corpo e triagem de auditoria validos")
     return 0
 
 
