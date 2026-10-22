@@ -16,7 +16,7 @@ Ler antes de interpretar um relatório de varredura, antes de declarar exceção
 - [Antipadrões](#antipadrões)
 
 ## Escopo do perfil
-O perfil mede cinco dívidas estruturais sobre a árvore inteira: duplicação, código morto, dependência sem uso e complexidade. Ele não mede estilo, formato, erro estático, cobertura de teste, acoplamento de arquitetura nem qualidade de interface. Nada disso é lacuna acidental: cada ausência tem ferramenta própria no repositório, e sobrepor instrumentos produz duas verdades concorrentes.
+O perfil mede cinco dívidas estruturais sobre a árvore inteira: duplicação, código morto, dependência sem uso e complexidade. Ele não mede cobertura nem obsolescência de testes; diagnóstico separado em `references/test-lifecycle-hygiene.md`. Outras classes possuem instrumentos próprios, sem fontes concorrentes.
 
 A varredura é determinística e offline. Duas execuções sobre a mesma árvore com a mesma política produzem o mesmo relatório, byte a byte, porque não há carimbo de tempo, caminho absoluto nem dependência da ordem do sistema de arquivos. A ordem dos achados é a ordem ordenada da classe e do caminho.
 
@@ -100,10 +100,6 @@ O motivo de cobertura é escrito com caminho relativo, nunca absoluto: duas cóp
 A leitura de texto para citacao fica contida na raiz, e o mesmo vale para manifest: link que resolve para fora da árvore entra em `not_analyzed`, porque conteudo de fora nao pode apagar achado da arvore medida. Link quebrado em formato de texto tambem entra, porque cobertura que nao foi lida nao pode passar por arvore limpa. A validação é somente leitura sobre a árvore varrida, inclusive na conferência do contrato do relatório, que acontece em memória. Validar não escreve, não altera e não remove arquivo na raiz analisada, e por isso a varredura pode rodar em árvore somente leitura.
 
 A regra existe porque cobertura que encolhe em silêncio é indistinguível de aprovação. Um arquivo que sai do conjunto analisado sem aparecer no relatório faz o número melhorar sem que a árvore melhore.
-
-## Diagnostico de testes (sob demanda)
-
-As cinco classes de divida estrutural NAO constituem medida de cobertura nem certificacao de obsolescencia de testes. Em particular, dead-module com exclude_tests pode ignorar suites descobertas dinamicamente; ausencia de import, similaridade AST, nomes e contagem nao autorizam remover teste. Um pedido explicito de higiene de testes usa diagnostico dirigido ao runner (configuracao, descoberta estatica/dinamica quando acessivel), requisitos/oraculos, testes parametrizados, fixtures/mocks, skips permanentes, cenarios removidos e consumidores legados. Para cada candidato usar keep, refactor/consolidate, remove-candidate ou needs-investigation; documentar provas de equivalencia material, controles positivos/negativos/limites/historicos antes/depois, checks reais e UNKNOWN para descoberta incompleta. Gerar findings acionaveis na forma de work item ja existente, sem alterar a politica de higiene global ou acrescentar uma sexta classe numerica. Nao fazer varredura global de testes durante entrega comum nem excluir automaticamente.
 
 ## Work items
 A varredura produz um work item por classe com achado, não um por achado. A classe é a unidade de decisão: corrigir, aceitar com justificativa ou rebaixar o limiar. Dezenas de ocorrências da mesma dívida viram uma linha cada dentro de um work item, e não dezenas de issues.

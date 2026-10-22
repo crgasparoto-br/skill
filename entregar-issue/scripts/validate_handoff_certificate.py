@@ -34,11 +34,11 @@ def scope_touches_tests(paths: list[str]) -> bool:
         name = parts[-1]
         if any(p in {"tests", "test", "__tests__", "specs", "fixtures"} for p in parts[:-1]):
             return True
-        if (name.startswith("test_") or "_test." in name or ".test." in name
+        if (name.startswith(("test_", "jest.config.", "vitest.config.",
+                                    "playwright.config.", "cypress.config.")) or "_test." in name or ".test." in name
                 or ".spec." in name or name.endswith((".feature", ".robot", ".bats"))
                 or name in {"pytest.ini", "tox.ini", "conftest.py"}
-                or name.startswith(("jest.config.", "vitest.config.", "playwright.config.",
-                                    "cypress.config."))):
+                ):
             return True
     return False
 

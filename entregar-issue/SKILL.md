@@ -76,7 +76,7 @@ Ler somente quando aplicavel:
 - correcao de handoff `result-only` em PR ja aberta ou decisao sobre PR substituta: `references/result-only-pr-recovery.md`;
 - auditoria interna: `references/controller-audit-contract.md` e `references/controller-single-invocation.md`;
 - controle negativo: `references/controller-adversarial-evidence.md`;
-- codigo executavel ou teste tocado (inclusive diff so de teste, criacao, modificacao, rename e exclusao): `references/codebase-grounding-gate.md`;
+- codigo ou testes tocados: `references/codebase-grounding-gate.md`;
 - arquivo de codigo novo ou ampliado: `references/code-growth-gate.md`;
 - matriz requisito -> ataque: `references/requirement-attack-matrix.md`;
 - parsers/gates: `references/semantic-mutation-saturation.md`; executar `semantic-mutation-saturation` com pairwise e SHA exato antes do handoff;
