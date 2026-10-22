@@ -57,9 +57,10 @@ RUNTIME_CONFIG_NAMES = {
     'compose.yml', 'tsconfig.json', 'vite.config.ts', 'next.config.js',
 }
 GENERATED_MARKERS = ('/generated/', '/dist/', '/build/', '/coverage/', '.generated.', '.g.')
-TEST_DIR_MARKERS = {'test', 'tests', '__tests__', 'spec', 'specs', 'fixtures'}
+TEST_DIR_MARKERS = {'test', 'tests', '__tests__', 'spec', 'specs', 'fixtures', 'e2e', 'cypress'}
 TEST_FILE_SUFFIXES = ('.feature', '.robot', '.bats', '.test.json', '.spec.json')
 TEST_RUNNER_CONFIGS = ('pytest.ini', 'tox.ini', 'conftest.py')
+TEST_RUNNER_MANIFESTS = {'package.json', 'pyproject.toml'}
 TEST_RUNNER_CONFIG_PREFIXES = ('jest.config.', 'vitest.config.', 'playwright.config.', 'cypress.config.')
 
 
@@ -235,9 +236,10 @@ def is_test_path(path: str) -> bool:
         or name.startswith('test_')
         or '.test.' in name
         or '.spec.' in name
-        or name.endswith('_test.py')
+        or name.endswith(('_test.py', '_test.go'))
         or name.endswith(TEST_FILE_SUFFIXES)
         or name in TEST_RUNNER_CONFIGS
+        or name in TEST_RUNNER_MANIFESTS
         or name.startswith(TEST_RUNNER_CONFIG_PREFIXES)
     )
 
@@ -256,7 +258,10 @@ def classify_changes(changed: list[str], signals: set[str]) -> dict[str, bool]:
         docs_only = True
     assets_only = bool(changed) and all(path.endswith(ASSET_SUFFIXES) for path in lower_paths)
     generated_only = bool(changed) and all(is_generated_path(path) for path in lower_paths)
-    test_only = bool(changed) and all(is_test_path(path) for path in lower_paths)
+    test_only = bool(changed) and all(
+        is_test_path(path) and Path(path).name not in TEST_RUNNER_MANIFESTS
+        for path in lower_paths
+    )
     tests_touched = any(is_test_path(path) for path in lower_paths)
     code_touched = any(path.endswith(CODE_SUFFIXES) for path in lower_paths)
     runtime_config_touched = any(
@@ -572,7 +577,11 @@ def main() -> int:
     missing_stage_inputs = set(deps['stages']) - set(stage_inputs)
     if missing_stage_inputs:
         raise ValueError(f'missing stage inputs: {sorted(missing_stage_inputs)}')
-    stages, execution_order, reusable, invalidated = build_stages(deps, stage_inputs, previous)
+    # Historical v2 plans may omit tests_touched; read them, but never reuse their gates.
+    previous_for_reuse = previous
+    if previous and 'tests_touched' not in previous.get('change_classification', {}):
+        previous_for_reuse = None
+    stages, execution_order, reusable, invalidated = build_stages(deps, stage_inputs, previous_for_reuse)
 
     internal_plan: list[dict[str, Any]] = [
         {

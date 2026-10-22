@@ -399,10 +399,68 @@
               },
               "reason": {
                 "$ref": "#/$defs/text"
+              },
+              "subject_sha": {
+                "$ref": "#/$defs/sha"
+              },
+              "reached_tests": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/text"
+                }
+              },
+              "evidence_path": {
+                "$ref": "#/$defs/text"
+              },
+              "evidence_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "replacement_tests": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/text"
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "deleted"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "required": [
+                "coverage_before",
+                "coverage_after",
+                "replacement_tests"
+              ],
+              "properties": {
+                "verification": {
+                  "required": [
+                    "status",
+                    "command",
+                    "exit_code",
+                    "subject_sha",
+                    "reached_tests",
+                    "evidence_path",
+                    "evidence_sha256"
+                  ]
+                }
               }
             }
           }
-        }
+        ]
       }
     }
   },

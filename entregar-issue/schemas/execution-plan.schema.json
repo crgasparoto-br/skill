@@ -269,7 +269,6 @@
         "assets_only",
         "generated_only",
         "test_only",
-        "tests_touched",
         "code_touched",
         "runtime_config_touched",
         "behavioral_change",

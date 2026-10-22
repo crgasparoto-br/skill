@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import subprocess
 import sys
@@ -256,17 +257,45 @@ def test_dynamic_runner_unavailable_is_unknown_not_ready(candidate):
 
 def test_deleted_test_requires_preserved_controls(candidate):
     repo = candidate["repo"]
+    write(repo, "tests/test_replacement.py", "def test_preserved_control():\n    assert 1 + 2 == 3\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "seed replacement")
+    deletion_base = git(repo, "rev-parse", "HEAD")
     git(repo, "rm", "-q", "tests/test_report.py")
     git(repo, "commit", "-q", "-m", "remove test")
     new_head = git(repo, "rev-parse", "HEAD")
-    scenario = {**candidate, "base": candidate["head"], "head": new_head}
+    scenario = {**candidate, "base": deletion_base, "head": new_head}
     report = copy.deepcopy(candidate["report"])
-    report.update(subject_sha=new_head, base_sha=candidate["head"], creations=[], references=[], replacements=[])
+    report.update(subject_sha=new_head, base_sha=deletion_base, creations=[], references=[], replacements=[])
     record = report["test_decisions"][0]
     record.update(operation="deleted", decision="covered-by-existing", disposition="remove-candidate")
-    assert "deletion requires before/after controls" in run(scenario, report).stdout
-    record.update(coverage_before=["positive", "negative"], coverage_after=["positive", "negative"])
+    assert "coverage_before" in run(scenario, report).stdout
+    record.update(coverage_before=["positive", "negative"], coverage_after=["positive", "negative"],
+                  replacement_tests=["tests/test_replacement.py"])
+    command = "python -m pytest -q tests/test_replacement.py"
+    check = subprocess.run([sys.executable, "-m", "pytest", "-q", "tests/test_replacement.py"],
+                           cwd=repo, capture_output=True, text=True, check=False)
+    assert check.returncode == 0, check.stdout + check.stderr
+    proof = "COMMAND: " + command + "\nHEAD: " + new_head + "\n" + check.stdout + check.stderr
+    evidence_path = repo / "verification.log"
+    evidence_path.write_text(proof, encoding="utf-8")
+    record["verification"] = {"status": "passed", "command": command, "exit_code": 0,
+                              "subject_sha": new_head, "reached_tests": ["tests/test_replacement.py"],
+                              "evidence_path": "verification.log",
+                              "evidence_sha256": hashlib.sha256(proof.encode()).hexdigest()}
     assert run(scenario, report).returncode == 0
+    invalid = copy.deepcopy(report)
+    invalid["test_decisions"][0]["verification"]["command"] = "pytest tests/test_report.py"
+    assert "command targets only deleted test" in run(scenario, invalid).stdout
+    invalid = copy.deepcopy(report)
+    invalid["test_decisions"][0]["coverage_after"] = ["positive"]
+    assert "loses documented control IDs" in run(scenario, invalid).stdout
+    invalid = copy.deepcopy(report)
+    invalid["test_decisions"][0]["verification"]["subject_sha"] = candidate["head"]
+    assert "not bound to head" in run(scenario, invalid).stdout
+    invalid = copy.deepcopy(report)
+    invalid["test_decisions"][0]["verification"]["evidence_sha256"] = "f" * 64
+    assert "evidence hash mismatch" in run(scenario, invalid).stdout
 
 
 def test_renamed_test_requires_source_at_base(candidate):
@@ -311,3 +340,28 @@ def test_test_scope_and_handoff_match_for_non_code_conventions():
         assert not is_test_path(path)
         assert not scope_touches_tests([path])
     assert not scope_touches_code(["spec/cases.json"])
+
+
+def test_go_test_only_and_runner_manifests_activate_gate():
+    from plan_execution import classify_changes, is_test_path
+    for filename in ("pkg/payment_test.go", "pkg/payment_test.py", "e2e/smoke.ts", "cypress/login.cy.ts"):
+        classification = classify_changes([filename], set())
+        assert is_test_path(filename)
+        assert classification["tests_touched"]
+        assert classification["test_only"]
+        assert not classification["hygiene_applicable"]
+    for manifest in ("pyproject.toml", "package.json"):
+        classification = classify_changes([manifest], set())
+        assert classification["tests_touched"]
+        assert not classification["test_only"]
+    from validate_handoff_certificate import scope_touches_tests
+    assert scope_touches_tests(["pkg/payment_test.go", "package.json", "pyproject.toml"])
+
+
+def test_blocked_scenario_cannot_report_passed(candidate):
+    report = copy.deepcopy(candidate["report"])
+    report["test_decisions"][0]["decision"] = "not-testable/blocked"
+    report["test_decisions"][0]["verification"]["reason"] = "runner unavailable"
+    result = run(candidate, report)
+    assert result.returncode == 2
+    assert "blocked scenario cannot claim passed" in result.stdout

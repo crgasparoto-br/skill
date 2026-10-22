@@ -32,12 +32,12 @@ def scope_touches_tests(paths: list[str]) -> bool:
         path = str(original).lower().replace("\\", "/")
         parts = path.split("/")
         name = parts[-1]
-        if any(p in {"tests", "test", "__tests__", "spec", "specs", "fixtures"} for p in parts[:-1]):
+        if any(p in {"tests", "test", "__tests__", "spec", "specs", "fixtures", "e2e", "cypress"} for p in parts[:-1]):
             return True
         if (name.startswith(("test_", "jest.config.", "vitest.config.",
                                     "playwright.config.", "cypress.config.")) or "_test." in name or ".test." in name
-                or ".spec." in name or name.endswith((".feature", ".robot", ".bats"))
-                or name in {"pytest.ini", "tox.ini", "conftest.py"}
+                or ".spec." in name or name.endswith((".feature", ".robot", ".bats", "_test.go"))
+                or name in {"pytest.ini", "tox.ini", "conftest.py", "package.json", "pyproject.toml"}
                 ):
             return True
     return False
