@@ -8,13 +8,16 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import tomllib
 import re
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-from plan_execution import CODE_SUFFIXES, is_generated_path, is_test_path
+from plan_execution import (
+    CODE_SUFFIXES, is_generated_path, is_test_path, pytest_discovery_configs,
+)
 from schema_validation import validate_against_schema
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,17 +39,78 @@ def mentions(text: str, token: str, *, package: bool = False) -> bool:
     return re.search(rf"(?<![{boundary}]){re.escape(token)}(?![{boundary}])", text) is not None
 
 
-def requires_search_record(path: str) -> bool:
-    return path.lower().endswith(CODE_SUFFIXES) and not is_test_path(path) and not is_generated_path(path)
+def requires_search_record(
+    path: str, pytest_configs: dict[str, tuple[str, ...]],
+) -> bool:
+    return (path.lower().endswith(CODE_SUFFIXES)
+            and not is_test_path(path, pytest_configs=pytest_configs)
+            and not is_generated_path(path))
 
 
-def check_creations(report: dict[str, Any], repo: Path, base: str, head: str, errors: list[str]) -> None:
+def runner_manifest_affects_tests(repo: Path, base: str, head: str, path: str) -> bool:
+    """Treat test runner manifest edits as tests only for test-relevant changes.
+
+    Unparseable manifests stay conservative: the caller must investigate.
+    """
+    name = Path(path).name.lower()
+    if name not in {'package.json', 'pyproject.toml'}:
+        return True
+
+    def relevant(sha: str) -> Any:
+        raw = read_at(repo, sha, path)
+        if raw is None:
+            return None
+        if name == 'package.json':
+            data = json.loads(raw)
+            scripts = data.get('scripts', {})
+            if not isinstance(scripts, dict):
+                return data
+            return {
+                'scripts': {key: value for key, value in scripts.items()
+                            if key.lower().startswith(('test', 'spec', 'e2e', 'cypress', 'playwright'))},
+                'runners': {key: data.get(key) for key in ('jest', 'vitest', 'cypress', 'playwright')
+                            if key in data},
+                'dependencies': {
+                    section: {key: value for key, value in data.get(section, {}).items()
+                              if any(term in key.lower() for term in
+                                     ('pytest', 'jest', 'vitest', 'cypress', 'playwright', 'mocha', 'chai'))}
+                    for section in ('dependencies', 'devDependencies')
+                    if isinstance(data.get(section), dict)
+                },
+            }
+        data = tomllib.loads(raw)
+        tool = data.get('tool', {})
+        return {
+            'pytest': tool.get('pytest') if isinstance(tool, dict) else tool,
+            'test_groups': {key: value for key, value in data.get('dependency-groups', {}).items()
+                            if key in {'test', 'tests', 'dev'}}
+                           if isinstance(data.get('dependency-groups'), dict) else {},
+        }
+
+    try:
+        return relevant(base) != relevant(head)
+    except (ValueError, TypeError, AttributeError):
+        return True
+
+
+def load_pytest_configs(
+    repo: Path, sha: str, paths: list[str], unknown: list[str],
+) -> dict[str, tuple[str, ...]]:
+    try:
+        return pytest_discovery_configs(paths, lambda path: read_at(repo, sha, path))
+    except (ValueError, TypeError) as exc:
+        unknown.append(f'GROUND-TEST-001: runner discovery UNKNOWN at {sha}: {exc}')
+        return {}
+
+
+def check_creations(report: dict[str, Any], repo: Path, base: str, head: str, errors: list[str],
+                    pytest_configs: dict[str, tuple[str, ...]]) -> None:
     diff = git(repo, "diff", "--name-only", "--diff-filter=A", base, head)
     if diff.returncode != 0:
         errors.append(f"cannot compute added files {base}..{head}: {diff.stderr.strip()}")
         return
     recorded = {item["path"]: item for item in report["creations"]}
-    for path in sorted(filter(requires_search_record, diff.stdout.splitlines())):
+    for path in sorted(path for path in diff.stdout.splitlines() if requires_search_record(path, pytest_configs)):
         if path not in recorded:
             errors.append(f"GROUND-REUSE-001: added code file without search record: {path}")
         elif recorded[path]["decision"] != "create":
@@ -57,7 +121,9 @@ def check_creations(report: dict[str, Any], repo: Path, base: str, head: str, er
                 errors.append(f"GROUND-REUSE-001: candidate does not exist at head: {candidate['path']}")
 
 
-def changed_tests(repo: Path, base: str, head: str, errors: list[str]) -> dict[str, tuple[str, str | None]]:
+def changed_tests(repo: Path, base: str, head: str, errors: list[str], unknown: list[str],
+                  base_configs: dict[str, tuple[str, ...]],
+                  head_configs: dict[str, tuple[str, ...]]) -> dict[str, tuple[str, str | None]]:
     """Git name-status covers additions, modifications, deletions and detected renames."""
     diff = git(repo, "diff", "--name-status", "--find-renames", "--no-ext-diff", base, head, "--")
     if diff.returncode != 0:
@@ -72,8 +138,14 @@ def changed_tests(repo: Path, base: str, head: str, errors: list[str]) -> dict[s
         status = columns[0][:1]
         path = columns[-1]
         previous = columns[1] if status in {"R", "C"} and len(columns) == 3 else None
-        if not (is_test_path(path) or (previous and is_test_path(previous))):
+        if not (is_test_path(path, pytest_configs=head_configs)
+                or is_test_path(path, pytest_configs=base_configs)
+                or (previous and (is_test_path(previous, pytest_configs=base_configs)
+                                  or is_test_path(previous, pytest_configs=head_configs)))):
             continue
+        if Path(path).name.lower() in {'package.json', 'pyproject.toml'}:
+            if not runner_manifest_affects_tests(repo, base, head, path):
+                continue
         operation = {"A": "added", "M": "modified", "D": "deleted", "R": "renamed", "C": "renamed"}.get(status)
         if operation is None:
             errors.append(f"unhandled test diff operation {columns[0]} for {path}")
@@ -84,7 +156,7 @@ def changed_tests(repo: Path, base: str, head: str, errors: list[str]) -> dict[s
 
 def check_deleted_test_decision(
     item: dict[str, Any], repo: Path, base: str, head: str,
-    path: str, errors: list[str],
+    path: str, errors: list[str], pytest_configs: dict[str, tuple[str, ...]],
 ) -> None:
     if read_at(repo, base, path) is None:
         errors.append(f"GROUND-TEST-001: deleted test absent at base: {path}")
@@ -101,7 +173,7 @@ def check_deleted_test_decision(
     if not replacements:
         errors.append(f"GROUND-TEST-001: deletion has no surviving replacement test: {path}")
     for replacement in replacements:
-        if replacement == path or not is_test_path(replacement) or read_at(repo, head, replacement) is None:
+        if replacement == path or not is_test_path(replacement, pytest_configs=pytest_configs) or read_at(repo, head, replacement) is None:
             errors.append(f"GROUND-TEST-001: replacement not found as test at head: {replacement}")
     command = item["verification"].get("command") or ""
     if path in command and not any(replacement in command for replacement in replacements):
@@ -153,7 +225,14 @@ def check_test_decisions(
     report: dict[str, Any], repo: Path, base: str, head: str,
     errors: list[str], unknown: list[str],
 ) -> None:
-    changes = changed_tests(repo, base, head, errors)
+    changed = git(repo, 'diff', '--name-only', '--no-ext-diff', base, head, '--')
+    if changed.returncode != 0:
+        errors.append(f'cannot inspect test discovery scope: {changed.stderr.strip()}')
+        return
+    changed_paths = changed.stdout.splitlines()
+    base_configs = load_pytest_configs(repo, base, changed_paths, unknown)
+    head_configs = load_pytest_configs(repo, head, changed_paths, unknown)
+    changes = changed_tests(repo, base, head, errors, unknown, base_configs, head_configs)
     if not changes:
         if report.get("test_decisions"):
             errors.append("GROUND-TEST-001: test_decisions without test changes in issue-local diff")
@@ -171,7 +250,7 @@ def check_test_decisions(
             if item["operation"] != operation or item.get("prior_path") != previous:
                 errors.append(f"GROUND-TEST-001: test operation/prior_path mismatch: {path}")
             if operation == "deleted":
-                check_deleted_test_decision(item, repo, base, head, path, errors)
+                check_deleted_test_decision(item, repo, base, head, path, errors, head_configs)
             elif read_at(repo, head, path) is None:
                 errors.append(f"GROUND-TEST-001: test absent at head: {path}")
             if previous and read_at(repo, base, previous) is None:
@@ -263,7 +342,10 @@ def main() -> int:
             errors.append("codebase-grounding evidence is stale for material head")
         if report["base_sha"] != args.base_sha:
             errors.append("codebase-grounding base does not match work item start")
-        check_creations(report, repo, args.base_sha, args.head_sha, errors)
+        discovery_paths = git(repo, 'diff', '--name-only', '--no-ext-diff',
+                              args.base_sha, args.head_sha, '--').stdout.splitlines()
+        head_configs = load_pytest_configs(repo, args.head_sha, discovery_paths, unknown)
+        check_creations(report, repo, args.base_sha, args.head_sha, errors, head_configs)
         check_test_decisions(report, repo, args.base_sha, args.head_sha, errors, unknown)
         check_references(report, repo, args.head_sha, errors)
         check_replacements(report, repo, args.head_sha, errors)
