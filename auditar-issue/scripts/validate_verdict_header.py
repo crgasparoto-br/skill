@@ -2,6 +2,7 @@
 """Fail-closed validation of the user-visible audit verdict header."""
 import argparse
 import hashlib
+import html
 import re
 from pathlib import Path
 
@@ -118,11 +119,17 @@ HTML_BLOCK_GENERIC = re.compile(
 
 # Only an evidence-shaped identifier at the start of a visible record counts.
 # Inline emphasis/code may decorate the ID, but cannot conceal it.
+# A visible evidence identifier may be decorated by CommonMark inline markup.
+# The rendering-equivalent identifier remains material even if it is a link,
+# emphasis, strike-through, inline HTML, or a numeric HTML entity.
+INLINE_EVIDENCE_TAG = r"(?:strong|b|em|i|del|s|strike|code|span|a)"
 VISIBLE_RECORD_ID = re.compile(
-    r"^(?:\[[^\]]+\][ \t]+)?(?:"
-    r"(?:\*\*|__|\*|_)?((?:A|RISK|LIM)-[0-9]{3,})(?:\*\*|__|\*|_)?"
-    r"|`{1,3}((?:A|RISK|LIM)-[0-9]{3,})`{1,3})"
-    r"(?=[ \t]+[—-]|[ \t]*:|$)"
+    r"^(?:\\[[^\\]]+\\][ \\t]+)?"
+    r"(?:\\*\\*|__|\\*|_|~~|`{1,3}|<(?:" + INLINE_EVIDENCE_TAG + r")(?:[ \\t]+[^>]*?)?>)*"
+    r"\\[?((?:A|RISK|LIM)-[0-9]{3,})"
+    r"(?:\\](?:\\([^()\\n]+\\)|\\[[^\\]\\n]*\\]))?"
+    r"(?:</(?:" + INLINE_EVIDENCE_TAG + r")>|\\*\\*|__|\\*|_|~~|`{1,3})*"
+    r"(?=[ \\t]+[—-]|[ \\t]*:|$)"
 )
 RECORD_LIST_PREFIX = re.compile(
     r"^ {0,3}(?:(?:>[ \t]?|(?:[-+*]|\d{1,9}[.)])[ \t]+)[ \t]*)*"
@@ -422,17 +429,17 @@ def detect_misplaced_records(plain):
                 current_section = None
             elif not nested and level == 2:
                 current_section = "## " + title
-            identifier_match = VISIBLE_RECORD_ID.match(title)
+            identifier_match = VISIBLE_RECORD_ID.match(html.unescape(title))
         else:
             level = 0
             # Strip container markers only at line start; prose mentioning
             # A-001 incidentally must not become a new evidence record.
             identifier_match = VISIBLE_RECORD_ID.match(
-                RECORD_LIST_PREFIX.sub("", line).lstrip(" ")
+                html.unescape(RECORD_LIST_PREFIX.sub("", line).lstrip(" "))
             )
         if not identifier_match:
             continue
-        identifier = identifier_match.group(1) or identifier_match.group(2)
+        identifier = identifier_match.group(1)
         prefix = identifier.split("-", 1)[0]
         if nested and heading:
             errors.append(f"{identifier}: item aninhado fora da secao canonica")

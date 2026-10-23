@@ -932,3 +932,61 @@ def test_type7_html_after_indented_paragraph_continuation_stays_visible(identifi
     )
     errors = module.validate(report("APROVADA", sections=sections))
     assert any(identifier in error for error in errors), errors
+
+
+@pytest.mark.parametrize("identifier", ["A-901", "RISK-901", "LIM-901"])
+@pytest.mark.parametrize("formatting", [
+    "{id}",
+    "[{id}](https://github.com/crgasparoto-br/skill/issues/110)",
+    "[{id}][finding]",
+    "**[{id}](https://github.com/crgasparoto-br/skill/issues/110)**",
+    "*[{id}](https://github.com/crgasparoto-br/skill/issues/110)*",
+    "~~{id}~~",
+    "<strong>{id}</strong>",
+    '<a href="https://github.com/crgasparoto-br/skill/issues/110">{id}</a>',
+    "<span>{id}</span>",
+    "`{id}`",
+])
+@pytest.mark.parametrize("container", ["", "- ", "#### ", "> ", "1. "])
+def test_issue110_rendered_inline_ids_cannot_hide_under_zero_counts(
+    identifier, formatting, container,
+):
+    visible = formatting.format(id=identifier)
+    references = ("\n[finding]: https://github.com/crgasparoto-br/skill/issues/110\n"
+                  if "][finding]" in visible else "")
+    text = report("APROVADA", sections=(
+        "## Evidencias adicionais\n"
+        + container + visible + " — registro comprovavel fora da triagem\n"
+        + references
+    ))
+    errors = module.validate(text)
+    assert any(identifier in error for error in errors), (container, visible, errors)
+
+
+@pytest.mark.parametrize("identifier", ["A-902", "RISK-902", "LIM-902"])
+def test_issue110_html_numeric_entity_identifier_is_not_hidden(identifier):
+    encoded = f"&#{ord(identifier[0])};{identifier[1:]}"
+    text = report("APROVADA", sections=(
+        "## Evidencias adicionais\n"
+        + encoded + " — registro com identificador renderizado\n"
+    ))
+    assert any(identifier in error for error in module.validate(text))
+
+
+@pytest.mark.parametrize("identifier", ["A-903", "RISK-903", "LIM-903"])
+def test_issue110_inline_rendered_id_inside_inert_fence_does_not_count(identifier):
+    reference = f"[{identifier}](https://github.com/crgasparoto-br/skill/issues/110)"
+    text = report("APROVADA", sections=(
+        "## Exemplos\n\n```markdown\n"
+        + reference + " — exemplo inerte\n```\n"
+    ))
+    assert module.validate(text) == []
+
+
+def test_issue110_incidental_link_reference_is_not_a_record():
+    text = report("APROVADA", sections=(
+        "## Referencias\n"
+        "Consulte [A-001](https://github.com/crgasparoto-br/skill/issues/110) "
+        "para o historico da auditoria.\n"
+    ))
+    assert module.validate(text) == []
