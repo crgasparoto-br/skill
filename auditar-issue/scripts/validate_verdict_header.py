@@ -177,6 +177,16 @@ def raw_html_line(candidate, state, quote_depth, in_list, list_indent):
     return False, (None, 0, 0)
 
 
+def normalize_list_record(line, candidate, in_list):
+    """Keep visible list records detectable without promoting indented code."""
+    if in_list and (
+        re.match(r"^ {0,3}#{1,6}(?:[ \t]+|$)", candidate)
+        or re.match(r"^[ \t]*(?:[-+*]|\d{1,9}[.)])[ \t]+", candidate)
+    ):
+        return "- " + candidate.lstrip()
+    return line
+
+
 def visible_lines(lines):
     """Ignore inert Markdown without letting a nested fence hide visible findings."""
     output = []
@@ -245,15 +255,7 @@ def visible_lines(lines):
             continue
         # Preserve the list container across blank lines. A heading continuing
         # a list is never a canonical evidence record, even if indented <= 3.
-        if in_list and (
-            re.match(r"^ {0,3}#{1,6}(?:[ \t]+|$)", candidate)
-            or re.match(r"^[ \t]*(?:[-+*]|\d{1,9}[.)])[ \t]+", candidate)
-        ):
-            # Normalize only actual list containers, not four-space code blocks.
-            # Otherwise an indented nested A/RISK/LIM record evades triage.
-            output.append("- " + candidate.lstrip())
-        else:
-            output.append(line)
+        output.append(normalize_list_record(line, candidate, in_list))
     return output
 
 def markdown_heading(line):
