@@ -24,6 +24,10 @@ on:
         description: Project test command; must emit JUnit XML in EVIDENCE_DIR
         type: string
         default: 'python -m pytest -vv --junitxml="$EVIDENCE_DIR/pytest-exact-head.xml"'
+      evidence-command:
+        description: Optional project evidence producer; must supply verified semantic closure inputs
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -108,6 +112,15 @@ jobs:
             --junit "$EVIDENCE_DIR/pytest-exact-head.xml" \
             --head-sha "${{ github.event.pull_request.head.sha }}" \
             --out "$EVIDENCE_DIR/test-candidate-index.json"
+
+      - name: Produce project-specific semantic evidence (when configured)
+        if: ${{ steps.exact_tests.outputs.exit_code == '0' && inputs.evidence-command != '' }}
+        shell: bash
+        env:
+          EVIDENCE_COMMAND: ${{ inputs.evidence-command }}
+          MATERIAL_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ inputs.base-ref }}
+        run: bash -eo pipefail -c "$EVIDENCE_COMMAND"
 
       - name: Validate evidence and build handoff certificate, fail closed
         id: certificate

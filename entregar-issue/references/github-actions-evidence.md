@@ -127,6 +127,14 @@ do repositorio `skill`: outro consumidor precisa configurar um processo
 separado, de fonte confiavel, com seus checks obrigatorios e autorizacao
 de release; nunca copiar uma credencial privilegiada para o workflow de PR.
 
+O caller pode informar `evidence-command`: um comando do projeto consumidor,
+executado apenas apos testes aprovados, sem `GITHUB_TOKEN`, para produzir
+`$EVIDENCE_DIR/certification-inputs.json` e os relatorios assinados por
+evidencias reais sob `$EVIDENCE_DIR/.audit/entregar-issue/`. Essa e a
+interface para um produtor de evidencias especifico de tecnologia/negocio,
+sem copiar validadores nem conceder privilegios de escrita. Sem produtor
+configurado, o workflow preserva a coleta mas bloqueia a certificacao.
+
 O indice de testes acelera o levantamento mas nao fecha requisitos.
 `entregar-issue` deve conferir requisitos com provas positivas e negativas
 autenticas. Na ausencia delas, registrar `UNKNOWN/BLOCK`, nunca `passed`.
