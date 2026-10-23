@@ -133,6 +133,30 @@ def validate_incomplete_review(source: Path, starter: dict) -> dict:
             "canonical_candidate_keys_verified": True}
 
 
+def stage_draft_code_growth(root: Path, out: Path, source: Path, head: str) -> dict:
+    """Run the official diff-based code-growth control; never infer a pass."""
+    manifest = read_json(source / "manifest.json")
+    start = manifest.get("work_item_start_sha")
+    if not isinstance(start, str) or not SHA.fullmatch(start):
+        raise ValueError("draft evidence needs a valid work-item start SHA")
+    git(root, "merge-base", "--is-ancestor", start, head)
+    path = out / ".audit" / "entregar-issue" / "code-growth.json"
+    command = [sys.executable, str(Path(__file__).with_name("check_code_growth.py")),
+               "--repo", str(root), "--base-sha", start, "--head-sha", head,
+               "--out", str(path)]
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    if result.returncode not in {0, 2, 3}:
+        raise ValueError(f"official CODE-GROWTH-001 could not execute: {result.stderr.strip()}")
+    report = read_json(path) if path.is_file() else {}
+    if result.returncode in {0, 2} and (
+            report.get("subject_sha") != head or report.get("base_sha") != start
+            or report.get("status") not in {"passed", "blocked"}):
+        raise ValueError("CODE-GROWTH-001 report provenance invalid")
+    return {"exit_code": result.returncode, "status": report.get("status", "unknown"),
+            "blocking_files": report.get("blocking_files", []),
+            "report": ".audit/entregar-issue/code-growth.json" if report else None}
+
+
 def collect_exact_tests(out: Path, head: str) -> tuple[dict, dict]:
     facts = read_json(out / "test-execution-facts.json")
     index = read_json(out / "test-candidate-index.json")
@@ -291,6 +315,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         draft_check = validate_incomplete_review(source, starter)
         if draft_check:
             draft_check["subject_sha"] = head
+            draft_check["code_growth"] = stage_draft_code_growth(root, out, source, head)
             write_json(out / "reviewed-dossier-inventory.json", draft_check)
     target = {"repository": repository, "issue_number": issue, "pull_request_number": pr,
               "base_ref": base_ref, "head_sha": head}
