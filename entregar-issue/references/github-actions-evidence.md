@@ -168,7 +168,13 @@ evidencias nem certificado):
 O exemplo e incompleto intencionalmente. O produtor rejeita
 `test_bindings` faltantes, hash adulterado, caso JUnit ignorado,
 perfil/historico ausente, branch/issue distintos e relatorios requeridos
-ausentes. O `certification-inputs.json` so e emitido apos todas
+ausentes. Um manifesto `review_state=approved` nao autoriza sequer o staging quando
+alguma obrigacao permanecer `pending` ou `blocked`; o produtor informa IDs
+pendentes e preserva a coleta tecnica como fonte factual. `not-applicable`
+so e valido com justificativa e validacao da closure oficial. Este preflight
+verifica completude formal, nao oraculos semanticos.
+
+O `certification-inputs.json` so e emitido apos todas
 as checagens formais do produtor; ainda nao e uma certificacao.
 O veredito final permanece de `prepare_actions_handoff.py --phase certify`,
 dos validadores semanticos existentes e do publicador confiavel.
