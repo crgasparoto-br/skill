@@ -34,7 +34,7 @@ OBLIGATION_FIELDS = frozenset({
 })
 
 
-class MissingReviewedEvidence(ValueError):
+class MissingReviewedEvidenceError(ValueError):
     """No reviewed dossier exists; factual collection may still finish."""
 
 
@@ -134,7 +134,7 @@ def collect_exact_tests(out: Path, head: str) -> tuple[dict, dict]:
 
 def load_reviewed_manifest(root: Path, source: Path, event: Path, target: dict) -> tuple[dict, str, list[str]]:
     if not source.is_dir() or source.is_symlink():
-        raise MissingReviewedEvidence(f"reviewed semantic evidence not supplied under {source.relative_to(root)}")
+        raise MissingReviewedEvidenceError(f"reviewed semantic evidence not supplied under {source.relative_to(root)}")
     if not source.resolve().is_relative_to(root) or git(
         root, "status", "--porcelain", "--", source.relative_to(root).as_posix()
     ):
@@ -281,7 +281,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         produce(args.root.resolve(), args.out.resolve(), args.event, args.base_ref)
-    except MissingReviewedEvidence as exc:
+    except MissingReviewedEvidenceError as exc:
         write_json(args.out.resolve() / "handoff-producer-status.json", {
             "status": "awaiting-reviewed-evidence", "reason": str(exc),
             "semantic_validation": "UNKNOWN", "certification": "NOT_ASSERTED",
