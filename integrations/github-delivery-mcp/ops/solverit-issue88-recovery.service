@@ -1,0 +1,32 @@
+# Staging ONLY: conservative restart reconciliation, not the delivery MCP.
+# Do not enable automatically. Review paths and ownership on the VPS first.
+[Unit]
+Description=SolverIT Issue 88 offline recovery (staging only)
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=/run/user/1004/docker.sock
+ConditionPathExists=/home/solverit-worker/issue88-homologacao
+
+[Service]
+Type=oneshot
+User=solverit-worker
+Group=solverit-worker
+WorkingDirectory=/home/solverit-worker/issue88-homologacao
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=DOCKER_HOST=unix:///run/user/1004/docker.sock
+ExecStart=/usr/bin/python3 /home/solverit-worker/issue88-homologacao/local_controller.py --database /home/solverit-worker/issue88-homologacao/controller-service.sqlite3 --lock /home/solverit-worker/issue88-homologacao/controller-service.lock
+TimeoutStartSec=120
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/solverit-worker/issue88-homologacao /run/user/1004
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictRealtime=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+StandardOutput=journal
+StandardError=journal
+
+# No Install section: no activation before security review and explicit approval.
