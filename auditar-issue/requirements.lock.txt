@@ -1,5 +1,5 @@
 # lockfile gerado de auditar-issue/requirements.txt
-# contexto: python 3.12.15 em linux x86_64
+# contexto: python 3.12.3 em linux x86_64
 # regenerar: python scripts/lock_dependencies.py --manifest auditar-issue/requirements.txt
 # nao editar a mao: alterar o manifest e regenerar
 
