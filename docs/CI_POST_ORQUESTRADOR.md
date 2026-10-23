@@ -73,6 +73,44 @@ Para registrar as evidências em cada projeto, copiar e preencher o [template de
 
 A matriz acima **não é inventário do estado atual**. Em cada PR consumidora, anexar dados da API do GitHub e da branch protection/rulesets com as colunas `context atual | workflow/job emissor | app | novo context | ruleset | SHA do check | data de troca | rollback`. Valor desconhecido é `UNKNOWN`; sem inventário e evidência de sucesso no SHA atual, não remover o contexto legado.
 
+## Configuração administrativa verificável de rulesets
+
+Para configurar os checks de uma branch, usar o utilitário versionado
+`scripts/configurar_ruleset.py` em checkout confiável do repositório. Ele exige
+autenticação **GitHub CLI da pessoa administradora**, com permissão
+`Administration:write`, e não recebe tokens por argumento nem os imprime.
+Seu modo padrão é somente leitura; `--apply` autoriza a única escrita após
+conferir identidade, branch exata, checks observados no SHA informado e
+aplicativo emissor. O PUT preserva todas as demais regras, bypasses e a
+exigência `strict_required_status_checks_policy=true`; após escrever,
+refaz a leitura autenticada e recusa divergências.
+
+Exemplo **somente de preflight** para a issue #119 (não é prova de
+implantação nem recomendação de executar sem conferência):
+
+```bash
+python scripts/configurar_ruleset.py \
+  --repo crgasparoto-br/skill --branch develop \
+  --ruleset-id 24821474 \
+  --sample-sha 3189dbe5f407d7eeac7fa6966bf0e6680fc8e6f6 \
+  --check 'Structure and tests' \
+  --check 'Offline authorization tests' \
+  --check 'collect / Require certified semantic handoff (exact SHA)'
+```
+
+Antes do `--apply`, comprovar que **todas** as PRs abrangidas pelo ruleset
+produzem esses mesmos contexts. A branch `main` só poderá receber um check
+de auditoria/release depois que existir um emissor independente e estável,
+com prova no SHA de uma PR de promoção; o script recusa apenas checks
+técnicos em `main`. Nunca supor que nome de workflow seja o context do job.
+
+Após qualquer alteração, registrar o ruleset efetivo e seus bypasses,
+executar uma PR com certificação propositalmente falha (merge bloqueado)
+e outra integralmente aprovada (checks obrigatórios e política de release
+atendidos). O script não pode substituir essas provas nem a auditoria
+independente. Em erro de configuração, restaurar os contexts anteriores
+com a mesma autenticação e repetir o read-back.
+
 ## Critério de encerramento
 
 A issue #66 estabelece **somente o padrão compartilhado**. Cada issue consumidora permanece responsável por provar implantação local, testes negativos, inventário real de checks, proteção equivalente e caminho de rollback. Não declarar os três produtos migrados sem evidências independentes nas respectivas PRs.
