@@ -220,6 +220,15 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         "obligations": obligations, "test_candidates": len(tests),
         "mapping": "UNKNOWN", "certification": "NOT_ASSERTED",
     })
+    changed_paths = sorted(set(git(root, "diff", "--name-only", "--no-renames",
+                                  base, head).splitlines()))
+    write_json(out / "material-change-index.json", {
+        "schema_version": 1, "base_sha": base, "subject_sha": head,
+        "scope": "current-PR-base-to-material-HEAD; not issue-local start",
+        "changed_paths": changed_paths,
+        "semantic_test_impact": "UNKNOWN",
+        "certification": "NOT_ASSERTED",
+    })
     write_json(out / "evidence-review-worklist.json", {
         "schema_version": 1, "subject_sha": head, "issue_number": issue,
         "pull_request_number": pr, "base_ref": base_ref,
@@ -233,6 +242,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         ],
         "pending_obligations": obligations,
         "test_index": "test-candidate-index.json",
+        "material_change_index": "material-change-index.json",
         "semantic_control_mapping": "UNKNOWN",
         "certification": "NOT_ASSERTED",
     })
