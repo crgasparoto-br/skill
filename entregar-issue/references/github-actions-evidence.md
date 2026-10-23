@@ -8,6 +8,7 @@ Consultar ao coletar, certificar ou publicar evidencias de PRs com GitHub Action
 
 - [Objetivo](#objetivo)
 - [Coleta autentica](#coleta-autentica)
+- [Separacao entre CI tecnica e certificacao](#separacao-entre-ci-tecnica-e-certificacao)
 - [Certificacao fail-closed](#certificacao-fail-closed)
 - [Produtor de evidencias revisadas (Actions)](#produtor-de-evidencias-revisadas-actions)
 - [Publicacao separada e autorizada](#publicacao-separada-e-autorizada)
@@ -34,6 +35,32 @@ sem `workflow_dispatch` ou `pull_request_target`.
    Restaurar o checkout so apos os gates, para permitir o cleanup da Action.
 4. Exportar `handoff-preflight.json` e o pacote completo em Actions artifact.
    CI verde nao comprova cobertura semantica por requisito.
+
+## Separacao entre CI tecnica e certificacao
+
+O workflow reutilizavel possui dois jobs com responsabilidades distintas:
+
+1. `Collect exact-SHA technical evidence` executa a suite, coleta log/JUnit
+   e hashes, escreve `semantic-evidence-candidates.json` e
+   `evidence-review-worklist.json` e publica artifact imutavel por SHA.
+   Quando falta apenas o dossie revisado, o produtor registra
+   `awaiting-reviewed-evidence` e retorna sucesso **da coleta**, sem
+   `certification-inputs.json` e sem `handoff-ready.json`. Erros reais de
+   teste, proveniencia, hash, schema ou manipulacao continuam reprovando a coleta.
+2. `Require certified semantic handoff (exact SHA)` depende da coleta,
+   baixa somente o artifact com identidade exata do run e utiliza o validador
+   oficial em checkout somente leitura. Se nao houver certificado autentico
+   para o material SHA, o job reprova com o motivo. A conclusao **do workflow
+   inteiro continua failure** ate a certificacao ser demonstrada; nao
+   apresentar a PR ou a entrega como pronta com apenas a coleta verde.
+
+Isso distingue `technical-green / certification-blocked` de
+`technical-failure`, sem abrir uma via para publicacao insegura: o workflow
+`publish-handoff.yml` so e elegivel quando o workflow completo estiver
+`completed/success`, e seu publicador revalida tudo no codigo confiavel do
+branch default. Nao editar required checks ou suprimir warnings para liberar
+a PR. O perfil de risco, as evidencias e a auditoria permanecem obrigatorios
+e independente do resultado dos testes.
 
 ## Certificacao fail-closed
 
@@ -73,9 +100,11 @@ identidade e precondicoes. Nunca marcar requisitos automaticamente
 como `passed`, converter `UNKNOWN` em `not-applicable` nem usar
 somente log/contagem de testes como prova discriminante.
 
-Enquanto faltarem provas, o passo de certificacao reprova a Action, mas
-a etapa de upload `if: always()` preserva `handoff-certification-status.json`
-com o bloqueio explicito e os logs para remediacao no mesmo SHA.
+Enquanto faltarem provas, o job separado de certificacao reprova o
+workflow completo, mas o job de coleta permanece verde quando a execucao
+tecnica foi valida. A etapa de upload `if: always()` preserva
+`handoff-certification-status.json`, o worklist e os logs para remediacao
+no mesmo SHA.
 
 ## Produtor de evidencias revisadas (Actions)
 
@@ -83,8 +112,10 @@ O caller do repositorio `skill` executa
 `scripts/produce_actions_handoff_evidence.py` apos a suite exact-SHA.
 O produtor nao escolhe o perfil, nao infere historico de rejeicoes e nao marca
 obrigacoes ou controles como aprovados. Sem dossie revisado, publica
-`semantic-evidence-candidates.json` com candidatos factuais e
-`handoff-producer-status.json` com `blocked`. O gate posterior permanece vermelho.
+`semantic-evidence-candidates.json` e `evidence-review-worklist.json`
+com candidatos factuais, alem de `handoff-producer-status.json` com
+`awaiting-reviewed-evidence`. A coleta tecnica nao falha por falta de revisao,
+mas o job de certificacao permanece vermelho.
 
 Para reutilizar em outros repositorios, configurar `evidence-command` no
 caller `reusable-handoff.yml` com o mesmo comando e implementar o dossie
