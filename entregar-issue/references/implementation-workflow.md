@@ -8,6 +8,7 @@ Ler sempre: define preparar, implementar, validar durante a edição e fechar po
 
 - [Principio](#principio)
 - [Preparar](#preparar)
+- [Preflight de testes](#preflight-de-testes)
 - [Implementar](#implementar)
 - [Controles criticos preservados](#controles-criticos-preservados)
 - [Reconciliar risco pelo diff](#reconciliar-risco-pelo-diff)
@@ -27,12 +28,16 @@ Executar implementacao como uma etapa interna do mesmo controlador. Consumir sna
 4. Registrar `input_fingerprint`, `implementation_scope`, `work_item_fingerprint` e `write_owner`.
 5. Nao usar arquivos produzidos nesta rodada como novo input para reabrir a propria rodada; o diff pode apenas revelar superficies adicionais para reconciliacao pos-diff.
 
+## Preflight de testes
+
+Antes de editar qualquer teste, comparar requisito e plausible_wrong_implementation com casos, parametrizacoes, fixtures e helpers ja existentes, no nivel adequado (unitario, integracao, contrato, E2E). Iniciar pelo recorte afetado e ampliar so quando houver consumidor/risk surface adicional. A decision tree, os registros no codebase-grounding.json e a validacao GROUND-TEST-001 pertencem a references/codebase-grounding-gate.md. Registrar casos cobertos, extensoes ou necessidade objetiva de novo teste; dois nomes iguais nao provam oraculo igual e nomes diferentes nao exigem novo teste. Em ajuste pos-CI ou pos-auditoria, repetir o preflight apenas para riscos e testes invalidados. Inspecionar no diff skips, remoção de asserções e redundancia; manter testes cujo runner/consumidor nao possa ser demonstrado como obsoleto. Nunca corrigir CI reduzindo cobertura.
+
 ## Implementar
 
 - Alterar o menor conjunto coeso de arquivos.
 - Preservar arquitetura e contratos publicos, salvo mudanca explicitamente requerida.
 - Implementar comportamento ponta a ponta, nao apenas o caminho feliz.
-- Atualizar testes e documentacao no mesmo recorte.
+- Atualizar testes e documentacao no mesmo recorte, depois de avaliar reuse/extend/create/keep/remove-candidate dos cenarios afetados.
 - Evitar TODO permanente, mock definitivo, seed incompleto ou fallback que esconda obrigacao.
 - Para persistencia, autorizacao, entrada nao confiavel, provider, retry, concorrencia ou proveniencia, aplicar as referencias especializadas.
 

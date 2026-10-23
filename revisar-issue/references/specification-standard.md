@@ -103,6 +103,10 @@ Cobrir somente categorias relevantes:
 - regressões em telas, relatórios ou contratos relacionados;
 - acessibilidade e responsividade quando fizerem parte da mudança.
 
+### Decisao de reaproveitamento
+
+Quando um comportamento, contrato ou risco exigir prova de regressao, localizar no repositorio acessivel testes/casos, fixtures, parametros, helpers e runner relevantes antes de propor novos testes. Classificar os cenarios esperados como covered-by-existing, extend-existing, new-test-required ou not-testable/blocked. Registrar paths, controles/assercoes discriminantes e lacunas na secao existente de Consideracoes de testes; testes no mesmo endpoint nao sao automaticamente equivalentes. Preferir ampliar/parametrizar quando preservar isolamento e diagnostico; exigir novo teste quando nivel, setup, oraculo ou risco for independente. Nao criar um teste para cada edicao sem motivo. Quando a arvore ou runner estiver indisponivel, declarar UNKNOWN com escopo nao inspecionado e criterio de desbloqueio; nunca afirmar que nao existem testes. Sinais de skips, mocks desatualizados e comportamento removido geram candidatos para investigacao, nao autorizacao para exclusao.
+
 ## 4. Checklist de qualidade
 
 Antes de finalizar, confirmar:
@@ -117,6 +121,8 @@ Antes de finalizar, confirmar:
 - [ ] Fallbacks estão definidos quando necessários.
 - [ ] Os critérios de aceite são verificáveis.
 - [ ] As expectativas de teste são proporcionais ao risco.
+- [ ] Inventario de testes existentes, extensoes preferidas ou UNKNOWN justificado constam nas consideracoes de testes quando o risco exigir controle.
+- [ ] Requisitos independentes preservam controles positivos, negativos, limites e oraculos distintos.
 - [ ] O impacto documental foi mapeado no registro compartilhado, aponta a fonte canônica no repositório e possui critério verificável quando aplicável.
 - [ ] A issue não usa comentário, descrição de PR ou memória externa como substituto da documentação versionada necessária.
 - [ ] Premissas, dependências e perguntas em aberto estão separadas dos requisitos.

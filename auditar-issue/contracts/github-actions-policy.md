@@ -57,3 +57,25 @@ Quando um workflow existente estiver aguardando aprovacao manual:
 ## Provider e credenciais
 
 Nao criar smoke de PR com credenciais reais. Provar comportamento com testes hermeticos, fake server, contract tests, replay sanitizado ou smoke local sem segredo. Um smoke remoto protegido ja existente pode ser observado como evidencia adicional, mas nunca disparado ou tornado obrigatorio pela Skill quando nao fizer parte do contrato da issue.
+
+
+## Publicacao certificada via workflow confiavel
+
+Excecao estreita, ativada somente quando o usuario autorizar explicitamente
+alteracoes de GitHub Actions: `.github/workflows/publish-handoff.yml` pode
+publicar um unico filho `result-only-child`, apos coleta e certificacao
+completas e CI material terminal verde. A Action privilegiada deve usar
+`workflow_run`, carregar exclusivamente codigo do branch default confiavel
+e nunca executar scripts ou testes da PR com token de escrita.
+
+Antes de qualquer push, revalidar o artifact de origem no validador confiavel,
+o SHA imutavel do material, o inventario de workflows, o fechamento da issue,
+a allowlist, a ausencia de novos paths materiais e o gate terminal simulado.
+O push deve ser fast-forward, sem force, sem merge e sem apagar arquivos
+existentes. Depois de publicar, fazer novas leituras remotas do HEAD,
+parent e diff, e repetir `validate_terminal_handoff.py`; falha impede
+`READY` mesmo que a escrita ja tenha ocorrido.
+
+O workflow privilegiado so fica ativo quando seu codigo estiver no default
+branch; uma PR isolada nao o ativa. Nao ampliar permissao do workflow
+`pull_request` nem tratar o artifact do PR como executavel confiavel.

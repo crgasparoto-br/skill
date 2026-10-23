@@ -3,44 +3,106 @@
   "title": "codebase-grounding",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "subject_sha", "base_sha", "creations", "references", "replacements"],
+  "required": [
+    "schema_version",
+    "subject_sha",
+    "base_sha",
+    "creations",
+    "references",
+    "replacements"
+  ],
   "properties": {
-    "schema_version": {"const": 1},
-    "subject_sha": {"$ref": "#/$defs/sha"},
-    "base_sha": {"$ref": "#/$defs/sha"},
+    "schema_version": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "subject_sha": {
+      "$ref": "#/$defs/sha"
+    },
+    "base_sha": {
+      "$ref": "#/$defs/sha"
+    },
     "creations": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "kind", "search", "decision", "justification"],
+        "required": [
+          "path",
+          "kind",
+          "search",
+          "decision",
+          "justification"
+        ],
         "properties": {
-          "path": {"$ref": "#/$defs/text"},
-          "kind": {"enum": ["file", "symbol", "endpoint", "table", "config", "dependency"]},
-          "name": {"$ref": "#/$defs/text"},
+          "path": {
+            "$ref": "#/$defs/text"
+          },
+          "kind": {
+            "enum": [
+              "file",
+              "symbol",
+              "endpoint",
+              "table",
+              "config",
+              "dependency"
+            ]
+          },
+          "name": {
+            "$ref": "#/$defs/text"
+          },
           "search": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["queries", "scope", "candidates"],
+            "required": [
+              "queries",
+              "scope",
+              "candidates"
+            ],
             "properties": {
-              "queries": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}},
-              "scope": {"$ref": "#/$defs/text"},
+              "queries": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/text"
+                }
+              },
+              "scope": {
+                "$ref": "#/$defs/text"
+              },
               "candidates": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["path", "reason_not_reused"],
+                  "required": [
+                    "path",
+                    "reason_not_reused"
+                  ],
                   "properties": {
-                    "path": {"$ref": "#/$defs/text"},
-                    "reason_not_reused": {"$ref": "#/$defs/text"}
+                    "path": {
+                      "$ref": "#/$defs/text"
+                    },
+                    "reason_not_reused": {
+                      "$ref": "#/$defs/text"
+                    }
                   }
                 }
               }
             }
           },
-          "decision": {"enum": ["reuse", "extend", "create"]},
-          "justification": {"$ref": "#/$defs/text"}
+          "decision": {
+            "enum": [
+              "reuse",
+              "extend",
+              "create"
+            ]
+          },
+          "justification": {
+            "$ref": "#/$defs/text"
+          }
         }
       }
     },
@@ -49,33 +111,104 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["symbol", "kind", "used_in", "verified_by"],
+        "required": [
+          "symbol",
+          "kind",
+          "used_in",
+          "verified_by"
+        ],
         "properties": {
-          "symbol": {"$ref": "#/$defs/text"},
-          "kind": {"enum": ["local", "dependency"]},
-          "used_in": {"$ref": "#/$defs/text"},
+          "symbol": {
+            "$ref": "#/$defs/text"
+          },
+          "kind": {
+            "enum": [
+              "local",
+              "dependency"
+            ]
+          },
+          "used_in": {
+            "$ref": "#/$defs/text"
+          },
           "defined_at": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["path", "line"],
-            "properties": {"path": {"$ref": "#/$defs/text"}, "line": {"type": "integer", "minimum": 1}}
+            "required": [
+              "path",
+              "line"
+            ],
+            "properties": {
+              "path": {
+                "$ref": "#/$defs/text"
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
           },
           "manifest": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["path", "name"],
-            "properties": {"path": {"$ref": "#/$defs/text"}, "name": {"$ref": "#/$defs/text"}}
+            "required": [
+              "path",
+              "name"
+            ],
+            "properties": {
+              "path": {
+                "$ref": "#/$defs/text"
+              },
+              "name": {
+                "$ref": "#/$defs/text"
+              }
+            }
           },
           "verified_by": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["command", "exit_code"],
-            "properties": {"command": {"$ref": "#/$defs/text"}, "exit_code": {"const": 0}}
+            "required": [
+              "command",
+              "exit_code"
+            ],
+            "properties": {
+              "command": {
+                "$ref": "#/$defs/text"
+              },
+              "exit_code": {
+                "const": 0
+              }
+            }
           }
         },
         "allOf": [
-          {"if": {"properties": {"kind": {"const": "local"}}}, "then": {"required": ["defined_at"]}},
-          {"if": {"properties": {"kind": {"const": "dependency"}}}, "then": {"required": ["manifest"]}}
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "local"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "defined_at"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "dependency"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "manifest"
+              ]
+            }
+          }
         ]
       }
     },
@@ -84,21 +217,315 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["old_path", "disposition"],
+        "required": [
+          "old_path",
+          "disposition"
+        ],
         "properties": {
-          "old_path": {"$ref": "#/$defs/text"},
-          "old_symbol": {"$ref": "#/$defs/text"},
-          "disposition": {"enum": ["removed", "kept"]},
-          "consumer": {"$ref": "#/$defs/text"}
+          "old_path": {
+            "$ref": "#/$defs/text"
+          },
+          "old_symbol": {
+            "$ref": "#/$defs/text"
+          },
+          "disposition": {
+            "enum": [
+              "removed",
+              "kept"
+            ]
+          },
+          "consumer": {
+            "$ref": "#/$defs/text"
+          }
         },
         "allOf": [
-          {"if": {"properties": {"disposition": {"const": "kept"}}}, "then": {"required": ["old_symbol", "consumer"]}}
+          {
+            "if": {
+              "properties": {
+                "disposition": {
+                  "const": "kept"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "old_symbol",
+                "consumer"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "test_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "operation",
+          "scenario",
+          "requirement",
+          "search",
+          "decision",
+          "justification",
+          "disposition",
+          "verification"
+        ],
+        "properties": {
+          "path": {
+            "$ref": "#/$defs/text"
+          },
+          "prior_path": {
+            "$ref": "#/$defs/text"
+          },
+          "operation": {
+            "enum": [
+              "added",
+              "modified",
+              "renamed",
+              "deleted"
+            ]
+          },
+          "scenario": {
+            "$ref": "#/$defs/text"
+          },
+          "requirement": {
+            "$ref": "#/$defs/text"
+          },
+          "search": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "queries",
+              "scope",
+              "runner",
+              "candidates"
+            ],
+            "properties": {
+              "queries": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/text"
+                }
+              },
+              "scope": {
+                "$ref": "#/$defs/text"
+              },
+              "runner": {
+                "$ref": "#/$defs/text"
+              },
+              "candidates": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "path",
+                    "case",
+                    "oracle",
+                    "comparison"
+                  ],
+                  "properties": {
+                    "path": {
+                      "$ref": "#/$defs/text"
+                    },
+                    "case": {
+                      "$ref": "#/$defs/text"
+                    },
+                    "oracle": {
+                      "$ref": "#/$defs/text"
+                    },
+                    "comparison": {
+                      "$ref": "#/$defs/text"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "decision": {
+            "enum": [
+              "covered-by-existing",
+              "extend-existing",
+              "new-test-required",
+              "not-testable/blocked"
+            ]
+          },
+          "justification": {
+            "$ref": "#/$defs/text"
+          },
+          "disposition": {
+            "enum": [
+              "keep",
+              "refactor/consolidate",
+              "remove-candidate",
+              "needs-investigation"
+            ]
+          },
+          "coverage_before": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/text"
+            }
+          },
+          "coverage_after": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/text"
+            }
+          },
+          "verification": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "passed",
+                  "blocked",
+                  "unknown"
+                ]
+              },
+              "command": {
+                "$ref": "#/$defs/text"
+              },
+              "exit_code": {
+                "type": "integer"
+              },
+              "reason": {
+                "$ref": "#/$defs/text"
+              },
+              "subject_sha": {
+                "$ref": "#/$defs/sha"
+              },
+              "reached_tests": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/text"
+                }
+              },
+              "evidence_path": {
+                "$ref": "#/$defs/text"
+              },
+              "evidence_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "replacement_tests": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/text"
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "deleted"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "required": [
+                "coverage_before",
+                "coverage_after",
+                "replacement_tests"
+              ],
+              "properties": {
+                "verification": {
+                  "required": [
+                    "status",
+                    "command",
+                    "exit_code",
+                    "subject_sha",
+                    "reached_tests",
+                    "evidence_path",
+                    "evidence_sha256"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "verification": {
+                  "properties": {
+                    "status": {
+                      "const": "passed"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              },
+              "required": [
+                "verification"
+              ]
+            },
+            "then": {
+              "properties": {
+                "verification": {
+                  "required": [
+                    "status",
+                    "command",
+                    "exit_code",
+                    "subject_sha",
+                    "reached_tests",
+                    "evidence_path",
+                    "evidence_sha256"
+                  ]
+                }
+              }
+            }
+          }
         ]
       }
     }
   },
   "$defs": {
-    "sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-    "text": {"type": "string", "minLength": 1, "pattern": "\\S"}
-  }
+    "sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 2
+          }
+        },
+        "required": [
+          "schema_version"
+        ]
+      },
+      "then": {
+        "required": [
+          "test_decisions"
+        ]
+      }
+    }
+  ]
 }

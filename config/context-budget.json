@@ -22,12 +22,12 @@
   },
   "allowances": {
     "entregar-issue/SKILL.md": {
-      "max_bytes": 66598,
+      "max_bytes": 66549,
       "max_line_chars": 2293,
       "reason": "Control plane mais crítico do catálogo: define os gates de ancoragem no código, crescimento de código, fechamento de requisitos e handoff. Reduzir exige mover conteúdo para referências já carregadas, o que é uma entrega própria. Exceção medida em 2026-10-11 para o contrato de execução exaustiva de pendências, sem remoção de controles. Inclui ponteiro condicional para saturacao semantica, com exemplos historicos desacoplados em 2026-10-18. Gate de saturacao executavel e ativado pelo registry em 2026-10-18. Mantida palavra-chave pairwise exigida no regression gate. Medicao exata apos protocolo de readiness abrangente em 2026-10-18. Medicao exata atualizada para incluir gate de endereco de evidencias em 2026-10-20."
     },
     "auditar-issue/SKILL.md": {
-      "max_bytes": 39484,
+      "max_bytes": 39438,
       "max_line_chars": 1974,
       "reason": "Control plane da auditoria independente, com o contrato de rederivação, os gates de refutação e o bloco obrigatório de conclusão do parecer. Reduzir depende de separar o preflight proporcional em referência carregada condicionalmente. Inclui ponteiro condicional para mutacoes semanticas, com exemplos historicos isolados em 2026-10-18. Medicao exata apos gate de completude em 2026-10-18. Medicao exata atualizada para revalidacao independente de enderecos em 2026-10-20. Atualizada para incluir fallback auditavel por Git Bundle do CI quando o runtime nao tem DNS, mantendo o script e o procedimento extenso em referencia sob demanda. Atualizada na issue #110 para validar a triagem com itens estruturados no corpo e exigir revalidacao contra parecer anterior em retificacoes, mantendo as regras detalhadas no report-template. Ajustada para o sinalizador --revision de comparacao obrigatoria de retificacoes (issue #110)."
     },
@@ -44,7 +44,7 @@
       "reason": "Referência do certificado de handoff, com uma linha que enumera os campos obrigatórios. Dividir a enumeração é melhoria editorial fora do escopo desta entrega."
     },
     "higienizar-repositorio/references/global-hygiene-profile.md": {
-      "max_bytes": 22408,
+      "max_bytes": 22330,
       "reason": "Referencia do perfil de higienizacao global, que declara o que cada classe mede, o que nao ve, os limites e o contrato da politica. Cresceu com as precisoes de normalizacao, cobertura, manifest e supressor declarativo exigidas pelas rodadas de auditoria; reduzir exige mover conteudo para referencia carregada sob demanda, o que e entrega propria."
     }
   }

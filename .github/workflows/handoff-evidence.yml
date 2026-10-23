@@ -1,0 +1,20 @@
+name: Collect and certify exact-SHA handoff
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  collect:
+    uses: ./.github/workflows/reusable-handoff.yml
+    with:
+      base-ref: develop
+      install-command: "python -m pip install --require-hashes -r requirements.lock.txt -r entregar-issue/requirements-dev.lock.txt -r auditar-issue/requirements-dev.lock.txt"
+      test-command: 'python -m pytest -vv --junitxml="$EVIDENCE_DIR/pytest-exact-head.xml"'
+      evidence-command: 'python "$HANDOFF_TOOLING/entregar-issue/scripts/produce_actions_handoff_evidence.py" --root . --out "$EVIDENCE_DIR" --event "$GITHUB_EVENT_PATH" --base-ref "$BASE_REF"'

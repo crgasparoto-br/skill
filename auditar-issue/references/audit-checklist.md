@@ -157,6 +157,11 @@ Testes isolados do resolvedor, executor ou adapter não comprovam a cadeia compl
 - fixtures não usam valores coincidentes quando o requisito define precedência entre campos;
 - reprodução da causa raiz provoca a condição anterior ou uma falha equivalente controlada;
 - testes antigos não foram enfraquecidos para passar;
+- foi refeito independentemente o inventario dirigido de testes/casos/fixtures e descoberta do runner para cada diff de teste, inclusive A/M/R/D e apenas-testes, confrontando evidencias do SHA com GROUND-TEST-001;
+- as decisoes covered-by-existing, extend-existing e new-test-required foram confrontadas com oraculos/assercoes concretos, sem deduzir equivalencia por nome, endpoint ou contagem;
+- teste novo justifica risco, nivel, isolamento ou oraculo nao demonstrado pelo existente; parametrizacao nao suprimiu cenarios independentes;
+- candidatos a obsolescencia possuem prova do contrato e uso vigentes, controles antes/depois, runner/CI e autorizacao da exclusao; descoberta dinamica/ambiente incompleto implica UNKNOWN, nao remocao;
+- consolidacoes preservaram controles positivos, negativos, limites, historia critica, matrizes adversariais e gates efetivamente executados;
 - type-check, lint, build e gates oficiais foram executados;
 - testes flaky, skips e TODOs relevantes foram registrados.
 

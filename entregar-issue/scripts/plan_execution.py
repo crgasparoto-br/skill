@@ -10,9 +10,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import test_path_discovery
 from planning_contract_runtime import CONTRACT_VERSION, validate_controller_context, validate_execution_plan
+from test_path_discovery import (
+    TEST_RUNNER_MANIFESTS,
+    is_test_path,
+    pytest_discovery_configs_from_git,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
+pytest_discovery_configs = test_path_discovery.pytest_discovery_configs
 CRITICAL = {
     'authorization', 'privacy', 'multi-tenant', 'migration', 'concurrency',
     'parser', 'decoder', 'retry', 'fallback', 'cancellation', 'continuation',
@@ -57,7 +64,7 @@ RUNTIME_CONFIG_NAMES = {
     'compose.yml', 'tsconfig.json', 'vite.config.ts', 'next.config.js',
 }
 GENERATED_MARKERS = ('/generated/', '/dist/', '/build/', '/coverage/', '.generated.', '.g.')
-TEST_DIR_MARKERS = {'test', 'tests', '__tests__', 'spec', 'specs', 'fixtures'}
+
 
 
 def now() -> str:
@@ -224,24 +231,15 @@ def deduplicate_domain_requests(items: list[dict[str, Any]]) -> list[dict[str, A
     return sorted(by_key.values(), key=lambda item: (item['skill'], item['input_fingerprint']))
 
 
-def is_test_path(path: str) -> bool:
-    parts = [part for part in path.replace('\\', '/').lower().split('/') if part]
-    name = parts[-1] if parts else ''
-    return (
-        any(part in TEST_DIR_MARKERS for part in parts[:-1])
-        or name.startswith('test_')
-        or '.test.' in name
-        or '.spec.' in name
-        or name.endswith('_test.py')
-    )
-
-
 def is_generated_path(path: str) -> bool:
     normalized = '/' + path.replace('\\', '/').lower().lstrip('/')
     return any(marker in normalized for marker in GENERATED_MARKERS)
 
 
-def classify_changes(changed: list[str], signals: set[str]) -> dict[str, bool]:
+def classify_changes(
+    changed: list[str], signals: set[str], *,
+    pytest_configs: dict[str, tuple[str, ...]] | None = None,
+) -> dict[str, bool]:
     lower_paths = [item.lower() for item in changed]
     docs_only = bool(changed) and all(
         path.endswith(DOC_SUFFIXES) or '/docs/' in f'/{path}' for path in lower_paths
@@ -250,7 +248,11 @@ def classify_changes(changed: list[str], signals: set[str]) -> dict[str, bool]:
         docs_only = True
     assets_only = bool(changed) and all(path.endswith(ASSET_SUFFIXES) for path in lower_paths)
     generated_only = bool(changed) and all(is_generated_path(path) for path in lower_paths)
-    test_only = bool(changed) and all(is_test_path(path) for path in lower_paths)
+    test_only = bool(changed) and all(
+        is_test_path(path, pytest_configs=pytest_configs) and Path(path).name not in TEST_RUNNER_MANIFESTS
+        for path in lower_paths
+    )
+    tests_touched = any(is_test_path(path, pytest_configs=pytest_configs) for path in lower_paths)
     code_touched = any(path.endswith(CODE_SUFFIXES) for path in lower_paths)
     runtime_config_touched = any(
         path.endswith(CONFIG_SUFFIXES)
@@ -268,6 +270,7 @@ def classify_changes(changed: list[str], signals: set[str]) -> dict[str, bool]:
         'assets_only': assets_only,
         'generated_only': generated_only,
         'test_only': test_only,
+        'tests_touched': tests_touched,
         'code_touched': code_touched,
         'runtime_config_touched': runtime_config_touched,
         'behavioral_change': behavioral_change,
@@ -353,6 +356,12 @@ def evaluate_gate_rule(rule: dict[str, Any], *, profile: str, classification: di
     if kind == 'signal-any':
         values = set(rule.get('values', []))
         return bool(signals & values)
+    if kind == 'any':
+        rules = rule.get('rules', [])
+        return bool(rules) and any(
+            evaluate_gate_rule(item, profile=profile, classification=classification, signals=signals)
+            for item in rules
+        )
     if kind == 'all':
         rules = rule.get('rules', [])
         return bool(rules) and all(
@@ -425,7 +434,13 @@ def main() -> int:
     explicit_signals = {item.strip().lower() for item in args.signal if item.strip()}
     planning_paths = sorted(set(changed) | set(implementation_scope) | set(work_item_paths))
     signals = infer_signals(explicit_signals, planning_paths, requirement_text)
-    classification = classify_changes(changed, signals)
+    # Do not infer completeness from filenames: use immutable runner configuration
+    # when the project checkout is available. The deterministic gate validates the
+    # same discovery against both Git revisions.
+    repo_path = Path(context['repository_path'])
+    head_sha = context['identity'].get('head_sha')
+    pytest_configs = pytest_discovery_configs_from_git(changed, repo_path, head_sha)
+    classification = classify_changes(changed, signals, pytest_configs=pytest_configs)
     lower_paths = [item.lower() for item in changed]
     planning_lower_paths = [item.lower() for item in planning_paths]
 
@@ -558,7 +573,11 @@ def main() -> int:
     missing_stage_inputs = set(deps['stages']) - set(stage_inputs)
     if missing_stage_inputs:
         raise ValueError(f'missing stage inputs: {sorted(missing_stage_inputs)}')
-    stages, execution_order, reusable, invalidated = build_stages(deps, stage_inputs, previous)
+    # Historical v2 plans may omit tests_touched; read them, but never reuse their gates.
+    previous_for_reuse = previous
+    if previous and 'tests_touched' not in previous.get('change_classification', {}):
+        previous_for_reuse = None
+    stages, execution_order, reusable, invalidated = build_stages(deps, stage_inputs, previous_for_reuse)
 
     internal_plan: list[dict[str, Any]] = [
         {

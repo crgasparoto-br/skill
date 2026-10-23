@@ -9,7 +9,7 @@ description: "Conduzir a entrega ponta a ponta de issues em repositorios de soft
 
 Produzir o menor candidato completo, rastreavel e localmente verde para uma issue. Possuir diretamente ciclo, identidade, contrato, plano, implementacao, validacoes, higiene limitada, gates, freeze, remediacao e handoff. Nao delegar etapas internas para Skills que recriem estado ou releiam o problema.
 
-O objetivo operacional e concluir a entrega, sempre que nao houver impedimento real, em **uma unica invocacao de nivel superior**. Estado de CI `pending-no-run`, `queued`, `waiting` ou `in_progress` nunca e motivo para devolver o controle ao usuario: transferir a propriedade temporaria da CI para `corrigir-ci`, aguardar o terminal e retomar automaticamente a entrega.
+Concluir a entrega em **uma unica invocacao de nivel superior**, salvo impedimento real. Estado de CI `pending-no-run`, `queued`, `waiting` ou `in_progress` nunca e motivo para devolver o controle ao usuario: transferir a propriedade temporaria da CI para `corrigir-ci`, aguardar o terminal e retomar automaticamente a entrega.
 
 A verificacao executada no mesmo contexto e interna. Somente `auditar-issue` em contexto realmente separado pode liberar aprovacao operacional.
 
@@ -22,7 +22,7 @@ A verificacao executada no mesmo contexto e interna. Somente `auditar-issue` em 
 3. Pendências que exigem verdade independente (ex.: classificacoes que exigem oraculo externo ao sistema) requerem fonte primária ou evidência histórica específica por caso, com procedência e teste verificável. Nunca tratar fixture, saída do próprio resolvedor, teste autorreferente, comentário ou CI verde como certificação independente.
 4. Em conjuntos com dezenas de casos, tentar revisar **cada caso**, registrando evidência e decisão por caso, em vez de revisar somente exemplos. Se faltar fonte acessível, marcar o caso como bloqueado e continuar nos demais; não mascarar a pendência nem alterar artificialmente o oráculo para passar.
 5. Distinguir implementação, verificação automática e revisão independente. Reconsultar issue, diff, testes, CI e auditoria no último HEAD antes da resposta final. Declarar entrega integral somente com zero pendências acionáveis não validadas. Reportar total, concluídas, bloqueadas e prova para cada ID.
-6. Se um bloqueio externo real impedir conclusão, registrar motivo preciso e requisito de desbloqueio na PR, sem pedir outra vez para o usuário emitir o mesmo comando, nem prometer trabalho assíncrono.
+6. Em bloqueio externo real, registrar motivo e desbloqueio na PR; não pedir novo comando nem prometer trabalho assíncrono.
 
 Anti-padrões proibidos: corrigir só itens simples; deixar casos rotulados sem fonte e apresentar o corpus como certificado; chamar documentação de pendência de implementação; devolver ao usuário por CI pendente; declarar conclusão com P1 aberto.
 
@@ -76,7 +76,7 @@ Ler somente quando aplicavel:
 - correcao de handoff `result-only` em PR ja aberta ou decisao sobre PR substituta: `references/result-only-pr-recovery.md`;
 - auditoria interna: `references/controller-audit-contract.md` e `references/controller-single-invocation.md`;
 - controle negativo: `references/controller-adversarial-evidence.md`;
-- codigo executavel tocado (criar, usar ou substituir simbolo, API, dependencia ou caminho): `references/codebase-grounding-gate.md`;
+- codigo ou testes tocados: `references/codebase-grounding-gate.md`;
 - arquivo de codigo novo ou ampliado: `references/code-growth-gate.md`;
 - matriz requisito -> ataque: `references/requirement-attack-matrix.md`;
 - parsers/gates: `references/semantic-mutation-saturation.md`; executar `semantic-mutation-saturation` com pairwise e SHA exato antes do handoff;
@@ -92,7 +92,8 @@ Ler somente quando aplicavel:
 - melhoria de Skill: `references/controller-skill-improvement.md`;
 - generalizacao de aprendizado apos rejeicao: `references/learning-generalization.md`;
 - certificado de handoff independente: `references/handoff-certificate.md`;
-- handoff: `references/connector-only-handoff.md`, `references/github-actions-evidence.md`; GitHub Actions: `scripts/require_actions_handoff_certificate.py`, `scripts/publish_actions_handoff.py`;
+- runtime `connector-only` ou recuperacao de certificado ausente/stale: `references/connector-only-handoff.md`;
+- GH Actions: `references/github-actions-evidence.md`, `scripts/prepare_actions_handoff.py`, `scripts/build_test_candidate_index.py`, `scripts/produce_actions_handoff_evidence.py`, `scripts/require_actions_handoff_certificate.py`, `scripts/publish_actions_handoff.py`;
 - checkout local indisponivel com escrita GitHub por conector: `references/github-connector-write-fallback.md`;
 - artefato JSON grande, limite de payload do connector ou publicacao por blobs: `references/large-artifact-transport.md`;
 - finding independente contra candidato antes aprovado internamente: `references/audit-escape-closure.md`;
@@ -104,8 +105,7 @@ Nao carregar referencias condicionais por antecipacao.
 
 ## Gate de completude de remediacao
 
-Para qualquer pedido de 'implementar pendências', 'implementar todas as pendências' ou equivalente, seja a fonte uma auditoria, issue, PR, comentários, checklist ou critérios de aceite, aplicar obrigatoriamente `references/finding-completion-gate.md` antes da primeira edição e antes de declarar resultado. Unificar todas as fontes em um ledger e executar cada obrigação aplicável até verificação ou impedimento real comprovado. Publicação de commit, CI iniciada ou CI verde isolada não constitui entrega integral. Aprovacao independente exige contexto separado, mas não impede que toda correção executável seja concluída primeiro. Um commit parcial ou CI iniciado nunca encerram o ledger de achados. Aprovacao independente exige contexto separado.
-
+Para qualquer pedido de 'implementar pendências', 'implementar todas as pendências' ou equivalente, seja a fonte uma auditoria, issue, PR, comentários, checklist ou critérios de aceite, aplicar obrigatoriamente `references/finding-completion-gate.md` antes da primeira edição e antes de declarar resultado. Unificar todas as fontes em um ledger e executar cada obrigação aplicável até verificação ou impedimento real comprovado. Publicação de commit, CI iniciada ou CI verde isolada não constitui entrega integral. Aprovacao independente exige contexto separado, mas não impede que toda correção executável seja concluída primeiro. Um commit parcial ou CI iniciado nunca encerram o ledger de achados. 
 ## Autoridade e invariantes
 
 1. Possuir com exclusividade identidade, `controller_cycle`, plano, estado, work items, freeze, findings globais e decisao.

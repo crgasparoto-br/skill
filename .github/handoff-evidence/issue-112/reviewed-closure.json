@@ -1,0 +1,473 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "387507ab35d29d27f65f8670396eea231582e7eed7e2ccc49d197569d0aed575": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-001 before any coverage claim."
+    },
+    "4e52debdfd23907278b938bd87737592cad821d5d4fbb94faf4ad393ebcb7598": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-002 before any coverage claim."
+    },
+    "bd3b1ccad7ed21dbc3a4daaf9a5cc29b9703d136c418ba0ef288bf35192b537b": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-003 before any coverage claim."
+    },
+    "2801d6258672b8018baf3acb05d107c77b8db2854ea17343e5519106abe37deb": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-004 before any coverage claim."
+    },
+    "012c3052d5c9591765aa8107da42aabb909525b9a5a1471254cecaac1e407769": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-005 before any coverage claim."
+    },
+    "342199765de735c3959da58f05f0af850d7c224312b29bfb5ce48413521d18d7": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-006 before any coverage claim."
+    },
+    "faa2ac950da36e2179df73f09b01b9bb2af246af03abeb37a6f1c8171de1c40a": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-007 before any coverage claim."
+    },
+    "94f70cae96f99f502f27580c2f3f990ad48ebc29d0027820e0c490e6851bd5a8": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-008 before any coverage claim."
+    },
+    "1493523ee3ff2bbaaf4b5690ac104b5cc959752c513eaf5816b03bf73e22b706": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-009 before any coverage claim."
+    },
+    "39f9e69fe4bddf938cb36bf71f04eb2364f4c14329f4ffa99cb544e2176c9470": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-010 before any coverage claim."
+    },
+    "7e1c0df5dfeda24a7392b6c20d7cc062114e64a2b7a6bb122490c94e2b7accb6": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-011 before any coverage claim."
+    },
+    "d6d37be23ebaa63728f176b09a9db5dbd7ae48f2bacf7611c6fca7eba0087b58": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-012 before any coverage claim."
+    },
+    "1cf68df6ad422a739d67eb13237c57c23df35262b22463db8c014b6cfc98ac4f": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-013 before any coverage claim."
+    },
+    "c24e81097b947d46836eccf234a9190b888df2965c246d8b049b6111523600aa": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-014 before any coverage claim."
+    },
+    "1ea87aba560d21cdc23b18cc2edf0a08b3a10b0b2411d1840a1e4b95fae5b9c7": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-015 before any coverage claim."
+    },
+    "e111b61ee8b5bdfa70a02f3b85e1e3572b6355c7e79080f4bf55d2e0bfdd146f": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-016 before any coverage claim."
+    },
+    "8922083570fd4f0e66dbd6a6f77f599bb4eb67395822f7365cb85fd614baee76": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-017 before any coverage claim."
+    },
+    "bc85912b59c17535385c582d70490985da9745d19e703dcc045df4478769a89b": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-018 before any coverage claim."
+    },
+    "102185f1599844fb071f57080701250bb66b5b2a7d07b5b977e39a19afad9b9e": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-019 before any coverage claim."
+    },
+    "c6047ea659ddb7fd9ea19256c18989725b39fe9c89e57d922f926298b31f7562": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-020 before any coverage claim."
+    },
+    "e0afbace8e2cc3a0c6e5e0c300db6aaf36e4823d63b14418b9961566015036fe": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-021 before any coverage claim."
+    },
+    "197dc790f0d17e7a64879cd0a82ea087d34fc401bfab550c46c287b9ffb28389": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-022 before any coverage claim."
+    },
+    "40fa0840722bbfdbf54af6c2ae7675ec4af82e6ea83debaf8076cdbfe628cd28": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-023 before any coverage claim."
+    },
+    "0b47fa9c9dbedad74d955b44b6cb201715c950766710ae0fca93db20e76d68ac": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-024 before any coverage claim."
+    },
+    "99e25804db66e95f30566cd30172c81d61d4d87feb855b1bc56925ca64789a4a": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-025 before any coverage claim."
+    },
+    "44b407f6481b07305b61004ab48a3ab23a1e05a39a2b92371a3f69093c17e296": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-026 before any coverage claim."
+    },
+    "650e4aa42e6d93ff8bf1d2c4e7200aaa1bf11c007d2f9cc505288f8d158a1c30": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-027 before any coverage claim."
+    },
+    "8ab0782dd30e1e28b77debe6d8918a066de4f796a73860d4873ac34fa6137d8d": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-028 before any coverage claim."
+    },
+    "50eedb89821c9c6af699c4c477a53fe51be4939f0556260d81b74c2b05fc342a": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-029 before any coverage claim."
+    },
+    "d23a733f94232bd1682e470b6712b96da43ff9476c3ffb9b75924800449b007d": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-030 before any coverage claim."
+    },
+    "642733975af8ee9400dd2b83e0e121ba5f36f8634c4ffbdaf6699f26944b37c3": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-031 before any coverage claim."
+    },
+    "cccd6b179762196f866843681541c857979106f3bc6457066faceec7909954fc": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-032 before any coverage claim."
+    },
+    "d7430bd917031835ef90254f1772562f5fc05a118fd6844bd7934dacde67b6b7": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-033 before any coverage claim."
+    },
+    "e8844ae4615f9c22a69e7d23befbd19be56bba7ecc608c928741b3f4806d830c": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-034 before any coverage claim."
+    },
+    "bc119020f5df627d95c8f940b0d84dadbc9033e09542c481465b581dc0daeb7b": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-035 before any coverage claim."
+    },
+    "b10f92e6414f30296040b038b0510c9be0710b92a4c9e3fe02ac04429b7ca1f9": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-036 before any coverage claim."
+    },
+    "cb4bb57003804cadaaff66870950c69236fa20e0497ac483d495e6638716c8dd": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-037 before any coverage claim."
+    },
+    "17c02744d4fc9b47386849ac09acc25ce74bcc4431a051eb21ec5e27595ad8bb": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-038 before any coverage claim."
+    },
+    "50745b9d5815f8d21fca2f1178f06ccc01d8b8c695ba575ad792fe3b34e12a61": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-039 before any coverage claim."
+    },
+    "658bd6a65d14bffaef0a197ce87452d066f6e1e0de0fa82bfc6d6958e38fb468": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-040 before any coverage claim."
+    },
+    "959c6dc1837804d9a35b750f457f548c0b0ef0fc634f8787c6ef05a784937452": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-041 before any coverage claim."
+    },
+    "a11aa405f25f61c2b96c72127ba1e5de51827e388eff3953415bea6b6497e8fa": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-042 before any coverage claim."
+    },
+    "d41ec970d8b472ea56b05f3718b80a2b703b336099aaa07dbb3bedcbbbc51210": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-043 before any coverage claim."
+    },
+    "3d46fc17c90890cece6ad6f89c85fe89a5bad834fa69b8fe309bdebcf6bc7a82": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-044 before any coverage claim."
+    },
+    "aa96d6edb9c7c6fac6f99d7f7d8f1ab4d28ecb04157d10412d426bf1486f4bc9": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-045 before any coverage claim."
+    },
+    "019f114602ab8f2bedca873a037526f2d643794d84d2ba9731404ba0fb0be76d": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-046 before any coverage claim."
+    },
+    "d2ce945d4ee067e76c27e18fca669291bf5ed1e4fa61d8c68409cb2af1f8d7be": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-047 before any coverage claim."
+    },
+    "28377bf39dfb6bc7f9481cb9b0e59292be08e5d0f99df327a5c9670d58bd5532": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-048 before any coverage claim."
+    },
+    "9d22964ea3a8da0baeb8c05c62c09534c5f9117571948af4b4809d83edf1abe9": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-049 before any coverage claim."
+    },
+    "9533a8e5b134a08a0dcc1df5910fd2cf36030c04f58b0240880d3f1ea3446feb": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-050 before any coverage claim."
+    },
+    "fe3aac63378b0a4a3c9b97e6ad4aacee79e77e758e0669f101bffa088e93837f": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-051 before any coverage claim."
+    },
+    "342cc6d1231a1d95456f7a3f74513eedb934e8c7939be5e2c8a6f9eaa947c91d": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-052 before any coverage claim."
+    }
+  },
+  "controls": {
+    "domain_inventories": [],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "pending",
+      "applicability_reason": "10 structural obligation candidates require negative-control review",
+      "entries": [],
+      "unresolved_invariants": [
+        "Independent refutation of canonical implementation paths remains incomplete"
+      ]
+    },
+    "read_model_closures": {
+      "status": "pending",
+      "applicability_reason": "Version compatibility and historical behavior require consumer evidence",
+      "entries": [],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "pending",
+      "applicability_reason": "Shared gate registries and contract copies must be checked at exact SHA",
+      "entries": [],
+      "unverified_surfaces": [
+        "shared gate registries and manifests"
+      ],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "pending",
+      "applicability_reason": "Normative Skills and cross-repository contract references require independent scan",
+      "old_contract_terms": [],
+      "new_contract_terms": [],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": false,
+      "search_evidence": []
+    },
+    "scope_reduction_review": {
+      "status": "pending",
+      "matches": []
+    },
+    "pass_c": {
+      "status": "pending",
+      "requirement_ids": [],
+      "obligation_ids": [],
+      "evidence": [],
+      "rederived_without_pr_description": false,
+      "reviewed_user_visible_semantics": false,
+      "reviewed_producer_consumer_parity": false,
+      "reviewed_all_specification_sources": false
+    }
+  }
+}

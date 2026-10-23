@@ -298,6 +298,9 @@
         },
         "hygiene_applicable": {
           "type": "boolean"
+        },
+        "tests_touched": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false
