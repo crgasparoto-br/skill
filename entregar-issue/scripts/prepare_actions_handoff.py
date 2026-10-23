@@ -63,8 +63,11 @@ def check_checkout(repo_root: Path, head: str) -> None:
 def issue_body(repository: str, issue: int, token: str) -> str:
     if not token:
         fail("missing GITHUB_TOKEN; issue source cannot be authenticated")
+    api_url = os.environ.get("GITHUB_API_URL", "")
+    if not api_url.startswith("https://"):
+        fail("GITHUB_API_URL must be provided by GitHub Actions as an HTTPS URL")
     request = urllib.request.Request(
-        f"https://api.github.com/repos/{repository}/issues/{issue}",
+        f"{api_url.rstrip('/')}/repos/{repository}/issues/{issue}",
         headers={"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}",
                  "X-GitHub-Api-Version": "2022-11-28"},
     )
