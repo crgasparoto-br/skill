@@ -126,6 +126,15 @@ def require_complete_semantic_review(closure: dict) -> None:
             f"reviewed semantic closure incomplete: {len(unresolved)} unresolved "
             f"obligations ({', '.join(unresolved[:5])}); no certificate can be staged"
         )
+    unjustified = [item.get("id", "unknown") for item in closure["obligations"]
+                   if item.get("disposition") == "not-applicable"
+                   and (not isinstance(item.get("rationale"), str)
+                        or not item["rationale"].strip())]
+    if unjustified:
+        raise MissingReviewedEvidenceError(
+            f"reviewed semantic closure has unjustified not-applicable "
+            f"obligations ({', '.join(unjustified[:5])}); no certificate can be staged"
+        )
 
 
 def validate_incomplete_review(source: Path, starter: dict) -> dict:
