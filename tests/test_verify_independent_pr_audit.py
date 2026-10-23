@@ -309,7 +309,7 @@ def test_trusted_base_sha_drift_is_rejected(monkeypatch, phase):
 
     monkeypatch.setattr(gate, "github", github)
     monkeypatch.setattr(gate, "trusted_workflow_check", lambda *args: True)
-    with pytest.raises(ValueError, match="trusted .*base SHA changed"):
+    with pytest.raises(ValueError, match=r"trusted .*base SHA changed"):
         gate.run("org/repo", 3, "develop", BASE_SHA, "token")
 
 
