@@ -142,7 +142,7 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--phase", choices=("prepare", "record-tests"), required=True)
     p.add_argument("--event", type=Path)
-    p.add_argument("--root", type=Path, default=Path("."))
+    p.add_argument("--root", type=Path, default=Path())
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--exit-code", type=int)
     a = p.parse_args()

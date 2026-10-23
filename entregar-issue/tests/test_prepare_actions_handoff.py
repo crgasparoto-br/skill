@@ -51,9 +51,11 @@ def test_untrusted_or_ambiguous_metadata_fails_closed(tmp_path, change, expected
 
 
 def test_actual_git_sha_must_match(tmp_path):
-    with patch.object(mod.subprocess, "run", return_value=SimpleNamespace(stdout=BASE + "\n")):
-        with pytest.raises(ValueError, match="differs"):
-            mod.check_checkout(tmp_path, HEAD)
+    with (
+        patch.object(mod.subprocess, "run", return_value=SimpleNamespace(stdout=BASE + "\n")),
+        pytest.raises(ValueError, match="differs"),
+    ):
+        mod.check_checkout(tmp_path, HEAD)
 
 
 def test_prepare_preserves_pending_and_never_builds_certificate(tmp_path, monkeypatch):
