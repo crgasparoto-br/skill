@@ -1046,6 +1046,28 @@ def test_dead_module_test_exclusion_follows_policy(tmp_path: Path) -> None:
     assert [finding["path"] for finding in findings_of(scan(included), "dead-module")] == ["tests/orphan.py"]
 
 
+
+def test_test_lifecycle_hygiene_requires_runner_oracle_review(tmp_path: Path) -> None:
+    """Dynamic pytest discovery and a removed contract cannot be distinguished by dead-module."""
+    files = {
+        "tests/dynamic_case.py": "def test_runtime():\n    assert True\n",
+        "tests/removed_contract.py": "def test_legacy():\n    assert True\n",
+        "pytest.ini": "[pytest]\npython_files = dynamic_*.py\n",
+    }
+    policy = policy_variant(**{"classes.dead-module.exclude_tests": False})
+    tree = make_tree(tmp_path, files, policy)
+    before = {path: (tree / path).read_bytes() for path in files}
+    report = scan(tree)
+    candidates = {finding["path"] for finding in findings_of(report, "dead-module")}
+    assert candidates == {"tests/dynamic_case.py", "tests/removed_contract.py"}
+
+    items = build_hygiene_work_items.build_work_items(tree, report)
+    dead_module = next(item for item in items if item["class"] == "dead-module")
+    assert all(path in dead_module["body_markdown"] for path in candidates)
+    # The report is an investigation work item, never an authorization to delete either test.
+    assert all((tree / path).read_bytes() == content for path, content in before.items())
+
+
 def test_unused_dependency_respects_declared_scope(tmp_path: Path) -> None:
     """Achado bloqueante: manifest em diretório excluído continuava sendo analisado."""
     document = policy_variant(**{"scope.exclude_dirs": ["skip"]})
