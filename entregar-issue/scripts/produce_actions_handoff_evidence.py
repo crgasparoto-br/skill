@@ -213,7 +213,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     audit = out / ".audit" / "entregar-issue"
     starter = read_json(audit / "requirement-closure.json")
     obligations = [{"id": entry["id"], "candidate_key": entry["candidate_key"],
-                    "source_text": entry["source_text"], "source_id": entry["source_id"],
+                    "source_text": entry["source_text"], "source_id": entry.get("source_id"),
                     "disposition": "pending-review"} for entry in starter["obligations"]]
     write_json(out / "semantic-evidence-candidates.json", {
         "schema_version": 1, "subject_sha": head,
