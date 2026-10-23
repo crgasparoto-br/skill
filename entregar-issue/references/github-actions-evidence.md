@@ -9,6 +9,7 @@ Consultar ao coletar, certificar ou publicar evidencias de PRs com GitHub Action
 - [Objetivo](#objetivo)
 - [Coleta autentica](#coleta-autentica)
 - [Certificacao fail-closed](#certificacao-fail-closed)
+- [Produtor de evidencias revisadas (Actions)](#produtor-de-evidencias-revisadas-actions)
 - [Publicacao separada e autorizada](#publicacao-separada-e-autorizada)
 - [Seguranca](#seguranca)
 - [Reuso em repositorios consumidores](#reuso-em-repositorios-consumidores)
