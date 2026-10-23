@@ -133,6 +133,23 @@ def validate_certificate(repo: str, pr: int, head: str, base: str, source: Path,
     for path in sorted(diff):
         args.extend(["--issue-changed-path", path])
     command("python", str(SCRIPT_ROOT / "validate_handoff_certificate.py"), *args)
+    reports = cert.get("artifacts") or {}
+    grounding = reports.get("codebase_grounding")
+    if isinstance(grounding, dict) and grounding.get("name"):
+        grounded = safe_bundle_path(bundle, PREFIX + grounding["name"])
+        command("python", str(SCRIPT_ROOT / "validate_codebase_grounding.py"),
+                "--repo", str(source), "--report", str(grounded),
+                "--base-sha", start, "--head-sha", head)
+    growth = reports.get("code_growth")
+    if isinstance(growth, dict) and growth.get("name"):
+        fresh = source.parent / "trusted-code-growth.json"
+        command("python", str(SCRIPT_ROOT / "check_code_growth.py"),
+                "--repo", str(source), "--base-sha", start, "--head-sha", head,
+                "--out", str(fresh))
+        report = json.loads(fresh.read_text(encoding="utf-8"))
+        if (report.get("status") != "passed" or report.get("subject_sha") != head
+                or report.get("blocking_files")):
+            block("independent CODE-GROWTH-001 recomputation did not pass")
 
 
 def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, published: str,

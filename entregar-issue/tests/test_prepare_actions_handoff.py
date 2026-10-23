@@ -177,6 +177,7 @@ def test_certification_requires_real_closure_and_calls_official_gates(tmp_path, 
     monkeypatch.setattr(mod, "run_script", capture)
     mod.certify(args)
     assert [row[0] for row in calls] == [
+        "validate_codebase_grounding.py", "check_code_growth.py",
         "build_handoff_certificate.py", "validate_handoff_certificate.py"]
     assert "--codebase-grounding" in calls[0][1]
     assert "--code-growth" in calls[0][1]

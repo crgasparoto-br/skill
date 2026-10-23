@@ -268,6 +268,15 @@ def certify(args: argparse.Namespace) -> None:
     inputs, start, profile, changed, resolved = _resolve_certification_requirements(
         out, args, repo, pr, issue, head, base)
 
+    if "codebase_grounding" in resolved:
+        run_script("validate_codebase_grounding.py", "--repo", str(args.root),
+                   "--report", str(resolved["codebase_grounding"]),
+                   "--base-sha", start, "--head-sha", head)
+    if "code_growth" in resolved:
+        run_script("check_code_growth.py", "--repo", str(args.root),
+                   "--base-sha", start, "--head-sha", head,
+                   "--out", str(resolved["code_growth"]))
+
     builder = [
         "--specification-snapshot", str(resolved["specification_snapshot"]),
         "--repository", repo, "--issue-number", str(issue), "--work-item-kind", "pr",
