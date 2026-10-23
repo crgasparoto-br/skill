@@ -40,3 +40,13 @@
 6. Atualizar hashes SHA-256 de todos os arquivos do dossiê, declarar `review_state=approved` somente após evidências completas e executar o gate de certificação exact-SHA seguido de auditoria independente.
 
 **Regra de segurança:** manter `manifest.review_state=incomplete` enquanto qualquer item estiver sem prova. Não criar `certification-inputs.json` antecipadamente e não liberar `workflow_run` privilegiado por sucesso apenas da coleta.
+
+
+## Estado pos-merge e cadeia de recuperacao (23/10/2026)
+
+- A [PR #113](https://github.com/crgasparoto-br/skill/pull/113) foi mergeada em `develop` no commit `418e5fcc312d90911fd8ec66e2e036b7bebdee43`; a [release #117](https://github.com/crgasparoto-br/skill/pull/117) foi mergeada em `main`. Nenhuma dessas operacoes converte o dossie pendente em aprovado.
+- No [workflow #39961079004](https://github.com/crgasparoto-br/skill/actions/runs/39961079004) da PR #113, o material `5e06cc1f115057633b1f82655134ea79ccdabc58` executou **2.309** casos JUnit aprovados; a coleta tecnica passou, mas a certificacao falhou com `certification-inputs.json absent: semantic closures have not been supplied`. O artifact `12505226511` mantem os fatos historicos de teste, nao o fechamento dos 52 oraculos.
+- A [PR corretiva #118](https://github.com/crgasparoto-br/skill/pull/118) nasce da `develop` integrada e tem o dossie reancorado ao numero de PR/branch atuais. A identidade do SHA material e os JUnit IDs **devem ser coletados novamente** no HEAD de #118 para certificar, pois a evidencia de #113 e historica.
+- A auditoria de protecao de branches verificou `required_status_checks=[]` nos rulesets de `develop` e `main`; a [issue #119](https://github.com/crgasparoto-br/skill/issues/119) trata a configuracao administrativa dos contexts obrigatorios. Nao afirmar que um gate vermelho impede merge enquanto a verificacao de rulesets nao comprovar a protecao.
+- **Nenhuma obrigacao foi promovida a `covered` nesta atualizacao.** Permanecem pendentes a revisao real de 52 cenarios/oraculos, vinculos positivos/negativos/regressao aos JUnit IDs do novo SHA, relatorios criticos e proveniencia das rejeicoes anteriores. O manifesto permanece `review_state=incomplete`, e o produtor deve continuar recusando certificacao.
+
