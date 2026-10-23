@@ -124,12 +124,12 @@ HTML_BLOCK_GENERIC = re.compile(
 # emphasis, strike-through, inline HTML, or a numeric HTML entity.
 INLINE_EVIDENCE_TAG = r"(?:strong|b|em|i|del|s|strike|code|span|a)"
 VISIBLE_RECORD_ID = re.compile(
-    r"^(?:\\[[^\\]]+\\][ \\t]+)?"
-    r"(?:\\*\\*|__|\\*|_|~~|`{1,3}|<(?:" + INLINE_EVIDENCE_TAG + r")(?:[ \\t]+[^>]*?)?>)*"
-    r"\\[?((?:A|RISK|LIM)-[0-9]{3,})"
-    r"(?:\\](?:\\([^()\\n]+\\)|\\[[^\\]\\n]*\\]))?"
-    r"(?:</(?:" + INLINE_EVIDENCE_TAG + r")>|\\*\\*|__|\\*|_|~~|`{1,3})*"
-    r"(?=[ \\t]+[—-]|[ \\t]*:|$)"
+    r"^(?:\[[^\]]+\][ \t]+)?"
+    r"(?:\*\*|__|\*|_|~~|`{1,3}|<(?:" + INLINE_EVIDENCE_TAG + r")(?:[ \t]+[^>]*?)?>)*"
+    r"\[?((?:A|RISK|LIM)-[0-9]{3,})"
+    r"(?:\](?:\([^()\n]+\)|\[[^\]\n]*\]))?"
+    r"(?:</(?:" + INLINE_EVIDENCE_TAG + r")>|\*\*|__|\*|_|~~|`{1,3})*"
+    r"(?=[ \t]+[—-]|[ \t]*:|$)"
 )
 RECORD_LIST_PREFIX = re.compile(
     r"^ {0,3}(?:(?:>[ \t]?|(?:[-+*]|\d{1,9}[.)])[ \t]+)[ \t]*)*"
