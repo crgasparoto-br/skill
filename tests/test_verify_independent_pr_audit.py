@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -40,8 +41,10 @@ def fixture(base="develop"):
     return pr, reviews, commits, checks
 
 
-def verify(data, base="develop"):
-    return gate.verify_gate(*data, base)
+def verify(data, base="develop", authorized=None):
+    if authorized is None:
+        authorized = lambda reviewer: reviewer == "independent-auditor"
+    return gate.verify_gate(*data, base, authorized)
 
 
 def test_valid_independent_review_exact_sha_and_all_checks():
@@ -106,10 +109,76 @@ def test_later_review_revokes_prior_approval():
         verify(data)
 
 
-def test_unknown_commit_author_cannot_prove_independence():
+@pytest.mark.parametrize("unknown_field", ["author", "committer"])
+def test_unknown_commit_participant_cannot_prove_independence(unknown_field):
     data = fixture()
-    data[2][0].update(author=None, committer=None)
+    data[2][0][unknown_field] = None
     with pytest.raises(ValueError, match="identity unavailable"):
+        verify(data)
+
+
+def test_unlinked_commit_participant_cannot_prove_independence():
+    data = fixture()
+    data[2][0]["author"] = {"login": None}
+    with pytest.raises(ValueError, match="identity unavailable"):
+        verify(data)
+
+
+def test_reviewer_must_have_repository_write_access():
+    with pytest.raises(ValueError, match="independent APPROVED"):
+        verify(fixture(), authorized=lambda reviewer: False)
+
+
+@pytest.mark.parametrize("permission,expected", [
+    ("admin", True), ("maintain", True), ("write", True),
+    ("read", False), ("triage", False), ("none", False), (None, False),
+])
+def test_reviewer_permission_checked_against_authenticated_github(
+        monkeypatch, permission, expected):
+    queries = []
+
+    def github(path, token):
+        queries.append((path, token))
+        return {"permission": permission}
+
+    monkeypatch.setattr(gate, "github", github)
+    result = gate.is_authorized_reviewer("org/repo", "auditor", "token")
+    assert result is expected
+    assert queries == [("/repos/org/repo/collaborators/auditor/permission", "token")]
+
+
+def test_non_collaborator_does_not_block_other_valid_reviewer(monkeypatch):
+    def github(path, token):
+        if path.endswith("/external/permission"):
+            raise urllib.error.HTTPError(path, 404, "not found", {}, None)
+        return {"permission": "write"}
+
+    monkeypatch.setattr(gate, "github", github)
+    data = fixture()
+    outsider = copy.deepcopy(data[1][0])
+    outsider["user"]["login"] = "external"
+    outsider["id"] = 2
+    data[1].append(outsider)
+    authorized = lambda user: gate.is_authorized_reviewer("org/repo", user, "token")
+    assert "pullrequestreview-1" in verify(data, authorized=authorized)
+
+
+def test_permission_api_error_does_not_grant_approval(monkeypatch):
+    def github(path, token):
+        raise urllib.error.HTTPError(path, 403, "forbidden", {}, None)
+
+    monkeypatch.setattr(gate, "github", github)
+    with pytest.raises(urllib.error.HTTPError):
+        gate.is_authorized_reviewer("org/repo", "auditor", "token")
+
+
+def test_edited_review_rechecked_and_rejected_if_contract_changes():
+    workflow = (Path(__file__).resolve().parents[1] / ".github" / "workflows"
+                / "independent-audit-gate.yml").read_text(encoding="utf-8")
+    assert "types: [submitted, edited, dismissed]" in workflow
+    data = fixture()
+    data[1][0]["body"] = "SOLVERIT_AUDIT_JSON:{}"
+    with pytest.raises(ValueError, match="independent APPROVED"):
         verify(data)
 
 
@@ -152,6 +221,8 @@ def test_pr_head_change_after_approval_rejected(monkeypatch):
             return data[2]
         if "/check-runs?" in path:
             return data[3]
+        if "/collaborators/" in path:
+            return {"permission": "write"}
         raise AssertionError(path)
     monkeypatch.setattr(gate, "github", github)
     with pytest.raises(ValueError, match="PR changed"):

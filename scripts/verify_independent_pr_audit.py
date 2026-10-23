@@ -6,6 +6,8 @@ import argparse
 import os
 import re
 import sys
+import urllib.error
+from collections.abc import Callable
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "entregar-issue" / "scripts"))
@@ -16,6 +18,7 @@ REPO = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
 APP_ID = 15368  # GitHub Actions
 TECHNICAL = ("Structure and tests", "Offline authorization tests")
 HANDOFF = "collect / Require certified semantic handoff (exact SHA)"
+AUTHORIZED_PERMISSIONS = frozenset({"write", "maintain", "admin"})
 
 
 def page_all(repo: str, suffix: str, token: str, max_pages: int = 25) -> list[dict]:
@@ -77,15 +80,18 @@ def required_checks_green(checks: dict, head: str, base: str) -> None:
 
 def contributor_logins(pr: dict, commits: list[dict]) -> set[str]:
     author = (pr.get("user") or {}).get("login")
-    if not author:
+    if not isinstance(author, str) or not author.strip():
         raise ValueError("PR author missing")
     implementers = {author.casefold()}
     for commit in commits:
         author_user = (commit.get("author") or {}).get("login")
         committer_user = (commit.get("committer") or {}).get("login")
-        if not author_user and not committer_user:
+        # GitHub may return null for unlinked Git identities. Never treat an
+        # unknown contributor as different from the purported reviewer.
+        if any(not isinstance(x, str) or not x.strip()
+               for x in (author_user, committer_user)):
             raise ValueError("commit contributor identity unavailable")
-        implementers.update(x.casefold() for x in (author_user, committer_user) if x)
+        implementers.update((author_user.casefold(), committer_user.casefold()))
     return implementers
 
 
@@ -107,8 +113,23 @@ def is_independent_approval(user: str, review: dict, implementers: set[str], hea
     return reviewed_contract(review, head)
 
 
+def is_authorized_reviewer(repo: str, reviewer: str, token: str) -> bool:
+    """Only current repository collaborators with write-capable roles can approve."""
+    if not re.fullmatch(r"[A-Za-z0-9-]+", reviewer):
+        return False
+    try:
+        permission = github(f"/repos/{repo}/collaborators/{reviewer}/permission", token)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return False  # Non-collaborator; other eligible approvals may exist.
+        raise
+    if not isinstance(permission, dict):
+        raise ValueError("invalid GitHub collaborator permission response")
+    return permission.get("permission") in AUTHORIZED_PERMISSIONS
+
+
 def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
-                checks: dict, base: str) -> str:
+                checks: dict, base: str, authorized: Callable[[str], bool]) -> str:
     """Authenticate identities, exact-HEAD checks and an actual independent review."""
     if base not in ("develop", "main") or pr.get("base", {}).get("ref") != base:
         raise ValueError("PR base differs from protected branch")
@@ -126,7 +147,7 @@ def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
         raise ValueError("outstanding request for changes")
     accepted = [
         review for user, review in current.items()
-        if is_independent_approval(user, review, implementers, head)
+        if is_independent_approval(user, review, implementers, head) and authorized(user)
     ]
     if not accepted:
         raise ValueError("independent APPROVED review with complete exact-SHA audit contract absent")
@@ -139,7 +160,10 @@ def run(repo: str, number: int, base: str, token: str) -> str:
     commits = page_all(repo, f"pulls/{number}/commits", token)
     head = pr["head"]["sha"]
     checks = github(f"/repos/{repo}/commits/{head}/check-runs?per_page=100", token)
-    approval = verify_gate(pr, reviews, commits, checks, base)
+    approval = verify_gate(
+        pr, reviews, commits, checks, base,
+        lambda reviewer: is_authorized_reviewer(repo, reviewer, token),
+    )
     current = github(f"/repos/{repo}/pulls/{number}", token)
     if current.get("head", {}).get("sha") != head or current.get("base", {}).get("ref") != base:
         raise ValueError("PR changed while validating independent audit")
