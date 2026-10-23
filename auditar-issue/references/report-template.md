@@ -5,6 +5,7 @@
 > **Libera merge/release:** [SIM | NAO]
 
 **Validade:** [Independente | Controller-adversarial | Pre-auditoria]
+**Triagem:** bloqueadores comprovados: `[n]` | riscos inferidos: `[n]` | limitacoes do auditor: `[n]`
 
 **Rejection ID:** `[audit-rejection:...]` — incluir somente em auditoria `Independente` com `RESULTADO: REPROVADA`; reutilizar exatamente o mesmo ID no resultado estruturado e no `external-audit.json` quando existir.
 
@@ -23,6 +24,9 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 - [Estado dos gates e alcance de testes](#estado-dos-gates-e-alcance-de-testes)
 - [Matriz de requisitos](#matriz-de-requisitos)
 - [Achados bloqueantes](#achados-bloqueantes)
+- [Riscos inferidos nao confirmados](#riscos-inferidos-nao-confirmados)
+- [Limitacoes exclusivas do auditor](#limitacoes-exclusivas-do-auditor)
+- [Retificacao do parecer](#retificacao-do-parecer)
 - [Recomendacoes opcionais](#recomendacoes-opcionais)
 - [Testes e validações](#testes-e-validações)
 - [Fronteira pública, privacidade e autorização](#fronteira-pública-privacidade-e-autorização)
@@ -51,9 +55,17 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 - SHA da base antes/depois: `[...]` / `[...]`
 - merge preview antes/depois: `[...]` / `[...]`
 
+### Triagem do resultado
+
+Preencher as tres contagens antes do veredito. `bloqueadores comprovados` equivale ao total da conclusao e exige prova do candidato/entrega (inclusive analise estatica conclusiva). Hipoteses sem prova sao `riscos inferidos`, nao blockers. `limitacoes do auditor` registra indisponibilidade exclusiva do runtime/conector para um gate obrigatorio, sem imputar defeito a entrega.
+
+Rejeitar secoes vazias, placeholders e prova generica. IDs A/RISK/LIM visiveis em listas, citacoes, H4-H6, links, enfase, tachado, HTML inline e entidades contam; somente H3 isolado e canonico. Ignorar exemplos inertes: fences, HTML raw (tipo 1 ate fechar; tipos 6/7 ate linha vazia) e codigo indentado, mesmo com ID solto na raiz/citacao. HTML tipo 7 nao interrompe paragrafo aberto; tipos 1/6 podem. Recuo de ate tres espacos permanece visivel. Ignorar referencias incidentais. H1 encerra H2. Prova exige fonte localizavel; `pytest` isolado e insuficiente. Preservar gate de completude.
+
+Precedencia: blocker comprovado > limitacao do auditor. Ambos: `REPROVADA`; so limitacao material: `INCONCLUSIVA`; aprovacao: nenhum dos dois. DNS ou bundle ausente no auditor nunca e falha do candidato. Em retificacao, revalidar todo o artefato, nao apenas o veredito verbal.
+
 ### Regras do cabecalho
 
-A primeira linha continua sendo o titulo do resultado. Imediatamente abaixo dele vem o bloco de conclusao em destaque, que repete o veredito e o resume, antes de qualquer outro metadado. Ele nao substitui o motivo determinante, os achados nem a matriz: resume o veredito, a contagem de achados bloqueantes e recomendacoes, o motivo em uma frase e a liberacao de merge/release. Manter o bloco consistente com o corpo do relatorio; divergencia entre o bloco e o corpo e defeito do proprio relatorio. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato.
+A primeira linha continua sendo o titulo do resultado. Imediatamente abaixo dele vem o bloco de conclusao em destaque, que repete o veredito e o resume, antes de qualquer outro metadado. Ele nao substitui o motivo determinante, os achados nem a matriz: resume o veredito, a contagem de achados bloqueantes e recomendacoes, o motivo em uma frase e a liberacao de merge/release. Manter o bloco consistente com o corpo do relatorio; divergencia entre o bloco e o corpo e defeito do proprio relatorio. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato. A triagem e obrigatoria mesmo com todos os contadores em zero.
 
 - `APROVADA`: apenas auditoria independente com portao de release satisfeito.
 - `APROVADA COM RESSALVAS`: apenas auditoria independente, sem bloqueio, com ressalva material nao bloqueante.
@@ -134,23 +146,60 @@ Usar uma linha por requisito. Não combinar requisitos diferentes para aparentar
 
 Incluir apenas observacoes com `disposition=blocking`.
 
-### Modelo de achado
-
-### [BLOQUEADOR/ALTO/MÉDIO/BAIXO] A-001 — [título objetivo]
+### [ALTO] A-001 — [titulo objetivo do achado comprovado]
 
 - **Requisitos afetados:** REQ-...
+- **Origem comprovada:** candidato
+- **Evidência:** arquivo:linha, URL, commit ou comando, com observacao reproduzivel
 - **Categoria de escape:** `execution-state-gap | control-propagation-gap | capability-operation-drift | adapter-support-drift | silent-translation-loss | legacy-variant-gap | documentation-claim-drift | other`
 - **Portão requerido:** `F28` a `F33` quando aplicável
 - **Caso literal:** ...
 - **Casos irmãos:** pelo menos dois cenários de famílias ou superfícies distintas
 - **Solicitado:** ...
 - **Encontrado:** ...
-- **Evidência:** ...
 - **Impacto:** ...
 - **Lacuna a corrigir:** ...
 
 Repetir por achado, em ordem decrescente de severidade.
 
+
+## Riscos inferidos nao confirmados
+
+Cada risco contabilizado exige um item separado com ID RISK-001, sem ser convertido em bloqueador:
+
+### RISK-001 — [titulo do risco inferido]
+
+- **Cenário hipotético:** [condicao e resultado possivel]
+- **Base da inferência:** [fonte ou trecho que sustenta suspeita e limite da prova]
+- **Grau de certeza:** baixo
+- **Prova discriminante pendente:** [experimento concreto para confirmar ou afastar]
+
+Nao incluir meras sugestoes sem impacto no contrato.
+
+## Limitacoes exclusivas do auditor
+
+Cada limitacao contabilizada exige um item separado com ID LIM-001, sem virar finding da issue:
+
+### LIM-001 — [titulo da limitacao exclusiva do auditor]
+
+- **Recurso indisponível:** [recurso de runtime/connector]
+- **Gate obrigatório afetado:** [nome e obrigacao nao coberta]
+- **Tentativas e fallbacks:** [passos de recuperacao, inclusive bundle CI quando aplicavel]
+- **Prova indisponível:** [evidencia obrigatoria que nao foi obtida]
+
+Nao propor alteracao no candidato para corrigir o ambiente do auditor.
+
+## Retificacao do parecer
+
+Toda edicao exige `--revision --previous <anterior>` e prova contextual por ID alterado/removido. Manter as provas de reclassificacao anteriores, sem alterar texto ou ordem; anexar nova prova quando o mesmo ID mudar de novo. A partir da segunda retificacao, registrar SHA-256 do parecer anterior inteiro para preservar o encadeamento.
+
+- **Veredito anterior:** [veredito original]
+- **Veredito atual:** [veredito novo]
+- **Motivo da retificacao:** [razao especifica]
+- **Nova evidencia:** [origem, procedimento e observacao]
+- **HEAD auditado:** [SHA Git completo]
+- **Prova de reclassificacao A-001:** [fonte e prova se A-001 mudou ou foi removido; repetir em ordem a cada nova prova]
+- **SHA-256 do parecer anterior:** [hash exato obrigatorio se o parecer anterior ja tiver Retificacao do parecer]
 
 ## Recomendacoes opcionais
 

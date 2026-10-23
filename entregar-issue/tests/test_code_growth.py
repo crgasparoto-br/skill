@@ -163,3 +163,32 @@ def test_gate_is_registered_and_documented():
     assert "references/code-growth-gate.md" in skill and "scripts/check_code_growth.py" in skill
     reference = (ROOT / "references" / "code-growth-gate.md").read_text(encoding="utf-8")
     assert "somente do `work_item_start_sha`" in reference
+
+
+
+def test_comparison_base_excludes_upstream_growth_but_preserves_policy(tmp_path):
+    candidate = Candidate(tmp_path)
+    start = candidate.commit({"src/legacy.py": lines(520)})
+    upstream = candidate.commit({"src/legacy.py": lines(590)})
+    head = candidate.commit({"src/feature.py": lines(40)})
+    out = tmp_path / "comparison.json"
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--repo", str(candidate.repo),
+         "--base-sha", start, "--comparison-base-sha", upstream,
+         "--head-sha", head, "--out", str(out)],
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stdout
+    record = json.loads(out.read_text(encoding="utf-8"))
+    assert record["base_sha"] == start
+    assert record["comparison_base_sha"] == upstream
+    assert record["status"] == "passed"
+    assert all(item["path"] != "src/legacy.py" for item in record["files"])
+    bad = subprocess.run(
+        [sys.executable, str(SCRIPT), "--repo", str(candidate.repo),
+         "--base-sha", upstream, "--comparison-base-sha", start,
+         "--head-sha", head, "--out", str(out)],
+        capture_output=True, text=True, check=False,
+    )
+    assert bad.returncode == 2
+    assert "comparison base" in bad.stdout

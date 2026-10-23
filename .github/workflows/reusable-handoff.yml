@@ -1,0 +1,198 @@
+name: Reusable exact-SHA handoff evidence
+
+# Caller repository controls its material code, while the official Skill
+# implementation is checked out at the reusable workflow revision.
+on:
+  workflow_call:
+    inputs:
+      base-ref:
+        description: Branch required as the PR base; SolverIT default is develop
+        type: string
+        default: develop
+      tooling-repository:
+        description: Official Skill source repository
+        type: string
+        default: crgasparoto-br/skill
+      python-version:
+        type: string
+        default: "3.12"
+      install-command:
+        description: Install project test dependencies on the hosted runner
+        type: string
+        default: ""
+      test-command:
+        description: Project test command; must emit JUnit XML in EVIDENCE_DIR
+        type: string
+        default: 'python -m pytest -vv --junitxml="$EVIDENCE_DIR/pytest-exact-head.xml"'
+      evidence-command:
+        description: Optional project evidence producer; must supply verified semantic closure inputs
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  evidence:
+    name: Collect exact-SHA technical evidence
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == inputs.base-ref }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EVIDENCE_DIR: /tmp/handoff-evidence
+    steps:
+      - name: Checkout consumer material SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout official Skill implementation at workflow SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.tooling-repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .handoff-tooling
+          persist-credentials: false
+
+      - name: Isolate official Skill checkout outside the consumer tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          tooling_target="$RUNNER_TEMP/solverit-handoff-tooling"
+          if [ -e "$tooling_target" ]; then
+            echo "::error::Trusted tooling target already exists; refuse to overwrite"
+            exit 2
+          fi
+          mv -- .handoff-tooling "$tooling_target"
+          echo "HANDOFF_TOOLING=$tooling_target" >> "$GITHUB_ENV"
+          test ! -e .handoff-tooling
+
+      - name: Set up Python for trusted Skill validators
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install official tooling dependencies
+        run: |
+          python -m pip install --require-hashes \
+            -r "$HANDOFF_TOOLING/requirements.lock.txt" \
+            -r "$HANDOFF_TOOLING/entregar-issue/requirements-dev.lock.txt" \
+            -r "$HANDOFF_TOOLING/auditar-issue/requirements-dev.lock.txt"
+
+      - name: Install project test dependencies
+        if: ${{ inputs.install-command != '' }}
+        env:
+          INSTALL_COMMAND: ${{ inputs.install-command }}
+        shell: bash
+        run: bash -eo pipefail -c "$INSTALL_COMMAND"
+
+      - name: Capture canonical PR/issue identity and initialize closure
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ inputs.base-ref }}
+        run: |
+          python "$HANDOFF_TOOLING/entregar-issue/scripts/prepare_actions_handoff.py" \
+            --phase prepare --event "$GITHUB_EVENT_PATH" --root . \
+            --base-ref "$BASE_REF" --out "$EVIDENCE_DIR"
+
+      - name: Run consumer tests against material SHA
+        id: exact_tests
+        shell: bash
+        env:
+          TEST_COMMAND: ${{ inputs.test-command }}
+        run: |
+          set +e
+          bash -eo pipefail -c "$TEST_COMMAND" > "$EVIDENCE_DIR/pytest-exact-head.log" 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit "$code"
+
+      - name: Record exact SHA test results and test-case index
+        if: ${{ always() && steps.exact_tests.outputs.exit_code != '' }}
+        env:
+          TEST_COMMAND: ${{ inputs.test-command }}
+        shell: bash
+        run: |
+          python "$HANDOFF_TOOLING/entregar-issue/scripts/prepare_actions_handoff.py" \
+            --phase record-tests --root . --out "$EVIDENCE_DIR" \
+            --test-command "$TEST_COMMAND" \
+            --exit-code "${{ steps.exact_tests.outputs.exit_code }}"
+          python "$HANDOFF_TOOLING/entregar-issue/scripts/build_test_candidate_index.py" \
+            --junit "$EVIDENCE_DIR/pytest-exact-head.xml" \
+            --head-sha "${{ github.event.pull_request.head.sha }}" \
+            --out "$EVIDENCE_DIR/test-candidate-index.json"
+
+      - name: Produce project-specific semantic evidence (when configured)
+        if: ${{ steps.exact_tests.outputs.exit_code == '0' && inputs.evidence-command != '' }}
+        shell: bash
+        env:
+          EVIDENCE_COMMAND: ${{ inputs.evidence-command }}
+          MATERIAL_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ inputs.base-ref }}
+        run: bash -eo pipefail -c "$EVIDENCE_COMMAND"
+
+      - name: Validate evidence and build handoff certificate, fail closed
+        id: certificate
+        if: ${{ always() && steps.exact_tests.outputs.exit_code != '' }}
+        shell: bash
+        env:
+          BASE_REF: ${{ inputs.base-ref }}
+        run: |
+          set +e
+          python "$HANDOFF_TOOLING/entregar-issue/scripts/prepare_actions_handoff.py" \
+            --phase certify --event "$GITHUB_EVENT_PATH" --root . \
+            --base-ref "$BASE_REF" --out "$EVIDENCE_DIR"
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload evidence and blocking diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: handoff-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: ${{ env.EVIDENCE_DIR }}/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Restore official Skill checkout for Actions post-job cleanup
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${HANDOFF_TOOLING:-}" ] && [ -d "$HANDOFF_TOOLING" ] && [ ! -e .handoff-tooling ]; then
+            mv -- "$HANDOFF_TOOLING" .handoff-tooling
+          fi
+
+  certification:
+    name: Require certified semantic handoff (exact SHA)
+    needs: evidence
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == inputs.base-ref }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download exact-SHA technical evidence
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: handoff-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/handoff-certification
+
+      - name: Checkout trusted certification gate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.tooling-repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .trusted-handoff-gate
+          persist-credentials: false
+
+      - name: Require authentic certified evidence (not merely passing tests)
+        env:
+          BASE_REF: ${{ inputs.base-ref }}
+        run: |
+          python .trusted-handoff-gate/entregar-issue/scripts/require_actions_handoff_certificate.py \
+            --event "$GITHUB_EVENT_PATH" --base-ref "$BASE_REF" \
+            --evidence-dir "$RUNNER_TEMP/handoff-certification"

@@ -47,9 +47,10 @@ Imediatamente abaixo dessa linha, abrir o parecer com o bloco de conclusao em de
 > **Libera merge/release:** [SIM | NAO]
 
 **Validade:** [Independente | Controller-adversarial | Pre-auditoria]
+**Triagem:** bloqueadores comprovados: `[n]` | riscos inferidos: `[n]` | limitacoes do auditor: `[n]`
 ```
 
-Validar o parecer final antes de publicar: `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>`. Corrigir qualquer falha antes da resposta.
+Validar **todo** parecer antes de publicar: executar `python <AUDIT_SKILL_ROOT>/scripts/validate_verdict_header.py <arquivo>` sobre cabecalho, itens estruturados e triagem. Em retificacao, usar `--revision --previous <anterior>`, comparar o parecer integral e exigir prova de cada item alterado ou removido, mesmo sob o mesmo ID; nunca retificar so verbalmente. O validador verifica coerencia de campos, nao substitui verificacao independente das provas. Seguir `references/report-template.md`.
 
 O bloco deixa a conclusao visivel nas primeiras linhas e nao substitui o motivo determinante, a matriz, os achados nem o resultado estruturado; divergencia entre eles e defeito do parecer. Em `INCONCLUSIVA` por runtime, declarar no bloco que nao ha defeito funcional atribuido ao candidato.
 
@@ -60,6 +61,8 @@ Aplicar o mapeamento deterministico:
 - `APROVADA INTERNAMENTE`: `controller-adversarial` ou pre-auditoria favoravel, sem finding bloqueante; nunca libera merge, fechamento ou release.
 - `INCONCLUSIVA`: somente quando uma limitacao do runtime, ferramenta ou connector da propria auditoria impedir obter bytes exatos, executar recurso interno da Skill ou observar evidencia obrigatoria, sem evidencia de que o candidato ou a entrega causaram a limitacao. Nao converter limitacao de infraestrutura da auditoria em finding da issue.
 - `REPROVADA`: qualquer finding bloqueante, requisito incorreto ou nao implementado, identidade invalidada, gate obrigatorio falho/ausente por responsabilidade do candidato ou da entrega, handoff ausente/stale/inconsistente quando `audit_transport=certified-handoff`, ou evidencia material que a entrega deveria ter produzido mas nao produziu. Em `native-github-audit`, ausencia de `.audit/entregar-issue` nao e finding por si so.
+
+**Precedencia da triagem:** um bloqueador do candidato/entrega demonstrado por evidencia independente (inclusive fluxo de codigo inequivoco) exige `REPROVADA`, ainda que haja `audit-runtime-limitation` adicional; registrar a limitacao em separado e manter merge bloqueado. Somente risco inferido sem demonstracao nao e bloqueador: descrever o cenario e a prova pendente, sem atribuir defeito ao candidato. Sem bloqueador demonstrado e com prova obrigatoria inviabilizada exclusivamente pelo auditor, usar `INCONCLUSIVA`, jamais reprovar pelo DNS ou pela falta de bundle do runtime.
 
 A decisao de liberacao aparece uma unica vez, no bloco de conclusao. Nao repetir a mesma informacao em outro ponto do cabecalho.
 

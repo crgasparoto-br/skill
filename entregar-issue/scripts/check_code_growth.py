@@ -83,16 +83,22 @@ def main() -> int:
     parser.add_argument("--repo", required=True)
     parser.add_argument("--base-sha", required=True, help="work_item_start_sha; also the trusted anchor of the policy")
     parser.add_argument("--head-sha", required=True)
+    parser.add_argument("--comparison-base-sha", help="Current PR base for material growth; policy stays at issue start")
     parser.add_argument("--justifications", help="JSON object: path -> reason, for new files above the soft limit")
     parser.add_argument("--policy-path", default=POLICY_PATH)
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
     repo = Path(args.repo).resolve()
 
-    for sha in (args.base_sha, args.head_sha):
+    compare = args.comparison_base_sha or args.base_sha
+    for sha in (args.base_sha, compare, args.head_sha):
         if git(repo, "cat-file", "-e", f"{sha}^{{commit}}").returncode != 0:
             print(f"UNKNOWN: commit {sha} is not available in checkout {repo}")
             return 3
+    if (git(repo, "merge-base", "--is-ancestor", args.base_sha, compare).returncode != 0
+            or git(repo, "merge-base", "--is-ancestor", compare, args.head_sha).returncode != 0):
+        print("BLOCK: code-growth comparison base is not a descendant of work-item start and ancestor of material head")
+        return 2
     try:
         policy, policy_source = load_policy(repo, args.base_sha, args.policy_path)
         justifications = json.loads(Path(args.justifications).read_text(encoding="utf-8")) if args.justifications else {}
@@ -101,7 +107,7 @@ def main() -> int:
     except Exception as exc:
         print(f"BLOCK: invalid code-growth policy or justifications: {exc}")
         return 2
-    diff = git(repo, "diff", "--name-only", "--no-renames", "--diff-filter=AM", args.base_sha, args.head_sha)
+    diff = git(repo, "diff", "--name-only", "--no-renames", "--diff-filter=AM", compare, args.head_sha)
     if diff.returncode != 0:
         print(f"BLOCK: cannot compute issue-local delta: {diff.stderr.strip()}")
         return 2
@@ -111,7 +117,7 @@ def main() -> int:
     for path in sorted(diff.stdout.splitlines()):
         if not is_measured(path, policy):
             continue
-        before = line_count(repo, args.base_sha, path)
+        before = line_count(repo, compare, path)
         after = line_count(repo, args.head_sha, path) or 0
         reason = str(justifications.get(path) or "").strip()
         entry: dict[str, Any] = {"path": path, "lines_before": before, "lines_after": after}
@@ -128,6 +134,7 @@ def main() -> int:
         "status": "blocked" if blocking else "passed",
         "subject_sha": args.head_sha,
         "base_sha": args.base_sha,
+        "comparison_base_sha": compare,
         "policy": {**policy, "source": policy_source},
         "files": files,
         "blocking_files": blocking,
