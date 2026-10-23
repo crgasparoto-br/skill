@@ -153,8 +153,16 @@ def test_tampered_reviewed_digest_fails_closed(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(SCRIPTS))
     root, out, event, source, _ = fixture(tmp_path)
     put(source / "reviewed-closure.json", {"schema_version": 1})
-    with pytest.raises(ValueError, match="digest mismatch"):
+    with pytest.raises(ValueError, match="clean material HEAD"):
         producer.produce(root, out, event, "develop")
+
+
+def test_verified_source_also_checks_declared_digest(tmp_path):
+    root, _, _, source, _ = fixture(tmp_path)
+    manifest = json.loads((source / "manifest.json").read_text())
+    put(source / "reviewed-closure.json", {"schema_version": 1})
+    with pytest.raises(ValueError, match="digest mismatch"):
+        producer.verified_source(root, source, "reviewed-closure.json", manifest["artifact_sha256"])
 
 
 def test_tampered_runner_provenance_is_rejected(tmp_path, monkeypatch):
