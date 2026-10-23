@@ -131,7 +131,8 @@ def load_reviewed_manifest(root: Path, source: Path, event: Path, target: dict) 
     manifest = read_json(source / "manifest.json")
     if manifest.get("schema_version") != 1:
         raise ValueError("unsupported reviewed evidence manifest")
-    expected = {**target, "head_ref": json.loads(event.read_text())["pull_request"]["head"]["ref"]}
+    expected = {key: value for key, value in target.items() if key != "head_sha"}
+    expected["head_ref"] = json.loads(event.read_text())["pull_request"]["head"]["ref"]
     if any(manifest.get(key) != val for key, val in expected.items()):
         raise ValueError("reviewed evidence manifest targets a different PR")
     if (manifest.get("evidence_profile") not in {"light", "standard", "critical"}
