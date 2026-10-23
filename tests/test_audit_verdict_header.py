@@ -1015,6 +1015,6 @@ def test_issue110_escaped_hyphen_markdown_link_is_rendered_id(identifier):
     escaped = identifier.replace("-", r"\-")
     text = report("APROVADA", sections=(
         "## Evidencias adicionais\n"
-        + f"[{escaped}](https://example.com/issue) — registro visivel\n"
+        f"[{escaped}](https://example.com/issue) — registro visivel\n"
     ))
     assert any(identifier in error for error in module.validate(text))
