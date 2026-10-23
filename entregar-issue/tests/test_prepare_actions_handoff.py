@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+import yaml
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "prepare_actions_handoff.py"
 spec = importlib.util.spec_from_file_location("prepare_actions_handoff", SCRIPT)
@@ -194,3 +197,43 @@ def test_allows_explicit_non_develop_branch_without_weakening_default(tmp_path):
     with pytest.raises(ValueError, match="base ref"):
         mod.read_event(path)
     assert mod.read_event(path, "integration") == ("team/skill", 113, 112, HEAD, BASE)
+
+def test_reusable_handoff_isolates_tooling_from_consumer_tests(tmp_path):
+    """Exercise the actual runner shell steps, not just a filename convention."""
+    workflow_path = SCRIPT.parents[2] / ".github" / "workflows" / "reusable-handoff.yml"
+    jobs = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))["jobs"]
+    steps = jobs["evidence"]["steps"]
+    stage = next(step for step in steps if step.get("name") ==
+                 "Isolate official Skill checkout outside the consumer tree")
+    cleanup = next(step for step in steps if step.get("name") ==
+                   "Restore official Skill checkout for Actions post-job cleanup")
+    test_step = next(step for step in steps if step.get("name") ==
+                     "Run consumer tests against material SHA")
+    assert steps.index(stage) < steps.index(test_step) < steps.index(cleanup)
+    for step in steps[steps.index(stage) + 1:steps.index(cleanup)]:
+        command = step.get("run", "")
+        assert "python .handoff-tooling/" not in command
+
+    consumer = tmp_path / "consumer"
+    consumer.mkdir()
+    checkout = consumer / ".handoff-tooling"
+    checkout.mkdir()
+    (checkout / "test_duplicate.py").write_text("assert True\\n", encoding="utf-8")
+    temporary = tmp_path / "runner-temp"
+    temporary.mkdir()
+    env_file = tmp_path / "github-env"
+    env = {**os.environ, "RUNNER_TEMP": str(temporary), "GITHUB_ENV": str(env_file)}
+
+    subprocess.run(["bash", "-e", "-o", "pipefail", "-c", stage["run"]],
+                   cwd=consumer, env=env, capture_output=True, text=True, check=True)
+    target = temporary / "solverit-handoff-tooling"
+    assert not checkout.exists()
+    assert (target / "test_duplicate.py").is_file()
+    assert env_file.read_text(encoding="utf-8").strip() == f"HANDOFF_TOOLING={target}"
+    assert not list(consumer.rglob("test_duplicate.py"))
+
+    env["HANDOFF_TOOLING"] = str(target)
+    subprocess.run(["bash", "-e", "-o", "pipefail", "-c", cleanup["run"]],
+                   cwd=consumer, env=env, capture_output=True, text=True, check=True)
+    assert (checkout / "test_duplicate.py").is_file()
+    assert not target.exists()

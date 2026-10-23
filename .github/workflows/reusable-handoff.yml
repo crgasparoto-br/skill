@@ -58,6 +58,19 @@ jobs:
           path: .handoff-tooling
           persist-credentials: false
 
+      - name: Isolate official Skill checkout outside the consumer tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          tooling_target="$RUNNER_TEMP/solverit-handoff-tooling"
+          if [ -e "$tooling_target" ]; then
+            echo "::error::Trusted tooling target already exists; refuse to overwrite"
+            exit 2
+          fi
+          mv -- .handoff-tooling "$tooling_target"
+          echo "HANDOFF_TOOLING=$tooling_target" >> "$GITHUB_ENV"
+          test ! -e .handoff-tooling
+
       - name: Set up Python for trusted Skill validators
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -66,9 +79,9 @@ jobs:
       - name: Install official tooling dependencies
         run: |
           python -m pip install --require-hashes \
-            -r .handoff-tooling/requirements.lock.txt \
-            -r .handoff-tooling/entregar-issue/requirements-dev.lock.txt \
-            -r .handoff-tooling/auditar-issue/requirements-dev.lock.txt
+            -r "$HANDOFF_TOOLING/requirements.lock.txt" \
+            -r "$HANDOFF_TOOLING/entregar-issue/requirements-dev.lock.txt" \
+            -r "$HANDOFF_TOOLING/auditar-issue/requirements-dev.lock.txt"
 
       - name: Install project test dependencies
         if: ${{ inputs.install-command != '' }}
@@ -82,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           BASE_REF: ${{ inputs.base-ref }}
         run: |
-          python .handoff-tooling/entregar-issue/scripts/prepare_actions_handoff.py \
+          python "$HANDOFF_TOOLING/entregar-issue/scripts/prepare_actions_handoff.py" \
             --phase prepare --event "$GITHUB_EVENT_PATH" --root . \
             --base-ref "$BASE_REF" --out "$EVIDENCE_DIR"
 
@@ -104,11 +117,11 @@ jobs:
           TEST_COMMAND: ${{ inputs.test-command }}
         shell: bash
         run: |
-          python .handoff-tooling/entregar-issue/scripts/prepare_actions_handoff.py \
+          python "$HANDOFF_TOOLING/entregar-issue/scripts/prepare_actions_handoff.py" \
             --phase record-tests --root . --out "$EVIDENCE_DIR" \
             --test-command "$TEST_COMMAND" \
             --exit-code "${{ steps.exact_tests.outputs.exit_code }}"
-          python .handoff-tooling/entregar-issue/scripts/build_test_candidate_index.py \
+          python "$HANDOFF_TOOLING/entregar-issue/scripts/build_test_candidate_index.py" \
             --junit "$EVIDENCE_DIR/pytest-exact-head.xml" \
             --head-sha "${{ github.event.pull_request.head.sha }}" \
             --out "$EVIDENCE_DIR/test-candidate-index.json"
@@ -130,7 +143,7 @@ jobs:
           BASE_REF: ${{ inputs.base-ref }}
         run: |
           set +e
-          python .handoff-tooling/entregar-issue/scripts/prepare_actions_handoff.py \
+          python "$HANDOFF_TOOLING/entregar-issue/scripts/prepare_actions_handoff.py" \
             --phase certify --event "$GITHUB_EVENT_PATH" --root . \
             --base-ref "$BASE_REF" --out "$EVIDENCE_DIR"
           code=$?
@@ -156,3 +169,11 @@ jobs:
             exit 1
           fi
           echo "Certificate created but NOT published; trusted publisher remains mandatory."
+
+      - name: Restore official Skill checkout for Actions post-job cleanup
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${HANDOFF_TOOLING:-}" ] && [ -d "$HANDOFF_TOOLING" ] && [ ! -e .handoff-tooling ]; then
+            mv -- "$HANDOFF_TOOLING" .handoff-tooling
+          fi

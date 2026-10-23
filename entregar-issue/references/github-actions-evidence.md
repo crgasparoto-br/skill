@@ -27,6 +27,10 @@ sem `workflow_dispatch` ou `pull_request_target`.
 2. Ler o corpo da issue usando a API oficial e gerar o snapshot com
    `build_specification_snapshot.py`; iniciar `requirement-closure.json` como pendente.
 3. Rodar a suite no material HEAD, gravar JUnit, log, exit code e SHA-256 do log.
+   Antes dos testes, mover o checkout do tooling oficial para `$RUNNER_TEMP`:
+   a arvore duplicada dentro do workspace contamina descoberta dinamica de testes,
+   higiene, validacao de dependencias e generacidade do repositorio consumidor.
+   Restaurar o checkout so apos os gates, para permitir o cleanup da Action.
 4. Exportar `handoff-preflight.json` e o pacote completo em Actions artifact.
    CI verde nao comprova cobertura semantica por requisito.
 
