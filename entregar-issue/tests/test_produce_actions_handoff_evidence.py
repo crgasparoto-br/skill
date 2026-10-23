@@ -196,7 +196,7 @@ def test_draft_code_growth_is_measured_by_official_exact_diff(tmp_path):
 
 
 def test_incomplete_review_validates_keys_without_claiming_approval(tmp_path):
-    root, out, _, source, _ = fixture(tmp_path)
+    _, out, _, source, _ = fixture(tmp_path)
     starter = json.loads(
         (out / ".audit/entregar-issue/requirement-closure.json").read_text())
     manifest = json.loads((source / "manifest.json").read_text())
