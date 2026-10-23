@@ -34,6 +34,10 @@ OBLIGATION_FIELDS = frozenset({
 })
 
 
+class MissingReviewedEvidence(ValueError):
+    """No reviewed dossier exists; factual collection may still finish."""
+
+
 def digest(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
@@ -130,7 +134,7 @@ def collect_exact_tests(out: Path, head: str) -> tuple[dict, dict]:
 
 def load_reviewed_manifest(root: Path, source: Path, event: Path, target: dict) -> tuple[dict, str, list[str]]:
     if not source.is_dir() or source.is_symlink():
-        raise ValueError(f"reviewed semantic evidence not supplied under {source.relative_to(root)}")
+        raise MissingReviewedEvidence(f"reviewed semantic evidence not supplied under {source.relative_to(root)}")
     if not source.resolve().is_relative_to(root) or git(
         root, "status", "--porcelain", "--", source.relative_to(root).as_posix()
     ):
@@ -208,11 +212,29 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     tests, _ = collect_exact_tests(out, head)
     audit = out / ".audit" / "entregar-issue"
     starter = read_json(audit / "requirement-closure.json")
+    obligations = [{"id": entry["id"], "candidate_key": entry["candidate_key"],
+                    "source_text": entry["source_text"], "source_id": entry["source_id"],
+                    "disposition": "pending-review"} for entry in starter["obligations"]]
     write_json(out / "semantic-evidence-candidates.json", {
         "schema_version": 1, "subject_sha": head,
-        "obligations": [{"id": entry["id"], "candidate_key": entry["candidate_key"],
-                         "source_text": entry["source_text"]} for entry in starter["obligations"]],
-        "test_candidates": len(tests), "mapping": "UNKNOWN",
+        "obligations": obligations, "test_candidates": len(tests),
+        "mapping": "UNKNOWN", "certification": "NOT_ASSERTED",
+    })
+    write_json(out / "evidence-review-worklist.json", {
+        "schema_version": 1, "subject_sha": head, "issue_number": issue,
+        "pull_request_number": pr, "base_ref": base_ref,
+        "reviewed_dossier_path": f".github/handoff-evidence/issue-{issue}",
+        "required_review": [
+            "Confirm all normative source candidates and dispositions",
+            "Record positive, discriminating negative, and regression controls per requirement",
+            "Reconcile changed files, codebase grounding, and CODE-GROWTH-001",
+            "Determine risk profile, independent audit history, and inherited controls",
+            "Review semantic report provenance and hashes before certification",
+        ],
+        "pending_obligations": obligations,
+        "test_index": "test-candidate-index.json",
+        "semantic_control_mapping": "UNKNOWN",
+        "certification": "NOT_ASSERTED",
     })
     source = root / ".github" / "handoff-evidence" / f"issue-{issue}"
     target = {"repository": repository, "issue_number": issue, "pull_request_number": pr,
@@ -259,9 +281,16 @@ def main() -> int:
     args = parser.parse_args()
     try:
         produce(args.root.resolve(), args.out.resolve(), args.event, args.base_ref)
+    except MissingReviewedEvidence as exc:
+        write_json(args.out.resolve() / "handoff-producer-status.json", {
+            "status": "awaiting-reviewed-evidence", "reason": str(exc),
+            "semantic_validation": "UNKNOWN", "certification": "NOT_ASSERTED",
+        })
+        print(f"REVIEW REQUIRED: {exc}; collection succeeded but certification remains blocked")
+        return 0
     except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:
         write_json(args.out.resolve() / "handoff-producer-status.json",
-                   {"status": "blocked", "reason": str(exc), "semantic_validation": "UNKNOWN"})
+                   {"status": "blocked-invalid-input", "reason": str(exc), "semantic_validation": "UNKNOWN"})
         print(f"BLOCK: {exc}", file=sys.stderr)
         return 2
     print("STAGED: reviewed evidence assembled; no certificate or approval asserted")
