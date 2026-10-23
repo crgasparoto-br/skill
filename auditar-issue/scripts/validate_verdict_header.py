@@ -208,6 +208,14 @@ def consume_html_comment(candidate, active):
     return False, False
 
 
+def paragraph_still_open(active, candidate, quote_depth, old_quote_depth, old_list_indent, in_list):
+    """Keep the current paragraph only inside its existing CommonMark container."""
+    return bool(
+        active and candidate.strip() and quote_depth == old_quote_depth
+        and (not old_list_indent or in_list)
+    )
+
+
 def visible_lines(lines):
     """Ignore inert Markdown without letting a nested fence hide visible findings."""
     output = []
@@ -229,12 +237,9 @@ def visible_lines(lines):
         candidate, quote_depth, current_indent, in_list = line_context(
             line, list_indent, previous_quote_depth,
         )
-        if (
-            not candidate.strip()
-            or quote_depth != old_quote_depth
-            or (old_list_indent and not in_list)
-        ):
-            paragraph_open = False
+        paragraph_open = paragraph_still_open(
+            paragraph_open, candidate, quote_depth, old_quote_depth, old_list_indent, in_list,
+        )
         list_code, preceding_blank, indented_list_code = list_code_state(
             line, in_list, current_indent, preceding_blank, indented_list_code,
         )
