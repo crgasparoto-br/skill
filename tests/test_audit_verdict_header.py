@@ -990,3 +990,31 @@ def test_issue110_incidental_link_reference_is_not_a_record():
         "para o historico da auditoria.\n"
     ))
     assert module.validate(text) == []
+
+@pytest.mark.parametrize("identifier", ["A-904", "RISK-904", "LIM-904"])
+@pytest.mark.parametrize("formatting", [
+    "[{id}](https://example.com/foo(bar))",
+    "[{id}](<https://example.com/a(b)>)",
+    "**[{id}](https://example.com/a(b(c)))**",
+    "~~[{id}](https://example.com/a(b))~~",
+    "<mark>{id}</mark>",
+    "<kbd>{id}</kbd>",
+    '[{id}](https://example.com/item "title")',
+    "[{id}](https://example.com) ",
+])
+def test_issue110_markup_variants_cannot_escape_triage(identifier, formatting):
+    text = report("APROVADA", sections=(
+        "## Evidencias adicionais\n\n"
+        + formatting.format(id=identifier).rstrip() + " — registro visivel\n"
+    ))
+    assert any(identifier in error for error in module.validate(text))
+
+
+@pytest.mark.parametrize("identifier", ["A-905", "RISK-905", "LIM-905"])
+def test_issue110_escaped_hyphen_markdown_link_is_rendered_id(identifier):
+    escaped = identifier.replace("-", r"\-")
+    text = report("APROVADA", sections=(
+        "## Evidencias adicionais\n"
+        + f"[{escaped}](https://example.com/issue) — registro visivel\n"
+    ))
+    assert any(identifier in error for error in module.validate(text))
