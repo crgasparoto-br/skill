@@ -3,6 +3,8 @@ import importlib.util
 from pathlib import Path
 
 import pytest
+import subprocess
+import sys
 
 SCRIPT = Path(__file__).resolve().parents[1] / "auditar-issue/scripts/validate_verdict_header.py"
 spec = importlib.util.spec_from_file_location("verdict_header", SCRIPT)
@@ -1035,3 +1037,16 @@ def test_issue110_decorated_link_labels_are_visible_evidence_identifiers(
         + formatting.format(id=identifier) + " — registro visivel\n"
     ))
     assert any(identifier in error for error in module.validate(text))
+
+
+def test_issue110_rendered_id_parser_rejects_pathological_emphasis_without_hanging():
+    # A repeated '**'/'*' alternation used to backtrack exponentially.
+    program = (
+        "import runpy, sys; "
+        "rx = runpy.run_path(sys.argv[1])['VISIBLE_RECORD_ID']; "
+        "assert rx.match('*' * 1500 + 'not-a-record') is None"
+    )
+    subprocess.run(
+        [sys.executable, "-c", program, str(SCRIPT)],
+        check=True, timeout=3, capture_output=True, text=True,
+    )
