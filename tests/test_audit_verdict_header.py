@@ -801,3 +801,61 @@ def test_issue110_real_record_after_raw_html_blank_line_still_counts():
 ])
 def test_issue110_styled_ids_are_not_inferred_from_incidental_references(reference):
     assert module.validate(report("APROVADA", sections="## Exemplos\n" + reference)) == []
+
+
+@pytest.mark.parametrize("record_id", ["A-123", "RISK-123", "LIM-123"])
+@pytest.mark.parametrize("nested", [
+    "- Lista de exemplos\n    - {record_id} — item presente no corpo\n",
+    "- Lista de exemplos\n      - {record_id} — item presente no corpo\n",
+    "- Lista de exemplos\n  - Sublista\n    - **{record_id}** — item presente no corpo\n",
+    "1. Lista numerada\n    1. {record_id} — item presente no corpo\n",
+])
+def test_nested_list_records_must_not_hide_under_zero_triage(record_id, nested):
+    text = report("APROVADA", sections="## Evidencias adicionais\n"
+                  + nested.format(record_id=record_id))
+    assert module.validate(text), "visible nested evidence must not evade reconciliation"
+
+
+@pytest.mark.parametrize("tag", [
+    "<audit-example>",
+    '<audit-example data-mode="sample">',
+    "<audit-example />",
+    "</audit-example>",
+])
+def test_custom_type7_html_is_inert_until_blank_line(tag):
+    text = report("APROVADA", sections=(
+        "## Referencias\n" + tag
+        + "\n### A-123 — exemplo inerte em bloco HTML\n"
+        + "</audit-example>\n"
+    ))
+    assert module.validate(text) == []
+
+
+def test_type7_html_ends_at_blank_line_and_following_finding_is_visible():
+    text = report("APROVADA", sections=(
+        "## Referencias\n"
+        "<audit-example>\n"
+        "### A-123 — ainda inerte no HTML\n\n"
+        "### A-124 — achado visivel depois da linha vazia\n"
+    ))
+    assert module.validate(text)
+
+
+def test_inline_html_with_trailing_content_does_not_hide_visible_records():
+    text = report("APROVADA", sections=(
+        "## Referencias\n"
+        "<audit-example>texto inline\n"
+        "### A-123 — achado que continua visivel\n"
+    ))
+    assert module.validate(text)
+
+
+@pytest.mark.parametrize("code_example", [
+    "    - A-123 — codigo indentado no nivel raiz\n",
+    "- Item da lista\n\n      - A-123 — codigo indentado dentro da lista\n",
+    "- Item da lista\n  - Item interno\n\n        - RISK-123 — codigo indentado dentro da sublista\n",
+])
+def test_indented_code_example_is_not_misclassified_as_evidence(code_example):
+    assert module.validate(report("APROVADA", sections=(
+        "## Exemplos inertes\n" + code_example
+    ))) == []
