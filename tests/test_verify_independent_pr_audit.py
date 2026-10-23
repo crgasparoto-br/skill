@@ -15,11 +15,12 @@ assert spec and spec.loader
 gate = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gate)
 HEAD = "a" * 40
+BASE_SHA = "b" * 40
 HANDOFF = "collect / Require certified semantic handoff (exact SHA)"
 
 
 def fixture(base="develop"):
-    pr = {"state": "open", "base": {"ref": base}, "head": {"sha": HEAD},
+    pr = {"state": "open", "base": {"ref": base, "sha": BASE_SHA}, "head": {"sha": HEAD},
           "user": {"login": "implementer"}}
     commits = [{"author": {"login": "implementer"}, "committer": {"login": "other-dev"}}]
     contract = {"schema": "solverit-audit-v1", "audit_round": "independent-01",
@@ -41,10 +42,12 @@ def fixture(base="develop"):
     return pr, reviews, commits, checks
 
 
-def verify(data, base="develop", authorized=None):
+def verify(data, base="develop", authorized=None, trusted=None):
     if authorized is None:
         authorized = lambda reviewer: reviewer == "independent-auditor"
-    return gate.verify_gate(*data, base, authorized)
+    if trusted is None:
+        trusted = lambda _name, _check: True  # Pure gate unit tests only.
+    return gate.verify_gate(*data, base, authorized, trusted)
 
 
 def test_valid_independent_review_exact_sha_and_all_checks():
@@ -225,5 +228,94 @@ def test_pr_head_change_after_approval_rejected(monkeypatch):
             return {"permission": "write"}
         raise AssertionError(path)
     monkeypatch.setattr(gate, "github", github)
-    with pytest.raises(ValueError, match="PR changed"):
-        gate.run("org/repo", 3, "develop", "token")
+    monkeypatch.setattr(gate, "trusted_workflow_check", lambda *args: True)
+    with pytest.raises(ValueError, match="PR HEAD or trusted base SHA changed"):
+        gate.run("org/repo", 3, "develop", BASE_SHA, "token")
+
+
+def test_spoofed_later_green_check_does_not_override_official_failure():
+    data = fixture()
+    official = data[3]["check_runs"][0]
+    official["conclusion"] = "failure"
+    forged = copy.deepcopy(official)
+    forged.update(id=999, conclusion="success")
+    data[3]["check_runs"].append(forged)
+    data[3]["total_count"] += 1
+    with pytest.raises(ValueError, match="not green"):
+        verify(data, trusted=lambda _name, check: check["id"] != 999)
+
+
+@pytest.mark.parametrize("mutation", [
+    lambda run, job, check: run.update(path=".github/workflows/fake.yml"),
+    lambda run, job, check: run.update(check_suite_id=999),
+    lambda run, job, check: run.update(head_sha="c" * 40),
+    lambda run, job, check: run.update(event="workflow_dispatch"),
+    lambda run, job, check: run.update(pull_requests=[{"number": 99}]),
+    lambda run, job, check: job.update(check_run_url="https://api.github.com/other/check-runs/42"),
+    lambda run, job, check: job.update(run_id=999),
+    lambda run, job, check: check.update(details_url="https://untrusted.example/other"),
+])
+def test_check_requires_matching_github_workflow_suite_and_job(monkeypatch, mutation):
+    check = {
+        "id": 42, "check_suite": {"id": 33},
+        "details_url": "https://github.com/org/repo/actions/runs/23/job/44",
+    }
+    run = {
+        "id": 23, "path": ".github/workflows/validate.yml@refs/pull/3/merge",
+        "head_sha": HEAD, "event": "pull_request", "check_suite_id": 33,
+        "status": "completed", "conclusion": "success",
+        "pull_requests": [{"number": 3}],
+    }
+    job = {
+        "id": 44, "run_id": 23, "name": "Structure and tests",
+        "status": "completed", "conclusion": "success",
+        "check_run_url": "https://api.github.com/repos/org/repo/check-runs/42",
+    }
+    response = {
+        "/repos/org/repo/actions/runs/23": run,
+        "/repos/org/repo/actions/jobs/44": job,
+    }
+    monkeypatch.setattr(gate, "github", lambda path, token: response[path])
+    assert gate.trusted_workflow_check(
+        "org/repo", 3, "Structure and tests", check, HEAD, "token")
+    mutation(run, job, check)
+    assert not gate.trusted_workflow_check(
+        "org/repo", 3, "Structure and tests", check, HEAD, "token")
+
+
+@pytest.mark.parametrize("phase", ["initial", "final"])
+def test_trusted_base_sha_drift_is_rejected(monkeypatch, phase):
+    data = fixture()
+    calls = 0
+
+    def github(path, token):
+        nonlocal calls
+        if path.endswith("/pulls/3"):
+            calls += 1
+            pr = copy.deepcopy(data[0])
+            if (phase == "initial" and calls == 1) or (
+                    phase == "final" and calls == 2):
+                pr["base"]["sha"] = "c" * 40
+            return pr
+        if "/reviews?" in path:
+            return data[1]
+        if "/commits?" in path:
+            return data[2]
+        if "/check-runs?" in path:
+            return data[3]
+        if "/collaborators/" in path:
+            return {"permission": "write"}
+        raise AssertionError(path)
+
+    monkeypatch.setattr(gate, "github", github)
+    monkeypatch.setattr(gate, "trusted_workflow_check", lambda *args: True)
+    with pytest.raises(ValueError, match="trusted .*base SHA changed"):
+        gate.run("org/repo", 3, "develop", BASE_SHA, "token")
+
+
+def test_workflow_passes_trusted_base_sha_and_scoped_actions_permission():
+    workflow = (Path(__file__).resolve().parents[1] / ".github" / "workflows"
+                / "independent-audit-gate.yml").read_text(encoding="utf-8")
+    assert "  actions: read" in workflow
+    assert "TARGET_BASE_SHA: ${{ github.event.pull_request.base.sha }}" in workflow
+    assert '--base-sha "$TARGET_BASE_SHA"' in workflow

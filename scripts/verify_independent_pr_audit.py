@@ -22,6 +22,12 @@ APP_ID = 15368  # GitHub Actions
 TECHNICAL = ("Structure and tests", "Offline authorization tests")
 HANDOFF = "collect / Require certified semantic handoff (exact SHA)"
 AUTHORIZED_PERMISSIONS = frozenset({"write", "maintain", "admin"})
+# Only these repository-owned workflow entrypoints may supply these check jobs.
+EXPECTED_WORKFLOWS = {
+    TECHNICAL[0]: ".github/workflows/validate.yml",
+    TECHNICAL[1]: ".github/workflows/github-audit-mcp.yml",
+    HANDOFF: ".github/workflows/handoff-evidence.yml",
+}
 
 
 def page_all(repo: str, suffix: str, token: str, max_pages: int = 25) -> list[dict]:
@@ -62,7 +68,50 @@ def reviewed_contract(review: dict, head: str) -> bool:
     return not (verified & excluded) and findings == (verified | excluded)
 
 
-def required_checks_green(checks: dict, head: str, base: str) -> None:
+def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
+                           head: str, token: str) -> bool:
+    """Bind a check to its actual GitHub Actions job, suite and official workflow."""
+    details = check.get("details_url")
+    if not isinstance(details, str):
+        return False
+    match = re.fullmatch(
+        rf"https://github\\.com/{re.escape(repo)}/actions/runs/([1-9][0-9]*)/job/([1-9][0-9]*)",
+        details,
+    )
+    suite = (check.get("check_suite") or {}).get("id")
+    check_id = check.get("id")
+    if not match or type(suite) is not int or type(check_id) is not int:
+        return False
+    run_id, job_id = (int(value) for value in match.groups())
+    run = github(f"/repos/{repo}/actions/runs/{run_id}", token)
+    job = github(f"/repos/{repo}/actions/jobs/{job_id}", token)
+    if not isinstance(run, dict) or not isinstance(job, dict):
+        raise ValueError("invalid GitHub Actions workflow provenance")
+    workflow_path = run.get("path")
+    if not isinstance(workflow_path, str):
+        return False
+    return (
+        workflow_path.split("@", 1)[0] == EXPECTED_WORKFLOWS[name]
+        and run.get("check_suite_id") == suite
+        and run.get("head_sha") == head
+        and run.get("event") == "pull_request"
+        and run.get("status") == "completed"
+        and run.get("conclusion") == "success"
+        and isinstance(run.get("pull_requests"), list)
+        and any(p.get("number") == number for p in run["pull_requests"]
+                if isinstance(p, dict))
+        and job.get("id") == job_id
+        and job.get("run_id") == run_id
+        and job.get("name") == name
+        and job.get("status") == "completed"
+        and job.get("conclusion") == "success"
+        and job.get("check_run_url") ==
+        f"https://api.github.com/repos/{repo}/check-runs/{check_id}"
+    )
+
+
+def required_checks_green(checks: dict, head: str, base: str,
+                          trusted: Callable[[str, dict], bool]) -> None:
     if not isinstance(checks, dict) or not isinstance(checks.get("check_runs"), list):
         raise ValueError("check-run inventory missing")
     runs = checks["check_runs"]
@@ -73,9 +122,10 @@ def required_checks_green(checks: dict, head: str, base: str) -> None:
         matches = [
             c for c in runs if c.get("name") == name and c.get("head_sha") == head
             and (c.get("app") or {}).get("id") == APP_ID
+            and trusted(name, c)
         ]
         if not matches:
-            raise ValueError(f"required exact-HEAD check missing: {name}")
+            raise ValueError(f"required trusted exact-HEAD check missing: {name}")
         latest = max(matches, key=lambda c: int(c.get("id") or 0))
         if latest.get("status") != "completed" or latest.get("conclusion") != "success":
             raise ValueError(f"required exact-HEAD check not green: {name}")
@@ -132,7 +182,8 @@ def is_authorized_reviewer(repo: str, reviewer: str, token: str) -> bool:
 
 
 def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
-                checks: dict, base: str, authorized: Callable[[str], bool]) -> str:
+                checks: dict, base: str, authorized: Callable[[str], bool],
+                trusted: Callable[[str, dict], bool]) -> str:
     """Authenticate identities, exact-HEAD checks and an actual independent review."""
     if base not in ("develop", "main") or pr.get("base", {}).get("ref") != base:
         raise ValueError("PR base differs from protected branch")
@@ -144,7 +195,7 @@ def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
     if not reviews or not commits:
         raise ValueError("independent audit requires review history and commits")
     implementers = contributor_logins(pr, commits)
-    required_checks_green(checks, head, base)
+    required_checks_green(checks, head, base, trusted)
     current = latest_reviews(reviews)
     if any(x.get("state") == "CHANGES_REQUESTED" for x in current.values()):
         raise ValueError("outstanding request for changes")
@@ -157,8 +208,12 @@ def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
     return str(accepted[-1]["html_url"])
 
 
-def run(repo: str, number: int, base: str, token: str) -> str:
+def run(repo: str, number: int, base: str, base_sha: str, token: str) -> str:
+    if not SHA.fullmatch(base_sha):
+        raise ValueError("invalid trusted base SHA")
     pr = github(f"/repos/{repo}/pulls/{number}", token)
+    if pr.get("base", {}).get("ref") != base or pr["base"].get("sha") != base_sha:
+        raise ValueError("trusted PR base SHA changed before verification")
     reviews = page_all(repo, f"pulls/{number}/reviews", token)
     commits = page_all(repo, f"pulls/{number}/commits", token)
     head = pr["head"]["sha"]
@@ -166,10 +221,13 @@ def run(repo: str, number: int, base: str, token: str) -> str:
     approval = verify_gate(
         pr, reviews, commits, checks, base,
         lambda reviewer: is_authorized_reviewer(repo, reviewer, token),
+        lambda name, check: trusted_workflow_check(repo, number, name, check, head, token),
     )
     current = github(f"/repos/{repo}/pulls/{number}", token)
-    if current.get("head", {}).get("sha") != head or current.get("base", {}).get("ref") != base:
-        raise ValueError("PR changed while validating independent audit")
+    if (current.get("head", {}).get("sha") != head
+            or current.get("base", {}).get("ref") != base
+            or current["base"].get("sha") != base_sha):
+        raise ValueError("PR HEAD or trusted base SHA changed while validating independent audit")
     return approval
 
 
@@ -178,6 +236,7 @@ def main() -> int:
     parser.add_argument("--repo", required=True)
     parser.add_argument("--pr", type=int, required=True)
     parser.add_argument("--base", choices=("develop", "main"), required=True)
+    parser.add_argument("--base-sha", required=True)
     args = parser.parse_args()
     if not REPO.fullmatch(args.repo) or args.pr < 1:
         parser.error("invalid repository or PR")
@@ -185,7 +244,7 @@ def main() -> int:
     try:
         if not token:
             raise ValueError("authenticated GitHub token unavailable")
-        url = run(args.repo, args.pr, args.base, token)
+        url = run(args.repo, args.pr, args.base, args.base_sha, token)
     except (ValueError, KeyError, TypeError, OSError) as exc:
         print(f"BLOCK: {exc}", file=sys.stderr)
         return 2

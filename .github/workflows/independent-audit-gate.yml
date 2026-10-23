@@ -12,6 +12,7 @@ permissions:
   contents: read
   pull-requests: read
   checks: read
+  actions: read
 
 jobs:
   verify:
@@ -35,6 +36,7 @@ jobs:
           TARGET_REPO: ${{ github.repository }}
           TARGET_PR: ${{ github.event.pull_request.number }}
           TARGET_BASE: ${{ github.event.pull_request.base.ref }}
+          TARGET_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           python scripts/verify_independent_pr_audit.py \
-            --repo "$TARGET_REPO" --pr "$TARGET_PR" --base "$TARGET_BASE"
+            --repo "$TARGET_REPO" --pr "$TARGET_PR" --base "$TARGET_BASE" --base-sha "$TARGET_BASE_SHA"
