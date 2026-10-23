@@ -179,6 +179,26 @@ def test_invalid_reviewed_inputs_fail_collection_not_just_certification(tmp_path
         "status"] == "blocked-invalid-input"
 
 
+def test_incomplete_review_manifest_is_not_mistaken_for_certified_evidence(tmp_path, monkeypatch):
+    root, _, event, source, head = fixture(tmp_path)
+    manifest = json.loads((source / "manifest.json").read_text())
+    manifest["review_state"] = "incomplete"
+    put(source / "manifest.json", manifest)
+    # The material source is committed in CI. Isolate review-state semantics here.
+    actual_git = producer.git
+    monkeypatch.setattr(producer, "git",
+                        lambda path, *args: "" if args[:2] == ("status", "--porcelain")
+                        else actual_git(path, *args))
+    target = {"repository": "team/skill", "issue_number": 112,
+              "pull_request_number": 113, "base_ref": "develop", "head_sha": head}
+    with pytest.raises(producer.MissingReviewedEvidenceError, match="explicitly incomplete"):
+        producer.load_reviewed_manifest(root, source, event, target)
+    manifest["review_state"] = "invalid-approval"
+    put(source / "manifest.json", manifest)
+    with pytest.raises(ValueError, match="unrecognized reviewed evidence state"):
+        producer.load_reviewed_manifest(root, source, event, target)
+
+
 def test_skipped_test_is_not_a_control(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(SCRIPTS))
     root, out, event, _, _ = fixture(tmp_path, skipped=True)
