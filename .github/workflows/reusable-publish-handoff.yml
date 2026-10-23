@@ -1,0 +1,69 @@
+name: Reusable trusted certified-handoff publisher
+
+# Only call from a workflow_run job in the consumer's trusted default branch.
+# No pull_request code is ever executed with contents: write.
+on:
+  workflow_call:
+    inputs:
+      base-ref:
+        type: string
+        default: develop
+      tooling-repository:
+        type: string
+        default: crgasparoto-br/skill
+      producer-path:
+        type: string
+        default: .github/workflows/handoff-evidence.yml
+      required-checks:
+        type: string
+        default: Collect and certify exact-SHA handoff
+
+permissions:
+  contents: write
+  actions: read
+  pull-requests: read
+
+jobs:
+  publish:
+    name: Publish only verified handoff results
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout trusted consumer default branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Load official Skill publisher at reusable workflow commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.tooling-repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .handoff-tooling
+          persist-credentials: false
+
+      - name: Python for trusted validators
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install trusted locked validation dependencies
+        run: |
+          python -m pip install --require-hashes \
+            -r .handoff-tooling/requirements.lock.txt \
+            -r .handoff-tooling/entregar-issue/requirements-dev.lock.txt
+
+      - name: Validate evidence, simulate terminal handoff and publish atomically
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ inputs.base-ref }}
+          PRODUCER_PATH: ${{ inputs.producer-path }}
+          REQUIRED_CHECKS: ${{ inputs.required-checks }}
+        run: |
+          python .handoff-tooling/entregar-issue/scripts/publish_actions_handoff.py \
+            --event "$GITHUB_EVENT_PATH" --base-ref "$BASE_REF" \
+            --producer-path "$PRODUCER_PATH" \
+            --required-checks-csv "$REQUIRED_CHECKS"
