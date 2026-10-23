@@ -90,7 +90,7 @@ def test_parent_control_snapshots_are_immutable(tmp_path):
     audit = source / ".audit" / "entregar-issue"
     audit.mkdir(parents=True)
     (audit / "inherited-controls.json").write_bytes(b'{"v":"material"}')
-    destination = publisher._material_parent_snapshots(source, tmp_path)
+    destination = publisher.material_parent_snapshots(source, tmp_path)
     assert (destination / "inherited-controls.json").read_bytes() == b'{"v":"material"}'
     (audit / "inherited-controls.json").write_bytes(b'{"v":"new"}')
     assert (destination / "inherited-controls.json").read_bytes() == b'{"v":"material"}'

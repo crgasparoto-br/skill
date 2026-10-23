@@ -187,7 +187,7 @@ def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, publishe
     return args
 
 
-def _material_parent_snapshots(source: Path, temp: Path) -> Path:
+def material_parent_snapshots(source: Path, temp: Path) -> Path:
     """Capture immutable pre-handoff control ledgers before staging new bytes."""
     folder = temp / "material-parent-snapshots"
     folder.mkdir()
@@ -263,7 +263,7 @@ def publish(event_path: Path) -> str:
         validate_certificate(repo, pr_number, head, base, source, bundle, cert, branch)
         check_material_ci(repo, head, pr_number)
 
-        material_parent = _material_parent_snapshots(source, temp)
+        material_parent = material_parent_snapshots(source, temp)
         existing = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
         if existing - set(paths):
             block("material HEAD contains stale audit paths outside the certificate allowlist")
