@@ -77,6 +77,4 @@ Em `certified-handoff`, passar o relatorio ao builder com `--codebase-grounding`
 O certificado prova que o relatorio existe e pertence ao SHA; executar o validador em `READY` antes do builder continua sendo obrigacao do controlador. O validador prova que o declarado e verdadeiro; nao prova que a lista de referencias esta completa. Completude e refutada pela auditoria independente (`auditar-issue/references/codebase-grounding-audit.md`).
 
 
-O classificador de testes e runners utiliza `scripts/test_path_discovery.py` como auxiliar único para planejamento e grounding; o planejador reexporta `is_test_path` e `pytest_discovery_configs` para consumidores existentes. Descoberta nominal não comprova oráculo ou equivalência semântica.
-
-No `CODE-GROWTH-001`, a política continua ancorada em `work_item_start_sha`, mas o delta material pode usar `--comparison-base-sha` da base atual da PR, verificando ancestralidade em ambos os lados. Mudanças de outras issues já integradas a `develop` não são imputadas à PR. Exceções documentadas por arquivo acima do soft limit não alteram o hard limit.
+O modulo `scripts/test_path_discovery.py` centraliza a deteccao de arquivos e runners usada no planejamento e no grounding; a interface legada e preservada. Para `CODE-GROWTH-001`, `--comparison-base-sha` compara o delta contra a base atual da PR, mas a politica permanece ancorada no inicio da issue. Exigir ancestralidade comprovada e justificativas por arquivo acima do limite brando, sem flexibilizar o limite rigido.
