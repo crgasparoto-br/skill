@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "entregar-issue" / "scripts"))
-from verify_github_completion import audit_contract, github  # noqa: E402
+from verify_github_completion import audit_contract, github
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 REPO = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
@@ -56,18 +56,26 @@ def reviewed_contract(review: dict, head: str) -> bool:
     return not (verified & excluded) and findings == (verified | excluded)
 
 
-def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
-                checks: dict, base: str) -> str:
-    """This gate verifies external evidence; it never performs the semantic audit."""
-    if base not in ("develop", "main") or pr.get("base", {}).get("ref") != base:
-        raise ValueError("PR base differs from protected branch")
-    if pr.get("state") != "open":
-        raise ValueError("PR is not open")
-    head = (pr.get("head") or {}).get("sha")
-    if not isinstance(head, str) or not SHA.fullmatch(head):
-        raise ValueError("invalid PR HEAD")
-    if not reviews or not commits:
-        raise ValueError("independent audit requires review history and commits")
+def required_checks_green(checks: dict, head: str, base: str) -> None:
+    if not isinstance(checks, dict) or not isinstance(checks.get("check_runs"), list):
+        raise ValueError("check-run inventory missing")
+    runs = checks["check_runs"]
+    if checks.get("total_count", len(runs)) > len(runs):
+        raise ValueError("check-run inventory truncated")
+    names = (*TECHNICAL, *((HANDOFF,) if base == "develop" else ()))
+    for name in names:
+        matches = [
+            c for c in runs if c.get("name") == name and c.get("head_sha") == head
+            and (c.get("app") or {}).get("id") == APP_ID
+        ]
+        if not matches:
+            raise ValueError(f"required exact-HEAD check missing: {name}")
+        latest = max(matches, key=lambda c: int(c.get("id") or 0))
+        if latest.get("status") != "completed" or latest.get("conclusion") != "success":
+            raise ValueError(f"required exact-HEAD check not green: {name}")
+
+
+def contributor_logins(pr: dict, commits: list[dict]) -> set[str]:
     author = (pr.get("user") or {}).get("login")
     if not author:
         raise ValueError("PR author missing")
@@ -78,35 +86,48 @@ def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
         if not author_user and not committer_user:
             raise ValueError("commit contributor identity unavailable")
         implementers.update(x.casefold() for x in (author_user, committer_user) if x)
-    if not isinstance(checks, dict) or not isinstance(checks.get("check_runs"), list):
-        raise ValueError("check-run inventory missing")
-    runs = checks["check_runs"]
-    if checks.get("total_count", len(runs)) > len(runs):
-        raise ValueError("check-run inventory truncated")
-    names = (*TECHNICAL, *((HANDOFF,) if base == "develop" else ()))
-    for name in names:
-        matches = [c for c in runs if c.get("name") == name
-                   and c.get("head_sha") == head and (c.get("app") or {}).get("id") == APP_ID]
-        if not matches:
-            raise ValueError(f"required exact-HEAD check missing: {name}")
-        latest = max(matches, key=lambda c: int(c.get("id") or 0))
-        if latest.get("status") != "completed" or latest.get("conclusion") != "success":
-            raise ValueError(f"required exact-HEAD check not green: {name}")
-    latest_by_user: dict[str, dict] = {}
+    return implementers
+
+
+def latest_reviews(reviews: list[dict]) -> dict[str, dict]:
+    current: dict[str, dict] = {}
     ordered = sorted(reviews, key=lambda x: (str(x.get("submitted_at") or ""), int(x.get("id") or 0)))
     for review in ordered:
         user = (review.get("user") or {}).get("login")
         if user:
-            latest_by_user[user.casefold()] = review
-    if any(x.get("state") == "CHANGES_REQUESTED" for x in latest_by_user.values()):
+            current[user.casefold()] = review
+    return current
+
+
+def is_independent_approval(user: str, review: dict, implementers: set[str], head: str) -> bool:
+    if review.get("state") != "APPROVED" or user in implementers or user.endswith("[bot]"):
+        return False
+    if review.get("commit_id") != head or not review.get("html_url") or not review.get("submitted_at"):
+        return False
+    return reviewed_contract(review, head)
+
+
+def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
+                checks: dict, base: str) -> str:
+    """Authenticate identities, exact-HEAD checks and an actual independent review."""
+    if base not in ("develop", "main") or pr.get("base", {}).get("ref") != base:
+        raise ValueError("PR base differs from protected branch")
+    if pr.get("state") != "open":
+        raise ValueError("PR is not open")
+    head = (pr.get("head") or {}).get("sha")
+    if not isinstance(head, str) or not SHA.fullmatch(head):
+        raise ValueError("invalid PR HEAD")
+    if not reviews or not commits:
+        raise ValueError("independent audit requires review history and commits")
+    implementers = contributor_logins(pr, commits)
+    required_checks_green(checks, head, base)
+    current = latest_reviews(reviews)
+    if any(x.get("state") == "CHANGES_REQUESTED" for x in current.values()):
         raise ValueError("outstanding request for changes")
-    accepted = []
-    for user, review in latest_by_user.items():
-        if (review.get("state") == "APPROVED" and user not in implementers
-                and not user.endswith("[bot]") and review.get("commit_id") == head
-                and review.get("html_url") and review.get("submitted_at")
-                and reviewed_contract(review, head)):
-            accepted.append(review)
+    accepted = [
+        review for user, review in current.items()
+        if is_independent_approval(user, review, implementers, head)
+    ]
     if not accepted:
         raise ValueError("independent APPROVED review with complete exact-SHA audit contract absent")
     return str(accepted[-1]["html_url"])
