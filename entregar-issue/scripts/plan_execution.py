@@ -10,15 +10,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import test_path_discovery
 from planning_contract_runtime import CONTRACT_VERSION, validate_controller_context, validate_execution_plan
 from test_path_discovery import (
     TEST_RUNNER_MANIFESTS,
     is_test_path,
-    pytest_discovery_configs as pytest_discovery_configs,
     pytest_discovery_configs_from_git,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+pytest_discovery_configs = test_path_discovery.pytest_discovery_configs
 CRITICAL = {
     'authorization', 'privacy', 'multi-tenant', 'migration', 'concurrency',
     'parser', 'decoder', 'retry', 'fallback', 'cancellation', 'continuation',
