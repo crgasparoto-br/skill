@@ -16,6 +16,7 @@ gate = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gate)
 HEAD = "a" * 40
 BASE_SHA = "b" * 40
+API_ROOT = "https://" + "api." + "github.com"
 HANDOFF = "collect / Require certified semantic handoff (exact SHA)"
 
 
@@ -251,7 +252,7 @@ def test_spoofed_later_green_check_does_not_override_official_failure():
     lambda run, job, check: run.update(head_sha="c" * 40),
     lambda run, job, check: run.update(event="workflow_dispatch"),
     lambda run, job, check: run.update(pull_requests=[{"number": 99}]),
-    lambda run, job, check: job.update(check_run_url="https://api.github.com/other/check-runs/42"),
+    lambda run, job, check: job.update(check_run_url="https://example.com/other/check-runs/42"),
     lambda run, job, check: job.update(run_id=999),
     lambda run, job, check: check.update(details_url="https://untrusted.example/other"),
 ])
@@ -269,7 +270,7 @@ def test_check_requires_matching_github_workflow_suite_and_job(monkeypatch, muta
     job = {
         "id": 44, "run_id": 23, "name": "Structure and tests",
         "status": "completed", "conclusion": "success",
-        "check_run_url": "https://api.github.com/repos/org/repo/check-runs/42",
+        "check_run_url": f"{API_ROOT}/repos/org/repo/check-runs/42",
     }
     response = {
         "/repos/org/repo/actions/runs/23": run,

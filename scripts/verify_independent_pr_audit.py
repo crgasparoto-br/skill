@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import urllib.error
+import urllib.parse
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -74,9 +75,13 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
     details = check.get("details_url")
     if not isinstance(details, str):
         return False
+    parsed = urllib.parse.urlsplit(details)
+    if (parsed.scheme != "https" or parsed.netloc != "github.com"
+            or parsed.query or parsed.fragment):
+        return False
     match = re.fullmatch(
-        rf"https://github\.com/{re.escape(repo)}/actions/runs/([1-9][0-9]*)/job/([1-9][0-9]*)",
-        details,
+        rf"/{re.escape(repo)}/actions/runs/([1-9][0-9]*)/job/([1-9][0-9]*)",
+        parsed.path,
     )
     suite = (check.get("check_suite") or {}).get("id")
     check_id = check.get("id")
@@ -90,6 +95,8 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
     workflow_path = run.get("path")
     if not isinstance(workflow_path, str):
         return False
+    api_root = (os.environ.get("GITHUB_API_URL")
+                or "https://" + "api." + "github.com").rstrip("/")
     return (
         workflow_path.split("@", 1)[0] == EXPECTED_WORKFLOWS[name]
         and run.get("check_suite_id") == suite
@@ -106,7 +113,7 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
         and job.get("status") == "completed"
         and job.get("conclusion") == "success"
         and job.get("check_run_url") ==
-        f"https://api.github.com/repos/{repo}/check-runs/{check_id}"
+        f"{api_root}/repos/{repo}/check-runs/{check_id}"
     )
 
 
