@@ -311,7 +311,7 @@ def test_approved_review_cannot_stage_pending_obligations():
         {"id": "OBL-003", "disposition": "blocked"},
     ]}
     with pytest.raises(producer.MissingReviewedEvidenceError,
-                       match="2 unresolved obligations .*OBL-002, OBL-003"):
+                       match=r"2 unresolved obligations .*OBL-002, OBL-003"):
         producer.require_complete_semantic_review(closure)
 
 
