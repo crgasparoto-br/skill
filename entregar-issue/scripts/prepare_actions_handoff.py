@@ -274,9 +274,14 @@ def certify(args: argparse.Namespace) -> None:
                    "--report", str(resolved["codebase_grounding"]),
                    "--base-sha", start, "--head-sha", head)
     if "code_growth" in resolved:
-        run_script("check_code_growth.py", "--repo", str(args.root),
-                   "--base-sha", start, "--head-sha", head,
-                   "--out", str(resolved["code_growth"]))
+        growth_args = ["--repo", str(args.root), "--base-sha", start,
+                       "--comparison-base-sha", base, "--head-sha", head,
+                       "--out", str(resolved["code_growth"])]
+        justification_path = (args.root / ".github" / "handoff-evidence"
+                              / f"issue-{issue}" / "code-growth-justifications.json")
+        if justification_path.is_file() and not justification_path.is_symlink():
+            growth_args.extend(["--justifications", str(justification_path)])
+        run_script("check_code_growth.py", *growth_args)
 
     builder = [
         "--specification-snapshot", str(resolved["specification_snapshot"]),

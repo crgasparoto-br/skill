@@ -188,6 +188,7 @@ def test_draft_code_growth_is_measured_by_official_exact_diff(tmp_path):
         (out / ".audit/entregar-issue/code-growth.json").read_text())
     assert actual["control_id"] == "CODE-GROWTH-001"
     assert actual["subject_sha"] == head
+    assert actual["comparison_base_sha"] == json.loads((source / "manifest.json").read_text())["work_item_start_sha"]
     manifest = json.loads((source / "manifest.json").read_text())
     manifest["work_item_start_sha"] = "fake"
     put(source / "manifest.json", manifest)

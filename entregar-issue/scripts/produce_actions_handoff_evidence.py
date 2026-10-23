@@ -133,7 +133,20 @@ def validate_incomplete_review(source: Path, starter: dict) -> dict:
             "canonical_candidate_keys_verified": True}
 
 
-def stage_draft_code_growth(root: Path, out: Path, source: Path, head: str) -> dict:
+def code_growth_command(
+    root: Path, start: str, head: str, comparison: str, out: Path, source: Path,
+) -> list[str]:
+    command = [sys.executable, str(Path(__file__).with_name("check_code_growth.py")),
+               "--repo", str(root), "--base-sha", start, "--head-sha", head,
+               "--comparison-base-sha", comparison, "--out", str(out)]
+    justifications = source / "code-growth-justifications.json"
+    if justifications.is_file() and not justifications.is_symlink():
+        command.extend(["--justifications", str(justifications)])
+    return command
+
+
+def stage_draft_code_growth(root: Path, out: Path, source: Path, head: str,
+                            comparison: str | None = None) -> dict:
     """Run the official diff-based code-growth control; never infer a pass."""
     manifest = read_json(source / "manifest.json")
     start = manifest.get("work_item_start_sha")
@@ -141,9 +154,7 @@ def stage_draft_code_growth(root: Path, out: Path, source: Path, head: str) -> d
         raise ValueError("draft evidence needs a valid work-item start SHA")
     git(root, "merge-base", "--is-ancestor", start, head)
     path = out / ".audit" / "entregar-issue" / "code-growth.json"
-    command = [sys.executable, str(Path(__file__).with_name("check_code_growth.py")),
-               "--repo", str(root), "--base-sha", start, "--head-sha", head,
-               "--out", str(path)]
+    command = code_growth_command(root, start, head, comparison or start, path, source)
     result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.returncode not in {0, 2, 3}:
         raise ValueError(f"official CODE-GROWTH-001 could not execute: {result.stderr.strip()}")
@@ -315,7 +326,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         draft_check = validate_incomplete_review(source, starter)
         if draft_check:
             draft_check["subject_sha"] = head
-            draft_check["code_growth"] = stage_draft_code_growth(root, out, source, head)
+            draft_check["code_growth"] = stage_draft_code_growth(root, out, source, head, base)
             write_json(out / "reviewed-dossier-inventory.json", draft_check)
     target = {"repository": repository, "issue_number": issue, "pull_request_number": pr,
               "base_ref": base_ref, "head_sha": head}
@@ -334,9 +345,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     for name, report in staged.items():
         write_json(audit / name, report)
     if touched_code:
-        command = [sys.executable, str(Path(__file__).with_name("check_code_growth.py")),
-                   "--repo", str(root), "--base-sha", start, "--head-sha", head,
-                   "--out", str(audit / "code-growth.json")]
+        command = code_growth_command(root, start, head, base, audit / "code-growth.json", source)
         subprocess.run(command, check=True)
     inputs = {"subject_sha": head, "work_item_start_sha": start, "base_ref": base_ref,
               "head_ref": manifest["head_ref"], "evidence_profile": manifest["evidence_profile"],
