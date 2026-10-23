@@ -56,7 +56,9 @@ def target_from_event(event: dict) -> tuple[str, int, str, str]:
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", str(repo)):
         block("invalid workflow repository identity")
     if (run.get("status") != "completed" or run.get("conclusion") != "success"
-            or run.get("event") != "pull_request" or not HEX_SHA.fullmatch(str(head))
+            or run.get("event") != "pull_request"
+            or run.get("path") != ".github/workflows/handoff-evidence.yml"
+            or not HEX_SHA.fullmatch(str(head))
             or len(prs) != 1):
         block("only one completed, successful PR evidence run is eligible")
     pr_number = prs[0].get("number")

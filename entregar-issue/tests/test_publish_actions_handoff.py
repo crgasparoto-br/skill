@@ -62,6 +62,7 @@ def test_reject_live_pr_sha_drift(monkeypatch):
     })
     event = {"repository": {"full_name": "team/skill"}, "workflow_run": {
         "status": "completed", "conclusion": "success", "event": "pull_request",
+        "path": ".github/workflows/handoff-evidence.yml",
         "head_sha": HEAD, "pull_requests": [{"number": 113}],
     }}
     with pytest.raises(ValueError, match="changed identity"):
