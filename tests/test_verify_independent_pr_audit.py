@@ -118,7 +118,7 @@ def test_paginated_review_inventory_is_not_truncated(monkeypatch):
     calls = []
     def github(path, token):
         calls.append(path)
-        return [{"id": i} for i in range(100)] if "page=1" in path else []
+        return [{"id": i} for i in range(100)] if path.endswith("&page=1") else []
     monkeypatch.setattr(gate, "github", github)
     assert len(gate.page_all("org/repo", "pulls/1/reviews", "token")) == 100
     assert any("page=2" in item for item in calls)
