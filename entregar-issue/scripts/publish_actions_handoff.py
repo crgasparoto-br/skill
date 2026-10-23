@@ -153,7 +153,7 @@ def validate_certificate(repo: str, pr: int, head: str, base: str, source: Path,
 
 
 def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, published: str,
-                  changed: list[str], audit: Path, branch: str) -> list[str]:
+                  changed: list[str], audit: Path, branch: str, material_parent: Path) -> list[str]:
     args = [
         "python", str(SCRIPT_ROOT / "validate_terminal_handoff.py"),
         "--certificate", str(audit / "handoff-ready.json"),
@@ -177,7 +177,25 @@ def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, publishe
             if not previous.is_file():
                 block("previous inherited controls unavailable")
             args.extend(["--previous-inherited-controls", str(previous)])
+    for filename, argument in (
+        ("inherited-controls.json", "--material-parent-inherited-controls"),
+        ("audit-escape-closure.json", "--material-parent-audit-escape-closure"),
+    ):
+        historical = material_parent / filename
+        if historical.is_file():
+            args.extend([argument, str(historical)])
     return args
+
+
+def _material_parent_snapshots(source: Path, temp: Path) -> Path:
+    """Capture immutable pre-handoff control ledgers before staging new bytes."""
+    folder = temp / "material-parent-snapshots"
+    folder.mkdir()
+    for name in ("inherited-controls.json", "audit-escape-closure.json"):
+        old = source / PREFIX / name
+        if old.is_file() and not old.is_symlink():
+            (folder / name).write_bytes(old.read_bytes())
+    return folder
 
 
 def check_material_ci(repository: str, head: str, pr_number: int) -> None:
@@ -245,6 +263,7 @@ def publish(event_path: Path) -> str:
         validate_certificate(repo, pr_number, head, base, source, bundle, cert, branch)
         check_material_ci(repo, head, pr_number)
 
+        material_parent = _material_parent_snapshots(source, temp)
         existing = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
         if existing - set(paths):
             block("material HEAD contains stale audit paths outside the certificate allowlist")
@@ -266,7 +285,7 @@ def publish(event_path: Path) -> str:
         # Prepublication: synthetic published/current identity on the exact local
         # commit. A failure MUST NOT publish the commit.
         command(*terminal_args(cert, repo, pr_number, head, base, published,
-                               changed, source / PREFIX, branch), cwd=trusted)
+                               changed, source / PREFIX, branch, material_parent), cwd=trusted)
         fresh = api_get(repo, f"pulls/{pr_number}")
         if fresh.get("state") != "open" or fresh["head"]["sha"] != head or fresh["base"]["sha"] != base:
             block("PR moved before the atomic fast-forward publication")
@@ -278,7 +297,7 @@ def publish(event_path: Path) -> str:
                 or {f["filename"] for f in published_metadata.get("files") or []} != set(changed)):
             block("fresh postpublication GitHub read failed the terminal identity check")
         command(*terminal_args(cert, repo, pr_number, head, base, published,
-                               changed, source / PREFIX, branch), cwd=trusted)
+                               changed, source / PREFIX, branch, material_parent), cwd=trusted)
         return published
 
 

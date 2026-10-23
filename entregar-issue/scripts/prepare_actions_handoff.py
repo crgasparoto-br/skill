@@ -290,6 +290,12 @@ def certify(args: argparse.Namespace) -> None:
     ]
     for path in changed:
         builder.extend(["--issue-changed-path", path])
+    if "previous_audit_escape_closure" in resolved:
+        builder.extend(["--allow-result-path",
+                        ".audit/entregar-issue/previous-audit-escape-closure.json"])
+    if inputs.get("remediation_mode") in {"systemic-remediation", "mixed-remediation"}:
+        builder.extend(["--allow-result-path",
+                        ".audit/entregar-issue/previous-inherited-controls.json"])
     # The certificate must authorize the exact issue source bytes it references.
     snapshot = _load_record(resolved["specification_snapshot"])
     for source in snapshot.get("sources", []):

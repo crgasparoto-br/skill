@@ -84,3 +84,13 @@ def test_material_ci_requires_every_observed_check_green(monkeypatch):
         publisher.check_material_ci("team/skill", HEAD, 113)
     monkeypatch.setattr(publisher, "api_get", lambda *_: response("success"))
     publisher.check_material_ci("team/skill", HEAD, 113)
+
+def test_parent_control_snapshots_are_immutable(tmp_path):
+    source = tmp_path / "source"
+    audit = source / ".audit" / "entregar-issue"
+    audit.mkdir(parents=True)
+    (audit / "inherited-controls.json").write_bytes(b'{"v":"material"}')
+    destination = publisher._material_parent_snapshots(source, tmp_path)
+    assert (destination / "inherited-controls.json").read_bytes() == b'{"v":"material"}'
+    (audit / "inherited-controls.json").write_bytes(b'{"v":"new"}')
+    assert (destination / "inherited-controls.json").read_bytes() == b'{"v":"material"}'
