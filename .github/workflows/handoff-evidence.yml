@@ -70,4 +70,5 @@ jobs:
           name: handoff-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
           path: ${{ env.EVIDENCE_DIR }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 14
