@@ -40,7 +40,7 @@ def test_resolves_one_issue_and_parenthesized_pr_title(tmp_path):
 @pytest.mark.parametrize("change,expected", [
     ({"fork": True}, "forked"),
     ({"head": "short"}, "exact SHA"),
-    ({"base": "main"}, "develop"),
+    ({"base": "main"}, "base ref"),
     ({"title": "test", "body": ""}, "exactly one"),
 ])
 def test_untrusted_or_ambiguous_metadata_fails_closed(tmp_path, change, expected):
