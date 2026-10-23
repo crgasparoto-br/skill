@@ -265,6 +265,30 @@ def test_distinct_oracle_is_not_rejected_by_nominal_similarity(candidate):
     assert result.returncode == 0, result.stdout
 
 
+def test_added_test_cannot_claim_covered_by_existing_without_any_candidate(candidate):
+    def change(report):
+        record = report["test_decisions"][0]
+        record["decision"] = "covered-by-existing"
+        record["search"]["candidates"] = []
+    result = run(candidate, mutated(candidate, change))
+    assert result.returncode == 2
+    assert "covered-by-existing lacks an identified existing test" in result.stdout
+    assert "added test cannot be classified covered-by-existing" in result.stdout
+
+
+def test_added_test_cannot_claim_covered_by_existing_with_real_candidate(candidate):
+    def change(report):
+        record = report["test_decisions"][0]
+        record["decision"] = "covered-by-existing"
+        record["search"]["candidates"] = [{
+            "path": "src/money.py", "case": "unit formatting",
+            "oracle": "format_money decimals", "comparison": "unit does not cover aggregate"
+        }]
+    result = run(candidate, mutated(candidate, change))
+    assert result.returncode == 2
+    assert "added test cannot be classified covered-by-existing" in result.stdout
+
+
 def test_dynamic_runner_unavailable_is_unknown_not_ready(candidate):
     def change(report):
         record = report["test_decisions"][0]
