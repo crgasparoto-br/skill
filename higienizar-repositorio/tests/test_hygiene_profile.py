@@ -1057,6 +1057,14 @@ def test_test_lifecycle_hygiene_requires_runner_oracle_review(tmp_path: Path) ->
     policy = policy_variant(**{"classes.dead-module.exclude_tests": False})
     tree = make_tree(tmp_path, files, policy)
     before = {path: (tree / path).read_bytes() for path in files}
+    collection = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+        cwd=tree, text=True, capture_output=True, check=False,
+    )
+    assert collection.returncode == 0, collection.stdout + collection.stderr
+    assert "tests/dynamic_case.py::test_runtime" in collection.stdout
+    assert "tests/removed_contract.py" not in collection.stdout
+
     report = scan(tree)
     candidates = {finding["path"] for finding in findings_of(report, "dead-module")}
     assert candidates == {"tests/dynamic_case.py", "tests/removed_contract.py"}
