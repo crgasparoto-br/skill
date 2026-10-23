@@ -113,6 +113,26 @@ def merge_closure(starter: dict, reviewed: dict) -> dict:
     return starter
 
 
+def validate_incomplete_review(source: Path, starter: dict) -> dict:
+    """A draft may be inventoried, but cannot supply semantic approval."""
+    manifest = read_json(source / "manifest.json")
+    if manifest.get("review_state") != "incomplete":
+        return {}
+    draft = read_json(source / "reviewed-closure.json")
+    canonical = {item["candidate_key"] for item in starter["obligations"]}
+    provided = draft.get("obligations")
+    if (draft.get("schema_version") != 1 or not isinstance(provided, dict)
+            or set(provided) != canonical):
+        raise ValueError("incomplete reviewed closure differs from canonical candidate inventory")
+    if any(not isinstance(item, dict) or item.get("disposition") != "pending"
+           for item in provided.values()):
+        raise ValueError("incomplete reviewed closure must not claim semantic coverage")
+    if manifest.get("artifact_sha256") or manifest.get("test_bindings"):
+        raise ValueError("incomplete dossier must not present reviewed hashes or test bindings")
+    return {"review_state": "incomplete", "pending_obligations": len(provided),
+            "canonical_candidate_keys_verified": True}
+
+
 def collect_exact_tests(out: Path, head: str) -> tuple[dict, dict]:
     facts = read_json(out / "test-execution-facts.json")
     index = read_json(out / "test-candidate-index.json")
@@ -267,6 +287,11 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         "certification": "NOT_ASSERTED",
     })
     source = root / ".github" / "handoff-evidence" / f"issue-{issue}"
+    if source.is_dir() and (source / "manifest.json").is_file():
+        draft_check = validate_incomplete_review(source, starter)
+        if draft_check:
+            draft_check["subject_sha"] = head
+            write_json(out / "reviewed-dossier-inventory.json", draft_check)
     target = {"repository": repository, "issue_number": issue, "pull_request_number": pr,
               "base_ref": base_ref, "head_sha": head}
     manifest, start, changed = load_reviewed_manifest(root, source, event, target)
