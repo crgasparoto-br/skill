@@ -142,6 +142,12 @@ def load_reviewed_manifest(root: Path, source: Path, event: Path, target: dict) 
     manifest = read_json(source / "manifest.json")
     if manifest.get("schema_version") != 1:
         raise ValueError("unsupported reviewed evidence manifest")
+    if manifest.get("review_state") == "incomplete":
+        raise MissingReviewedEvidenceError(
+            "reviewed dossier is explicitly incomplete; complete and verify all mandatory reports before certification"
+        )
+    if manifest.get("review_state") not in (None, "approved"):
+        raise ValueError("unrecognized reviewed evidence state; fail closed")
     expected = {key: value for key, value in target.items() if key != "head_sha"}
     expected["head_ref"] = json.loads(event.read_text())["pull_request"]["head"]["ref"]
     if any(manifest.get(key) != val for key, val in expected.items()):
@@ -209,7 +215,21 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
                 "pull_request_number": pr, "material_head_sha": head, "base_sha": base}
     if any(identity.get(key) != val for key, val in expected.items()):
         raise ValueError("preflight identity differs from the exact PR material")
-    tests, _ = collect_exact_tests(out, head)
+    tests, exact_index = collect_exact_tests(out, head)
+    # Factual candidate grouping does not assert an oracle or semantic coverage.
+    modules = {}
+    for case in exact_index["tests"]:
+        module = case["id"].split("::", 1)[0]
+        entry = modules.setdefault(module, {"passed": 0, "other": 0, "examples": []})
+        entry["passed" if case["status"] == "passed" else "other"] += 1
+        if len(entry["examples"]) < 3:
+            entry["examples"].append(case["id"])
+    write_json(out / "semantic-test-review-candidates.json", {
+        "schema_version": 1, "subject_sha": head, "issue_number": issue,
+        "pull_request_number": pr, "source": "verified exact-SHA JUnit index",
+        "candidate_modules": modules, "semantic_mapping": "UNKNOWN",
+        "warning": "Names are navigation aids; assertions and negative controls require review.",
+    })
     audit = out / ".audit" / "entregar-issue"
     starter = read_json(audit / "requirement-closure.json")
     obligations = [{"id": entry["id"], "candidate_key": entry["candidate_key"],
