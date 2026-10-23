@@ -1018,3 +1018,20 @@ def test_issue110_escaped_hyphen_markdown_link_is_rendered_id(identifier):
         f"[{escaped}](https://example.com/issue) — registro visivel\n"
     ))
     assert any(identifier in error for error in module.validate(text))
+
+@pytest.mark.parametrize("identifier", ["A-906", "RISK-906", "LIM-906"])
+@pytest.mark.parametrize("formatting", [
+    "[**{id}**](https://example.com/a(b))",
+    "[*{id}*](https://example.com/a(b))",
+    "[~~{id}~~](https://example.com/a(b))",
+    "[<strong>{id}</strong>](https://example.com/a(b))",
+    "*[**{id}**](https://example.com/a(b))*",
+])
+def test_issue110_decorated_link_labels_are_visible_evidence_identifiers(
+    identifier, formatting,
+):
+    text = report("APROVADA", sections=(
+        "## Evidencias adicionais\n\n"
+        + formatting.format(id=identifier) + " — registro visivel\n"
+    ))
+    assert any(identifier in error for error in module.validate(text))
