@@ -159,6 +159,10 @@ def test_missing_review_is_factual_collection_success_not_certification(tmp_path
     assert worklist["subject_sha"] == head
     assert worklist["semantic_control_mapping"] == "UNKNOWN"
     assert worklist["pending_obligations"][0]["disposition"] == "pending-review"
+    delta = json.loads((out / "material-change-index.json").read_text())
+    assert delta["subject_sha"] == head
+    assert "docs/change.md" in delta["changed_paths"]
+    assert delta["semantic_test_impact"] == "UNKNOWN"
     assert not (out / "certification-inputs.json").exists()
 
 
