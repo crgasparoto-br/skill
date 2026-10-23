@@ -7,7 +7,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-001 no candidato material: fonte entregar-issue/references/codebase-grounding-gate.md; entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_gate_is_registered_and_loaded_progressively. Pendente: confrontar as regras genericas com o comportamento observavel de reuso e rejeicao. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-001 no candidato material: fonte entregar-issue/references/codebase-grounding-gate.md; entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_gate_is_registered_and_loaded_progressively. Pendente: confrontar as regras genericas com o comportamento observavel de reuso e rejeicao. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-001, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "4e52debdfd23907278b938bd87737592cad821d5d4fbb94faf4ad393ebcb7598": {
       "disposition": "pending",
@@ -15,7 +15,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-002 no candidato material: fonte entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: verificar se a lacuna historica citada ainda e real apos o merge. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-002 no candidato material: fonte entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: verificar se a lacuna historica citada ainda e real apos o merge. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-002, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "bd3b1ccad7ed21dbc3a4daaf9a5cc29b9703d136c418ba0ef288bf35192b537b": {
       "disposition": "pending",
@@ -23,7 +23,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-003 no candidato material: fonte auditar-issue/references/audit-checklist.md; auditar-issue/references/codebase-grounding-audit.md; limite de controle: nao ha teste de auditoria independente da Issue #112 localizado. Pendente: reexecutar revisao separada dos oraculos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-003 no candidato material: fonte auditar-issue/references/audit-checklist.md; auditar-issue/references/codebase-grounding-audit.md; limite de controle: nao ha teste de auditoria independente da Issue #112 localizado. Pendente: reexecutar revisao separada dos oraculos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-003 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente."
     },
     "2801d6258672b8018baf3acb05d107c77b8db2854ea17343e5519106abe37deb": {
       "disposition": "pending",
@@ -31,7 +31,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-004 no candidato material: fonte AGENTS.md; entregar-issue/references/codebase-grounding-gate.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_gate_is_registered_and_loaded_progressively. Pendente: conferir a regra global vigente e o seu consumo pelo gate. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-004 no candidato material: fonte AGENTS.md; entregar-issue/references/codebase-grounding-gate.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_gate_is_registered_and_loaded_progressively. Pendente: conferir a regra global vigente e o seu consumo pelo gate. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-004, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "012c3052d5c9591765aa8107da42aabb909525b9a5a1471254cecaac1e407769": {
       "disposition": "pending",
@@ -39,7 +39,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-005 no candidato material: fonte entregar-issue/references/codebase-grounding-gate.md; entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls; test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: revisar contratos reuse/extend/create e classificacao de obsolescencia. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-005 no candidato material: fonte entregar-issue/references/codebase-grounding-gate.md; entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls; test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: revisar contratos reuse/extend/create e classificacao de obsolescencia. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-005, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "342199765de735c3959da58f05f0af850d7c224312b29bfb5ce48413521d18d7": {
       "disposition": "pending",
@@ -47,7 +47,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-006 no candidato material: fonte revisar-issue/references/specification-standard.md; limite de controle: nao ha fixture de revisao real localizada. Pendente: provar uma revisao de issue com inventario ou UNKNOWN. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-006 no candidato material: fonte revisar-issue/references/specification-standard.md; limite de controle: nao ha fixture de revisao real localizada. Pendente: provar uma revisao de issue com inventario ou UNKNOWN. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCONTROLE SEMÂNTICO A EXECUTAR: revisão real de uma issue por revisar-issue deve produzir decisão de reaproveitamento por teste existente, ou UNKNOWN com justificativa. Não foi localizado artefato de revisão autenticado no SHA material; testes de contrato de documentação não constituem oráculo desta saída. Sem vínculo POS/NEG/REG até obter execução real."
     },
     "faa2ac950da36e2179df73f09b01b9bb2af246af03abeb37a6f1c8171de1c40a": {
       "disposition": "pending",
@@ -55,7 +55,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-007 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: refutar um caminho de preflight omitido antes da escrita. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-007 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: refutar um caminho de preflight omitido antes da escrita. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-007, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "94f70cae96f99f502f27580c2f3f990ad48ebc29d0027820e0c490e6851bd5a8": {
       "disposition": "pending",
@@ -63,7 +63,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-008 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nao ha revisao independente autenticada no HEAD. Pendente: auditor distinto precisa verificar assertivas e exclusoes. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-008 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nao ha revisao independente autenticada no HEAD. Pendente: auditor distinto precisa verificar assertivas e exclusoes. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-008 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente."
     },
     "1493523ee3ff2bbaaf4b5690ac104b5cc959752c513eaf5816b03bf73e22b706": {
       "disposition": "pending",
@@ -71,7 +71,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-009 no candidato material: fonte higienizar-repositorio/references/test-lifecycle-hygiene.md; limite de controle: nao ha cenario de diagnostico dinamico isolado localizado. Pendente: demonstrar work item e ausencia de exclusao automatica. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-009 no candidato material: fonte higienizar-repositorio/references/test-lifecycle-hygiene.md; limite de controle: nao ha cenario de diagnostico dinamico isolado localizado. Pendente: demonstrar work item e ausencia de exclusao automatica. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review; negativo=higienizar-repositorio.tests.test_hygiene_profile::test_dead_module_test_exclusion_follows_policy; regressão=higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-009, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "39f9e69fe4bddf938cb36bf71f04eb2364f4c14329f4ffa99cb544e2176c9470": {
       "disposition": "pending",
@@ -79,7 +79,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-010 no candidato material: fonte corrigir-ci/SKILL.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_ci_remediation_mode_returns_to_existing_controller. Pendente: demonstrar aplicacao de GROUND-TEST-001 durante remediacao de teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-010 no candidato material: fonte corrigir-ci/SKILL.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_ci_remediation_mode_returns_to_existing_controller. Pendente: demonstrar aplicacao de GROUND-TEST-001 durante remediacao de teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=corrigir-ci.tests.test_ci_ownership_contract::test_ci_remediation_mode_returns_to_existing_controller; negativo=corrigir-ci.tests.test_ci_terminal_state_guard::test_rejects_stale_certificate_after_later_material_ci_fix; regressão=entregar-issue.tests.test_ci_autopilot_contract::test_ci_fix_returns_to_refreeze_before_final_handoff. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-010, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "7e1c0df5dfeda24a7392b6c20d7cc062114e64a2b7a6bb122490c94e2b7accb6": {
       "disposition": "pending",
@@ -87,7 +87,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-011 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_legacy_v1_is_explicitly_rejected_for_test_diff. Pendente: rever migracao e todas as copias compartilhadas. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-011 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_legacy_v1_is_explicitly_rejected_for_test_diff. Pendente: rever migracao e todas as copias compartilhadas. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_deterministic_planning::test_historical_v2_plan_schema_and_runtime_compatible; negativo=entregar-issue.tests.test_codebase_grounding::test_legacy_v1_is_explicitly_rejected_for_test_diff; regressão=entregar-issue.tests.test_codebase_grounding::test_stale_subject_sha_blocks. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-011, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "d6d37be23ebaa63728f176b09a9db5dbd7ae48f2bacf7611c6fca7eba0087b58": {
       "disposition": "pending",
@@ -95,7 +95,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-012 no candidato material: fonte entregar-issue/references/codebase-grounding-gate.md; entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: inspecionar consultas e escopo realmente usados em candidato de teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-012 no candidato material: fonte entregar-issue/references/codebase-grounding-gate.md; entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: inspecionar consultas e escopo realmente usados em candidato de teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-012, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "1cf68df6ad422a739d67eb13237c57c23df35262b22463db8c014b6cfc98ac4f": {
       "disposition": "pending",
@@ -103,7 +103,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-013 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_blocked_scenario_cannot_report_passed. Pendente: refutar qualidade semantica dos quatro tipos de decisao. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-013 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_blocked_scenario_cannot_report_passed. Pendente: refutar qualidade semantica dos quatro tipos de decisao. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-013, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "c24e81097b947d46836eccf234a9190b888df2965c246d8b049b6111523600aa": {
       "disposition": "pending",
@@ -111,7 +111,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-014 no candidato material: fonte entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: demonstrar extensao real sem colapsar controle independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-014 no candidato material: fonte entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: demonstrar extensao real sem colapsar controle independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-014, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "1ea87aba560d21cdc23b18cc2edf0a08b3a10b0b2411d1840a1e4b95fae5b9c7": {
       "disposition": "pending",
@@ -119,7 +119,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-015 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_added_test_cannot_claim_covered_by_existing_without_any_candidate; test_added_test_cannot_claim_covered_by_existing_with_real_candidate. Pendente: confirmar no HEAD material execucao e nao apenas nome dos controles negativos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-015 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_added_test_cannot_claim_covered_by_existing_without_any_candidate; test_added_test_cannot_claim_covered_by_existing_with_real_candidate. Pendente: confirmar no HEAD material execucao e nao apenas nome dos controles negativos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-015, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "e111b61ee8b5bdfa70a02f3b85e1e3572b6355c7e79080f4bf55d2e0bfdd146f": {
       "disposition": "pending",
@@ -127,7 +127,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-016 no candidato material: fonte higienizar-repositorio/references/test-lifecycle-hygiene.md; limite de controle: nao ha teste de obsolescencia sem contrato localizado. Pendente: distinguir sinal de skip e obsolescencia comprovada. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-016 no candidato material: fonte higienizar-repositorio/references/test-lifecycle-hygiene.md; limite de controle: nao ha teste de obsolescencia sem contrato localizado. Pendente: distinguir sinal de skip e obsolescencia comprovada. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review; negativo=higienizar-repositorio.tests.test_hygiene_profile::test_dead_module_test_exclusion_follows_policy; regressão=higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-016, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "8922083570fd4f0e66dbd6a6f77f599bb4eb67395822f7365cb85fd614baee76": {
       "disposition": "pending",
@@ -135,7 +135,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-017 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; higienizar-repositorio/references/test-lifecycle-hygiene.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: validar disposicao segura por cenario e consumidor. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-017 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; higienizar-repositorio/references/test-lifecycle-hygiene.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: validar disposicao segura por cenario e consumidor. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls; negativo=entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case; regressão=entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-017, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "bc85912b59c17535385c582d70490985da9745d19e703dcc045df4478769a89b": {
       "disposition": "pending",
@@ -143,7 +143,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-018 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: inspecionar controles antes/depois em exclusao real. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-018 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: inspecionar controles antes/depois em exclusao real. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls; negativo=entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case; regressão=entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-018, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "102185f1599844fb071f57080701250bb66b5b2a7d07b5b977e39a19afad9b9e": {
       "disposition": "pending",
@@ -151,7 +151,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-019 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_passed_test_requires_execution_proof_fields[subject_sha]. Pendente: confirmar mapeamento exact-SHA de decisoes e evidencias. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-019 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_passed_test_requires_execution_proof_fields[subject_sha]. Pendente: confirmar mapeamento exact-SHA de decisoes e evidencias. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-019, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "c6047ea659ddb7fd9ea19256c18989725b39fe9c89e57d922f926298b31f7562": {
       "disposition": "pending",
@@ -159,7 +159,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-020 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_dynamic_runner_unavailable_is_unknown_not_ready. Pendente: testar limite real de arvore/runner inacessivel. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-020 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_dynamic_runner_unavailable_is_unknown_not_ready. Pendente: testar limite real de arvore/runner inacessivel. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate; negativo=entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown; regressão=entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-020, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "e0afbace8e2cc3a0c6e5e0c300db6aaf36e4823d63b14418b9961566015036fe": {
       "disposition": "pending",
@@ -167,7 +167,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-021 no candidato material: fonte entregar-issue/references/implementation-workflow.md; entregar-issue/references/codebase-grounding-gate.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_non_test_package_metadata_change_does_not_require_test_decision. Pendente: comprovar ausencia de varredura global em diff de testes. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-021 no candidato material: fonte entregar-issue/references/implementation-workflow.md; entregar-issue/references/codebase-grounding-gate.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_non_test_package_metadata_change_does_not_require_test_decision. Pendente: comprovar ausencia de varredura global em diff de testes. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-021, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "197dc790f0d17e7a64879cd0a82ea087d34fc401bfab550c46c287b9ffb28389": {
       "disposition": "pending",
@@ -175,7 +175,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-022 no candidato material: fonte higienizar-repositorio/references/test-lifecycle-hygiene.md; auditar-issue/references/codebase-grounding-audit.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: validar autorizacao/aviso independente de teste verde. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-022 no candidato material: fonte higienizar-repositorio/references/test-lifecycle-hygiene.md; auditar-issue/references/codebase-grounding-audit.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: validar autorizacao/aviso independente de teste verde. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls; negativo=entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case; regressão=entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-022, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "40fa0840722bbfdbf54af6c2ae7675ec4af82e6ea83debaf8076cdbfe628cd28": {
       "disposition": "pending",
@@ -183,7 +183,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-023 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_configured_pytest_filename_is_a_test[pytest.ini-[pytest]\\\\npython_files = smoke.py\\\\n]; test_go_test_only_and_runner_manifests_activate_gate. Pendente: revalidar runner dinamico e rename no HEAD corrente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-023 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_configured_pytest_filename_is_a_test[pytest.ini-[pytest]\\\\npython_files = smoke.py\\\\n]; test_go_test_only_and_runner_manifests_activate_gate. Pendente: revalidar runner dinamico e rename no HEAD corrente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate; negativo=entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown; regressão=entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-023, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "0b47fa9c9dbedad74d955b44b6cb201715c950766710ae0fca93db20e76d68ac": {
       "disposition": "pending",
@@ -191,7 +191,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-024 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; auditar-issue/references/codebase-grounding-audit.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: separar forma/identidade do julgamento semantico independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-024 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; auditar-issue/references/codebase-grounding-audit.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: separar forma/identidade do julgamento semantico independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-024, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "99e25804db66e95f30566cd30172c81d61d4d87feb855b1bc56925ca64789a4a": {
       "disposition": "pending",
@@ -199,7 +199,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-025 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_legacy_v1_is_explicitly_rejected_for_test_diff. Pendente: testar consumidor historico e schema migrado. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-025 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_legacy_v1_is_explicitly_rejected_for_test_diff. Pendente: testar consumidor historico e schema migrado. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_deterministic_planning::test_historical_v2_plan_schema_and_runtime_compatible; negativo=entregar-issue.tests.test_codebase_grounding::test_legacy_v1_is_explicitly_rejected_for_test_diff; regressão=entregar-issue.tests.test_codebase_grounding::test_stale_subject_sha_blocks. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-025, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "44b407f6481b07305b61004ab48a3ab23a1e05a39a2b92371a3f69093c17e296": {
       "disposition": "pending",
@@ -207,7 +207,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-026 no candidato material: fonte entregar-issue/references/codebase-grounding-gate.md; entregar-issue/contracts/gate-registry.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_gate_is_registered_and_loaded_progressively. Pendente: rever eventual mecanismo paralelo no diff da issue. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-026 no candidato material: fonte entregar-issue/references/codebase-grounding-gate.md; entregar-issue/contracts/gate-registry.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_gate_is_registered_and_loaded_progressively. Pendente: rever eventual mecanismo paralelo no diff da issue. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-026, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "650e4aa42e6d93ff8bf1d2c4e7200aaa1bf11c007d2f9cc505288f8d158a1c30": {
       "disposition": "pending",
@@ -215,7 +215,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-027 no candidato material: fonte .github/workflows/handoff-evidence.yml; PR #118; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_stale_subject_sha_blocks. Pendente: reconferir base develop e identidade HEAD final. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-027 no candidato material: fonte .github/workflows/handoff-evidence.yml; PR #118; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_stale_subject_sha_blocks. Pendente: reconferir base develop e identidade HEAD final. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_produce_actions_handoff_evidence::test_stages_reviewed_light_bundle_without_declaring_certificate; negativo=entregar-issue.tests.test_produce_actions_handoff_evidence::test_approved_review_cannot_stage_pending_obligations; regressão=entregar-issue.tests.test_produce_actions_handoff_evidence::test_missing_review_is_factual_collection_success_not_certification. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-027, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "8ab0782dd30e1e28b77debe6d8918a066de4f796a73860d4873ac34fa6137d8d": {
       "disposition": "pending",
@@ -223,7 +223,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-028 no candidato material: fonte entregar-issue/references/github-actions-evidence.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_reviewed_evidence_is_blocked_with_candidate_inventory. Pendente: reconciliar gates tecnicos e certificacao sem relaxamento. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-028 no candidato material: fonte entregar-issue/references/github-actions-evidence.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_reviewed_evidence_is_blocked_with_candidate_inventory. Pendente: reconciliar gates tecnicos e certificacao sem relaxamento. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_produce_actions_handoff_evidence::test_stages_reviewed_light_bundle_without_declaring_certificate; negativo=entregar-issue.tests.test_produce_actions_handoff_evidence::test_approved_review_cannot_stage_pending_obligations; regressão=entregar-issue.tests.test_produce_actions_handoff_evidence::test_missing_review_is_factual_collection_success_not_certification. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-028, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "50eedb89821c9c6af699c4c477a53fe51be4939f0556260d81b74c2b05fc342a": {
       "disposition": "pending",
@@ -231,7 +231,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-029 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nenhum artefato independente do HEAD final foi validado. Pendente: solicitar auditoria separada somente apos dossie certificado. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-029 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nenhum artefato independente do HEAD final foi validado. Pendente: solicitar auditoria separada somente apos dossie certificado. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-029 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente."
     },
     "d23a733f94232bd1682e470b6712b96da43ff9476c3ffb9b75924800449b007d": {
       "disposition": "pending",
@@ -239,7 +239,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-030 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: refutar criacao por semelhança nominal. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-030 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: refutar criacao por semelhança nominal. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-030, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "642733975af8ee9400dd2b83e0e121ba5f36f8634c4ffbdaf6699f26944b37c3": {
       "disposition": "pending",
@@ -247,7 +247,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-031 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: comparar niveis e oraculos reais dos candidatos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-031 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: comparar niveis e oraculos reais dos candidatos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-031, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "cccd6b179762196f866843681541c857979106f3bc6457066faceec7909954fc": {
       "disposition": "pending",
@@ -255,7 +255,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-032 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_dynamic_runner_unavailable_is_unknown_not_ready. Pendente: demonstrar que ausencia de import nao prova obsolescencia. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-032 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_dynamic_runner_unavailable_is_unknown_not_ready. Pendente: demonstrar que ausencia de import nao prova obsolescencia. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review; negativo=higienizar-repositorio.tests.test_hygiene_profile::test_dead_module_test_exclusion_follows_policy; regressão=higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-032, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "d7430bd917031835ef90254f1772562f5fc05a118fd6844bd7934dacde67b6b7": {
       "disposition": "pending",
@@ -263,7 +263,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-033 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: comparar cobertura positiva/negativa apos consolidacao. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-033 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: comparar cobertura positiva/negativa apos consolidacao. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls; negativo=entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case; regressão=entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-033, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "e8844ae4615f9c22a69e7d23befbd19be56bba7ecc608c928741b3f4806d830c": {
       "disposition": "pending",
@@ -271,7 +271,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-034 no candidato material: fonte entregar-issue/references/github-actions-evidence.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_review_is_factual_collection_success_not_certification. Pendente: nao confundir contagem verde com qualidade de teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-034 no candidato material: fonte entregar-issue/references/github-actions-evidence.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_review_is_factual_collection_success_not_certification. Pendente: nao confundir contagem verde com qualidade de teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_produce_actions_handoff_evidence::test_stages_reviewed_light_bundle_without_declaring_certificate; negativo=entregar-issue.tests.test_produce_actions_handoff_evidence::test_approved_review_cannot_stage_pending_obligations; regressão=entregar-issue.tests.test_produce_actions_handoff_evidence::test_missing_review_is_factual_collection_success_not_certification. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-034, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "bc119020f5df627d95c8f940b0d84dadbc9033e09542c481465b581dc0daeb7b": {
       "disposition": "pending",
@@ -279,7 +279,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-035 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_unparseable_pytest_discovery_is_unknown. Pendente: exigir escopo nao verificado quando descoberta falha. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-035 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_unparseable_pytest_discovery_is_unknown. Pendente: exigir escopo nao verificado quando descoberta falha. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate; negativo=entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown; regressão=entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-035, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "b10f92e6414f30296040b038b0510c9be0710b92a4c9e3fe02ac04429b7ca1f9": {
       "disposition": "pending",
@@ -287,7 +287,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-036 no candidato material: fonte revisar-issue/references/specification-standard.md; limite de controle: nao ha output de revisao de issue com teste de reuso localizado. Pendente: executar caso de revisao e confirmar orientacao ou UNKNOWN. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-036 no candidato material: fonte revisar-issue/references/specification-standard.md; limite de controle: nao ha output de revisao de issue com teste de reuso localizado. Pendente: executar caso de revisao e confirmar orientacao ou UNKNOWN. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCONTROLE SEMÂNTICO A EXECUTAR: revisão real de uma issue por revisar-issue deve produzir decisão de reaproveitamento por teste existente, ou UNKNOWN com justificativa. Não foi localizado artefato de revisão autenticado no SHA material; testes de contrato de documentação não constituem oráculo desta saída. Sem vínculo POS/NEG/REG até obter execução real."
     },
     "cb4bb57003804cadaaff66870950c69236fa20e0497ac483d495e6638716c8dd": {
       "disposition": "pending",
@@ -295,7 +295,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-037 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_added_test_cannot_claim_covered_by_existing_without_any_candidate; test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: refutar equivalencia efetiva; classificacao de oraculos exige auditor. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-037 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_added_test_cannot_claim_covered_by_existing_without_any_candidate; test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: refutar equivalencia efetiva; classificacao de oraculos exige auditor. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-037, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "17c02744d4fc9b47386849ac09acc25ce74bcc4431a051eb21ec5e27595ad8bb": {
       "disposition": "pending",
@@ -303,7 +303,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-038 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: confirmar diffs apenas de testes com gate ativo. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-038 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: confirmar diffs apenas de testes com gate ativo. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-038, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "50745b9d5815f8d21fca2f1178f06ccc01d8b8c695ba575ad792fe3b34e12a61": {
       "disposition": "pending",
@@ -311,7 +311,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-039 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: confirmar teste distinto por risco independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-039 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: confirmar teste distinto por risco independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-039, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "658bd6a65d14bffaef0a197ce87452d066f6e1e0de0fa82bfc6d6958e38fb468": {
       "disposition": "pending",
@@ -319,7 +319,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-040 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nenhum review independente APPROVED no HEAD final foi apresentado. Pendente: executar leitura e prova adversarial independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-040 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nenhum review independente APPROVED no HEAD final foi apresentado. Pendente: executar leitura e prova adversarial independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-040 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente."
     },
     "959c6dc1837804d9a35b750f457f548c0b0ef0fc634f8787c6ef05a784937452": {
       "disposition": "pending",
@@ -327,7 +327,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-041 no candidato material: fonte higienizar-repositorio/references/test-lifecycle-hygiene.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_work_item_generator_describes_open_debt. Pendente: rever report diagnostico sob demanda do corpus real. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-041 no candidato material: fonte higienizar-repositorio/references/test-lifecycle-hygiene.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_work_item_generator_describes_open_debt. Pendente: rever report diagnostico sob demanda do corpus real. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review; negativo=higienizar-repositorio.tests.test_hygiene_profile::test_dead_module_test_exclusion_follows_policy; regressão=higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-041, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "a11aa405f25f61c2b96c72127ba1e5de51827e388eff3953415bea6b6497e8fa": {
       "disposition": "pending",
@@ -335,7 +335,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-042 no candidato material: fonte corrigir-ci/SKILL.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_ci_remediation_mode_returns_to_existing_controller. Pendente: demonstrar que falha CI nao remove testes. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-042 no candidato material: fonte corrigir-ci/SKILL.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_ci_remediation_mode_returns_to_existing_controller. Pendente: demonstrar que falha CI nao remove testes. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=corrigir-ci.tests.test_ci_ownership_contract::test_ci_remediation_mode_returns_to_existing_controller; negativo=corrigir-ci.tests.test_ci_terminal_state_guard::test_rejects_stale_certificate_after_later_material_ci_fix; regressão=entregar-issue.tests.test_ci_autopilot_contract::test_ci_fix_returns_to_refreeze_before_final_handoff. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-042, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "d41ec970d8b472ea56b05f3718b80a2b703b336099aaa07dbb3bedcbbbc51210": {
       "disposition": "pending",
@@ -343,7 +343,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-043 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_dynamic_runner_unavailable_is_unknown_not_ready; test_configured_pytest_filename_is_a_test[pytest.ini-[pytest]\\\\npython_files = smoke.py\\\\n]. Pendente: demonstrar runner dinamico e parametrizacao sem falso duplicado. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-043 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_dynamic_runner_unavailable_is_unknown_not_ready; test_configured_pytest_filename_is_a_test[pytest.ini-[pytest]\\\\npython_files = smoke.py\\\\n]. Pendente: demonstrar runner dinamico e parametrizacao sem falso duplicado. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate; negativo=entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown; regressão=entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-043, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "3d46fc17c90890cece6ad6f89c85fe89a5bad834fa69b8fe309bdebcf6bc7a82": {
       "disposition": "pending",
@@ -351,7 +351,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-044 no candidato material: fonte .github/workflows/handoff-evidence.yml; auditar-issue/SKILL.md; limite de controle: teste tecnico nao substitui certificado semantico. Pendente: bloqueio terminal ate certificacao e auditoria independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-044 no candidato material: fonte .github/workflows/handoff-evidence.yml; auditar-issue/SKILL.md; limite de controle: teste tecnico nao substitui certificado semantico. Pendente: bloqueio terminal ate certificacao e auditoria independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-044 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente."
     },
     "aa96d6edb9c7c6fac6f99d7f7d8f1ab4d28ecb04157d10412d426bf1486f4bc9": {
       "disposition": "pending",
@@ -359,7 +359,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-045 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: revalidar contrato legado antes de remover teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-045 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: revalidar contrato legado antes de remover teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls; negativo=entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case; regressão=entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-045, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "019f114602ab8f2bedca873a037526f2d643794d84d2ba9731404ba0fb0be76d": {
       "disposition": "pending",
@@ -367,7 +367,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-046 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: manter casos com oraculos diferentes apesar de titulos similares. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-046 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: manter casos com oraculos diferentes apesar de titulos similares. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-046, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "d2ce945d4ee067e76c27e18fca669291bf5ed1e4fa61d8c68409cb2af1f8d7be": {
       "disposition": "pending",
@@ -375,7 +375,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-047 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_renamed_test_requires_source_at_base; test_test_only_cypress_outside_conventional_folder_triggers_gate. Pendente: inspecionar added/modified/renamed/deleted e config do runner. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-047 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_renamed_test_requires_source_at_base; test_test_only_cypress_outside_conventional_folder_triggers_gate. Pendente: inspecionar added/modified/renamed/deleted e config do runner. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate; negativo=entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown; regressão=entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-047, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "28377bf39dfb6bc7f9481cb9b0e59292be08e5d0f99df327a5c9670d58bd5532": {
       "disposition": "pending",
@@ -383,7 +383,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-048 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; auditar-issue/references/codebase-grounding-audit.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_unverified_reference_is_schema_violation. Pendente: verificar que o validador apenas valida fatos formais. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-048 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; auditar-issue/references/codebase-grounding-audit.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_unverified_reference_is_schema_violation. Pendente: verificar que o validador apenas valida fatos formais. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-048, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "9d22964ea3a8da0baeb8c05c62c09534c5f9117571948af4b4809d83edf1abe9": {
       "disposition": "pending",
@@ -391,7 +391,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-049 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_legacy_v1_is_explicitly_rejected_for_test_diff; test_historical_v2_plan_schema_and_runtime_compatible. Pendente: comprovar migração com artefatos historicos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-049 no candidato material: fonte entregar-issue/schemas/codebase-grounding.schema.json; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_legacy_v1_is_explicitly_rejected_for_test_diff; test_historical_v2_plan_schema_and_runtime_compatible. Pendente: comprovar migração com artefatos historicos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_deterministic_planning::test_historical_v2_plan_schema_and_runtime_compatible; negativo=entregar-issue.tests.test_codebase_grounding::test_legacy_v1_is_explicitly_rejected_for_test_diff; regressão=entregar-issue.tests.test_codebase_grounding::test_stale_subject_sha_blocks. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-049, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "9533a8e5b134a08a0dcc1df5910fd2cf36030c04f58b0240880d3f1ea3446feb": {
       "disposition": "pending",
@@ -399,7 +399,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-050 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls; test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: revisar matriz de positivos/negativos e regressao. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-050 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls; test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: revisar matriz de positivos/negativos e regressao. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls; negativo=entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case; regressão=entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-050, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "fe3aac63378b0a4a3c9b97e6ad4aacee79e77e758e0669f101bffa088e93837f": {
       "disposition": "pending",
@@ -407,7 +407,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-051 no candidato material: fonte revisar-issue/references/specification-standard.md; entregar-issue/references/codebase-grounding-gate.md; auditar-issue/references/codebase-grounding-audit.md; higienizar-repositorio/references/test-lifecycle-hygiene.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_gate_is_registered_and_loaded_progressively. Pendente: validar corpus de documentacao e versao do catalogo. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-051 no candidato material: fonte revisar-issue/references/specification-standard.md; entregar-issue/references/codebase-grounding-gate.md; auditar-issue/references/codebase-grounding-audit.md; higienizar-repositorio/references/test-lifecycle-hygiene.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_gate_is_registered_and_loaded_progressively. Pendente: validar corpus de documentacao e versao do catalogo. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-051, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     },
     "342cc6d1231a1d95456f7a3f74513eedb934e8c7939be5e2c8a6f9eaa947c91d": {
       "disposition": "pending",
@@ -415,7 +415,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-052 no candidato material: fonte entregar-issue/references/implementation-workflow.md; higienizar-repositorio/references/test-lifecycle-hygiene.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls; test_non_test_package_metadata_change_does_not_require_test_decision. Pendente: provar ausencia de varredura global e preservacao de testes legitimos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente."
+      "rationale": "Revisao individual OBL-052 no candidato material: fonte entregar-issue/references/implementation-workflow.md; higienizar-repositorio/references/test-lifecycle-hygiene.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls; test_non_test_package_metadata_change_does_not_require_test_decision. Pendente: provar ausencia de varredura global e preservacao de testes legitimos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS EXACT-JUNIT (NÃO CERTIFICADOS, RUN 40020454336, MATERIAL SHA 9c4a917e776ec9473a3b8bc5cfcc30a949c32534): positivo=higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review; negativo=higienizar-repositorio.tests.test_hygiene_profile::test_dead_module_test_exclusion_follows_policy; regressão=higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-052, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
     }
   },
   "controls": {
