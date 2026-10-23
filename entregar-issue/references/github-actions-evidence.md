@@ -85,3 +85,48 @@ convocar `auditar-issue` apenas pelo status verde do coletor.
   permanece `BLOCK/UNKNOWN`. Nunca introduzir credenciais de escrita no job PR.
 - O certificado e um hash das provas, nao uma avaliacao independente.
 - Nao registrar secrets, credenciais ou logs com dados sensiveis no artifact.
+
+## Reuso em repositorios consumidores
+
+O workflow `reusable-handoff.yml` e acionado com `workflow_call`; cada projeto
+mantem apenas um caller, referenciando uma revisao aprovada do repositorio
+oficial `skill`. A revisao do codigo dos validadores e vinculada ao
+`job.workflow_sha`, enquanto o alvo auditado e o checkout do SHA da PR
+do repositorio consumidor.
+
+Exemplo Python:
+
+```yaml
+name: Certified handoff
+on:
+  pull_request:
+    branches: [develop]
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+jobs:
+  handoff:
+    uses: crgasparoto-br/skill/.github/workflows/reusable-handoff.yml@<SHA_APROVADO>
+    with:
+      base-ref: develop
+      install-command: "python -m pip install -r requirements.txt"
+      test-command: 'python -m pytest -vv --junitxml="$EVIDENCE_DIR/pytest-exact-head.xml"'
+```
+
+Projetos Node/React podem configurar `install-command: npm ci` e executar
+seus testes com um reporter JUnit apontando para
+`$EVIDENCE_DIR/pytest-exact-head.xml`. O arquivo e contrato de resultado,
+nao dependencia de pytest. O indice `test-candidate-index.json` contem
+nomes, status e hash do JUnit, mas `requirement_mapping=UNKNOWN` ate
+que controles discriminantes comprovem a cobertura de cada requisito.
+
+`base-ref` e parametrizavel, com `develop` padrao na SolverIT. Nao
+conceder tokens de escrita ao job do PR. O publicador atual e especifico
+do repositorio `skill`: outro consumidor precisa configurar um processo
+separado, de fonte confiavel, com seus checks obrigatorios e autorizacao
+de release; nunca copiar uma credencial privilegiada para o workflow de PR.
+
+O indice de testes acelera o levantamento mas nao fecha requisitos.
+`entregar-issue` deve conferir requisitos com provas positivas e negativas
+autenticas. Na ausencia delas, registrar `UNKNOWN/BLOCK`, nunca `passed`.

@@ -26,7 +26,7 @@ def fail(message: str) -> None:
     raise ValueError(message)
 
 
-def read_event(path: Path) -> tuple[str, int, int, str, str]:
+def read_event(path: Path, base_ref: str = "develop") -> tuple[str, int, int, str, str]:
     event = json.loads(path.read_text(encoding="utf-8"))
     pr = event.get("pull_request") or {}
     repo = (event.get("repository") or {}).get("full_name")
@@ -37,8 +37,8 @@ def read_event(path: Path) -> tuple[str, int, int, str, str]:
         fail("missing or invalid repository identity")
     if not isinstance(number, int) or number <= 0 or not SHA.fullmatch(str(head)) or not SHA.fullmatch(str(base)):
         fail("missing PR number or exact SHA identities")
-    if (pr.get("base") or {}).get("ref") != "develop":
-        fail("this collection requires develop as the PR base")
+    if (pr.get("base") or {}).get("ref") != base_ref:
+        fail("pull_request base ref does not match the configured base branch")
     if (pr.get("head") or {}).get("repo", {}).get("full_name") != repo:
         fail("forked PR head requires a separate, read-only evidence policy")
     title = pr.get("title") or ""
@@ -88,7 +88,7 @@ def write_json(path: Path, value: dict) -> None:
 
 
 def prepare(args: argparse.Namespace) -> None:
-    repo, pr, issue, head, base = read_event(args.event)
+    repo, pr, issue, head, base = read_event(args.event, args.base_ref)
     check_checkout(args.root, head)
     body = issue_body(repo, issue, os.environ.get("GITHUB_TOKEN", ""))
     out = args.out.resolve()
@@ -111,6 +111,7 @@ def prepare(args: argparse.Namespace) -> None:
         "unverified": ["requirement-closure", "test-decision-evidence", "codebase-grounding",
                        "code-growth", "risk-profile-evidence", "audit-remediation-lineage",
                        "handoff-certificate", "terminal-handoff"],
+        "base_ref": args.base_ref,
         "runner": "github-hosted-actions", "generated_at": datetime.now(UTC).isoformat(),
     }
     write_json(out / "handoff-preflight.json", metadata)
@@ -125,11 +126,11 @@ def record_tests(args: argparse.Namespace) -> None:
     log = out / "pytest-exact-head.log"
     if not log.is_file() or not log.stat().st_size:
         fail("missing test log; cannot attest execution")
-    if args.exit_code is None or args.exit_code < 0:
-        fail("missing exact exit code from the test runner")
+    if args.exit_code is None or args.exit_code < 0 or not args.test_command.strip():
+        fail("missing exact exit code or command from the test runner")
     facts = {
         "schema_version": 1, "subject_sha": head,
-        "execution": {"command": "python -m pytest -vv --junitxml=<output>/pytest-exact-head.xml",
+        "execution": {"command": args.test_command,
                       "exit_code": args.exit_code,
                       "log_sha256": hashlib.sha256(log.read_bytes()).hexdigest(),
                       "log_path": log.name},
@@ -204,7 +205,7 @@ def _read_certification_inputs(out: Path, args: argparse.Namespace, head: str):
         fail("verified audit history is required; absence must remain UNKNOWN")
     if not isinstance(inputs.get("head_ref"), str) or not inputs["head_ref"].strip():
         fail("missing head_ref binding")
-    if inputs.get("base_ref") != "develop":
+    if inputs.get("base_ref") != args.base_ref:
         fail("base_ref mismatch")
 
     gitcheck = subprocess.run(["git", "merge-base", "--is-ancestor", start, head], cwd=args.root,
@@ -260,7 +261,7 @@ def certify(args: argparse.Namespace) -> None:
     """Certify only authenticated, complete evidence; NEVER perform a repository write."""
     if args.event is None:
         fail("certify phase requires --event")
-    repo, pr, issue, head, base = read_event(args.event)
+    repo, pr, issue, head, base = read_event(args.event, args.base_ref)
     check_checkout(args.root, head)
     out = args.out.resolve()
     audit = out / ".audit" / "entregar-issue"
@@ -281,7 +282,7 @@ def certify(args: argparse.Namespace) -> None:
         "--specification-snapshot", str(resolved["specification_snapshot"]),
         "--repository", repo, "--issue-number", str(issue), "--work-item-kind", "pr",
         "--work-item-number", str(pr), "--pull-request-number", str(pr),
-        "--work-item-start-sha", start, "--base-ref", "develop",
+        "--work-item-start-sha", start, "--base-ref", args.base_ref,
         "--head-ref", inputs["head_ref"],
         "--requirement-closure", str(resolved["requirement_closure"]),
         "--evidence-profile", profile, "--head-sha", head, "--base-sha", base,
@@ -345,7 +346,7 @@ def certify(args: argparse.Namespace) -> None:
                    "--work-item-kind", "pr", "--work-item-number", str(pr),
                    "--pull-request-number", str(pr),
                    "--work-item-start-sha", start,
-                   "--base-ref", "develop", "--head-ref", inputs["head_ref"],
+                   "--base-ref", args.base_ref, "--head-ref", inputs["head_ref"],
                    *(arg for path in changed for arg in ("--issue-changed-path", path)),
                    "--source-repository-root", str(args.root.resolve()))
     except subprocess.CalledProcessError:
@@ -362,6 +363,8 @@ def main() -> int:
     p.add_argument("--root", type=Path, default=Path())
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--exit-code", type=int)
+    p.add_argument("--base-ref", default="develop")
+    p.add_argument("--test-command", default="python -m pytest -vv --junitxml=pytest-exact-head.xml")
     a = p.parse_args()
     try:
         if a.phase == "prepare":

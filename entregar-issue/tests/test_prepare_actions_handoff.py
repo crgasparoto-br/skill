@@ -72,7 +72,7 @@ def test_prepare_preserves_pending_and_never_builds_certificate(tmp_path, monkey
 
     monkeypatch.setattr(mod, "run_script", fake_script)
     out = tmp_path / "out"
-    mod.prepare(SimpleNamespace(event=ev, root=tmp_path, out=out))
+    mod.prepare(SimpleNamespace(event=ev, root=tmp_path, out=out, base_ref="develop"))
     status = json.loads((out / "handoff-preflight.json").read_text())
     closure = json.loads((out / ".audit/entregar-issue/requirement-closure.json").read_text())
     assert status["status"] == "blocked"
@@ -88,14 +88,14 @@ def test_test_execution_records_real_digest_but_not_semantic_approval(tmp_path, 
     out.mkdir()
     (out / "handoff-preflight.json").write_text(json.dumps({"identity": {"material_head_sha": HEAD}}))
     (out / "pytest-exact-head.log").write_text("1 passed\n")
-    mod.record_tests(SimpleNamespace(out=out, root=tmp_path, exit_code=0))
+    mod.record_tests(SimpleNamespace(out=out, root=tmp_path, exit_code=0, test_command="python -m pytest"))
     facts = json.loads((out / "test-execution-facts.json").read_text())
     assert facts["subject_sha"] == HEAD
     assert facts["verification"] == "passed"
     assert facts["semantic_control_mapping"] == "UNKNOWN"
     assert len(facts["execution"]["log_sha256"]) == 64
     with pytest.raises(ValueError, match="missing exact exit"):
-        mod.record_tests(SimpleNamespace(out=out, root=tmp_path, exit_code=-1))
+        mod.record_tests(SimpleNamespace(out=out, root=tmp_path, exit_code=-1, test_command="python -m pytest"))
 
 def _certification_fixture(tmp_path, monkeypatch):
     import hashlib
@@ -117,7 +117,7 @@ def _certification_fixture(tmp_path, monkeypatch):
         "subject_sha": HEAD,
         "execution": {"exit_code": 0, "log_sha256": hashlib.sha256(log.read_bytes()).hexdigest()},
     }))
-    args = SimpleNamespace(event=ev, out=out, root=tmp_path)
+    args = SimpleNamespace(event=ev, out=out, root=tmp_path, base_ref="develop")
     return args, audit
 
 
@@ -179,10 +179,18 @@ def test_certification_requires_real_closure_and_calls_official_gates(tmp_path, 
     assert [row[0] for row in calls] == [
         "validate_codebase_grounding.py", "check_code_growth.py",
         "build_handoff_certificate.py", "validate_handoff_certificate.py"]
-    assert "--codebase-grounding" in calls[0][1]
-    assert "--code-growth" in calls[0][1]
-    assert "--issue-changed-path" in calls[0][1]
+    assert "--codebase-grounding" in calls[2][1]
+    assert "--code-growth" in calls[2][1]
+    assert "--issue-changed-path" in calls[2][1]
     result = json.loads((args.out / "handoff-certification-status.json").read_text())
     assert result["status"] == "certificate-generated"
     assert result["terminal_ready"] is False
     assert result["certificate_published"] is False
+
+def test_allows_explicit_non_develop_branch_without_weakening_default(tmp_path):
+    ev = event(base="integration")
+    path = tmp_path / "event.json"
+    path.write_text(json.dumps(ev))
+    with pytest.raises(ValueError, match="base ref"):
+        mod.read_event(path)
+    assert mod.read_event(path, "integration") == ("team/skill", 113, 112, HEAD, BASE)
