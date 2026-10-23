@@ -262,6 +262,11 @@ def check_test_decisions(
             for candidate in item["search"]["candidates"]:
                 if read_at(repo, head, candidate["path"]) is None and read_at(repo, base, candidate["path"]) is None:
                     errors.append(f"GROUND-TEST-001: candidate absent in both revisions: {candidate['path']}")
+            if item["decision"] == "covered-by-existing":
+                if not item["search"]["candidates"]:
+                    errors.append(f"GROUND-TEST-001: covered-by-existing lacks an identified existing test: {path}")
+                if operation == "added":
+                    errors.append(f"GROUND-TEST-001: added test cannot be classified covered-by-existing: {path}")
             check = item["verification"]
             if check["status"] == "passed" and (not check.get("command") or check.get("exit_code") != 0):
                 errors.append(f"GROUND-TEST-001: passed check lacks command/exit_code=0: {path}")
