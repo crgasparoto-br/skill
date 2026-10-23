@@ -98,21 +98,24 @@ def fixture(tmp_path: Path, *, dossier=True, skipped=False):
         "material_head_sha": head, "base_sha": start,
     }})
     log = b"3 passed\n"
-    junit = b"<testsuite><testcase classname='suite' name='positive'/></testsuite>"
+    junit = (b"<testsuite><testcase classname='suite' name='positive'>"
+             + (b"<skipped/>" if skipped else b"")
+             + b"</testcase><testcase classname='suite' name='negative'/>"
+             + b"<testcase classname='suite' name='regression'/></testsuite>")
     (out / "pytest-exact-head.log").write_bytes(log)
     (out / "pytest-exact-head.xml").write_bytes(junit)
     put(out / "test-execution-facts.json", {
         "subject_sha": head, "execution": {"exit_code": 0,
                                           "log_sha256": hashlib.sha256(log).hexdigest()},
     })
-    put(out / "test-candidate-index.json", {
-        "subject_sha": head,
-        "source": {"sha256": hashlib.sha256(junit).hexdigest()},
-        "tests": [{"id": "suite::positive", "status": "skipped" if skipped else "passed"},
-                  {"id": "suite::negative", "status": "passed"},
-                  {"id": "suite::regression", "status": "passed"}],
-        "requirement_mapping": "UNKNOWN",
-    })
+    index_spec = importlib.util.spec_from_file_location(
+        "build_test_candidate_index", SCRIPTS / "build_test_candidate_index.py"
+    )
+    assert index_spec and index_spec.loader
+    indexer = importlib.util.module_from_spec(index_spec)
+    index_spec.loader.exec_module(indexer)
+    put(out / "test-candidate-index.json",
+        indexer.collect(out / "pytest-exact-head.xml", head))
     return root, out, ev, source, head
 
 
@@ -170,6 +173,17 @@ def test_tampered_runner_provenance_is_rejected(tmp_path, monkeypatch):
     root, out, event, _, _ = fixture(tmp_path)
     (out / "pytest-exact-head.log").write_bytes(b"fake passing text")
     with pytest.raises(ValueError, match="attestation failed"):
+        producer.produce(root, out, event, "develop")
+
+
+def test_forged_candidate_index_is_rejected(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(SCRIPTS))
+    root, out, event, _, _ = fixture(tmp_path)
+    index_file = out / "test-candidate-index.json"
+    index = json.loads(index_file.read_text())
+    index["tests"][0]["status"] = "passed" if index["tests"][0]["status"] != "passed" else "skipped"
+    put(index_file, index)
+    with pytest.raises(ValueError, match="differs from exact-head JUnit"):
         producer.produce(root, out, event, "develop")
 
 
