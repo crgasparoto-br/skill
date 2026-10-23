@@ -118,8 +118,10 @@ def test_apply_refuses_stale_ruleset_before_any_write(monkeypatch):
 
     def fake_gh(endpoint, method="GET", payload=None):
         if "check-runs" in endpoint:
-            return {"total_count": 1, "check_runs": [
+            return {"total_count": 2, "check_runs": [
                 {"name": CHECK, "conclusion": "failure", "app": {"id": 15368}},
+                {"name": "Verify independent audit (exact SHA)",
+                 "conclusion": "failure", "app": {"id": 15368}},
             ]}
         if method == "PUT":
             writes.append(payload)
@@ -131,7 +133,8 @@ def test_apply_refuses_stale_ruleset_before_any_write(monkeypatch):
     monkeypatch.setattr(sys, "argv", [
         "configurar_ruleset", "--repo", REPO, "--branch", "develop",
         "--ruleset-id", "24821474", "--sample-sha", "a" * 40,
-        "--check", CHECK, "--apply",
+        "--check", CHECK, "--check", "Verify independent audit (exact SHA)",
+        "--apply",
     ])
     with pytest.raises(ValueError, match="ruleset changed after preview"):
         admin.main()
@@ -146,3 +149,53 @@ def test_readback_rejects_bypass_drift():
                     bypass_actors=[{"actor_id": 1, "bypass_mode": "always"}])
     with pytest.raises(ValueError, match="bypass_actors"):
         admin.verify(before, observed, planned)
+
+
+def test_existing_required_checks_remain_mandatory():
+    current = ruleset()
+    current["rules"][-1]["parameters"]["required_status_checks"] = [
+        {"context": "Legacy integration gate", "integration_id": 5678},
+    ]
+    planned = admin.plan(current, "develop", 24821474, [CHECK], 15368)
+    assert planned["rules"][-1]["parameters"]["required_status_checks"] == [
+        {"context": "Legacy integration gate", "integration_id": 5678},
+        {"context": CHECK, "integration_id": 15368},
+    ]
+    assert current["rules"][-1]["parameters"]["required_status_checks"] == [
+        {"context": "Legacy integration gate", "integration_id": 5678},
+    ]
+    with pytest.raises(ValueError, match="origin differs"):
+        admin.plan(current, "develop", 24821474, ["Legacy integration gate"], 15368)
+
+
+def test_admin_apply_requires_independent_review_check(monkeypatch):
+    monkeypatch.setattr(admin, "gh", lambda *args, **kwargs: pytest.fail("unexpected GitHub access"))
+    monkeypatch.setattr(sys, "argv", [
+        "configurar_ruleset", "--repo", REPO, "--branch", "develop",
+        "--ruleset-id", "24821474", "--sample-sha", "a" * 40,
+        "--check", CHECK, "--apply",
+    ])
+    with pytest.raises(SystemExit, match="2"):
+        admin.main()
+
+
+def test_admin_dry_run_cannot_drop_existing_check(monkeypatch):
+    current = ruleset()
+    current["rules"][-1]["parameters"]["required_status_checks"] = [
+        {"context": "Pre-existing", "integration_id": 4321},
+    ]
+    def fake_gh(endpoint, method="GET", payload=None):
+        if "check-runs" in endpoint:
+            return {"total_count": 1, "check_runs": [
+                {"name": CHECK, "app": {"id": 15368}, "conclusion": "failure"},
+            ]}
+        assert method == "GET"
+        return current
+    monkeypatch.setattr(admin, "gh", fake_gh)
+    monkeypatch.setattr(sys, "argv", [
+        "configurar_ruleset", "--repo", REPO, "--branch", "develop",
+        "--ruleset-id", "24821474", "--sample-sha", "a" * 40,
+        "--check", CHECK,
+    ])
+    admin.main()
+    assert current["rules"][-1]["parameters"]["required_status_checks"][0]["context"] == "Pre-existing"

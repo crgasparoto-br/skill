@@ -114,3 +114,46 @@ com a mesma autenticação e repetir o read-back.
 ## Critério de encerramento
 
 A issue #66 estabelece **somente o padrão compartilhado**. Cada issue consumidora permanece responsável por provar implantação local, testes negativos, inventário real de checks, proteção equivalente e caminho de rollback. Não declarar os três produtos migrados sem evidências independentes nas respectivas PRs.
+
+
+## Gate de auditoria independente GitHub-native
+
+O workflow `.github/workflows/independent-audit-gate.yml` introduz o contexto
+`Verify independent audit (exact SHA)` para PRs destinadas a `develop` e `main`.
+Ele executa a política da **base confiável**, sem checkout de código da PR e sem
+token de escrita. Não realiza a auditoria: verifica um review GitHub `APPROVED`
+de revisor distinto de todos os contribuidores do diff e um contrato explícito.
+
+O review independente precisa trazer uma linha própria:
+
+```text
+SOLVERIT_AUDIT_JSON:{"schema":"solverit-audit-v1","audit_round":"<rodada>","head_sha":"<SHA>","finding_ids":["<finding>"],"verified_finding_ids":["<finding>"],"accepted_exclusions":[]}
+```
+
+Os achados declarados precisam estar todos verificados ou explicitamente excluídos
+pelo auditor independente. A completude da lista contra o manifesto verdadeiro
+exige inspeção do auditor, não é demonstrada por um JSON produzido pelo executor.
+O gate reprova review revogado, SHA ultrapassado, autor/committer como revisor,
+bot, coleção incompleta, check com aplicativo errado e controles técnicos falhos.
+
+Em `develop`, exige `Structure and tests`, `Offline authorization tests` e
+`collect / Require certified semantic handoff (exact SHA)` no HEAD real.
+Em `main`, exige os dois checks técnicos e review independente específico
+da PR de promoção. O evento `pull_request_review` reexecuta o gate após o
+auditor aprovar, **depois** da CI técnica ficar verde. Novo commit invalida a
+aprovação anterior.
+
+### Ativação administrativa sem janela desprotegida
+
+Publicar o workflow na base confiável e observar o nome de check emitido pelo
+GitHub Actions **antes** de registrá-lo no ruleset. Um workflow só presente
+na PR candidata ainda não cria um emissor confiável em `develop`/`main`.
+Depois de verificar a emissão, usar `scripts/configurar_ruleset.py` com
+`--apply` somente sob uma autenticação que tenha `Administration:write`,
+preservando todos os contexts já requeridos. IDs inventariados:
+`24821474` (`develop`) e `24821457` (`main`). Não afirmar ativação apenas
+pela existência de script, commit ou check verde.
+
+Obrigatório validar uma PR negativa (auditoria ausente ou CI falha => merge
+bloqueado) e uma positiva (aprovação independente e checks verdes => permitido).
+Registrar read-back de ambos os rulesets e seus bypasses, e rollback.

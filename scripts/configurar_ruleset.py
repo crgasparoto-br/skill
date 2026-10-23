@@ -61,9 +61,24 @@ def plan(current: dict, branch: str, ruleset_id: int,
     params = checks[0]["parameters"]
     if params.get("strict_required_status_checks_policy") is not True:
         raise ValueError("existing strict required checks must remain enabled")
-    params["required_status_checks"] = [
-        {"context": name, "integration_id": app_id} for name in names
-    ]
+    # Never drop a status context which was already mandatory. Rollout only adds
+    # checks; removal/replacement requires a separate explicitly audited migration.
+    existing = params.get("required_status_checks")
+    if not isinstance(existing, list):
+        raise ValueError("current required check inventory unavailable")
+    contexts = {}
+    for item in existing:
+        if not isinstance(item, dict) or not item.get("context"):
+            raise ValueError("malformed existing required status check")
+        if item["context"] in contexts:
+            raise ValueError("duplicate existing required status check")
+        contexts[item["context"]] = item
+    for name in names:
+        old = contexts.get(name)
+        if old is not None and old.get("integration_id") != app_id:
+            raise ValueError(f"existing check origin differs: {name}")
+        if old is None:
+            existing.append({"context": name, "integration_id": app_id})
     return {
         "name": current["name"], "target": current["target"],
         "enforcement": current["enforcement"], "conditions": copy.deepcopy(conditions),
@@ -100,6 +115,12 @@ def main() -> None:
     ):
         parser.error("main needs a real independent audit/release check; technical CI is insufficient")
 
+    if args.apply and (
+        "Verify independent audit (exact SHA)" not in args.check
+        or (args.branch == "develop" and
+            "collect / Require certified semantic handoff (exact SHA)" not in args.check)
+    ):
+        parser.error("--apply requires independent audit gate (and certified handoff on develop)")
     names = verified_checks(args.repo, args.sample_sha, args.check, args.app_id)
     endpoint = f"/repos/{args.repo}/rulesets/{args.ruleset_id}"
     current = gh(endpoint)
