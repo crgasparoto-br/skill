@@ -152,7 +152,7 @@ def line_context(line, previous_indent, previous_quote_depth):
     return candidate, quote_depth, list_indent, in_list
 
 
-def raw_html_line(candidate, state, quote_depth, in_list, list_indent):
+def raw_html_line(candidate, state, quote_depth, in_list, list_indent, paragraph_open):
     """Track CommonMark raw HTML without treating inner headings as records."""
     tag, old_quote, old_list = state
     if tag and (quote_depth != old_quote or (old_list and not in_list and candidate.strip())):
@@ -172,7 +172,10 @@ def raw_html_line(candidate, state, quote_depth, in_list, list_indent):
         if re.search(rf"</{tag}\s*>", candidate, re.IGNORECASE):
             return True, (None, 0, 0)
         return True, (tag, quote_depth, list_indent if in_list else 0)
-    if HTML_BLOCK_OPEN.match(candidate) or HTML_BLOCK_GENERIC.match(candidate):
+    # CommonMark type 6 interrupts paragraphs, while type 7 cannot.
+    if HTML_BLOCK_OPEN.match(candidate) or (
+        not paragraph_open and HTML_BLOCK_GENERIC.match(candidate)
+    ):
         return True, ("html-block", quote_depth, list_indent if in_list else 0)
     return False, (None, 0, 0)
 
@@ -219,10 +222,19 @@ def visible_lines(lines):
     raw_state = (None, 0, 0)
     preceding_blank = False
     indented_list_code = False
+    paragraph_open = False
     for line in lines:
+        old_list_indent = list_indent
+        old_quote_depth = previous_quote_depth
         candidate, quote_depth, current_indent, in_list = line_context(
             line, list_indent, previous_quote_depth,
         )
+        if (
+            not candidate.strip()
+            or quote_depth != old_quote_depth
+            or (old_list_indent and not in_list)
+        ):
+            paragraph_open = False
         list_code, preceding_blank, indented_list_code = list_code_state(
             line, in_list, current_indent, preceding_blank, indented_list_code,
         )
@@ -238,11 +250,20 @@ def visible_lines(lines):
         if list_code or skip_comment:
             continue
         if fence is None:
-            inert, raw_state = raw_html_line(candidate, raw_state, quote_depth, in_list, current_indent)
+            inert, raw_state = raw_html_line(
+                candidate, raw_state, quote_depth, in_list, current_indent, paragraph_open,
+            )
             if inert:
+                paragraph_open = False
                 continue
+        # Root/quote lines indented by four spaces are code, not findings.
+        # List-contained code is handled separately by list_code_state.
+        if not in_list and len(candidate) - len(candidate.lstrip(" ")) >= 4:
+            paragraph_open = False
+            continue
         marker = FENCE_MARKER.match(candidate)
         if marker:
+            paragraph_open = False
             mark, suffix = marker.groups()
             if fence is None:
                 if mark[0] == "~" or chr(96) not in suffix:
@@ -257,6 +278,7 @@ def visible_lines(lines):
             continue
         # CommonMark comments are inert even when they contain ATX-looking IDs.
         if re.match(r"^ {0,3}<!--", candidate):
+            paragraph_open = False
             if "-->" not in candidate:
                 html_comment = True
                 comment_quote = quote_depth
@@ -265,6 +287,7 @@ def visible_lines(lines):
         # Preserve the list container across blank lines. A heading continuing
         # a list is never a canonical evidence record, even if indented <= 3.
         output.append(normalize_list_record(line, candidate, in_list))
+        paragraph_open = bool(candidate.strip() and markdown_heading(candidate) is None)
     return output
 
 def markdown_heading(line):
