@@ -1,5 +1,19 @@
 # Coleta e certificacao de handoff no GitHub Actions
 
+## Quando ler este arquivo
+
+Consultar ao coletar, certificar ou publicar evidencias de PRs com GitHub Actions em qualquer repositorio consumidor, especialmente para adaptar ferramentas de teste ou branch base.
+
+## Índice
+
+- [Objetivo](#objetivo)
+- [Coleta autentica](#coleta-autentica)
+- [Certificacao fail-closed](#certificacao-fail-closed)
+- [Publicacao separada e autorizada](#publicacao-separada-e-autorizada)
+- [Seguranca](#seguranca)
+- [Reuso em repositorios consumidores](#reuso-em-repositorios-consumidores)
+- [Publicador reutilizavel para repositorios consumidores](#publicador-reutilizavel-para-repositorios-consumidores)
+
 ## Objetivo
 
 Usar runners hospedados `ubuntu-latest` para obter a especificacao original e fatos
