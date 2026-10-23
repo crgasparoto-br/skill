@@ -128,6 +128,10 @@ def collect_exact_tests(out: Path, head: str) -> tuple[dict, dict]:
 def load_reviewed_manifest(root: Path, source: Path, event: Path, target: dict) -> tuple[dict, str, list[str]]:
     if not source.is_dir() or source.is_symlink():
         raise ValueError(f"reviewed semantic evidence not supplied under {source.relative_to(root)}")
+    if not source.resolve().is_relative_to(root) or git(
+        root, "status", "--porcelain", "--", source.relative_to(root).as_posix()
+    ):
+        raise ValueError("reviewed evidence must match the clean material HEAD checkout")
     manifest = read_json(source / "manifest.json")
     if manifest.get("schema_version") != 1:
         raise ValueError("unsupported reviewed evidence manifest")
