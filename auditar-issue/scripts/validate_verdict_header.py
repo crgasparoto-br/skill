@@ -216,6 +216,16 @@ def paragraph_still_open(active, candidate, quote_depth, old_quote_depth, old_li
     )
 
 
+def container_ended(active, old_quote, old_list, quote_depth, in_list, candidate):
+    """Reset inert container state only when its Markdown container ends."""
+    return bool(
+        active and (
+            quote_depth != old_quote
+            or (old_list and not in_list and candidate.strip())
+        )
+    )
+
+
 def visible_lines(lines):
     """Ignore inert Markdown without letting a nested fence hide visible findings."""
     output = []
@@ -245,9 +255,11 @@ def visible_lines(lines):
         )
         # A quote/list fence closes when its container ends. A bare following
         # heading is then visible; it must not be swallowed as an example.
-        if fence and (quote_depth != fence_quote or (fence_list and not in_list and candidate.strip())):
+        if container_ended(fence, fence_quote, fence_list, quote_depth, in_list, candidate):
             fence = None
-        if html_comment and (quote_depth != comment_quote or (comment_list and not in_list and candidate.strip())):
+        if container_ended(
+            html_comment, comment_quote, comment_list, quote_depth, in_list, candidate,
+        ):
             html_comment = False
         list_indent = current_indent
         previous_quote_depth = quote_depth
