@@ -859,3 +859,63 @@ def test_indented_code_example_is_not_misclassified_as_evidence(code_example):
     assert module.validate(report("APROVADA", sections=(
         "## Exemplos inertes\n" + code_example
     ))) == []
+
+
+
+@pytest.mark.parametrize("identifier", ["A-901", "RISK-901", "LIM-901"])
+@pytest.mark.parametrize("tag", [
+    "<audit-example>",
+    '<audit-example data-mode="sample">',
+    "<audit-example />",
+    "</audit-example>",
+])
+def test_type7_html_cannot_interrupt_an_existing_paragraph(identifier, tag):
+    # CommonMark HTML block type 7 cannot interrupt a paragraph.
+    # The following H3 is a real heading and must be rejected.
+    sections = (
+        "## Exemplos\n"
+        "Paragrafo anterior permanece aberto\n"
+        + tag + "\n"
+        + f"### {identifier} — registro real fora da triagem\n"
+    )
+    errors = module.validate(report("APROVADA", sections=sections))
+    assert any(identifier in error for error in errors), (tag, identifier, errors)
+
+
+@pytest.mark.parametrize("tag", ["<audit-example>", "<audit-example />"])
+def test_type7_html_after_blank_line_remains_inert(tag):
+    sections = (
+        "## Exemplos\n"
+        "Paragrafo terminado\n\n"
+        + tag + "\n"
+        "### A-901 — exemplo dentro de HTML raw\n"
+    )
+    assert module.validate(report("APROVADA", sections=sections)) == []
+
+
+@pytest.mark.parametrize("tag", ["<div>", "<pre>"])
+def test_type1_and_type6_html_may_interrupt_paragraphs(tag):
+    sections = (
+        "## Exemplos\n"
+        "Texto de contexto antes do bloco\n"
+        + tag + "\n"
+        "### A-901 — exemplo dentro de HTML raw\n"
+    )
+    assert module.validate(report("APROVADA", sections=sections)) == []
+
+
+@pytest.mark.parametrize("identifier", ["A-901", "RISK-901", "LIM-901"])
+@pytest.mark.parametrize("indent", ["    ", "      ", ">     "])
+@pytest.mark.parametrize("lead", ["", "Paragrafo que nao declara um achado\n\n"])
+def test_indented_code_is_inert_even_when_identifier_starts_without_list_marker(
+    identifier, indent, lead,
+):
+    sections = "## Exemplos\n" + lead + indent + identifier + " — exemplo de codigo\n"
+    assert module.validate(report("APROVADA", sections=sections)) == []
+
+
+@pytest.mark.parametrize("identifier", ["A-901", "RISK-901", "LIM-901"])
+def test_three_space_plain_record_is_visible_and_still_rejected(identifier):
+    sections = "## Exemplos\n   " + identifier + " — registro real\n"
+    errors = module.validate(report("APROVADA", sections=sections))
+    assert any(identifier in error for error in errors), errors
