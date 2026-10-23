@@ -75,7 +75,7 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
     if not isinstance(details, str):
         return False
     match = re.fullmatch(
-        rf"https://github\\.com/{re.escape(repo)}/actions/runs/([1-9][0-9]*)/job/([1-9][0-9]*)",
+        rf"https://github\.com/{re.escape(repo)}/actions/runs/([1-9][0-9]*)/job/([1-9][0-9]*)",
         details,
     )
     suite = (check.get("check_suite") or {}).get("id")
