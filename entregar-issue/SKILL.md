@@ -9,7 +9,7 @@ description: "Conduzir a entrega ponta a ponta de issues em repositorios de soft
 
 Produzir o menor candidato completo, rastreavel e localmente verde para uma issue. Possuir diretamente ciclo, identidade, contrato, plano, implementacao, validacoes, higiene limitada, gates, freeze, remediacao e handoff. Nao delegar etapas internas para Skills que recriem estado ou releiam o problema.
 
-O objetivo operacional e concluir a entrega, sempre que nao houver impedimento real, em **uma unica invocacao de nivel superior**. Estado de CI `pending-no-run`, `queued`, `waiting` ou `in_progress` nunca e motivo para devolver o controle ao usuario: transferir a propriedade temporaria da CI para `corrigir-ci`, aguardar o terminal e retomar automaticamente a entrega.
+Concluir a entrega em **uma unica invocacao de nivel superior**, salvo impedimento real. Estado de CI `pending-no-run`, `queued`, `waiting` ou `in_progress` nunca e motivo para devolver o controle ao usuario: transferir a propriedade temporaria da CI para `corrigir-ci`, aguardar o terminal e retomar automaticamente a entrega.
 
 A verificacao executada no mesmo contexto e interna. Somente `auditar-issue` em contexto realmente separado pode liberar aprovacao operacional.
 
@@ -93,7 +93,7 @@ Ler somente quando aplicavel:
 - generalizacao de aprendizado apos rejeicao: `references/learning-generalization.md`;
 - certificado de handoff independente: `references/handoff-certificate.md`;
 - runtime `connector-only` ou recuperacao de certificado ausente/stale: `references/connector-only-handoff.md`;
-- GitHub Actions: `references/github-actions-evidence.md`, `scripts/prepare_actions_handoff.py`;
+- GH Actions: `references/github-actions-evidence.md`, `scripts/prepare_actions_handoff.py`, `scripts/publish_actions_handoff.py`;
 - checkout local indisponivel com escrita GitHub por conector: `references/github-connector-write-fallback.md`;
 - artefato JSON grande, limite de payload do connector ou publicacao por blobs: `references/large-artifact-transport.md`;
 - finding independente contra candidato antes aprovado internamente: `references/audit-escape-closure.md`;

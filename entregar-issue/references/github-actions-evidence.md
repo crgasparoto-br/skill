@@ -60,13 +60,22 @@ com o bloqueio explicito e os logs para remediacao no mesmo SHA.
 
 ## Publicacao separada e autorizada
 
-Um certificado `certificate-generated` no artifact AINDA NAO esta publicado.
-O token com `contents:write` nao pode ser passado ao job de PR que executa
-codigo do head; usar publicador isolado de fonte confiavel, revalidando os
-bytes do artifact, a identidade remota fresca, o filho direto
-`result-only-child`, a allowlist e `validate_terminal_handoff.py`.
-Nao emitir `READY` nem convocar `auditar-issue` antes da verificacao
-pos-publicacao em chamada remota independente.
+O certificado `certificate-generated` no artifact ainda NAO esta publicado.
+O workflow `.github/workflows/publish-handoff.yml` usa `workflow_run` e
+somente codigo carregado do default branch; sua primeira ativacao exige
+que a alteracao seja aprovada e integrada ao default branch por um fluxo
+de release autorizado. Ele nao executa codigo da PR com token de escrita.
+
+A publicacao automatica exige: CI material terminal verde, leitura
+fresca de PR e HEAD, validacao independente do artifact no runtime
+confiavel, copia apenas de caminhos allowlisted, simulacao
+`validate_terminal_handoff.py` do commit filho local, push fast-forward
+sem force ou merge, releitura GitHub apos a escrita e gate terminal real.
+O SHA do filho nao altera o SHA material certificado.
+
+Enquanto a evidencia semantica ainda nao foi produzida, a certificacao
+reprova e o `workflow_run` nao publica. Nao emitir `READY` nem
+convocar `auditar-issue` apenas pelo status verde do coletor.
 
 ## Seguranca
 

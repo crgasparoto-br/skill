@@ -260,6 +260,21 @@ def certify(args: argparse.Namespace) -> None:
     ]
     for path in changed:
         builder.extend(["--issue-changed-path", path])
+    # The certificate must authorize the exact issue source bytes it references.
+    snapshot = _load_record(resolved["specification_snapshot"])
+    for source in snapshot.get("sources", []):
+        if not isinstance(source, dict) or not isinstance(source.get("path"), str):
+            fail("malformed specification source path")
+        relative = source["path"]
+        if not relative.startswith("specification-sources/") or ".." in Path(relative).parts:
+            fail("specification source must remain under specification-sources")
+        source_path = audit / relative
+        if not source_path.is_file() or source_path.is_symlink():
+            fail("required specification source bytes are missing")
+        if hashlib.sha256(source_path.read_bytes()).hexdigest() != source.get("sha256"):
+            fail("specification source bytes differ from the immutable snapshot")
+        builder.extend(["--allow-result-path", f".audit/entregar-issue/{relative}"])
+
     switches = {
         "standard_evidence": "--standard-evidence", "attack_matrix": "--attack-matrix",
         "risk_saturation": "--risk-saturation", "inherited_controls": "--inherited-controls",

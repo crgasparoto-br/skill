@@ -123,7 +123,7 @@ def _certification_fixture(tmp_path, monkeypatch):
 
 def test_certification_missing_semantic_inputs_fails_closed(tmp_path, monkeypatch):
     args, _audit = _certification_fixture(tmp_path, monkeypatch)
-    with pytest.raises(ValueError, match="certification-inputs.json absent"):
+    with pytest.raises(ValueError, match=r"certification-inputs\.json absent"):
         mod.certify(args)
     status = json.loads((args.out / "handoff-certification-status.json").read_text())
     assert status["status"] == "blocked"

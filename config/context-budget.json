@@ -22,7 +22,7 @@
   },
   "allowances": {
     "entregar-issue/SKILL.md": {
-      "max_bytes": 66419,
+      "max_bytes": 66411,
       "max_line_chars": 2293,
       "reason": "Control plane mais crítico do catálogo: define os gates de ancoragem no código, crescimento de código, fechamento de requisitos e handoff. Reduzir exige mover conteúdo para referências já carregadas, o que é uma entrega própria. Exceção medida em 2026-10-11 para o contrato de execução exaustiva de pendências, sem remoção de controles. Inclui ponteiro condicional para saturacao semantica, com exemplos historicos desacoplados em 2026-10-18. Gate de saturacao executavel e ativado pelo registry em 2026-10-18. Mantida palavra-chave pairwise exigida no regression gate. Medicao exata apos protocolo de readiness abrangente em 2026-10-18. Medicao exata atualizada para incluir gate de endereco de evidencias em 2026-10-20."
     },
