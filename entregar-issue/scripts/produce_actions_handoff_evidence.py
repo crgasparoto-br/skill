@@ -119,6 +119,9 @@ def collect_exact_tests(out: Path, head: str) -> tuple[dict, dict]:
             or not log.is_file() or digest(log.read_bytes()) != facts["execution"].get("log_sha256")
             or not junit.is_file() or digest(junit.read_bytes()) != index.get("source", {}).get("sha256")):
         raise ValueError("exact-head test log/JUnit attestation failed")
+    from build_test_candidate_index import collect
+    if collect(junit, head) != index:
+        raise ValueError("test candidate index differs from exact-head JUnit")
     tests = {entry["id"]: entry["status"] for entry in index["tests"]}
     if not tests or index.get("requirement_mapping") != "UNKNOWN":
         raise ValueError("test index must be factual and unclassified")
