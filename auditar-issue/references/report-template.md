@@ -57,7 +57,7 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 
 ### Triagem do resultado
 
-Preencher as tres contagens da linha **Triagem** antes de decidir o veredito. `bloqueadores comprovados` e exatamente o total do bloco de conclusao, sempre respaldado por evidencia do candidato/entrega (analise estatica conclusiva pode servir como prova; hipotese sem prova discriminante nao serve). `riscos inferidos` representa suspeitas nao confirmadas, fora da contagem de blockers. `limitacoes do auditor` registra incapacidade exclusiva do runtime/conector para executar um gate obrigatorio, sem encontrar defeito na entrega.
+Preencher as tres contagens antes do veredito. `bloqueadores comprovados` equivale ao total da conclusao e exige prova do candidato/entrega (inclusive analise estatica conclusiva). Hipoteses sem prova sao `riscos inferidos`, nao blockers. `limitacoes do auditor` registra indisponibilidade exclusiva do runtime/conector para um gate obrigatorio, sem imputar defeito a entrega.
 
 Rejeitar secoes vazias, placeholders e prova generica. IDs A/RISK/LIM visiveis em listas, citacoes, H4-H6 e estilos contam; somente H3 isolado e canonico. Ignorar exemplos inertes: fences, HTML raw (tipo 1 ate fechar; tipos 6/7 ate linha vazia) e codigo indentado, mesmo com ID solto na raiz/citacao. HTML tipo 7 nao interrompe paragrafo aberto; tipos 1/6 podem. Recuo de ate tres espacos permanece visivel. Ignorar referencias incidentais. H1 encerra H2. Prova exige fonte localizavel; `pytest` isolado e insuficiente. Preservar gate de completude.
 
