@@ -85,6 +85,7 @@ Estas regras existem para impedir sujeira, ambiguidade, código obsoleto e dupli
 - Não manter arquivo inalcançável: toda referência, script e schema de uma skill precisa ser alcançável a partir do seu `SKILL.md`, reprovado por `scripts/validate_reachability.py`.
 - Não criar segunda fonte de verdade: schema que nenhum validador aplica é removido ou passa a ser aplicado.
 - Buscar arquivo existente antes de criar outro; arquivo replicado entre skills precisa entrar em `config/shared-files.json`.
+- Para testes afetados, fazer inventario dirigido ao risco e ao runner antes de criar, estender, consolidar ou excluir: preservar cenarios, oraculos, controles negativos e descoberta dinamica. Sem prova de equivalencia/obsolescencia, manter teste e declarar UNKNOWN. Aplicar GROUND-TEST-001 da entrega tambem para diffs apenas de testes.
 - Manter cada `SKILL.md` compacto como control plane dentro do orçamento de [config/context-budget.json](config/context-budget.json), medido em bytes por arquivo e caracteres por linha, sem parágrafos densos que misturem cláusulas independentes. A contagem de linhas não mede carregamento progressivo e não é mais a regra.
 - Preservar `UNKNOWN` quando faltar evidência; nunca converter ausência em `false`, zero, sucesso ou `not-applicable`.
 - Distinguir verificação interna de auditoria independente; trocar de skill no mesmo contexto não cria independência.

@@ -196,11 +196,12 @@ def validate_execution_plan(payload: dict[str, Any]) -> None:
         _fail('context_fingerprints values must be lowercase SHA-256')
     classification = payload['change_classification']
     classification_fields = {
-        'docs_only', 'assets_only', 'generated_only', 'test_only',
+        'docs_only', 'assets_only', 'generated_only', 'test_only', 'tests_touched',
         'code_touched', 'runtime_config_touched', 'behavioral_change',
         'hygiene_applicable',
     }
-    if not isinstance(classification, dict) or set(classification) != classification_fields:
+    historical_v2 = classification_fields - {'tests_touched'}
+    if not isinstance(classification, dict) or set(classification) not in (classification_fields, historical_v2):
         _fail('change_classification fields are invalid')
     if any(not isinstance(value, bool) for value in classification.values()):
         _fail('change_classification values must be boolean')

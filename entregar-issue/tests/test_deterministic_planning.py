@@ -337,3 +337,44 @@ class PlanningTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_planner_classifies_test_only_and_preserves_gate_contract():
+    with tempfile.TemporaryDirectory() as temp_value:
+        temp = Path(temp_value)
+        planner = PlanningTests()
+        context = planner.init_context(temp)
+        changed = temp / "changed.json"
+        changed.write_text(json.dumps(["features/checkout.feature"]))
+        payload = planner.run_plan(context, changed, temp / "plan.json")
+        classification = payload["change_classification"]
+        assert classification["tests_touched"] is True
+        assert classification["test_only"] is True
+        assert classification["code_touched"] is False
+        assert classification["hygiene_applicable"] is False
+        assert "codebase-grounding" in payload["required_gates"]
+        schema = json.loads((ROOT / "schemas" / "execution-plan.schema.json").read_text())
+        assert list(Draft202012Validator(schema).iter_errors(payload)) == []
+
+
+def test_historical_v2_plan_schema_and_runtime_compatible():
+    from jsonschema import Draft202012Validator
+    from planning_contract_runtime import validate_execution_plan
+    with tempfile.TemporaryDirectory() as dirname:
+        temp = Path(dirname)
+        planner = PlanningTests()
+        context = planner.init_context(temp)
+        changed = temp / "changed.json"
+        changed.write_text(json.dumps(["features/checkout.feature"]))
+        current = planner.run_plan(context, changed, temp / "plan.json")
+        legacy = json.loads(json.dumps(current))
+        legacy["change_classification"].pop("tests_touched")
+        schema = json.loads((ROOT / "schemas" / "execution-plan.schema.json").read_text())
+        assert not list(Draft202012Validator(schema).iter_errors(legacy))
+        validate_execution_plan(legacy)
+        assert current["change_classification"]["tests_touched"] is True
+        previous = temp / "legacy.json"
+        previous.write_text(json.dumps(legacy))
+        updated = planner.run_plan(context, changed, temp / "replanned.json", "--previous-plan", str(previous))
+        assert not updated["reusable_stages"]
+        assert updated["change_classification"]["tests_touched"] is True

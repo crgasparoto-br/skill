@@ -21,7 +21,7 @@ from pathlib import Path
 from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_json_artifact
 from validate_evidence_source_locations import candidate_locations
 from validate_evidence_source_locations import validate as validate_source_locations
-from validate_handoff_certificate import scope_touches_code
+from validate_handoff_certificate import scope_touches_code, scope_touches_tests
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REPO_DIR = ".audit/entregar-issue"
@@ -223,11 +223,12 @@ def main() -> int:
         }
 
     code_scope = scope_touches_code(issue_scope["issue_changed_paths"]) if issue_scope else "unknown"
+    test_scope = scope_touches_tests(issue_scope["issue_changed_paths"]) if issue_scope else "unknown"
     for key, value in (("codebase_grounding", args.codebase_grounding), ("code_growth", args.code_growth)):
         label = key.replace("_", " ")
         if not value:
-            if code_scope is True:
-                print(f"BLOCK: issue-local scope touches code and requires --{key.replace('_', '-')}")
+            if code_scope is True or (key == "codebase_grounding" and test_scope is True):
+                print(f"BLOCK: issue-local scope touches code/tests and requires --{key.replace('_', '-')}")
                 return 2
             continue
         files[key] = Path(value).resolve()
@@ -402,7 +403,7 @@ def main() -> int:
             name: artifact_metadata(path) for name, path in files.items()
         },
         "controls": {
-            "codebase_grounding": {"applicable": code_scope},
+            "codebase_grounding": {"applicable": code_scope or test_scope if issue_scope else "unknown"},
             "code_growth": {"applicable": code_scope},
             "source_locations": source_control,
         },
