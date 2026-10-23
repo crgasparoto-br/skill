@@ -48,7 +48,10 @@ def api_get(repository: str, endpoint: str) -> dict:
     return result
 
 
-def target_from_event(event: dict) -> tuple[str, int, str, str]:
+def target_from_event(event: dict, base_ref: str = "develop",
+                      producer_path: str = ".github/workflows/handoff-evidence.yml") -> tuple[str, int, str, str]:
+    if not re.fullmatch(r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml", producer_path):
+        block("producer workflow path must be a GitHub Actions workflow file")
     run = event.get("workflow_run") or {}
     repo = (event.get("repository") or {}).get("full_name")
     prs = run.get("pull_requests") or []
@@ -57,7 +60,7 @@ def target_from_event(event: dict) -> tuple[str, int, str, str]:
         block("invalid workflow repository identity")
     if (run.get("status") != "completed" or run.get("conclusion") != "success"
             or run.get("event") != "pull_request"
-            or run.get("path") != ".github/workflows/handoff-evidence.yml"
+            or run.get("path") != producer_path
             or not HEX_SHA.fullmatch(str(head))
             or len(prs) != 1):
         block("only one completed, successful PR evidence run is eligible")
@@ -70,7 +73,7 @@ def target_from_event(event: dict) -> tuple[str, int, str, str]:
     base = (pr.get("base") or {}).get("sha")
     if (pr.get("state") != "open" or actual != head
             or (pr.get("head") or {}).get("repo", {}).get("full_name") != repo
-            or (pr.get("base") or {}).get("ref") != "develop"
+            or (pr.get("base") or {}).get("ref") != base_ref
             or not HEX_SHA.fullmatch(str(base)) or not REF.fullmatch(str(branch))):
         block("PR was closed, moved, forked, or changed identity since CI")
     return repo, pr_number, head, base
@@ -104,13 +107,13 @@ def safe_bundle_path(bundle: Path, relative: str) -> Path:
 
 
 def validate_certificate(repo: str, pr: int, head: str, base: str, source: Path,
-                         bundle: Path, cert: dict, branch: str) -> None:
+                         bundle: Path, cert: dict, branch: str, base_ref: str = "develop") -> None:
     subject = cert.get("subject") or {}
     identity = cert.get("identity") or {}
     issue = subject.get("issue_number")
     if (subject.get("repository") != repo or subject.get("pull_request_number") != pr
             or subject.get("work_item_kind") != "pr" or subject.get("work_item_number") != pr
-            or subject.get("base_ref") != "develop" or subject.get("head_ref") != branch
+            or subject.get("base_ref") != base_ref or subject.get("head_ref") != branch
             or identity.get("material_head_sha") != head or identity.get("base_sha") != base
             or not isinstance(issue, int) or issue < 1):
         block("the certificate subject does not match the live PR")
@@ -127,7 +130,7 @@ def validate_certificate(repo: str, pr: int, head: str, base: str, source: Path,
         "--head-sha", head, "--base-sha", base, "--repository", repo,
         "--issue-number", str(issue), "--work-item-kind", "pr",
         "--work-item-number", str(pr), "--pull-request-number", str(pr),
-        "--work-item-start-sha", start, "--base-ref", "develop", "--head-ref", branch,
+        "--work-item-start-sha", start, "--base-ref", base_ref, "--head-ref", branch,
         "--source-repository-root", str(source),
     ]
     for path in sorted(diff):
@@ -153,14 +156,15 @@ def validate_certificate(repo: str, pr: int, head: str, base: str, source: Path,
 
 
 def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, published: str,
-                  changed: list[str], audit: Path, branch: str, material_parent: Path) -> list[str]:
+                  changed: list[str], audit: Path, branch: str, material_parent: Path,
+                  base_ref: str = "develop") -> list[str]:
     args = [
         "python", str(SCRIPT_ROOT / "validate_terminal_handoff.py"),
         "--certificate", str(audit / "handoff-ready.json"),
         "--artifacts-dir", str(audit), "--repository", repo,
         "--issue-number", str(cert["subject"]["issue_number"]),
         "--work-item-kind", "pr", "--work-item-number", str(pr),
-        "--pull-request-number", str(pr), "--base-ref", "develop", "--head-ref", branch,
+        "--pull-request-number", str(pr), "--base-ref", base_ref, "--head-ref", branch,
         "--material-head-sha", head, "--published-head-sha", published,
         "--published-parent-sha", head, "--current-head-sha", published,
         "--current-parent-sha", head, "--base-sha", base,
@@ -198,7 +202,8 @@ def material_parent_snapshots(source: Path, temp: Path) -> Path:
     return folder
 
 
-def check_material_ci(repository: str, head: str, pr_number: int) -> None:
+def check_material_ci(repository: str, head: str, pr_number: int,
+                      required_checks: set[str] | None = None) -> None:
     """Require a terminal success from every observed PR workflow at this material SHA."""
     result = api_get(repository, f"actions/runs?head_sha={head}&per_page=100")
     observed = [
@@ -216,8 +221,11 @@ def check_material_ci(repository: str, head: str, pr_number: int) -> None:
         if identifier not in latest or row.get("run_number", 0) > latest[identifier].get("run_number", 0):
             latest[identifier] = row
     names = {row.get("name") for row in latest.values()}
-    required = {"Validate skills", "Validate GitHub Audit MCP",
-                "Collect and certify exact-SHA handoff"}
+    required = required_checks if required_checks is not None else {
+        "Validate skills", "Validate GitHub Audit MCP",
+        "Collect and certify exact-SHA handoff"}
+    if not required or any(not name.strip() for name in required):
+        block("at least one explicit CI workflow name is mandatory")
     if not required.issubset(names):
         block("required current material PR checks are not present")
     if any(row.get("status") != "completed" or row.get("conclusion") != "success"
@@ -225,9 +233,11 @@ def check_material_ci(repository: str, head: str, pr_number: int) -> None:
         block("material PR workflow run is not terminal success")
 
 
-def publish(event_path: Path) -> str:
+def publish(event_path: Path, *, base_ref: str = "develop",
+            producer_path: str = ".github/workflows/handoff-evidence.yml",
+            required_checks: set[str] | None = None) -> str:
     event = json.loads(event_path.read_text(encoding="utf-8"))
-    repo, pr_number, head, base = target_from_event(event)
+    repo, pr_number, head, base = target_from_event(event, base_ref, producer_path)
     run_id = event["workflow_run"]["id"]
     name = f"handoff-evidence-{pr_number}-{head}"
     listed = api_get(repo, f"actions/runs/{run_id}/artifacts?per_page=100")
@@ -260,8 +270,8 @@ def publish(event_path: Path) -> str:
             block("downloaded material differs from the recorded SHA")
         pr = api_get(repo, f"pulls/{pr_number}")
         branch = pr["head"]["ref"]
-        validate_certificate(repo, pr_number, head, base, source, bundle, cert, branch)
-        check_material_ci(repo, head, pr_number)
+        validate_certificate(repo, pr_number, head, base, source, bundle, cert, branch, base_ref)
+        check_material_ci(repo, head, pr_number, required_checks)
 
         material_parent = material_parent_snapshots(source, temp)
         existing = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
@@ -285,7 +295,7 @@ def publish(event_path: Path) -> str:
         # Prepublication: synthetic published/current identity on the exact local
         # commit. A failure MUST NOT publish the commit.
         command(*terminal_args(cert, repo, pr_number, head, base, published,
-                               changed, source / PREFIX, branch, material_parent), cwd=trusted)
+                               changed, source / PREFIX, branch, material_parent, base_ref), cwd=trusted)
         fresh = api_get(repo, f"pulls/{pr_number}")
         if fresh.get("state") != "open" or fresh["head"]["sha"] != head or fresh["base"]["sha"] != base:
             block("PR moved before the atomic fast-forward publication")
@@ -297,16 +307,22 @@ def publish(event_path: Path) -> str:
                 or {f["filename"] for f in published_metadata.get("files") or []} != set(changed)):
             block("fresh postpublication GitHub read failed the terminal identity check")
         command(*terminal_args(cert, repo, pr_number, head, base, published,
-                               changed, source / PREFIX, branch, material_parent), cwd=trusted)
+                               changed, source / PREFIX, branch, material_parent, base_ref), cwd=trusted)
         return published
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True, type=Path)
+    parser.add_argument("--base-ref", default="develop")
+    parser.add_argument("--producer-path", default=".github/workflows/handoff-evidence.yml")
+    parser.add_argument("--required-checks-csv", default="")
     args = parser.parse_args()
+    names = {name.strip() for name in args.required_checks_csv.split(",") if name.strip()}
     try:
-        published = publish(args.event)
+        published = publish(args.event, base_ref=args.base_ref,
+                            producer_path=args.producer_path,
+                            required_checks=names or None)
     except (ValueError, KeyError, OSError, subprocess.CalledProcessError, json.JSONDecodeError) as exc:
         print(f"BLOCK: certified handoff publication aborted: {exc}")
         return 2

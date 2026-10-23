@@ -138,3 +138,44 @@ configurado, o workflow preserva a coleta mas bloqueia a certificacao.
 O indice de testes acelera o levantamento mas nao fecha requisitos.
 `entregar-issue` deve conferir requisitos com provas positivas e negativas
 autenticas. Na ausencia delas, registrar `UNKNOWN/BLOCK`, nunca `passed`.
+
+## Publicador reutilizavel para repositorios consumidores
+
+O publicador de fonte confiavel fica em `reusable-publish-handoff.yml`.
+Cada consumidor cria um workflow chamado somente por `workflow_run` no
+branch default; este e o **unico** workflow com `contents: write`.
+Exemplo (arquivo versionado no branch default do consumidor):
+
+```yaml
+name: Publish certified handoff
+on:
+  workflow_run:
+    workflows: ["Certified handoff"]
+    types: [completed]
+permissions:
+  contents: write
+  actions: read
+  pull-requests: read
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    uses: crgasparoto-br/skill/.github/workflows/reusable-publish-handoff.yml@<SHA_APROVADO>
+    with:
+      base-ref: develop
+      producer-path: .github/workflows/certified-handoff.yml
+      required-checks: "Certified handoff,CI"
+```
+
+O nome de check deve refletir workflows realmente requeridos e registrados;
+todos os demais workflows de PR observados no mesmo material SHA tambem precisam
+estar `completed/success`. O publicador executa validadores e `git` somente
+a partir de codigo oficial vinculado ao SHA do workflow reutilizavel, checa
+`workflow_run`, PR/base/head, allowlist, artefatos e hashes, simula o filho
+direto de resultados e faz push fast-forward sem merge. A leitura remota
+depois do push e obrigatoria. Nao executar este fluxo a partir de PR nem
+habilita-lo antes de revisao e promocao autorizada ao default branch.
+
+O pacote `certification-inputs.json`, `requirement-closure.json` e controles
+adversariais continua sendo obrigatorio: indexar testes nao gera aprovacao
+semantica. Ausencia de evidencia impede o workflow de producao e, portanto,
+impede o publicador.

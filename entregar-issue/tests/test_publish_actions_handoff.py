@@ -94,3 +94,36 @@ def test_parent_control_snapshots_are_immutable(tmp_path):
     assert (destination / "inherited-controls.json").read_bytes() == b'{"v":"material"}'
     (audit / "inherited-controls.json").write_bytes(b'{"v":"new"}')
     assert (destination / "inherited-controls.json").read_bytes() == b'{"v":"material"}'
+
+def test_trusted_publisher_accepts_configured_producer_and_base(monkeypatch):
+    monkeypatch.setattr(publisher, "api_get", lambda *_: {
+        "state": "open",
+        "head": {"sha": HEAD, "ref": "feat/112", "repo": {"full_name": "team/skill"}},
+        "base": {"sha": BASE, "ref": "integration"},
+    })
+    event = {"repository": {"full_name": "team/skill"}, "workflow_run": {
+        "status": "completed", "conclusion": "success", "event": "pull_request",
+        "path": ".github/workflows/caller.yml",
+        "head_sha": HEAD, "pull_requests": [{"number": 113}],
+    }}
+    with pytest.raises(ValueError, match="only one completed"):
+        publisher.target_from_event(event)
+    assert publisher.target_from_event(event, "integration", ".github/workflows/caller.yml") == (
+        "team/skill", 113, HEAD, BASE
+    )
+    with pytest.raises(ValueError, match="producer workflow path"):
+        publisher.target_from_event(event, "integration", "../caller.yml")
+
+
+def test_consumer_required_check_names_are_enforced(monkeypatch):
+    monkeypatch.setattr(publisher, "api_get", lambda *_: {
+        "total_count": 1,
+        "workflow_runs": [{
+            "workflow_id": 3, "name": "My custom quality check",
+            "head_sha": HEAD, "event": "pull_request", "pull_requests": [{"number": 113}],
+            "run_number": 1, "status": "completed", "conclusion": "success",
+        }],
+    })
+    publisher.check_material_ci("team/skill", HEAD, 113, {"My custom quality check"})
+    with pytest.raises(ValueError, match="not present"):
+        publisher.check_material_ci("team/skill", HEAD, 113, {"Other required check"})
