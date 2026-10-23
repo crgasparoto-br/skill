@@ -166,15 +166,9 @@ def _record_status(out: Path, status: str, reason: str, subject_sha: str) -> Non
     })
 
 
-def certify(args: argparse.Namespace) -> None:
-    """Certify only authenticated, complete evidence; NEVER perform a repository write."""
-    if args.event is None:
-        fail("certify phase requires --event")
-    repo, pr, issue, head, base = read_event(args.event)
-    check_checkout(args.root, head)
-    out = args.out.resolve()
-    audit = out / ".audit" / "entregar-issue"
-    _record_status(out, "blocked", "unverified-requirement-controls", head)
+def _resolve_certification_requirements(out: Path, args: argparse.Namespace,
+                                        repo: str, pr: int, issue: int, head: str, base: str):
+    """Separate identity/evidence validation from the certificate invocation."""
     preflight = _load_record(out / "handoff-preflight.json")
     identity = preflight.get("identity")
     expected = {"repository": repo, "issue_number": issue, "pull_request_number": pr,
@@ -246,6 +240,22 @@ def certify(args: argparse.Namespace) -> None:
         record = _load_record(item)
         if record.get("subject_sha") not in (None, head) and record.get("head_sha") not in (None, head):
             fail(f"stale evidence report: {item.name}")
+
+
+    return inputs, start, profile, changed, resolved
+
+
+def certify(args: argparse.Namespace) -> None:
+    """Certify only authenticated, complete evidence; NEVER perform a repository write."""
+    if args.event is None:
+        fail("certify phase requires --event")
+    repo, pr, issue, head, base = read_event(args.event)
+    check_checkout(args.root, head)
+    out = args.out.resolve()
+    audit = out / ".audit" / "entregar-issue"
+    _record_status(out, "blocked", "unverified-requirement-controls", head)
+    inputs, start, profile, changed, resolved = _resolve_certification_requirements(
+        out, args, repo, pr, issue, head, base)
 
     builder = [
         "--specification-snapshot", str(resolved["specification_snapshot"]),
