@@ -231,7 +231,7 @@ def check_existing_test_decision(
     """Reject observable contradictions, without inferring oracle equivalence."""
     if item["decision"] != "covered-by-existing":
         return
-    if not item["search"]["candidates"]:
+    if operation in {"added", "modified"} and not item["search"]["candidates"]:
         errors.append(f"GROUND-TEST-001: covered-by-existing lacks an identified existing test: {path}")
     if operation == "added":
         errors.append(f"GROUND-TEST-001: added test cannot be classified covered-by-existing: {path}")
