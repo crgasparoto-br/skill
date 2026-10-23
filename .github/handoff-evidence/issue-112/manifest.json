@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "review_state": "incomplete",
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 112,
+  "pull_request_number": 113,
+  "base_ref": "develop",
+  "head_ref": "feat/112-test-lifecycle-governance",
+  "work_item_start_sha": "8cf01341030de7762b98b73c6a19efde5ad71461",
+  "evidence_profile": "critical",
+  "risk_justification": "Governance changes executable validation of test deletion, dynamic discovery and independent audit; false semantic approval could permit loss of negative/regression controls.",
+  "audit_history": "previous-rejection",
+  "audit_history_evidence": "Prior independent audit findings A-112-01..05 are documented in PR #113 comments https://github.com/crgasparoto-br/skill/pull/113#issuecomment-6350885227 and https://github.com/crgasparoto-br/skill/pull/113#issuecomment-6352025888. They are not assumed closed by CI success.",
+  "remediation_mode": "targeted-remediation",
+  "evidence_sources": [
+    {
+      "kind": "canonical-issue",
+      "uri": "https://github.com/crgasparoto-br/skill/issues/112",
+      "body_sha256": "9a1bc299fc5514ffebc31dbc43a4e9f83963d4a093c786f686c7fa5e56007b1a",
+      "candidate_count": 52
+    },
+    {
+      "kind": "exact-sha-test-index",
+      "uri": "https://github.com/crgasparoto-br/skill/actions/runs/39944254214/artifacts/12497159222",
+      "subject_sha": "c047217e0bbb334b62221c49d6e24fcca27edc47",
+      "test_candidates": 2305,
+      "limitations": "Snapshot historical; refresh on material SHA"
+    },
+    {
+      "kind": "material-technical-ci",
+      "uri": "https://github.com/crgasparoto-br/skill/actions/runs/39944249033",
+      "subject_sha": "c047217e0bbb334b62221c49d6e24fcca27edc47",
+      "limitations": "Passing tests do not prove semantic obligation closure"
+    },
+    {
+      "kind": "review-and-remediation-history",
+      "uri": "https://github.com/crgasparoto-br/skill/pull/113#issuecomment-6352025888",
+      "limitations": "Comments alone are not an immutable independent audit report"
+    }
+  ],
+  "pending_review": [
+    "Each canonical candidate_key must have verified disposition and rationale.",
+    "Positive, discriminating negative and regression assertions must be inspected and bound to actually executed JUnit cases.",
+    "Critical attack matrix, risk saturation, inherited controls, requirement closure and codebase grounding must be validated at material HEAD.",
+    "Previous independent rejection and remediation lineage must be reconstructed from verifiable original sources.",
+    "A separate read-only auditor must approve only after certified handoff."
+  ],
+  "artifact_sha256": {},
+  "test_bindings": {}
+}
