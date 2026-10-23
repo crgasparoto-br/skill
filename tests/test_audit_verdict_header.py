@@ -1050,3 +1050,11 @@ def test_issue110_rendered_id_parser_rejects_pathological_emphasis_without_hangi
         [sys.executable, "-c", program, str(SCRIPT)],
         check=True, timeout=3, capture_output=True, text=True,
     )
+
+@pytest.mark.parametrize("identifier", ["A-907", "RISK-907", "LIM-907"])
+def test_issue110_inline_code_example_is_not_a_finding_but_wrapped_id_is(identifier):
+    example = f"- `{identifier} — exemplo inline`\n"
+    visible = f"- `{identifier}` — registro realmente visivel\n"
+    assert module.validate(report("APROVADA", sections="## Exemplos\n" + example)) == []
+    errors = module.validate(report("APROVADA", sections="## Exemplos\n" + visible))
+    assert any(identifier in error for error in errors)

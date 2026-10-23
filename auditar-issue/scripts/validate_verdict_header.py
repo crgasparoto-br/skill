@@ -431,15 +431,20 @@ def detect_misplaced_records(plain):
                 current_section = None
             elif not nested and level == 2:
                 current_section = "## " + title
-            identifier_match = VISIBLE_RECORD_ID.match(html.unescape(title).replace(r"\-", "-"))
+            candidate = html.unescape(title).replace(r"\-", "-")
+            identifier_match = VISIBLE_RECORD_ID.match(candidate)
         else:
             level = 0
             # Strip container markers only at line start; prose mentioning
             # A-001 incidentally must not become a new evidence record.
-            identifier_match = VISIBLE_RECORD_ID.match(
-                html.unescape(RECORD_LIST_PREFIX.sub("", line).lstrip(" ")).replace(r"\-", "-")
-            )
+            candidate = html.unescape(RECORD_LIST_PREFIX.sub("", line).lstrip(" ")).replace(r"\-", "-")
+            identifier_match = VISIBLE_RECORD_ID.match(candidate)
         if not identifier_match:
+            continue
+        # Code spans ending after the dash are inline examples, not records.
+        prefix = candidate[:identifier_match.start(1)]
+        suffix = candidate[identifier_match.end(1):identifier_match.end()]
+        if "`" in prefix and "`" not in suffix:
             continue
         identifier = identifier_match.group(1)
         prefix = identifier.split("-", 1)[0]
