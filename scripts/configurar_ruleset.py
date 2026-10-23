@@ -132,6 +132,19 @@ def main() -> None:
     ):
         parser.error("--apply requires independent audit gate (and certified handoff on develop)")
     names = verified_checks(args.repo, args.sample_sha, args.check, args.app_id)
+    if args.apply:
+        # No administrative activation from a PR-only workflow or from a
+        # failing/queued sample: the exact policy must exist on the trusted base.
+        for required_path in (
+            "scripts/verify_independent_pr_audit.py",
+            ".github/workflows/independent-audit-gate.yml",
+        ):
+            file = gh(f"/repos/{args.repo}/contents/{required_path}?ref={args.branch}")
+            if file.get("type") != "file" or not file.get("sha"):
+                raise ValueError(f"trusted branch does not publish: {required_path}")
+        for check, conclusions in names.items():
+            if not conclusions or any(result != "success" for result in conclusions):
+                raise ValueError(f"sample check not green for administrative activation: {check}")
     endpoint = f"/repos/{args.repo}/rulesets/{args.ruleset_id}"
     current = gh(endpoint)
     payload = plan(current, args.branch, args.ruleset_id, args.check, args.app_id)

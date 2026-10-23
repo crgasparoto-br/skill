@@ -161,3 +161,8 @@ Registrar read-back de ambos os rulesets e seus bypasses, e rollback.
 O utilitário preserva qualquer check já requerido e eleva `required_approving_review_count`
 de zero para **um** na regra de PR existente, sem reduzir um limite mais estrito.
 Antes de aplicar, confirmar o bypass real e a identidade da integração emissora.
+
+O `--apply` também exige evidência **verde** para cada contexto da amostra e
+ambos os arquivos do emissor presentes na branch-base confiável. Caso contrário,
+bloqueia antes do PUT, inclusive quando um PR publica o workflow mas a base ainda
+não o possui. O modo padrão sem `--apply` continua somente leitura.
