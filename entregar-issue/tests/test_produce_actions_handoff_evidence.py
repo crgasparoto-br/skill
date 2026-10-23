@@ -179,6 +179,22 @@ def test_invalid_reviewed_inputs_fail_collection_not_just_certification(tmp_path
         "status"] == "blocked-invalid-input"
 
 
+def test_draft_code_growth_is_measured_by_official_exact_diff(tmp_path):
+    root, out, _, source, head = fixture(tmp_path)
+    report = producer.stage_draft_code_growth(root, out, source, head)
+    assert report["status"] == "passed"
+    assert report["exit_code"] == 0
+    actual = json.loads(
+        (out / ".audit/entregar-issue/code-growth.json").read_text())
+    assert actual["control_id"] == "CODE-GROWTH-001"
+    assert actual["subject_sha"] == head
+    manifest = json.loads((source / "manifest.json").read_text())
+    manifest["work_item_start_sha"] = "fake"
+    put(source / "manifest.json", manifest)
+    with pytest.raises(ValueError, match="valid work-item start"):
+        producer.stage_draft_code_growth(root, out, source, head)
+
+
 def test_incomplete_review_validates_keys_without_claiming_approval(tmp_path):
     root, out, _, source, _ = fixture(tmp_path)
     starter = json.loads(
