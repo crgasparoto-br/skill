@@ -76,6 +76,71 @@ Enquanto faltarem provas, o passo de certificacao reprova a Action, mas
 a etapa de upload `if: always()` preserva `handoff-certification-status.json`
 com o bloqueio explicito e os logs para remediacao no mesmo SHA.
 
+## Produtor de evidencias revisadas (Actions)
+
+O caller do repositorio `skill` executa
+`scripts/produce_actions_handoff_evidence.py` apos a suite exact-SHA.
+O produtor nao escolhe o perfil, nao infere historico de rejeicoes e nao marca
+obrigacoes ou controles como aprovados. Sem dossie revisado, publica
+`semantic-evidence-candidates.json` com candidatos factuais e
+`handoff-producer-status.json` com `blocked`. O gate posterior permanece vermelho.
+
+Para reutilizar em outros repositorios, configurar `evidence-command` no
+caller `reusable-handoff.yml` com o mesmo comando e implementar o dossie
+em `.github/handoff-evidence/issue-<N>/`, no SHA material da PR.
+A pasta nao pode ter symlinks nem ser usada para executar codigo arbitrario.
+Um dossie completo consiste em:
+
+- `manifest.json` schema 1 com `repository`, `issue_number`,
+  `pull_request_number`, `base_ref`, `head_ref`,
+  `work_item_start_sha`, `evidence_profile`, `risk_justification`,
+  `audit_history`, `audit_history_evidence`, `artifact_sha256`
+  e `test_bindings`.
+- `reviewed-closure.json` com `schema_version: 1`, `obligations`
+  indexadas por `candidate_key` extraida do snapshot e `controls`
+  com todas as familias canonicas. O overlay preserva campos
+  imutaveis do snapshot corrente; um requisito nao registrado ou novo
+  obriga revisao explicita, nunca ganha `covered` automaticamente.
+- Relatorios aplicaveis (standard, matriz de ataque, saturacao, controles
+  herdados, grounding, reauditoria e lineage) com hashes SHA-256 declarados
+  individualmente em `artifact_sha256`. O produtor permite apenas
+  nomes na allowlist e amarra campos `head_sha`/`subject_sha` e
+  `base_sha` a identidades do runner; textos de prova nao podem
+  conter placeholders.
+- `test_bindings` associa cada requisito `covered` a casos JUnit
+  positivos, negativos e de regressao **presentes e aprovados** no
+  material HEAD. Isso valida apenas existencia/execucao: oraculo,
+  falha discriminante e abrangencia exigem inspecao e validadores oficiais.
+
+Exemplo de cabecalho do `manifest.json` (valores ilustrativos, nao
+evidencias nem certificado):
+
+```json
+{
+  "schema_version": 1,
+  "repository": "owner/repository",
+  "issue_number": 123,
+  "pull_request_number": 124,
+  "base_ref": "develop",
+  "head_ref": "feat/123-example",
+  "work_item_start_sha": "<SHA real ancestral da issue>",
+  "evidence_profile": "critical",
+  "risk_justification": "Fundamentacao revisada com referencias verificaveis.",
+  "audit_history": "previous-rejection",
+  "audit_history_evidence": "URL/ID da rejeicao independente e data verificada.",
+  "artifact_sha256": {"reviewed-closure.json": "<SHA-256 real do arquivo>"},
+  "test_bindings": {}
+}
+```
+
+O exemplo e incompleto intencionalmente. O produtor rejeita
+`test_bindings` faltantes, hash adulterado, caso JUnit ignorado,
+perfil/historico ausente, branch/issue distintos e relatorios requeridos
+ausentes. O `certification-inputs.json` so e emitido apos todas
+as checagens formais do produtor; ainda nao e uma certificacao.
+O veredito final permanece de `prepare_actions_handoff.py --phase certify`,
+dos validadores semanticos existentes e do publicador confiavel.
+
 ## Publicacao separada e autorizada
 
 O certificado `certificate-generated` no artifact ainda NAO esta publicado.
