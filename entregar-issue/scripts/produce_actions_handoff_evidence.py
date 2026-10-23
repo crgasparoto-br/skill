@@ -53,7 +53,7 @@ def write_json(path: Path, data: dict) -> None:
 
 
 def git(root: Path, *args: str) -> str:
-    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, check=False)
     if result.returncode:
         raise ValueError(f"git {' '.join(args[:2])} failed: {result.stderr.strip()}")
     return result.stdout.strip()
@@ -109,18 +109,7 @@ def merge_closure(starter: dict, reviewed: dict) -> dict:
     return starter
 
 
-def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
-    # Import the official identity parser rather than maintaining another one.
-    from prepare_actions_handoff import check_checkout, read_event
-    repository, pr, issue, head, base = read_event(event, base_ref)
-    check_checkout(root, head)
-    preflight = read_json(out / "handoff-preflight.json")
-    identity = preflight.get("identity") or {}
-    if any(identity.get(key) != val for key, val in {
-        "repository": repository, "issue_number": issue, "pull_request_number": pr,
-        "material_head_sha": head, "base_sha": base,
-    }.items()):
-        raise ValueError("preflight identity differs from the exact PR material")
+def collect_exact_tests(out: Path, head: str) -> tuple[dict, dict]:
     facts = read_json(out / "test-execution-facts.json")
     index = read_json(out / "test-candidate-index.json")
     log = out / "pytest-exact-head.log"
@@ -133,29 +122,20 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     tests = {entry["id"]: entry["status"] for entry in index["tests"]}
     if not tests or index.get("requirement_mapping") != "UNKNOWN":
         raise ValueError("test index must be factual and unclassified")
-    audit = out / ".audit" / "entregar-issue"
-    starter = read_json(audit / "requirement-closure.json")
-    write_json(out / "semantic-evidence-candidates.json", {
-        "schema_version": 1, "subject_sha": head,
-        "obligations": [{"id": entry["id"], "candidate_key": entry["candidate_key"],
-                         "source_text": entry["source_text"]} for entry in starter["obligations"]],
-        "test_candidates": len(tests), "mapping": "UNKNOWN",
-    })
-    source = root / ".github" / "handoff-evidence" / f"issue-{issue}"
+    return tests, index
+
+
+def load_reviewed_manifest(root: Path, source: Path, event: Path, target: dict) -> tuple[dict, str, list[str]]:
     if not source.is_dir() or source.is_symlink():
-        raise ValueError(f"reviewed semantic evidence not supplied under .github/handoff-evidence/issue-{issue}")
+        raise ValueError(f"reviewed semantic evidence not supplied under {source.relative_to(root)}")
     manifest = read_json(source / "manifest.json")
     if manifest.get("schema_version") != 1:
         raise ValueError("unsupported reviewed evidence manifest")
-    expected = {"repository": repository, "issue_number": issue, "pull_request_number": pr,
-                "base_ref": base_ref, "head_ref": (json.loads(event.read_text())["pull_request"]["head"]["ref"])}
+    expected = {**target, "head_ref": json.loads(event.read_text())["pull_request"]["head"]["ref"]}
     if any(manifest.get(key) != val for key, val in expected.items()):
         raise ValueError("reviewed evidence manifest targets a different PR")
-    profile = manifest.get("evidence_profile")
-    history = manifest.get("audit_history")
-    if profile not in {"light", "standard", "critical"} or history not in {
-        "verified-no-rejection", "previous-rejection",
-    }:
+    if (manifest.get("evidence_profile") not in {"light", "standard", "critical"}
+            or manifest.get("audit_history") not in {"verified-no-rejection", "previous-rejection"}):
         raise ValueError("risk profile or verified audit history is missing")
     for key in ("risk_justification", "audit_history_evidence"):
         if not isinstance(manifest.get(key), str) or len(manifest[key].strip()) < 20:
@@ -163,19 +143,20 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     start = manifest.get("work_item_start_sha")
     if not isinstance(start, str) or not SHA.fullmatch(start):
         raise ValueError("invalid work item starting commit")
-    git(root, "merge-base", "--is-ancestor", start, head)
-    changed = git(root, "diff", "--name-only", "--no-renames", start, head).splitlines()
+    git(root, "merge-base", "--is-ancestor", start, target["head_sha"])
+    changed = git(root, "diff", "--name-only", "--no-renames", start, target["head_sha"]).splitlines()
     if not changed:
         raise ValueError("empty material diff cannot be certified")
-    hashes = manifest.get("artifact_sha256")
-    if not isinstance(hashes, dict) or not set(hashes).issubset(ALLOWED_REPORTS | {"reviewed-closure.json"}):
-        raise ValueError("reviewed artifact allowlist invalid")
+    return manifest, start, changed
+
+
+def required_reviewed_reports(manifest: dict, changed: list[str]) -> tuple[set[str], bool]:
     needed = {"reviewed-closure.json"}
-    if profile == "standard":
+    if manifest["evidence_profile"] == "standard":
         needed.add("standard-evidence.json")
-    elif profile == "critical":
+    elif manifest["evidence_profile"] == "critical":
         needed.update({"requirement-attack-matrix.json", "risk-saturation.json", "inherited-controls.json"})
-    if history == "previous-rejection":
+    if manifest["audit_history"] == "previous-rejection":
         needed.update({"audit-remediation.json", "audit-source-result.json", "learning-closure.json",
                        "audit-escape-closure.json", "previous-audit-escape-closure.json"})
     if manifest.get("remediation_mode") in {"systemic-remediation", "mixed-remediation"}:
@@ -184,13 +165,12 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     touched_tests = any("test" in path.lower() or path.endswith((".cy.ts", ".spec.ts")) for path in changed)
     if touched_code or touched_tests:
         needed.add("codebase-grounding.json")
-    if not needed.issubset(hashes):
-        raise ValueError(f"missing required reviewed reports: {sorted(needed - set(hashes))}")
-    binding = manifest.get("test_bindings")
+    return needed, touched_code
+
+
+def validate_test_bindings(binding: object, closure: dict, tests: dict) -> None:
     if not isinstance(binding, dict):
         raise ValueError("reviewed test bindings are required")
-    reviewed = verified_source(root, source, "reviewed-closure.json", hashes)
-    closure = merge_closure(starter, reviewed)
     covered = {rid for item in closure["obligations"] if item["disposition"] == "covered"
                for rid in item["requirement_ids"]}
     if set(binding) != covered:
@@ -203,10 +183,43 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
                 raise ValueError(f"missing or duplicate {kind} controls for {requirement}")
             if any(tests.get(name) != "passed" for name in names):
                 raise ValueError(f"unreached/skipped/nonpassing {kind} test for {requirement}")
-    # All semantic approvals come from reviewed files, never from the JUnit count.
-    staged = {}
-    for name in sorted(set(hashes) - {"reviewed-closure.json"}):
-        staged[name] = bind_identity(verified_source(root, source, name, hashes), head, start)
+        if set(controls["positive"]) & set(controls["negative"]):
+            raise ValueError(f"positive and negative controls are not distinct for {requirement}")
+
+
+def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
+    from prepare_actions_handoff import check_checkout, read_event
+
+    repository, pr, issue, head, base = read_event(event, base_ref)
+    check_checkout(root, head)
+    identity = read_json(out / "handoff-preflight.json").get("identity") or {}
+    expected = {"repository": repository, "issue_number": issue,
+                "pull_request_number": pr, "material_head_sha": head, "base_sha": base}
+    if any(identity.get(key) != val for key, val in expected.items()):
+        raise ValueError("preflight identity differs from the exact PR material")
+    tests, _ = collect_exact_tests(out, head)
+    audit = out / ".audit" / "entregar-issue"
+    starter = read_json(audit / "requirement-closure.json")
+    write_json(out / "semantic-evidence-candidates.json", {
+        "schema_version": 1, "subject_sha": head,
+        "obligations": [{"id": entry["id"], "candidate_key": entry["candidate_key"],
+                         "source_text": entry["source_text"]} for entry in starter["obligations"]],
+        "test_candidates": len(tests), "mapping": "UNKNOWN",
+    })
+    source = root / ".github" / "handoff-evidence" / f"issue-{issue}"
+    target = {"repository": repository, "issue_number": issue, "pull_request_number": pr,
+              "base_ref": base_ref, "head_sha": head}
+    manifest, start, changed = load_reviewed_manifest(root, source, event, target)
+    hashes = manifest.get("artifact_sha256")
+    if not isinstance(hashes, dict) or not set(hashes).issubset(ALLOWED_REPORTS | {"reviewed-closure.json"}):
+        raise ValueError("reviewed artifact allowlist invalid")
+    needed, touched_code = required_reviewed_reports(manifest, changed)
+    if not needed.issubset(hashes):
+        raise ValueError(f"missing required reviewed reports: {sorted(needed - set(hashes))}")
+    closure = merge_closure(starter, verified_source(root, source, "reviewed-closure.json", hashes))
+    validate_test_bindings(manifest.get("test_bindings"), closure, tests)
+    staged = {name: bind_identity(verified_source(root, source, name, hashes), head, start)
+              for name in sorted(set(hashes) - {"reviewed-closure.json"})}
     write_json(audit / "requirement-closure.json", closure)
     for name, report in staged.items():
         write_json(audit / name, report)
@@ -216,15 +229,16 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
                    "--out", str(audit / "code-growth.json")]
         subprocess.run(command, check=True)
     inputs = {"subject_sha": head, "work_item_start_sha": start, "base_ref": base_ref,
-              "head_ref": manifest["head_ref"], "evidence_profile": profile,
-              "audit_history": history}
+              "head_ref": manifest["head_ref"], "evidence_profile": manifest["evidence_profile"],
+              "audit_history": manifest["audit_history"]}
     if "remediation_mode" in manifest:
         inputs["remediation_mode"] = manifest["remediation_mode"]
     write_json(out / "certification-inputs.json", inputs)
     write_json(out / "handoff-producer-status.json", {
         "status": "staged-for-independent-validation", "subject_sha": head,
         "source": f".github/handoff-evidence/issue-{issue}", "reports": sorted(staged),
-        "reviewed_test_bindings": len(binding), "warning": "Neither JUnit nor this producer proves semantic equivalence; official validators and independent audit remain mandatory.",
+        "reviewed_test_bindings": len(manifest["test_bindings"]),
+        "warning": "JUnit and producer cannot prove semantic equivalence; official validation and independent audit are mandatory.",
     })
 
 
