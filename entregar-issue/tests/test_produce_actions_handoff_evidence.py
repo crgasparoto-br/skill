@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -142,6 +143,36 @@ def test_missing_reviewed_evidence_is_blocked_with_candidate_inventory(tmp_path,
     assert inventory["mapping"] == "UNKNOWN"
     assert inventory["obligations"][0]["candidate_key"] == "c" * 64
     assert not (out / "certification-inputs.json").exists()
+
+
+def test_missing_review_is_factual_collection_success_not_certification(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(SCRIPTS))
+    root, out, event, _, head = fixture(tmp_path, dossier=False)
+    monkeypatch.setattr(sys, "argv", [
+        "producer", "--root", str(root), "--out", str(out),
+        "--event", str(event), "--base-ref", "develop",
+    ])
+    assert producer.main() == 0
+    receipt = json.loads((out / "handoff-producer-status.json").read_text())
+    worklist = json.loads((out / "evidence-review-worklist.json").read_text())
+    assert receipt["status"] == "awaiting-reviewed-evidence"
+    assert worklist["subject_sha"] == head
+    assert worklist["semantic_control_mapping"] == "UNKNOWN"
+    assert worklist["pending_obligations"][0]["disposition"] == "pending-review"
+    assert not (out / "certification-inputs.json").exists()
+
+
+def test_invalid_reviewed_inputs_fail_collection_not_just_certification(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(SCRIPTS))
+    root, out, event, source, _ = fixture(tmp_path)
+    put(source / "reviewed-closure.json", {"schema_version": 1})
+    monkeypatch.setattr(sys, "argv", [
+        "producer", "--root", str(root), "--out", str(out),
+        "--event", str(event), "--base-ref", "develop",
+    ])
+    assert producer.main() == 2
+    assert json.loads((out / "handoff-producer-status.json").read_text())[
+        "status"] == "blocked-invalid-input"
 
 
 def test_skipped_test_is_not_a_control(tmp_path, monkeypatch):
