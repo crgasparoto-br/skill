@@ -69,6 +69,15 @@ def test_rejects_false_approval(mutate, reason):
         verify(data)
 
 
+def test_clean_audit_can_approve_no_findings_with_complete_contract():
+    data = fixture()
+    review = data[1][0]
+    contract = json.loads(review["body"].split(":", 1)[1])
+    contract.update(finding_ids=[], verified_finding_ids=[], accepted_exclusions=[])
+    review["body"] = "SOLVERIT_AUDIT_JSON:" + json.dumps(contract)
+    assert "pullrequestreview-1" in verify(data)
+
+
 def test_incomplete_or_overclaimed_audit_contract_rejected():
     for change in [
         {"verified_finding_ids": ["A-112-01"]},

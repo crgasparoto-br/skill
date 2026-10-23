@@ -46,7 +46,7 @@ def reviewed_contract(review: dict, head: str) -> bool:
             or not contract["audit_round"].strip()):
         return False
     try:
-        findings = exact_set(contract.get("finding_ids"), "finding_ids")
+        findings = exact_set(contract.get("finding_ids"), "finding_ids", allow_empty=True)
         verified = exact_set(contract.get("verified_finding_ids"), "verified_finding_ids",
                              allow_empty=True)
         excluded = exact_set(contract.get("accepted_exclusions"), "accepted_exclusions",
