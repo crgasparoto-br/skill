@@ -179,6 +179,29 @@ def test_invalid_reviewed_inputs_fail_collection_not_just_certification(tmp_path
         "status"] == "blocked-invalid-input"
 
 
+def test_incomplete_review_validates_keys_without_claiming_approval(tmp_path):
+    root, out, _, source, _ = fixture(tmp_path)
+    starter = json.loads(
+        (out / ".audit/entregar-issue/requirement-closure.json").read_text())
+    manifest = json.loads((source / "manifest.json").read_text())
+    manifest.update(review_state="incomplete", artifact_sha256={}, test_bindings={})
+    put(source / "manifest.json", manifest)
+    record = json.loads((source / "reviewed-closure.json").read_text())
+    record["obligations"]["c" * 64]["disposition"] = "pending"
+    put(source / "reviewed-closure.json", record)
+    result = producer.validate_incomplete_review(source, starter)
+    assert result["pending_obligations"] == 1
+    assert result["canonical_candidate_keys_verified"] is True
+    record["obligations"]["c" * 64]["disposition"] = "covered"
+    put(source / "reviewed-closure.json", record)
+    with pytest.raises(ValueError, match="must not claim semantic coverage"):
+        producer.validate_incomplete_review(source, starter)
+    record["obligations"] = {"d" * 64: record["obligations"].pop("c" * 64)}
+    put(source / "reviewed-closure.json", record)
+    with pytest.raises(ValueError, match="differs from canonical"):
+        producer.validate_incomplete_review(source, starter)
+
+
 def test_incomplete_review_manifest_is_not_mistaken_for_certified_evidence(tmp_path, monkeypatch):
     root, _, event, source, head = fixture(tmp_path)
     manifest = json.loads((source / "manifest.json").read_text())
