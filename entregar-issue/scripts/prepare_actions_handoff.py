@@ -166,9 +166,9 @@ def _record_status(out: Path, status: str, reason: str, subject_sha: str) -> Non
     })
 
 
-def _resolve_certification_requirements(out: Path, args: argparse.Namespace,
-                                        repo: str, pr: int, issue: int, head: str, base: str):
-    """Separate identity/evidence validation from the certificate invocation."""
+def _verify_exact_starter(out: Path, repo: str, pr: int, issue: int,
+                          head: str, base: str) -> None:
+    """Verify GitHub issue, PR and immutable test-run provenance."""
     preflight = _load_record(out / "handoff-preflight.json")
     identity = preflight.get("identity")
     expected = {"repository": repo, "issue_number": issue, "pull_request_number": pr,
@@ -185,6 +185,9 @@ def _resolve_certification_requirements(out: Path, args: argparse.Namespace,
             or not (out / "pytest-exact-head.xml").is_file()):
         fail("exact-SHA test execution, log digest or JUnit evidence is invalid")
 
+
+def _read_certification_inputs(out: Path, args: argparse.Namespace, head: str):
+    """Reject stale, ambiguous, or unreachable work-item inputs."""
     inputs_path = out / "certification-inputs.json"
     if not inputs_path.is_file():
         fail("certification-inputs.json absent: semantic closures have not been supplied")
@@ -214,6 +217,14 @@ def _resolve_certification_requirements(out: Path, args: argparse.Namespace,
     if not changed:
         fail("cannot certify an issue with an empty or unverified material diff")
 
+    return inputs, profile, start, changed
+
+
+def _resolve_certification_requirements(out: Path, args: argparse.Namespace,
+                                        repo: str, pr: int, issue: int, head: str, base: str):
+    """Resolve only explicitly evidenced controls for the material diff."""
+    _verify_exact_starter(out, repo, pr, issue, head, base)
+    inputs, profile, start, changed = _read_certification_inputs(out, args, head)
     required = {"specification_snapshot": "specification-snapshot.json",
                 "requirement_closure": "requirement-closure.json"}
     if profile == "standard":
