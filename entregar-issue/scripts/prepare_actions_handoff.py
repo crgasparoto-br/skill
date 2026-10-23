@@ -49,7 +49,7 @@ def read_event(path: Path, base_ref: str = "develop") -> tuple[str, int, int, st
         # A canonical issue in the title outranks incidental mentions in a PR
         # description (e.g. a related branch-ruleset issue). Explicit closing
         # references to other issues are still contradictory and must fail.
-        closed = set(re.findall(r"\\b(?:fixes|closes|resolves)\\s*#(\\d+)\\b",
+        closed = set(re.findall(r"\b(?:fixes|closes|resolves)\s*#(\d+)\b",
                                 "\n".join((title, description)), re.IGNORECASE))
         if closed - {trailing.group(1)}:
             fail("closing reference conflicts with primary issue in PR title")
