@@ -259,7 +259,8 @@ def visible_lines(lines):
         # Root/quote lines indented by four spaces are code, not findings.
         # List-contained code is handled separately by list_code_state.
         if not in_list and len(candidate) - len(candidate.lstrip(" ")) >= 4:
-            paragraph_open = False
+            # Four-space indentation cannot start a code block during a
+            # paragraph; preserve that state for subsequent type-7 HTML.
             continue
         marker = FENCE_MARKER.match(candidate)
         if marker:
