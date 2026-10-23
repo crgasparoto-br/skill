@@ -919,3 +919,18 @@ def test_three_space_plain_record_is_visible_and_still_rejected(identifier):
     sections = "## Exemplos\n   " + identifier + " — registro real\n"
     errors = module.validate(report("APROVADA", sections=sections))
     assert any(identifier in error for error in errors), errors
+
+
+
+@pytest.mark.parametrize("identifier", ["A-901", "RISK-901", "LIM-901"])
+def test_type7_html_after_indented_paragraph_continuation_stays_visible(identifier):
+    # Four-space indentation cannot interrupt an existing CommonMark paragraph.
+    sections = (
+        "## Exemplos\n"
+        "Paragrafo aberto\n"
+        "    continuacao da mesma frase\n"
+        "<audit-example>\n"
+        + f"### {identifier} — registro externo realmente visivel\n"
+    )
+    errors = module.validate(report("APROVADA", sections=sections))
+    assert any(identifier in error for error in errors), errors
