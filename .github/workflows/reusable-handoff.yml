@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   evidence:
-    name: Capture and gate semantic evidence (exact SHA)
+    name: Collect exact-SHA technical evidence
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == inputs.base-ref }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -160,16 +160,6 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Require full certification before handoff
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.certificate.outputs.exit_code }}" != "0" ]; then
-            echo "::error::Evidence is not certified; review handoff-certification-status.json"
-            exit 1
-          fi
-          echo "Certificate created but NOT published; trusted publisher remains mandatory."
-
       - name: Restore official Skill checkout for Actions post-job cleanup
         if: always()
         shell: bash
@@ -177,3 +167,32 @@ jobs:
           if [ -n "${HANDOFF_TOOLING:-}" ] && [ -d "$HANDOFF_TOOLING" ] && [ ! -e .handoff-tooling ]; then
             mv -- "$HANDOFF_TOOLING" .handoff-tooling
           fi
+
+  certification:
+    name: Require certified semantic handoff (exact SHA)
+    needs: evidence
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == inputs.base-ref }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download exact-SHA technical evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: handoff-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/handoff-certification
+
+      - name: Checkout trusted certification gate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.tooling-repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .trusted-handoff-gate
+          persist-credentials: false
+
+      - name: Require authentic certified evidence (not merely passing tests)
+        env:
+          BASE_REF: ${{ inputs.base-ref }}
+        run: |
+          python .trusted-handoff-gate/entregar-issue/scripts/require_actions_handoff_certificate.py \
+            --event "$GITHUB_EVENT_PATH" --base-ref "$BASE_REF" \
+            --evidence-dir "$RUNNER_TEMP/handoff-certification"
