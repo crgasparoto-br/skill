@@ -187,6 +187,24 @@ def normalize_list_record(line, candidate, in_list):
     return line
 
 
+def list_code_state(line, in_list, current_indent, preceding_blank, active_code):
+    """Distinguish code in a list from a visible nested list item."""
+    source_indent = len(line) - len(line.lstrip(" "))
+    is_code = (
+        in_list and source_indent >= current_indent + 4
+        and (preceding_blank or active_code)
+    )
+    blank = not line.strip()
+    return is_code, blank, is_code or (active_code and blank)
+
+
+def consume_html_comment(candidate, active):
+    """Keep an HTML comment inert, preserving its closing delimiter."""
+    if active:
+        return True, "-->" not in candidate
+    return False, False
+
+
 def visible_lines(lines):
     """Ignore inert Markdown without letting a nested fence hide visible findings."""
     output = []
@@ -205,17 +223,9 @@ def visible_lines(lines):
         candidate, quote_depth, current_indent, in_list = line_context(
             line, list_indent, previous_quote_depth,
         )
-        # After a blank line, four extra spaces inside a list mark inert code.
-        # A nested marker without the blank remains visible Markdown content.
-        source_indent = len(line) - len(line.lstrip(" "))
-        list_code = (
-            in_list and source_indent >= current_indent + 4
-            and (preceding_blank or indented_list_code)
+        list_code, preceding_blank, indented_list_code = list_code_state(
+            line, in_list, current_indent, preceding_blank, indented_list_code,
         )
-        preceding_blank = not line.strip()
-        indented_list_code = list_code or (indented_list_code and preceding_blank)
-        if list_code:
-            continue
         # A quote/list fence closes when its container ends. A bare following
         # heading is then visible; it must not be swallowed as an example.
         if fence and (quote_depth != fence_quote or (fence_list and not in_list and candidate.strip())):
@@ -224,9 +234,8 @@ def visible_lines(lines):
             html_comment = False
         list_indent = current_indent
         previous_quote_depth = quote_depth
-        if html_comment:
-            if "-->" in candidate:
-                html_comment = False
+        skip_comment, html_comment = consume_html_comment(candidate, html_comment)
+        if list_code or skip_comment:
             continue
         if fence is None:
             inert, raw_state = raw_html_line(candidate, raw_state, quote_depth, in_list, current_indent)
