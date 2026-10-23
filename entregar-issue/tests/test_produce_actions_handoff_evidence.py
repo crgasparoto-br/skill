@@ -318,5 +318,17 @@ def test_approved_review_cannot_stage_pending_obligations():
 def test_approved_review_can_explicitly_exclude_nonapplicable_obligation():
     producer.require_complete_semantic_review({"obligations": [
         {"id": "OBL-001", "disposition": "covered"},
-        {"id": "OBL-002", "disposition": "not-applicable"},
+        {"id": "OBL-002", "disposition": "not-applicable",
+         "rationale": "The archived behavior has no active consumer or required contract."},
     ]})
+
+
+@pytest.mark.parametrize("rationale", ["", "   ", None])
+def test_approved_review_rejects_unjustified_nonapplicable_obligation(rationale):
+    closure = {"obligations": [
+        {"id": "OBL-001", "disposition": "covered"},
+        {"id": "OBL-002", "disposition": "not-applicable", "rationale": rationale},
+    ]}
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match=r"unjustified not-applicable.*OBL-002"):
+        producer.require_complete_semantic_review(closure)
