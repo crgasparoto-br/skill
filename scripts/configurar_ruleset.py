@@ -55,6 +55,16 @@ def plan(current: dict, branch: str, ruleset_id: int,
     if not isinstance(current.get("bypass_actors"), list):
         raise ValueError("bypass actor visibility is required before changing rules")
     rules = copy.deepcopy(current.get("rules") or [])
+    review_rules = [r for r in rules if r.get("type") == "pull_request"]
+    if len(review_rules) != 1:
+        raise ValueError("one existing PR review rule is required")
+    review_parameters = review_rules[0].get("parameters")
+    if not isinstance(review_parameters, dict):
+        raise ValueError("PR review parameters unavailable")
+    current_approvals = review_parameters.get("required_approving_review_count")
+    if type(current_approvals) is not int or current_approvals < 0:
+        raise ValueError("current PR approval count is invalid")
+    review_parameters["required_approving_review_count"] = max(1, current_approvals)
     checks = [r for r in rules if r.get("type") == "required_status_checks"]
     if len(checks) != 1:
         raise ValueError("expected exactly one required-status-checks rule")

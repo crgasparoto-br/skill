@@ -157,3 +157,7 @@ pela existência de script, commit ou check verde.
 Obrigatório validar uma PR negativa (auditoria ausente ou CI falha => merge
 bloqueado) e uma positiva (aprovação independente e checks verdes => permitido).
 Registrar read-back de ambos os rulesets e seus bypasses, e rollback.
+
+O utilitário preserva qualquer check já requerido e eleva `required_approving_review_count`
+de zero para **um** na regra de PR existente, sem reduzir um limite mais estrito.
+Antes de aplicar, confirmar o bypass real e a identidade da integração emissora.

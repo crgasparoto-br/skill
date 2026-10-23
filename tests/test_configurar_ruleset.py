@@ -199,3 +199,16 @@ def test_admin_dry_run_cannot_drop_existing_check(monkeypatch):
     ])
     admin.main()
     assert current["rules"][-1]["parameters"]["required_status_checks"][0]["context"] == "Pre-existing"
+
+
+def test_ruleset_raises_zero_review_approval_to_one_and_preserves_stronger_policy():
+    current = ruleset()
+    current["rules"][2]["parameters"]["required_approving_review_count"] = 0
+    assert admin.plan(current, "develop", 24821474, [CHECK], 15368)["rules"][2]["parameters"][
+        "required_approving_review_count"
+    ] == 1
+    current["rules"][2]["parameters"]["required_approving_review_count"] = 2
+    assert admin.plan(current, "develop", 24821474, [CHECK], 15368)["rules"][2]["parameters"][
+        "required_approving_review_count"
+    ] == 2
+    assert current["rules"][2]["parameters"]["required_approving_review_count"] == 2
