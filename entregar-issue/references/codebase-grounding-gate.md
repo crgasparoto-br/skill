@@ -1,5 +1,17 @@
 # Gate de ancoragem no codigo
 
+## Quando ler este arquivo
+
+Consultar sempre que codigo, testes ou configuracao de descoberta forem alterados, inclusive diffs apenas de testes. Aplicar a validacao no SHA exato, sem presumir equivalencia semantica dos oraculos.
+
+## Índice
+
+- [Objetivo](#objetivo)
+- [Quando aplicar](#quando-aplicar)
+- [Controles](#controles)
+- [Validacao deterministica](#validacao-deterministica)
+- [Limites conhecidos](#limites-conhecidos)
+
 ## Objetivo
 
 Impedir que a entrega crie o que ja existe, use o que nao existe ou deixe para tras o que substituiu. Toda afirmacao sobre o repositorio deve apontar para bytes do `material_head_sha`; memoria do modelo, nome plausivel e documentacao externa nao sao evidencia.
