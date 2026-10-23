@@ -92,7 +92,7 @@ Ler somente quando aplicavel:
 - melhoria de Skill: `references/controller-skill-improvement.md`;
 - generalizacao de aprendizado apos rejeicao: `references/learning-generalization.md`;
 - certificado de handoff independente: `references/handoff-certificate.md`;
-- runtime `connector-only` ou recuperacao de certificado ausente/stale: `references/connector-only-handoff.md`;
+- handoff: `references/connector-only-handoff.md`, `references/github-actions-evidence.md`;
 - checkout local indisponivel com escrita GitHub por conector: `references/github-connector-write-fallback.md`;
 - artefato JSON grande, limite de payload do connector ou publicacao por blobs: `references/large-artifact-transport.md`;
 - finding independente contra candidato antes aprovado internamente: `references/audit-escape-closure.md`;
