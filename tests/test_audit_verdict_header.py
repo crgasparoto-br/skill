@@ -1,10 +1,10 @@
 """Regression tests for the audit report verdict and evidence triage."""
 import importlib.util
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
-import subprocess
-import sys
 
 SCRIPT = Path(__file__).resolve().parents[1] / "auditar-issue/scripts/validate_verdict_header.py"
 spec = importlib.util.spec_from_file_location("verdict_header", SCRIPT)
