@@ -7,11 +7,14 @@ import os
 import re
 import sys
 import urllib.error
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "entregar-issue" / "scripts"))
 from verify_github_completion import audit_contract, github
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 REPO = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
