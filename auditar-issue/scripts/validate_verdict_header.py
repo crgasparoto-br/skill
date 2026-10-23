@@ -108,6 +108,14 @@ HTML_BLOCK_OPEN = re.compile(
     r"^ {0,3}</?(?:" + "|".join(HTML_BLOCK_TAGS) + r")(?=[ \t/>])",
     re.IGNORECASE,
 )
+# CommonMark type 7: a complete opening/closing HTML tag on its own line
+# starts a raw block terminated by a blank line, including custom elements.
+HTML_BLOCK_GENERIC = re.compile(
+    r"^ {0,3}</?[A-Za-z][A-Za-z0-9-]*"
+    r"(?:[ \t]+[A-Za-z_:][\w:.-]*(?:[ \t]*=[ \t]*(?:\"[^\"]*\"|'[^']*'|[^ \t=<>\x60'\"]+))?)*"
+    r"[ \t]*/?>[ \t]*$"
+)
+
 # Only an evidence-shaped identifier at the start of a visible record counts.
 # Inline emphasis/code may decorate the ID, but cannot conceal it.
 VISIBLE_RECORD_ID = re.compile(
@@ -164,7 +172,7 @@ def raw_html_line(candidate, state, quote_depth, in_list, list_indent):
         if re.search(rf"</{tag}\s*>", candidate, re.IGNORECASE):
             return True, (None, 0, 0)
         return True, (tag, quote_depth, list_indent if in_list else 0)
-    if HTML_BLOCK_OPEN.match(candidate):
+    if HTML_BLOCK_OPEN.match(candidate) or HTML_BLOCK_GENERIC.match(candidate):
         return True, ("html-block", quote_depth, list_indent if in_list else 0)
     return False, (None, 0, 0)
 
@@ -181,10 +189,23 @@ def visible_lines(lines):
     comment_quote = 0
     comment_list = 0
     raw_state = (None, 0, 0)
+    preceding_blank = False
+    indented_list_code = False
     for line in lines:
         candidate, quote_depth, current_indent, in_list = line_context(
             line, list_indent, previous_quote_depth,
         )
+        # After a blank line, four extra spaces inside a list mark inert code.
+        # A nested marker without the blank remains visible Markdown content.
+        source_indent = len(line) - len(line.lstrip(" "))
+        list_code = (
+            in_list and source_indent >= current_indent + 4
+            and (preceding_blank or indented_list_code)
+        )
+        preceding_blank = not line.strip()
+        indented_list_code = list_code or (indented_list_code and preceding_blank)
+        if list_code:
+            continue
         # A quote/list fence closes when its container ends. A bare following
         # heading is then visible; it must not be swallowed as an example.
         if fence and (quote_depth != fence_quote or (fence_list and not in_list and candidate.strip())):
@@ -224,7 +245,12 @@ def visible_lines(lines):
             continue
         # Preserve the list container across blank lines. A heading continuing
         # a list is never a canonical evidence record, even if indented <= 3.
-        if in_list and re.match(r"^ {0,3}#{1,6}(?:[ \t]+|$)", candidate):
+        if in_list and (
+            re.match(r"^ {0,3}#{1,6}(?:[ \t]+|$)", candidate)
+            or re.match(r"^[ \t]*(?:[-+*]|\d{1,9}[.)])[ \t]+", candidate)
+        ):
+            # Normalize only actual list containers, not four-space code blocks.
+            # Otherwise an indented nested A/RISK/LIM record evades triage.
             output.append("- " + candidate.lstrip())
         else:
             output.append(line)
