@@ -141,9 +141,172 @@ def record_tests(args: argparse.Namespace) -> None:
     print(f"Recorded exact-SHA test execution, exit={args.exit_code}; semantic mapping UNKNOWN")
 
 
+
+def _audit_path(out: Path, filename: str) -> Path:
+    """Resolve a declared evidence filename inside the local, ephemeral audit folder."""
+    if not isinstance(filename, str) or not re.fullmatch(r"[a-z][a-z0-9-]*\.json", filename):
+        fail("evidence inputs require a plain JSON filename, not a path")
+    path = out / ".audit" / "entregar-issue" / filename
+    if path.is_symlink() or not path.is_file() or not path.stat().st_size:
+        fail(f"required evidence is missing or invalid: {filename}")
+    return path
+
+
+def _load_record(path: Path) -> dict:
+    item = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(item, dict):
+        fail(f"expected a JSON object: {path.name}")
+    return item
+
+
+def _record_status(out: Path, status: str, reason: str, subject_sha: str) -> None:
+    write_json(out / "handoff-certification-status.json", {
+        "schema_version": 1, "status": status, "reason": reason, "material_head_sha": subject_sha,
+        "certificate_published": False, "terminal_ready": False,
+    })
+
+
+def certify(args: argparse.Namespace) -> None:
+    """Certify only authenticated, complete evidence; NEVER perform a repository write."""
+    if args.event is None:
+        fail("certify phase requires --event")
+    repo, pr, issue, head, base = read_event(args.event)
+    check_checkout(args.root, head)
+    out = args.out.resolve()
+    audit = out / ".audit" / "entregar-issue"
+    _record_status(out, "blocked", "unverified-requirement-controls", head)
+    preflight = _load_record(out / "handoff-preflight.json")
+    identity = preflight.get("identity")
+    expected = {"repository": repo, "issue_number": issue, "pull_request_number": pr,
+                "material_head_sha": head, "base_sha": base}
+    if not isinstance(identity, dict) or any(identity.get(k) != v for k, v in expected.items()):
+        fail("the evidence starter does not match the exact current PR identity")
+
+    execution = _load_record(out / "test-execution-facts.json")
+    facts = execution.get("execution") or {}
+    log = out / "pytest-exact-head.log"
+    if (execution.get("subject_sha") != head or facts.get("exit_code") != 0
+            or not log.is_file() or not log.stat().st_size
+            or hashlib.sha256(log.read_bytes()).hexdigest() != facts.get("log_sha256")
+            or not (out / "pytest-exact-head.xml").is_file()):
+        fail("exact-SHA test execution, log digest or JUnit evidence is invalid")
+
+    inputs_path = out / "certification-inputs.json"
+    if not inputs_path.is_file():
+        fail("certification-inputs.json absent: semantic closures have not been supplied")
+    inputs = _load_record(inputs_path)
+    if inputs.get("subject_sha") != head:
+        fail("certification inputs do not match the material head SHA")
+    profile = inputs.get("evidence_profile")
+    if profile not in {"light", "standard", "critical"}:
+        fail("explicit valid evidence_profile required; never infer risk from CI success")
+    start = inputs.get("work_item_start_sha")
+    if not isinstance(start, str) or not SHA.fullmatch(start):
+        fail("valid, recorded work_item_start_sha required")
+    if inputs.get("audit_history") not in {"verified-no-rejection", "previous-rejection"}:
+        fail("verified audit history is required; absence must remain UNKNOWN")
+    if not isinstance(inputs.get("head_ref"), str) or not inputs["head_ref"].strip():
+        fail("missing head_ref binding")
+    if inputs.get("base_ref") != "develop":
+        fail("base_ref mismatch")
+
+    gitcheck = subprocess.run(["git", "merge-base", "--is-ancestor", start, head], cwd=args.root,
+                              capture_output=True, check=False)
+    if gitcheck.returncode != 0:
+        fail("work_item_start_sha must be a reachable ancestor of the exact material SHA")
+    diff = subprocess.run(["git", "diff", "--name-only", "--no-renames", start, head],
+                          cwd=args.root, capture_output=True, text=True, check=True)
+    changed = sorted({line.strip() for line in diff.stdout.splitlines() if line.strip()})
+    if not changed:
+        fail("cannot certify an issue with an empty or unverified material diff")
+
+    required = {"specification_snapshot": "specification-snapshot.json",
+                "requirement_closure": "requirement-closure.json"}
+    if profile == "standard":
+        required["standard_evidence"] = "standard-evidence.json"
+    if profile == "critical":
+        required.update({"attack_matrix": "requirement-attack-matrix.json",
+                         "risk_saturation": "risk-saturation.json",
+                         "inherited_controls": "inherited-controls.json"})
+    if inputs.get("audit_history") == "previous-rejection":
+        required.update({"audit_remediation": "audit-remediation.json",
+                         "audit_source_result": "audit-source-result.json",
+                         "learning_closure": "learning-closure.json",
+                         "audit_escape_closure": "audit-escape-closure.json",
+                         "previous_audit_escape_closure": "previous-audit-escape-closure.json"})
+    touched_code = any(path.endswith((".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".sh")) for path in changed)
+    touched_tests = any("test" in path.lower() or path.endswith((".cy.ts", ".spec.ts")) for path in changed)
+    if touched_code or touched_tests:
+        required["codebase_grounding"] = "codebase-grounding.json"
+    if touched_code:
+        required["code_growth"] = "code-growth.json"
+
+    resolved = {key: _audit_path(out, filename) for key, filename in required.items()}
+    for item in resolved.values():
+        record = _load_record(item)
+        if record.get("subject_sha") not in (None, head) and record.get("head_sha") not in (None, head):
+            fail(f"stale evidence report: {item.name}")
+
+    builder = [
+        "--specification-snapshot", str(resolved["specification_snapshot"]),
+        "--repository", repo, "--issue-number", str(issue), "--work-item-kind", "pr",
+        "--work-item-number", str(pr), "--pull-request-number", str(pr),
+        "--work-item-start-sha", start, "--base-ref", "develop",
+        "--head-ref", inputs["head_ref"],
+        "--requirement-closure", str(resolved["requirement_closure"]),
+        "--evidence-profile", profile, "--head-sha", head, "--base-sha", base,
+        "--source-repository-root", str(args.root.resolve()),
+        "--out", str(audit / "handoff-ready.json"),
+    ]
+    for path in changed:
+        builder.extend(["--issue-changed-path", path])
+    switches = {
+        "standard_evidence": "--standard-evidence", "attack_matrix": "--attack-matrix",
+        "risk_saturation": "--risk-saturation", "inherited_controls": "--inherited-controls",
+        "codebase_grounding": "--codebase-grounding", "code_growth": "--code-growth",
+        "audit_remediation": "--audit-remediation", "audit_source_result": "--audit-source-result",
+        "learning_closure": "--learning-closure", "audit_escape_closure": "--audit-escape-closure",
+        "previous_audit_escape_closure": "--previous-audit-escape-closure",
+    }
+    for key, option in switches.items():
+        if key in resolved and key != "previous_audit_escape_closure":
+            builder.extend([option, str(resolved[key])])
+    if inputs["audit_history"] == "previous-rejection":
+        builder.extend(["--previous-independent-rejection", "--previous-audit-escape-closure",
+                        str(resolved["previous_audit_escape_closure"])])
+    if profile == "critical" and (audit / "evidence-provenance.json").is_file():
+        builder.extend(["--evidence-provenance", str(_audit_path(out, "evidence-provenance.json"))])
+    if "remediation_mode" in inputs:
+        if inputs["remediation_mode"] not in {"targeted-remediation", "systemic-remediation", "mixed-remediation"}:
+            fail("invalid remediation mode")
+        builder.extend(["--remediation-mode", inputs["remediation_mode"]])
+    if inputs.get("remediation_mode") in {"systemic-remediation", "mixed-remediation"}:
+        builder.extend(["--previous-inherited-controls",
+                        str(_audit_path(out, "previous-inherited-controls.json"))])
+
+    try:
+        run_script("build_handoff_certificate.py", *builder)
+        run_script("validate_handoff_certificate.py",
+                   "--certificate", str(audit / "handoff-ready.json"),
+                   "--artifacts-dir", str(audit),
+                   "--head-sha", head, "--base-sha", base,
+                   "--repository", repo, "--issue-number", str(issue),
+                   "--work-item-kind", "pr", "--work-item-number", str(pr),
+                   "--pull-request-number", str(pr),
+                   "--work-item-start-sha", start,
+                   "--base-ref", "develop", "--head-ref", inputs["head_ref"],
+                   *(arg for path in changed for arg in ("--issue-changed-path", path)),
+                   "--source-repository-root", str(args.root.resolve()))
+    except subprocess.CalledProcessError:
+        (audit / "handoff-ready.json").unlink(missing_ok=True)
+        raise
+    _record_status(out, "certificate-generated", "publication-and-terminal-guard-still-required", head)
+    print("CERTIFICATE GENERATED: publication is NOT authorized until prepublication and terminal guards pass")
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--phase", choices=("prepare", "record-tests"), required=True)
+    p.add_argument("--phase", choices=("prepare", "record-tests", "certify"), required=True)
     p.add_argument("--event", type=Path)
     p.add_argument("--root", type=Path, default=Path())
     p.add_argument("--out", type=Path, required=True)
@@ -154,9 +317,14 @@ def main() -> int:
             if a.event is None:
                 fail("prepare phase requires --event")
             prepare(a)
-        else:
+        elif a.phase == "record-tests":
             record_tests(a)
+        else:
+            certify(a)
     except (ValueError, OSError, subprocess.CalledProcessError, json.JSONDecodeError) as exc:
+        if a.phase == "certify":
+            _record_status(a.out.resolve(), "blocked", str(exc),
+                           (json.loads(a.event.read_text()).get("pull_request") or {}).get("head", {}).get("sha", "unknown") if a.event and a.event.is_file() else "unknown")
         print(f"BLOCK: {exc}", file=sys.stderr)
         return 2
     return 0
