@@ -113,6 +113,30 @@ def merge_closure(starter: dict, reviewed: dict) -> dict:
     return starter
 
 
+def require_complete_semantic_review(closure: dict) -> None:
+    """An approved dossier cannot silently retain pending obligation decisions.
+
+    This is a deterministic completeness guard only.  It does not establish
+    oracle quality, independence, or the authenticity of a claimed coverage.
+    """
+    unresolved = [item.get("id", "unknown") for item in closure["obligations"]
+                  if item.get("disposition") not in {"covered", "not-applicable"}]
+    if unresolved:
+        raise MissingReviewedEvidenceError(
+            f"reviewed semantic closure incomplete: {len(unresolved)} unresolved "
+            f"obligations ({', '.join(unresolved[:5])}); no certificate can be staged"
+        )
+    unjustified = [item.get("id", "unknown") for item in closure["obligations"]
+                   if item.get("disposition") == "not-applicable"
+                   and (not isinstance(item.get("rationale"), str)
+                        or not item["rationale"].strip())]
+    if unjustified:
+        raise MissingReviewedEvidenceError(
+            f"reviewed semantic closure has unjustified not-applicable "
+            f"obligations ({', '.join(unjustified[:5])}); no certificate can be staged"
+        )
+
+
 def validate_incomplete_review(source: Path, starter: dict) -> dict:
     """A draft may be inventoried, but cannot supply semantic approval."""
     manifest = read_json(source / "manifest.json")
@@ -338,6 +362,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     if not needed.issubset(hashes):
         raise ValueError(f"missing required reviewed reports: {sorted(needed - set(hashes))}")
     closure = merge_closure(starter, verified_source(root, source, "reviewed-closure.json", hashes))
+    require_complete_semantic_review(closure)
     validate_test_bindings(manifest.get("test_bindings"), closure, tests)
     staged = {name: bind_identity(verified_source(root, source, name, hashes), head, start)
               for name in sorted(set(hashes) - {"reviewed-closure.json"})}

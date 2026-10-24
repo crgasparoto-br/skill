@@ -3,9 +3,9 @@
   "review_state": "incomplete",
   "repository": "crgasparoto-br/skill",
   "issue_number": 112,
-  "pull_request_number": 113,
+  "pull_request_number": 118,
   "base_ref": "develop",
-  "head_ref": "feat/112-test-lifecycle-governance",
+  "head_ref": "fix/112-post-merge-certification-evidence",
   "work_item_start_sha": "8cf01341030de7762b98b73c6a19efde5ad71461",
   "evidence_profile": "critical",
   "risk_justification": "Governance changes executable validation of test deletion, dynamic discovery and independent audit; false semantic approval could permit loss of negative/regression controls.",
@@ -36,6 +36,13 @@
       "kind": "review-and-remediation-history",
       "uri": "https://github.com/crgasparoto-br/skill/pull/113#issuecomment-6352025888",
       "limitations": "Comments alone are not an immutable independent audit report"
+    },
+    {
+      "kind": "post-merge-remediation",
+      "uri": "https://github.com/crgasparoto-br/skill/pull/118",
+      "original_pull_request": 113,
+      "material_origin_sha": "418e5fcc312d90911fd8ec66e2e036b7bebdee43",
+      "limitations": "Original PR and release were merged without semantic certificate; this PR must produce a new exact-SHA certified package"
     }
   ],
   "pending_review": [

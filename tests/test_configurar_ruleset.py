@@ -118,9 +118,13 @@ def test_apply_refuses_stale_ruleset_before_any_write(monkeypatch):
 
     def fake_gh(endpoint, method="GET", payload=None):
         if "check-runs" in endpoint:
-            return {"total_count": 1, "check_runs": [
-                {"name": CHECK, "conclusion": "failure", "app": {"id": 15368}},
+            return {"total_count": 2, "check_runs": [
+                {"name": CHECK, "conclusion": "success", "app": {"id": 15368}},
+                {"name": "Verify independent audit (exact SHA)",
+                 "conclusion": "success", "app": {"id": 15368}},
             ]}
+        if "/contents/" in endpoint:
+            return {"type": "file", "sha": "a" * 40}
         if method == "PUT":
             writes.append(payload)
             pytest.fail("write must not occur after a stale-ruleset preflight")
@@ -131,7 +135,8 @@ def test_apply_refuses_stale_ruleset_before_any_write(monkeypatch):
     monkeypatch.setattr(sys, "argv", [
         "configurar_ruleset", "--repo", REPO, "--branch", "develop",
         "--ruleset-id", "24821474", "--sample-sha", "a" * 40,
-        "--check", CHECK, "--apply",
+        "--check", CHECK, "--check", "Verify independent audit (exact SHA)",
+        "--apply",
     ])
     with pytest.raises(ValueError, match="ruleset changed after preview"):
         admin.main()
@@ -146,3 +151,159 @@ def test_readback_rejects_bypass_drift():
                     bypass_actors=[{"actor_id": 1, "bypass_mode": "always"}])
     with pytest.raises(ValueError, match="bypass_actors"):
         admin.verify(before, observed, planned)
+
+
+def test_existing_required_checks_remain_mandatory():
+    current = ruleset()
+    current["rules"][-1]["parameters"]["required_status_checks"] = [
+        {"context": "Legacy integration gate", "integration_id": 5678},
+    ]
+    planned = admin.plan(current, "develop", 24821474, [CHECK], 15368)
+    assert planned["rules"][-1]["parameters"]["required_status_checks"] == [
+        {"context": "Legacy integration gate", "integration_id": 5678},
+        {"context": CHECK, "integration_id": 15368},
+    ]
+    assert current["rules"][-1]["parameters"]["required_status_checks"] == [
+        {"context": "Legacy integration gate", "integration_id": 5678},
+    ]
+    with pytest.raises(ValueError, match="origin differs"):
+        admin.plan(current, "develop", 24821474, ["Legacy integration gate"], 15368)
+
+
+def test_admin_apply_requires_independent_review_check(monkeypatch):
+    monkeypatch.setattr(admin, "gh", lambda *args, **kwargs: pytest.fail("unexpected GitHub access"))
+    monkeypatch.setattr(sys, "argv", [
+        "configurar_ruleset", "--repo", REPO, "--branch", "develop",
+        "--ruleset-id", "24821474", "--sample-sha", "a" * 40,
+        "--check", CHECK, "--apply",
+    ])
+    with pytest.raises(SystemExit, match="2"):
+        admin.main()
+
+
+def test_admin_dry_run_cannot_drop_existing_check(monkeypatch):
+    current = ruleset()
+    current["rules"][-1]["parameters"]["required_status_checks"] = [
+        {"context": "Pre-existing", "integration_id": 4321},
+    ]
+    def fake_gh(endpoint, method="GET", payload=None):
+        if "check-runs" in endpoint:
+            return {"total_count": 1, "check_runs": [
+                {"name": CHECK, "app": {"id": 15368}, "conclusion": "failure"},
+            ]}
+        assert method == "GET"
+        return current
+    monkeypatch.setattr(admin, "gh", fake_gh)
+    monkeypatch.setattr(sys, "argv", [
+        "configurar_ruleset", "--repo", REPO, "--branch", "develop",
+        "--ruleset-id", "24821474", "--sample-sha", "a" * 40,
+        "--check", CHECK,
+    ])
+    admin.main()
+    assert current["rules"][-1]["parameters"]["required_status_checks"][0]["context"] == "Pre-existing"
+
+
+def test_ruleset_raises_zero_review_approval_to_one_and_preserves_stronger_policy():
+    current = ruleset()
+    current["rules"][2]["parameters"]["required_approving_review_count"] = 0
+    assert admin.plan(current, "develop", 24821474, [CHECK], 15368)["rules"][2]["parameters"][
+        "required_approving_review_count"
+    ] == 1
+    current["rules"][2]["parameters"]["required_approving_review_count"] = 2
+    assert admin.plan(current, "develop", 24821474, [CHECK], 15368)["rules"][2]["parameters"][
+        "required_approving_review_count"
+    ] == 2
+    assert current["rules"][2]["parameters"]["required_approving_review_count"] == 2
+
+
+def test_admin_apply_blocks_when_policy_absent_from_trusted_base(monkeypatch):
+    writes = []
+    def fake_gh(endpoint, method="GET", payload=None):
+        if method != "GET":
+            writes.append(endpoint)
+            pytest.fail("unexpected administrative write")
+        if "check-runs" in endpoint:
+            return {"total_count": 2, "check_runs": [
+                {"name": CHECK, "conclusion": "success", "app": {"id": 15368}},
+                {"name": "Verify independent audit (exact SHA)",
+                 "conclusion": "success", "app": {"id": 15368}},
+            ]}
+        if "/contents/" in endpoint:
+            return {"type": "dir"}
+        pytest.fail("unexpected ruleset read")
+    monkeypatch.setattr(admin, "gh", fake_gh)
+    monkeypatch.setattr(sys, "argv", [
+        "configurar_ruleset", "--repo", REPO, "--branch", "develop",
+        "--ruleset-id", "24821474", "--sample-sha", "a" * 40,
+        "--check", CHECK, "--check", "Verify independent audit (exact SHA)", "--apply",
+    ])
+    with pytest.raises(ValueError, match="trusted branch does not publish"):
+        admin.main()
+    assert not writes
+
+
+def test_admin_apply_requires_failed_gate_without_bypassing_it(monkeypatch):
+    current = ruleset()
+    written = []
+
+    def fake_gh(endpoint, method="GET", payload=None):
+        if "check-runs" in endpoint:
+            return {"total_count": 2, "check_runs": [
+                {"name": CHECK, "conclusion": "failure", "app": {"id": 15368}},
+                {"name": "Verify independent audit (exact SHA)",
+                 "conclusion": "failure", "app": {"id": 15368}},
+            ]}
+        if "/contents/" in endpoint:
+            return {"type": "file", "sha": "a" * 40}
+        if method == "PUT":
+            written.append(copy.deepcopy(payload))
+            return {"updated": True}
+        if written:
+            return dict(current, **written[0])
+        return current
+
+    monkeypatch.setattr(admin, "gh", fake_gh)
+    monkeypatch.setattr(sys, "argv", [
+        "configurar_ruleset", "--repo", REPO, "--branch", "develop",
+        "--ruleset-id", "24821474", "--sample-sha", "a" * 40,
+        "--check", CHECK, "--check", "Verify independent audit (exact SHA)",
+        "--apply",
+    ])
+    admin.main()
+    assert len(written) == 1
+    protected = written[0]["rules"][-1]["parameters"]["required_status_checks"]
+    assert {entry["context"] for entry in protected} == {
+        CHECK, "Verify independent audit (exact SHA)",
+    }
+    assert written[0]["rules"][2]["parameters"]["required_approving_review_count"] == 1
+    assert written[0]["rules"][-1]["parameters"]["strict_required_status_checks_policy"] is True
+
+
+@pytest.mark.parametrize("unacceptable", [None, "skipped", "cancelled", "timed_out"])
+def test_admin_apply_blocks_unusable_sample_even_with_trusted_emitter(monkeypatch, unacceptable):
+    writes = []
+
+    def fake_gh(endpoint, method="GET", payload=None):
+        if method != "GET":
+            writes.append(endpoint)
+            pytest.fail("unexpected administrative write")
+        if "check-runs" in endpoint:
+            return {"total_count": 2, "check_runs": [
+                {"name": CHECK, "conclusion": unacceptable, "app": {"id": 15368}},
+                {"name": "Verify independent audit (exact SHA)",
+                 "conclusion": "failure", "app": {"id": 15368}},
+            ]}
+        if "/contents/" in endpoint:
+            return {"type": "file", "sha": "a" * 40}
+        pytest.fail("unexpected ruleset read")
+
+    monkeypatch.setattr(admin, "gh", fake_gh)
+    monkeypatch.setattr(sys, "argv", [
+        "configurar_ruleset", "--repo", REPO, "--branch", "develop",
+        "--ruleset-id", "24821474", "--sample-sha", "a" * 40,
+        "--check", CHECK, "--check", "Verify independent audit (exact SHA)",
+        "--apply",
+    ])
+    with pytest.raises(ValueError, match="sample check not terminal"):
+        admin.main()
+    assert writes == []

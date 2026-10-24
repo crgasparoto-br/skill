@@ -1,5 +1,17 @@
 # Gate de ancoragem no codigo
 
+## Quando ler este arquivo
+
+Consultar sempre que codigo, testes ou configuracao de descoberta forem alterados, inclusive diffs apenas de testes. Aplicar a validacao no SHA exato, sem presumir equivalencia semantica dos oraculos.
+
+## Índice
+
+- [Objetivo](#objetivo)
+- [Quando aplicar](#quando-aplicar)
+- [Controles](#controles)
+- [Validacao deterministica](#validacao-deterministica)
+- [Limites conhecidos](#limites-conhecidos)
+
 ## Objetivo
 
 Impedir que a entrega crie o que ja existe, use o que nao existe ou deixe para tras o que substituiu. Toda afirmacao sobre o repositorio deve apontar para bytes do `material_head_sha`; memoria do modelo, nome plausivel e documentacao externa nao sao evidencia.
@@ -27,6 +39,7 @@ Antes de adicionar, editar, renomear ou excluir testes e configuracoes de descob
 Registrar uma entrada test_decisions por arquivo de teste alterado (e por cenario quando necessario) no mesmo codebase-grounding.json. Diffs apenas de testes acionam o gate; renomeacoes incluem prior_path. Excluir exige mapa coverage_before/coverage_after, verificacao executada e autorizacao/aviso de operacao destrutiva do repositorio; sinal de duplicacao/obsolescencia nao e prova. Sem runner/checkout, registrar status unknown/blocked e escopo nao verificado; nao declarar READY. A deteccao considera convencoes/runner, incluindo suites dinamicas quando conhecidas e arquivos Cypress `.cy.*` ou E2E `.e2e.*` fora de pastas convencionais; extensoes e nomes sao apenas indicios.
 
 O formato v2 do relatorio exige test_decisions e o validador o confronta com o git diff --name-status -M do base/head. Formato v1 segue aceito apenas se nao houver diff de testes; para diff de testes legado, migrar explicitamente para v2 (rejeicao explicita, nunca compatibilidade silenciosa). O validador confere campos, paths/candidatos, operacoes e verificacao declarada no SHA exato; em exclusoes exige IDs de controles antes/depois sem perda, teste substituto presente no HEAD e evidencia bruta hasheada que identifique o teste alcançado e SHA do HEAD.
+Uma decisao `covered-by-existing` em teste **modificado** exige candidato existente identificado na revisao base. Se o candidato nao for reconhecido pelas configuracoes de descoberta do runner, devolver `UNKNOWN` e exigir prova de execucao dinamica; a mera existencia de um arquivo de producao nao autoriza afirmar cobertura.  Um arquivo de teste **adicionado** nao pode usar essa decisao para justificar sua propria criacao: deve registrar `new-test-required` com justificativa discriminante, ou reaproveitar/estender de fato o teste existente em vez de adicionar arquivo. Em renomeacao, o `prior_path` validado identifica o teste preservado; em exclusao, os controles separados de `replacement_tests` e `coverage_before/coverage_after` comprovam a substituicao declarada. O gate rejeita contradicoes formais observaveis e nao infere equivalencia de oraculos por nomes ou contagens.
 
 Todo `verification.status=passed` em teste alterado exige `subject_sha=material_head_sha`, `reached_tests`,
 comando, exit code zero e arquivo de evidencia com SHA-256, incluindo linhas `HEAD:`, `COMMAND:`, `EXIT_CODE:` e

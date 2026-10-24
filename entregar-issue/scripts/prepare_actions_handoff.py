@@ -42,10 +42,19 @@ def read_event(path: Path, base_ref: str = "develop") -> tuple[str, int, int, st
     if (pr.get("head") or {}).get("repo", {}).get("full_name") != repo:
         fail("forked PR head requires a separate, read-only evidence policy")
     title = pr.get("title") or ""
-    references = set(ISSUE_REF.findall("\n".join((title, pr.get("body") or ""))))
+    description = pr.get("body") or ""
+    combined = f"{title}\n{description}"
+    references = set(ISSUE_REF.findall(combined))
     trailing = re.search(r"\(#(\d+)\)\s*$", title)
     if trailing:
-        references.add(trailing.group(1))
+        # A canonical issue in the title outranks incidental mentions in a PR
+        # description (e.g. a related branch-ruleset issue). Explicit closing
+        # references to other issues are still contradictory and must fail.
+        closed = set(re.findall(r"\b(?:fixes|closes|resolves)\s*#(\d+)\b",
+                                combined, re.IGNORECASE))
+        if closed - {trailing.group(1)}:
+            fail("closing reference conflicts with primary issue in PR title")
+        references = {trailing.group(1)}
     if len(references) != 1:
         fail("expected exactly one unambiguous Issue #N reference in PR title/body")
     issue = int(references.pop())

@@ -40,6 +40,25 @@ def test_resolves_one_issue_and_parenthesized_pr_title(tmp_path):
         mod.read_event(p)
 
 
+def test_primary_title_issue_allows_related_issue_mentions_in_description(tmp_path):
+    path = tmp_path / "event.json"
+    path.write_text(json.dumps(event(
+        title="fix: strengthen semantic certification (#112)",
+        body="Issue #112 is the delivery target. Related branch-ruleset Issue #119 stays open.",
+    )))
+    assert mod.read_event(path)[2] == 112
+
+
+def test_primary_title_issue_rejects_conflicting_closing_reference(tmp_path):
+    path = tmp_path / "event.json"
+    path.write_text(json.dumps(event(
+        title="fix: strengthen semantic certification (#112)",
+        body="Related Issue #119. Fixes #119.",
+    )))
+    with pytest.raises(ValueError, match="closing reference conflicts"):
+        mod.read_event(path)
+
+
 @pytest.mark.parametrize("change,expected", [
     ({"fork": True}, "forked"),
     ({"head": "short"}, "exact SHA"),

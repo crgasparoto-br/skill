@@ -302,3 +302,33 @@ def test_identity_substitution_is_scoped_to_identity_fields():
         "head_sha": "a" * 40, "nested": [{"base_sha": "b" * 40}]}
     with pytest.raises(ValueError, match="outside a declared identity"):
         producer.bind_identity({"control_evidence": "__MATERIAL_HEAD_SHA__"}, "a" * 40, "b" * 40)
+
+
+def test_approved_review_cannot_stage_pending_obligations():
+    closure = {"obligations": [
+        {"id": "OBL-001", "disposition": "covered"},
+        {"id": "OBL-002", "disposition": "pending"},
+        {"id": "OBL-003", "disposition": "blocked"},
+    ]}
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match=r"2 unresolved obligations .*OBL-002, OBL-003"):
+        producer.require_complete_semantic_review(closure)
+
+
+def test_approved_review_can_explicitly_exclude_nonapplicable_obligation():
+    producer.require_complete_semantic_review({"obligations": [
+        {"id": "OBL-001", "disposition": "covered"},
+        {"id": "OBL-002", "disposition": "not-applicable",
+         "rationale": "The archived behavior has no active consumer or required contract."},
+    ]})
+
+
+@pytest.mark.parametrize("rationale", ["", "   ", None])
+def test_approved_review_rejects_unjustified_nonapplicable_obligation(rationale):
+    closure = {"obligations": [
+        {"id": "OBL-001", "disposition": "covered"},
+        {"id": "OBL-002", "disposition": "not-applicable", "rationale": rationale},
+    ]}
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match=r"unjustified not-applicable.*OBL-002"):
+        producer.require_complete_semantic_review(closure)
