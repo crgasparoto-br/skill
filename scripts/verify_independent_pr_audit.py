@@ -87,6 +87,36 @@ def verify_trusted_workflow_source(
         raise ValueError(f"required workflow differs from trusted base: {workflow}")
 
 
+def official_job_matches(
+        repo: str, number: int, name: str, check: dict, run: dict, job: dict,
+        head: str, base_sha: str, check_id: int, run_id: int, job_id: int) -> bool:
+    """Match the authoritative GitHub Actions run, PR base, suite and job."""
+    workflow_path = run.get("path")
+    if not isinstance(workflow_path, str):
+        return False
+    api_root = (os.environ.get("GITHUB_API_URL")
+                or "https://" + "api." + "github.com").rstrip("/")
+    pr_links = run.get("pull_requests")
+    return (
+        workflow_path.split("@", 1)[0] == EXPECTED_WORKFLOWS[name]
+        and run.get("check_suite_id") == check["check_suite"]["id"]
+        and run.get("head_sha") == head
+        and run.get("event") == "pull_request"
+        and isinstance(pr_links, list)
+        and any(
+            p.get("number") == number
+            and isinstance(p.get("base"), dict)
+            and p["base"].get("sha") == base_sha
+            for p in pr_links if isinstance(p, dict)
+        )
+        and job.get("id") == job_id
+        and job.get("run_id") == run_id
+        and job.get("name") == name
+        and job.get("check_run_url") ==
+        f"{api_root}/repos/{repo}/check-runs/{check_id}"
+    )
+
+
 def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
                            head: str, base_sha: str, token: str) -> bool:
     """Authenticate the job and pin its workflow source to the trusted base."""
@@ -110,31 +140,9 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
     job = github(f"/repos/{repo}/actions/jobs/{job_id}", token)
     if not isinstance(run, dict) or not isinstance(job, dict):
         raise ValueError("invalid GitHub Actions workflow provenance")
-    workflow_path = run.get("path")
-    if not isinstance(workflow_path, str):
-        return False
-    api_root = (os.environ.get("GITHUB_API_URL")
-                or "https://" + "api." + "github.com").rstrip("/")
-    pr_links = run.get("pull_requests")
-    identity_matches = (
-        workflow_path.split("@", 1)[0] == EXPECTED_WORKFLOWS[name]
-        and run.get("check_suite_id") == suite
-        and run.get("head_sha") == head
-        and run.get("event") == "pull_request"
-        and isinstance(pr_links, list)
-        and any(
-            p.get("number") == number
-            and isinstance(p.get("base"), dict)
-            and p["base"].get("sha") == base_sha
-            for p in pr_links if isinstance(p, dict)
-        )
-        and job.get("id") == job_id
-        and job.get("run_id") == run_id
-        and job.get("name") == name
-        and job.get("check_run_url") ==
-        f"{api_root}/repos/{repo}/check-runs/{check_id}"
-    )
-    if not identity_matches:
+    if not official_job_matches(
+            repo, number, name, check, run, job, head, base_sha,
+            check_id, run_id, job_id):
         return False
 
     # A workflow reported by the Actions app can still have untrusted code.
