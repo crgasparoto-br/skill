@@ -1,0 +1,13 @@
+# Caddy addition for Issue 88. Stage only after auth DNS points to this VPS.
+# Append this block to the existing Caddyfile; retain audit-mcp site unchanged.
+auth.solveritconsultoria.com.br {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:18780 {
+        header_up -X-Forwarded-Host
+        header_up -X-Forwarded-Proto
+        header_up -X-Forwarded-For
+        header_up X-Forwarded-Host {host}
+        header_up X-Forwarded-Proto https
+        header_up X-Forwarded-For {remote_host}
+    }
+}

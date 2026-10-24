@@ -1,0 +1,45 @@
+# STAGING ONLY: do not start or enable without independent VPS review.
+# Requires solverit-delivery-control group and a root-owned broker.env.
+[Unit]
+Description=SolverIT Issue 88 privileged GitHub evidence broker (staging)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/solverit/issue-delivery/protected_broker_server.py
+ConditionPathExists=/etc/solverit/issue-delivery/broker.env
+ConditionPathExists=/var/lib/solverit/issue-delivery/protected/jobs.sqlite3
+
+[Service]
+Type=simple
+User=solverit-github-auth
+Group=solverit-delivery-control
+SupplementaryGroups=solverit-app-key
+EnvironmentFile=/etc/solverit/issue-delivery/broker.env
+WorkingDirectory=/opt/solverit/issue-delivery
+ExecStart=/usr/bin/python3 /opt/solverit/issue-delivery/protected_broker_server.py
+RuntimeDirectory=solverit-issue88-broker
+RuntimeDirectoryMode=0750
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadOnlyPaths=/var/lib/solverit/issue-delivery/protected
+ReadWritePaths=/run/solverit-issue88-broker
+LimitNOFILE=128
+TasksMax=32
+MemoryMax=256M
+CPUQuota=50%
+TimeoutStopSec=20s
+Restart=on-failure
+RestartSec=5s
+
+# Intentionally NO [Install] section: explicit, reviewed staging only.
