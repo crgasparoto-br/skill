@@ -250,6 +250,7 @@ def workflow_source_fixture():
     check = {
         "id": 42, "check_suite": {"id": 33},
         "details_url": "https://github.com/org/repo/actions/runs/23/job/44",
+        "head_sha": HEAD, "app": {"id": 15368},
         "status": "completed", "conclusion": "success",
     }
     run = {
