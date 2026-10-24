@@ -226,15 +226,31 @@ def check_passed_test_evidence(
 
 
 def check_existing_test_decision(
-    item: dict[str, Any], operation: str, path: str, errors: list[str],
+    item: dict[str, Any], repo: Path, base: str, operation: str, path: str,
+    errors: list[str], unknown: list[str],
+    base_configs: dict[str, tuple[str, ...]],
+    head_configs: dict[str, tuple[str, ...]],
 ) -> None:
-    """Reject observable contradictions, without inferring oracle equivalence."""
+    """Reject false coverage without treating unknown runner discovery as absence."""
     if item["decision"] != "covered-by-existing":
         return
-    if operation in {"added", "modified"} and not item["search"]["candidates"]:
+    candidates = item["search"]["candidates"]
+    if operation in {"added", "modified"} and not candidates:
         errors.append(f"GROUND-TEST-001: covered-by-existing lacks an identified existing test: {path}")
     if operation == "added":
         errors.append(f"GROUND-TEST-001: added test cannot be classified covered-by-existing: {path}")
+    if operation != "modified":
+        return
+    for candidate in candidates:
+        existing = candidate["path"]
+        if read_at(repo, base, existing) is None:
+            errors.append(f"GROUND-TEST-001: covered-by-existing candidate absent at base: {existing}")
+        elif not (is_test_path(existing, pytest_configs=base_configs)
+                  or is_test_path(existing, pytest_configs=head_configs)):
+            unknown.append(
+                f"GROUND-TEST-001: candidate test discovery UNKNOWN for {existing}; "
+                f"verify dynamic runner execution before claiming coverage of {path}"
+            )
 
 
 def check_test_decisions(
@@ -274,7 +290,10 @@ def check_test_decisions(
             for candidate in item["search"]["candidates"]:
                 if read_at(repo, head, candidate["path"]) is None and read_at(repo, base, candidate["path"]) is None:
                     errors.append(f"GROUND-TEST-001: candidate absent in both revisions: {candidate['path']}")
-            check_existing_test_decision(item, operation, path, errors)
+            check_existing_test_decision(
+                item, repo, base, operation, path, errors, unknown,
+                base_configs, head_configs,
+            )
             check = item["verification"]
             if check["status"] == "passed" and (not check.get("command") or check.get("exit_code") != 0):
                 errors.append(f"GROUND-TEST-001: passed check lacks command/exit_code=0: {path}")
