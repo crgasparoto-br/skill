@@ -69,6 +69,24 @@ def reviewed_contract(review: dict, head: str) -> bool:
     return not (verified & excluded) and findings == (verified | excluded)
 
 
+def verify_trusted_workflow_source(
+        repo: str, workflow: str, base_sha: str, head: str, token: str) -> None:
+    """Reject a PR-altered workflow even when Actions reports the official path."""
+    source = [
+        github(f"/repos/{repo}/contents/{workflow}?ref={ref}", token)
+        for ref in (base_sha, head)
+    ]
+    if any(
+        not isinstance(item, dict) or item.get("type") != "file"
+        or not isinstance(item.get("sha"), str)
+        or not SHA.fullmatch(item["sha"])
+        for item in source
+    ):
+        raise ValueError("trusted workflow source unavailable")
+    if source[0]["sha"] != source[1]["sha"]:
+        raise ValueError(f"required workflow differs from trusted base: {workflow}")
+
+
 def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
                            head: str, base_sha: str, token: str) -> bool:
     """Authenticate the job and pin its workflow source to the trusted base."""
@@ -119,22 +137,8 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
     if not identity_matches:
         return False
 
-    # A path and an Actions app ID do not prove the workflow code was trusted:
-    # pull_request jobs may execute a workflow changed by the candidate.
-    workflow = EXPECTED_WORKFLOWS[name]
-    source = [
-        github(f"/repos/{repo}/contents/{workflow}?ref={ref}", token)
-        for ref in (base_sha, head)
-    ]
-    if any(
-        not isinstance(item, dict) or item.get("type") != "file"
-        or not isinstance(item.get("sha"), str)
-        or not SHA.fullmatch(item["sha"])
-        for item in source
-    ):
-        raise ValueError("trusted workflow source unavailable")
-    if source[0]["sha"] != source[1]["sha"]:
-        raise ValueError(f"required workflow differs from trusted base: {workflow}")
+    # A workflow reported by the Actions app can still have untrusted code.
+    verify_trusted_workflow_source(repo, EXPECTED_WORKFLOWS[name], base_sha, head, token)
 
     # A failed official job must remain eligible for recency selection; filtering
     # by success here would let an older green run hide a newer red run.
