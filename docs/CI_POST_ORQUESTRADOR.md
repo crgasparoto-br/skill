@@ -162,7 +162,13 @@ O utilitário preserva qualquer check já requerido e eleva `required_approving_
 de zero para **um** na regra de PR existente, sem reduzir um limite mais estrito.
 Antes de aplicar, confirmar o bypass real e a identidade da integração emissora.
 
-O `--apply` também exige evidência **verde** para cada contexto da amostra e
-ambos os arquivos do emissor presentes na branch-base confiável. Caso contrário,
-bloqueia antes do PUT, inclusive quando um PR publica o workflow mas a base ainda
-não o possui. O modo padrão sem `--apply` continua somente leitura.
+O `--apply` exige que cada contexto da amostra exista na integração
+GitHub Actions observada, com conclusão **terminal** (`success` ou `failure`),
+e que os dois arquivos do emissor independente já estejam na branch-base
+confiável. A conclusão `failure` **não** é aprovação: permite instalar a
+proteção fail-closed, que impedirá merges até o check ser corrigido.
+`queued`, sem conclusão, `skipped` e `cancelled` não servem como
+amostras válidas. Antes de ativar, o administrador deve aceitar que PRs
+com check vermelho ficarão bloqueadas; não remover contextos para liberá-las.
+Apenas read-back autenticado e testes negativo/positivo de merge comprovam
+proteção efetiva. O modo padrão sem `--apply` continua somente leitura.

@@ -133,8 +133,9 @@ def main() -> None:
         parser.error("--apply requires independent audit gate (and certified handoff on develop)")
     names = verified_checks(args.repo, args.sample_sha, args.check, args.app_id)
     if args.apply:
-        # No administrative activation from a PR-only workflow or from a
-        # failing/queued sample: the exact policy must exist on the trusted base.
+        # A known failing check is safe to REQUIRE: GitHub will block merges
+        # until it succeeds. Reject unobserved, pending, skipped or cancelled
+        # samples; the trusted source must already be published on the base.
         for required_path in (
             "scripts/verify_independent_pr_audit.py",
             ".github/workflows/independent-audit-gate.yml",
@@ -143,8 +144,8 @@ def main() -> None:
             if file.get("type") != "file" or not file.get("sha"):
                 raise ValueError(f"trusted branch does not publish: {required_path}")
         for check, conclusions in names.items():
-            if not conclusions or any(result != "success" for result in conclusions):
-                raise ValueError(f"sample check not green for administrative activation: {check}")
+            if not conclusions or any(result not in {"success", "failure"} for result in conclusions):
+                raise ValueError(f"sample check not terminal for administrative activation: {check}")
     endpoint = f"/repos/{args.repo}/rulesets/{args.ruleset_id}"
     current = gh(endpoint)
     payload = plan(current, args.branch, args.ruleset_id, args.check, args.app_id)
