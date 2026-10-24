@@ -246,42 +246,52 @@ def test_spoofed_later_green_check_does_not_override_official_failure():
         verify(data, trusted=lambda _name, check: check["id"] != 999)
 
 
-@pytest.mark.parametrize("mutation", [
-    lambda run, job, check: run.update(path=".github/workflows/fake.yml"),
-    lambda run, job, check: run.update(check_suite_id=999),
-    lambda run, job, check: run.update(head_sha="c" * 40),
-    lambda run, job, check: run.update(event="workflow_dispatch"),
-    lambda run, job, check: run.update(pull_requests=[{"number": 99}]),
-    lambda run, job, check: job.update(check_run_url="https://example.com/other/check-runs/42"),
-    lambda run, job, check: job.update(run_id=999),
-    lambda run, job, check: check.update(details_url="https://untrusted.example/other"),
-])
-def test_check_requires_matching_github_workflow_suite_and_job(monkeypatch, mutation):
+def workflow_source_fixture():
     check = {
         "id": 42, "check_suite": {"id": 33},
         "details_url": "https://github.com/org/repo/actions/runs/23/job/44",
+        "status": "completed", "conclusion": "success",
     }
     run = {
         "id": 23, "path": ".github/workflows/validate.yml@refs/pull/3/merge",
         "head_sha": HEAD, "event": "pull_request", "check_suite_id": 33,
         "status": "completed", "conclusion": "success",
-        "pull_requests": [{"number": 3}],
+        "pull_requests": [{"number": 3, "base": {"sha": BASE_SHA}}],
     }
     job = {
         "id": 44, "run_id": 23, "name": "Structure and tests",
         "status": "completed", "conclusion": "success",
         "check_run_url": f"{API_ROOT}/repos/org/repo/check-runs/42",
     }
+    source = {"type": "file", "sha": "c" * 40}
     response = {
         "/repos/org/repo/actions/runs/23": run,
         "/repos/org/repo/actions/jobs/44": job,
+        f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={BASE_SHA}": source,
+        f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={HEAD}": dict(source),
     }
+    return check, run, job, response
+
+
+@pytest.mark.parametrize("mutation", [
+    lambda run, job, check: run.update(path=".github/workflows/fake.yml"),
+    lambda run, job, check: run.update(check_suite_id=999),
+    lambda run, job, check: run.update(head_sha="c" * 40),
+    lambda run, job, check: run.update(event="workflow_dispatch"),
+    lambda run, job, check: run.update(pull_requests=[{"number": 99}]),
+    lambda run, job, check: run["pull_requests"][0]["base"].update(sha="d" * 40),
+    lambda run, job, check: job.update(check_run_url="https://example.com/other/check-runs/42"),
+    lambda run, job, check: job.update(run_id=999),
+    lambda run, job, check: check.update(details_url="https://untrusted.example/other"),
+])
+def test_check_requires_matching_github_workflow_suite_and_job(monkeypatch, mutation):
+    check, run, job, response = workflow_source_fixture()
     monkeypatch.setattr(gate, "github", lambda path, token: response[path])
     assert gate.trusted_workflow_check(
-        "org/repo", 3, "Structure and tests", check, HEAD, "token")
+        "org/repo", 3, "Structure and tests", check, HEAD, BASE_SHA, "token")
     mutation(run, job, check)
     assert not gate.trusted_workflow_check(
-        "org/repo", 3, "Structure and tests", check, HEAD, "token")
+        "org/repo", 3, "Structure and tests", check, HEAD, BASE_SHA, "token")
 
 
 @pytest.mark.parametrize("phase", ["initial", "final"])
@@ -320,3 +330,121 @@ def test_workflow_passes_trusted_base_sha_and_scoped_actions_permission():
     assert "  actions: read" in workflow
     assert "TARGET_BASE_SHA: ${{ github.event.pull_request.base.sha }}" in workflow
     assert '--base-sha "$TARGET_BASE_SHA"' in workflow
+
+
+def test_latest_official_failure_wins_over_prior_success(monkeypatch):
+    old, run, job, response = workflow_source_fixture()
+    newer = copy.deepcopy(old)
+    newer.update(
+        id=99, check_suite={"id": 34},
+        details_url="https://github.com/org/repo/actions/runs/24/job/46",
+        conclusion="failure",
+    )
+    newer_run = copy.deepcopy(run)
+    newer_run.update(id=24, check_suite_id=34, conclusion="failure")
+    newer_job = copy.deepcopy(job)
+    newer_job.update(
+        id=46, run_id=24, conclusion="failure",
+        check_run_url=f"{API_ROOT}/repos/org/repo/check-runs/99",
+    )
+    response.update({
+        "/repos/org/repo/actions/runs/24": newer_run,
+        "/repos/org/repo/actions/jobs/46": newer_job,
+    })
+    monkeypatch.setattr(gate, "github", lambda path, token: response[path])
+    trusted = lambda _name, check: gate.trusted_workflow_check(
+        "org/repo", 3, "Structure and tests", check, HEAD, BASE_SHA, "token")
+    assert trusted("Structure and tests", old)
+    assert trusted("Structure and tests", newer)
+    with pytest.raises(ValueError, match="not green: Structure and tests"):
+        gate.required_checks_green(
+            {"total_count": 2, "check_runs": [old, newer]}, HEAD, "main", trusted)
+
+
+def test_workflow_contents_must_match_trusted_base(monkeypatch):
+    check, _, _, response = workflow_source_fixture()
+    path = f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={HEAD}"
+    response[path] = {"type": "file", "sha": "d" * 40}
+    monkeypatch.setattr(gate, "github", lambda path, token: response[path])
+    with pytest.raises(ValueError, match="differs from trusted base"):
+        gate.trusted_workflow_check(
+            "org/repo", 3, "Structure and tests", check, HEAD, BASE_SHA, "token")
+
+
+@pytest.mark.parametrize("mutation,reason", [
+    (lambda check, run, job: run.update(conclusion="failure"), "workflow not green"),
+    (lambda check, run, job: job.update(conclusion="failure"), "outcome mismatch"),
+])
+def test_inconsistent_official_workflow_outcome_blocks(monkeypatch, mutation, reason):
+    check, run, job, response = workflow_source_fixture()
+    mutation(check, run, job)
+    monkeypatch.setattr(gate, "github", lambda path, token: response[path])
+    with pytest.raises(ValueError, match=reason):
+        gate.trusted_workflow_check(
+            "org/repo", 3, "Structure and tests", check, HEAD, BASE_SHA, "token")
+
+
+@pytest.mark.parametrize("drift", [
+    "review-dismissed", "review-edited", "permission-revoked", "latest-check-failed",
+])
+def test_recheck_rejects_midflight_review_or_ci_drift(monkeypatch, drift):
+    pr, reviews, commits, checks = fixture()
+    seen = {"reviews": 0, "checks": 0, "permissions": 0}
+
+    def github(path, token):
+        if path.endswith("/pulls/3"):
+            return copy.deepcopy(pr)
+        if "/reviews?" in path:
+            seen["reviews"] += 1
+            result = copy.deepcopy(reviews)
+            if seen["reviews"] == 2 and drift == "review-dismissed":
+                result[0]["state"] = "DISMISSED"
+            if seen["reviews"] == 2 and drift == "review-edited":
+                result[0]["body"] = "SOLVERIT_AUDIT_JSON:{}"
+            return result
+        if "/commits?" in path:
+            return copy.deepcopy(commits)
+        if "/check-runs?" in path:
+            seen["checks"] += 1
+            result = copy.deepcopy(checks)
+            if seen["checks"] == 2 and drift == "latest-check-failed":
+                result["check_runs"][0]["conclusion"] = "failure"
+            return result
+        if "/collaborators/" in path:
+            seen["permissions"] += 1
+            permission = ("read" if seen["permissions"] == 2
+                          and drift == "permission-revoked" else "write")
+            return {"permission": permission}
+        raise AssertionError(path)
+
+    monkeypatch.setattr(gate, "github", github)
+    monkeypatch.setattr(gate, "trusted_workflow_check", lambda *args: True)
+    with pytest.raises(ValueError):
+        gate.run("org/repo", 3, "develop", BASE_SHA, "token")
+    assert seen["reviews"] == 2
+    assert seen["checks"] == 2
+
+
+def test_stable_live_review_recheck_can_approve(monkeypatch):
+    pr, reviews, commits, checks = fixture()
+    seen = {"reviews": 0}
+
+    def github(path, token):
+        if path.endswith("/pulls/3"):
+            return copy.deepcopy(pr)
+        if "/reviews?" in path:
+            seen["reviews"] += 1
+            return copy.deepcopy(reviews)
+        if "/commits?" in path:
+            return copy.deepcopy(commits)
+        if "/check-runs?" in path:
+            return copy.deepcopy(checks)
+        if "/collaborators/" in path:
+            return {"permission": "write"}
+        raise AssertionError(path)
+
+    monkeypatch.setattr(gate, "github", github)
+    monkeypatch.setattr(gate, "trusted_workflow_check", lambda *args: True)
+    assert "pullrequestreview-1" in gate.run(
+        "org/repo", 3, "develop", BASE_SHA, "token")
+    assert seen["reviews"] == 2
