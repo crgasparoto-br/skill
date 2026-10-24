@@ -70,8 +70,8 @@ def reviewed_contract(review: dict, head: str) -> bool:
 
 
 def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
-                           head: str, token: str) -> bool:
-    """Bind a check to its actual GitHub Actions job, suite and official workflow."""
+                           head: str, base_sha: str, token: str) -> bool:
+    """Authenticate the job and pin its workflow source to the trusted base."""
     details = check.get("details_url")
     if not isinstance(details, str):
         return False
@@ -97,24 +97,54 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
         return False
     api_root = (os.environ.get("GITHUB_API_URL")
                 or "https://" + "api." + "github.com").rstrip("/")
-    return (
+    pr_links = run.get("pull_requests")
+    identity_matches = (
         workflow_path.split("@", 1)[0] == EXPECTED_WORKFLOWS[name]
         and run.get("check_suite_id") == suite
         and run.get("head_sha") == head
         and run.get("event") == "pull_request"
-        and run.get("status") == "completed"
-        and run.get("conclusion") == "success"
-        and isinstance(run.get("pull_requests"), list)
-        and any(p.get("number") == number for p in run["pull_requests"]
-                if isinstance(p, dict))
+        and isinstance(pr_links, list)
+        and any(
+            p.get("number") == number
+            and isinstance(p.get("base"), dict)
+            and p["base"].get("sha") == base_sha
+            for p in pr_links if isinstance(p, dict)
+        )
         and job.get("id") == job_id
         and job.get("run_id") == run_id
         and job.get("name") == name
-        and job.get("status") == "completed"
-        and job.get("conclusion") == "success"
         and job.get("check_run_url") ==
         f"{api_root}/repos/{repo}/check-runs/{check_id}"
     )
+    if not identity_matches:
+        return False
+
+    # A path and an Actions app ID do not prove the workflow code was trusted:
+    # pull_request jobs may execute a workflow changed by the candidate.
+    workflow = EXPECTED_WORKFLOWS[name]
+    source = [
+        github(f"/repos/{repo}/contents/{workflow}?ref={ref}", token)
+        for ref in (base_sha, head)
+    ]
+    if any(
+        not isinstance(item, dict) or item.get("type") != "file"
+        or not isinstance(item.get("sha"), str)
+        or not SHA.fullmatch(item["sha"])
+        for item in source
+    ):
+        raise ValueError("trusted workflow source unavailable")
+    if source[0]["sha"] != source[1]["sha"]:
+        raise ValueError(f"required workflow differs from trusted base: {workflow}")
+
+    # A failed official job must remain eligible for recency selection; filtering
+    # by success here would let an older green run hide a newer red run.
+    if (job.get("status") != check.get("status")
+            or job.get("conclusion") != check.get("conclusion")):
+        raise ValueError("GitHub Actions job/check outcome mismatch")
+    if check.get("conclusion") == "success" and (
+            run.get("status") != "completed" or run.get("conclusion") != "success"):
+        raise ValueError("required GitHub Actions workflow not green")
+    return True
 
 
 def required_checks_green(checks: dict, head: str, base: str,
@@ -228,14 +258,33 @@ def run(repo: str, number: int, base: str, base_sha: str, token: str) -> str:
     approval = verify_gate(
         pr, reviews, commits, checks, base,
         lambda reviewer: is_authorized_reviewer(repo, reviewer, token),
-        lambda name, check: trusted_workflow_check(repo, number, name, check, head, token),
+        lambda name, check: trusted_workflow_check(
+            repo, number, name, check, head, base_sha, token),
     )
     current = github(f"/repos/{repo}/pulls/{number}", token)
     if (current.get("head", {}).get("sha") != head
             or current.get("base", {}).get("ref") != base
             or current["base"].get("sha") != base_sha):
         raise ValueError("PR HEAD or trusted base SHA changed while validating independent audit")
-    return approval
+
+    # Reviews can be edited/dismissed and CI checks rerun without changing HEAD.
+    # Reauthenticate the live review, permissions and checks before returning.
+    latest_reviews_snapshot = page_all(repo, f"pulls/{number}/reviews", token)
+    latest_checks = github(f"/repos/{repo}/commits/{head}/check-runs?per_page=100", token)
+    current_approval = verify_gate(
+        current, latest_reviews_snapshot, commits, latest_checks, base,
+        lambda reviewer: is_authorized_reviewer(repo, reviewer, token),
+        lambda name, check: trusted_workflow_check(
+            repo, number, name, check, head, base_sha, token),
+    )
+    if current_approval != approval:
+        raise ValueError("independent approval changed while validating")
+    final = github(f"/repos/{repo}/pulls/{number}", token)
+    if (final.get("head", {}).get("sha") != head
+            or final.get("base", {}).get("ref") != base
+            or final["base"].get("sha") != base_sha):
+        raise ValueError("PR HEAD or trusted base SHA changed while validating independent audit")
+    return current_approval
 
 
 def main() -> int:
