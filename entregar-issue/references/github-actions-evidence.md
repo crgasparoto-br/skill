@@ -64,6 +64,8 @@ e independente do resultado dos testes.
 
 ## Certificacao fail-closed
 
+Quando a especificacao exigir auditoria **depois** do handoff, o dossie pode manter itens `deferred` apenas com decisao canonica comprovada, issue pai aberta e rastreabilidade completa. `certification-inputs.json` deve declarar `issue_completion=partial`, IDs diferidos e `parent_issue_must_remain_open=true`; o certificado inclui os mesmos campos em `completion`. Os validadores do produtor, do builder e da copia auditora conferem essa correspondencia, e o check confiavel consulta novamente a issue no GitHub com permissao somente leitura. Nenhum desses estados substitui review independente autenticado ou permite encerrar a issue pai. `pending`, `UNKNOWN`, hashes ausentes, controles criticos incompletos e reports obrigatorios ausentes continuam bloqueantes. A verificacao autenticada do pai so recebe `GITHUB_TOKEN` no step confiavel de certificacao, nunca no comando de evidencia do PR.
+
 O modo `--phase certify` de `scripts/prepare_actions_handoff.py` valida identidade,
 log e digest e exige, no mesmo diretorio efemero de evidencias,
 `certification-inputs.json` mais todos os relatorios autenticos aplicaveis
