@@ -279,7 +279,7 @@ def test_test_only_removal_requires_independent_lifecycle_review(tmp_path: Path)
     git(checkout, "reset", "--hard", "HEAD~1")
     removed = checkout / "tests/test_removed_contract.py"
     removed.parent.mkdir(parents=True)
-    removed.write_text("def test_legacy_contract():\\n    assert True\\n".replace("\\n", "\n"), encoding="utf-8")
+    removed.write_text("def test_legacy_contract():\n    assert True\n", encoding="utf-8")
     git(checkout, "add", "-A")
     git(checkout, "commit", "-qm", "existing test baseline")
     removed.unlink()
