@@ -63,7 +63,7 @@ Nenhum candidato pode permanecer `pending`.
 
 Não existe `out-of-scope` livre. Documentação ou PR produzidas pela implementação não são decisão de escopo.
 
-Quando houver `deferred`, o handoff deve declarar `issue_completion=partial`, listar todas as `remaining_issue_ids` e marcar `parent_issue_must_remain_open=true`.
+Quando houver `deferred`, o certificado deve declarar `completion.issue_completion=partial`, listar `completion.deferred_obligation_ids`, `completion.remaining_issue_ids` e marcar `completion.parent_issue_must_remain_open=true`. Cada item exige `scope_decision` com a fonte da issue canonica, hash, localizador verificavel, issue pai como destino e justificativa especifica. O produtor confere os bytes da issue capturados pelo preflight autenticado; o check confiavel reconsulta o estado `open` da issue pai com token GitHub de leitura. Certificacao parcial prova apenas prontidao para auditoria: nao fecha a issue, nao converte item `deferred` em `covered` e nao substitui review independente exact-SHA.
 
 ## Inventário fechado de domínio
 
