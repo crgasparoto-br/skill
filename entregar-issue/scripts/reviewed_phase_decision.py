@@ -7,6 +7,7 @@ from __future__ import annotations
 import hashlib
 import re
 
+
 class MissingReviewedEvidenceError(ValueError):
     """No reviewed dossier exists; factual collection may still finish."""
 
