@@ -339,6 +339,28 @@ def validate_test_bindings(binding: object, closure: dict, tests: dict) -> None:
             raise ValueError(f"positive and negative controls are not distinct for {requirement}")
 
 
+def canonical_issue_context(out: Path, repository: str, issue: int) -> tuple[str, bool]:
+    """Validate authenticated preflight source before making phase decisions."""
+    preflight = read_json(out / "handoff-preflight.json")
+    body_path = out / "issue-body.md"
+    body = body_path.read_text(encoding="utf-8") if body_path.is_file() else ""
+    source = preflight.get("source") or {}
+    expected = {"issue_body_sha256": digest(body.encode("utf-8")),
+                "uri": f"https://github.com/{repository}/issues/{issue}"}
+    if not body or any(source.get(key) != value for key, value in expected.items()):
+        raise MissingReviewedEvidenceError("canonical issue source binding is unavailable")
+    return body, source.get("issue_state") == "open"
+
+
+def with_deferred_completion(inputs: dict, deferred_ids: list[str], issue: int) -> dict:
+    """Add provisional completion metadata without asserting final audit."""
+    if deferred_ids:
+        return {**inputs, "issue_completion": "partial",
+                "deferred_obligation_ids": deferred_ids,
+                "remaining_issue_ids": [issue], "parent_issue_must_remain_open": True}
+    return inputs
+
+
 def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     from prepare_actions_handoff import check_checkout, read_event
 
@@ -417,16 +439,10 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     if not needed.issubset(hashes):
         raise ValueError(f"missing required reviewed reports: {sorted(needed - set(hashes))}")
     closure = merge_closure(starter, verified_source(root, source, "reviewed-closure.json", hashes))
-    preflight = read_json(out / "handoff-preflight.json")
-    issue_body_path = out / "issue-body.md"
-    issue_body = issue_body_path.read_text(encoding="utf-8") if issue_body_path.is_file() else ""
-    trusted_source = preflight.get("source") or {}
-    if (trusted_source.get("issue_body_sha256") != digest(issue_body.encode("utf-8"))
-            or trusted_source.get("uri") != f"https://github.com/{repository}/issues/{issue}"):
-        raise MissingReviewedEvidenceError("canonical issue source binding is unavailable")
+    canonical_body, parent_open = canonical_issue_context(out, repository, issue)
     deferred_ids = require_complete_semantic_review(
-        closure, issue_number=issue, canonical_issue_body=issue_body,
-        parent_issue_open=trusted_source.get("issue_state") == "open")
+        closure, issue_number=issue, canonical_issue_body=canonical_body,
+        parent_issue_open=parent_open)
     validate_test_bindings(manifest.get("test_bindings"), closure, tests)
     staged = {name: bind_identity(verified_source(root, source, name, hashes), head, start)
               for name in sorted(set(hashes) - {"reviewed-closure.json"})}
@@ -441,12 +457,8 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
               "audit_history": manifest["audit_history"]}
     if "remediation_mode" in manifest:
         inputs["remediation_mode"] = manifest["remediation_mode"]
-    if deferred_ids:
-        inputs["issue_completion"] = "partial"
-        inputs["deferred_obligation_ids"] = deferred_ids
-        inputs["remaining_issue_ids"] = [issue]
-        inputs["parent_issue_must_remain_open"] = True
-    write_json(out / "certification-inputs.json", inputs)
+    write_json(out / "certification-inputs.json",
+               with_deferred_completion(inputs, deferred_ids, issue))
     write_json(out / "handoff-producer-status.json", {
         "status": "staged-for-independent-validation", "subject_sha": head,
         "source": f".github/handoff-evidence/issue-{issue}", "reports": sorted(staged),
