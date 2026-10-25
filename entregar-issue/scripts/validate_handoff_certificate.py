@@ -62,7 +62,8 @@ def _valid_deferred_decision(item: dict, source_id: str, source_sha: str,
                 "target_issue": issue_number, "parent_issue_must_remain_open": True}
     return (isinstance(decision, dict)
             and all(decision.get(key) == value for key, value in expected.items())
-            and len(str(decision.get("decision_locator") or "").strip()) >= 4
+            and len(str(decision.get("decision_locator") or "").strip()) >= 8
+            and str(decision.get("decision_locator") or "") in str(item.get("source_text") or "")
             and len(str(item.get("rationale") or "").strip()) >= 20)
 
 
