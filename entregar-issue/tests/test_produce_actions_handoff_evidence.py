@@ -241,27 +241,19 @@ def test_progressive_review_requires_passing_exact_head_controls(tmp_path):
         producer.validate_incomplete_review(source, starter, tests)
 
 
-def test_deferred_obligation_needs_canonical_decision_and_open_parent():
+def test_deferred_obligation_cannot_claim_certification_without_partial_handoff():
     obligation = {"id": "OBL-044", "disposition": "deferred",
                   "rationale": "Independent review occurs after certified handoff.",
-                  "scope_decision": None}
+                  "scope_decision": {"decision_source_id": "SRC-ISSUE-112",
+                                     "decision_source_sha256": "a" * 64,
+                                     "decision_locator": "OBL-044 canonical contract",
+                                     "target_issue": 120,
+                                     "parent_issue_must_remain_open": True}}
     closure = {"obligations": [obligation], "source_coverage": [{
         "source_id": "SRC-ISSUE-112", "source_sha256": "a" * 64}]}
     with pytest.raises(producer.MissingReviewedEvidenceError,
-                       match="deferred obligations require canonical"):
+                       match="deferred obligations need verified partial handoff"):
         producer.require_complete_semantic_review(closure)
-    obligation["scope_decision"] = {
-        "decision_source_id": "SRC-ISSUE-112",
-        "decision_source_sha256": "a" * 64,
-        "decision_locator": "OBL-044 from reviewed canonical issue",
-        "target_issue": 120, "parent_issue_must_remain_open": True,
-    }
-    producer.require_complete_semantic_review(closure)
-    obligation["scope_decision"]["parent_issue_must_remain_open"] = False
-    with pytest.raises(producer.MissingReviewedEvidenceError,
-                       match="deferred obligations require canonical"):
-        producer.require_complete_semantic_review(closure)
-    obligation["scope_decision"]["parent_issue_must_remain_open"] = True
     obligation["disposition"] = "pending"
     with pytest.raises(producer.MissingReviewedEvidenceError,
                        match="closure incomplete"):

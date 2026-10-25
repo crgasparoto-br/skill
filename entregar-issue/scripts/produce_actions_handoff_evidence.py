@@ -114,14 +114,21 @@ def merge_closure(starter: dict, reviewed: dict) -> dict:
 
 
 def require_complete_semantic_review(closure: dict) -> None:
-    """Require terminal dispositions without treating a deferred item as completed.
+    """Refuse unresolved obligations and unverified partial handoff.
 
-    Deferred work is a *partial* issue outcome.  The downstream handoff gate
-    must still enforce remaining_issue_ids and parent_issue_must_remain_open.
-    This check never approves semantic oracles or an independent audit.
+    Partial completion requires a verified remaining-issues/parent-open contract
+    in the terminal handoff path.  This producer cannot certify that contract,
+    so a deferred decision must not masquerade as complete certification.
     """
+    deferred = [item.get("id", "unknown") for item in closure["obligations"]
+                if item.get("disposition") == "deferred"]
+    if deferred:
+        raise MissingReviewedEvidenceError(
+            "deferred obligations need verified partial handoff and open parent "
+            f"before any certificate: {', '.join(deferred[:5])}"
+        )
     unresolved = [item.get("id", "unknown") for item in closure["obligations"]
-                  if item.get("disposition") not in {"covered", "deferred", "not-applicable"}]
+                  if item.get("disposition") not in {"covered", "not-applicable"}]
     if unresolved:
         raise MissingReviewedEvidenceError(
             f"reviewed semantic closure incomplete: {len(unresolved)} unresolved "
@@ -135,28 +142,6 @@ def require_complete_semantic_review(closure: dict) -> None:
         raise MissingReviewedEvidenceError(
             f"reviewed semantic closure has unjustified not-applicable "
             f"obligations ({', '.join(unjustified[:5])}); no certificate can be staged"
-        )
-    sources = {s.get("source_id"): s.get("source_sha256")
-               for s in closure.get("source_coverage", []) if isinstance(s, dict)}
-    invalid_deferrals = []
-    for item in closure["obligations"]:
-        if item.get("disposition") != "deferred":
-            continue
-        decision = item.get("scope_decision")
-        if (not isinstance(item.get("rationale"), str)
-                or not item["rationale"].strip()
-                or not isinstance(decision, dict)
-                or sources.get(decision.get("decision_source_id")) != decision.get("decision_source_sha256")
-                or not isinstance(decision.get("decision_locator"), str)
-                or len(decision["decision_locator"].strip()) < 4
-                or type(decision.get("target_issue")) is not int
-                or decision["target_issue"] <= 0
-                or decision.get("parent_issue_must_remain_open") is not True):
-            invalid_deferrals.append(item.get("id", "unknown"))
-    if invalid_deferrals:
-        raise MissingReviewedEvidenceError(
-            "deferred obligations require canonical source, destination issue "
-            f"and open parent: {', '.join(invalid_deferrals[:5])}"
         )
 
 
