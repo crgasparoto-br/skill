@@ -337,7 +337,7 @@ def test_mixed_deferred_requires_pre_handoff_evidence_and_exact_junit():
         "positive": ["suite::positive"], "negative": ["suite::negative"],
         "regression": ["suite::regression"],
     }}
-    tests = {name: "passed" for name in ["suite::positive", "suite::negative", "suite::regression"]}
+    tests = dict.fromkeys(["suite::positive", "suite::negative", "suite::regression"], "passed")
     producer.validate_test_bindings(bindings, closure, tests)
     with pytest.raises(ValueError, match="account for every covered"):
         producer.validate_test_bindings({}, closure, tests)
