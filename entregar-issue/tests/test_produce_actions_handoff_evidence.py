@@ -211,12 +211,61 @@ def test_incomplete_review_validates_keys_without_claiming_approval(tmp_path):
     assert result["canonical_candidate_keys_verified"] is True
     record["obligations"]["c" * 64]["disposition"] = "covered"
     put(source / "reviewed-closure.json", record)
-    with pytest.raises(ValueError, match="must not claim semantic coverage"):
+    with pytest.raises(ValueError, match="draft test bindings require exact-head"):
         producer.validate_incomplete_review(source, starter)
     record["obligations"] = {"d" * 64: record["obligations"].pop("c" * 64)}
     put(source / "reviewed-closure.json", record)
     with pytest.raises(ValueError, match="differs from canonical"):
         producer.validate_incomplete_review(source, starter)
+
+
+
+def test_progressive_review_requires_passing_exact_head_controls(tmp_path):
+    _, out, _, source, _ = fixture(tmp_path)
+    starter = json.loads((out / ".audit/entregar-issue/requirement-closure.json").read_text())
+    manifest = json.loads((source / "manifest.json").read_text())
+    manifest.update(review_state="incomplete", artifact_sha256={})
+    put(source / "manifest.json", manifest)
+    tests = {"suite::positive": "passed", "suite::negative": "passed",
+             "suite::regression": "passed"}
+    result = producer.validate_incomplete_review(source, starter, tests)
+    assert result["provisional_obligations"] == 1
+    assert result["pending_obligations"] == 0
+    assert result["semantic_certification"] == "NOT_ASSERTED"
+    with pytest.raises(ValueError, match="nonpassing negative"):
+        producer.validate_incomplete_review(source, starter, {
+            **tests, "suite::negative": "skipped"})
+    with pytest.raises(ValueError, match="reviewed artifact hashes"):
+        manifest["artifact_sha256"] = {"reviewed-closure.json": "f" * 64}
+        put(source / "manifest.json", manifest)
+        producer.validate_incomplete_review(source, starter, tests)
+
+
+def test_deferred_obligation_needs_canonical_decision_and_open_parent():
+    obligation = {"id": "OBL-044", "disposition": "deferred",
+                  "rationale": "Independent review occurs after certified handoff.",
+                  "scope_decision": None}
+    closure = {"obligations": [obligation], "source_coverage": [{
+        "source_id": "SRC-ISSUE-112", "source_sha256": "a" * 64}]}
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match="deferred obligations require canonical"):
+        producer.require_complete_semantic_review(closure)
+    obligation["scope_decision"] = {
+        "decision_source_id": "SRC-ISSUE-112",
+        "decision_source_sha256": "a" * 64,
+        "decision_locator": "OBL-044 from reviewed canonical issue",
+        "target_issue": 120, "parent_issue_must_remain_open": True,
+    }
+    producer.require_complete_semantic_review(closure)
+    obligation["scope_decision"]["parent_issue_must_remain_open"] = False
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match="deferred obligations require canonical"):
+        producer.require_complete_semantic_review(closure)
+    obligation["scope_decision"]["parent_issue_must_remain_open"] = True
+    obligation["disposition"] = "pending"
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match="closure incomplete"):
+        producer.require_complete_semantic_review(closure)
 
 
 def test_incomplete_review_manifest_is_not_mistaken_for_certified_evidence(tmp_path, monkeypatch):

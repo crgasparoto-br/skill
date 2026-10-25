@@ -114,13 +114,14 @@ def merge_closure(starter: dict, reviewed: dict) -> dict:
 
 
 def require_complete_semantic_review(closure: dict) -> None:
-    """An approved dossier cannot silently retain pending obligation decisions.
+    """Require terminal dispositions without treating a deferred item as completed.
 
-    This is a deterministic completeness guard only.  It does not establish
-    oracle quality, independence, or the authenticity of a claimed coverage.
+    Deferred work is a *partial* issue outcome.  The downstream handoff gate
+    must still enforce remaining_issue_ids and parent_issue_must_remain_open.
+    This check never approves semantic oracles or an independent audit.
     """
     unresolved = [item.get("id", "unknown") for item in closure["obligations"]
-                  if item.get("disposition") not in {"covered", "not-applicable"}]
+                  if item.get("disposition") not in {"covered", "deferred", "not-applicable"}]
     if unresolved:
         raise MissingReviewedEvidenceError(
             f"reviewed semantic closure incomplete: {len(unresolved)} unresolved "
@@ -135,10 +136,40 @@ def require_complete_semantic_review(closure: dict) -> None:
             f"reviewed semantic closure has unjustified not-applicable "
             f"obligations ({', '.join(unjustified[:5])}); no certificate can be staged"
         )
+    sources = {s.get("source_id"): s.get("source_sha256")
+               for s in closure.get("source_coverage", []) if isinstance(s, dict)}
+    invalid_deferrals = []
+    for item in closure["obligations"]:
+        if item.get("disposition") != "deferred":
+            continue
+        decision = item.get("scope_decision")
+        if (not isinstance(item.get("rationale"), str)
+                or not item["rationale"].strip()
+                or not isinstance(decision, dict)
+                or sources.get(decision.get("decision_source_id")) != decision.get("decision_source_sha256")
+                or not isinstance(decision.get("decision_locator"), str)
+                or len(decision["decision_locator"].strip()) < 4
+                or type(decision.get("target_issue")) is not int
+                or decision["target_issue"] <= 0
+                or decision.get("parent_issue_must_remain_open") is not True):
+            invalid_deferrals.append(item.get("id", "unknown"))
+    if invalid_deferrals:
+        raise MissingReviewedEvidenceError(
+            "deferred obligations require canonical source, destination issue "
+            f"and open parent: {', '.join(invalid_deferrals[:5])}"
+        )
 
 
-def validate_incomplete_review(source: Path, starter: dict) -> dict:
-    """A draft may be inventoried, but cannot supply semantic approval."""
+def validate_incomplete_review(source: Path, starter: dict,
+                               tests: dict | None = None) -> dict:
+    """Record progressive draft decisions, never issue a certification claim.
+
+    Draft 'covered' decisions are mechanically cross-checked against actually
+    passed JUnit IDs.  This does *not* establish semantic equivalence; the
+    approved-dossier path and independent audit remain mandatory.
+    """
+    import copy
+
     manifest = read_json(source / "manifest.json")
     if manifest.get("review_state") != "incomplete":
         return {}
@@ -148,13 +179,26 @@ def validate_incomplete_review(source: Path, starter: dict) -> dict:
     if (draft.get("schema_version") != 1 or not isinstance(provided, dict)
             or set(provided) != canonical):
         raise ValueError("incomplete reviewed closure differs from canonical candidate inventory")
-    if any(not isinstance(item, dict) or item.get("disposition") != "pending"
-           for item in provided.values()):
-        raise ValueError("incomplete reviewed closure must not claim semantic coverage")
-    if manifest.get("artifact_sha256") or manifest.get("test_bindings"):
-        raise ValueError("incomplete dossier must not present reviewed hashes or test bindings")
-    return {"review_state": "incomplete", "pending_obligations": len(provided),
-            "canonical_candidate_keys_verified": True}
+    if manifest.get("artifact_sha256"):
+        raise ValueError("incomplete dossier must not present reviewed artifact hashes")
+    merged = merge_closure(copy.deepcopy(starter), draft)
+    obligations = merged["obligations"]
+    permitted = {"pending", "covered", "deferred", "not-applicable"}
+    if any(item.get("disposition") not in permitted for item in obligations):
+        raise ValueError("incomplete reviewed closure has invalid disposition")
+    provisional = [item for item in obligations if item["disposition"] == "covered"]
+    if any(not item.get("requirement_ids") or len(str(item.get("rationale") or "").strip()) < 20
+           for item in provisional):
+        raise ValueError("draft covered obligation lacks requirement IDs or reviewed rationale")
+    bindings = manifest.get("test_bindings")
+    if tests is None and (provisional or bindings):
+        raise ValueError("draft test bindings require exact-head JUnit facts")
+    validate_test_bindings(bindings, merged, tests or {})
+    return {"review_state": "incomplete", "pending_obligations": sum(
+                item["disposition"] == "pending" for item in obligations),
+            "provisional_obligations": len(provisional),
+            "canonical_candidate_keys_verified": True,
+            "semantic_certification": "NOT_ASSERTED"}
 
 
 def code_growth_command(
@@ -347,7 +391,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     })
     source = root / ".github" / "handoff-evidence" / f"issue-{issue}"
     if source.is_dir() and (source / "manifest.json").is_file():
-        draft_check = validate_incomplete_review(source, starter)
+        draft_check = validate_incomplete_review(source, starter, tests)
         if draft_check:
             draft_check["subject_sha"] = head
             draft_check["code_growth"] = stage_draft_code_growth(root, out, source, head, base)

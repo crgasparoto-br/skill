@@ -53,5 +53,17 @@
     "A separate read-only auditor must approve only after certified handoff."
   ],
   "artifact_sha256": {},
-  "test_bindings": {}
+  "test_bindings": {
+    "REQ-112-038": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_test_only_feature_diff_triggers_gate_without_global_hygiene"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_missing_test_decision_blocks_even_for_test_only_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate"
+      ]
+    }
+  }
 }
