@@ -228,6 +228,20 @@ def validate_rows(name: str, expected: dict, actual: object, root: Path,
     return limited
 
 
+def recognized_test_or_runner_path(path: str) -> bool:
+    """Conservative known signals; absence is never proof of non-test status."""
+    parts = path.casefold().replace("\\", "/").split("/")
+    name = parts[-1]
+    return (any(part in {"tests", "test", "__tests__", "specs", "e2e"}
+                for part in parts[:-1])
+            or name.startswith("test_")
+            or name.endswith(("_test.py", "_test.go", "_test.rs", "_spec.rb", "_test.rb"))
+            or any(token in name for token in (".test.", ".spec.", ".cy.", ".e2e."))
+            or name in {"pytest.ini", "tox.ini", "jest.config.js", "jest.config.ts",
+                        "vitest.config.js", "vitest.config.ts", "playwright.config.ts",
+                        "cypress.config.ts"})
+
+
 def validate_changed_paths(inventory: dict, report: dict, surfaces: dict,
                            root: Path, errors: list[str]) -> None:
     discovery = inventory.get("discovery", {})
@@ -242,12 +256,20 @@ def validate_changed_paths(inventory: dict, report: dict, surfaces: dict,
         if status not in {"covered", "not-applicable"}:
             errors.append(f"changed path {key}: requires completed review")
             continue
+        test_or_runner = recognized_test_or_runner_path(key)
         if status == "not-applicable":
             require_reason(row, f"changed path {key}", errors)
+            if test_or_runner:
+                errors.append(f"changed test/runner path cannot be not-applicable: {key}")
         else:
             affected = row.get("surface_ids")
             if not isinstance(affected, list) or not affected or set(affected) - surfaces.keys():
                 errors.append(f"changed path {key}: known surfaces not linked")
+            elif test_or_runner:
+                if not any(surfaces[s].get("risk_family") == "test-lifecycle"
+                           for s in affected):
+                    errors.append(f"changed test/runner path lacks test-lifecycle surface: {key}")
+                require_reason(row, f"changed test/runner path {key}", errors)
         check_evidence(root, row, f"changed path {key}", errors)
 
 
