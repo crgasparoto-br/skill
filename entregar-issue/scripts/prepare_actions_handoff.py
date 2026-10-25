@@ -84,6 +84,8 @@ def issue_body(repository: str, issue: int, token: str) -> str:
         payload = json.load(response)
     if payload.get("pull_request") or not isinstance(payload.get("body"), str) or not payload["body"].strip():
         fail("source Issue #N is not a nonempty issue body")
+    if payload.get("state") != "open":
+        fail("canonical parent issue must be open to prepare post-handoff evidence")
     return payload["body"]
 
 
@@ -116,7 +118,8 @@ def prepare(args: argparse.Namespace) -> None:
         "identity": {"repository": repo, "issue_number": issue, "pull_request_number": pr,
                      "material_head_sha": head, "base_sha": base},
         "source": {"issue_body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
-                   "uri": f"https://github.com/{repo}/issues/{issue}"},
+                   "uri": f"https://github.com/{repo}/issues/{issue}",
+                   "issue_state": "open"},
         "unverified": ["requirement-closure", "test-decision-evidence", "codebase-grounding",
                        "code-growth", "risk-profile-evidence", "audit-remediation-lineage",
                        "handoff-certificate", "terminal-handoff"],
