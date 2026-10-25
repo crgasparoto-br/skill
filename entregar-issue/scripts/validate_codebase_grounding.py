@@ -229,9 +229,8 @@ def check_existing_test_decision(
     item: dict[str, Any], repo: Path, base: str, operation: str, path: str,
     errors: list[str], unknown: list[str],
     base_configs: dict[str, tuple[str, ...]],
-    head_configs: dict[str, tuple[str, ...]],
 ) -> None:
-    """Reject false coverage without treating unknown runner discovery as absence."""
+    """Check that existing coverage was discoverable before the change."""
     if item["decision"] != "covered-by-existing":
         return
     candidates = item["search"]["candidates"]
@@ -245,11 +244,13 @@ def check_existing_test_decision(
         existing = candidate["path"]
         if read_at(repo, base, existing) is None:
             errors.append(f"GROUND-TEST-001: covered-by-existing candidate absent at base: {existing}")
-        elif not (is_test_path(existing, pytest_configs=base_configs)
-                  or is_test_path(existing, pytest_configs=head_configs)):
+        elif not is_test_path(existing, pytest_configs=base_configs):
+            # A HEAD-only runner setting cannot prove that the candidate was
+            # discoverable before the change. Preserve UNKNOWN rather than
+            # backdating coverage from the candidate's new configuration.
             unknown.append(
-                f"GROUND-TEST-001: candidate test discovery UNKNOWN for {existing}; "
-                f"verify dynamic runner execution before claiming coverage of {path}"
+                f"GROUND-TEST-001: candidate test discovery UNKNOWN at base for {existing}; "
+                f"verify base runner discovery before claiming coverage of {path}"
             )
 
 
@@ -292,7 +293,7 @@ def check_test_decisions(
                     errors.append(f"GROUND-TEST-001: candidate absent in both revisions: {candidate['path']}")
             check_existing_test_decision(
                 item, repo, base, operation, path, errors, unknown,
-                base_configs, head_configs,
+                base_configs,
             )
             check = item["verification"]
             if check["status"] == "passed" and (not check.get("command") or check.get("exit_code") != 0):

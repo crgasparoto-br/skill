@@ -318,13 +318,59 @@ def test_modified_test_coverage_requires_existing_test_candidate(candidate):
     decision["search"]["candidates"][0]["path"] = "src/money.py"
     unknown = run(scenario, report)
     assert unknown.returncode == 3, unknown.stdout
-    assert "candidate test discovery UNKNOWN for src/money.py" in unknown.stdout
+    assert "candidate test discovery UNKNOWN at base for src/money.py" in unknown.stdout
 
     # A test added only at HEAD cannot be evidence of pre-existing coverage.
     decision["search"]["candidates"][0]["path"] = "tests/test_new.py"
     missing = run(scenario, report)
     assert missing.returncode == 2, missing.stdout
     assert "covered-by-existing candidate absent at base" in missing.stdout
+
+
+def test_head_only_runner_configuration_cannot_prove_existing_test_coverage(tmp_path):
+    """Runner discovery introduced at HEAD does not prove BASE test coverage."""
+    from plan_execution import is_test_path
+    from validate_codebase_grounding import (
+        check_existing_test_decision,
+        load_pytest_configs,
+    )
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q")
+    write(repo, "src/smoke.py", "def smoke():\n    assert True\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "baseline with undiscovered file")
+    base = git(repo, "rev-parse", "HEAD")
+    write(repo, "pytest.ini", "[pytest]\npython_files = smoke.py\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "enable test discovery only at head")
+    head = git(repo, "rev-parse", "HEAD")
+    paths = ["pytest.ini", "src/smoke.py"]
+    base_configs = load_pytest_configs(repo, base, paths, [])
+    head_configs = load_pytest_configs(repo, head, paths, [])
+    assert not is_test_path("src/smoke.py", pytest_configs=base_configs)
+    assert is_test_path("src/smoke.py", pytest_configs=head_configs)
+
+    item = {"decision": "covered-by-existing",
+            "search": {"candidates": [{"path": "src/smoke.py"}]}}
+    errors, unknown = [], []
+    check_existing_test_decision(
+        item, repo, base, "modified", "tests/test_report.py", errors, unknown,
+        base_configs,
+    )
+    assert not errors
+    assert len(unknown) == 1
+    assert "discovery UNKNOWN at base" in unknown[0]
+
+    # When BASE itself discovers the test, the mechanical check can accept
+    # provenance; semantic oracle equivalence remains independent.
+    errors, unknown = [], []
+    check_existing_test_decision(
+        item, repo, base, "modified", "tests/test_report.py", errors, unknown,
+        head_configs,
+    )
+    assert errors == [] and unknown == []
 
 
 def test_dynamic_runner_unavailable_is_unknown_not_ready(candidate):
