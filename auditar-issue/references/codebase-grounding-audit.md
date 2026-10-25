@@ -22,3 +22,7 @@ Com checkout e base disponiveis, usando buscas proprias sobre o `material_head_s
 Quando o gate era aplicavel e o relatorio estiver ausente ou stale para o SHA auditado, tratar como `delivery-not-ready` antes de provas caras. Finding em SHA aprovado internamente e `audit_escape`.
 
 Sem checkout executavel, declarar a verificacao `UNKNOWN`; nao aprovar por inferencia.
+
+## Controle de diffs de testes no gate independente
+
+`validate_audit_completeness.py` reconcilia os caminhos alterados com objetos Git imutáveis. Para caminhos reconhecidos por convenções usuais de testes e arquivos explícitos de configuração de runner (inclusive diffs só de testes, adições e exclusões), a revisão do caminho não pode ser `not-applicable`: exigir superfície `risk_family=test-lifecycle`, motivo substantivo e evidência com hash. Isso impede omissão formal e rotulagem como código comum, mas não comprova equivalência de oráculos ou preservação de cobertura. O auditor continua obrigado a conferir antes/depois, controles positivos/negativos/regressão e descoberta do runner. Convenções de nome são indícios conservadores: padrões personalizados, plugins e descoberta dinâmica não reconhecidos continuam `UNKNOWN` até inspeção do runner; não declarar inexistência de testes com base apenas na heurística.
