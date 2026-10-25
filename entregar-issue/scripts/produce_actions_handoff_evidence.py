@@ -113,59 +113,69 @@ def merge_closure(starter: dict, reviewed: dict) -> dict:
     return starter
 
 
+def _deferred_phase_decision(item: dict, source_id: str, source_sha: str,
+                             issue_number: int, issue_body: str) -> bool:
+    """Only post-handoff obligations explicitly grounded in the issue may defer."""
+    decision = item.get("scope_decision")
+    if not isinstance(decision, dict):
+        return False
+    expected = {"decision_source_id": source_id,
+                "decision_source_sha256": source_sha,
+                "target_issue": issue_number,
+                "parent_issue_must_remain_open": True}
+    locator = decision.get("decision_locator")
+    source_text = str(item.get("source_text") or "")
+    return (all(decision.get(key) == value for key, value in expected.items())
+            and isinstance(locator, str) and len(locator.strip()) >= 8
+            and locator in issue_body and locator in source_text
+            and len(str(item.get("rationale") or "").strip()) >= 20)
+
+
+def _verify_deferred_phase(closure: dict, deferred: list[dict],
+                           issue_number: int | None, issue_body: str | None,
+                           parent_issue_open: bool) -> None:
+    if not deferred:
+        return
+    if (not isinstance(issue_number, int) or issue_number <= 0
+            or not isinstance(issue_body, str) or not issue_body
+            or not parent_issue_open):
+        raise MissingReviewedEvidenceError(
+            "deferred obligations need verified partial handoff and open parent")
+    source_id = closure.get("primary_issue_source_id")
+    if not isinstance(source_id, str) or not source_id:
+        raise MissingReviewedEvidenceError("deferred obligations require canonical source identity")
+    source_sha = digest(issue_body.encode("utf-8"))
+    invalid = [str(item.get("id", "unknown")) for item in deferred
+               if not _deferred_phase_decision(item, source_id, source_sha,
+                                               issue_number, issue_body)]
+    if invalid:
+        raise MissingReviewedEvidenceError(
+            "deferred obligation " + ", ".join(invalid) +
+            " lacks canonical phase decision, verified issue binding or open-parent requirement")
+
+
 def require_complete_semantic_review(
     closure: dict, *, issue_number: int | None = None,
     canonical_issue_body: str | None = None, parent_issue_open: bool = False,
 ) -> list[str]:
-    """Permit only source-bound, open-parent post-handoff deferrals.
-
-    Deferred is a partial preparation state, never proof of final approval.
-    An independent exact-SHA review and final parent-issue closure remain due.
-    Legacy callers without authenticated issue inputs fail closed.
-    """
+    """Prove pre-handoff closure; track independent review as unsatisfied."""
     deferred = [item for item in closure["obligations"]
                 if item.get("disposition") == "deferred"]
-    if deferred:
-        if (not isinstance(issue_number, int) or issue_number <= 0
-                or not isinstance(canonical_issue_body, str) or not canonical_issue_body
-                or not parent_issue_open):
-            raise MissingReviewedEvidenceError(
-                "deferred obligations need verified partial handoff and open parent"
-            )
-        source_sha = digest(canonical_issue_body.encode("utf-8"))
-        source_id = closure.get("primary_issue_source_id")
-        if not isinstance(source_id, str) or not source_id:
-            raise MissingReviewedEvidenceError("deferred obligations require canonical source identity")
-        for item in deferred:
-            decision = item.get("scope_decision")
-            if (not isinstance(decision, dict)
-                    or decision.get("decision_source_id") != source_id
-                    or decision.get("decision_source_sha256") != source_sha
-                    or decision.get("target_issue") != issue_number
-                    or decision.get("parent_issue_must_remain_open") is not True
-                    or not isinstance(decision.get("decision_locator"), str)
-                    or decision["decision_locator"] not in canonical_issue_body
-                    or len(str(item.get("rationale") or "").strip()) < 20):
-                raise MissingReviewedEvidenceError(
-                    f"deferred obligation {item.get('id', 'unknown')} lacks canonical "
-                    "phase decision, verified issue binding or open-parent requirement"
-                )
+    _verify_deferred_phase(closure, deferred, issue_number, canonical_issue_body,
+                           parent_issue_open)
     unresolved = [item.get("id", "unknown") for item in closure["obligations"]
                   if item.get("disposition") not in {"covered", "not-applicable", "deferred"}]
     if unresolved:
         raise MissingReviewedEvidenceError(
             f"reviewed semantic closure incomplete: {len(unresolved)} unresolved "
-            f"obligations ({', '.join(unresolved[:5])}); no certificate can be staged"
-        )
+            f"obligations ({', '.join(unresolved[:5])}); no certificate can be staged")
     unjustified = [item.get("id", "unknown") for item in closure["obligations"]
                    if item.get("disposition") == "not-applicable"
-                   and (not isinstance(item.get("rationale"), str)
-                        or not item["rationale"].strip())]
+                   and not str(item.get("rationale") or "").strip()]
     if unjustified:
         raise MissingReviewedEvidenceError(
-            f"reviewed semantic closure has unjustified not-applicable "
-            f"obligations ({', '.join(unjustified[:5])}); no certificate can be staged"
-        )
+            "reviewed semantic closure has unjustified not-applicable "
+            f"obligations ({', '.join(unjustified[:5])}); no certificate can be staged")
     return sorted(str(item["id"]) for item in deferred)
 
 
