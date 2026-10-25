@@ -95,3 +95,11 @@ A revisão utiliza os paths e oráculos inspecionados nos testes do repositório
 - OBL-045: o corpus de higiene exercita o sinal `removed_contract` e não apaga o teste, porque o inventário de consumidores/contrato legado não está confirmado. A ausência de coleta pelo runner não equivale à prova de obsolescência.
 - **Progresso:** 50/52 registros provisoriamente `covered`, **2 pendentes**: OBL-040 (refutação independente efetiva) e OBL-044 (certificado, CI, auditoria posterior ao handoff). Ambos permanecem bloqueantes para aprovação da issue, sem dispensa por testes/documentação.
 - Os controles globais `pass_c`, matrizes críticas, risco, controles herdados e linhagem de rejeições continuam sem fechamento formal. Manifesto `incomplete`, sem certificado. O handoff exige novo SHA material e auditoria externa autêntica.
+
+## Estado revisado do contrato de fases — 25/10/2026
+
+- **50/52** registros continuam com cobertura **provisória**: não constituem certificação nem auditoria independente.
+- **OBL-040 permanece `pending`**: trata da capacidade funcional de `auditar-issue` para refutar enfraquecimento de testes; não é exclusivamente uma ação externa pós-handoff. Exige evidência discriminante dessa capacidade e fechamento na fase de implementação.
+- **OBL-044 está `deferred` apenas para o ato de aprovação independente posterior**: sua decisão usa a própria frase da especificação, hash da fonte canônica e vínculo à issue pai #112, que deve permanecer aberta. As exigências materiais de documentação, testes e CI continuam sendo gates prévios obrigatórios, não podem ser diferidas por essa classificação.
+- O contrato de `deferred` requer correspondência entre `decision_locator` e o texto exato da obrigação, vínculo ao corpo da issue autenticado, lista de obrigações diferidas no certificado e verificação da issue pai aberta no gate confiável. Isso **não** significa que o certificado tenha sido produzido.
+- `manifest.review_state=incomplete`, `pass_c=pending`, `artifact_sha256={}`, relatórios críticos e fechamento de rejeições anteriores ainda ausentes. Não liberar PR, merge ou fechamento da issue antes de nova certificação e auditoria independente exact-SHA.
