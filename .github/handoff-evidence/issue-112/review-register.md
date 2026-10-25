@@ -50,3 +50,11 @@
 - A auditoria de protecao de branches verificou `required_status_checks=[]` nos rulesets de `develop` e `main`; a [issue #119](https://github.com/crgasparoto-br/skill/issues/119) trata a configuracao administrativa dos contexts obrigatorios. Nao afirmar que um gate vermelho impede merge enquanto a verificacao de rulesets nao comprovar a protecao.
 - **Nenhuma obrigacao foi promovida a `covered` nesta atualizacao.** Permanecem pendentes a revisao real de 52 cenarios/oraculos, vinculos positivos/negativos/regressao aos JUnit IDs do novo SHA, relatorios criticos e proveniencia das rejeicoes anteriores. O manifesto permanece `review_state=incomplete`, e o produtor deve continuar recusando certificacao.
 
+
+
+## Revisão semântica incremental, com oráculos (25/10/2026)
+
+- No material de partida `1209d8bac815a23772a160d9b4cf950dba944622`, `OBL-038` estava provisoriamente coberta, e outras 51 permaneciam pendentes. A revisão desta mudança inspecionou especificamente 21 obrigações de comportamento determinístico; seus identificadores `OBL`, fontes e testes de refutação constam nos registros individuais de `reviewed-closure.json` e nos `test_bindings` do manifesto.
+- Revisadas neste lote: OBL-009, OBL-016, OBL-017, OBL-018, OBL-020, OBL-021, OBL-023, OBL-025, OBL-026, OBL-027, OBL-028, OBL-030, OBL-032, OBL-033, OBL-034, OBL-035, OBL-037, OBL-042, OBL-046, OBL-047, OBL-049. Cada entrada tem controles positivo/negativo/regressão distintos, com ID JUnit formal já existente na suíte; o produtor voltará a conferir a execução no novo SHA. A revisão preliminar **não** afirma que nomes de testes sozinhos provam equivalência de oráculos.
+- **Progresso do dossiê: 22/52 provisoriamente cobertas; 30/52 pendentes.** `review_state=incomplete`, sem hashes certificados; `pass_c`, matrizes críticas, riscos, controles herdados e auditoria externa seguem pendentes. A certificação deve permanecer bloqueada. Uma possível regressão de CI será corrigida no SHA material, sem enfraquecer gates.
+- Pendências que não podem ser declaradas implementadas por contagem de testes incluem execução real de revisão de issue, revisão read-only independente, comprovação completa de oráculos/consumidores e certificação/auditoria após handoff. Não há aprovação independente ou autorização de merge.
