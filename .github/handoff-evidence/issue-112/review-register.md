@@ -72,3 +72,26 @@
 - Lote de 10 revisoes: OBL-002, OBL-003, OBL-004, OBL-007, OBL-008, OBL-010, OBL-012, OBL-015, OBL-029, OBL-050. Fontes, casos JUnit, classes de refutacao e racional especifico registrados individualmente no `reviewed-closure.json`/manifest.
 - **Estado: 46/52 registros provisoriamente `covered`; 6 pendentes: OBL-006, OBL-022, OBL-036, OBL-040, OBL-044 e OBL-045.** Esses cenarios exigem prova adicional: exemplo real de revisao de issue, autorizacao de operacoes destrutivas, refutacao read-only independente, auditoria/certificado apos handoff e consumidor legado para teste obsoleto. Nao completar por inferencia.
 - Manifesto continua `incomplete`, `pass_c=pending`, hashes/reports criticos nao emitidos. Nao se declarou certificado, aprovacao independente nem autorizacao de merge.
+
+
+## Revisão concreta dos testes existentes na Issue #112 (sem invocar Skill) — 25/10/2026
+
+Objetivo desta revisão: produzir a orientação exigida por OBL-006 e OBL-036 na fonte canônica `revisar-issue/references/specification-standard.md`, sem assumir inexistência de cobertura e sem exigir testes novos por similaridade de títulos.
+
+| Risco/cenário da issue | Inventário de casos/fixtures existentes observado | Decisão de revisão | Justificativa observável |
+|---|---|---|---|
+| Diff apenas de testes | `entregar-issue/tests/test_codebase_grounding.py::test_test_only_feature_diff_triggers_gate_without_global_hygiene`, `test_missing_test_decision_blocks_even_for_test_only_diff` e `test_go_test_only_and_runner_manifests_activate_gate` | `covered-by-existing` | O primeiro exige test_only sem higiene global, o segundo recusa omissão da decisão, o terceiro cobre Go/Cypress; reusar antes de duplicar |
+| Criação e modificação de testes | `test_modified_test_coverage_requires_existing_test_candidate`, `test_added_test_cannot_claim_covered_by_existing_with_real_candidate`, `test_distinct_oracle_is_not_rejected_by_nominal_similarity` | `extend-existing` se mesmo oráculo; `new-test-required` para oráculo independente | Fixtures Git reais comprovam BASE e cenário de integração distinto; não deduzir equivalência por nome |
+| Descontinuação de contrato/teste legado | `higienizar-repositorio/tests/test_hygiene_profile.py::test_test_lifecycle_hygiene_requires_runner_oracle_review`, `entregar-issue/tests/test_codebase_grounding.py::test_deleted_test_requires_preserved_controls` | `keep` / `needs-investigation` | O teste sintético `tests/removed_contract.py` não é coletado, mas é preservado; falta prova de inexistência de consumidores para excluir. Scanner não apaga |
+| Runner customizado/descoberta dinâmica | `test_configured_pytest_filename_is_a_test` parametrizado para pytest.ini, pyproject.toml, tox.ini e setup.cfg; `test_unparseable_pytest_discovery_is_unknown`; `test_head_only_runner_configuration_cannot_prove_existing_test_coverage` | `covered-by-existing` para runners inspecionados; `not-testable/blocked` para plugins dinâmicos não acessíveis | Verificado runner real pytest para configurações disponíveis; plugin externo não observável permanece UNKNOWN, nunca ausência presumida |
+| Compatibilidade de formatos | `entregar-issue/tests/test_deterministic_planning.py::test_historical_v2_plan_schema_and_runtime_compatible`; `entregar-issue/tests/test_codebase_grounding.py::test_legacy_v1_is_explicitly_rejected_for_test_diff` | `covered-by-existing` | Compatibilidade histórica aceita onde segura e rejeição explícita para diff de testes v1 insuficiente |
+| Auditoria independente posterior | `scripts/verify_independent_pr_audit.py` e checks de GitHub Actions; revisão autenticada atual ausente | `not-testable/blocked` até certificado e auditor externo | O implementador não fabrica review independente nem toma CI técnico verde como aprovação |
+
+A revisão utiliza os paths e oráculos inspecionados nos testes do repositório; casos Go/Cypress fora de runner executável não são declarados integração E2E comprovada. Não existe recomendação para remover ou criar teste redundante. Cada decisão foi vinculada ao controle já existente, preservando a distinção entre inventário, execução e equivalência semântica.
+
+### Encerramento provisório de regras conservadoras
+
+- OBL-022: a operação destrutiva é expressamente proibida sem autorização/aviso; a PR não removeu arquivo de testes. O teste sintético de `git rm` serve somente para testar a negativa de perda de cobertura.
+- OBL-045: o corpus de higiene exercita o sinal `removed_contract` e não apaga o teste, porque o inventário de consumidores/contrato legado não está confirmado. A ausência de coleta pelo runner não equivale à prova de obsolescência.
+- **Progresso:** 50/52 registros provisoriamente `covered`, **2 pendentes**: OBL-040 (refutação independente efetiva) e OBL-044 (certificado, CI, auditoria posterior ao handoff). Ambos permanecem bloqueantes para aprovação da issue, sem dispensa por testes/documentação.
+- Os controles globais `pass_c`, matrizes críticas, risco, controles herdados e linhagem de rejeições continuam sem fechamento formal. Manifesto `incomplete`, sem certificado. O handoff exige novo SHA material e auditoria externa autêntica.

@@ -574,6 +574,50 @@
         "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity",
         "entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready"
       ]
+    },
+    "REQ-112-006": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ]
+    },
+    "REQ-112-022": {
+      "positive": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ],
+      "regression": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt"
+      ]
+    },
+    "REQ-112-036": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_test_only_feature_diff_triggers_gate_without_global_hygiene"
+      ]
+    },
+    "REQ-112-045": {
+      "positive": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case"
+      ]
     }
   }
 }

@@ -52,12 +52,14 @@
       "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-005: entregar-issue/contracts/gate-registry.json ativa gate existente codebase-grounding; schema v2 amplia test_decisions sem controlador paralelo; test_codebase_grounding.py:214-244 comprova reuso do gate e reprova omissao. test_deterministic_planning.py:360-381 garante contrato historico. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "342199765de735c3959da58f05f0af850d7c224312b29bfb5ce48413521d18d7": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-006"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-006 no candidato material: fonte revisar-issue/references/specification-standard.md; limite de controle: nao ha fixture de revisao real localizada. Pendente: provar uma revisao de issue com inventario ou UNKNOWN. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCONTROLE SEMÂNTICO A EXECUTAR: revisão real de uma issue por revisar-issue deve produzir decisão de reaproveitamento por teste existente, ou UNKNOWN com justificativa. Execução de revisão de cenário documentada em https://github.com/crgasparoto-br/skill/pull/118#issuecomment-6374605866: busca os testes de diff apenas de testes, pytest dinâmico, higiene e compatibilidade, e registra covered-by-existing, extend-existing, new-test-required e not-testable/blocked com limites reais. É evidência da aplicação do procedimento, mas não uma prova independente do ciclo inteiro; falta revisão externa e reexecução exact-SHA."
+      "rationale": "REVISAO PROVISORIA DOCUMENTADA — OBL-006: revisar-issue/references/specification-standard.md:108-125 exige diagnostico de testes/runner, alternativa extend/reuse/new ou UNKNOWN e limite de acesso. A revisao concreta registrada no review-register abaixo confronta a issue #112 e testes existentes por riscos. test_codebase_grounding.py:119-124 prova candidato fundamentado, 648-665 runner indisponivel resulta UNKNOWN e 292-329 preserva candidato na BASE. Os IDs dos testes positivos/negativos/regressao sao vinculados no manifesto e sua execucao deve ser confirmada no novo SHA. O registro descreve comportamento de governanca e nao autoriza excluir testes reais, nem faz auditoria externa/Passagem C."
     },
     "faa2ac950da36e2179df73f09b01b9bb2af246af03abeb37a6f1c8171de1c40a": {
       "disposition": "covered",
@@ -210,12 +212,14 @@
       "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-021; contrato e oraculos inspecionados: entregar-issue/tests/test_codebase_grounding.py:434-439 prova test_only=true e hygiene_applicable=false para .feature; lines 241-244 rejeitam ausencia de decisao. tests/test_deterministic_planning.py:342-358 confirma o gate e ausencia de higiene global. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "197dc790f0d17e7a64879cd0a82ea087d34fc401bfab550c46c287b9ffb28389": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-022"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-022 no candidato material: fonte higienizar-repositorio/references/test-lifecycle-hygiene.md; auditar-issue/references/codebase-grounding-audit.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: validar autorizacao/aviso independente de teste verde. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS JUNIT HISTÓRICOS (NÃO CERTIFICADOS; RUN 40020454336; SHA DE ORIGEM 9c4a917e776ec9473a3b8bc5cfcc30a949c32534; NECESSÁRIO REVALIDAR NO HEAD FINAL): positivo=entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls; negativo=entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case; regressão=entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-022, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
+      "rationale": "REVISAO PROVISORIA DOCUMENTADA — OBL-022: higienizar-repositorio/references/test-lifecycle-hygiene.md:7-15 obriga preservar arquivo sem autorizacao/aviso, e separa diagnostico read-only de escrita; auditar-issue/references/codebase-grounding-audit.md:20-24 veda apagar em auditoria. Teste hygiene_profile.py:1050-1078 compara bytes antes/depois e prova ausencia de exclusao; teste de entrega test_codebase_grounding.py:386-417 so permite disposicao quando controles sobrevivem. Diff desta PR nao inclui exclusao de teste real; operacao destrutiva nao foi executada nem implicitamente autorizada. Os IDs dos testes positivos/negativos/regressao sao vinculados no manifesto e sua execucao deve ser confirmada no novo SHA. O registro descreve comportamento de governanca e nao autoriza excluir testes reais, nem faz auditoria externa/Passagem C."
     },
     "40fa0840722bbfdbf54af6c2ae7675ec4af82e6ea83debaf8076cdbfe628cd28": {
       "disposition": "covered",
@@ -348,12 +352,14 @@
       "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-035; contrato e oraculos inspecionados: entregar-issue/scripts/validate_codebase_grounding.py:100-107 mantem runner discovery UNKNOWN por configuracao corrompida; tests/test_codebase_grounding.py:376-384 e 648-665 exigem returncode 3, nunca READY; deteccao de Go/Cypress/manifestos limitada ao que pode ser observado. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "b10f92e6414f30296040b038b0510c9be0710b92a4c9e3fe02ac04429b7ca1f9": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-036"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-036 no candidato material: fonte revisar-issue/references/specification-standard.md; limite de controle: nao ha output de revisao de issue com teste de reuso localizado. Pendente: executar caso de revisao e confirmar orientacao ou UNKNOWN. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCONTROLE SEMÂNTICO A EXECUTAR: revisão real de uma issue por revisar-issue deve produzir decisão de reaproveitamento por teste existente, ou UNKNOWN com justificativa. Execução de revisão de cenário documentada em https://github.com/crgasparoto-br/skill/pull/118#issuecomment-6374605866: busca os testes de diff apenas de testes, pytest dinâmico, higiene e compatibilidade, e registra covered-by-existing, extend-existing, new-test-required e not-testable/blocked com limites reais. É evidência da aplicação do procedimento, mas não uma prova independente do ciclo inteiro; falta revisão externa e reexecução exact-SHA."
+      "rationale": "REVISAO PROVISORIA DOCUMENTADA — OBL-036: Orientacao real de revisao da issue #112 documentada em review-register abaixo: reusar/estender testes existentes de diff test-only, obsolescencia e compatibilidade, e declarar UNKNOWN para runner/plugin nao observado. revisar-issue/references/specification-standard.md:108-125 e o contrato. Tests test_codebase_grounding.py:256-265 impede falsa rejeicao por titulo, 376-384 documenta UNKNOWN e 434-439 confirma gate sem sweep global. Os IDs dos testes positivos/negativos/regressao sao vinculados no manifesto e sua execucao deve ser confirmada no novo SHA. O registro descreve comportamento de governanca e nao autoriza excluir testes reais, nem faz auditoria externa/Passagem C."
     },
     "cb4bb57003804cadaaff66870950c69236fa20e0497ac483d495e6638716c8dd": {
       "disposition": "covered",
@@ -432,12 +438,14 @@
       "rationale": "Revisao individual OBL-044 no candidato material: fonte .github/workflows/handoff-evidence.yml; auditar-issue/SKILL.md; limite de controle: teste tecnico nao substitui certificado semantico. Pendente: bloqueio terminal ate certificacao e auditoria independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-044 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente."
     },
     "aa96d6edb9c7c6fac6f99d7f7d8f1ab4d28ecb04157d10412d426bf1486f4bc9": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-045"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-045 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls. Pendente: revalidar contrato legado antes de remover teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS JUNIT HISTÓRICOS (NÃO CERTIFICADOS; RUN 40020454336; SHA DE ORIGEM 9c4a917e776ec9473a3b8bc5cfcc30a949c32534; NECESSÁRIO REVALIDAR NO HEAD FINAL): positivo=entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls; negativo=entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case; regressão=entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-045, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
+      "rationale": "REVISAO PROVISORIA DOCUMENTADA — OBL-045: higienizar-repositorio/tests/test_hygiene_profile.py:1050-1078 modela testes/removed_contract.py nao coletado e dynamic_case coletado: ambos geram sinais estruturais, scanner nao distingue contrato legado e nenhum arquivo e apagado. Policy test-lifecycle-hygiene.md:7-15 exige confirmar consumidores e runner antes de remover. entregar-issue/tests/test_codebase_grounding.py:386-417 e 507-513 bloqueiam apagamento sem controles substitutos executados. Ausencia de consumidor legado nao foi presumida, portanto o teste foi preservado: comportamento seguro pedido pelo cenario. Os IDs dos testes positivos/negativos/regressao sao vinculados no manifesto e sua execucao deve ser confirmada no novo SHA. O registro descreve comportamento de governanca e nao autoriza excluir testes reais, nem faz auditoria externa/Passagem C."
     },
     "019f114602ab8f2bedca873a037526f2d643794d84d2ba9731404ba0fb0be76d": {
       "disposition": "covered",
