@@ -113,22 +113,45 @@ def merge_closure(starter: dict, reviewed: dict) -> dict:
     return starter
 
 
-def require_complete_semantic_review(closure: dict) -> None:
-    """Refuse unresolved obligations and unverified partial handoff.
+def require_complete_semantic_review(
+    closure: dict, *, issue_number: int | None = None,
+    canonical_issue_body: str | None = None, parent_issue_open: bool = False,
+) -> list[str]:
+    """Permit only source-bound, open-parent post-handoff deferrals.
 
-    Partial completion requires a verified remaining-issues/parent-open contract
-    in the terminal handoff path.  This producer cannot certify that contract,
-    so a deferred decision must not masquerade as complete certification.
+    Deferred is a partial preparation state, never proof of final approval.
+    An independent exact-SHA review and final parent-issue closure remain due.
+    Legacy callers without authenticated issue inputs fail closed.
     """
-    deferred = [item.get("id", "unknown") for item in closure["obligations"]
+    deferred = [item for item in closure["obligations"]
                 if item.get("disposition") == "deferred"]
     if deferred:
-        raise MissingReviewedEvidenceError(
-            "deferred obligations need verified partial handoff and open parent "
-            f"before any certificate: {', '.join(deferred[:5])}"
-        )
+        if (not isinstance(issue_number, int) or issue_number <= 0
+                or not isinstance(canonical_issue_body, str) or not canonical_issue_body
+                or not parent_issue_open):
+            raise MissingReviewedEvidenceError(
+                "deferred obligations need verified partial handoff and open parent"
+            )
+        source_sha = digest(canonical_issue_body.encode("utf-8"))
+        source_id = closure.get("primary_issue_source_id")
+        if not isinstance(source_id, str) or not source_id:
+            raise MissingReviewedEvidenceError("deferred obligations require canonical source identity")
+        for item in deferred:
+            decision = item.get("scope_decision")
+            if (not isinstance(decision, dict)
+                    or decision.get("decision_source_id") != source_id
+                    or decision.get("decision_source_sha256") != source_sha
+                    or decision.get("target_issue") != issue_number
+                    or decision.get("parent_issue_must_remain_open") is not True
+                    or not isinstance(decision.get("decision_locator"), str)
+                    or decision["decision_locator"] not in canonical_issue_body
+                    or len(str(item.get("rationale") or "").strip()) < 20):
+                raise MissingReviewedEvidenceError(
+                    f"deferred obligation {item.get('id', 'unknown')} lacks canonical "
+                    "phase decision, verified issue binding or open-parent requirement"
+                )
     unresolved = [item.get("id", "unknown") for item in closure["obligations"]
-                  if item.get("disposition") not in {"covered", "not-applicable"}]
+                  if item.get("disposition") not in {"covered", "not-applicable", "deferred"}]
     if unresolved:
         raise MissingReviewedEvidenceError(
             f"reviewed semantic closure incomplete: {len(unresolved)} unresolved "
@@ -143,6 +166,7 @@ def require_complete_semantic_review(closure: dict) -> None:
             f"reviewed semantic closure has unjustified not-applicable "
             f"obligations ({', '.join(unjustified[:5])}); no certificate can be staged"
         )
+    return sorted(str(item["id"]) for item in deferred)
 
 
 def validate_incomplete_review(source: Path, starter: dict,
@@ -391,7 +415,16 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     if not needed.issubset(hashes):
         raise ValueError(f"missing required reviewed reports: {sorted(needed - set(hashes))}")
     closure = merge_closure(starter, verified_source(root, source, "reviewed-closure.json", hashes))
-    require_complete_semantic_review(closure)
+    preflight = read_json(out / "handoff-preflight.json")
+    issue_body_path = out / "issue-body.md"
+    issue_body = issue_body_path.read_text(encoding="utf-8") if issue_body_path.is_file() else ""
+    trusted_source = preflight.get("source") or {}
+    if (trusted_source.get("issue_body_sha256") != digest(issue_body.encode("utf-8"))
+            or trusted_source.get("uri") != f"https://github.com/{repository}/issues/{issue}"):
+        raise MissingReviewedEvidenceError("canonical issue source binding is unavailable")
+    deferred_ids = require_complete_semantic_review(
+        closure, issue_number=issue, canonical_issue_body=issue_body,
+        parent_issue_open=trusted_source.get("issue_state") == "open")
     validate_test_bindings(manifest.get("test_bindings"), closure, tests)
     staged = {name: bind_identity(verified_source(root, source, name, hashes), head, start)
               for name in sorted(set(hashes) - {"reviewed-closure.json"})}
@@ -406,6 +439,11 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
               "audit_history": manifest["audit_history"]}
     if "remediation_mode" in manifest:
         inputs["remediation_mode"] = manifest["remediation_mode"]
+    if deferred_ids:
+        inputs["issue_completion"] = "partial"
+        inputs["deferred_obligation_ids"] = deferred_ids
+        inputs["remaining_issue_ids"] = [issue]
+        inputs["parent_issue_must_remain_open"] = True
     write_json(out / "certification-inputs.json", inputs)
     write_json(out / "handoff-producer-status.json", {
         "status": "staged-for-independent-validation", "subject_sha": head,
