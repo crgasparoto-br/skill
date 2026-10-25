@@ -12,28 +12,34 @@
       "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-001: Contratos entregar-issue/references/codebase-grounding-gate.md:25-59 e implementation-workflow.md, mais higienizar-repositorio/references/test-lifecycle-hygiene.md:3-15, cobrem busca, decisao, runner e conservacao. test_codebase_grounding.py:119-124 aceita caso fundamentado; 279-290 refuta falsa cobertura e hygiene_profile.py:1050-1078 preserva testes diante de sinal estrutural ambiguo. O perfil de risco integral depende de matriz critica futura. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "4e52debdfd23907278b938bd87737592cad821d5d4fbb94faf4ad393ebcb7598": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-002"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-002 no candidato material: fonte entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: verificar se a lacuna historica citada ainda e real apos o merge. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS JUNIT HISTÓRICOS (NÃO CERTIFICADOS; RUN 40020454336; SHA DE ORIGEM 9c4a917e776ec9473a3b8bc5cfcc30a949c32534; NECESSÁRIO REVALIDAR NO HEAD FINAL): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-002, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-002: Lacuna historica descrita na issue foi eliminada: entregar-issue/references/implementation-workflow.md exige inventario antes de editar teste e compara caso, parametrizacao, fixture e risco; tests/test_codebase_grounding.py:214-239 verifica ativacao do gate para testes, 279-290 rejeita falso reuso, 292-329 exige candidato existente na BASE. A assertiva 'nao determina' descrevia a linha de base, nao o estado corrente da entrega. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "bd3b1ccad7ed21dbc3a4daaf9a5cc29b9703d136c418ba0ef288bf35192b537b": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-003"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-003 no candidato material: fonte auditar-issue/references/audit-checklist.md; auditar-issue/references/codebase-grounding-audit.md; limite de controle: nao ha teste de auditoria independente da Issue #112 localizado. Pendente: reexecutar revisao separada dos oraculos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-003 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-003: Lacuna historica do checklist corrigida em auditar-issue/references/audit-checklist.md:150-165: refazer inventario A/M/R/D, comparar oraculos, exigir prova de conservacao de cobertura e investigar obsolescencia. auditar-issue/tests/test_controller_mode_contract.py:26-58 impede alegar independência na modalidade interna; entregar-issue/tests/test_codebase_grounding.py:386-417 refuta apagamento de controle negativo. Auditoria externa posterior permanece separada. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "2801d6258672b8018baf3acb05d107c77b8db2854ea17343e5519106abe37deb": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-004"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-004 no candidato material: fonte AGENTS.md; entregar-issue/references/codebase-grounding-gate.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_gate_is_registered_and_loaded_progressively. Pendente: conferir a regra global vigente e o seu consumo pelo gate. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS JUNIT HISTÓRICOS (NÃO CERTIFICADOS; RUN 40020454336; SHA DE ORIGEM 9c4a917e776ec9473a3b8bc5cfcc30a949c32534; NECESSÁRIO REVALIDAR NO HEAD FINAL): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-004, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-004: AGENTS.md:82-92 complementa regra antiga e exige inventario/test runner antes de criar, estender e excluir; entregar-issue/references/codebase-grounding-gate.md:35-59 detalha decisao e igualdade de oraculos. tests/test_codebase_grounding.py:214-225 ancora norma no registry, 256-290 refuta similaridade nominal e falsa cobertura. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "012c3052d5c9591765aa8107da42aabb909525b9a5a1471254cecaac1e407769": {
       "disposition": "covered",
@@ -54,20 +60,24 @@
       "rationale": "Revisao individual OBL-006 no candidato material: fonte revisar-issue/references/specification-standard.md; limite de controle: nao ha fixture de revisao real localizada. Pendente: provar uma revisao de issue com inventario ou UNKNOWN. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCONTROLE SEMÂNTICO A EXECUTAR: revisão real de uma issue por revisar-issue deve produzir decisão de reaproveitamento por teste existente, ou UNKNOWN com justificativa. Execução de revisão de cenário documentada em https://github.com/crgasparoto-br/skill/pull/118#issuecomment-6374605866: busca os testes de diff apenas de testes, pytest dinâmico, higiene e compatibilidade, e registra covered-by-existing, extend-existing, new-test-required e not-testable/blocked com limites reais. É evidência da aplicação do procedimento, mas não uma prova independente do ciclo inteiro; falta revisão externa e reexecução exact-SHA."
     },
     "faa2ac950da36e2179df73f09b01b9bb2af246af03abeb37a6f1c8171de1c40a": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-007"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-007 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; entregar-issue/references/implementation-workflow.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: refutar um caminho de preflight omitido antes da escrita. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS JUNIT HISTÓRICOS (NÃO CERTIFICADOS; RUN 40020454336; SHA DE ORIGEM 9c4a917e776ec9473a3b8bc5cfcc30a949c32534; NECESSÁRIO REVALIDAR NO HEAD FINAL): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-007, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-007: entregar-issue/references/codebase-grounding-gate.md:35-59 exige preflight antes da alteracao e GROUND-TEST-001 em diffs de testes, corrigir-ci incluso; scripts/validate_codebase_grounding.py:257-312 inspeciona criacao/modificacao/remocao/rename. tests/test_codebase_grounding.py:214-244 e 386-417 recusam diff sem decisao e exclusao sem prova; planner test_deterministic_planning.py:342-358 ativa gate. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "94f70cae96f99f502f27580c2f3f990ad48ebc29d0027820e0c490e6851bd5a8": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-008"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-008 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nao ha revisao independente autenticada no HEAD. Pendente: auditor distinto precisa verificar assertivas e exclusoes. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-008 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-008: auditar-issue/references/codebase-grounding-audit.md:5-24 exige redescoberta independente dos casos/fixtures, runner e refutacao real de oraculos, nao aceita log ou declaracao da implementacao como conclusao; audit-checklist.md:150-165 e tests/test_controller_mode_contract.py:26-58 protegem a fronteira independent/internal. A execucao externa de #112 ainda nao ocorreu e e verificada separadamente em OBL-040/044. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "1493523ee3ff2bbaaf4b5690ac104b5cc959752c513eaf5816b03bf73e22b706": {
       "disposition": "covered",
@@ -80,12 +90,14 @@
       "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-009; contrato e oraculos inspecionados: higienizar-repositorio/references/test-lifecycle-hygiene.md:3-15 define investigacao sob demanda, work items e proibe apagar; tests/test_hygiene_profile.py:1034-1078 coleta dynamic_case via pytest, distingue removed_contract nao coletado, inventaria ambos, gera work item e compara bytes inalterados. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "39f9e69fe4bddf938cb36bf71f04eb2364f4c14329f4ffa99cb544e2176c9470": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-010"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-010 no candidato material: fonte corrigir-ci/SKILL.md; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_ci_remediation_mode_returns_to_existing_controller. Pendente: demonstrar aplicacao de GROUND-TEST-001 durante remediacao de teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS JUNIT HISTÓRICOS (NÃO CERTIFICADOS; RUN 40020454336; SHA DE ORIGEM 9c4a917e776ec9473a3b8bc5cfcc30a949c32534; NECESSÁRIO REVALIDAR NO HEAD FINAL): positivo=corrigir-ci.tests.test_ci_ownership_contract::test_ci_remediation_mode_returns_to_existing_controller; negativo=corrigir-ci.tests.test_ci_terminal_state_guard::test_rejects_stale_certificate_after_later_material_ci_fix; regressão=entregar-issue.tests.test_ci_autopilot_contract::test_ci_fix_returns_to_refreeze_before_final_handoff. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-010, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-010: corrigir-ci/SKILL.md:93 manda repetir preflight GROUND-TEST-001 para mudanca de teste/runner, sem controlador novo, e nao permite relaxar cobertura. tests/test_ci_ownership_contract.py:6-16 confirma ownership, tests/test_ci_terminal_state_guard.py:69-81 rejeita certificado stale e entregar-issue/tests/test_ci_autopilot_contract.py:25-31 refreeze apos ajuste material. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "7e1c0df5dfeda24a7392b6c20d7cc062114e64a2b7a6bb122490c94e2b7accb6": {
       "disposition": "covered",
@@ -98,12 +110,14 @@
       "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-011: entregar-issue/schemas/codebase-grounding.schema.json e scripts/validate_codebase_grounding.py:257-312 estendem schema/validator existente; tests/test_deterministic_planning.py:360-381 comprova compatibilidade do plano antigo e test_codebase_grounding.py:247-254 rejeita formato legado apenas onde change de testes torna v1 insuficiente. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "d6d37be23ebaa63728f176b09a9db5dbd7ae48f2bacf7611c6fca7eba0087b58": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-012"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-012 no candidato material: fonte entregar-issue/references/codebase-grounding-gate.md; entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_missing_test_decision_blocks_even_for_test_only_diff. Pendente: inspecionar consultas e escopo realmente usados em candidato de teste. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS JUNIT HISTÓRICOS (NÃO CERTIFICADOS; RUN 40020454336; SHA DE ORIGEM 9c4a917e776ec9473a3b8bc5cfcc30a949c32534; NECESSÁRIO REVALIDAR NO HEAD FINAL): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-012, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-012: entregar-issue/references/codebase-grounding-gate.md:35-59 define inventario por requisito/risco, casos, fixtures, parametrizacoes, runner e lacunas; schema/codebase-grounding.schema.json obriga search. tests/test_codebase_grounding.py:119-139 recusa candidato inexistente, 279-290 rejeita falsa cobertura, 292-329 verifica candidato no SHA da BASE. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "1cf68df6ad422a739d67eb13237c57c23df35262b22463db8c014b6cfc98ac4f": {
       "disposition": "covered",
@@ -126,12 +140,14 @@
       "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-014: entregar-issue/references/implementation-workflow.md: preflight antes de editar teste exige ampliar/parametrizar quando possivel; tests/test_codebase_grounding.py:292-329 testa reuso de teste BASE existente, 279-290 bloqueia reaproveitamento falso e 256-265 admite novo oraculo de integracao independente. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "1ea87aba560d21cdc23b18cc2edf0a08b3a10b0b2411d1840a1e4b95fae5b9c7": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-015"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-015 no candidato material: fonte entregar-issue/scripts/validate_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_added_test_cannot_claim_covered_by_existing_without_any_candidate; test_added_test_cannot_claim_covered_by_existing_with_real_candidate. Pendente: confirmar no HEAD material execucao e nao apenas nome dos controles negativos. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS JUNIT HISTÓRICOS (NÃO CERTIFICADOS; RUN 40020454336; SHA DE ORIGEM 9c4a917e776ec9473a3b8bc5cfcc30a949c32534; NECESSÁRIO REVALIDAR NO HEAD FINAL): positivo=entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready; negativo=entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate; regressão=entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-015, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-015: entregar-issue/references/implementation-workflow.md e codebase-grounding-gate.md:35-59 exigem risco e oraculo de novo teste, busca, recusa de reuso inadequado e preservacao de independencia. tests/test_codebase_grounding.py:256-329 aceita novo oraculo quando independente, rejeita falso existing, e linhas 483-491 bloqueiam cenário nao testavel falsamente marcado passed. Julgamento real de equivalencia continua de auditoria separada. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "e111b61ee8b5bdfa70a02f3b85e1e3572b6355c7e79080f4bf55d2e0bfdd146f": {
       "disposition": "covered",
@@ -262,12 +278,14 @@
       "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-028; contrato e oraculos inspecionados: entregar-issue/tests/test_produce_actions_handoff_evidence.py:123-134 prepara sem certificado, 283-313 recusa skipped e proveniencia adulterada, 348-356 impede fechamento pendente. GitHub rulesets develop #24821474 / main #24821457 agora ativos e com checks obrigatorios; vermelho continua bloqueante. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "50eedb89821c9c6af699c4c477a53fe51be4939f0556260d81b74c2b05fc342a": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-029"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-029 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nenhum artefato independente do HEAD final foi validado. Pendente: solicitar auditoria separada somente apos dossie certificado. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-029 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-029: auditar-issue/references/audit-checklist.md:33-37, 206-234 separa auditoria independente de controller-adversarial; tests/test_controller_mode_contract.py:26-58 proibe resultado operational approval no controlador; scripts/verify_independent_pr_audit.py:210-265 exige review APPROVED de identidade nao implementadora, autorizado, exact-SHA. Ruleset develop exige esse check e 1 review; nao ha merge automatico. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "d23a733f94232bd1682e470b6712b96da43ff9476c3ffb9b75924800449b007d": {
       "disposition": "covered",
@@ -462,12 +480,14 @@
       "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-049; contrato e oraculos inspecionados: entregar-issue/tests/test_deterministic_planning.py:360-381 valida schema/runtime ao reusar plano v2 historico sem tests_touched; tests/test_codebase_grounding.py:247-254 rejeita v1 para diff teste de forma explicita; lines 194-199 impede status historico stale. O formato v1 permanece aceito somente se nao ha mudanca de teste. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "9533a8e5b134a08a0dcc1df5910fd2cf36030c04f58b0240880d3f1ea3446feb": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-050"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao individual OBL-050 no candidato material: fonte entregar-issue/tests/test_codebase_grounding.py; controle candidato (nome orientativo, NAO vinculo JUnit certificado): test_deleted_test_requires_preserved_controls; test_distinct_oracle_is_not_rejected_by_nominal_similarity. Pendente: revisar matriz de positivos/negativos e regressao. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nCANDIDATOS JUNIT HISTÓRICOS (NÃO CERTIFICADOS; RUN 40020454336; SHA DE ORIGEM 9c4a917e776ec9473a3b8bc5cfcc30a949c32534; NECESSÁRIO REVALIDAR NO HEAD FINAL): positivo=entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls; negativo=entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case; regressão=entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base. Estes IDs aparecem no índice factual com status passed; o gate exige confrontar assertivas e oráculos com a obrigação OBL-050, incluindo refutação independente; por isso disposition permanece pending e não há test_bindings aprovados."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-050: entregar-issue/tests/test_codebase_grounding.py:119-124, 256-329, 376-417 usa fixtures compartilhadas do arquivo existente para cobrir reuse/extend/create, remocao segura, false positives e runner indisponivel; testes parametrizados para configuracoes pytest em 545-596. Sem criar outra suite global paralela; negativos sao controle distinto e comparavel ao positivo. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "fe3aac63378b0a4a3c9b97e6ad4aacee79e77e758e0669f101bffa088e93837f": {
       "disposition": "covered",

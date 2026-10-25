@@ -65,3 +65,10 @@
 - No material de partida `702ecb01ebfa16e7d6e9b644305996b32f5925f7`, 22 obrigações eram provisoriamente `covered`; revisadas outras **14**: OBL-001, OBL-005, OBL-011, OBL-013, OBL-014, OBL-019, OBL-024, OBL-031, OBL-039, OBL-041, OBL-043, OBL-048, OBL-051, OBL-052. Os oráculos e fontes de cada caso estão descritos individualmente em `reviewed-closure.json`, e seus vínculos positivo/negativo/regressão constam de `manifest.json`.
 - **Estado: 36/52 registros provisoriamente cobertos e 16/52 ainda pendentes.** Continua `review_state=incomplete` e `pass_c=pending`. A obrigação de auditoria independente, certificação terminal e controles críticos não pode ser inferida de testes verdes. Não gerar certificado com este dossiê.
 - Os casos ausentes não devem ser promovidos por analogia nem reusando os mesmos testes para oráculos diferentes sem prova. O SHA material atual deve ser revalidado no GitHub Actions; a etapa de comparação dos bindings é estrita e recusa testes não executados, `skipped` e SHA incorreto.
+
+
+## Terceiro lote de verificacoes de implementacao — 25/10/2026
+
+- Lote de 10 revisoes: OBL-002, OBL-003, OBL-004, OBL-007, OBL-008, OBL-010, OBL-012, OBL-015, OBL-029, OBL-050. Fontes, casos JUnit, classes de refutacao e racional especifico registrados individualmente no `reviewed-closure.json`/manifest.
+- **Estado: 46/52 registros provisoriamente `covered`; 6 pendentes: OBL-006, OBL-022, OBL-036, OBL-040, OBL-044 e OBL-045.** Esses cenarios exigem prova adicional: exemplo real de revisao de issue, autorizacao de operacoes destrutivas, refutacao read-only independente, auditoria/certificado apos handoff e consumidor legado para teste obsoleto. Nao completar por inferencia.
+- Manifesto continua `incomplete`, `pass_c=pending`, hashes/reports criticos nao emitidos. Nao se declarou certificado, aprovacao independente nem autorizacao de merge.
