@@ -195,6 +195,15 @@ def test_certification_requires_real_closure_and_calls_official_gates(tmp_path, 
 
     def capture(script, *argv):
         calls.append((script, list(argv)))
+        if script == "build_handoff_certificate.py":
+            (audit / "handoff-ready.json").write_text(json.dumps({
+                "completion": {
+                    "issue_completion": "complete",
+                    "deferred_obligation_ids": [],
+                    "remaining_issue_ids": [],
+                    "parent_issue_must_remain_open": False,
+                },
+            }), encoding="utf-8")
 
     monkeypatch.setattr(mod, "run_script", capture)
     mod.certify(args)
