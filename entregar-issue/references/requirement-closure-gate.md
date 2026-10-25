@@ -65,6 +65,8 @@ Não existe `out-of-scope` livre. Documentação ou PR produzidas pela implement
 
 Quando houver `deferred`, o certificado deve declarar `completion.issue_completion=partial`, listar `completion.deferred_obligation_ids`, `completion.remaining_issue_ids` e marcar `completion.parent_issue_must_remain_open=true`. Cada item exige `scope_decision` com a fonte da issue canonica, hash, localizador verificavel, issue pai como destino e justificativa especifica. O produtor confere os bytes da issue capturados pelo preflight autenticado; o check confiavel reconsulta o estado `open` da issue pai com token GitHub de leitura. Certificacao parcial prova apenas prontidao para auditoria: nao fecha a issue, nao converte item `deferred` em `covered` e nao substitui review independente exact-SHA.
 
+Uma obrigacao mista (implementacao/documentacao/CI **e** aprovacao posterior) nao pode ser inteiramente adiada. O `decision_locator` identifica apenas o trecho posterior; o campo `scope_decision.pre_handoff_coverage` deve reproduzir em `covered_text` todo o restante da obrigacao e trazer `rationale` fundamentado. Mesmo com `disposition=deferred`, os `test_bindings` desse requisito devem demonstrar controles positivos, negativos e regressao executados no material SHA. A aprovacao independente posterior continua obrigatoria, e o vinculo automatico de testes nao certifica a equivalencia dos oraculos.
+
 ## Inventário fechado de domínio
 
 Obrigações `exhaustive` ou `source-catalog` exigem `domain_inventory`:

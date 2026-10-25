@@ -113,6 +113,23 @@ def merge_closure(starter: dict, reviewed: dict) -> dict:
     return starter
 
 
+def _uncovered_deferred_clause(item: dict, locator: str) -> str:
+    """Identify pre-handoff text that cannot be waived by a later approval."""
+    source = str(item.get("source_text") or "").strip()
+    source = re.sub(r"^[-*]\s*(?:\[[ xX]\]\s*)?", "", source).strip()
+    return source.replace(locator, "", 1).strip(" \t\r\n;,.") if locator in source else source
+
+
+def _deferred_pre_handoff_is_covered(item: dict, locator: str) -> bool:
+    remaining = _uncovered_deferred_clause(item, locator)
+    coverage = (item.get("scope_decision") or {}).get("pre_handoff_coverage")
+    if not remaining:
+        return coverage is None
+    return (isinstance(coverage, dict)
+            and coverage.get("covered_text") == remaining
+            and len(str(coverage.get("rationale") or "").strip()) >= 30)
+
+
 def _deferred_phase_decision(item: dict, source_id: str, source_sha: str,
                              issue_number: int, issue_body: str) -> bool:
     """Only post-handoff obligations explicitly grounded in the issue may defer."""
@@ -128,7 +145,8 @@ def _deferred_phase_decision(item: dict, source_id: str, source_sha: str,
     return (all(decision.get(key) == value for key, value in expected.items())
             and isinstance(locator, str) and len(locator.strip()) >= 8
             and locator in issue_body and locator in source_text
-            and len(str(item.get("rationale") or "").strip()) >= 20)
+            and len(str(item.get("rationale") or "").strip()) >= 20
+            and _deferred_pre_handoff_is_covered(item, locator))
 
 
 def _verify_deferred_phase(closure: dict, deferred: list[dict],
@@ -333,7 +351,12 @@ def required_reviewed_reports(manifest: dict, changed: list[str]) -> tuple[set[s
 def validate_test_bindings(binding: object, closure: dict, tests: dict) -> None:
     if not isinstance(binding, dict):
         raise ValueError("reviewed test bindings are required")
-    covered = {rid for item in closure["obligations"] if item["disposition"] == "covered"
+    # A partially deferred requirement still needs executed controls for its
+    # implementable pre-handoff clause; the post-handoff approval stays open.
+    covered = {rid for item in closure["obligations"]
+               if item["disposition"] == "covered" or
+               (item["disposition"] == "deferred" and isinstance(
+                   (item.get("scope_decision") or {}).get("pre_handoff_coverage"), dict))
                for rid in item["requirement_ids"]}
     if set(binding) != covered:
         raise ValueError("test bindings must account for every covered requirement")

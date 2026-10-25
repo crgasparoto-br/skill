@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import posixpath
+import re
 from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, load_json_artifact
@@ -55,6 +56,23 @@ def load(path: Path) -> dict:
     return value
 
 
+def _uncovered_deferred_clause(item: dict, locator: str) -> str:
+    """Identify pre-handoff text that cannot be waived by a later approval."""
+    source = str(item.get("source_text") or "").strip()
+    source = re.sub(r"^[-*]\s*(?:\[[ xX]\]\s*)?", "", source).strip()
+    return source.replace(locator, "", 1).strip(" \t\r\n;,.") if locator in source else source
+
+
+def _deferred_pre_handoff_is_covered(item: dict, locator: str) -> bool:
+    remaining = _uncovered_deferred_clause(item, locator)
+    coverage = (item.get("scope_decision") or {}).get("pre_handoff_coverage")
+    if not remaining:
+        return coverage is None
+    return (isinstance(coverage, dict)
+            and coverage.get("covered_text") == remaining
+            and len(str(coverage.get("rationale") or "").strip()) >= 30)
+
+
 def _valid_deferred_decision(item: dict, source_id: str, source_sha: str,
                              issue_number: int) -> bool:
     decision = item.get("scope_decision")
@@ -64,7 +82,8 @@ def _valid_deferred_decision(item: dict, source_id: str, source_sha: str,
             and all(decision.get(key) == value for key, value in expected.items())
             and len(str(decision.get("decision_locator") or "").strip()) >= 8
             and str(decision.get("decision_locator") or "") in str(item.get("source_text") or "")
-            and len(str(item.get("rationale") or "").strip()) >= 20)
+            and len(str(item.get("rationale") or "").strip()) >= 20
+            and _deferred_pre_handoff_is_covered(item, str(decision.get("decision_locator") or "")))
 
 
 def completion_fields(closure: dict, issue_number: int) -> dict:

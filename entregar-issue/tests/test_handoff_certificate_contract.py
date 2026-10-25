@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import pytest
 import json
 import subprocess
 import sys
@@ -613,7 +614,7 @@ def test_certified_partial_completion_binds_canonical_parent_and_preserves_final
     decision = {
         "decision_source_id": "SRC-ISSUE-112",
         "decision_source_sha256": source_sha,
-        "decision_locator": "independent post-handoff audit",
+        "decision_locator": "Canonical issue permits an independent post-handoff audit.",
         "target_issue": 112,
         "parent_issue_must_remain_open": True,
     }
@@ -639,3 +640,33 @@ def test_certified_partial_completion_binds_canonical_parent_and_preserves_final
             assert "verified parent-issue decision" in str(exc)
         else:
             raise AssertionError(f"invalid deferred {field} was accepted")
+
+def test_deferred_mixed_clause_requires_exact_pre_handoff_coverage(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "scripts"))
+    from validate_handoff_certificate import completion_fields
+
+    source_text = "- [ ] Documentation and CI are correct; final independent approval follows implementation."
+    locator = "final independent approval follows implementation."
+    sha = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
+    decision = {
+        "decision_source_id": "SRC-ISSUE-112", "decision_source_sha256": sha,
+        "decision_locator": locator, "target_issue": 112,
+        "parent_issue_must_remain_open": True,
+    }
+    item = {"id": "OBL-044", "disposition": "deferred", "source_text": source_text,
+            "scope_decision": decision,
+            "rationale": "Approval remains a separate obligation after implementation."}
+    closure = {"primary_issue_source_id": "SRC-ISSUE-112",
+               "source_coverage": [{"source_id": "SRC-ISSUE-112", "source_sha256": sha}],
+               "obligations": [item]}
+    with pytest.raises(ValueError, match="verified parent-issue decision"):
+        completion_fields(closure, 112)
+    decision["pre_handoff_coverage"] = {
+        "covered_text": "Documentation and CI are correct",
+        "rationale": "Pre-handoff implementation requirements are evidenced before approval.",
+    }
+    assert completion_fields(closure, 112)["issue_completion"] == "partial"
+    decision["pre_handoff_coverage"]["covered_text"] = "Documentation alone is correct"
+    with pytest.raises(ValueError, match="verified parent-issue decision"):
+        completion_fields(closure, 112)
+

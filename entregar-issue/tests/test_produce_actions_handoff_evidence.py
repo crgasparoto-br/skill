@@ -274,7 +274,7 @@ def test_phase_deferred_requires_canonical_open_parent_and_locator():
     phase_decision = {
         "decision_source_id": "SRC-ISSUE-112",
         "decision_source_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
-        "decision_locator": "After technical handoff",
+        "decision_locator": body,
         "target_issue": 112,
         "parent_issue_must_remain_open": True,
     }
@@ -305,6 +305,46 @@ def test_phase_deferred_requires_canonical_open_parent_and_locator():
         producer.require_complete_semantic_review(closure, **{**kwargs, "parent_issue_open": False})
     obligation["disposition"] = "pending"
     with pytest.raises(producer.MissingReviewedEvidenceError, match="closure incomplete"):
+        producer.require_complete_semantic_review(closure, **kwargs)
+
+
+
+def test_mixed_deferred_requires_pre_handoff_evidence_and_exact_junit():
+    body = "Documentation and CI are consistent at final SHA; independent approval follows handoff."
+    locator = "independent approval follows handoff."
+    decision = {
+        "decision_source_id": "SRC-ISSUE-112",
+        "decision_source_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        "decision_locator": locator, "target_issue": 112,
+        "parent_issue_must_remain_open": True,
+    }
+    obligation = {
+        "id": "OBL-044", "disposition": "deferred", "source_text": "- [ ] " + body,
+        "requirement_ids": ["REQ-112-044"],
+        "rationale": "Independent approval must occur after the certified handoff.",
+        "scope_decision": decision,
+    }
+    closure = {"primary_issue_source_id": "SRC-ISSUE-112", "obligations": [obligation]}
+    kwargs = {"issue_number": 112, "canonical_issue_body": body, "parent_issue_open": True}
+    with pytest.raises(producer.MissingReviewedEvidenceError, match="canonical phase decision"):
+        producer.require_complete_semantic_review(closure, **kwargs)
+    decision["pre_handoff_coverage"] = {
+        "covered_text": "Documentation and CI are consistent at final SHA",
+        "rationale": "The full pre-handoff clause must be evidenced on the final material SHA.",
+    }
+    assert producer.require_complete_semantic_review(closure, **kwargs) == ["OBL-044"]
+    bindings = {"REQ-112-044": {
+        "positive": ["suite::positive"], "negative": ["suite::negative"],
+        "regression": ["suite::regression"],
+    }}
+    tests = {name: "passed" for name in ["suite::positive", "suite::negative", "suite::regression"]}
+    producer.validate_test_bindings(bindings, closure, tests)
+    with pytest.raises(ValueError, match="account for every covered"):
+        producer.validate_test_bindings({}, closure, tests)
+    with pytest.raises(ValueError, match="nonpassing negative"):
+        producer.validate_test_bindings(bindings, closure, {**tests, "suite::negative": "skipped"})
+    decision["pre_handoff_coverage"]["covered_text"] = "Only documentation is consistent"
+    with pytest.raises(producer.MissingReviewedEvidenceError, match="canonical phase decision"):
         producer.require_complete_semantic_review(closure, **kwargs)
 
 
