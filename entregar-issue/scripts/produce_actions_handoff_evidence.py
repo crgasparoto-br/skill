@@ -371,6 +371,29 @@ def with_deferred_completion(inputs: dict, deferred_ids: list[str], issue: int) 
     return inputs
 
 
+def candidate_module_inventory(exact_index: dict) -> dict:
+    """Group executed JUnit facts for navigation, never semantic approval."""
+    modules: dict = {}
+    for case in exact_index["tests"]:
+        module = case["id"].split("::", 1)[0]
+        entry = modules.setdefault(module, {"passed": 0, "other": 0, "examples": []})
+        entry["passed" if case["status"] == "passed" else "other"] += 1
+        if len(entry["examples"]) < 3:
+            entry["examples"].append(case["id"])
+    return modules
+
+
+def stage_draft_review(root: Path, out: Path, source: Path, starter: dict,
+                       tests: dict, head: str, base: str) -> None:
+    if not source.is_dir() or not (source / "manifest.json").is_file():
+        return
+    draft_check = validate_incomplete_review(source, starter, tests)
+    if draft_check:
+        draft_check["subject_sha"] = head
+        draft_check["code_growth"] = stage_draft_code_growth(root, out, source, head, base)
+        write_json(out / "reviewed-dossier-inventory.json", draft_check)
+
+
 def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     from prepare_actions_handoff import check_checkout, read_event
 
@@ -383,13 +406,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         raise ValueError("preflight identity differs from the exact PR material")
     tests, exact_index = collect_exact_tests(out, head)
     # Factual candidate grouping does not assert an oracle or semantic coverage.
-    modules = {}
-    for case in exact_index["tests"]:
-        module = case["id"].split("::", 1)[0]
-        entry = modules.setdefault(module, {"passed": 0, "other": 0, "examples": []})
-        entry["passed" if case["status"] == "passed" else "other"] += 1
-        if len(entry["examples"]) < 3:
-            entry["examples"].append(case["id"])
+    modules = candidate_module_inventory(exact_index)
     write_json(out / "semantic-test-review-candidates.json", {
         "schema_version": 1, "subject_sha": head, "issue_number": issue,
         "pull_request_number": pr, "source": "verified exact-SHA JUnit index",
@@ -433,12 +450,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         "certification": "NOT_ASSERTED",
     })
     source = root / ".github" / "handoff-evidence" / f"issue-{issue}"
-    if source.is_dir() and (source / "manifest.json").is_file():
-        draft_check = validate_incomplete_review(source, starter, tests)
-        if draft_check:
-            draft_check["subject_sha"] = head
-            draft_check["code_growth"] = stage_draft_code_growth(root, out, source, head, base)
-            write_json(out / "reviewed-dossier-inventory.json", draft_check)
+    stage_draft_review(root, out, source, starter, tests, head, base)
     target = {"repository": repository, "issue_number": issue, "pull_request_number": pr,
               "base_ref": base_ref, "head_sha": head}
     manifest, start, changed = load_reviewed_manifest(root, source, event, target)
