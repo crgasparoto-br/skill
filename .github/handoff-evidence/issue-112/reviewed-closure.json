@@ -392,18 +392,12 @@
       "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-039: entregar-issue/tests/test_codebase_grounding.py:256-265 constroi setup/oraculo diferente para integracao e retorna READY sem deduplicacao; 279-329 impede rotular test novo como cobertura antiga e preserva teste existente no caso de extensao justificada. Autonomia do novo oraculo continua sujeita a revisao independente. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "658bd6a65d14bffaef0a197ce87452d066f6e1e0de0fa82bfc6d6958e38fb468": {
-      "disposition": "deferred",
+      "disposition": "pending",
       "requirement_ids": [],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": {
-        "decision_source_id": "SRC-ISSUE-112",
-        "decision_source_sha256": "9a1bc299fc5514ffebc31dbc43a4e9f83963d4a093c786f686c7fa5e56007b1a",
-        "decision_locator": "auditoria independente aprova após a implementação.",
-        "target_issue": 112,
-        "parent_issue_must_remain_open": true
-      },
-      "rationale": "Revisao individual OBL-040 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nenhum review independente APPROVED no HEAD final foi apresentado. Pendente: executar leitura e prova adversarial independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-040 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente.\n\nDISPOSIÇÃO PRÉ-HANDOFF: deferred com vínculo à exigência canônica de aprovação independente posterior. A issue pai #112 deve continuar aberta até review autenticado e verificação final. Este registro não afirma que a obrigação foi aprovada."
+      "scope_decision": null,
+      "rationale": "Revisao individual OBL-040 no candidato material: fonte auditar-issue/references/codebase-grounding-audit.md; limite de controle: nenhum review independente APPROVED no HEAD final foi apresentado. Pendente: executar leitura e prova adversarial independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-040 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente.\n\nDISPOSIÇÃO PRÉ-HANDOFF: deferred com vínculo à exigência canônica de aprovação independente posterior. A issue pai #112 deve continuar aberta até review autenticado e verificação final. Este registro não afirma que a obrigação foi aprovada.\n\nRevisão corretiva do contrato de fases: esta obrigação trata da capacidade funcional de auditar-issue, não exclusivamente da aprovação externa posterior. Não pode ser diferida com uma referência genérica à aprovação. Exige prova discriminante na fase de implementação."
     },
     "959c6dc1837804d9a35b750f457f548c0b0ef0fc634f8787c6ef05a784937452": {
       "disposition": "covered",
