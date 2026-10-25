@@ -98,6 +98,15 @@ def fixture(tmp_path: Path, *, dossier=True, skipped=False):
         "repository": "team/skill", "issue_number": 112, "pull_request_number": 113,
         "material_head_sha": head, "base_sha": start,
     }})
+    canonical_issue_body = "After technical handoff, an independent auditor must approve the exact SHA.\n"
+    (out / "issue-body.md").write_text(canonical_issue_body, encoding="utf-8")
+    preflight = json.loads((out / "handoff-preflight.json").read_text(encoding="utf-8"))
+    preflight["source"] = {
+        "issue_body_sha256": hashlib.sha256(canonical_issue_body.encode("utf-8")).hexdigest(),
+        "uri": "https://github.com/team/skill/issues/112",
+        "issue_state": "open",
+    }
+    put(out / "handoff-preflight.json", preflight)
     log = b"3 passed\n"
     junit = (b"<testsuite><testcase classname='suite' name='positive'>"
              + (b"<skipped/>" if skipped else b"")
@@ -258,6 +267,44 @@ def test_deferred_obligation_cannot_claim_certification_without_partial_handoff(
     with pytest.raises(producer.MissingReviewedEvidenceError,
                        match="closure incomplete"):
         producer.require_complete_semantic_review(closure)
+
+
+def test_phase_deferred_requires_canonical_open_parent_and_locator():
+    body = "After technical handoff, an independent auditor approves the exact SHA."
+    phase_decision = {
+        "decision_source_id": "SRC-ISSUE-112",
+        "decision_source_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        "decision_locator": "After technical handoff",
+        "target_issue": 112,
+        "parent_issue_must_remain_open": True,
+    }
+    obligation = {
+        "id": "OBL-040", "disposition": "deferred",
+        "scope_decision": phase_decision,
+        "rationale": "Independent read-only audit must occur after certified preparation.",
+    }
+    closure = {"primary_issue_source_id": "SRC-ISSUE-112",
+               "obligations": [{"id": "OBL-001", "disposition": "covered"},
+                               obligation]}
+    kwargs = {"issue_number": 112, "canonical_issue_body": body,
+              "parent_issue_open": True}
+    assert producer.require_complete_semantic_review(closure, **kwargs) == ["OBL-040"]
+    for name, wrong in (
+        ("target_issue", 113), ("decision_source_sha256", "a" * 64),
+        ("decision_locator", "not in canonical source"),
+        ("parent_issue_must_remain_open", False),
+    ):
+        invalid = dict(phase_decision)
+        invalid[name] = wrong
+        obligation["scope_decision"] = invalid
+        with pytest.raises(producer.MissingReviewedEvidenceError, match="canonical phase decision"):
+            producer.require_complete_semantic_review(closure, **kwargs)
+    obligation["scope_decision"] = phase_decision
+    with pytest.raises(producer.MissingReviewedEvidenceError, match="open parent"):
+        producer.require_complete_semantic_review(closure, **{**kwargs, "parent_issue_open": False})
+    obligation["disposition"] = "pending"
+    with pytest.raises(producer.MissingReviewedEvidenceError, match="closure incomplete"):
+        producer.require_complete_semantic_review(closure, **kwargs)
 
 
 def test_incomplete_review_manifest_is_not_mistaken_for_certified_evidence(tmp_path, monkeypatch):
