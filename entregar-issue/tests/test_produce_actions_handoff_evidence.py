@@ -280,6 +280,7 @@ def test_phase_deferred_requires_canonical_open_parent_and_locator():
     }
     obligation = {
         "id": "OBL-040", "disposition": "deferred",
+        "source_text": body,
         "scope_decision": phase_decision,
         "rationale": "Independent read-only audit must occur after certified preparation.",
     }
