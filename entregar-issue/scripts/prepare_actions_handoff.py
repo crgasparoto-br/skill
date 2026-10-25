@@ -269,6 +269,28 @@ def _resolve_certification_requirements(out: Path, args: argparse.Namespace,
     return inputs, start, profile, changed, resolved
 
 
+def verify_certificate_completion(audit: Path, inputs: dict) -> None:
+    """Do not confuse partial handoff preparation with final issue approval."""
+    certificate = audit / "handoff-ready.json"
+    receipt = _load_record(certificate)
+    completion = receipt.get("completion") or {}
+    partial = completion.get("issue_completion") == "partial"
+    declared_partial = inputs.get("issue_completion") == "partial"
+    if partial != declared_partial:
+        certificate.unlink(missing_ok=True)
+        fail("certified deferred phase does not match declared certification inputs")
+    if partial:
+        for field in ("deferred_obligation_ids", "remaining_issue_ids",
+                      "parent_issue_must_remain_open"):
+            if completion.get(field) != inputs.get(field):
+                certificate.unlink(missing_ok=True)
+                fail(f"partial certification inputs disagree on {field}")
+    elif any(key in inputs for key in ("deferred_obligation_ids", "remaining_issue_ids",
+                                        "parent_issue_must_remain_open")):
+        certificate.unlink(missing_ok=True)
+        fail("complete certification cannot declare deferred obligations")
+
+
 def certify(args: argparse.Namespace) -> None:
     """Certify only authenticated, complete evidence; NEVER perform a repository write."""
     if args.event is None:
@@ -369,23 +391,7 @@ def certify(args: argparse.Namespace) -> None:
     except subprocess.CalledProcessError:
         (audit / "handoff-ready.json").unlink(missing_ok=True)
         raise
-    receipt = _load_record(audit / "handoff-ready.json")
-    completion = receipt.get("completion") or {}
-    partial = completion.get("issue_completion") == "partial"
-    declared_partial = inputs.get("issue_completion") == "partial"
-    if partial != declared_partial:
-        (audit / "handoff-ready.json").unlink(missing_ok=True)
-        fail("certified deferred phase does not match declared certification inputs")
-    if partial:
-        for field in ("deferred_obligation_ids", "remaining_issue_ids",
-                      "parent_issue_must_remain_open"):
-            if completion.get(field) != inputs.get(field):
-                (audit / "handoff-ready.json").unlink(missing_ok=True)
-                fail(f"partial certification inputs disagree on {field}")
-    elif any(key in inputs for key in ("deferred_obligation_ids", "remaining_issue_ids",
-                                        "parent_issue_must_remain_open")):
-        (audit / "handoff-ready.json").unlink(missing_ok=True)
-        fail("complete certification cannot declare deferred obligations")
+    verify_certificate_completion(audit, inputs)
     _record_status(out, "certificate-generated", "publication-and-terminal-guard-still-required", head)
     print("CERTIFICATE GENERATED: publication is NOT authorized until prepublication and terminal guards pass")
 
