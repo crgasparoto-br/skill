@@ -55,11 +55,21 @@ def load(path: Path) -> dict:
     return value
 
 
+def _valid_deferred_decision(item: dict, source_id: str, source_sha: str,
+                             issue_number: int) -> bool:
+    decision = item.get("scope_decision")
+    expected = {"decision_source_id": source_id, "decision_source_sha256": source_sha,
+                "target_issue": issue_number, "parent_issue_must_remain_open": True}
+    return (isinstance(decision, dict)
+            and all(decision.get(key) == value for key, value in expected.items())
+            and len(str(decision.get("decision_locator") or "").strip()) >= 4
+            and len(str(item.get("rationale") or "").strip()) >= 20)
+
+
 def completion_fields(closure: dict, issue_number: int) -> dict:
     """Bind post-handoff obligations to the parent issue without approving them."""
-    obligations = closure.get("obligations") or []
-    deferred = [item for item in obligations if isinstance(item, dict)
-                and item.get("disposition") == "deferred"]
+    deferred = [item for item in closure.get("obligations") or []
+                if isinstance(item, dict) and item.get("disposition") == "deferred"]
     if not deferred:
         return {"issue_completion": "complete", "deferred_obligation_ids": [],
                 "remaining_issue_ids": [], "parent_issue_must_remain_open": False}
@@ -68,18 +78,10 @@ def completion_fields(closure: dict, issue_number: int) -> dict:
                for item in closure.get("source_coverage") or [] if isinstance(item, dict)}
     if not isinstance(issue_number, int) or issue_number <= 0 or primary not in sources:
         raise ValueError("partial handoff lacks canonical parent issue source")
-    ids = []
     for item in deferred:
-        decision = item.get("scope_decision")
-        if (not isinstance(decision, dict)
-                or decision.get("decision_source_id") != primary
-                or decision.get("decision_source_sha256") != sources[primary]
-                or decision.get("target_issue") != issue_number
-                or decision.get("parent_issue_must_remain_open") is not True
-                or len(str(decision.get("decision_locator") or "").strip()) < 4
-                or len(str(item.get("rationale") or "").strip()) < 20):
+        if not _valid_deferred_decision(item, primary, sources[primary], issue_number):
             raise ValueError(f"deferred obligation {item.get('id', 'unknown')} lacks verified parent-issue decision")
-        ids.append(str(item["id"]))
+    ids = [str(item["id"]) for item in deferred]
     if len(ids) != len(set(ids)):
         raise ValueError("duplicate deferred obligation IDs")
     return {"issue_completion": "partial", "deferred_obligation_ids": sorted(ids),
@@ -319,9 +321,9 @@ def main() -> int:
             errors.append(f"invalid deferred completion evidence: {exc}")
         else:
             declared_completion = cert.get("completion")
-            if derived_completion["issue_completion"] == "partial" or declared_completion is not None:
-                if declared_completion != derived_completion:
-                    errors.append("certificate partial completion disagrees with certified requirement closure")
+            if (derived_completion["issue_completion"] == "partial"
+                    or declared_completion is not None) and declared_completion != derived_completion:
+                errors.append("certificate partial completion disagrees with certified requirement closure")
 
     source_control = (cert.get("controls") or {}).get("source_locations")
     certified_source_gate = "validate_evidence_source_locations.py" in (cert.get("validators") or {})
