@@ -618,6 +618,28 @@
       "regression": [
         "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case"
       ]
+    },
+    "REQ-112-040": {
+      "positive": [
+        "tests.test_audit_completeness_gate::test_test_only_removal_requires_independent_lifecycle_review"
+      ],
+      "negative": [
+        "tests.test_audit_completeness_gate::test_changed_path_is_not_silently_skipped"
+      ],
+      "regression": [
+        "tests.test_audit_completeness_gate::test_existing_but_forged_git_base_rejected_by_remote_anchor"
+      ]
+    },
+    "REQ-112-044": {
+      "positive": [
+        "tests.test_catalog_governance::test_shared_files_are_byte_identical_to_canonical"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_contract_validator_detects_generated_copy_drift"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_documentation_references_are_current"
+      ]
     }
   }
 }
