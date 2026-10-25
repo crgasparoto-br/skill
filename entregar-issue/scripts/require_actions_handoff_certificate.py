@@ -43,6 +43,25 @@ def verify_open_parent_issue(repository: str, issue: int) -> None:
         raise ValueError("partial handoff parent issue is not verifiably open")
 
 
+def verify_partial_completion(evidence: Path, cert: dict, identity: dict) -> None:
+    """Validate the deferred ledger and current open parent at the trusted gate."""
+    closure = load(evidence, ".audit/entregar-issue/requirement-closure.json")
+    deferred = sorted(str(item.get("id")) for item in closure.get("obligations", [])
+                      if isinstance(item, dict) and item.get("disposition") == "deferred")
+    completion = cert.get("completion")
+    if deferred:
+        expected = {"issue_completion": "partial", "deferred_obligation_ids": deferred,
+                    "remaining_issue_ids": [identity["issue_number"]],
+                    "parent_issue_must_remain_open": True}
+        if completion != expected:
+            raise ValueError("partial handoff does not bind every deferred obligation and parent")
+        verify_open_parent_issue(identity["repository"], identity["issue_number"])
+    elif completion is not None and completion != {
+            "issue_completion": "complete", "deferred_obligation_ids": [],
+            "remaining_issue_ids": [], "parent_issue_must_remain_open": False}:
+        raise ValueError("certificate claims unsupported partial completion")
+
+
 def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
     event = json.loads(event_path.read_text(encoding="utf-8"))
     pr = event.get("pull_request") or {}
@@ -74,21 +93,7 @@ def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
         raise ValueError("certificate body does not bind the canonical issue and material SHA")
     if (cert.get("certificate_commit_policy") or {}).get("mode") != "result-only-child":
         raise ValueError("certificate does not require result-only publication")
-    closure = load(evidence, ".audit/entregar-issue/requirement-closure.json")
-    deferred = sorted(str(item.get("id")) for item in closure.get("obligations", [])
-                      if isinstance(item, dict) and item.get("disposition") == "deferred")
-    completion = cert.get("completion")
-    if deferred:
-        expected = {"issue_completion": "partial", "deferred_obligation_ids": deferred,
-                    "remaining_issue_ids": [identity["issue_number"]],
-                    "parent_issue_must_remain_open": True}
-        if completion != expected:
-            raise ValueError("partial handoff does not bind every deferred obligation and parent")
-        verify_open_parent_issue(identity["repository"], identity["issue_number"])
-    elif completion is not None and completion != {
-            "issue_completion": "complete", "deferred_obligation_ids": [],
-            "remaining_issue_ids": [], "parent_issue_must_remain_open": False}:
-        raise ValueError("certificate claims unsupported partial completion")
+    verify_partial_completion(evidence, cert, identity)
 
 
 
