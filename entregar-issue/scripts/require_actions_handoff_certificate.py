@@ -32,8 +32,11 @@ def verify_open_parent_issue(repository: str, issue: int) -> None:
     token = os.environ.get("GITHUB_TOKEN", "")
     if not token:
         raise ValueError("partial handoff requires authenticated parent issue read")
+    api_url = os.environ.get("GITHUB_API_URL", "")
+    if not api_url.startswith("https://") or api_url.rstrip("/") != api_url:
+        raise ValueError("partial handoff requires the trusted GitHub Actions HTTPS API endpoint")
     request = urllib.request.Request(
-        f"https://api.github.com/repos/{repository}/issues/{issue}",
+        f"{api_url}/repos/{repository}/issues/{issue}",
         headers={"Accept": "application/vnd.github+json",
                  "Authorization": f"Bearer {token}",
                  "X-GitHub-Api-Version": "2022-11-28"})
