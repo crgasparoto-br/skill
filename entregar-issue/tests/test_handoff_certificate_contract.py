@@ -621,6 +621,7 @@ def test_certified_partial_completion_binds_canonical_parent_and_preserves_final
         "primary_issue_source_id": "SRC-ISSUE-112",
         "source_coverage": [{"source_id": "SRC-ISSUE-112", "source_sha256": source_sha}],
         "obligations": [{"id": "OBL-040", "disposition": "deferred",
+                         "source_text": "Canonical issue permits an independent post-handoff audit.",
                          "scope_decision": decision,
                          "rationale": "An independent auditor must approve the material exact SHA later."}],
     }
