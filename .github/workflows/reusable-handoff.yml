@@ -192,6 +192,7 @@ jobs:
       - name: Require authentic certified evidence (not merely passing tests)
         env:
           BASE_REF: ${{ inputs.base-ref }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           python .trusted-handoff-gate/entregar-issue/scripts/require_actions_handoff_certificate.py \
             --event "$GITHUB_EVENT_PATH" --base-ref "$BASE_REF" \
