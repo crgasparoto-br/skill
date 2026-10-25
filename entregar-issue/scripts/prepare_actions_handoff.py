@@ -369,6 +369,23 @@ def certify(args: argparse.Namespace) -> None:
     except subprocess.CalledProcessError:
         (audit / "handoff-ready.json").unlink(missing_ok=True)
         raise
+    receipt = _load_record(audit / "handoff-ready.json")
+    completion = receipt.get("completion") or {}
+    partial = completion.get("issue_completion") == "partial"
+    declared_partial = inputs.get("issue_completion") == "partial"
+    if partial != declared_partial:
+        (audit / "handoff-ready.json").unlink(missing_ok=True)
+        fail("certified deferred phase does not match declared certification inputs")
+    if partial:
+        for field in ("deferred_obligation_ids", "remaining_issue_ids",
+                      "parent_issue_must_remain_open"):
+            if completion.get(field) != inputs.get(field):
+                (audit / "handoff-ready.json").unlink(missing_ok=True)
+                fail(f"partial certification inputs disagree on {field}")
+    elif any(key in inputs for key in ("deferred_obligation_ids", "remaining_issue_ids",
+                                        "parent_issue_must_remain_open")):
+        (audit / "handoff-ready.json").unlink(missing_ok=True)
+        fail("complete certification cannot declare deferred obligations")
     _record_status(out, "certificate-generated", "publication-and-terminal-guard-still-required", head)
     print("CERTIFICATE GENERATED: publication is NOT authorized until prepublication and terminal guards pass")
 
