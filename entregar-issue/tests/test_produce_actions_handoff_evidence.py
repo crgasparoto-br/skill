@@ -11,6 +11,8 @@ from pathlib import Path
 import pytest
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 spec = importlib.util.spec_from_file_location("produce_actions_handoff_evidence",
                                                SCRIPTS / "produce_actions_handoff_evidence.py")
 assert spec and spec.loader
