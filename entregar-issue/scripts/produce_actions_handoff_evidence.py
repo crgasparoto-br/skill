@@ -205,6 +205,8 @@ def validate_incomplete_review(source: Path, starter: dict,
     validate_test_bindings(bindings, merged, tests or {})
     return {"review_state": "incomplete", "pending_obligations": sum(
                 item["disposition"] == "pending" for item in obligations),
+            "deferred_obligations": sum(
+                item["disposition"] == "deferred" for item in obligations),
             "provisional_obligations": len(provisional),
             "canonical_candidate_keys_verified": True,
             "semantic_certification": "NOT_ASSERTED"}
