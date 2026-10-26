@@ -316,7 +316,7 @@ def test_grounding_runner_binds_real_junit_cases_and_proof(tmp_path):
     assert check["reached_tests"] == ["suite.py", "suite::negative", "suite::positive", "suite::regression"]
     assert hashlib.sha256(raw).hexdigest() == check["evidence_sha256"]
     assert f"HEAD: {head}".encode() in raw
-    assert f"JUNIT_SHA256: ".encode() in raw
+    assert b"JUNIT_SHA256: " in raw
     assert (out / ".audit/entregar-issue/grounding-proofs/suite.log").read_bytes() == raw
 
 
