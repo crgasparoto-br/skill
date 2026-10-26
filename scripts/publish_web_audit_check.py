@@ -15,7 +15,6 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
-
 from produce_web_independent_audit import github, verify_technical_checks
 SHA = re.compile(r"[a-f0-9]{40}\Z")
 CHECK_NAME = "Verify independent web audit (exact SHA)"
@@ -55,9 +54,9 @@ def discover_target(repo: str, report: dict, token: str) -> dict:
     pr = github(repo, f"pulls/{matching[0]['number']}", token)
     if not isinstance(pr, dict):
         raise ValueError("PR identity unavailable")
-    refs = set(int(v) for v in re.findall(
+    refs = {int(v) for v in re.findall(
         r"(?i)\b(?:closes|fixes|refs)\s+#(\d+)\b", pr.get("body") or ""
-    ))
+    )}
     if refs != {report.get("issue")}:
         raise ValueError("report issue does not match canonical PR reference")
     return pr
