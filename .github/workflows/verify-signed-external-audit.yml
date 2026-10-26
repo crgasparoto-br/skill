@@ -33,7 +33,7 @@ jobs:
       - name: Checkout trusted workflow branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -63,6 +63,10 @@ jobs:
               raise SystemExit("BLOCK: unexpected PR base")
           if run.get("repository", {}).get("full_name") != repository:
               raise SystemExit("BLOCK: artifact run from foreign repository")
+          if run.get("head_sha") != pr.get("head", {}).get("sha"):
+              raise SystemExit("BLOCK: artifact run does not match current PR HEAD")
+          if run.get("event") not in ("workflow_dispatch", "workflow_call"):
+              raise SystemExit("BLOCK: unexpected audit producer event")
           if run.get("status") != "completed" or run.get("conclusion") != "success":
               raise SystemExit("BLOCK: source audit run is not successful")
           (path / "target.json").write_text(json.dumps({
