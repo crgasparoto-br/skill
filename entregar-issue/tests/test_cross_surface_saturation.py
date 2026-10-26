@@ -158,7 +158,8 @@ def test_risk_saturation_rejects_escape_closed_without_cross_surface_dimensions(
         for dimension in auth["dimensions"]:
             dimension["status"] = "passed"
         r.write_text(json.dumps(data), encoding="utf-8")
-        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m), "--risk-saturation", str(r))
+        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m),
+                   "--risk-saturation", str(r), "--audit-escape-closure", str(escape))
         assert proc.returncode == 2
         assert "audit escape required attack dimensions are not covered" in proc.stdout
         assert "authorization:filesystem:missing-dimension" in proc.stdout
@@ -187,5 +188,6 @@ def test_risk_saturation_accepts_escape_when_required_dimensions_are_covered():
         for dimension in auth["dimensions"]:
             dimension["status"] = "passed"
         r.write_text(json.dumps(data), encoding="utf-8")
-        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m), "--risk-saturation", str(r))
+        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m),
+                   "--risk-saturation", str(r), "--audit-escape-closure", str(escape))
         assert proc.returncode == 0, proc.stdout
