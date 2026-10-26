@@ -143,6 +143,48 @@ def verify_technical_checks(packet: dict, token: str) -> None:
             raise ValueError(f"required exact-SHA check not green: {name}")
 
 
+def canonical_requirements(issue_body: str) -> list[dict]:
+    numbered = re.findall(r"(?m)^\s*(\d+)\.\s+(.+)$", issue_body)
+    if numbered:
+        requirements = [{"id": f"REQ-{n}", "text": body} for n, body in numbered]
+    else:
+        bullets = re.findall(r"(?m)^\s*[-*]\s+(.+)$", issue_body)
+        requirements = [{"id": f"REQ-{i}", "text": body} for i, body in enumerate(bullets, 1)]
+    if not requirements or len({r["id"] for r in requirements}) != len(requirements):
+        raise ValueError("canonical issue obligations cannot be derived unambiguously")
+    return requirements
+
+
+def validate_model_coverage(response: dict, packet: dict, source: str) -> None:
+    requirements = canonical_requirements(packet["issue_body"])
+    expected = {item["id"] for item in requirements}
+    coverage = response.get("requirement_coverage")
+    if not isinstance(coverage, list) or len(coverage) != len(expected):
+        raise ValueError("AI audit did not cover every canonical requirement")
+    actual = [item.get("id") for item in coverage if isinstance(item, dict)]
+    if len(actual) != len(coverage) or set(actual) != expected:
+        raise ValueError("AI audit requirement binding differs from issue")
+    evidence_ids = set()
+    for evidence in response["evidence"]:
+        if not isinstance(evidence, dict):
+            raise ValueError("invalid audit evidence")
+        eid = evidence.get("id")
+        filename = evidence.get("source")
+        excerpt = evidence.get("excerpt")
+        if (not isinstance(eid, str) or not eid.strip()
+                or not isinstance(filename, str) or filename not in packet["changed_files"]
+                or not isinstance(excerpt, str) or len(excerpt.strip()) < 12
+                or excerpt not in source):
+            raise ValueError("audit evidence is not grounded in exact material source")
+        evidence_ids.add(eid)
+    if len(evidence_ids) != len(response["evidence"]):
+        raise ValueError("duplicate audit evidence")
+    for item in coverage:
+        linked = item.get("evidence_ids")
+        if not isinstance(linked, list) or not linked or not set(linked) <= evidence_ids:
+            raise ValueError(f"unproven canonical requirement: {item['id']}")
+
+
 def review_with_model(packet: dict, diff: str, token: str, model: str, endpoint: str) -> dict:
     if not endpoint.startswith("https://"):
         raise ValueError("audit provider URL must use HTTPS")
@@ -156,7 +198,9 @@ def review_with_model(packet: dict, diff: str, token: str, model: str, endpoint:
         "Reply with ONLY a JSON object with keys: verdict (approved/rejected), "
         "findings (array of objects with id, severity, description, file, evidence), "
         "limitations (array of strings), evidence (array of objects with id, claim, "
-        "source). Never return approved when findings or limitations are nonempty. "
+        "source, excerpt copied verbatim from source), requirement_coverage (array of "
+        "{id, evidence_ids}, one for every canonical requirement). Never return "
+        "approved when findings or limitations are nonempty. "
         "Use concrete paths and observed patch lines; do not invent execution results."
     )
     body = {
@@ -165,7 +209,7 @@ def review_with_model(packet: dict, diff: str, token: str, model: str, endpoint:
         "response_format": {"type": "json_object"},
         "messages": [
             {"role": "system", "content": instructions},
-            {"role": "user", "content": json.dumps({"target": packet, "diff": diff}, ensure_ascii=False)},
+            {"role": "user", "content": json.dumps({"target": packet, "requirements": canonical_requirements(packet["issue_body"]), "diff": diff}, ensure_ascii=False)},
         ],
     }
     result = fetch_json(endpoint, token, "POST", body)
@@ -183,6 +227,7 @@ def review_with_model(packet: dict, diff: str, token: str, model: str, endpoint:
         raise ValueError("independent auditor produced no evidence")
     if response["verdict"] == "approved" and (response["findings"] or response["limitations"]):
         raise ValueError("model attempted approval with unresolved findings")
+    validate_model_coverage(response, packet, diff)
     return response
 
 
