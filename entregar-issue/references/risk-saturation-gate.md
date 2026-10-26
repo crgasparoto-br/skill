@@ -74,6 +74,8 @@ O gate rederiva as familias canonicas diretamente das obrigacoes cobertas e bloq
 
 Passar `--audit-escape-closure <caminho>` **somente** para um artefato de escape comprovadamente associado ao alvo atual (tambem em `validate_handoff_readiness.py`). Nao inferir aplicabilidade pela simples presenca de arquivo herdado no diretorio `.audit/entregar-issue`, mesmo que esteja com `status=passed`: esse arquivo pode pertencer a outra issue.
 
+O ledger selecionado deve conter `subject.repository`, `subject.issue_number`, `subject.pull_request_number` (ou `null` para issue sem PR) e `subject.material_head_sha`. O validador exige identidade externa do alvo por `--target-repository`, `--target-issue-number`, `--target-pull-request-number` (quando houver) e `--target-head-sha`, recusando valor ausente, divergente ou SHA diferente da matriz. `validate_handoff_readiness.py` confere o mesmo vinculo via `--repository`, `--issue-number`, `--pull-request-number` e `--head-sha` em todos os perfis, inclusive sem matriz critica. O builder entrega os parametros a partir da identidade canonica da entrega.
+
 Se houver rejeicao independente anterior, o caller deve passar `--audit-escape-closure` explicitamente, inclusive quando existir um arquivo com esse nome ao lado da matriz. Ausencia da opcao ou caminho inexistente devem bloquear em vez de ativar silenciosamente o arquivo herdado ou dispensar suas dimensoes. Para remediacao sistemica, o perfil `critical` e os controles cumulativos continuam obrigatorios. Qualquer lacuna impede handoff.
 
 

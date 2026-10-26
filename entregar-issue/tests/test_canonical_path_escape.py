@@ -128,6 +128,12 @@ def test_handoff_accepts_canon_divergence_control_and_closed_escape() -> None:
         }), encoding="utf-8")
         escape = base / "audit-escape-closure.json"
         escape.write_text(json.dumps({
+            "subject": {
+                "repository": "example/consumer",
+                "issue_number": 125,
+                "pull_request_number": 126,
+                "material_head_sha": "e" * 40,
+            },
             "escape_id": "A-GENERIC-001",
             "escape_class": "canonical-path-divergence",
             "source_audit": {"rejection_id": "audit-rejection:canonical-synthetic", "finding_id": "A-GENERIC-001"},
@@ -173,6 +179,10 @@ def test_handoff_accepts_canon_divergence_control_and_closed_escape() -> None:
             sys.executable,
             str(ROOT / "scripts" / "validate_handoff_readiness.py"),
             "--requirement-closure", str(closure),
+            "--repository", "example/consumer",
+            "--issue-number", "125",
+            "--pull-request-number", "126",
+            "--head-sha", "e" * 40,
             "--attack-matrix", str(matrix),
             "--risk-saturation", str(risk),
             "--inherited-controls", str(inherited),
@@ -183,3 +193,18 @@ def test_handoff_accepts_canon_divergence_control_and_closed_escape() -> None:
             "--previous-independent-rejection",
         ], check=False, text=True, stdout=subprocess.PIPE)
         assert proc.returncode == 0, proc.stdout
+        foreign = json.loads(escape.read_text(encoding="utf-8"))
+        foreign["subject"]["issue_number"] = 999
+        escape.write_text(json.dumps(foreign), encoding="utf-8")
+        rejected = subprocess.run([
+            sys.executable, str(ROOT / "scripts" / "validate_handoff_readiness.py"),
+            "--requirement-closure", str(closure),
+            "--evidence-profile", "light",
+            "--repository", "example/consumer",
+            "--issue-number", "125",
+            "--pull-request-number", "126",
+            "--head-sha", "e" * 40,
+            "--audit-escape-closure", str(escape),
+        ], check=False, text=True, stdout=subprocess.PIPE)
+        assert rejected.returncode == 2
+        assert "subject.issue_number differs from current target" in rejected.stdout

@@ -57,3 +57,4 @@ def test_risk_validator_requires_explicit_escape_binding(tmp_path):
                              text=True, capture_output=True, check=False)
     assert relevant.returncode == 2
     assert "audit escape required attack dimensions are not covered" in relevant.stdout
+    assert "explicit audit escape closure lacks current-target subject binding" in relevant.stdout
