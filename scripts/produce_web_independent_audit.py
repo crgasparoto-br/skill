@@ -7,6 +7,7 @@ trusted workflow verifies source, technical checks, certificate, signature, and 
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import re
@@ -14,6 +15,7 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
+from urllib.parse import quote
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -86,7 +88,21 @@ def build_packet(repo: str, pr_number: int, issue_number: int, token: str) -> tu
             raise ValueError(f"missing full textual patch for {path or 'unknown'}")
         if len(patch) > MAX_FILE_CHARS:
             raise ValueError(f"patch too large to audit without truncation: {path}")
-        sections.append(f"\nFILE: {path}\nSTATUS: {file.get('status')}\nPATCH:\n{patch}\n")
+        snapshot = ""
+        if file.get("status") != "removed":
+            response = github(
+                repo, f"contents/{quote(path, safe='/')}?ref={sha}", token
+            )
+            if (not isinstance(response, dict) or response.get("encoding") != "base64"
+                    or not isinstance(response.get("content"), str)):
+                raise ValueError(f"source file snapshot unavailable: {path}")
+            try:
+                snapshot = base64.b64decode(response["content"], validate=False).decode("utf-8")
+            except (ValueError, UnicodeError) as exc:
+                raise ValueError(f"source file is not auditable UTF-8: {path}") from exc
+            if len(snapshot) > MAX_FILE_CHARS:
+                raise ValueError(f"source file exceeds audit context budget: {path}")
+        sections.append(f"\nFILE: {path}\nSTATUS: {file.get('status')}\nPATCH:\n{patch}\nSOURCE AT HEAD:\n{snapshot}\n")
     source = "".join(sections)
     if len(source) > MAX_SOURCE_CHARS:
         raise ValueError("aggregate diff exceeds audit context budget; refuse truncation")
