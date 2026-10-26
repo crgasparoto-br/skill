@@ -244,6 +244,8 @@ def build_report(packet: dict, model_result: dict, audit_run: str, source_run: s
     if verdict == "rejected":
         raise ValueError("independent AI audit rejected candidate; preserve raw diagnostics, no signing")
     evidence = []
+    if not model_result["evidence"]:
+        raise ValueError("independent audit has no evidence")
     for item in model_result["evidence"]:
         if not isinstance(item, dict) or not all(
             isinstance(item.get(k), str) and item[k].strip()
