@@ -37,7 +37,7 @@ Em `sessions`, informar referencias reais fornecidas pelo operador para `impleme
 
 Cada item de `requirements` deve ter o `candidate_key` canonico, uma `analysis` propria, `sources` e `controls`. Cada fonte aponta `path`, `start_line`, `end_line` e SHA-256 do trecho unido por `\n` sem quebra final. Cada controle informa `kind`, `test_case_id` e `rationale`. Exigem-se tres casos distintos: `positive`, `negative` e `regression`, presentes como passed no JUnit do SHA material. Isso verifica vinculos, nao substitui a avaliacao semantica do revisor.
 
-O resultado aprovado exige `conclusion=approved`, `blocking_findings=[]` e `limitations=[]`. Parecer incompleto, anterior ao certificado, editado, de conta nao autorizada ou vinculado a outro alvo nao aprova. A edicao/exclusao revoga o parecer; publicar novo comentario em vez de alterar um aprovado. Um parecer rejeitado mais recente impede voltar a uma aprovacao antiga.
+O resultado aprovado exige `conclusion=approved`, `blocking_findings=[]` e `limitations=[]`. Parecer incompleto, anterior ao certificado, editado, de conta nao autorizada ou vinculado a outro alvo nao aprova. A edicao/exclusao revoga o parecer; publicar novo comentario em vez de alterar um aprovado. Um parecer rejeitado mais recente impede voltar a uma aprovacao antiga. Os eventos usam fila explicita `queue: max`, evitando a substituicao silenciosa do evento pendente pela politica padrao de concorrencia do GitHub. A fila da plataforma tem limite de 100 pendencias; cancelamento administrativo ou falha de entrega de eventos exige revalidacao operacional, nao uma alegacao de independencia criptografica.
 
 ## Politica e ativacao administrativa
 

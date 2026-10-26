@@ -156,3 +156,10 @@ def test_ambiguous_pr_reference_is_retained_for_revocation(monkeypatch):
     monkeypatch.setattr(runner, "api", lambda *_: pr)
     event = {"repository": {"full_name": "owner/repo"}, "pull_request": {"number": 10}}
     assert runner.resolve_targets("owner/repo", event) == [(10, 0)]
+
+
+def test_review_revocation_events_are_queued_not_replaced():
+    root = Path(__file__).resolve().parents[1]
+    workflow = (root / ".github/workflows/session-review.yml").read_text()
+    assert "  queue: max\n" in workflow
+    assert "  cancel-in-progress: false\n" in workflow
