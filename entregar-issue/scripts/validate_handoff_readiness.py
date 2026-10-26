@@ -9,6 +9,7 @@ from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
 from handoff_semantic_guards import validate_terminal_requirement_closure
+from validate_risk_saturation import validate_escape_target
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,6 +42,9 @@ def main() -> int:
     parser.add_argument("--inherited-controls")
     parser.add_argument("--evidence-provenance")
     parser.add_argument("--audit-escape-closure")
+    parser.add_argument("--repository")
+    parser.add_argument("--issue-number", type=int)
+    parser.add_argument("--pull-request-number", type=int)
     parser.add_argument("--learning-closure")
     parser.add_argument("--previous-inherited-controls")
     parser.add_argument("--historical-inherited-controls", action="append", default=[])
@@ -55,6 +59,17 @@ def main() -> int:
     closure_path = Path(args.requirement_closure)
     closure = load(closure_path)
     validate_terminal_requirement_closure(closure, errors)
+    if args.audit_escape_closure:
+        explicit_escape = Path(args.audit_escape_closure)
+        if explicit_escape.is_file():
+            validate_escape_target(
+                load(explicit_escape), repository=args.repository,
+                issue_number=args.issue_number,
+                pull_request_number=args.pull_request_number,
+                head_sha=args.head_sha, errors=errors,
+            )
+        else:
+            errors.append("explicit audit escape closure file is missing")
 
     structural = closure.get("structural_invariant_closures") or {}
     structural_flags = {"structural", "forbidden-implementation", "canonical-path", "dependency-independence", "precedence"}
@@ -164,7 +179,14 @@ def main() -> int:
             if inherited_path.is_file():
                 risk_args.extend(["--inherited-controls", str(inherited_path)])
             if args.audit_escape_closure:
-                risk_args.extend(["--audit-escape-closure", args.audit_escape_closure])
+                risk_args.extend([
+                    "--audit-escape-closure", args.audit_escape_closure,
+                    "--target-repository", args.repository or "",
+                    "--target-issue-number", str(args.issue_number) if args.issue_number is not None else "",
+                    "--target-head-sha", args.head_sha or "",
+                ])
+                if args.pull_request_number is not None:
+                    risk_args.extend(["--target-pull-request-number", str(args.pull_request_number)])
             run_validator(risk_args, errors)
 
         if not inherited_path.is_file():
