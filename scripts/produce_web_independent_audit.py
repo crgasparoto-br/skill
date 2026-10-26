@@ -34,7 +34,7 @@ def fetch_json(url: str, token: str, method: str = "GET", body: dict | None = No
         method=method,
         headers={
             "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json" if "api.github.com" in url else "application/json",
+            "Accept": "application/json",
             "Content-Type": "application/json",
             "User-Agent": "solverit-independent-audit",
         },
@@ -44,7 +44,10 @@ def fetch_json(url: str, token: str, method: str = "GET", body: dict | None = No
 
 
 def github(repo: str, suffix: str, token: str) -> dict | list:
-    return fetch_json(f"https://api.github.com/repos/{repo}/{suffix}", token)
+    api_root = os.environ.get("GITHUB_API_URL")
+    if not api_root or not api_root.startswith("https://"):
+        raise ValueError("trusted GitHub API URL unavailable")
+    return fetch_json(f"{api_root.rstrip('/')}/repos/{repo}/{suffix}", token)
 
 
 def get_all_files(repo: str, number: int, token: str) -> list[dict]:
@@ -321,7 +324,7 @@ def main() -> int:
         ai_model = os.environ["OPENAI_AUDITOR_MODEL"]
         key_id = os.environ["AUDITOR_KEY_ID"]
         pem = os.environ["AUDITOR_PRIVATE_KEY_PEM"]
-        endpoint = os.environ.get("OPENAI_AUDITOR_URL", "https://api.openai.com/v1/chat/completions")
+        endpoint = os.environ["OPENAI_AUDITOR_URL"]
         packet, diff = build_packet(args.repository, args.pr, args.issue, gh_token)
         if packet["head_sha"] != args.expected_head:
             raise ValueError("workflow event HEAD differs from PR HEAD")
