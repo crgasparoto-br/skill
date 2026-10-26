@@ -14,7 +14,7 @@
   "artifact_sha256": {
     "reviewed-closure.json": "ce5cb0d9f80d17f5d8a3901b94962db7fe9454f9e2390fa38a6694572688d6e6",
     "standard-evidence.json": "abd46070f560d36662ca9b35be18e275e1a841bd48534052634d02108c4077ad",
-    "codebase-grounding.json": "22068b1e81d7fab4531639a3e4525146ff26ae7595801569289771fd1934950e"
+    "codebase-grounding.json": "e86748dc7ef9a8112fe653f7bd2adcd7ab15d21f8a795839a7a0cef6910cf409"
   },
   "test_bindings": {
     "REQ-001": {
