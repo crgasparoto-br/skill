@@ -125,6 +125,16 @@ def verify_material(repo: str, pr: dict, report: Path, registry: Path, run_id: i
         "head_sha": current["head"]["sha"],
         "base_ref": current["base"]["ref"],
     }, token)
+    from verify_independent_pr_audit import required_checks_green, trusted_workflow_check
+
+    check_inventory = github(repo, f"commits/{current['head']['sha']}/check-runs?per_page=100", token)
+    required_checks_green(
+        check_inventory, current["head"]["sha"], current["base"]["ref"],
+        lambda name, check: trusted_workflow_check(
+            repo, current["number"], name, check, current["head"]["sha"],
+            current["base"]["sha"], token,
+        ),
+    )
     # Re-fetch after all validations, before publishing a success check.
     latest = github(repo, f"pulls/{pr['number']}", token)
     if not isinstance(latest, dict) or latest.get("state") != "open":
