@@ -53,7 +53,11 @@ def test_risk_validator_requires_explicit_escape_binding(tmp_path):
     clean = subprocess.run(args, text=True, capture_output=True, check=False)
     assert clean.returncode == 0, clean.stdout + clean.stderr
     relevant = subprocess.run([*args, "--audit-escape-closure",
-                             str(tmp_path / "audit-escape-closure.json")],
+                             str(tmp_path / "audit-escape-closure.json"),
+                             "--target-repository", "example/consumer",
+                             "--target-issue-number", "125",
+                             "--target-pull-request-number", "126",
+                             "--target-head-sha", "a" * 40],
                              text=True, capture_output=True, check=False)
     assert relevant.returncode == 2
     assert "audit escape required attack dimensions are not covered" in relevant.stdout
