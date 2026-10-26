@@ -252,6 +252,39 @@ def test_progressive_review_requires_passing_exact_head_controls(tmp_path):
         producer.validate_incomplete_review(source, starter, tests)
 
 
+
+def test_draft_inventory_identifies_exact_missing_reports_and_controls(tmp_path):
+    root, out, _, source, head = fixture(tmp_path)
+    manifest = json.loads((source / "manifest.json").read_text())
+    manifest.update(review_state="incomplete", artifact_sha256={},
+                    evidence_profile="critical", audit_history="previous-rejection")
+    put(source / "manifest.json", manifest)
+    draft = json.loads((source / "reviewed-closure.json").read_text())
+    draft["controls"]["pass_c"] = {"status": "pending"}
+    draft["controls"]["domain_inventories"] = []
+    put(source / "reviewed-closure.json", draft)
+    starter = json.loads((out / ".audit/entregar-issue/requirement-closure.json").read_text())
+    tests = {"suite::positive": "passed", "suite::negative": "passed",
+             "suite::regression": "passed"}
+
+    producer.stage_draft_review(root, out, source, starter, tests, head, head)
+
+    inventory = json.loads((out / "reviewed-dossier-inventory.json").read_text())
+    required = {"reviewed-closure.json", "requirement-attack-matrix.json",
+                "risk-saturation.json", "inherited-controls.json",
+                "audit-remediation.json", "audit-source-result.json",
+                "learning-closure.json", "audit-escape-closure.json",
+                "previous-audit-escape-closure.json"}
+    assert set(inventory["required_reports"]) == required
+    assert set(inventory["missing_reports"]) == required - {"reviewed-closure.json"}
+    assert set(inventory["unhashed_reports"]) == required
+    assert inventory["pending_review_controls"] == ["domain_inventories", "pass_c"]
+    assert inventory["semantic_certification"] == "NOT_ASSERTED"
+    assert inventory["subject_sha"] == head
+    assert not (out / "certification-inputs.json").exists()
+
+
+
 def test_deferred_obligation_cannot_claim_certification_without_partial_handoff():
     obligation = {"id": "OBL-044", "disposition": "deferred",
                   "rationale": "Independent review occurs after certified handoff.",
