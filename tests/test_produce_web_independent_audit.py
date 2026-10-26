@@ -102,7 +102,7 @@ def test_approved_report_binds_independent_run_and_target():
     assert report["merge_preview_sha_after"] == PREVIEW
     assert report["audit_context_id"] == "github-actions:12"
     assert report["implementation_context_id"] == "github-actions-source:10"
-    assert report["signature"] if "signature" in report else True
+    assert "signature" not in report  # Signing only occurs in the isolated trusted runner.
     assert report["verdict"] == "approved"
 
 
