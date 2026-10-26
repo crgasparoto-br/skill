@@ -106,7 +106,7 @@ def fixture(tmp_path: Path, *, dossier=True, skipped=False):
     (out / "pytest-exact-head.log").write_bytes(log)
     (out / "pytest-exact-head.xml").write_bytes(junit)
     put(out / "test-execution-facts.json", {
-        "subject_sha": head, "execution": {"exit_code": 0,
+        "subject_sha": head, "execution": {"command": "python -m pytest -vv --junitxml=pytest-exact-head.xml", "exit_code": 0,
                                           "log_sha256": hashlib.sha256(log).hexdigest()},
     })
     index_spec = importlib.util.spec_from_file_location(
