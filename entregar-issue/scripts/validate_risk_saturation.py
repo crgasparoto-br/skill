@@ -32,8 +32,11 @@ def iter_surfaces(item: dict):
                 yield family, surface
 
 
-def required_escape_dimensions(directory: Path, errors: list[str]) -> set[tuple[str, str, str]]:
-    path = directory / "audit-escape-closure.json"
+def required_escape_dimensions(path: Path | None, errors: list[str]) -> set[tuple[str, str, str]]:
+    # The parent directory can contain a foreign/legacy closure from the base
+    # branch. Never activate it merely because a file exists at that path.
+    if path is None:
+        return set()
     if not path.is_file():
         return set()
     closure = load(path)
@@ -91,6 +94,7 @@ def main() -> int:
     p.add_argument("--risk-saturation", required=True)
     p.add_argument("--requirement-closure")
     p.add_argument("--inherited-controls")
+    p.add_argument("--audit-escape-closure", help="Current-target escape closure explicitly selected by the caller")
     a=p.parse_args()
     attack_path=Path(a.attack_matrix)
     matrix=load(attack_path); saturation=load(Path(a.risk_saturation)); errors=[]
@@ -212,7 +216,7 @@ def main() -> int:
         elif item.get("status") not in {"not-applicable", "passed"}: errors.append(f"family {family} non-applicable status is invalid")
         if len(str(item.get("reason") or "").strip()) < 8: errors.append(f"family {family} lacks applicability reason")
 
-    required_escape = required_escape_dimensions(attack_path.parent, errors)
+    required_escape = required_escape_dimensions(Path(a.audit_escape_closure) if a.audit_escape_closure else None, errors)
     missing_escape = sorted(required_escape - control_dimensions)
     if missing_escape:
         rendered = [f"{family}:{surface}:{dimension}" for family, surface, dimension in missing_escape]

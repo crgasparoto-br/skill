@@ -62,13 +62,13 @@ Antes do freeze:
 
 ## Audit escapes
 
-Quando existir `audit-escape-closure.json` com `status=passed`, cada escape deve declarar `required_attack_dimensions`. Cada item possui `risk_family`, `surface` e `dimension`. O gate de saturacao confirma que essas dimensoes existem de fato na matriz atual, inclusive quando aparecem como casos irmaos.
+Quando o controlador vincular explicitamente ao alvo atual `audit-escape-closure.json` com `status=passed`, cada escape deve declarar `required_attack_dimensions`. Cada item possui `risk_family`, `surface` e `dimension`. O gate de saturacao confirma que essas dimensoes existem de fato na matriz atual, inclusive quando aparecem como casos irmaos.
 
 Para uma classe que escapou por um canal e reapareceu por outro, as dimensoes obrigatorias devem atravessar superficies. Nao aceitar fechamento de `role-secret-boundary-leak`, por exemplo, apenas com duas variacoes de `environment` quando filesystem ou credential store persistente estiverem presentes.
 
 ## Portao
 
-Executar `scripts/validate_risk_saturation.py --attack-matrix ... --risk-saturation ... --requirement-closure ... --inherited-controls ...`. O gate rederiva as familias canonicas diretamente das obrigacoes cobertas e bloqueia quando a especificacao exige uma familia omitida pela matriz ou marcada `not-applicable`. `material_families_missing_controls` deve estar vazio, toda superficie requerida deve possuir dimensao `passed` com controle correspondente, e todas as `required_attack_dimensions` de escapes fechados devem estar cobertas. Qualquer lacuna impede handoff.
+Executar `scripts/validate_risk_saturation.py --attack-matrix ... --risk-saturation ... --requirement-closure ... --inherited-controls ...`. O gate rederiva as familias canonicas diretamente das obrigacoes cobertas e bloqueia quando a especificacao exige uma familia omitida pela matriz ou marcada `not-applicable`. `material_families_missing_controls` deve estar vazio, toda superficie requerida deve possuir dimensao `passed` com controle correspondente, e todas as `required_attack_dimensions` de escapes fechados devem estar cobertas. Passar `--audit-escape-closure <caminho>` **somente** para um artefato de escape comprovadamente associado ao alvo atual (tambem em `validate_handoff_readiness.py`). Nao inferir aplicabilidade pela simples presenca de arquivo herdado no diretorio `.audit/entregar-issue`, mesmo que esteja com `status=passed`: esse arquivo pode pertencer a outra issue. Se a remediacao sistemica exigir o escape atual, a ausencia da opcao deve ser bloqueada pelo controller/handoff readiness, nunca servir como atalho para omiti-lo. Qualquer lacuna impede handoff.
 
 
 ## Fontes nao circulares de materialidade

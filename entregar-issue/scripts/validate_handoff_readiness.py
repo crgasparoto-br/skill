@@ -163,6 +163,8 @@ def main() -> int:
             ]
             if inherited_path.is_file():
                 risk_args.extend(["--inherited-controls", str(inherited_path)])
+            if args.audit_escape_closure:
+                risk_args.extend(["--audit-escape-closure", args.audit_escape_closure])
             run_validator(risk_args, errors)
 
         if not inherited_path.is_file():
