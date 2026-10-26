@@ -17,6 +17,7 @@ import urllib.request
 from pathlib import Path
 
 from produce_web_independent_audit import github, verify_technical_checks
+from verify_independent_pr_audit import required_checks_green, trusted_workflow_check
 
 SHA = re.compile(r"[a-f0-9]{40}\Z")
 CHECK_NAME = "Verify independent web audit (exact SHA)"
@@ -125,8 +126,6 @@ def verify_material(repo: str, pr: dict, report: Path, registry: Path, run_id: i
         "head_sha": current["head"]["sha"],
         "base_ref": current["base"]["ref"],
     }, token)
-    from verify_independent_pr_audit import required_checks_green, trusted_workflow_check
-
     check_inventory = github(repo, f"commits/{current['head']['sha']}/check-runs?per_page=100", token)
     required_checks_green(
         check_inventory, current["head"]["sha"], current["base"]["ref"],
