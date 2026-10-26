@@ -105,6 +105,28 @@ def build_packet(repo: str, pr_number: int, issue_number: int, token: str) -> tu
     return packet, source
 
 
+def verify_technical_checks(packet: dict, token: str) -> None:
+    checks = github(packet["repository"], f"commits/{packet['head_sha']}/check-runs?per_page=100", token)
+    if not isinstance(checks, dict) or not isinstance(checks.get("check_runs"), list):
+        raise ValueError("missing exact-SHA GitHub check inventory")
+    if checks.get("total_count", 0) > len(checks["check_runs"]):
+        raise ValueError("truncated check inventory")
+    required = {"Structure and tests", "Offline authorization tests"}
+    if packet["base_ref"] == "develop":
+        required.add("collect / Require certified semantic handoff (exact SHA)")
+    for name in sorted(required):
+        matches = [
+            check for check in checks["check_runs"]
+            if check.get("name") == name and check.get("head_sha") == packet["head_sha"]
+            and (check.get("app") or {}).get("id") == 15368
+        ]
+        if not matches:
+            raise ValueError(f"missing trusted exact-SHA check: {name}")
+        latest = max(matches, key=lambda check: int(check.get("id") or 0))
+        if latest.get("status") != "completed" or latest.get("conclusion") != "success":
+            raise ValueError(f"required exact-SHA check not green: {name}")
+
+
 def review_with_model(packet: dict, diff: str, token: str, model: str, endpoint: str) -> dict:
     if not endpoint.startswith("https://"):
         raise ValueError("audit provider URL must use HTTPS")
@@ -242,6 +264,7 @@ def main() -> int:
         packet, diff = build_packet(args.repository, args.pr, args.issue, gh_token)
         if packet["head_sha"] != args.expected_head:
             raise ValueError("workflow event HEAD differs from PR HEAD")
+        verify_technical_checks(packet, gh_token)
         response = review_with_model(packet, diff, ai_token, ai_model, endpoint)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         (args.output.parent / "audit-model-response.json").write_text(
