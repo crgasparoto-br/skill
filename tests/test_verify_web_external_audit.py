@@ -94,3 +94,23 @@ def test_requires_exact_40_character_sha():
     assert gate.SHA.fullmatch(HEAD)
     assert not gate.SHA.fullmatch("b" * 39)
     assert not gate.SHA.fullmatch(HEAD + "malicious")
+
+
+def test_merge_preview_binding_accepts_exact_sha():
+    assert gate.check_binding(valid_report() | {
+        "merge_preview_sha": "c" * 40,
+        "merge_preview_sha_after": "c" * 40,
+    }, repository="crgasparoto-br/skill", issue=125, base_ref="develop",
+        base_sha=BASE, head_sha=HEAD, merge_preview_sha="c" * 40) == []
+
+
+@pytest.mark.parametrize("field", ["merge_preview_sha", "merge_preview_sha_after"])
+def test_merge_preview_binding_rejects_stale_snapshot(field):
+    report = valid_report() | {
+        "merge_preview_sha": "c" * 40,
+        "merge_preview_sha_after": "c" * 40,
+    }
+    report[field] = "d" * 40
+    assert gate.check_binding(report, repository="crgasparoto-br/skill",
+        issue=125, base_ref="develop", base_sha=BASE, head_sha=HEAD,
+        merge_preview_sha="c" * 40)
