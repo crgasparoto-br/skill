@@ -24,8 +24,11 @@ TRUSTED_WORKFLOW = ".github/workflows/produce-independent-audit.yml"
 
 
 def call_api(repo: str, suffix: str, token: str, body: dict) -> dict:
+    api_root = os.environ.get("GITHUB_API_URL")
+    if not api_root or not api_root.startswith("https://"):
+        raise ValueError("trusted GitHub API URL unavailable")
     req = urllib.request.Request(
-        f"https://api.github.com/repos/{repo}/{suffix}",
+        f"{api_root.rstrip('/')}/repos/{repo}/{suffix}",
         data=json.dumps(body).encode("utf-8"),
         method="POST",
         headers={
