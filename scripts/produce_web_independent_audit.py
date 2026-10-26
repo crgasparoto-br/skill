@@ -15,9 +15,9 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
-from urllib.parse import quote
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import quote
 
 SHA = re.compile(r"[a-f0-9]{40}\Z")
 ROOT = Path(__file__).resolve().parents[1]
