@@ -15,67 +15,36 @@ permissions:
   issues: read
   pull-requests: read
   checks: read
+  actions: read
 jobs:
   packet:
     name: Generate neutral audit packet
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Collect canonical source without candidate execution
+      - name: Checkout trusted packet tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Collect certified exact-SHA source without candidate execution
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ inputs.pull_request }}
           ISSUE_NUMBER: ${{ inputs.issue }}
         run: |
-          set -euo pipefail
-          mkdir -p audit-packet
-          gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" > audit-packet/pr.json
-          gh api "repos/$REPOSITORY/issues/$ISSUE_NUMBER" > audit-packet/issue.json
-          gh api --paginate --slurp "repos/$REPOSITORY/pulls/$PR_NUMBER/files?per_page=100" > audit-packet/files-pages.json
-          python - <<'PY'
-          import hashlib, json, os, pathlib, subprocess
-          root = pathlib.Path("audit-packet")
-          pr = json.loads((root / "pr.json").read_text())
-          issue = json.loads((root / "issue.json").read_text())
-          if pr.get("state") != "open" or pr.get("base", {}).get("ref") not in ("develop", "main"):
-              raise SystemExit("BLOCK: open PR to develop/main required")
-          if issue.get("number") != int(os.environ["ISSUE_NUMBER"]) or not issue.get("body"):
-              raise SystemExit("BLOCK: canonical issue absent")
-          import re
-          refs = {int(x) for x in re.findall(r"(?i)\b(?:closes|fixes|refs)\s+#(\d+)\b", pr.get("body") or "")}
-          if refs != {issue["number"]}:
-              raise SystemExit("BLOCK: PR must link exactly one canonical issue")
-          pages = json.loads((root / "files-pages.json").read_text())
-          files = [e for page in pages for e in page]
-          if not files or any(not isinstance(f.get("patch"), str) for f in files):
-              raise SystemExit("BLOCK: patch missing or binary file needs separate evidence")
-          lines = []
-          for item in files:
-              lines.append("FILE: "+item["filename"]+"\n"+item["patch"]+"\n")
-          (root / "diff.txt").write_text("\n".join(lines))
-          manifest = {
-              "repository": os.environ["REPOSITORY"],
-              "pull_request": pr["number"], "issue": issue["number"],
-              "base_ref": pr["base"]["ref"], "base_sha": pr["base"]["sha"],
-              "head_sha": pr["head"]["sha"], "merge_preview_sha": pr.get("merge_commit_sha"),
-              "producer": "github-actions-neutral-packet",
-              "disposition": "RAW_INPUT_ONLY_NOT_INDEPENDENT_APPROVAL",
-          }
-          for name in ("pr.json", "issue.json", "files-pages.json", "diff.txt"):
-              manifest[name+"_sha256"] = hashlib.sha256((root / name).read_bytes()).hexdigest()
-          (root / "manifest.json").write_text(json.dumps(manifest, sort_keys=True, indent=2))
-          latest = json.loads(subprocess.check_output(
-              ["gh", "api", "repos/"+os.environ["REPOSITORY"]+"/pulls/"+os.environ["PR_NUMBER"]], text=True))
-          if (latest["head"]["sha"] != manifest["head_sha"] or
-                  latest["base"]["sha"] != manifest["base_sha"] or
-                  latest.get("merge_commit_sha") != manifest["merge_preview_sha"]):
-              raise SystemExit("BLOCK: PR changed during evidence collection")
-          PY
+          python scripts/verify_session_review.py --repo "$REPOSITORY" \
+            --pr "$PR_NUMBER" --issue "$ISSUE_NUMBER" \
+            --packet-out "$RUNNER_TEMP/audit-packet/review-packet.json"
       - name: Upload neutral packet
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: neutral-independent-audit-packet
-          path: audit-packet/
+          path: ${{ runner.temp }}/audit-packet/
           if-no-files-found: error
           retention-days: 14

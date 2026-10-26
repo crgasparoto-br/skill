@@ -1,0 +1,55 @@
+name: Verify operator-attested session review
+
+# This is a distinct, opt-in guarantee, never third-party audit impersonation.
+# Trusted default/base code only; PR source and comments are untrusted DATA.
+on:
+  issue_comment:
+    types: [created, edited, deleted]
+  pull_request_target:
+    branches: [develop, main]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+  issues:
+    types: [edited]
+  workflow_run:
+    workflows: ["Validate skills", "Validate GitHub Audit MCP", "Collect and certify exact-SHA handoff"]
+    types: [completed]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: "Open PR number to revalidate (no AI execution)"
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+  checks: write
+
+concurrency:
+  group: session-review-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout trusted workflow source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Validate or revoke the exact-SHA session review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: python scripts/verify_session_review.py --repo "$REPOSITORY" --event "$GITHUB_EVENT_PATH"

@@ -1,50 +1,58 @@
-# Auditoria independente web — issue #127
+# Revisao web para operador unico, sem API de IA
 
-## Decisão vinculante
+## Decisao de garantia
 
-Não utilizar API de inteligência artificial para implementação ou auditoria. Não utilizar VPS, runners self-hosted ou infraestrutura privada. O ChatGPT opera por conversas separadas com acesso às ferramentas conectadas do GitHub. GitHub Actions executa somente testes, certificação semântica exact-SHA e validação determinística das evidências.
+Uma conta GitHub nao comprova que duas pessoas diferentes revisaram o codigo. Um hash, uma chave gerada pelo implementador ou uma URL de conversa tambem nao comprovam essa separacao. O modo novo chama-se **operator-attested-session-review**, nunca auditoria criptograficamente independente.
 
-## Separação de funções
+A revisao e feita no ChatGPT web, em contexto separado. O operador declara essa separacao e responde por ela. O GitHub autentica a conta que depositou o parecer, verifica os vinculos das evidencias e registra um recibo no SHA exato. Nao ha API de IA, VPS, runner self-hosted, chave de API ou chave privada nesse modo.
 
-1. **Implementação**: conversa do ChatGPT que implementa e corrige a entrega, sem produzir sua própria aprovação independente.
-2. **Certificação**: GitHub Actions coleta resultados técnicos e exige dossiê semântico com vínculo exato a issue, base e HEAD. A falta de entradas permanece bloqueante.
-3. **Auditoria**: outra conversa do ChatGPT analisa requisitos, código, controles e testes, em somente leitura, e produz parecer real. Uma conversa separada não é, por si só, prova criptográfica de independência nem equivale a um GitHub review APPROVED.
-4. **Verificação**: o verificador determinístico exige relatório assinado por auditor previamente confiado, alvo exato, prova de contexto, assinatura e evidências. Não aceita uma conclusão autoassinada como independência.
+Esta e uma alternativa **optativa de governanca**, nao um contorno do gate existente. A politica [.github/session-review-policy.json](../.github/session-review-policy.json) nasce desativada. O fluxo de review humano independente e a via Ed25519 existentes permanecem intactos. Nenhum check de nome "independent audit" recebe sucesso com uma declaracao de operador unico.
 
-## Componentes mantidos
+## Componentes
 
-- `scripts/verify_web_external_audit.py`: verificações de relatório Ed25519, repositório, issue, base, SHA material, merge preview e contexto da auditoria.
-- `tests/test_verify_web_external_audit.py`: testes de desvio de alvo, contexto, merge preview e evidências de aprovação.
-- O validador CLI permanece disponível para execução determinística por política confiável. O workflow manual anterior foi removido porque referenciava o produtor de IA descontinuado e não autenticava a origem de um relatório produzido no ChatGPT.
+- [session_review.py](../scripts/session_review.py): contrato estrito, identidade, autoria, cobertura, provas e revogacao.
+- [verify_session_review.py](../scripts/verify_session_review.py): coleta autenticada no GitHub, reuso dos validadores oficiais, JUnit real, fontes completas e publicacao do check `Verify session review (exact SHA)`.
+- [session-review.yml](../.github/workflows/session-review.yml): execucao deterministica com permissao de leitura e escrita exclusivamente em Checks; nao executa codigo do candidato.
+- [prepare-neutral-audit-packet.yml](../.github/workflows/prepare-neutral-audit-packet.yml): pacote neutro com issue canonica, obrigacoes, fontes de base/HEAD, diff recomposto dos blobs e testes efetivamente aprovados.
 
-## Regras contra looping
+A coleta nao inclui a narrativa da PR ou comentarios do implementador. O diff e recomposto a partir dos blobs completos, em vez de aceitar patches truncados da API. Fontes removidas aparecem sob `base/`, fontes correntes sob `head/`.
 
-- Auditoria somente leitura, sem commits, reexecuções de CI ou correção de código.
-- Fixar identidade de PR/base/HEAD e invalidar a aprovação somente quando SHA, contrato, risco ou evidência material mudar.
-- Agrupar todos os achados demonstrados na mesma rodada.
-- Não transformar CI verde em conclusão; não aceitar aprovação interna da implementação como auditoria independente.
-- Se a credencial independente ou o relatório assinado faltar, emitir BLOCKED e não reiniciar a auditoria sem mudança material.
+## Fluxo sem dependencia circular
 
-## Limitações e implantação
+`Implementacao -> testes e dossie semantico -> certificado -> conversa revisora -> comentario de parecer -> verificador deterministico`.
 
-O gate atual `Verify independent audit (exact SHA)` exige uma revisão GitHub APPROVED de outra identidade. Como só existe uma conta humana, **essa proteção não pode ser satisfeita por uma segunda conversa por si só**. A futura substituição do requisito precisa de política e atestação realmente confiáveis. Não desabilitar regras para criar uma aprovação artificial.
+O certificado nao depende do comentario de aprovacao. O comentario nao cria commit. O verificador nao chama IA, nao corrige codigo, nao dispara testes e nao pede outra auditoria para aprovar a primeira. Um recibo com o mesmo fingerprint pode ser reutilizado depois de revalidar as fontes mutaveis.
 
-O registro `TRUSTED_AUDITORS_JSON` e a assinatura Ed25519 são opcionais para executar testes, mas indispensáveis para aceitar um relatório pela via externa; mantê-los fora da implementação. Não pedir nem cadastrar `OPENAI_AUDITOR_API_KEY`, `OPENAI_AUDITOR_MODEL` ou `OPENAI_AUDITOR_URL`.
+Somente uma alteracao material ou uma evidencia realmente diferente exige nova revisao. Findings sao consolidados na mesma rodada. Credencial, dossie ou permissao ausente gera BLOCK com causa concreta, nao um ciclo automatico de tentativa.
 
-A issue #127 permanece aberta até certificação exata, provas de auditoria real, migração segura dos checks e rulesets efetivas em develop/main. Nenhum merge automático.
+## Contrato do parecer
 
-## Contrato de importação de auditoria em outra conversa
+Depositar um comentario na PR cujo corpo comece com `SOLVERIT_SESSION_REVIEW_V1`, seguido de quebra de linha e um unico objeto JSON. Nao publicar esse marcador como parte de narrativas ou exemplos operacionais na propria PR.
 
-O auditor de uma conversa separada só pode entregar **parecer humano de pré-auditoria** enquanto não houver evidência autenticada do ID da conversa, custódia independente de chave Ed25519 e registro de confiança anterior à PR. O implementador **não pode** assinar esse parecer nem publicar um check aprovado em nome do auditor.
+O JSON usa `schema_version=1`, `identity`, `assurance`, `acknowledgement`, `sessions`, `conclusion`, `blocking_findings`, `limitations` e `requirements`.
 
-Quando houver uma identidade auditora de fato confiável, o relatório `external-audit.json` deve obedecer ao schema oficial `auditar-issue/schemas/external-audit.schema.json` e incluir fonte da prova de contexto, emissor da prova, contexto de implementação diferente do contexto auditor, base/head/merge-preview exatos e evidência verificável por requisito. O validador `scripts/verify_web_external_audit.py` aceita os parâmetros `--audit-context-id` e `--context-proof-issuer` para confrontar esses campos com valores autenticados fora do relatório. **Esses parâmetros não podem ser copiados cegamente do próprio JSON do candidato.**
+Copiar `identity` do pacote autenticado: repositorio, PR, issue, base ref/SHA, HEAD, merge preview e digests de issue/politica. `assurance` e `operator-attested-session-review`; `acknowledgement` e `separate-context-declared-not-cryptographically-proven`.
 
-Sem essas condições, o resultado formal é BLOCKED. Não há substituição segura de review GitHub obrigatório por um texto fornecido pela mesma conta GitHub. O próximo passo de implantação só poderá ser executado quando houver uma origem de atestação confiável, sem API de IA, aprovada para operador único.
+Em `sessions`, informar referencias reais fornecidas pelo operador para `implementation` e `audit`, diferentes entre si, e `separate_context_attested=true`. O programa **nao autentica uma sessao ChatGPT**; esses campos sao uma declaracao de processo. Nao inventar IDs ou assinar essa declaracao como terceiro.
 
-## Pacote neutro no GitHub Actions (sem API)
+Cada item de `requirements` deve ter o `candidate_key` canonico, uma `analysis` propria, `sources` e `controls`. Cada fonte aponta `path`, `start_line`, `end_line` e SHA-256 do trecho unido por `\n` sem quebra final. Cada controle informa `kind`, `test_case_id` e `rationale`. Exigem-se tres casos distintos: `positive`, `negative` e `regression`, presentes como passed no JUnit do SHA material. Isso verifica vinculos, nao substitui a avaliacao semantica do revisor.
 
-O workflow `.github/workflows/prepare-neutral-audit-packet.yml` é manual (`workflow_dispatch`) e gera um artifact `neutral-independent-audit-packet` com metadados da PR e issue canônica, patches textuais, hashes SHA-256 e manifesto de SHAs da base e HEAD. Rejeita PR fechada, associação de issue ambígua, diff incompleto e alteração do alvo durante a coleta. O pacote serve de entrada bruta para **uma nova conversa do ChatGPT**, e não para executar um modelo por API.
+O resultado aprovado exige `conclusion=approved`, `blocking_findings=[]` e `limitations=[]`. Parecer incompleto, anterior ao certificado, editado, de conta nao autorizada ou vinculado a outro alvo nao aprova. A edicao/exclusao revoga o parecer; publicar novo comentario em vez de alterar um aprovado. Um parecer rejeitado mais recente impede voltar a uma aprovacao antiga.
 
-**Contrato de garantia:** o workflow produz somente evidência de origem do GitHub, nunca prova autenticada de que uma conversa ChatGPT independente a examinou. Como o ChatGPT conectado não fornece neste fluxo uma assinatura de sessão verificável pelo GitHub, não existe base para publicar `APPROVED` ou substituir o review obrigatório por esse artifact. Para migrar o gate é indispensável uma identidade auditora autorizada com atestação separada (ex.: GitHub App sob custódia independente); se essa dependência não existir, manter `BLOCKED` e não simular certificação.
+## Politica e ativacao administrativa
 
-**Uso:** após publicar o workflow na branch default de forma autorizada, executar Actions > Prepare neutral independent audit packet > Run workflow, preencher `pull_request` e `issue`, usar o artifact em conversa auditora separada e registrar achados com links e hashes reais. A revisão não deve reaproveitar conclusões da implementação.
+A conta autorizada e definida por **ID numerico e login** na allowlist `operators`. A permissao e verificada novamente no momento da publicacao. O proprietario individual e reconhecido pelos metadados autenticados do repositorio, sem exigir outro usuario ou um segredo administrativo adicional.
+
+Ativar requer alterar `mode` para `enabled` e cadastrar a conta **na base confiavel**, mantendo a declaracao explicita do limite de garantia. O candidato nao pode ativar sua propria politica; os bytes do executor/politica devem coincidir com os da base. As branches default e destino precisam conter as mesmas versoes desses arquivos.
+
+O novo check nao substitui sozinho a regra nativa `required_approving_review_count=1`. A migracao administrativa, depois de aceitar este modelo de garantia, consiste em manter PR obrigatoria, remover a exigencia de outra conta (contagem 0), trocar o check de identidade independente pelo check de sessao e preservar os checks tecnicos, certificacao, atualizacao estrita, bloqueio de force-push e exclusao. Isso altera o modelo de confianca; nao e equivalente a uma aprovacao de terceiro.
+
+O bootstrap e uma decisao administrativa unica: a politica antiga, que exige outra conta, nao pode aprovar sua propria substituicao por uma unica conta. Registrar essa decisao, o SHA revisado e as evidencias; nao fabricar check verde nem desativar indiscriminadamente todas as protecoes. A automacao nao altera rulesets e nao faz merge. Enquanto nao houver autorizacao e instalacao protegida, permanece o gate antigo.
+
+## develop, main e provas reais
+
+O coletor de handoff suporta as duas bases. O modo de sessao exige certificado e testes no HEAD de cada PR, inclusive em main; nao aceita certificado de outro PR/issue nem de um commit anterior. A via humana legada conserva sua politica propria.
+
+Antes de ativar o required check, comprovar em execucao real o caso positivo e os negativos de adulteracao, exclusao de parecer, mudanca de issue, base/HEAD e permissao. Os testes automatizados exercitam a implementacao, mas **nao sao evidencia de que um auditor real revisou esta PR**.
+
+A issue permanece aberta ate completar a certificacao da entrega e a adocao operacional. O implementador desta migracao nao publica o proprio parecer como revisao separada. A PR nao e declarada aprovada por CI verde, pacote neutro ou recibo de pre-auditoria.
