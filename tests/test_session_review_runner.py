@@ -148,3 +148,11 @@ def test_edit_removing_marker_still_revokes(monkeypatch, tmp_path):
                     "changes": {"body": {"from": runner.PREFIX + "{}"}}}))
     monkeypatch.setenv("GITHUB_EVENT_PATH", str(path))
     assert runner.event_review_id({"operators": [{"id": 123, "login": "owner"}]}) == 42
+
+
+
+def test_ambiguous_pr_reference_is_retained_for_revocation(monkeypatch):
+    pr = {"number": 10, "state": "open", "base": {"ref": "develop"}, "body": "Refs #9\nRefs #8"}
+    monkeypatch.setattr(runner, "api", lambda *_: pr)
+    event = {"repository": {"full_name": "owner/repo"}, "pull_request": {"number": 10}}
+    assert runner.resolve_targets("owner/repo", event) == [(10, 0)]

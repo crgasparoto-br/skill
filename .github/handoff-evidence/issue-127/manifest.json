@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 127,
+  "pull_request_number": 128,
+  "base_ref": "develop",
+  "head_ref": "feat/127-web-independent-audit",
+  "work_item_start_sha": "2366dd6da7ac9d8c5defe9b40f53dd3c4a0c650f",
+  "review_state": "incomplete",
+  "artifact_sha256": {},
+  "test_bindings": {},
+  "reason": "Original independent-identity and operational-migration obligations are not fulfilled by an explicitly limited, opt-in single-operator review. No semantic approval is asserted."
+}

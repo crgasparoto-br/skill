@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "fb64e9d0abc2527d9638225dc276ea99edd4eed0c2d8c51a22bedbd471906402": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Historical initial blocker is documented. The legacy GitHub independent-review gate is preserved; no administrative bypass or passing independent review has been fabricated."
+    },
+    "c855127e050d32366e1d221982fc4e5b6b32f68dd3dfc05c2eccd3da20b3438d": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The new opt-in operator-attested-session-review mode intentionally declares its lower assurance. It does not satisfy the original requirement for cryptographically independent identity; formal adoption of the revised trust model is outstanding."
+    },
+    "b9c61c2f42f75fa282262beefc2f84dbb24f8f681cb1498c0911b3d13cf52269": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The signed external-audit path and auditar-issue independence rules remain unchanged. The implementing conversation has not issued an independent approval of its own candidate."
+    },
+    "92dc1c5f00e8a0b2079f33337d65251370368f82902de5e1c2ec591ec1e0225e": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The legacy human and signed-external paths are preserved. The added session-review mode has a different check name and is disabled by default; it cannot be substituted silently for independent approval."
+    },
+    "95a37157a2eacc5dc53703c9f402fe5b2f01dc1c13d078178bfff93a4ecf5861": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "No external signer, key custody or platform-signed ChatGPT session is provisioned or asserted. The single-operator alternative avoids those claims and requires explicit protected-base policy adoption."
+    },
+    "1b9fd267b71cf993efd469ddee3eef01ef264e3d3a9fb9428dd68314dad1a7ec": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Trusted-base byte comparison, immutable source collection, exact-SHA publication and revocation are implemented in scripts/verify_session_review.py. Live protected-branch activation is still outstanding."
+    },
+    "b5a0019efab8f8135a8144580577ef0d1add6ad219a0f3510737cc8a6ff926e6": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue/base/HEAD/merge-preview and evidence digests are validated in scripts/session_review.py. Ed25519 remains in the existing external path; the new mode explicitly does not impersonate that guarantee."
+    },
+    "c988612ba2b757f2ea98e3bb396e5b88ce61f6a4d9215acddae9665873742e84": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Focused tests cover forged identities, altered source hashes, absent/failed test bindings, edited/deleted reviews and stale targets. Tests are implementation evidence, not a real externally signed audit or completed operational rollout."
+    },
+    "74f8095d1eff95ec79807eef20e907c3683fe9e377e006bfbe20838c981959ef": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Rulesets have not been weakened by this change and no merge was performed. A policy migration must be explicitly adopted and verified on a real PR; this step has not been executed."
+    },
+    "8438bd53fa88f2a5d23bd6e21f7073ce2a34ff0106d38a0ee9c5ad6d9aca469a": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "External identity and private key custody are not simulated. The new web-only, no-AI-API alternative changes the stated assurance model and remains opt-in rather than falsely satisfying this original criterion."
+    },
+    "46ef59dc2f690957687fdcf9f4aa66b5581aad7bc14e7e7dfc75b6b2827f7c27": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "An independent approved live audit and final rollout are not demonstrated. The dossier remains incomplete and must not generate certification-inputs.json or an approval claim."
+    }
+  },
+  "controls": {}
+}

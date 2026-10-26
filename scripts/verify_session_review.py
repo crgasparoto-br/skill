@@ -310,6 +310,7 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         local_policy = strict_json((ROOT / POLICY_PATH).read_text(encoding="utf-8"))
         watermark = max(watermark, event_review_id(local_policy)) if not packet_out else watermark
         receipt["minimum_comment_id"] = watermark
+        require(type(issue_number) is int and issue_number > 0, "canonical issue reference missing or ambiguous")
         packet, policy, files, passed = prepare(repo, number, issue_number, require_enabled=not packet_out)
         if packet_out:
             packet_out.parent.mkdir(parents=True, exist_ok=True)
@@ -374,8 +375,11 @@ def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
         pr = api(f"/repos/{repo}/pulls/{number}")
         if pr.get("state") != "open" or pr.get("base", {}).get("ref") not in {"develop", "main"}:
             continue
-        issue = linked_issue(pr)
-        if event.get("issue") and not event["issue"].get("pull_request") and event["issue"]["number"] != issue:
+        try:
+            issue = linked_issue(pr)
+        except ValueError:
+            issue = 0  # Keep the PR target so evaluate revokes a previous approval.
+        if issue and event.get("issue") and not event["issue"].get("pull_request") and event["issue"]["number"] != issue:
             continue
         result.append((number, issue))
     return result

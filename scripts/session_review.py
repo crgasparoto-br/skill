@@ -102,6 +102,40 @@ def validate_identity(identity: dict) -> None:
                 for k in ("issue_sha256", "policy_sha256")), "immutable source digests required")
 
 
+def verify_requirements(rows: list, requirements: list, files: dict[str, str], passed_tests: set[str]) -> None:
+    """Reconcile all canonical obligations with exact source and executed controls."""
+    expected = {item["candidate_key"] for item in requirements}
+    require(bool(expected) and isinstance(rows, list) and len(rows) == len(expected), "incomplete requirement inventory")
+    require(all(isinstance(row, dict) for row in rows), "requirement rows must be objects")
+    require({row.get("candidate_key") for row in rows} == expected, "requirement keys are missing or foreign")
+    for row in rows:
+        require(set(row) == {"candidate_key", "analysis", "sources", "controls"}, "invalid requirement row")
+        require(isinstance(row["analysis"], str) and len(row["analysis"].strip()) >= 40,
+                "requirement-specific semantic analysis required")
+        sources = row["sources"]
+        require(isinstance(sources, list) and 0 < len(sources) <= 20, "source evidence required")
+        for source in sources:
+            require(isinstance(source, dict) and set(source) == {"path", "start_line", "end_line", "sha256"},
+                    "invalid source anchor")
+            path = source["path"]
+            require(isinstance(path, str) and path in files and safe_path(path), "source not in frozen file inventory")
+            start, end = source["start_line"], source["end_line"]
+            lines = files[path].splitlines()
+            require(type(start) is int and type(end) is int and 1 <= start <= end <= len(lines),
+                    "source lines do not exist at material SHA")
+            require(source["sha256"] == digest("\n".join(lines[start - 1:end]).encode()), "source evidence digest mismatch")
+        controls = row["controls"]
+        require(isinstance(controls, list) and len(controls) == 3, "positive, negative and regression controls required")
+        require(all(isinstance(c, dict) and set(c) == {"kind", "test_case_id", "rationale"} for c in controls),
+                "invalid test control")
+        require({c["kind"] for c in controls} == {"positive", "negative", "regression"}, "test control kinds incomplete")
+        require(len({c["test_case_id"] for c in controls}) == 3, "discriminating test cases must be distinct")
+        for control in controls:
+            require(control["test_case_id"] in passed_tests, "test was absent, failed or skipped at exact SHA")
+            require(isinstance(control["rationale"], str) and len(control["rationale"].strip()) >= 25,
+                    "test relevance rationale missing")
+
+
 def verify_review(comment: dict, packet: dict, policy: dict, files: dict[str, str],
                   passed_tests: set[str]) -> dict:
     """All factual inputs are collected independently by the trusted runner.
@@ -136,40 +170,10 @@ def verify_review(comment: dict, packet: dict, policy: dict, files: dict[str, st
     require(report["conclusion"] == "approved", "review does not approve the candidate")
     require(report["blocking_findings"] == [] and report["limitations"] == [],
             "unresolved findings or material limitations")
-    expected = {item["candidate_key"] for item in packet["requirements"]}
-    rows = report["requirements"]
-    require(bool(expected) and isinstance(rows, list) and len(rows) == len(expected), "incomplete requirement inventory")
-    require(all(isinstance(row, dict) for row in rows), "requirement rows must be objects")
-    require({row.get("candidate_key") for row in rows} == expected, "requirement keys are missing or foreign")
-    for row in rows:
-        require(set(row) == {"candidate_key", "analysis", "sources", "controls"}, "invalid requirement row")
-        require(isinstance(row["analysis"], str) and len(row["analysis"].strip()) >= 40,
-                "requirement-specific semantic analysis required")
-        sources = row["sources"]
-        require(isinstance(sources, list) and 0 < len(sources) <= 20, "source evidence required")
-        for source in sources:
-            require(isinstance(source, dict) and set(source) == {"path", "start_line", "end_line", "sha256"},
-                    "invalid source anchor")
-            path = source["path"]
-            require(isinstance(path, str) and path in files and safe_path(path), "source not in frozen file inventory")
-            start, end = source["start_line"], source["end_line"]
-            lines = files[path].splitlines()
-            require(type(start) is int and type(end) is int and 1 <= start <= end <= len(lines),
-                    "source lines do not exist at material SHA")
-            require(source["sha256"] == digest("\n".join(lines[start - 1:end]).encode()), "source evidence digest mismatch")
-        controls = row["controls"]
-        require(isinstance(controls, list) and len(controls) == 3, "positive, negative and regression controls required")
-        require(all(isinstance(c, dict) and set(c) == {"kind", "test_case_id", "rationale"} for c in controls),
-                "invalid test control")
-        require({c["kind"] for c in controls} == {"positive", "negative", "regression"}, "test control kinds incomplete")
-        require(len({c["test_case_id"] for c in controls}) == 3, "discriminating test cases must be distinct")
-        for control in controls:
-            require(control["test_case_id"] in passed_tests, "test was absent, failed or skipped at exact SHA")
-            require(isinstance(control["rationale"], str) and len(control["rationale"].strip()) >= 25,
-                    "test relevance rationale missing")
-    created = datetime.fromisoformat(comment["created_at"].replace("Z", "+00:00"))
+    verify_requirements(report["requirements"], packet["requirements"], files, passed_tests)
+    created = datetime.fromisoformat(comment["created_at"])
     require(created.tzinfo is not None, "review timestamp requires timezone")
-    certified = datetime.fromisoformat(packet["certified_at"].replace("Z", "+00:00"))
+    certified = datetime.fromisoformat(packet["certified_at"])
     require(certified.tzinfo is not None and created >= certified, "review predates certified evidence")
     receipt = {"schema_version": 1, "assurance": ASSURANCE, "identity": packet["identity"],
                "review_comment_id": comment["id"], "review_body_sha256": digest(body.encode()),

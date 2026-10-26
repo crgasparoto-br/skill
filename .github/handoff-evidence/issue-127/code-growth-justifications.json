@@ -1,0 +1,3 @@
+{
+  "scripts/verify_session_review.py": "The runner keeps one narrow trusted boundary for GitHub transport, official certificate/JUnit reuse, full immutable source collection, review revocation and exact-SHA publication. Semantic report validation is split into scripts/session_review.py; existing independent-check and specification validators are reused rather than copied. Its size remains below the hard limit and no policy threshold is changed."
+}

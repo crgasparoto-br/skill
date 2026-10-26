@@ -125,7 +125,8 @@ def test_no_fallback_after_rejection_edit_or_deletion():
         gate.latest_review([first, rejected], policy())
 
 
-@pytest.mark.parametrize("text", ['{"a":1,"a":2}', '[]', 'null', '{"x":' + '"x"' * 60001 + '}'])
+@pytest.mark.parametrize("text", ['{"a":1,"a":2}', '[]', 'null', '{"x":' + '"x"' * 60001 + '}'],
+                         ids=["duplicate", "array", "null", "too-large"])
 def test_ambiguous_or_oversized_json_rejected(text):
     with pytest.raises(ValueError):
         gate.strict_json(text)
