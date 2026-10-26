@@ -164,3 +164,15 @@ def test_missing_requirement_binding_must_fail_closed():
     }
     with pytest.raises(ValueError, match="every canonical requirement"):
         producer.validate_model_coverage(response, p, "raise ValueError('sha mismatch')")
+
+
+def test_main_base_requires_only_applicable_trusted_checks(monkeypatch):
+    p = packet() | {"base_ref": "main"}
+    checks = fake_checks()
+    checks["check_runs"] = checks["check_runs"][:2]
+    checks["total_count"] = 2
+    monkeypatch.setattr(producer, "github", lambda *_: checks)
+    producer.verify_technical_checks(p, "token")
+    checks["check_runs"][1]["conclusion"] = "failure"
+    with pytest.raises(ValueError, match="not green"):
+        producer.verify_technical_checks(p, "token")
