@@ -9,8 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "entregar-issue/scripts/validate_risk_saturation.py"
 sys.path.insert(0, str(SCRIPT.parent))
-from validate_risk_saturation import required_escape_dimensions  # noqa: E402
-from risk_inference import CANONICAL_RISK_FAMILIES  # noqa: E402
+from risk_inference import CANONICAL_RISK_FAMILIES  # noqa: E402 - script module path added above
+from validate_risk_saturation import required_escape_dimensions  # noqa: E402 - script module path added above
 
 
 def test_foreign_closure_is_not_inferred_from_neighboring_file(tmp_path):
@@ -52,7 +52,7 @@ def test_risk_validator_requires_explicit_escape_binding(tmp_path):
             "--risk-saturation", str(tmp_path / "risk-saturation.json")]
     clean = subprocess.run(args, text=True, capture_output=True, check=False)
     assert clean.returncode == 0, clean.stdout + clean.stderr
-    relevant = subprocess.run(args + ["--audit-escape-closure",
+    relevant = subprocess.run([*args, "--audit-escape-closure",
                              str(tmp_path / "audit-escape-closure.json")],
                              text=True, capture_output=True, check=False)
     assert relevant.returncode == 2
