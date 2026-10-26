@@ -65,13 +65,18 @@ jobs:
               raise SystemExit("BLOCK: artifact run from foreign repository")
           if run.get("head_sha") != pr.get("head", {}).get("sha"):
               raise SystemExit("BLOCK: artifact run does not match current PR HEAD")
+          if run.get("actor", {}).get("login") == pr.get("user", {}).get("login"):
+              raise SystemExit("BLOCK: self-produced audit run is not independent")
+          if not pr.get("merge_commit_sha"):
+              raise SystemExit("BLOCK: merge preview SHA unavailable")
           if run.get("event") not in ("workflow_dispatch", "workflow_call"):
               raise SystemExit("BLOCK: unexpected audit producer event")
           if run.get("status") != "completed" or run.get("conclusion") != "success":
               raise SystemExit("BLOCK: source audit run is not successful")
           (path / "target.json").write_text(json.dumps({
               "repository": repository, "base_ref": pr["base"]["ref"],
-              "base_sha": pr["base"]["sha"], "head_sha": pr["head"]["sha"]}))
+              "base_sha": pr["base"]["sha"], "head_sha": pr["head"]["sha"],
+              "merge_preview_sha": pr["merge_commit_sha"]}))
           PY
           gh run download "$AUDIT_RUN" -R "$TARGET_REPO" -n signed-independent-audit -D "$RUNNER_TEMP/web-audit/artifact"
       - name: Verify signature and exact target
@@ -100,6 +105,7 @@ jobs:
               "--repository", target["repository"], "--issue", issue,
               "--base-ref", target["base_ref"], "--base-sha", target["base_sha"],
               "--head-sha", target["head_sha"],
+              "--merge-preview-sha", target["merge_preview_sha"],
           ]
           raise SystemExit(subprocess.run(cmd, check=False).returncode)
           PY
