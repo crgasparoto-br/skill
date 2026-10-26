@@ -261,7 +261,6 @@ def test_draft_inventory_identifies_exact_missing_reports_and_controls(tmp_path)
     put(source / "manifest.json", manifest)
     draft = json.loads((source / "reviewed-closure.json").read_text())
     draft["controls"]["pass_c"] = {"status": "pending"}
-    draft["controls"]["domain_inventories"] = []
     put(source / "reviewed-closure.json", draft)
     starter = json.loads((out / ".audit/entregar-issue/requirement-closure.json").read_text())
     tests = {"suite::positive": "passed", "suite::negative": "passed",
@@ -278,7 +277,7 @@ def test_draft_inventory_identifies_exact_missing_reports_and_controls(tmp_path)
     assert set(inventory["required_reports"]) == required
     assert set(inventory["missing_reports"]) == required - {"reviewed-closure.json"}
     assert set(inventory["unhashed_reports"]) == required
-    assert inventory["pending_review_controls"] == ["domain_inventories", "pass_c"]
+    assert inventory["pending_review_controls"] == ["pass_c"]
     assert inventory["semantic_certification"] == "NOT_ASSERTED"
     assert inventory["subject_sha"] == head
     assert not (out / "certification-inputs.json").exists()
