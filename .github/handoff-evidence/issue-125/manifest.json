@@ -13,7 +13,7 @@
   "audit_history_evidence": "Authenticated GitHub pull-request review history for #126 contains no independent APPROVED or REJECTED review; chat pre-audit findings A-001 to A-003 were not independent Github rejection identities.",
   "artifact_sha256": {
     "reviewed-closure.json": "ce5cb0d9f80d17f5d8a3901b94962db7fe9454f9e2390fa38a6694572688d6e6",
-    "standard-evidence.json": "d45ef4689ecbbbf5d2abd949b75bbf723d07c6d5bbe9dc1850f30217c0730a1c",
+    "standard-evidence.json": "abd46070f560d36662ca9b35be18e275e1a841bd48534052634d02108c4077ad",
     "codebase-grounding.json": "22068b1e81d7fab4531639a3e4525146ff26ae7595801569289771fd1934950e"
   },
   "test_bindings": {
