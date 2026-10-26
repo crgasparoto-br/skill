@@ -191,3 +191,81 @@ def test_risk_saturation_accepts_escape_when_required_dimensions_are_covered():
         proc = run("validate_risk_saturation.py", "--attack-matrix", str(m),
                    "--risk-saturation", str(r), "--audit-escape-closure", str(escape))
         assert proc.returncode == 0, proc.stdout
+
+
+def test_risk_saturation_fails_closed_for_explicit_missing_escape_file():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        m = base / "matrix.json"
+        m.write_text(json.dumps(matrix_data()), encoding="utf-8")
+        r = base / "risk.json"
+        assert run("init_risk_saturation.py", "--attack-matrix", str(m), "--out", str(r)).returncode == 0
+        data = json.loads(r.read_text(encoding="utf-8"))
+        auth = next(item for item in data["families"] if item["family"] == "authorization")
+        auth["status"] = "passed"
+        for dimension in auth["dimensions"]:
+            dimension["status"] = "passed"
+        r.write_text(json.dumps(data), encoding="utf-8")
+        missing = base / "missing" / "audit-escape-closure.json"
+        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m),
+                   "--risk-saturation", str(r), "--audit-escape-closure", str(missing))
+        assert proc.returncode == 2
+        assert "explicit audit escape closure is missing" in proc.stdout
+
+
+def test_previous_rejection_cannot_infer_foreign_escape_from_neighboring_file():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        closure_path = base / "requirement-closure.json"
+        closure_path.write_text(json.dumps({"obligations": []}), encoding="utf-8")
+        (base / "audit-escape-closure.json").write_text(json.dumps({
+            "escapes": [{"escape_id": "previous-issue", "status": "passed"}]
+        }), encoding="utf-8")
+        proc = run("validate_handoff_readiness.py", "--requirement-closure",
+                   str(closure_path), "--evidence-profile", "light",
+                   "--previous-independent-rejection")
+        assert proc.returncode == 2
+        assert "requires explicit --audit-escape-closure for the current target" in proc.stdout
+
+
+def test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions():
+    # Mirrors the relevant cardinalities in SolverFin #742/#743 without copying
+    # any consumer business data into the generic Skill tests.
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        source = matrix_data()
+        requirement = source["requirements"][0]
+        source["requirements"] = [
+            {**requirement, "requirement_id": f"REQ-{number}",
+             "obligation_ids": [f"OBL-{number}"]}
+            for number in range(1, 20)
+        ]
+        matrix = base / "requirement-attack-matrix.json"
+        matrix.write_text(json.dumps(source), encoding="utf-8")
+        risk = base / "risk-saturation.json"
+        assert run("init_risk_saturation.py", "--attack-matrix", str(matrix),
+                   "--out", str(risk)).returncode == 0
+        data = json.loads(risk.read_text(encoding="utf-8"))
+        family = next(item for item in data["families"] if item["family"] == "authorization")
+        family["status"] = "passed"
+        for dimension in family["dimensions"]:
+            dimension["status"] = "passed"
+        risk.write_text(json.dumps(data), encoding="utf-8")
+        foreign = base / "audit-escape-closure.json"
+        foreign.write_text(json.dumps({"escapes": [{
+            "escape_id": "unrelated-delivery", "status": "passed",
+            "required_risk_families": ["authorization"],
+            "required_attack_dimensions": [
+                {"risk_family": "authorization", "surface": "old-surface",
+                 "dimension": f"historical-{i}"}
+                for i in range(16)
+            ]
+        }]}), encoding="utf-8")
+        arguments = ("--attack-matrix", str(matrix), "--risk-saturation", str(risk))
+        baseline = run("validate_risk_saturation.py", *arguments)
+        assert baseline.returncode == 0, baseline.stdout
+        activated = run("validate_risk_saturation.py", *arguments,
+                        "--audit-escape-closure", str(foreign))
+        assert activated.returncode == 2
+        assert "audit escape required attack dimensions are not covered" in activated.stdout
+        assert "authorization:old-surface:historical-15" in activated.stdout

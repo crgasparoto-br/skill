@@ -74,7 +74,7 @@ O gate rederiva as familias canonicas diretamente das obrigacoes cobertas e bloq
 
 Passar `--audit-escape-closure <caminho>` **somente** para um artefato de escape comprovadamente associado ao alvo atual (tambem em `validate_handoff_readiness.py`). Nao inferir aplicabilidade pela simples presenca de arquivo herdado no diretorio `.audit/entregar-issue`, mesmo que esteja com `status=passed`: esse arquivo pode pertencer a outra issue.
 
-Se a remediacao sistemica exigir o escape atual, a ausencia da opcao deve ser bloqueada pelo controller/handoff readiness, nunca servir como atalho para omiti-lo. Qualquer lacuna impede handoff.
+Se houver rejeicao independente anterior, o caller deve passar `--audit-escape-closure` explicitamente, inclusive quando existir um arquivo com esse nome ao lado da matriz. Ausencia da opcao ou caminho inexistente devem bloquear em vez de ativar silenciosamente o arquivo herdado ou dispensar suas dimensoes. Para remediacao sistemica, o perfil `critical` e os controles cumulativos continuam obrigatorios. Qualquer lacuna impede handoff.
 
 
 ## Fontes nao circulares de materialidade

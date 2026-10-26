@@ -190,14 +190,11 @@ def main() -> int:
     learning_path = Path(args.learning_closure) if args.learning_closure else None
     if systemic_reaudit and args.evidence_profile != "critical":
         errors.append("systemic audit remediation requires critical evidence profile")
-    if args.previous_independent_rejection and not escape_path:
-        default_escape = closure_path.parent / "audit-escape-closure.json"
-        escape_path = default_escape if default_escape.is_file() else None
     if args.previous_independent_rejection and not learning_path:
         default_learning = closure_path.parent / "learning-closure.json"
         learning_path = default_learning if default_learning.is_file() else None
     if args.previous_independent_rejection and not escape_path:
-        errors.append("previous independent rejection requires audit-escape-closure.json")
+        errors.append("previous independent rejection requires explicit --audit-escape-closure for the current target")
     if args.previous_independent_rejection and not learning_path:
         errors.append("previous independent rejection requires learning-closure.json")
     if args.previous_independent_rejection and not args.previous_audit_escape_closure:

@@ -38,6 +38,7 @@ def required_escape_dimensions(path: Path | None, errors: list[str]) -> set[tupl
     if path is None:
         return set()
     if not path.is_file():
+        errors.append(f"explicit audit escape closure is missing: {path}")
         return set()
     closure = load(path)
     entries = closure.get("escapes") if isinstance(closure.get("escapes"), list) else [closure]
