@@ -66,13 +66,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           OPENAI_AUDITOR_API_KEY: ${{ secrets.OPENAI_AUDITOR_API_KEY }}
           OPENAI_AUDITOR_MODEL: ${{ vars.OPENAI_AUDITOR_MODEL }}
+          OPENAI_AUDITOR_URL: ${{ vars.OPENAI_AUDITOR_URL }}
           AUDITOR_PRIVATE_KEY_PEM: ${{ secrets.AUDITOR_PRIVATE_KEY_PEM }}
           AUDITOR_KEY_ID: ${{ vars.AUDITOR_KEY_ID }}
           TARGET_REPO: ${{ github.repository }}
           CURRENT_RUN_ID: ${{ github.run_id }}
         run: |
           set -eu
-          if [ -z "$OPENAI_AUDITOR_API_KEY" ] || [ -z "$OPENAI_AUDITOR_MODEL" ] || [ -z "$AUDITOR_PRIVATE_KEY_PEM" ] || [ -z "$AUDITOR_KEY_ID" ]; then
+          if [ -z "$OPENAI_AUDITOR_API_KEY" ] || [ -z "$OPENAI_AUDITOR_URL" ] || [ -z "$OPENAI_AUDITOR_MODEL" ] || [ -z "$AUDITOR_PRIVATE_KEY_PEM" ] || [ -z "$AUDITOR_KEY_ID" ]; then
             echo "BLOCK: web auditor API, model or signing key is not provisioned"
             exit 2
           fi
