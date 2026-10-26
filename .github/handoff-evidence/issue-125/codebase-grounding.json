@@ -168,6 +168,35 @@
       "verification": {
         "status": "passed"
       }
+    },
+    {
+      "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+      "operation": "modified",
+      "scenario": "Terminal handoff forwards exact current-target identity through previous-independent-rejection readiness",
+      "requirement": "Issue 125: target-bound audit escape closure on terminal handoff",
+      "search": {
+        "queries": [
+          "terminal handoff previous rejection",
+          "readiness target binding",
+          "audit escape closure"
+        ],
+        "scope": "entregar-issue/tests and terminal handoff validators",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_canonical_path_escape.py",
+            "case": "terminal target-bound previous rejection",
+            "oracle": "Terminal caller must forward repository, issue and pull request identity when reauditing",
+            "comparison": "Canonical readiness test does not cover terminal handoff caller forwarding"
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the existing terminal handoff suite rather than duplicating its synthetic certificate fixture.",
+      "disposition": "keep",
+      "verification": {
+        "status": "passed"
+      }
     }
   ]
 }
