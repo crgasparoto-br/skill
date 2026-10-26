@@ -32,7 +32,7 @@ jobs:
           mkdir -p audit-packet
           gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" > audit-packet/pr.json
           gh api "repos/$REPOSITORY/issues/$ISSUE_NUMBER" > audit-packet/issue.json
-          gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/files?per_page=100" > audit-packet/files-pages.json
+          gh api --paginate --slurp "repos/$REPOSITORY/pulls/$PR_NUMBER/files?per_page=100" > audit-packet/files-pages.json
           python - <<'PY'
           import hashlib, json, os, pathlib, subprocess
           root = pathlib.Path("audit-packet")
@@ -47,7 +47,7 @@ jobs:
           if refs != {issue["number"]}:
               raise SystemExit("BLOCK: PR must link exactly one canonical issue")
           pages = json.loads((root / "files-pages.json").read_text())
-          files = pages if all(isinstance(v, dict) for v in pages) else [e for page in pages for e in page]
+          files = [e for page in pages for e in page]
           if not files or any(not isinstance(f.get("patch"), str) for f in files):
               raise SystemExit("BLOCK: patch missing or binary file needs separate evidence")
           lines = []
