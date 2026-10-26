@@ -17,7 +17,8 @@ SHA = re.compile(r"[a-f0-9]{40}\Z")
 
 
 def check_binding(report: dict, *, repository: str, issue: int, base_ref: str,
-                  base_sha: str, head_sha: str, merge_preview_sha: str | None = None) -> list[str]:
+                  base_sha: str, head_sha: str, merge_preview_sha: str | None = None,
+                  audit_context_id: str | None = None) -> list[str]:
     errors = []
     expected = {
         "repository": repository,
@@ -34,6 +35,8 @@ def check_binding(report: dict, *, repository: str, issue: int, base_ref: str,
     if merge_preview_sha is not None:
         if report.get("merge_preview_sha") != merge_preview_sha or report.get("merge_preview_sha_after") != merge_preview_sha:
             errors.append("merge preview does not match exact target")
+    if audit_context_id is not None and report.get("audit_context_id") != audit_context_id:
+        errors.append("signed audit context does not match authenticated workflow run")
     if report.get("verdict") != "approved":
         errors.append("auditor verdict is not approved")
     for key in ("findings", "recommendations", "limitations"):
@@ -61,6 +64,7 @@ def main() -> int:
     parser.add_argument("--base-sha", required=True)
     parser.add_argument("--head-sha", required=True)
     parser.add_argument("--merge-preview-sha")
+    parser.add_argument("--audit-context-id")
     args = parser.parse_args()
     if (args.issue < 1 or not SHA.fullmatch(args.head_sha) or not SHA.fullmatch(args.base_sha)
             or (args.merge_preview_sha is not None and not SHA.fullmatch(args.merge_preview_sha))):
@@ -85,6 +89,7 @@ def main() -> int:
         report, repository=args.repository, issue=args.issue,
         base_ref=args.base_ref, base_sha=args.base_sha, head_sha=args.head_sha,
         merge_preview_sha=args.merge_preview_sha,
+        audit_context_id=args.audit_context_id,
     )
     for error in errors:
         print(f"BLOCK: {error}", file=sys.stderr)
