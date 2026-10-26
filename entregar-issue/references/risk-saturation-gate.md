@@ -1,5 +1,19 @@
 # Gate de saturacao de risco antes do handoff
 
+## Quando ler este arquivo
+
+Consultar antes do freeze, ao validar familias materiais, superficies adversariais e o vinculo de escapes explicitamente selecionados.
+
+## Indice
+
+- [Objetivo](#objetivo)
+- [Familias canonicas](#familias-canonicas)
+- [Precisao da inferencia](#precisao-da-inferencia)
+- [Varredura de saturacao](#varredura-de-saturacao)
+- [Audit escapes](#audit-escapes)
+- [Portao](#portao)
+- [Fontes nao circulares de materialidade](#fontes-nao-circulares-de-materialidade)
+
 ## Objetivo
 
 Impedir que uma familia **ou uma superficie material da mesma familia** seja descoberta pela primeira vez na auditoria independente.
