@@ -40,3 +40,31 @@ Uma GitHub App instalada no mesmo repositorio nao cria, sozinha, independencia: 
 ## Criterios de evidencia
 
 Para cada PR, armazenar identificador do run, SHA, hash dos artefatos, chave publica/key ID, origem do veredito, contrato assinado e resultado da verificacao. Relatorios e logs nao podem conter tokens ou chave privada. Registro de falha deve mostrar qual requisito faltou, evitando loops de auditoria sobre evidencia ja certificada.
+
+
+## Componentes web implementados
+
+O produtor .github/workflows/produce-independent-audit.yml utiliza workflow_run de uma coleta exact-SHA certificada, faz leitura somente de issue/diff/fontes pinadas via GitHub API, chama modelo de IA independente e emite parecer Ed25519. O publicador .github/workflows/publish-independent-audit-check.yml revalida o workflow de origem, a assinatura, alvo material e checks tecnicos antes de publicar o check Verify independent web audit (exact SHA) associado ao commit material. A verificacao manual verify-signed-external-audit.yml nao substitui esse check.
+
+Todos usam GitHub-hosted ubuntu-latest. Nenhuma VPS, DNS proprio ou runner self-hosted e necessario.
+
+## Configuracao web do ambiente independent-auditor
+
+Pela interface GitHub Settings > Environments > independent-auditor, cadastrar:
+- Secret OPENAI_AUDITOR_API_KEY: chave do provedor de inferencia; pode gerar custo por token.
+- Variable OPENAI_AUDITOR_MODEL: modelo com suporte a resposta estruturada JSON.
+- Secret AUDITOR_PRIVATE_KEY_PEM: chave privada Ed25519, nunca versionada ou compartilhada com implementador.
+- Variable AUDITOR_KEY_ID: identificador da chave confiavel.
+- Secret TRUSTED_AUDITORS_JSON: registro publico de auditores ja confiados e autorizado para o repositorio. Disponibilizar tambem ao workflow publicador.
+
+Gerar par e registro pelo contrato oficial auditar-issue/references/external-audit-contract.md. Configuracao de Secrets na mesma conta protege contra codigo de PR, mas NAO garante independencia administrativa absoluta contra o unico administrador. Para essa garantia e necessaria custodia separada.
+
+## Migracao controlada
+
+1. Concluir CI, certificacao e auditoria dos proprios componentes. Falta de dossie exige fechamento real, nunca marcar passed por reflexo da CI.
+2. Publicar os workflows de policy na branch default de forma autorizada. Enquanto permanecerem apenas na PR, nao sao workflows de producao acionaveis.
+3. Configurar os Secrets/Variables e realizar um teste de auditoria real, mais controles negativos: assinatura alterada, chave sem confianca, SHA/base/merge divergentes, artifact adulterado, workflow de origem estrangeiro e findings pendentes.
+4. Confirmar check no SHA exato e comparar com o gate antigo. So entao substituir no ruleset a revisao incompatível com operador unico pelo check independente autenticado, preservando os demais checks tecnicos e protecao contra exclusoes/force push.
+5. Confirmar regras efetivas em develop/main antes de liberar merge. Nao executar merge automatico.
+
+Falhas de credenciais, origem, evidencias ou validacoes devem retornar BLOCK sem nova auditoria recursiva. Apenas nova evidencia, configuracao ou novo SHA justificam outra tentativa.
