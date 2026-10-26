@@ -53,6 +53,7 @@ Todos usam GitHub-hosted ubuntu-latest. Nenhuma VPS, DNS proprio ou runner self-
 Pela interface GitHub Settings > Environments > independent-auditor, cadastrar:
 - Secret OPENAI_AUDITOR_API_KEY: chave do provedor de inferencia; pode gerar custo por token.
 - Variable OPENAI_AUDITOR_MODEL: modelo com suporte a resposta estruturada JSON.
+- Variable OPENAI_AUDITOR_URL: endpoint HTTPS de chat completions do provedor escolhido, configurado pela UI web; nenhum host codificado no codigo.
 - Secret AUDITOR_PRIVATE_KEY_PEM: chave privada Ed25519, nunca versionada ou compartilhada com implementador.
 - Variable AUDITOR_KEY_ID: identificador da chave confiavel.
 - Secret TRUSTED_AUDITORS_JSON: registro publico de auditores ja confiados e autorizado para o repositorio. Disponibilizar tambem ao workflow publicador.
