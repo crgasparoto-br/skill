@@ -63,20 +63,20 @@ jobs:
               raise SystemExit("BLOCK: unexpected PR base")
           if run.get("repository", {}).get("full_name") != repository:
               raise SystemExit("BLOCK: artifact run from foreign repository")
-          if run.get("head_sha") != pr.get("head", {}).get("sha"):
-              raise SystemExit("BLOCK: artifact run does not match current PR HEAD")
+          if run.get("path", "").split("@", 1)[0] != ".github/workflows/produce-independent-audit.yml":
+              raise SystemExit("BLOCK: untrusted audit producer workflow")
           # A GitHub workflow may be triggered by the same operator; independence
           # is established by signed auditor provenance, not workflow actor.
           if not pr.get("merge_commit_sha"):
               raise SystemExit("BLOCK: merge preview SHA unavailable")
-          if run.get("event") not in ("workflow_dispatch", "workflow_call", "workflow_run"):
+          if run.get("event") != "workflow_run":
               raise SystemExit("BLOCK: unexpected audit producer event")
           if run.get("status") != "completed" or run.get("conclusion") != "success":
               raise SystemExit("BLOCK: source audit run is not successful")
           (path / "target.json").write_text(json.dumps({
               "repository": repository, "base_ref": pr["base"]["ref"],
               "base_sha": pr["base"]["sha"], "head_sha": pr["head"]["sha"],
-              "merge_preview_sha": pr["merge_commit_sha"]}))
+              "merge_preview_sha": pr["merge_commit_sha"], "audit_run": run["id"]}))
           PY
           gh run download "$AUDIT_RUN" -R "$TARGET_REPO" -n signed-independent-audit -D "$RUNNER_TEMP/web-audit/artifact"
       - name: Verify signature and exact target
@@ -106,6 +106,7 @@ jobs:
               "--base-ref", target["base_ref"], "--base-sha", target["base_sha"],
               "--head-sha", target["head_sha"],
               "--merge-preview-sha", target["merge_preview_sha"],
+              "--audit-context-id", "github-actions:" + str(target["audit_run"]),
           ]
           raise SystemExit(subprocess.run(cmd, check=False).returncode)
           PY
