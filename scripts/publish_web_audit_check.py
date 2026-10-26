@@ -15,7 +15,9 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
+
 from produce_web_independent_audit import github, verify_technical_checks
+
 SHA = re.compile(r"[a-f0-9]{40}\Z")
 CHECK_NAME = "Verify independent web audit (exact SHA)"
 TRUSTED_WORKFLOW = ".github/workflows/produce-independent-audit.yml"
