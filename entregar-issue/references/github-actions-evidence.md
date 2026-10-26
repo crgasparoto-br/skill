@@ -176,6 +176,13 @@ pendentes e preserva a coleta tecnica como fonte factual. `not-applicable`
 so e valido com justificativa e validacao da closure oficial. Este preflight
 verifica completude formal, nao oraculos semanticos.
 
+Durante `review_state=incomplete`, o artifact `reviewed-dossier-inventory.json`
+relaciona `required_reports`, `missing_reports`, `unhashed_reports` e
+`pending_review_controls` conforme o perfil, o historico e o diff
+`work_item_start_sha..material_head_sha`. Essa lista e diagnostica:
+nao transforma um relatorio presente em prova validada, nem altera o
+bloqueio da certificacao ou a necessidade de revisar os oraculos.
+
 O `certification-inputs.json` so e emitido apos todas
 as checagens formais do produtor; ainda nao e uma certificacao.
 O veredito final permanece de `prepare_actions_handoff.py --phase certify`,
