@@ -121,3 +121,46 @@ def test_canonical_issue_and_patch_are_required(monkeypatch):
     ])
     with pytest.raises(ValueError, match="missing full textual patch"):
         producer.build_packet("org/repo", 10, 9, "token")
+
+
+def test_canonical_coverage_must_have_real_source_excerpt():
+    p = packet() | {
+        "issue_body": "## Acceptance\n1. Secure signing\n2. Reject forged report",
+        "changed_files": ["scripts/verify.py"],
+    }
+    response = {
+        "verdict": "approved", "findings": [], "limitations": [],
+        "evidence": [{
+            "id": "EV1", "claim": "The SHA check rejects mismatch.",
+            "source": "scripts/verify.py", "excerpt": "raise ValueError('sha mismatch')",
+        }],
+        "requirement_coverage": [
+            {"id": "REQ-1", "evidence_ids": ["EV1"]},
+            {"id": "REQ-2", "evidence_ids": ["EV1"]},
+        ],
+    }
+    source = "FILE scripts/verify.py\nraise ValueError('sha mismatch')"
+    producer.validate_model_coverage(response, p, source)
+    response["evidence"][0]["excerpt"] = "assert True # fabricated proof"
+    with pytest.raises(ValueError, match="not grounded"):
+        producer.validate_model_coverage(response, p, source)
+
+
+def test_missing_requirement_binding_must_fail_closed():
+    p = packet() | {
+        "issue_body": "1. One\n2. Two\n3. Three",
+        "changed_files": ["scripts/verify.py"],
+    }
+    response = {
+        "verdict": "approved", "findings": [], "limitations": [],
+        "evidence": [{
+            "id": "EV1", "claim": "A source line shows check",
+            "source": "scripts/verify.py", "excerpt": "raise ValueError('sha mismatch')",
+        }],
+        "requirement_coverage": [
+            {"id": "REQ-1", "evidence_ids": ["EV1"]},
+            {"id": "REQ-2", "evidence_ids": ["EV1"]},
+        ],
+    }
+    with pytest.raises(ValueError, match="every canonical requirement"):
+        producer.validate_model_coverage(response, p, "raise ValueError('sha mismatch')")
