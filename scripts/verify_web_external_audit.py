@@ -32,9 +32,11 @@ def check_binding(report: dict, *, repository: str, issue: int, base_ref: str,
     for key, value in expected.items():
         if report.get(key) != value:
             errors.append(f"{key} does not match exact target")
-    if merge_preview_sha is not None:
-        if report.get("merge_preview_sha") != merge_preview_sha or report.get("merge_preview_sha_after") != merge_preview_sha:
-            errors.append("merge preview does not match exact target")
+    if merge_preview_sha is not None and (
+        report.get("merge_preview_sha") != merge_preview_sha
+        or report.get("merge_preview_sha_after") != merge_preview_sha
+    ):
+        errors.append("merge preview does not match exact target")
     if audit_context_id is not None and report.get("audit_context_id") != audit_context_id:
         errors.append("signed audit context does not match authenticated workflow run")
     if report.get("verdict") != "approved":
