@@ -346,6 +346,22 @@ def stage_draft_review(root: Path, out: Path, source: Path, starter: dict,
         return
     draft_check = validate_incomplete_review(source, starter, tests)
     if draft_check:
+        manifest = read_json(source / "manifest.json")
+        start = manifest["work_item_start_sha"]
+        changed = git(root, "diff", "--name-only", "--no-renames", start, head).splitlines()
+        required, _ = required_reviewed_reports(manifest, changed)
+        hashes = manifest.get("artifact_sha256") or {}
+        reviewed = read_json(source / "reviewed-closure.json")
+        controls = reviewed.get("controls") or {}
+        draft_check["required_reports"] = sorted(required)
+        draft_check["missing_reports"] = sorted(
+            name for name in required if not (source / name).is_file())
+        draft_check["unhashed_reports"] = sorted(
+            name for name in required if name not in hashes)
+        draft_check["pending_review_controls"] = sorted(
+            name for name, value in controls.items()
+            if (isinstance(value, dict) and value.get("status") in {"pending", "blocked"})
+            or (isinstance(value, list) and not value))
         draft_check["subject_sha"] = head
         draft_check["code_growth"] = stage_draft_code_growth(root, out, source, head, base)
         write_json(out / "reviewed-dossier-inventory.json", draft_check)
