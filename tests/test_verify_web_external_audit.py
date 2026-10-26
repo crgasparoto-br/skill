@@ -33,6 +33,7 @@ def valid_report():
         "same_conversation": False,
         "implementation_context_id": "implementation-123",
         "audit_context_id": "independent-audit-456",
+        "source_context_proof": {"value": "independent-audit-456", "issuer": "trusted-auditor"},
         "neutral_packet": {
             "implementation_conclusions_included": False,
             "implementation_narrative_included": False,
@@ -114,3 +115,16 @@ def test_merge_preview_binding_rejects_stale_snapshot(field):
     assert gate.check_binding(report, repository="crgasparoto-br/skill",
         issue=125, base_ref="develop", base_sha=BASE, head_sha=HEAD,
         merge_preview_sha="c" * 40)
+
+
+def test_context_proof_must_match_and_have_expected_issuer():
+    report = valid_report()
+    assert gate.check_binding(report, repository="crgasparoto-br/skill", issue=125,
+        base_ref="develop", base_sha=BASE, head_sha=HEAD,
+        context_proof_issuer="trusted-auditor") == []
+    report["source_context_proof"]["issuer"] = "implementation"
+    assert gate.check_binding(report, repository="crgasparoto-br/skill", issue=125,
+        base_ref="develop", base_sha=BASE, head_sha=HEAD,
+        context_proof_issuer="trusted-auditor")
+    report["source_context_proof"]["value"] = "fabricated-context"
+    assert check(report)
