@@ -48,7 +48,11 @@ jobs:
           root = pathlib.Path(sys.argv[1])
           repo, source_id, sha, event, conclusion = sys.argv[2:]
           prs = json.loads((root / "prs.json").read_text())
-          if event != "pull_request" or conclusion != "success" or len(prs) != 1:
+          if event != "pull_request" or conclusion != "success":
+              raise SystemExit("BLOCK: source is not a successful PR handoff")
+          if not prs:
+              prs = json.loads(subprocess.check_output(["gh", "api", f"repos/{repo}/commits/{sha}/pulls"], text=True))
+          if len(prs) != 1:
               raise SystemExit("BLOCK: certified source must map to exactly one PR")
           number = prs[0]["number"]
           pr = json.loads(subprocess.check_output(["gh", "api", f"repos/{repo}/pulls/{number}"], text=True))
