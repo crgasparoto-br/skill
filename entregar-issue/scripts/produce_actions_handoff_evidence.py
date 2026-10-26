@@ -217,9 +217,9 @@ def stage_verified_test_grounding(root: Path, out: Path, report: dict,
             raise ValueError(f"grounding test absent, skipped or failed in exact JUnit: {path}")
         # A reached-file marker is derived exclusively from matched JUnit cases.
         reached = [path, *matching]
-        proof = (f"HEAD: {head}\\nCOMMAND: {command}\\nEXIT_CODE: 0\\n"
-                 + "".join(f"REACHED: {item}\\n" for item in reached)
-                 + f"JUNIT_SHA256: {index['source']['sha256']}\\n").encode("utf-8")
+        proof = (f"HEAD: {head}\nCOMMAND: {command}\nEXIT_CODE: 0\n"
+                 + "".join(f"REACHED: {item}\n" for item in reached)
+                 + f"JUNIT_SHA256: {index['source']['sha256']}\n").encode("utf-8")
         # Never persist mutable material-SHA proofs into the source commit.
         relative = Path(".handoff-runtime-evidence") / (module + ".log")
         location = root / relative
