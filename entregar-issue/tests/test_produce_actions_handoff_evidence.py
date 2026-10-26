@@ -302,3 +302,47 @@ def test_identity_substitution_is_scoped_to_identity_fields():
         "head_sha": "a" * 40, "nested": [{"base_sha": "b" * 40}]}
     with pytest.raises(ValueError, match="outside a declared identity"):
         producer.bind_identity({"control_evidence": "__MATERIAL_HEAD_SHA__"}, "a" * 40, "b" * 40)
+
+def test_grounding_runner_binds_real_junit_cases_and_proof(tmp_path):
+    root, out, _, _, head = fixture(tmp_path)
+    (root / "suite.py").write_text("# synthetic test path whose module matches JUnit", encoding="utf-8")
+    report = {"schema_version": 2, "test_decisions": [
+        {"path": "suite.py", "verification": {"status": "passed"}}]}
+    tests, _ = producer.collect_exact_tests(out, head)
+    bound = producer.stage_verified_test_grounding(root, out, report, tests, head)
+    check = bound["test_decisions"][0]["verification"]
+    raw = (root / check["evidence_path"]).read_bytes()
+    assert check["subject_sha"] == head
+    assert check["reached_tests"] == ["suite.py", "suite::negative", "suite::positive", "suite::regression"]
+    assert hashlib.sha256(raw).hexdigest() == check["evidence_sha256"]
+    assert f"HEAD: {head}".encode() in raw
+    assert f"JUNIT_SHA256: ".encode() in raw
+    assert (out / ".audit/entregar-issue/grounding-proofs/suite.log").read_bytes() == raw
+
+
+def test_grounding_refuses_skipped_or_unrelated_cases(tmp_path):
+    root, out, _, _, head = fixture(tmp_path, skipped=True)
+    (root / "suite.py").write_text("# test module", encoding="utf-8")
+    tests, _ = producer.collect_exact_tests(out, head)
+    with pytest.raises(ValueError, match="absent, skipped or failed"):
+        producer.stage_verified_test_grounding(root, out, {
+            "schema_version": 2,
+            "test_decisions": [{"path": "suite.py", "verification": {"status": "passed"}}],
+        }, tests, head)
+    with pytest.raises(ValueError, match="absent, skipped or failed"):
+        producer.stage_verified_test_grounding(root, out, {
+            "schema_version": 2,
+            "test_decisions": [{"path": "unrelated.py", "verification": {"status": "passed"}}],
+        }, tests, head)
+
+
+def test_grounding_refuses_self_attested_proof(tmp_path):
+    root, out, _, _, head = fixture(tmp_path)
+    (root / "suite.py").write_text("# test module", encoding="utf-8")
+    tests, _ = producer.collect_exact_tests(out, head)
+    with pytest.raises(ValueError, match="runtime supplies provenance"):
+        producer.stage_verified_test_grounding(root, out, {
+            "schema_version": 2,
+            "test_decisions": [{"path": "suite.py",
+                                "verification": {"status": "passed", "exit_code": 0}}],
+        }, tests, head)

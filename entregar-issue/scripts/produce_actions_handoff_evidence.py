@@ -187,6 +187,56 @@ def collect_exact_tests(out: Path, head: str) -> tuple[dict, dict]:
     return tests, index
 
 
+
+def stage_verified_test_grounding(root: Path, out: Path, report: dict,
+                                  tests: dict[str, str], head: str) -> dict:
+    """Bind reviewed test decisions to real JUnit cases and create ephemeral raw proofs.
+
+    Reviewed inputs may declare only verification.status=passed. The runner must
+    supply every other provenance field. No synthetic or skipped test is accepted.
+    """
+    if report.get("schema_version") != 2:
+        return report
+    facts = read_json(out / "test-execution-facts.json")
+    index = read_json(out / "test-candidate-index.json")
+    command = facts.get("execution", {}).get("command")
+    if (facts.get("subject_sha") != head or facts.get("execution", {}).get("exit_code") != 0
+            or index.get("subject_sha") != head or not isinstance(command, str)
+            or not command.strip()):
+        raise ValueError("grounding requires authenticated exact-SHA runner command")
+    for decision in report.get("test_decisions") or []:
+        verification = decision.get("verification")
+        if not isinstance(verification, dict) or verification != {"status": "passed"}:
+            raise ValueError("reviewed test decisions may request passed status only; runtime supplies provenance")
+        path = str(decision.get("path") or "")
+        module = path.removesuffix(".py").replace("/", ".")
+        matching = sorted(case for case in tests
+                          if case == module or case.startswith(module + "::"))
+        if (not path.endswith(".py") or not (root / path).is_file() or not matching
+                or any(tests[case] != "passed" for case in matching)):
+            raise ValueError(f"grounding test absent, skipped or failed in exact JUnit: {path}")
+        # A reached-file marker is derived exclusively from matched JUnit cases.
+        reached = [path, *matching]
+        proof = (f"HEAD: {head}\\nCOMMAND: {command}\\nEXIT_CODE: 0\\n"
+                 + "".join(f"REACHED: {item}\\n" for item in reached)
+                 + f"JUNIT_SHA256: {index['source']['sha256']}\\n").encode("utf-8")
+        # Never persist mutable material-SHA proofs into the source commit.
+        relative = Path(".handoff-runtime-evidence") / (module + ".log")
+        location = root / relative
+        location.parent.mkdir(parents=True, exist_ok=True)
+        if location.is_symlink():
+            raise ValueError("grounding runtime proof may not be a symlink")
+        location.write_bytes(proof)
+        saved = out / ".audit" / "entregar-issue" / "grounding-proofs" / (module + ".log")
+        saved.parent.mkdir(parents=True, exist_ok=True)
+        saved.write_bytes(proof)
+        decision["verification"] = {
+            "status": "passed", "command": command, "exit_code": 0,
+            "subject_sha": head, "reached_tests": reached,
+            "evidence_path": relative.as_posix(), "evidence_sha256": digest(proof),
+        }
+    return report
+
 def load_reviewed_manifest(root: Path, source: Path, event: Path, target: dict) -> tuple[dict, str, list[str]]:
     if not source.is_dir() or source.is_symlink():
         raise MissingReviewedEvidenceError(f"reviewed semantic evidence not supplied under {source.relative_to(root)}")
@@ -342,6 +392,8 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     staged = {name: bind_identity(verified_source(root, source, name, hashes), head, start)
               for name in sorted(set(hashes) - {"reviewed-closure.json"})}
     write_json(audit / "requirement-closure.json", closure)
+    if "codebase-grounding.json" in staged:
+        stage_verified_test_grounding(root, out, staged["codebase-grounding.json"], tests, head)
     for name, report in staged.items():
         write_json(audit / name, report)
     if touched_code:
