@@ -1,0 +1,173 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [
+    {
+      "path": "tests/test_risk_saturation_target_binding.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "test_risk_saturation",
+          "audit escape explicit binding"
+        ],
+        "scope": "entregar-issue/tests and top-level tests",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_cross_surface_saturation.py",
+            "reason_not_reused": "Specialized risk saturation tests did not cover top-level test discovery and direct unbound-source regression."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "Independent root test surface guards omission through repository pytest discovery."
+    }
+  ],
+  "references": [
+    {
+      "symbol": "validate_escape_target",
+      "kind": "local",
+      "used_in": "entregar-issue/scripts/validate_handoff_readiness.py",
+      "defined_at": {
+        "path": "entregar-issue/scripts/validate_risk_saturation.py",
+        "line": 35
+      },
+      "verified_by": {
+        "command": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
+        "exit_code": 0
+      }
+    },
+    {
+      "symbol": "stage_verified_test_grounding",
+      "kind": "local",
+      "used_in": "entregar-issue/scripts/produce_actions_handoff_evidence.py",
+      "defined_at": {
+        "path": "entregar-issue/scripts/produce_actions_handoff_evidence.py",
+        "line": 191
+      },
+      "verified_by": {
+        "command": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
+        "exit_code": 0
+      }
+    }
+  ],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "entregar-issue/tests/test_canonical_path_escape.py",
+      "operation": "modified",
+      "scenario": "Handoff current-subject acceptance with rejection replay and fail-closed canonical path",
+      "requirement": "Issue 125: semantic binding and regression prevention",
+      "search": {
+        "queries": [
+          "audit escape target binding",
+          "foreign audit escape risk saturation",
+          "handoff semantic JUnit provenance"
+        ],
+        "scope": "entregar-issue/tests, tests and GitHub Actions test runner",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_cross_surface_saturation.py",
+            "case": "Handoff current-subject acceptance with rejection replay and fail-closed canonical path",
+            "oracle": "Negative controls distinguish a foreign target from current-target binding at the caller boundary.",
+            "comparison": "Cross-surface scenarios exist, but the canonical handoff acceptance path needs its own regression test."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
+      "disposition": "keep",
+      "verification": {
+        "status": "passed"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_cross_surface_saturation.py",
+      "operation": "modified",
+      "scenario": "Material risk dimensions, explicit foreign subjects, missing files, and 19/16 regression fixture",
+      "requirement": "Issue 125: semantic binding and regression prevention",
+      "search": {
+        "queries": [
+          "audit escape target binding",
+          "foreign audit escape risk saturation",
+          "handoff semantic JUnit provenance"
+        ],
+        "scope": "entregar-issue/tests, tests and GitHub Actions test runner",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_canonical_path_escape.py",
+            "case": "Material risk dimensions, explicit foreign subjects, missing files, and 19/16 regression fixture",
+            "oracle": "Negative controls distinguish a foreign target from current-target binding at the caller boundary.",
+            "comparison": "The direct handoff case does not exercise all risk-saturation surfaces and issue cardinalities."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
+      "disposition": "keep",
+      "verification": {
+        "status": "passed"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+      "operation": "modified",
+      "scenario": "Exact material SHA JUnit provenance generation with skipped/unrelated and forged-proof negative controls",
+      "requirement": "Runtime evidence provenance for exact-SHA semantic certification",
+      "search": {
+        "queries": [
+          "audit escape target binding",
+          "foreign audit escape risk saturation",
+          "handoff semantic JUnit provenance"
+        ],
+        "scope": "entregar-issue/tests, tests and GitHub Actions test runner",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+            "case": "Exact material SHA JUnit provenance generation with skipped/unrelated and forged-proof negative controls",
+            "oracle": "Negative controls distinguish a foreign target from current-target binding at the caller boundary.",
+            "comparison": "The existing collector checks identities, not the production of grounded per-test proof from JUnit."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
+      "disposition": "keep",
+      "verification": {
+        "status": "passed"
+      }
+    },
+    {
+      "path": "tests/test_risk_saturation_target_binding.py",
+      "operation": "added",
+      "scenario": "Top-level runner check for foreign closure co-location and explicit binding without false exemptions",
+      "requirement": "Issue 125: semantic binding and regression prevention",
+      "search": {
+        "queries": [
+          "audit escape target binding",
+          "foreign audit escape risk saturation",
+          "handoff semantic JUnit provenance"
+        ],
+        "scope": "entregar-issue/tests, tests and GitHub Actions test runner",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_cross_surface_saturation.py",
+            "case": "Top-level runner check for foreign closure co-location and explicit binding without false exemptions",
+            "oracle": "Negative controls distinguish a foreign target from current-target binding at the caller boundary.",
+            "comparison": "Specialized tests cover risk saturation; a top-level runner discovery regression is additionally required."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
+      "disposition": "keep",
+      "verification": {
+        "status": "passed"
+      }
+    }
+  ]
+}

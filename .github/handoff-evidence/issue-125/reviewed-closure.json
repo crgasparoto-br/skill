@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "864cbfc6045da5c47b367dcd67e950a983d38edef4ed073eecdd697ac4b03c24": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-001"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A regressão reproduz as cardinalidades da falha observada e garante que dimensões de outra issue não sejam exigidas por mera co-localização."
+    },
+    "4e2b720dd693bc70509537dda59c105264513b7c862cd1e27d0a2dc33ba8231b": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-002"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A closure precisa ser selecionada explicitamente e corresponder a repository, issue, PR e SHA antes de contribuir para os controles."
+    },
+    "a600976ad6e3d622194cf2fac91544b513d13b4d8e1d496a42b4f13af8993779": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-003"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O readiness recebe apenas a closure explicitamente indicada; a rejeição independente anterior continua exigindo ledger e lineage."
+    },
+    "5ec01a7b705b531b6a7102bbbc0aa39bd554074e1e3a1895e8233ad07d0aa0c2": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-004"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Todas as famílias e superfícies materiais e os controles herdados ativos continuam sendo requisitos de saturação, não podendo desaparecer."
+    },
+    "644ce358afdac6c7067b2902d5aec2ba2378ae962f3c476fdbd371f29ad49954": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-005"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Os controles positivos, negativos e de regressão verificam diretório estrangeiro, seleção explícita, rejeição e casos corretos."
+    },
+    "9e1709e9414950bcdb008b0c892a31d7db9e7d0f79f75bf9b37406d5faabe72a": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-006"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Uma fixture sintética com dezenove requisitos locais e dezesseis dimensões estrangeiras cobre a regressão sem fazer merge automático."
+    }
+  },
+  "controls": {
+    "domain_inventories": [],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "not-applicable",
+      "applicability_reason": "A issue nao especifica restricao de caminho canonico, dependencias proibidas nem invariantes estruturais adicionais.",
+      "entries": [],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "not-applicable",
+      "applicability_reason": "A issue modifica validadores CLI e dossies de auditoria; nao define modelo de leitura ou campos de interface.",
+      "entries": [],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "not-applicable",
+      "applicability_reason": "Nao ha fontes de dados de negocio concorrentes; as identidades sao comparadas ao alvo recebido do fluxo GitHub.",
+      "entries": [],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "O contrato normativo de selecao explicita e vinculo ao alvo mudou e as referencias da Skill foram reconciliadas.",
+      "old_contract_terms": [
+        "ativacao implicita por arquivo vizinho",
+        "closure herdada contaminava risco"
+      ],
+      "new_contract_terms": [
+        "subject.material_head_sha",
+        "vinculo semantico explicito"
+      ],
+      "occurrences": [
+        {
+          "path": "entregar-issue/references/risk-saturation-gate.md",
+          "line": 91,
+          "text": "O ledger selecionado deve conter `subject.repository`, `subject.issue_number`, `subject.pull_request_number` (ou `null` para issue sem PR) e `subject.material_head_sha`. O validador exige identidade externa do alvo por `--target-repository`, `--target-issue-number`, `--target-pull-request-number` (quando houver) e `--target-head-sha`, recusando valor ausente, divergente ou SHA diferente da matriz. `validate_handoff_readiness.py` confere o mesmo vinculo via `--repository`, `--issue-number`, `--pull-request-number` e `--head-sha` em todos os perfis, inclusive sem matriz critica. O builder entrega os parametros a partir da identidade canonica da entrega.",
+          "term": "subject.material_head_sha",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "REQ-002"
+          ]
+        },
+        {
+          "path": "entregar-issue/references/audit-escape-closure.md",
+          "line": 35,
+          "text": "O objeto raiz deve declarar `subject.repository`, `subject.issue_number`, `subject.pull_request_number` (ou `null` em entregas sem PR) e `subject.material_head_sha`, sempre vinculados ao alvo atual. Um `source_audit` historico ou a localizacao do arquivo nao provam pertencimento.",
+          "term": "subject.material_head_sha",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "REQ-002"
+          ]
+        }
+      ],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "entregar-issue/references/risk-saturation-gate.md: portao e selecao explicita",
+        "entregar-issue/references/audit-escape-closure.md: subject do ledger",
+        "entregar-issue/references/handoff-certificate.md: vinculo do subject",
+        "entregar-issue/references/github-actions-evidence.md: certificado e evidencias reviewed",
+        "AGENTS.md: fonte normativa e invariantes"
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": []
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "REQ-001",
+        "REQ-002",
+        "REQ-003",
+        "REQ-004",
+        "REQ-005",
+        "REQ-006"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-002",
+        "OBL-003",
+        "OBL-004",
+        "OBL-005",
+        "OBL-006"
+      ],
+      "evidence": [
+        "Issue #125 source body, lines 2 and 5-9: six immutable candidate keys",
+        "entregar-issue/scripts/validate_risk_saturation.py: explicit escape target and source risk families",
+        "entregar-issue/scripts/validate_handoff_readiness.py: caller-bound current subject and prior rejection",
+        "entregar-issue/tests/test_cross_surface_saturation.py: positive, negative, cross-surface and 19/16 fixture",
+        "tests/test_risk_saturation_target_binding.py: missing subject and foreign ledger",
+        "GitHub Actions exact-material-head JUnit, material SHA provided at runtime"
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}
