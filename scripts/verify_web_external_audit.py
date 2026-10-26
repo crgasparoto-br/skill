@@ -13,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SHA = re.compile(r"[a-f0-9]{40}\\Z")
+SHA = re.compile(r"[a-f0-9]{40}\Z")
 
 
 def check_binding(report: dict, *, repository: str, issue: int, base_ref: str,
