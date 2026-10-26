@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 from reviewed_phase_decision import MissingReviewedEvidenceError, _verify_deferred_phase, digest
+from validate_handoff_certificate import scope_touches_code, scope_touches_tests
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 ALLOWED_REPORTS = frozenset({
@@ -275,8 +276,10 @@ def required_reviewed_reports(manifest: dict, changed: list[str]) -> tuple[set[s
                        "audit-escape-closure.json", "previous-audit-escape-closure.json"})
     if manifest.get("remediation_mode") in {"systemic-remediation", "mixed-remediation"}:
         needed.add("previous-inherited-controls.json")
-    touched_code = any(path.endswith((".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".sh")) for path in changed)
-    touched_tests = any("test" in path.lower() or path.endswith((".cy.ts", ".spec.ts")) for path in changed)
+    # Reuse the certificate's canonical scope classifier. Filename substring
+    # checks miss test-only diffs such as features/*.feature and *.robot.
+    touched_code = scope_touches_code(changed)
+    touched_tests = scope_touches_tests(changed)
     if touched_code or touched_tests:
         needed.add("codebase-grounding.json")
     return needed, touched_code

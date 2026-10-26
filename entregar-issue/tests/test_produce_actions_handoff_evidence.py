@@ -495,3 +495,24 @@ def test_approved_review_rejects_unjustified_nonapplicable_obligation(rationale)
     with pytest.raises(producer.MissingReviewedEvidenceError,
                        match=r"unjustified not-applicable.*OBL-002"):
         producer.require_complete_semantic_review(closure)
+
+
+@pytest.mark.parametrize(
+    ("changed", "requires_grounding", "touches_code"),
+    [
+        (["features/checkout.feature"], True, False),
+        (["acceptance/payment.robot"], True, False),
+        (["spec/dynamic_case"], True, False),
+        (["configuration/pytest.ini"], True, False),
+        (["src/checkout.ts"], True, True),
+        (["docs/usage.md"], False, False),
+    ],
+)
+def test_required_reviewed_reports_reuses_canonical_test_scope_classifier(
+    changed, requires_grounding, touches_code
+):
+    """A test-only diff cannot bypass GROUND-TEST-001 via file naming."""
+    manifest = {"evidence_profile": "light", "audit_history": "verified-no-rejection"}
+    reports, code = producer.required_reviewed_reports(manifest, changed)
+    assert ("codebase-grounding.json" in reports) is requires_grounding
+    assert code is touches_code
