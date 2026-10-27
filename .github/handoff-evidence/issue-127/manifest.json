@@ -207,8 +207,7 @@
       "regression": [
         "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret",
         "tests.test_session_review_runner::test_no_recursive_workflow_trigger",
-        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_untrusted_run_without_api_access",
-        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_publisher_can_stage_gitignored_certified_results"
+        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_untrusted_run_without_api_access"
       ]
     },
     "R127-10": {
