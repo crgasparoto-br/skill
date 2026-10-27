@@ -380,8 +380,15 @@ def publish(event_path: Path, *, base_ref: str | None = None,
 
         material_parent = material_parent_snapshots(source, temp, head)
         existing = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
-        if existing - set(paths):
-            block("material HEAD contains stale audit paths outside the certificate allowlist")
+        inherited = set(command("git", "ls-tree", "-r", "--name-only", base,
+                                "--", PREFIX, cwd=source).splitlines())
+        modified = set(command("git", "diff", "--name-only", base, head,
+                               "--", PREFIX, cwd=source).splitlines())
+        # Previously certified material from the trusted base is immutable
+        # history. Do not mistake its unchanged files for current PR results.
+        # New, removed or altered audit paths outside this certificate remain blocked.
+        if (existing - set(paths)) - inherited or modified - set(paths):
+            block("material HEAD changed unallowlisted or non-inherited audit paths")
         for path in paths:
             dest = source / path
             dest.parent.mkdir(parents=True, exist_ok=True)
