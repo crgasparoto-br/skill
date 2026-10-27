@@ -2,21 +2,21 @@
   "schema_version": 1,
   "repository": "crgasparoto-br/skill",
   "issue_number": 127,
-  "pull_request_number": 135,
+  "pull_request_number": 136,
   "base_ref": "develop",
-  "head_ref": "fix/127-session-check-fail-closed-transition",
-  "work_item_start_sha": "3f7b574201c19662425cc11881573f241f9ac9cf",
+  "head_ref": "fix/127-handoff-readback-retry",
+  "work_item_start_sha": "1e9a5d4efca3c479abe2093433232a72840d1fb0",
   "evidence_profile": "critical",
-  "risk_justification": "Critical authorization state machine. GitHub check-run publication must not allow a success, neutral or skipped conclusion before reviewed exact-SHA sources, authenticated operator and negative controls are checked.",
+  "risk_justification": "Critical GitHub postpublication trust boundary: transient stale reads can be retried, never unauthorized SHA, branch, base, direct parent or changed paths.",
   "audit_history": "verified-no-rejection",
-  "audit_history_evidence": "No separately registered audit rejection exists for the new PR #135 material SHA. Runtime failure in PR #134 (#40542407952) is a technical failure to remediate, never interpreted as approval.",
-  "review_scope": "Issue #127 R127-06/07: change only session check boundary, review positive and negative GitHub status controls, and document fail-closed states. The operational separate-context audit and live adversarial checks R127-12 plus ruleset migration R127-13 remain pending.",
+  "audit_history_evidence": "No independent auditor rejection was registered for the new PR #136 SHA. Run 40544565514 is an observed post-push technical failure, not a source of independent approval.",
+  "review_scope": "Trusted publisher read-after-write and its existing integration tests, distinct positive/negative/regression controls. Operational separate reviewer and ruleset migration R127-12/13 remain open.",
   "artifact_sha256": {
-    "reviewed-closure.json": "0ec65908e8d608aafb6fde5b8c9ccb11abd65022fe51416bb332b26b486a7342",
+    "reviewed-closure.json": "08ad7ecbd85ef7bf27b215f5f88d9ad78ad5d6448a2c5946bfcd1a0ea38eb71c",
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
     "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
-    "codebase-grounding.json": "7d155fd3706895dac2beec49eacf3f888a48a296bd185c0c11c70241db857a26"
+    "codebase-grounding.json": "618d67e6cf2dab69b518fe0c3307c7869b671b6e54ae9d35e0e82f876397101e"
   },
   "test_bindings": {
     "SPEC-L3": {
@@ -197,31 +197,37 @@
       "positive": [
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[all-live-targets]",
         "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_selects_main_from_trusted_api",
-        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_publisher_can_stage_gitignored_certified_results"
+        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_publisher_can_stage_gitignored_certified_results",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_retries_only_stale_pr_readback"
       ],
       "negative": [
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[certificate-failure]",
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[no-eligible-target]",
-        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_unsupported_base_before_publication"
+        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_unsupported_base_before_publication",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[unexpected-head]"
       ],
       "regression": [
         "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret",
         "tests.test_session_review_runner::test_no_recursive_workflow_trigger",
-        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_untrusted_run_without_api_access"
+        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_untrusted_run_without_api_access",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[permanent-stale]"
       ]
     },
     "R127-10": {
       "positive": [
-        "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates"
+        "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_retries_only_stale_pr_readback"
       ],
       "negative": [
         "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]",
         "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
-        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]"
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[unexpected-head]"
       ],
       "regression": [
         "tests.test_session_review_dossier::test_m2_is_excluded_from_implementation_bindings_and_retains_parent",
-        "tests.test_verify_web_external_audit::test_accepts_exact_target_after_signature_verification"
+        "tests.test_verify_web_external_audit::test_accepts_exact_target_after_signature_verification",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[permanent-stale]"
       ]
     },
     "R127-11": {
@@ -331,10 +337,10 @@
     }
   },
   "grounding_test_bindings": {
-    "tests/test_session_review_workflows.py": [
+    "entregar-issue/tests/test_publish_actions_handoff.py": [
       {
-        "case": "tests/test_session_review_workflows.py::test_completed_check_that_cannot_reopen_creates_new_pending_check",
-        "test_case_id": "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
+        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_publication_retries_only_stale_pr_readback",
+        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_publication_retries_only_stale_pr_readback"
       }
     ]
   }

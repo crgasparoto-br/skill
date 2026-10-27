@@ -7,33 +7,33 @@
   "replacements": [],
   "test_decisions": [
     {
-      "path": "tests/test_session_review_workflows.py",
+      "path": "entregar-issue/tests/test_publish_actions_handoff.py",
       "operation": "modified",
-      "scenario": "Authentic GitHub Checks API can return a completed/failure check during session-review startup. Continue only for exact-target non-authorizing statuses, rejecting completed/success, neutral, skipped, premature conclusion, malformed state or identity drift.",
-      "requirement": "R127-06 and R127-07: session-review exact SHA state transition must remain fail-closed while processing a real operator review or its absence.",
+      "scenario": "Trusted publisher may see a temporarily stale PR head after successful git push. Exact parent, base, allowed changed files and postpublication terminal guard remain mandatory even after bounded retries.",
+      "requirement": "R127-09 / R127-10: a robust trusted GitHub publication must remain fail-closed.",
       "search": {
         "queries": [
-          "rg -n 'begin_check|test_begin_check_|test_completed_check_' scripts/verify_session_review.py tests/test_session_review_workflows.py"
+          "rg -n 'confirm_published_result|postpublication|test_publication_readback' entregar-issue/scripts/publish_actions_handoff.py entregar-issue/tests/test_publish_actions_handoff.py"
         ],
-        "scope": "Existing GitHub check writer and workflow test module; extend the current tests rather than creating duplicate runners.",
+        "scope": "Reused existing trusted publisher and full Git integration tests without introducing another publisher.",
         "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
         "candidates": [
           {
-            "path": "tests/test_session_review_workflows.py",
-            "case": "test_completed_check_that_cannot_reopen_creates_new_pending_check",
-            "oracle": "Completed failure cannot authorize; a new write may remain blocking while review and technical evidence are still being inspected.",
-            "comparison": "Reuse the existing workflow-runner test and add safe/fail-unsafe enumerated status outcomes to the same module."
+            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+            "case": "test_publisher_materializes_certified_execution_before_grounding",
+            "oracle": "Two validated terminal guard executions, exact material parent and no unauthorized result paths.",
+            "comparison": "Extend with stale-read success and permanent drift failures."
           },
           {
-            "path": "tests/test_session_review_runner.py",
-            "case": "test_evaluate_publishes_failure_when_journal_is_unreadable",
-            "oracle": "Existing unit contract proves failure publication and journal state but not alternate GitHub POST statuses.",
-            "comparison": "Preserve original journal regressions, extend the workflow suite only for the state-transport boundary."
+            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+            "case": "test_trusted_publisher_can_stage_gitignored_certified_results",
+            "oracle": "Existing forced staging must remain within the certificate allowlist.",
+            "comparison": "Preserve prior staging regression; add authenticated readback behavior."
           }
         ]
       },
       "decision": "extend-existing",
-      "justification": "Existing test discovery, workflow API mocks and identity checks are retained; the new discriminator comes from a failure observed in real GitHub-hosted Actions for PR #134.",
+      "justification": "A real trusted publisher run proved the exact failure; the existing harness faithfully records Git push, terminal guards and API reads.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",
