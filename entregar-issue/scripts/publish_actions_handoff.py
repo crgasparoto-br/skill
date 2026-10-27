@@ -82,6 +82,8 @@ def target_from_event(event: dict, base_ref: str = "develop",
 
 
 def allowed_paths(cert: dict) -> list[str]:
+    from handoff_postcondition import require_final_phase
+    require_final_phase(cert)
     policy = cert.get("certificate_commit_policy") or {}
     paths = policy.get("allowed_paths")
     if policy.get("mode") != "result-only-child" or not isinstance(paths, list):

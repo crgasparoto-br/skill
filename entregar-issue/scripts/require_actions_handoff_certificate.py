@@ -12,6 +12,8 @@ import re
 import sys
 from pathlib import Path
 
+from handoff_postcondition import require_final_phase
+
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
 
@@ -46,6 +48,7 @@ def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
     if status.get("terminal_ready") is not False or status.get("certificate_published") is not False:
         raise ValueError("certificate receipt falsely claims final publication")
     cert = load(evidence, ".audit/entregar-issue/handoff-ready.json")
+    require_final_phase(cert)
     subject = cert.get("subject") or {}
     if (cert.get("schema_version") != 2 or cert.get("status") != "ready"
             or (cert.get("identity") or {}).get("material_head_sha") != head
@@ -56,6 +59,15 @@ def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
         raise ValueError("certificate body does not bind the canonical issue and material SHA")
     if (cert.get("certificate_commit_policy") or {}).get("mode") != "result-only-child":
         raise ValueError("certificate does not require result-only publication")
+    if cert.get("phase") == "final":
+        artifacts = cert.get("artifacts")
+        paths = cert["certificate_commit_policy"].get("allowed_paths")
+        if (not isinstance(artifacts, dict) or not {"specification_snapshot", "requirement_closure"} <= set(artifacts)
+                or not isinstance(paths, list) or ".audit/entregar-issue/handoff-ready.json" not in paths):
+            raise ValueError("final certificate lacks artifacts or publication inventory")
+    if cert.get("previous_independent_rejection") or "postcondition_proof" in cert:
+        from handoff_postcondition import verify_finalization
+        verify_finalization(cert, evidence / ".audit/entregar-issue", expected_base=identity.get("base_sha"))
 
 
 def main() -> int:

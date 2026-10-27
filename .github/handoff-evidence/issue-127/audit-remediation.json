@@ -111,7 +111,29 @@
         "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
         "entregar-issue/tests/test_prepare_actions_handoff.py",
         "entregar-issue/tests/test_publish_actions_handoff.py",
-        "entregar-issue/tests/test_terminal_handoff_contract.py"
+        "entregar-issue/tests/test_terminal_handoff_contract.py",
+        "entregar-issue/scripts/build_handoff_certificate.py",
+        "entregar-issue/scripts/certify_handoff_postcondition.py",
+        "entregar-issue/scripts/handoff_postcondition.py",
+        "entregar-issue/scripts/handoff_postcondition_records.py",
+        "entregar-issue/scripts/certificate_postcondition_replay.py",
+        "entregar-issue/scripts/certificate_replay_source.py",
+        "entregar-issue/scripts/certificate_replay_io.py",
+        "entregar-issue/scripts/certificate_replay_inputs.py",
+        "entregar-issue/tests/test_handoff_postcondition.py",
+        "entregar-issue/tests/test_handoff_postcondition_records.py",
+        "entregar-issue/tests/test_certificate_postcondition_replay.py",
+        "entregar-issue/scripts/require_actions_handoff_certificate.py",
+        "entregar-issue/scripts/validate_handoff_certificate.py",
+        "entregar-issue/scripts/validate_audit_remediation.py",
+        "entregar-issue/scripts/validate_handoff_readiness.py",
+        "entregar-issue/scripts/validate_audit_escape_lineage.py",
+        "entregar-issue/scripts/validate_independent_rejection_closure.py",
+        "auditar-issue/scripts/check_delivery_preflight.py",
+        "auditar-issue/scripts/check_connector_preflight.py",
+        "auditar-issue/tests/test_evidence_profile_preflight.py",
+        "auditar-issue/tests/test_connector_preflight.py",
+        "entregar-issue/references/certificate-postconditions.md"
       ],
       "evidence": [
         "tests/test_session_review_dossier.py"
@@ -124,7 +146,7 @@
         "sha256": "0566c4ce1aa67aeeda793d99372db3e6c9161ef459b3e441982ee8de27767764",
         "evidence_kind": "reviewed-source-and-test-definition",
         "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
-        "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The original certificate replay is not passed: it is itself required before generating the certificate it checks.",
+        "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
         "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
       },
       "original_failed_gate": {
@@ -142,8 +164,8 @@
         "equivalence": "exact-command-replay",
         "status": "not-passed"
       },
-      "remaining_action": "Obtain a real successful replay of the original certificate gate for the material SHA under an explicitly resolved certification contract.",
-      "blocker": "The original deterministic gate requires a generated certificate. The official builder validates this replay before creating that certificate. No canonical postcondition exception exists; approval and replay evidence must not be fabricated."
+      "execution_condition": "Close this item only after the official postcondition executor records a real successful literal replay on the material SHA and all final validators accept the resulting proof chain.",
+      "preparation_reason": "The historical gate consumes certification metadata. The source template therefore retains blocked status and null execution facts until CERTIFICATE-POSTCONDITION-001 produces and authenticates the actual replay; preparation alone has no release authority."
     },
     {
       "source_kind": "finding",

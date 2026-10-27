@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
+from handoff_postcondition import require_final_phase
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CERT_REPO_PATH = ".audit/entregar-issue/handoff-ready.json"
@@ -127,6 +128,11 @@ def main() -> int:
         print(f"BLOCK: invalid handoff certificate: {exc}")
         return 2
 
+    try:
+        require_final_phase(cert)
+    except ValueError as exc:
+        print(f"BLOCK: {exc}")
+        return 2
     identity = cert.get("identity") or {}
     material = identity.get("material_head_sha") or identity.get("head_sha")
     policy = cert.get("certificate_commit_policy") or {}
@@ -263,6 +269,8 @@ def main() -> int:
         cmd.extend(["--candidate-changed-path", path])
     if args.contract_version:
         cmd.extend(["--contract-version", args.contract_version])
+    if args.material_parent_repository:
+        cmd.extend(["--source-repository-root", args.material_parent_repository])
     proc = subprocess.run(cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if proc.returncode != 0:
         print(proc.stdout.strip() or "BLOCK: handoff certificate validation failed")

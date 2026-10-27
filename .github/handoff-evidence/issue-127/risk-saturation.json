@@ -9,6 +9,7 @@
       "control_ids": [
         "NEG-R127-02-01",
         "NEG-R127-07-01",
+        "NEG-R127-11-04",
         "NEG-SPEC-L33-01",
         "NEG-SPEC-L7-01"
       ],
@@ -38,6 +39,14 @@
           "status": "passed"
         },
         {
+          "surface": "trusted-postcondition-base",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "control_ids": [
+            "NEG-R127-11-04"
+          ],
+          "status": "passed"
+        },
+        {
           "surface": "trusted-workflow-source",
           "reason": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
           "control_ids": [
@@ -62,7 +71,8 @@
       "reason": "The source obligation and reviewed matrix identify this family; every declared surface has a discriminating negative oracle tied to mandatory live JUnit evidence.",
       "control_ids": [
         "NEG-R127-08-02",
-        "NEG-R127-11-02"
+        "NEG-R127-11-02",
+        "NEG-R127-11-07"
       ],
       "dimensions": [
         {
@@ -70,6 +80,14 @@
           "reason": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro.",
           "control_ids": [
             "NEG-R127-08-02"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "literal-replay-materialization",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "control_ids": [
+            "NEG-R127-11-07"
           ],
           "status": "passed"
         },
@@ -191,7 +209,8 @@
       "reason": "The source obligation and reviewed matrix identify this family; every declared surface has a discriminating negative oracle tied to mandatory live JUnit evidence.",
       "control_ids": [
         "NEG-R127-06-02",
-        "NEG-R127-11-03"
+        "NEG-R127-11-03",
+        "NEG-R127-11-06"
       ],
       "dimensions": [
         {
@@ -199,6 +218,14 @@
           "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
           "control_ids": [
             "NEG-R127-11-03"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "prepared-record-transition",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "control_ids": [
+            "NEG-R127-11-06"
           ],
           "status": "passed"
         },
@@ -218,9 +245,18 @@
       "applicable": true,
       "reason": "The source obligation and reviewed matrix identify this family; every declared surface has a discriminating negative oracle tied to mandatory live JUnit evidence.",
       "control_ids": [
-        "NEG-R127-04-02"
+        "NEG-R127-04-02",
+        "NEG-R127-11-05"
       ],
       "dimensions": [
+        {
+          "surface": "certificate-preparation-state",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "control_ids": [
+            "NEG-R127-11-05"
+          ],
+          "status": "passed"
+        },
         {
           "surface": "semantic-mutation-saturation",
           "reason": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",

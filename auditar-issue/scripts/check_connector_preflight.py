@@ -60,6 +60,8 @@ def main() -> int:
     parser.add_argument("--certificate", required=True)
     parser.add_argument("--connector-manifest", required=True)
     parser.add_argument("--contract-version", required=True)
+    parser.add_argument("--artifacts-dir", type=Path, help="Materialized bytes required for certificate postcondition proofs")
+    parser.add_argument("--source-repository-root", type=Path, help="Git source for independently checking the historical gate")
     args = parser.parse_args()
 
     try:
@@ -67,6 +69,10 @@ def main() -> int:
         manifest = load(Path(args.connector_manifest))
     except Exception as exc:
         print(f"BLOCK: invalid connector preflight input: {exc}")
+        return 2
+
+    if cert.get("phase") not in (None, "final") or "prepared_artifacts" in cert:
+        print("BLOCK: certificate preparation is not a final handoff")
         return 2
 
     errors: list[str] = []
@@ -363,6 +369,19 @@ def main() -> int:
                     f"independent rejection {rejection_id} lacks connector semantic closure for finding ids: "
                     + ", ".join(missing_findings)
                 )
+
+    # Do not execute even a historical gate before the independently observed
+    # identity and immutable connector inventory have been checked.
+    if "postcondition_proof" in cert and not errors and not limitations:
+        if args.artifacts_dir is None or args.source_repository_root is None:
+            limitations.append("certificate postcondition proof requires materialized artifacts and trusted Git source")
+        else:
+            try:
+                from handoff_postcondition import verify_finalization
+                verify_finalization(cert, args.artifacts_dir, args.source_repository_root,
+                                    expected_base=base_sha, require_repository=True)
+            except Exception as exc:
+                errors.append(f"certificate postcondition proof failed: {exc}")
 
     if target_mismatch:
         recovery = "fresh-handoff-required"

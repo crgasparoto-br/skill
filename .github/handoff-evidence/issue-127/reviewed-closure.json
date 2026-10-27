@@ -139,7 +139,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "O dossie critical vincula os controles reais de contrato, adversarios e regressao ao JUnit do futuro SHA material. Gates de higiene, analise estatica e certificacao continuam obrigatorios sem alterar limites. A prova bruta de grounding nasce no runner e precisa acompanhar o artifact ate o worktree limpo do publicador, antes da revalidacao pelo gate oficial; os controles do publicador verificam essa materializacao restrita. I-002 vincula referencias de fonte a declaracoes reais e executa o source gate completo, preservando as identidades JUnit. I-003 verifica snapshots ou ausencia no commit material exato, inclusive quando o worktree ja esta no filho; rejeicao anterior e perfil critical continuam exigindo suas evidencias. Esta linha mapeia a implementacao e seus controles; nao declara certificado emitido: A-004 continua implemented-unverified no ledger ate replay real do gate original, cuja dependencia circular e registrada sem exit 0 inventado."
+      "rationale": "O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada."
     },
     "331962011f0d8a45ced3696e1c4a3c3efaf7c1842af93b5865c4a787853a41bc": {
       "disposition": "deferred",
@@ -191,7 +191,7 @@
           "entregar-issue/scripts/specification.py"
         ],
         "consumer_sources": [
-          "scripts/verify_session_review.py:95-112",
+          "scripts/verify_session_review.py:99-116",
           "scripts/session_review.py:139-183",
           "entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
         ],
@@ -513,7 +513,7 @@
             "superseded issue-127 dossier"
           ],
           "evidence_ids": [
-            "scripts/verify_session_review.py:95-112"
+            "scripts/verify_session_review.py:99-116"
           ],
           "scenario_ids": [
             "tests/test_session_review_runner.py:42-49 (case test_canonical_requirements_use_existing_issue_parser; JUnit classname tests.test_session_review_runner)",
@@ -547,14 +547,14 @@
             "fingerprint"
           ],
           "producer_evidence": [
-            "scripts/verify_session_review.py:299-321"
+            "scripts/verify_session_review.py:303-325"
           ],
           "public_projection_evidence": [
             "GitHub Checks API check_runs and output.text"
           ],
           "consumer_evidence": [
-            "scripts/verify_session_review.py:235-254",
-            "scripts/verify_session_review.py:324-375"
+            "scripts/verify_session_review.py:239-258",
+            "scripts/verify_session_review.py:328-379"
           ],
           "visible_surface_evidence": [
             "Verify session review (exact SHA) check conclusion and summary"
@@ -590,7 +590,7 @@
             "final publication"
           ],
           "evidence_ids": [
-            "scripts/verify_session_review.py:324-375",
+            "scripts/verify_session_review.py:328-379",
             "scripts/session_review.py:139-183"
           ],
           "scenario_ids": [
@@ -607,6 +607,43 @@
               "final HEAD f*40"
             ]
           }
+        },
+        {
+          "id": "CSC-002",
+          "semantic_field": "certificate postcondition preparation and final records",
+          "canonical_source": "Immutable source audit, externally authenticated base, prepared snapshots and verified literal replay receipt",
+          "alternative_sources": [
+            "candidate-authored success fields",
+            "legacy compatibility view",
+            "rehashed final semantic records"
+          ],
+          "surfaces": [
+            "official preparation",
+            "literal replay",
+            "deterministic record closure",
+            "final certificate and consumers"
+          ],
+          "evidence_ids": [
+            "entregar-issue/scripts/handoff_postcondition_records.py:279-311",
+            "entregar-issue/scripts/certify_handoff_postcondition.py:29-75",
+            "entregar-issue/scripts/handoff_postcondition.py:187-237",
+            "entregar-issue/scripts/certificate_replay_source.py:42-60"
+          ],
+          "scenario_ids": [
+            "entregar-issue/tests/test_handoff_postcondition.py:121-147 (case test_official_critical_postcondition_replays_historical_gate_before_final_handoff; JUnit classname entregar-issue.tests.test_handoff_postcondition)",
+            "entregar-issue/tests/test_handoff_postcondition_records.py:299-320 (case test_finalization_requires_real_replay_and_exact_prepared_records; JUnit classname entregar-issue.tests.test_handoff_postcondition_records)"
+          ],
+          "negative_control_evidence": [
+            "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[rehashed-record]; JUnit classname entregar-issue.tests.test_handoff_postcondition)",
+            "entregar-issue/tests/test_certificate_postcondition_replay.py:224-245 (case test_replay_rejects_unauthorized_source_before_execution[candidate-anchor]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay)"
+          ],
+          "divergent_fixture": {
+            "canonical_value": "Authenticated preparation and actual exit/log receipt for its fixed material identity",
+            "alternative_values": [
+              "same-label record with changed semantic bytes",
+              "candidate-selected trust anchor outside the external base"
+            ]
+          }
         }
       ],
       "unverified_surfaces": [],
@@ -614,7 +651,7 @@
     },
     "documentation_consistency": {
       "status": "passed",
-      "applicability_reason": "The guide describes opt-in session assurance, M1/M2 and rollback; existing human/Ed25519 policies remain separate and are not silently replaced.",
+      "applicability_reason": "The guide describes opt-in session assurance, M1/M2 and rollback. The canonical certificate protocol now separates complete blocked preparation, real literal replay and strict final certification; existing independent/human/Ed25519 policies and terminal publication requirements still apply.",
       "old_contract_terms": [
         "independent audit",
         "Ed25519",
@@ -623,7 +660,9 @@
       "new_contract_terms": [
         "operator-attested-session-review",
         "parent_issue_must_remain_open",
-        "Rollback do modo de sessao"
+        "Rollback do modo de sessao",
+        "CERTIFICATE-POSTCONDITION-001",
+        "phase=preparation"
       ],
       "occurrences": [
         {
@@ -691,6 +730,61 @@
             "AGENTS.md",
             "SRC-ISSUE-127:L33"
           ]
+        },
+        {
+          "path": "entregar-issue/references/certificate-postconditions.md",
+          "line": 7,
+          "text": "produzir. Esta referencia define `CERTIFICATE-POSTCONDITION-001`.",
+          "term": "CERTIFICATE-POSTCONDITION-001",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "entregar-issue/references/certificate-postconditions.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "entregar-issue/references/certificate-postconditions.md",
+          "line": 44,
+          "text": "Ela tem `phase=preparation`, inventario `prepared_artifacts`, ausencia do mapa",
+          "term": "phase=preparation",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "entregar-issue/references/certificate-postconditions.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "entregar-issue/references/handoff-certificate.md",
+          "line": 45,
+          "text": "aplicar [CERTIFICATE-POSTCONDITION-001](certificate-postconditions.md). A preparacao",
+          "term": "aplicar [CERTIFICATE-POSTCONDITION-001]",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "entregar-issue/references/handoff-certificate.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "auditar-issue/references/handoff-certificate-preflight.md",
+          "line": 32,
+          "text": "Preparacao nao e certificado final: rejeitar `phase=preparation` e o inventario",
+          "term": "Preparacao nao e certificado final",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "auditar-issue/references/handoff-certificate-preflight.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "entregar-issue/references/github-actions-evidence.md",
+          "line": 109,
+          "text": "Replay: [pos-condicoes](certificate-postconditions.md).",
+          "term": "Replay: [pos-condicoes]",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "entregar-issue/references/github-actions-evidence.md",
+            "SRC-ISSUE-127:L33"
+          ]
         }
       ],
       "unresolved_contradictions": [],
@@ -698,7 +792,9 @@
       "search_evidence": [
         "rg -n -i 'operator-attested-session-review|ed25519|independent audit|auditoria independente|review humano' AGENTS.md auditar-issue entregar-issue docs .github/workflows .github/session-review-policy.json -g '*.md' -g '*.json' -g '*.yml'",
         "Reviewed outside-diff SECURITY.md, CI_POST_ORQUESTRADOR.md, CI_STANDARD.md, AGENTS.md, auditar-issue evidence-rules.md; their independent/human/Ed25519 constraints still govern their own paths.",
-        "Manually checked rollback sequence against current issue R127-10 and phase decision: preserve protections, restore legacy before removing session check, read back both bases, retain issue open. No operational rollback is claimed."
+        "Manually checked rollback sequence against current issue R127-10 and phase decision: preserve protections, restore legacy before removing session check, read back both bases, retain issue open. No operational rollback is claimed.",
+        "rg -n -i 'prepar|postcondition|terminal|block|ready' entregar-issue/references/handoff-certificate.md auditar-issue/references/handoff-certificate-preflight.md auditar-issue/references/reaudit-readiness.md entregar-issue/references/github-actions-evidence.md",
+        "Reviewed the new canonical postcondition reference against outside-diff AGENTS.md, SECURITY.md, CI_STANDARD.md and the existing delivery/audit contracts: preparation is not final readiness or an independent approval, all non-postcondition obligations remain strict, and final publication still needs authenticated identity and cumulative controls."
       ]
     },
     "scope_reduction_review": {
@@ -752,7 +848,7 @@
         "SRC-ISSUE-127 sha256:252b9564fd843f0fb3fd5498354ee94bb458a0b8c1c3ddd77eb8fd416335bd59",
         ".github/handoff-evidence/issue-127/reviewed-source-issue.md:3-33",
         "Reviewed actual assertions in session_review, runner, workflow and dossier tests; producer/consumer identity and revocation paths.",
-        "Semantic mapping is reviewed implementation evidence. The open A-004 replay prevents certificate readiness; no M2 rollout or independent approval is asserted."
+        "Semantic mapping is reviewed implementation evidence. The versioned A-004 seed remains blocked until its actual authenticated replay; only the completed final phase may assert certification. No final-SHA certificate, M2 rollout or independent approval is asserted by this reviewed template."
       ],
       "rederived_without_pr_description": true,
       "reviewed_user_visible_semantics": true,

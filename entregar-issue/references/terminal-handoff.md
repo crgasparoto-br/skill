@@ -24,6 +24,11 @@ Ler quando houver PR aberta, publicação, CI ou coleta remota com `audit_transp
 O `material_head_sha` e a identidade certificada. `handoff-ready.json` certifica esse material head e e publicado em um filho direto `result-only-child`; o commit de resultados nao redefine a identidade material.
 
 
+Preparacoes de [pos-condicao de certificado](certificate-postconditions.md) nunca
+satisfazem o guard terminal. Exigir certificado final e cadeia autentica entre a
+preparacao imutavel, replay factual e ledger fechado. Remover o marcador de fase ou
+alterar allowlist/nomes nao constitui finalizacao.
+
 ## Vinculo com o alvo antes do fechamento
 
 Antes de considerar qualquer handoff existente, aplicar `references/delivery-target-binding.md`. Um `handoff-ready.json` herdado da base ou de outra PR/issue e apenas dado historico. Se a classificacao for `inherited-base-artifact`, `foreign-target`, `partial-current-target` ou `unbound-or-invalid`, o estado terminal obrigatorio e `fresh-handoff-required`: artefatos anteriores nao satisfazem readiness e o fast path `handoff-only` fica proibido ate existir pacote corrente vinculado ao alvo atual.

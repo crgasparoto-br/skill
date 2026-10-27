@@ -1570,9 +1570,11 @@
         "OBL-013"
       ],
       "risk_families": [
+        "authorization",
         "historical-immutability",
         "public-boundary",
-        "semantic-effect"
+        "semantic-effect",
+        "structural-contract"
       ],
       "source_texts": [
         "R127-11: Aprovar testes de contrato, controles adversariais e regressões das duas bases, análise estática, higiene e certificação exact-SHA da implementação, sem aumentar limites nem inventar provas."
@@ -1584,12 +1586,12 @@
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
-          "classname": "tests.test_session_review_dossier",
-          "name": "test_current_dossier_reconciles_all_canonical_candidates"
+          "classname": "entregar-issue.tests.test_handoff_postcondition",
+          "name": "test_official_critical_postcondition_replays_historical_gate_before_final_handoff"
         },
-        "evidence": "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier). O dossie critical vincula os controles reais de contrato, adversarios e regressao ao JUnit do futuro SHA material. Gates de higiene, analise estatica e certificacao continuam obrigatorios sem alterar limites. A prova bruta de grounding nasce no runner e precisa acompanhar o artifact ate o worktree limpo do publicador, antes da revalidacao pelo gate oficial; os controles do publicador verificam essa materializacao restrita. I-002 vincula referencias de fonte a declaracoes reais e executa o source gate completo, preservando as identidades JUnit. I-003 verifica snapshots ou ausencia no commit material exato, inclusive quando o worktree ja esta no filho; rejeicao anterior e perfil critical continuam exigindo suas evidencias. Esta linha mapeia a implementacao e seus controles; nao declara certificado emitido: A-004 continua implemented-unverified no ledger ate replay real do gate original, cuja dependencia circular e registrada sem exit 0 inventado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
-        "evidence_path": "tests/test_session_review_dossier.py",
-        "evidence_sha256": "0566c4ce1aa67aeeda793d99372db3e6c9161ef459b3e441982ee8de27767764"
+        "evidence": "entregar-issue/tests/test_handoff_postcondition.py:121-147 (case test_official_critical_postcondition_replays_historical_gate_before_final_handoff; JUnit classname entregar-issue.tests.test_handoff_postcondition). O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "entregar-issue/tests/test_handoff_postcondition.py",
+        "evidence_sha256": "9a46e9eee3f8ca4ebc4dbbe8f9e81471b14806432c9d3e9f957a814916457e9f"
       },
       "negative_controls": [
         {
@@ -1601,7 +1603,7 @@
             "classname": "tests.test_session_review_dossier",
             "name": "test_dossier_cannot_promote_unexecuted_controls[missing]"
           },
-          "evidence": "tests/test_session_review_dossier.py:96-107 (case test_dossier_cannot_promote_unexecuted_controls[missing]; JUnit classname tests.test_session_review_dossier). O dossie critical vincula os controles reais de contrato, adversarios e regressao ao JUnit do futuro SHA material. Gates de higiene, analise estatica e certificacao continuam obrigatorios sem alterar limites. A prova bruta de grounding nasce no runner e precisa acompanhar o artifact ate o worktree limpo do publicador, antes da revalidacao pelo gate oficial; os controles do publicador verificam essa materializacao restrita. I-002 vincula referencias de fonte a declaracoes reais e executa o source gate completo, preservando as identidades JUnit. I-003 verifica snapshots ou ausencia no commit material exato, inclusive quando o worktree ja esta no filho; rejeicao anterior e perfil critical continuam exigindo suas evidencias. Esta linha mapeia a implementacao e seus controles; nao declara certificado emitido: A-004 continua implemented-unverified no ledger ate replay real do gate original, cuja dependencia circular e registrada sem exit 0 inventado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence": "tests/test_session_review_dossier.py:96-107 (case test_dossier_cannot_promote_unexecuted_controls[missing]; JUnit classname tests.test_session_review_dossier). O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
           "evidence_path": "tests/test_session_review_dossier.py",
           "evidence_sha256": "0566c4ce1aa67aeeda793d99372db3e6c9161ef459b3e441982ee8de27767764",
           "id": "NEG-R127-11-01",
@@ -1647,7 +1649,7 @@
             "classname": "entregar-issue.tests.test_publish_actions_handoff",
             "name": "test_publisher_rejects_untrusted_execution_before_publication[proof-hash]"
           },
-          "evidence": "entregar-issue/tests/test_publish_actions_handoff.py:374-423 (case test_publisher_rejects_untrusted_execution_before_publication[proof-hash]; JUnit classname entregar-issue.tests.test_publish_actions_handoff). O dossie critical vincula os controles reais de contrato, adversarios e regressao ao JUnit do futuro SHA material. Gates de higiene, analise estatica e certificacao continuam obrigatorios sem alterar limites. A prova bruta de grounding nasce no runner e precisa acompanhar o artifact ate o worktree limpo do publicador, antes da revalidacao pelo gate oficial; os controles do publicador verificam essa materializacao restrita. I-002 vincula referencias de fonte a declaracoes reais e executa o source gate completo, preservando as identidades JUnit. I-003 verifica snapshots ou ausencia no commit material exato, inclusive quando o worktree ja esta no filho; rejeicao anterior e perfil critical continuam exigindo suas evidencias. Esta linha mapeia a implementacao e seus controles; nao declara certificado emitido: A-004 continua implemented-unverified no ledger ate replay real do gate original, cuja dependencia circular e registrada sem exit 0 inventado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence": "entregar-issue/tests/test_publish_actions_handoff.py:374-423 (case test_publisher_rejects_untrusted_execution_before_publication[proof-hash]; JUnit classname entregar-issue.tests.test_publish_actions_handoff). O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
           "evidence_path": "entregar-issue/tests/test_publish_actions_handoff.py",
           "evidence_sha256": "b7a56a415e297d1e8576d611f4c42f5251a7399d3f3c2545008265160a901206",
           "id": "NEG-R127-11-02",
@@ -1693,7 +1695,7 @@
             "classname": "entregar-issue.tests.test_publish_actions_handoff",
             "name": "test_first_critical_reaudit_rejects_unproved_parent_absence[critical-targeted]"
           },
-          "evidence": "entregar-issue/tests/test_publish_actions_handoff.py:364-371 (case test_first_critical_reaudit_rejects_unproved_parent_absence[critical-targeted]; JUnit classname entregar-issue.tests.test_publish_actions_handoff). O dossie critical vincula os controles reais de contrato, adversarios e regressao ao JUnit do futuro SHA material. Gates de higiene, analise estatica e certificacao continuam obrigatorios sem alterar limites. A prova bruta de grounding nasce no runner e precisa acompanhar o artifact ate o worktree limpo do publicador, antes da revalidacao pelo gate oficial; os controles do publicador verificam essa materializacao restrita. I-002 vincula referencias de fonte a declaracoes reais e executa o source gate completo, preservando as identidades JUnit. I-003 verifica snapshots ou ausencia no commit material exato, inclusive quando o worktree ja esta no filho; rejeicao anterior e perfil critical continuam exigindo suas evidencias. Esta linha mapeia a implementacao e seus controles; nao declara certificado emitido: A-004 continua implemented-unverified no ledger ate replay real do gate original, cuja dependencia circular e registrada sem exit 0 inventado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence": "entregar-issue/tests/test_publish_actions_handoff.py:364-371 (case test_first_critical_reaudit_rejects_unproved_parent_absence[critical-targeted]; JUnit classname entregar-issue.tests.test_publish_actions_handoff). O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
           "evidence_path": "entregar-issue/tests/test_publish_actions_handoff.py",
           "evidence_sha256": "b7a56a415e297d1e8576d611f4c42f5251a7399d3f3c2545008265160a901206",
           "id": "NEG-R127-11-03",
@@ -1749,6 +1751,489 @@
                 "name": "test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-parent-symlink]"
               },
               "evidence": "entregar-issue/tests/test_terminal_handoff_contract.py:380-440 (case test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-parent-symlink]; JUnit classname entregar-issue.tests.test_terminal_handoff_contract); source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+            "name": "test_replay_rejects_unauthorized_source_before_execution[candidate-anchor]"
+          },
+          "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:224-245 (case test_replay_rejects_unauthorized_source_before_execution[candidate-anchor]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay). O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_certificate_postcondition_replay.py",
+          "evidence_sha256": "f484fab6fdd4edd8b51665004bfcc7cce96e074a836e48ec1f28a3e717ea2f07",
+          "id": "NEG-R127-11-04",
+          "risk_family": "authorization",
+          "surface": "trusted-postcondition-base",
+          "dimension": "candidate-selected-trusted-anchor",
+          "failure_mode": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "plausible_wrong_implementation": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "procedure": "Execute the pytest case identified by junit_case and manifest.test_bindings at entregar-issue/tests/test_certificate_postcondition_replay.py:224-245 (case test_replay_rejects_unauthorized_source_before_execution[candidate-anchor]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay) with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: candidate-selected-trusted-anchor.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-11-04-S1",
+              "surface": "trusted-postcondition-base",
+              "dimension": "foreign-repository-source",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_rejects_unauthorized_source_before_execution[repository]"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:224-245 (case test_replay_rejects_unauthorized_source_before_execution[repository]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-04-S2",
+              "surface": "trusted-postcondition-base",
+              "dimension": "foreign-event-base",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_rejects_unauthorized_source_before_execution[event-base]"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:224-245 (case test_replay_rejects_unauthorized_source_before_execution[event-base]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-04-S3",
+              "surface": "trusted-postcondition-base",
+              "dimension": "connector-base-before-execution",
+              "status": "passed",
+              "junit_case": {
+                "classname": "auditar-issue.tests.test_connector_preflight",
+                "name": "test_connector_rejects_foreign_base_before_executing_postcondition_verifier"
+              },
+              "evidence": "auditar-issue/tests/test_connector_preflight.py:64-85 (case test_connector_rejects_foreign_base_before_executing_postcondition_verifier; JUnit classname auditar-issue.tests.test_connector_preflight); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-04-S4",
+              "surface": "trusted-postcondition-base",
+              "dimension": "final-base-before-execution",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_certificate_identity_rejection_precedes_postcondition_execution[base]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:211-234 (case test_certificate_identity_rejection_precedes_postcondition_execution[base]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-04-S5",
+              "surface": "trusted-postcondition-base",
+              "dimension": "final-head-before-execution",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_certificate_identity_rejection_precedes_postcondition_execution[head]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:211-234 (case test_certificate_identity_rejection_precedes_postcondition_execution[head]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-04-S6",
+              "surface": "trusted-postcondition-base",
+              "dimension": "final-repository-before-execution",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_certificate_identity_rejection_precedes_postcondition_execution[repository]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:211-234 (case test_certificate_identity_rejection_precedes_postcondition_execution[repository]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_handoff_postcondition",
+            "name": "test_preparation_cannot_authorize_current_handoff_consumers[intact]"
+          },
+          "evidence": "entregar-issue/tests/test_handoff_postcondition.py:237-270 (case test_preparation_cannot_authorize_current_handoff_consumers[intact]; JUnit classname entregar-issue.tests.test_handoff_postcondition). O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_handoff_postcondition.py",
+          "evidence_sha256": "9a46e9eee3f8ca4ebc4dbbe8f9e81471b14806432c9d3e9f957a814916457e9f",
+          "id": "NEG-R127-11-05",
+          "risk_family": "structural-contract",
+          "surface": "certificate-preparation-state",
+          "dimension": "prepared-candidate-used-as-final-certificate",
+          "failure_mode": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "plausible_wrong_implementation": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "procedure": "Execute the pytest case identified by junit_case and manifest.test_bindings at entregar-issue/tests/test_handoff_postcondition.py:237-270 (case test_preparation_cannot_authorize_current_handoff_consumers[intact]; JUnit classname entregar-issue.tests.test_handoff_postcondition) with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: prepared-candidate-used-as-final-certificate.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-11-05-S1",
+              "surface": "certificate-preparation-state",
+              "dimension": "phase-marker-removed",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_preparation_cannot_authorize_current_handoff_consumers[phase-removed]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:237-270 (case test_preparation_cannot_authorize_current_handoff_consumers[phase-removed]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-05-S2",
+              "surface": "certificate-preparation-state",
+              "dimension": "prepared-map-removed",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_preparation_cannot_authorize_current_handoff_consumers[map-removed]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:237-270 (case test_preparation_cannot_authorize_current_handoff_consumers[map-removed]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-05-S3",
+              "surface": "certificate-preparation-state",
+              "dimension": "legacy-artifact-authority-absent",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_preparation_without_markers_still_lacks_legacy_artifact_authority"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:273-285 (case test_preparation_without_markers_still_lacks_legacy_artifact_authority; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-05-S4",
+              "surface": "certificate-preparation-state",
+              "dimension": "proof-claim-without-materialized-bytes",
+              "status": "passed",
+              "junit_case": {
+                "classname": "auditar-issue.tests.test_connector_preflight",
+                "name": "test_connector_postcondition_requires_materialized_proof_not_semantic_booleans"
+              },
+              "evidence": "auditar-issue/tests/test_connector_preflight.py:51-61 (case test_connector_postcondition_requires_materialized_proof_not_semantic_booleans; JUnit classname auditar-issue.tests.test_connector_preflight); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-05-S5",
+              "surface": "certificate-preparation-state",
+              "dimension": "blocked-seed-used-as-final-ledger",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+                "name": "test_default_remediation_validation_rejects_blocked_preparation"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:194-199 (case test_default_remediation_validation_rejects_blocked_preparation; JUnit classname entregar-issue.tests.test_handoff_postcondition_records); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-05-S6",
+              "surface": "certificate-preparation-state",
+              "dimension": "foreign-source-learning-event",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+                "name": "test_preparation_rejects_learning_from_another_audit[readiness]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:278-286 (case test_preparation_rejects_learning_from_another_audit[readiness]; JUnit classname entregar-issue.tests.test_handoff_postcondition_records); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-05-S7",
+              "surface": "certificate-preparation-state",
+              "dimension": "unrecognized-preparation-plan",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_postcondition_plan_recomputes_immutable_source_and_external_base"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:213-221 (case test_postcondition_plan_recomputes_immutable_source_and_external_base; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_handoff_postcondition",
+            "name": "test_final_certificate_rejects_tampered_postcondition_chain[rehashed-record]"
+          },
+          "evidence": "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[rehashed-record]; JUnit classname entregar-issue.tests.test_handoff_postcondition). O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_handoff_postcondition.py",
+          "evidence_sha256": "9a46e9eee3f8ca4ebc4dbbe8f9e81471b14806432c9d3e9f957a814916457e9f",
+          "id": "NEG-R127-11-06",
+          "risk_family": "historical-immutability",
+          "surface": "prepared-record-transition",
+          "dimension": "rehashed-final-record-substitution",
+          "failure_mode": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "plausible_wrong_implementation": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "procedure": "Execute the pytest case identified by junit_case and manifest.test_bindings at entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[rehashed-record]; JUnit classname entregar-issue.tests.test_handoff_postcondition) with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: rehashed-final-record-substitution.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-11-06-S1",
+              "surface": "prepared-record-transition",
+              "dimension": "replay-for-another-material-head",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+                "name": "test_postcondition_transition_rejects_substituted_replay_facts[wrong-head]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:95-118 (case test_postcondition_transition_rejects_substituted_replay_facts[wrong-head]; JUnit classname entregar-issue.tests.test_handoff_postcondition_records); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S2",
+              "surface": "prepared-record-transition",
+              "dimension": "replacement-literal-command",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+                "name": "test_postcondition_transition_rejects_substituted_replay_facts[wrong-command]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:95-118 (case test_postcondition_transition_rejects_substituted_replay_facts[wrong-command]; JUnit classname entregar-issue.tests.test_handoff_postcondition_records); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S3",
+              "surface": "prepared-record-transition",
+              "dimension": "replacement-trusted-source",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+                "name": "test_postcondition_transition_rejects_substituted_replay_facts[wrong-source]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:95-118 (case test_postcondition_transition_rejects_substituted_replay_facts[wrong-source]; JUnit classname entregar-issue.tests.test_handoff_postcondition_records); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S4",
+              "surface": "prepared-record-transition",
+              "dimension": "changed-preparation-receipt",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_proof_rejects_substitution[preparation]"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:299-317 (case test_replay_proof_rejects_substitution[preparation]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S5",
+              "surface": "prepared-record-transition",
+              "dimension": "prepared-snapshot-digest-drift",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_authenticates_bounded_prepared_inventory[snapshot-hash]"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:278-296 (case test_replay_authenticates_bounded_prepared_inventory[snapshot-hash]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S6",
+              "surface": "prepared-record-transition",
+              "dimension": "final-proof-absent",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_final_certificate_rejects_tampered_postcondition_chain[missing-proof]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[missing-proof]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S7",
+              "surface": "prepared-record-transition",
+              "dimension": "raw-replay-log-substitution",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_final_certificate_rejects_tampered_postcondition_chain[raw-log]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[raw-log]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S8",
+              "surface": "prepared-record-transition",
+              "dimension": "semantic-snapshot-bytes-changed",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_final_certificate_rejects_tampered_postcondition_chain[snapshot-bytes]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[snapshot-bytes]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S9",
+              "surface": "prepared-record-transition",
+              "dimension": "unlisted-snapshot",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_final_certificate_rejects_tampered_postcondition_chain[unlisted-snapshot]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[unlisted-snapshot]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S10",
+              "surface": "prepared-record-transition",
+              "dimension": "missing-semantic-snapshot",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_final_certificate_rejects_tampered_postcondition_chain[missing-snapshot]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[missing-snapshot]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S11",
+              "surface": "prepared-record-transition",
+              "dimension": "rehashed-receipt",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_final_certificate_rejects_tampered_postcondition_chain[rehashed-receipt]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[rehashed-receipt]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-06-S12",
+              "surface": "prepared-record-transition",
+              "dimension": "unlisted-final-allowlist",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_postcondition",
+                "name": "test_final_certificate_rejects_tampered_postcondition_chain[allowlist]"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[allowlist]; JUnit classname entregar-issue.tests.test_handoff_postcondition); source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+            "name": "test_replay_rejects_unsafe_layout_without_overwriting[parent-symlink]"
+          },
+          "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:248-275 (case test_replay_rejects_unsafe_layout_without_overwriting[parent-symlink]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay). O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_certificate_postcondition_replay.py",
+          "evidence_sha256": "f484fab6fdd4edd8b51665004bfcc7cce96e074a836e48ec1f28a3e717ea2f07",
+          "id": "NEG-R127-11-07",
+          "risk_family": "public-boundary",
+          "surface": "literal-replay-materialization",
+          "dimension": "symlink-in-literal-layout",
+          "failure_mode": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "plausible_wrong_implementation": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "procedure": "Execute the pytest case identified by junit_case and manifest.test_bindings at entregar-issue/tests/test_certificate_postcondition_replay.py:248-275 (case test_replay_rejects_unsafe_layout_without_overwriting[parent-symlink]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay) with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: symlink-in-literal-layout.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-11-07-S1",
+              "surface": "literal-replay-materialization",
+              "dimension": "existing-unowned-destination",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_rejects_unsafe_layout_without_overwriting[collision]"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:248-275 (case test_replay_rejects_unsafe_layout_without_overwriting[collision]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-07-S2",
+              "surface": "literal-replay-materialization",
+              "dimension": "forbidden-system-destination",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_rejects_unsafe_layout_without_overwriting[system-path]"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:248-275 (case test_replay_rejects_unsafe_layout_without_overwriting[system-path]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-07-S3",
+              "surface": "literal-replay-materialization",
+              "dimension": "replacement-interpreter",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_rejects_unsafe_layout_without_overwriting[interpreter]"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:248-275 (case test_replay_rejects_unsafe_layout_without_overwriting[interpreter]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-07-S4",
+              "surface": "literal-replay-materialization",
+              "dimension": "foreign-venv-startup-code",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_rejects_foreign_venv_before_startup_code"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:410-428 (case test_replay_rejects_foreign_venv_before_startup_code; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-07-S5",
+              "surface": "literal-replay-materialization",
+              "dimension": "non-regular-proof-input",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_rejects_non_regular_input_without_waiting"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:401-407 (case test_replay_rejects_non_regular_input_without_waiting; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+            "name": "test_failed_literal_gate_records_real_failure_without_promoting_preparation"
+          },
+          "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:336-350 (case test_failed_literal_gate_records_real_failure_without_promoting_preparation; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay). O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_certificate_postcondition_replay.py",
+          "evidence_sha256": "f484fab6fdd4edd8b51665004bfcc7cce96e074a836e48ec1f28a3e717ea2f07",
+          "id": "NEG-R127-11-08",
+          "risk_family": "semantic-effect",
+          "surface": "literal-replay-outcome",
+          "dimension": "real-failed-gate-presented-as-closure",
+          "failure_mode": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "plausible_wrong_implementation": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "procedure": "Execute the pytest case identified by junit_case and manifest.test_bindings at entregar-issue/tests/test_certificate_postcondition_replay.py:336-350 (case test_failed_literal_gate_records_real_failure_without_promoting_preparation; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay) with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: real-failed-gate-presented-as-closure.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-11-08-S1",
+              "surface": "literal-replay-outcome",
+              "dimension": "fabricated-success-log",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_semantic_reexecution_rejects_fabricated_success_log"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:320-333 (case test_semantic_reexecution_rejects_fabricated_success_log; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-08-S2",
+              "surface": "literal-replay-outcome",
+              "dimension": "boolean-used-as-zero-exit",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_proof_rejects_substitution[boolean-exit]"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:299-317 (case test_replay_proof_rejects_substitution[boolean-exit]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-08-S3",
+              "surface": "literal-replay-outcome",
+              "dimension": "unbounded-child-process-output",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+                "name": "test_replay_log_is_bounded_during_actual_process_execution"
+              },
+              "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:396-398 (case test_replay_log_is_bounded_during_actual_process_execution; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay); source oracle reviewed, execution required by manifest.test_bindings."
             }
           ]
         }
@@ -1870,6 +2355,110 @@
           "evidence": "entregar-issue/tests/test_terminal_handoff_contract.py:348-377 (case test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child; JUnit classname entregar-issue.tests.test_terminal_handoff_contract). Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
           "evidence_path": "entregar-issue/tests/test_terminal_handoff_contract.py",
           "evidence_sha256": "553c218e1658e0544b94244dc67412b56d4147af3a025b4c0464c8e6d3db1a39"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+            "name": "test_preparation_keeps_unrelated_failed_gate_strict"
+          },
+          "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:143-162 (case test_preparation_keeps_unrelated_failed_gate_strict; JUnit classname entregar-issue.tests.test_handoff_postcondition_records). Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+          "evidence_sha256": "5cbcf2f3f9921011c5d3abbbe6c838990595e06284e99f9531baaecba5bd2d3d"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+            "name": "test_preparation_validators_authenticate_plan_and_keep_final_blocked[remediation]"
+          },
+          "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:259-275 (case test_preparation_validators_authenticate_plan_and_keep_final_blocked[remediation]; JUnit classname entregar-issue.tests.test_handoff_postcondition_records). Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+          "evidence_sha256": "5cbcf2f3f9921011c5d3abbbe6c838990595e06284e99f9531baaecba5bd2d3d"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+            "name": "test_preparation_validators_authenticate_plan_and_keep_final_blocked[lineage]"
+          },
+          "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:259-275 (case test_preparation_validators_authenticate_plan_and_keep_final_blocked[lineage]; JUnit classname entregar-issue.tests.test_handoff_postcondition_records). Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+          "evidence_sha256": "5cbcf2f3f9921011c5d3abbbe6c838990595e06284e99f9531baaecba5bd2d3d"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+            "name": "test_preparation_validators_authenticate_plan_and_keep_final_blocked[rejection]"
+          },
+          "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:259-275 (case test_preparation_validators_authenticate_plan_and_keep_final_blocked[rejection]; JUnit classname entregar-issue.tests.test_handoff_postcondition_records). Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+          "evidence_sha256": "5cbcf2f3f9921011c5d3abbbe6c838990595e06284e99f9531baaecba5bd2d3d"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+            "name": "test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]"
+          },
+          "evidence": "entregar-issue/tests/test_handoff_postcondition_records.py:259-275 (case test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]; JUnit classname entregar-issue.tests.test_handoff_postcondition_records). Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+          "evidence_sha256": "5cbcf2f3f9921011c5d3abbbe6c838990595e06284e99f9531baaecba5bd2d3d"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_certificate_postcondition_replay",
+            "name": "test_literal_replay_uses_only_trusted_runtime_and_clean_environment"
+          },
+          "evidence": "entregar-issue/tests/test_certificate_postcondition_replay.py:373-393 (case test_literal_replay_uses_only_trusted_runtime_and_clean_environment; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay). Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_certificate_postcondition_replay.py",
+          "evidence_sha256": "f484fab6fdd4edd8b51665004bfcc7cce96e074a836e48ec1f28a3e717ea2f07"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "auditar-issue.tests.test_connector_preflight",
+            "name": "test_connector_preflight_accepts_immutable_snapshot"
+          },
+          "evidence": "auditar-issue/tests/test_connector_preflight.py:182-187 (case test_connector_preflight_accepts_immutable_snapshot; JUnit classname auditar-issue.tests.test_connector_preflight). Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "auditar-issue/tests/test_connector_preflight.py",
+          "evidence_sha256": "51dc575657a940979d432494e7c7e7d3e3494abc01bc49405023a037c2528666"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "auditar-issue.tests.test_evidence_profile_preflight",
+            "name": "test_audit_preflight_is_profile_aware"
+          },
+          "evidence": "auditar-issue/tests/test_evidence_profile_preflight.py:9-16 (case test_audit_preflight_is_profile_aware; JUnit classname auditar-issue.tests.test_evidence_profile_preflight). Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "auditar-issue/tests/test_evidence_profile_preflight.py",
+          "evidence_sha256": "ce604612e44c694d4c6bd8a2f49a1f13f9123a677fb11d80887e79b8f6ef6797"
         }
       ],
       "obligation_control_map": [
@@ -1892,6 +2481,31 @@
         {
           "risk_family": "historical-immutability",
           "surface": "material-parent-lineage",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff."
+        },
+        {
+          "risk_family": "authorization",
+          "surface": "trusted-postcondition-base",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff."
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "certificate-preparation-state",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff."
+        },
+        {
+          "risk_family": "historical-immutability",
+          "surface": "prepared-record-transition",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff."
+        },
+        {
+          "risk_family": "public-boundary",
+          "surface": "literal-replay-materialization",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff."
+        },
+        {
+          "risk_family": "semantic-effect",
+          "surface": "literal-replay-outcome",
           "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff."
         }
       ],

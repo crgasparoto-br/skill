@@ -305,6 +305,7 @@ def certify(args: argparse.Namespace) -> None:
     out = args.out.resolve()
     audit = out / ".audit" / "entregar-issue"
     _record_status(out, "blocked", "unverified-requirement-controls", head)
+    (audit / "handoff-ready.json").unlink(missing_ok=True)
     inputs, start, profile, changed, resolved = _resolve_certification_requirements(
         out, args, repo, pr, issue, head, base)
 
@@ -362,6 +363,9 @@ def certify(args: argparse.Namespace) -> None:
                         str(_audit_path(out, "previous-inherited-controls.json"))])
 
     try:
+        if "audit_source_result" in resolved:
+            from certify_handoff_postcondition import prepare_replay_finalization
+            builder = prepare_replay_finalization(args, builder, resolved, head, base, run_script)
         run_script("build_handoff_certificate.py", *builder)
         run_script("validate_handoff_certificate.py",
                    "--certificate", str(audit / "handoff-ready.json"),
@@ -374,7 +378,7 @@ def certify(args: argparse.Namespace) -> None:
                    "--base-ref", args.base_ref, "--head-ref", inputs["head_ref"],
                    *(arg for path in changed for arg in ("--issue-changed-path", path)),
                    "--source-repository-root", str(args.root.resolve()))
-    except subprocess.CalledProcessError:
+    except (ValueError, OSError, subprocess.CalledProcessError):
         (audit / "handoff-ready.json").unlink(missing_ok=True)
         raise
     _record_status(out, "certificate-generated", "publication-and-terminal-guard-still-required", head)

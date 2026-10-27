@@ -6,6 +6,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_connector_preflight.py"
 MATERIAL = "a" * 40
@@ -31,6 +33,56 @@ def run(cert: Path, manifest: Path):
          "--contract-version", "2026-08-20.3"],
         check=False, text=True, stdout=subprocess.PIPE,
     )
+
+
+@pytest.mark.parametrize("phase,inventory", [("preparation", False), (None, True), ("final", True), ({}, False)])
+def test_connector_preflight_rejects_preparation_even_with_legacy_ready_fields(tmp_path, phase, inventory):
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["phase"] = phase
+    if inventory:
+        data["prepared_artifacts"] = data["artifacts"]
+    cert.write_text(json.dumps(data))
+    result = run(cert, manifest)
+    assert result.returncode == 2, result.stdout
+    assert "preparation is not a final handoff" in result.stdout
+
+
+def test_connector_postcondition_requires_materialized_proof_not_semantic_booleans(tmp_path):
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["postcondition_proof"] = {"name": "postcondition/proof.json", "sha256": "f" * 64}
+    cert.write_text(json.dumps(data))
+    claims = json.loads(manifest.read_text())
+    claims["postcondition"] = {"passed": True, "replay_exit_code": 0}
+    manifest.write_text(json.dumps(claims))
+    result = run(cert, manifest)
+    assert result.returncode == 3, result.stdout
+    assert "requires materialized artifacts and trusted Git source" in result.stdout
+
+
+def test_connector_rejects_foreign_base_before_executing_postcondition_verifier(tmp_path, monkeypatch):
+    import importlib.util
+    from types import SimpleNamespace
+
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["identity"]["base_sha"] = "9" * 40
+    data["postcondition_proof"] = {"name": "postcondition/proof.json", "sha256": "f" * 64}
+    cert.write_text(json.dumps(data))
+    called = []
+    monkeypatch.syspath_prepend(str(ROOT / "scripts"))
+    monkeypatch.setitem(sys.modules, "handoff_postcondition", SimpleNamespace(
+        verify_finalization=lambda *args: called.append(args),
+    ))
+    spec = importlib.util.spec_from_file_location("connector_preflight_boundary", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--certificate", str(cert),
+        "--connector-manifest", str(manifest), "--contract-version", "2026-08-20.3",
+        "--artifacts-dir", str(tmp_path), "--source-repository-root", str(tmp_path)])
+    assert module.main() == 2
+    assert not called
 
 
 def artifact(path: str, semantic: dict):

@@ -106,6 +106,8 @@ tecnica foi valida. A etapa de upload `if: always()` preserva
 `handoff-certification-status.json`, o worklist e os logs para remediacao
 no mesmo SHA.
 
+Replay: [pos-condicoes](certificate-postconditions.md).
+
 ## Produtor de evidencias revisadas (Actions)
 
 O caller do repositorio `skill` executa

@@ -28,6 +28,312 @@
       },
       "decision": "create",
       "justification": "The former producer could bind identity tokens but could not supply the raw exact-SHA reached-test evidence required by the existing grounding contract. The helper derives only authenticated runtime fields from explicitly reviewed case mappings and preserves semantic fields/statuses outside the opt-in pending execution marker."
+    },
+    {
+      "path": "entregar-issue/scripts/certificate_replay_io.py",
+      "kind": "file",
+      "decision": "create",
+      "justification": "Bounded regular-file reads and fresh literal-path lifecycle, with component-safe IO, clean trusted runtime environment and bounded subprocess output.",
+      "search": {
+        "queries": [
+          "rg -n 'failed_gate|revalidation|exact-command-replay|allowed_paths|prepared|source_repository' entregar-issue/scripts auditar-issue/scripts -g '*.py'"
+        ],
+        "scope": "Existing remediation, certificate producer/consumers, artifact IO and trusted publication scripts; all reused APIs remain active.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/audit_artifact_io.py",
+            "reason_not_reused": "Reused for logical artifact transport and metadata. It does not provide descriptor-relative no-follow IO, bounded child-process capture or ownership-aware fresh-path cleanup."
+          },
+          {
+            "path": "entregar-issue/scripts/publish_actions_handoff.py",
+            "reason_not_reused": "Retained publisher path checks. Literal replay needs a separately bounded absent-path layout and may never reuse publisher write authority to overwrite original audit inputs."
+          }
+        ]
+      }
+    },
+    {
+      "path": "entregar-issue/scripts/certificate_replay_source.py",
+      "kind": "file",
+      "decision": "create",
+      "justification": "Recognize only literal canonical certificate gates in the immutable source audit and authenticate the original Git source against an externally supplied base before executing anything.",
+      "search": {
+        "queries": [
+          "rg -n 'failed_gate|revalidation|exact-command-replay|allowed_paths|prepared|source_repository' entregar-issue/scripts auditar-issue/scripts -g '*.py'"
+        ],
+        "scope": "Existing remediation, certificate producer/consumers, artifact IO and trusted publication scripts; all reused APIs remain active.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/validate_audit_remediation.py",
+            "reason_not_reused": "Reused for ordinary actionable-item and exact-replay requirements; it does not authenticate executable historical Git bytes or a constrained literal argv."
+          },
+          {
+            "path": "entregar-issue/scripts/require_actions_handoff_certificate.py",
+            "reason_not_reused": "The historical Git blob is reused unchanged for the actual replay; the current consumer gains a final-phase boundary and cannot stand in for the original command source."
+          }
+        ]
+      }
+    },
+    {
+      "path": "entregar-issue/scripts/certificate_replay_inputs.py",
+      "kind": "file",
+      "decision": "create",
+      "justification": "Authenticate the complete immutable preparation inventory, identities, source binding and legacy replay view without creating final certificate authority.",
+      "search": {
+        "queries": [
+          "rg -n 'failed_gate|revalidation|exact-command-replay|allowed_paths|prepared|source_repository' entregar-issue/scripts auditar-issue/scripts -g '*.py'"
+        ],
+        "scope": "Existing remediation, certificate producer/consumers, artifact IO and trusted publication scripts; all reused APIs remain active.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/audit_artifact_io.py",
+            "reason_not_reused": "Reused for existing artifact metadata and shards. A preparation has no terminal artifact map and needs its own full physical inventory and event/source identity checks."
+          },
+          {
+            "path": "entregar-issue/scripts/handoff_postcondition.py",
+            "reason_not_reused": "Reused for final proof-chain consumption; extracting preparation authentication avoids divergent executor/verifier views and keeps the producer/consumer proof code bounded."
+          }
+        ]
+      }
+    },
+    {
+      "path": "entregar-issue/scripts/certificate_postcondition_replay.py",
+      "kind": "file",
+      "decision": "create",
+      "justification": "Execute the unchanged literal command over authenticated prepared inputs, preserve real output and exit, and independently verify the receipt against trusted Git source and semantic reexecution.",
+      "search": {
+        "queries": [
+          "rg -n 'failed_gate|revalidation|exact-command-replay|allowed_paths|prepared|source_repository' entregar-issue/scripts auditar-issue/scripts -g '*.py'"
+        ],
+        "scope": "Existing remediation, certificate producer/consumers, artifact IO and trusted publication scripts; all reused APIs remain active.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/prepare_actions_handoff.py",
+            "reason_not_reused": "Reused as orchestrator. The existing certification step could not execute a postcondition before its own final certificate; a narrowly scoped replay API separates execution facts from orchestration and approval."
+          },
+          {
+            "path": "entregar-issue/scripts/require_actions_handoff_certificate.py",
+            "reason_not_reused": "Reused as frozen historical execution source. Editing it to report success or substituting another command would violate the immutable audit failure."
+          }
+        ]
+      }
+    },
+    {
+      "path": "entregar-issue/scripts/handoff_postcondition_records.py",
+      "kind": "file",
+      "decision": "create",
+      "justification": "Keep a typed blocked preparation and one deterministic transition oracle shared by producer and consumers; only verified receipt-derived closure fields may change.",
+      "search": {
+        "queries": [
+          "rg -n 'failed_gate|revalidation|exact-command-replay|allowed_paths|prepared|source_repository' entregar-issue/scripts auditar-issue/scripts -g '*.py'"
+        ],
+        "scope": "Existing remediation, certificate producer/consumers, artifact IO and trusted publication scripts; all reused APIs remain active.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/validate_audit_remediation.py",
+            "reason_not_reused": "Reused final schema, source inventory and all unrelated replay checks. The separate preparation model preserves null exit/hash without representing a final success."
+          },
+          {
+            "path": "entregar-issue/scripts/validate_audit_escape_lineage.py",
+            "reason_not_reused": "Reused ordinary escape checks and historical identity rules. The transition also cross-binds the original audit finding and preserves all other records."
+          },
+          {
+            "path": "entregar-issue/scripts/handoff_postcondition.py",
+            "reason_not_reused": "Reused authenticated snapshot/path reader. A shared pure record oracle prevents independent producer and verifier implementations from disagreeing on allowed changes."
+          }
+        ]
+      }
+    },
+    {
+      "path": "entregar-issue/scripts/handoff_postcondition.py",
+      "kind": "file",
+      "decision": "create",
+      "justification": "Preserve full prepared snapshots and authenticate the final P-to-replay-to-closure chain, with immutable artifact equality and explicit final-consumer rejection of preparation.",
+      "search": {
+        "queries": [
+          "rg -n 'failed_gate|revalidation|exact-command-replay|allowed_paths|prepared|source_repository' entregar-issue/scripts auditar-issue/scripts -g '*.py'"
+        ],
+        "scope": "Existing remediation, certificate producer/consumers, artifact IO and trusted publication scripts; all reused APIs remain active.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/build_handoff_certificate.py",
+            "reason_not_reused": "Reused all official semantic gates in both phases; the builder delegates snapshot/proof representation rather than accumulating another orchestration model."
+          },
+          {
+            "path": "entregar-issue/scripts/validate_handoff_certificate.py",
+            "reason_not_reused": "Reused certificate identity, artifact, scope and terminal checks; the helper adds only the exact authenticated transition shared with all final consumers."
+          }
+        ]
+      }
+    },
+    {
+      "path": "auditar-issue/scripts/certificate_replay_io.py",
+      "kind": "file",
+      "decision": "create",
+      "search": {
+        "queries": [
+          "rg -n 'canonical|copies|postcondition|semantic_guards|audit_escape' config/shared-files.json"
+        ],
+        "scope": "Canonical shared-file ownership and standalone audit package imports.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/certificate_replay_io.py",
+            "reason_not_reused": "Reused byte for byte through the canonical shared-files generator; the generated local copy is needed because the audit skill is packaged independently."
+          }
+        ]
+      },
+      "justification": "Generated packaging copy of the existing canonical implementation, with no separately authored logic. The shared-file gate enforces byte equality and the dependency closure includes the late-bound escape validator and semantic guards."
+    },
+    {
+      "path": "auditar-issue/scripts/certificate_replay_source.py",
+      "kind": "file",
+      "decision": "create",
+      "search": {
+        "queries": [
+          "rg -n 'canonical|copies|postcondition|semantic_guards|audit_escape' config/shared-files.json"
+        ],
+        "scope": "Canonical shared-file ownership and standalone audit package imports.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/certificate_replay_source.py",
+            "reason_not_reused": "Reused byte for byte through the canonical shared-files generator; the generated local copy is needed because the audit skill is packaged independently."
+          }
+        ]
+      },
+      "justification": "Generated packaging copy of the existing canonical implementation, with no separately authored logic. The shared-file gate enforces byte equality and the dependency closure includes the late-bound escape validator and semantic guards."
+    },
+    {
+      "path": "auditar-issue/scripts/certificate_replay_inputs.py",
+      "kind": "file",
+      "decision": "create",
+      "search": {
+        "queries": [
+          "rg -n 'canonical|copies|postcondition|semantic_guards|audit_escape' config/shared-files.json"
+        ],
+        "scope": "Canonical shared-file ownership and standalone audit package imports.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/certificate_replay_inputs.py",
+            "reason_not_reused": "Reused byte for byte through the canonical shared-files generator; the generated local copy is needed because the audit skill is packaged independently."
+          }
+        ]
+      },
+      "justification": "Generated packaging copy of the existing canonical implementation, with no separately authored logic. The shared-file gate enforces byte equality and the dependency closure includes the late-bound escape validator and semantic guards."
+    },
+    {
+      "path": "auditar-issue/scripts/certificate_postcondition_replay.py",
+      "kind": "file",
+      "decision": "create",
+      "search": {
+        "queries": [
+          "rg -n 'canonical|copies|postcondition|semantic_guards|audit_escape' config/shared-files.json"
+        ],
+        "scope": "Canonical shared-file ownership and standalone audit package imports.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/certificate_postcondition_replay.py",
+            "reason_not_reused": "Reused byte for byte through the canonical shared-files generator; the generated local copy is needed because the audit skill is packaged independently."
+          }
+        ]
+      },
+      "justification": "Generated packaging copy of the existing canonical implementation, with no separately authored logic. The shared-file gate enforces byte equality and the dependency closure includes the late-bound escape validator and semantic guards."
+    },
+    {
+      "path": "auditar-issue/scripts/handoff_postcondition_records.py",
+      "kind": "file",
+      "decision": "create",
+      "search": {
+        "queries": [
+          "rg -n 'canonical|copies|postcondition|semantic_guards|audit_escape' config/shared-files.json"
+        ],
+        "scope": "Canonical shared-file ownership and standalone audit package imports.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/handoff_postcondition_records.py",
+            "reason_not_reused": "Reused byte for byte through the canonical shared-files generator; the generated local copy is needed because the audit skill is packaged independently."
+          }
+        ]
+      },
+      "justification": "Generated packaging copy of the existing canonical implementation, with no separately authored logic. The shared-file gate enforces byte equality and the dependency closure includes the late-bound escape validator and semantic guards."
+    },
+    {
+      "path": "auditar-issue/scripts/handoff_postcondition.py",
+      "kind": "file",
+      "decision": "create",
+      "search": {
+        "queries": [
+          "rg -n 'canonical|copies|postcondition|semantic_guards|audit_escape' config/shared-files.json"
+        ],
+        "scope": "Canonical shared-file ownership and standalone audit package imports.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/handoff_postcondition.py",
+            "reason_not_reused": "Reused byte for byte through the canonical shared-files generator; the generated local copy is needed because the audit skill is packaged independently."
+          }
+        ]
+      },
+      "justification": "Generated packaging copy of the existing canonical implementation, with no separately authored logic. The shared-file gate enforces byte equality and the dependency closure includes the late-bound escape validator and semantic guards."
+    },
+    {
+      "path": "auditar-issue/scripts/validate_audit_escape_lineage.py",
+      "kind": "file",
+      "decision": "create",
+      "search": {
+        "queries": [
+          "rg -n 'canonical|copies|postcondition|semantic_guards|audit_escape' config/shared-files.json"
+        ],
+        "scope": "Canonical shared-file ownership and standalone audit package imports.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/validate_audit_escape_lineage.py",
+            "reason_not_reused": "Reused byte for byte through the canonical shared-files generator; the generated local copy is needed because the audit skill is packaged independently."
+          }
+        ]
+      },
+      "justification": "Generated packaging copy of the existing canonical implementation, with no separately authored logic. The shared-file gate enforces byte equality and the dependency closure includes the late-bound escape validator and semantic guards."
+    },
+    {
+      "path": "auditar-issue/scripts/handoff_semantic_guards.py",
+      "kind": "file",
+      "decision": "create",
+      "search": {
+        "queries": [
+          "rg -n 'canonical|copies|postcondition|semantic_guards|audit_escape' config/shared-files.json"
+        ],
+        "scope": "Canonical shared-file ownership and standalone audit package imports.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/handoff_semantic_guards.py",
+            "reason_not_reused": "Reused byte for byte through the canonical shared-files generator; the generated local copy is needed because the audit skill is packaged independently."
+          }
+        ]
+      },
+      "justification": "Generated packaging copy of the existing canonical implementation, with no separately authored logic. The shared-file gate enforces byte equality and the dependency closure includes the late-bound escape validator and semantic guards."
+    },
+    {
+      "path": "entregar-issue/scripts/certify_handoff_postcondition.py",
+      "kind": "file",
+      "decision": "create",
+      "search": {
+        "queries": [
+          "rg -n 'certify|run_script|postcondition|record_status' entregar-issue/scripts/prepare_actions_handoff.py entregar-issue/scripts/build_handoff_certificate.py entregar-issue/scripts/handoff_postcondition.py"
+        ],
+        "scope": "Existing local Actions certification entrypoint, official builder and shared proof representation.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/prepare_actions_handoff.py",
+            "reason_not_reused": "Reused as the single local certification entrypoint. A focused subordinate orchestrator composes the multi-step preparation/replay/finalization sequence without expanding its existing collector and input-resolution responsibilities."
+          },
+          {
+            "path": "entregar-issue/scripts/build_handoff_certificate.py",
+            "reason_not_reused": "Reused as gate authority for each phase; orchestration invokes it twice and cannot replace semantic validation with a fabricated certificate."
+          },
+          {
+            "path": "entregar-issue/scripts/handoff_postcondition.py",
+            "reason_not_reused": "Reused shared snapshot/proof metadata and consumer contract. Execution and record writes belong only to the local producer, so this orchestration is not copied into the standalone auditor."
+          }
+        ]
+      },
+      "justification": "A local-only orchestrator connects the existing certification entrypoint to recognized immutable-source plans, the real literal executor, verified deterministic record closure and the ordinary final builder. It preserves the source audit, emits no publication itself, and writes closure only after all receipts verify."
     }
   ],
   "references": [],
@@ -40,9 +346,9 @@
       "requirement": "R127-03, R127-06, R127-07; targeted findings A-002/A-003.",
       "search": {
         "queries": [
-          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
         ],
-        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
         "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
         "candidates": [
           {
@@ -74,9 +380,9 @@
       "requirement": "R127-07/R127-09; A-001.",
       "search": {
         "queries": [
-          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
         ],
-        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
         "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
         "candidates": [
           {
@@ -102,9 +408,9 @@
       "requirement": "R127-04/R127-05/R127-10/R127-11 and SPEC-L33; A-004/A-005 and latent source-location finding I-002.",
       "search": {
         "queries": [
-          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
         ],
-        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
         "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
         "candidates": [
           {
@@ -130,9 +436,9 @@
       "requirement": "R127-05/R127-11; A-004 factual evidence production.",
       "search": {
         "queries": [
-          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
         ],
-        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
         "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
         "candidates": [
           {
@@ -164,9 +470,9 @@
       "requirement": "R127-05/R127-11; A-004 producer gap.",
       "search": {
         "queries": [
-          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
         ],
-        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
         "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
         "candidates": [
           {
@@ -192,9 +498,9 @@
       "requirement": "R127-11; A-004 certificate input handoff.",
       "search": {
         "queries": [
-          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
         ],
-        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
         "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
         "candidates": [
           {
@@ -220,9 +526,9 @@
       "requirement": "R127-11; A-004 factual-proof delivery and I-003 exact-material lineage in the trusted publisher.",
       "search": {
         "queries": [
-          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
         ],
-        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
         "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
         "candidates": [
           {
@@ -272,9 +578,9 @@
       "requirement": "R127-11; I-003 terminal lineage authentication within A-004.",
       "search": {
         "queries": [
-          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
         ],
-        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
         "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
         "candidates": [
           {
@@ -299,6 +605,194 @@
       },
       "decision": "extend-existing",
       "justification": "Extend the existing terminal contract suite and its real CLI harness. The new counterexamples deliberately keep different material and current HEAD values and compare snapshot bytes to immutable blobs; existing snapshot-required and historical escape-preservation assertions remain in place.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "auditar-issue/tests/test_connector_preflight.py",
+      "operation": "modified",
+      "scenario": "Preparation and boolean proof claims cannot authorize the connector boundary; an independently observed base mismatch blocks before executable postcondition verification.",
+      "requirement": "R127-11; A-004 and CERTIFICATE-POSTCONDITION-001 consumer authority.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "auditar-issue/tests/test_connector_preflight.py",
+            "case": "test_connector_preflight_accepts_immutable_snapshot",
+            "oracle": "An ordinary immutable certified snapshot remains acceptable.",
+            "comparison": "Retained existing connector fixtures and final semantics; new negatives exercise preparation and executable-source authorization rather than replacing the accepted flow."
+          },
+          {
+            "path": "auditar-issue/tests/test_certified_delivery_preflight.py",
+            "case": "make_certificate",
+            "oracle": "Existing certificate fixture describes the current artifact contract.",
+            "comparison": "Reused contract shape; no test-only certificate authority is introduced."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the established connector suite. The base-substitution counterexample observes that the verifier is never called, and the materialization counterexample refuses boolean claims without bytes.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "auditar-issue/tests/test_evidence_profile_preflight.py",
+      "operation": "modified",
+      "scenario": "The audit preflight forwards the actual material source root; a real source anchor passes while removal of the referenced source file fails.",
+      "requirement": "R127-11; A-004 source checkout and final preflight.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "auditar-issue/tests/test_certified_delivery_preflight.py",
+            "case": "make_certificate / write_packet / run",
+            "oracle": "Existing certified delivery fixtures and CLI harness validate actual preflight inputs.",
+            "comparison": "Reused directly; the extension changes the supplied source checkout and observes the real anchor gate rather than asserting command-string presence alone."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the compact profile suite and reuse the current preflight fixture. Preserve the original profile check while adding a behavioral positive/negative source-root round trip.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_certificate_postcondition_replay.py",
+      "operation": "added",
+      "scenario": "The original frozen gate executes through the literal argv and trusted interpreter in fresh paths; source/base substitution, hostile path/runtime state, altered proof and real failure cannot manufacture success.",
+      "requirement": "R127-11; A-004 factual literal replay and CERTIFICATE-POSTCONDITION-001.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_audit_remediation_gate_replay.py",
+            "case": "audit / ledger / test_substitute_check_cannot_close_failed_gate",
+            "oracle": "The existing ledger validator requires the original command and real successful replay fields.",
+            "comparison": "Reused source fixture; it did not actually execute the historical gate or prove bounded filesystem/runtime behavior."
+          },
+          {
+            "path": "entregar-issue/tests/test_codebase_grounding.py",
+            "case": "git",
+            "oracle": "Real synthetic Git commits anchor material and historical source bytes.",
+            "comparison": "Reused to avoid a mocked Git authority model."
+          },
+          {
+            "path": "entregar-issue/scripts/require_actions_handoff_certificate.py",
+            "case": "verify",
+            "oracle": "The historical verifier checks prepared candidate identity and requires publication/independent audit to remain outstanding.",
+            "comparison": "The exact historical bytes are pinned as readable test data inside the executed pytest module; the current consumer intentionally rejects preparation and cannot replace those original bytes."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "A focused real-process suite is needed for the new executor. The initially separate unversioned text fixture was consolidated into this executed pytest module with the same verified SHA-256 and unchanged real Git/replay behavior, so execution evidence points to a file actually reached by pytest. No test-path classification, gate or binder exception is used.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+      "operation": "added",
+      "scenario": "A typed blocked preparation preserves source/history/null facts; the single closure oracle changes only verified receipt fields, and every CLI retains strict final behavior.",
+      "requirement": "R127-11; A-004 deterministic P-to-final transition and source-bound rejection closure.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_audit_remediation_gate_replay.py",
+            "case": "audit / ledger",
+            "oracle": "Final replay equality and source-bound ledger structure remain mandatory.",
+            "comparison": "Reused fixtures and official validate_ledger; unrelated failed gates remain strict in preparation."
+          },
+          {
+            "path": "entregar-issue/tests/test_independent_rejection_closure.py",
+            "case": "escape / learning",
+            "oracle": "Rejection identity and cumulative escape representations are explicit.",
+            "comparison": "Reused fixture shapes; new tests bind blocked postconditions and learning to the same immutable audit bytes."
+          },
+          {
+            "path": "entregar-issue/tests/test_certificate_postcondition_replay.py",
+            "case": "make_replay_case",
+            "oracle": "The frozen gate runs over real Git/source/event inputs.",
+            "comparison": "Reused for CLI authentication and real finalization rather than a mocked validated receipt."
+          },
+          {
+            "path": "entregar-issue/tests/test_handoff_certificate_contract.py",
+            "case": "build_valid_delivery",
+            "oracle": "The complete synthetic critical evidence set passes official semantic gates.",
+            "comparison": "Reused by the readiness test so preparation cannot skip the other gates."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "A dedicated transition suite observes immutable records before/after and uses real CLI gates and replay for authentication. Pure receipt fixtures are confined to transition-oracle unit controls and never represented as execution evidence.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_handoff_postcondition.py",
+      "operation": "added",
+      "scenario": "Complete critical targeted remediation traverses the actual builder preparation, literal historical gate, deterministic closure, strict final builder and final consumers; substitutions and authority laundering fail.",
+      "requirement": "R127-11; A-004 end-to-end acyclic certification and CERTIFICATE-POSTCONDITION-001.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow, official collector/certification, real replay and independent audit consumer test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_handoff_certificate_contract.py",
+            "case": "build_valid_delivery",
+            "oracle": "Official certificate gates accept a complete synthetic critical dossier.",
+            "comparison": "Reused without weakening semantic artifacts or replacing the official builder."
+          },
+          {
+            "path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+            "case": "test_certification_requires_real_closure_and_calls_official_gates",
+            "oracle": "Mandatory artifacts and gates are passed by the certification entrypoint.",
+            "comparison": "Retained; the new full integration executes the gates and proves the two-phase ordering and output identity."
+          },
+          {
+            "path": "entregar-issue/tests/test_certificate_postcondition_replay.py",
+            "case": "make_replay_case",
+            "oracle": "A real frozen trusted Git gate executes the literal command.",
+            "comparison": "Reused for source, runtime and input proof; the complete integration replaces its minimal executor-only preparation with the official builder preparation."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "Use one integration module composing existing delivery, rejection and real replay fixtures. It verifies current consumers plus the historical view with all semantic artifacts retained; it does not create independent approval or assert publication of the real PR.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",
