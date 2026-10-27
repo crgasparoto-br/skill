@@ -587,4 +587,5 @@ def test_enabled_session_mode_preserves_material_sha_without_result_child(certif
     monkeypatch.setattr(publisher, "session_mode_active", lambda repo, base: True)
     assert publisher.publish(harness.event) is None
     assert harness.pushed is None
-    assert harness.validators == []
+    assert harness.validators == ["validate_handoff_certificate.py", "validate_codebase_grounding.py",
+                                  "check_code_growth.py"]
