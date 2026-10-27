@@ -123,3 +123,21 @@ explicita para repositorios consumidores, nunca pela autodeteccao.
 
 Esse ajuste e condicao de M2 para que PRs de release contra `main`
 nao sejam interpretadas como PRs contra `develop`.
+
+
+### Recuperacao de checks e staging de resultados
+
+No reprocessamento de comentarios, uma tentativa de reabrir um check que
+o GitHub ja registrou como `completed` pode conservar o estado terminal.
+O emissor exige identidade exata do check antigo e, somente nessa condicao,
+publica novo check `in_progress` para impedir que o resultado anterior
+permaneça indevidamente como o mais recente. Mudanca de identidade bloqueia
+sem fallback. O novo check depende de revisao real e evidencias: nunca e
+marcado como `success` pela ausencia de review.
+
+O publicador da `main` usa `git add -f --` exclusivamente nos caminhos
+autorizados pelo certificado, porque `.audit/` esta corretamente no
+`.gitignore` do repositorio. Nao se modifica o ignore global nem se
+aceitam caminhos de codigo fora da allowlist. A CI de `main` isola
+`GITHUB_REF_NAME` e `GITHUB_ACTIONS` nos testes de versionamento com
+repositorio sintetico; o gate de release sobre o checkout real continua ativo.
