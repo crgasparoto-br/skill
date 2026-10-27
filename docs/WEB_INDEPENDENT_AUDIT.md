@@ -109,3 +109,17 @@ O coletor de handoff suporta as duas bases. O modo de sessao exige certificado e
 Antes de ativar o required check, comprovar em execucao real o caso positivo e os negativos de adulteracao, exclusao de parecer, mudanca de issue, base/HEAD e permissao. Os testes automatizados exercitam a implementacao, mas **nao sao evidencia de que um auditor real revisou esta PR**.
 
 A issue permanece aberta ate completar a certificacao da entrega e a adocao operacional. O implementador desta migracao nao publica o proprio parecer como revisao separada. A PR nao e declarada aprovada por CI verde, pacote neutro ou recibo de pre-auditoria.
+
+### Publicador confiavel com duas branches
+
+O publicador do workflow `Publish certified handoff (trusted)` executa
+exclusivamente codigo da `main` e, quando nenhum `--base-ref` explicito
+e fornecido, seleciona `develop` ou `main` por meio do registro
+**autenticado** da PR no GitHub, nao por campos manipulaveis do evento.
+Depois, `target_from_event` revalida estado, SHA, origem, path do
+workflow e a base selecionada; eventos antigos ou alterados bloqueiam.
+Bases diferentes sao permitidas apenas na interface de configuracao
+explicita para repositorios consumidores, nunca pela autodeteccao.
+
+Esse ajuste e condicao de M2 para que PRs de release contra `main`
+nao sejam interpretadas como PRs contra `develop`.

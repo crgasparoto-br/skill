@@ -119,7 +119,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "As duas rotas usam runner ubuntu-latest do GitHub e GITHUB_TOKEN; o parecer vem do ChatGPT web. Nao ha chamada de IA, segredo de IA, infraestrutura externa, API de merge ou rulesets nessas rotas. O shell passa campos de evento como dados e propaga rejeicao em vez de transformar coleta em aprovacao."
+      "rationale": "As duas rotas usam runner ubuntu-latest do GitHub e GITHUB_TOKEN; o parecer vem do ChatGPT web. Nao ha chamada de IA, segredo de IA, infraestrutura externa, API de merge ou rulesets nessas rotas. O shell passa campos de evento como dados e propaga rejeicao em vez de transformar coleta em aprovacao. O publicador confiavel passa a selecionar develop/main a partir da PR autenticada; testes distinguem main valido de base nao permitida e evento falso. Homologacao em origin confiavel permanece pendente."
     },
     "2ba444ea6b713643184ce67b4999081e273563eb7c78e78bcbd7c771e1ac1416": {
       "disposition": "covered",

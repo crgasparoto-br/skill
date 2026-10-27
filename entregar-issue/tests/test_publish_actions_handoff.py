@@ -443,3 +443,38 @@ def test_publisher_rejects_untrusted_execution_before_publication(certified_publ
     assert reason.lower() in details.lower(), details
     assert not harness.staged and harness.pushed is None
     assert "validate_codebase_grounding.py" not in harness.validators
+
+
+def test_default_publisher_selects_main_from_trusted_api(monkeypatch):
+    event = {"repository": {"full_name": "team/skill"}, "workflow_run": {
+        "status": "completed", "conclusion": "success", "event": "pull_request",
+        "path": ".github/workflows/handoff-evidence.yml", "head_sha": HEAD,
+        "pull_requests": [{"number": 113, "base": {"ref": "develop"}}]}}
+    monkeypatch.setattr(publisher, "api_get", lambda *_: {
+        "state": "open", "head": {"sha": HEAD, "ref": "feat/127",
+                                 "repo": {"full_name": "team/skill"}},
+        "base": {"sha": BASE, "ref": "main"}})
+    selected = publisher.trusted_default_base_ref(event, ".github/workflows/handoff-evidence.yml")
+    assert selected == "main"  # The spoofed event says develop, but the API is authoritative.
+    assert publisher.target_from_event(event, selected) == ("team/skill", 113, HEAD, BASE)
+
+
+def test_default_publisher_rejects_unsupported_base_before_publication(monkeypatch):
+    event = {"repository": {"full_name": "team/skill"}, "workflow_run": {
+        "status": "completed", "conclusion": "success", "event": "pull_request",
+        "path": ".github/workflows/handoff-evidence.yml", "head_sha": HEAD,
+        "pull_requests": [{"number": 113}]}}
+    monkeypatch.setattr(publisher, "api_get", lambda *_: {
+        "base": {"sha": BASE, "ref": "integration"}})
+    with pytest.raises(ValueError, match="must be develop or main"):
+        publisher.trusted_default_base_ref(event, ".github/workflows/handoff-evidence.yml")
+
+
+def test_default_publisher_rejects_untrusted_run_without_api_access(monkeypatch):
+    event = {"repository": {"full_name": "team/skill"}, "workflow_run": {
+        "status": "completed", "conclusion": "failure", "event": "pull_request",
+        "path": ".github/workflows/handoff-evidence.yml", "head_sha": HEAD,
+        "pull_requests": [{"number": 113}]}}
+    monkeypatch.setattr(publisher, "api_get", lambda *_: pytest.fail("must not access API"))
+    with pytest.raises(ValueError, match="authenticated successful PR"):
+        publisher.trusted_default_base_ref(event, ".github/workflows/handoff-evidence.yml")

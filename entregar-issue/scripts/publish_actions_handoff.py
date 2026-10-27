@@ -81,6 +81,26 @@ def target_from_event(event: dict, base_ref: str = "develop",
     return repo, pr_number, head, base
 
 
+def trusted_default_base_ref(event: dict, producer_path: str) -> str:
+    """Select only a trusted supported base, not a caller-provided event claim."""
+    run = event.get("workflow_run") or {}
+    repo = (event.get("repository") or {}).get("full_name")
+    prs = run.get("pull_requests") or []
+    if (not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", str(repo))
+            or not re.fullmatch(r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml", producer_path)
+            or run.get("status") != "completed" or run.get("conclusion") != "success"
+            or run.get("event") != "pull_request" or run.get("path") != producer_path
+            or not HEX_SHA.fullmatch(str(run.get("head_sha")))
+            or not isinstance(prs, list) or len(prs) != 1
+            or type(prs[0].get("number")) is not int or prs[0]["number"] < 1):
+        block("only one authenticated successful PR evidence event may select the default base")
+    pr = api_get(repo, f"pulls/{prs[0]['number']}")
+    base_ref = (pr.get("base") or {}).get("ref")
+    if base_ref not in {"develop", "main"}:
+        block("trusted publisher default base must be develop or main")
+    return base_ref
+
+
 def allowed_paths(cert: dict) -> list[str]:
     from handoff_postcondition import require_final_phase
     require_final_phase(cert)
@@ -293,11 +313,13 @@ def check_material_ci(repository: str, head: str, pr_number: int,
         block("required material PR workflow run is not terminal success")
 
 
-def publish(event_path: Path, *, base_ref: str = "develop",
+def publish(event_path: Path, *, base_ref: str | None = None,
             producer_path: str = ".github/workflows/handoff-evidence.yml",
             required_checks: set[str] | None = None) -> str:
     event = json.loads(event_path.read_text(encoding="utf-8"))
-    repo, pr_number, head, base = target_from_event(event, base_ref, producer_path)
+    selected_base = trusted_default_base_ref(event, producer_path) if base_ref is None else base_ref
+    repo, pr_number, head, base = target_from_event(event, selected_base, producer_path)
+    base_ref = selected_base
     run_id = event["workflow_run"]["id"]
     name = f"handoff-evidence-{pr_number}-{head}"
     listed = api_get(repo, f"actions/runs/{run_id}/artifacts?per_page=100")
@@ -374,7 +396,7 @@ def publish(event_path: Path, *, base_ref: str = "develop",
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True, type=Path)
-    parser.add_argument("--base-ref", default="develop")
+    parser.add_argument("--base-ref", default=None)
     parser.add_argument("--producer-path", default=".github/workflows/handoff-evidence.yml")
     parser.add_argument("--required-checks-csv", default="")
     args = parser.parse_args()

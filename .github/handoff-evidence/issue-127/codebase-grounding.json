@@ -39,6 +39,40 @@
         "status": "unknown",
         "reason": "awaiting-exact-SHA-JUnit"
       }
+    },
+    {
+      "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+      "operation": "modified",
+      "scenario": "Default-branch trusted publisher derives the live PR base from authenticated GitHub metadata, accepts main, and rejects unsupported base or invalid workflow run before publication.",
+      "requirement": "R127-09 and R127-10: both protected bases must be supported by trusted GitHub Actions without running PR code with write credentials.",
+      "search": {
+        "queries": [
+          "rg -n 'def publish|target_from_event|test_trusted_publisher_accepts_configured' entregar-issue/scripts/publish_actions_handoff.py entregar-issue/tests/test_publish_actions_handoff.py"
+        ],
+        "scope": "Reused current trusted publisher and existing publication tests; extended to authenticated main base resolution.",
+        "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+            "case": "test_trusted_publisher_accepts_configured_producer_and_base",
+            "oracle": "Explicit configured base integration remains supported for consumers; default base needs protected branch selection.",
+            "comparison": "Retain existing explicit-base test and add positive main, negative unsupported base and invalid-event checks."
+          },
+          {
+            "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+            "case": "test_first_terminal_handoff_validates_material_parent_absence",
+            "oracle": "Terminal guard checks result-only lineage but does not select main/develop via GitHub API.",
+            "comparison": "Reuse published result and ledger checks without duplicating terminal guard tests."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Trusted publication has an existing dedicated test module and target_from_event guard; extend its entrypoint coverage with no alternative publisher.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
     }
   ]
 }
