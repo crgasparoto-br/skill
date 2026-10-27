@@ -155,6 +155,18 @@ permitidos apenas sem conclusao. Estados `completed/success`,
 identidades divergentes sao sempre recusados. O diagnóstico expõe apenas
 a classe do estado, nao corpo de API, token ou entrada do operador.
 
+
+### Read-back pos-push do publicador confiavel
+
+O GitHub pode devolver temporariamente o HEAD anterior da PR depois de um
+`git push` concluido, enquanto os metadados de commit ja estao visiveis.
+O publicador repete a leitura por um numero limitado de tentativas com
+espera curta. O resultado so e aceito se a PR estiver aberta, na mesma base,
+com o filho `result-only` exato, parent material exato e **todos** os arquivos
+exatamente na allowlist. Um terceiro SHA, base alterada ou timeout bloqueiam
+a publicacao. O guard terminal de pos-publicacao continua sendo executado
+apos a leitura confirmada; a espera nao concede nenhuma aprovacao.
+
 ## Piloto de homologacao operacional M2
 
 Uma PR dedicada a esta etapa deve provar, com fontes autenticadas, o check

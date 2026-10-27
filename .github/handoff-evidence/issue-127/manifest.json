@@ -5,14 +5,14 @@
   "pull_request_number": 134,
   "base_ref": "develop",
   "head_ref": "chore/127-session-review-live-pilot",
-  "work_item_start_sha": "3f7b574201c19662425cc11881573f241f9ac9cf",
+  "work_item_start_sha": "bd66edac00779260750789712062a5128932d04a",
   "evidence_profile": "critical",
-  "risk_justification": "Este piloto documental exercita o mecanismo de revisão por sessão exata e seus efeitos de autorização; requer evidências autenticadas e negativas reais de edição, exclusão, rejeição e mudança de alvo.",
+  "risk_justification": "Pilot of operator-attested review against current trusted develop, including authenticated exact-SHA technical certificate, operator permission, immutable policy and negative revocation checks; no independent approval inferred.",
   "audit_history": "verified-no-rejection",
   "audit_history_evidence": "A PR #134 é piloto novo sem rejeição independente de auditor contra seu HEAD material. Evidências de #128/#129/#132 são históricas e não são confundidas com parecer do novo piloto.",
-  "review_scope": "Somente extensão documental para plano M2, derivada da base develop após correção de runtime #132. M1 já possui certificado histórico, mas este piloto exige certificado próprio do SHA material, pacote neutro e revisão realmente separada; R127-12/13 não encerrados.",
+  "review_scope": "Pilot PR #134 is reconciled by an explicit non-rewriting merge of trusted develop into its feature branch, preserving the documentary pilot change and updating the local issue start to the new develop. The current inherited controls from #136 are used as immutable base evidence, not as fresh audit approval. M2 still needs real separate-session review and administrative ruleset migration.",
   "artifact_sha256": {
-    "reviewed-closure.json": "970cd285a5f52e84d15eb7c4a4702783012b8ecf347ad6db711dac37d2e6089e",
+    "reviewed-closure.json": "08ad7ecbd85ef7bf27b215f5f88d9ad78ad5d6448a2c5946bfcd1a0ea38eb71c",
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
     "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a"

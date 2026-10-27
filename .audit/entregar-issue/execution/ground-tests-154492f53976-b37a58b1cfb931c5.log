@@ -1,0 +1,9 @@
+HEAD: 154492f53976410a08f4998f71dc4467e9315ef5
+COMMAND: python -m pytest -vv --junitxml="$EVIDENCE_DIR/pytest-exact-head.xml"
+EXIT_CODE: 0
+SOURCE_SHA256: test-execution-facts.json cfef67d4fea569a3e80b39e4469922ce59bccf339e611b4cee06a31f9c84946c
+SOURCE_SHA256: pytest-exact-head.log a8fd10f070174e0c15ba5a726d262662ccd395cd0aa52fd261a49e6c98b0c345
+SOURCE_SHA256: pytest-exact-head.xml 9a6febbb41c74a2c260e7d2ed8814ae73211a38fe14ec25794d23d4b1c800591
+REACHED: tests/test_session_review_workflows.py::test_completed_check_that_cannot_reopen_creates_new_pending_check
+JUNIT: tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check
+RESULT: PASSED

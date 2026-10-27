@@ -140,3 +140,51 @@ def test_reopen_response_identity_drift_is_not_recovered_by_new_check(monkeypatc
     with pytest.raises(ValueError, match="existing check identity changed"):
         runner.begin_check("owner/repo", sha, {}, previous)
     assert writes == ["PATCH"]
+
+
+@pytest.mark.parametrize(("status", "conclusion"), [
+    ("queued", None),
+    ("in_progress", None),
+    ("completed", "failure"),
+])
+def test_begin_check_accepts_only_non_authorizing_github_states(monkeypatch, status, conclusion):
+    head = "a" * 40
+    previous = [{"id": 11, "head_sha": head, "name": runner.CHECK_NAME,
+                 "status": "completed", "conclusion": "failure"}]
+    calls = []
+
+    def api(path, *, method="GET", data=None):
+        calls.append(method)
+        if method == "PATCH":
+            return dict(previous[0])
+        if method == "POST":
+            return {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
+                    "status": status, "conclusion": conclusion}
+        raise AssertionError("unexpected call")
+
+    monkeypatch.setattr(runner, "api", api)
+    assert runner.begin_check("owner/repo", head, {}, previous) == 12
+    assert calls == ["PATCH", "POST"]
+
+
+@pytest.mark.parametrize(("status", "conclusion"), [
+    ("completed", "success"),
+    ("completed", "neutral"),
+    ("completed", "skipped"),
+    ("completed", None),
+    ("in_progress", "success"),
+    ("queued", "success"),
+    ("in_progress", "failure"),
+    ("waiting", None),
+])
+def test_begin_check_rejects_states_that_could_bypass_review(monkeypatch, status, conclusion):
+    head = "a" * 40
+
+    def api(path, *, method="GET", data=None):
+        assert method == "POST"
+        return {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
+                "status": status, "conclusion": conclusion}
+
+    monkeypatch.setattr(runner, "api", api)
+    with pytest.raises(ValueError, match="fail-closed state not confirmed"):
+        runner.begin_check("owner/repo", head, {}, [])

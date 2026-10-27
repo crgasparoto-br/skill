@@ -1,0 +1,51 @@
+{
+  "schema_version": 2,
+  "subject_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+  "base_sha": "3f7b574201c19662425cc11881573f241f9ac9cf",
+  "creations": [],
+  "references": [],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "tests/test_session_review_workflows.py",
+      "operation": "modified",
+      "scenario": "Authentic GitHub Checks API can return a completed/failure check during session-review startup. Continue only for exact-target non-authorizing statuses, rejecting completed/success, neutral, skipped, premature conclusion, malformed state or identity drift.",
+      "requirement": "R127-06 and R127-07: session-review exact SHA state transition must remain fail-closed while processing a real operator review or its absence.",
+      "search": {
+        "queries": [
+          "rg -n 'begin_check|test_begin_check_|test_completed_check_' scripts/verify_session_review.py tests/test_session_review_workflows.py"
+        ],
+        "scope": "Existing GitHub check writer and workflow test module; extend the current tests rather than creating duplicate runners.",
+        "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
+        "candidates": [
+          {
+            "path": "tests/test_session_review_workflows.py",
+            "case": "test_completed_check_that_cannot_reopen_creates_new_pending_check",
+            "oracle": "Completed failure cannot authorize; a new write may remain blocking while review and technical evidence are still being inspected.",
+            "comparison": "Reuse the existing workflow-runner test and add safe/fail-unsafe enumerated status outcomes to the same module."
+          },
+          {
+            "path": "tests/test_session_review_runner.py",
+            "case": "test_evaluate_publishes_failure_when_journal_is_unreadable",
+            "oracle": "Existing unit contract proves failure publication and journal state but not alternate GitHub POST statuses.",
+            "comparison": "Preserve original journal regressions, extend the workflow suite only for the state-transport boundary."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Existing test discovery, workflow API mocks and identity checks are retained; the new discriminator comes from a failure observed in real GitHub-hosted Actions for PR #134.",
+      "disposition": "keep",
+      "verification": {
+        "status": "passed",
+        "command": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "exit_code": 0,
+        "subject_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "reached_tests": [
+          "tests/test_session_review_workflows.py::test_completed_check_that_cannot_reopen_creates_new_pending_check"
+        ],
+        "evidence_path": ".audit/entregar-issue/execution/ground-tests-154492f53976-b37a58b1cfb931c5.log",
+        "evidence_sha256": "b37a58b1cfb931c56d4f01bf1fc4376cce0e9ebe24de12f34ff99f78841b5c5f"
+      }
+    }
+  ]
+}

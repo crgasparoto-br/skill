@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import tempfile
+import time
 import urllib.request
 from pathlib import Path, PurePosixPath
 
@@ -313,6 +314,40 @@ def check_material_ci(repository: str, head: str, pr_number: int,
         block("required material PR workflow run is not terminal success")
 
 
+
+def ensure_historical_audit_unchanged(source: Path, base: str, head: str,
+                                      authorized: list[str]) -> None:
+    """Confirm that noncurrent audit files are exactly inherited from trusted base."""
+    current = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
+    original = set(command("git", "ls-tree", "-r", "--name-only", base,
+                           "--", PREFIX, cwd=source).splitlines())
+    modified = set(command("git", "diff", "--name-only", base, head,
+                           "--", PREFIX, cwd=source).splitlines())
+    if (current - set(authorized)) - original or modified - set(authorized):
+        block("material HEAD has changed audit paths outside certificate scope")
+
+
+def confirm_published_result(repo: str, number: int, head: str, base: str,
+                             published: str, changed: list[str]) -> None:
+    """Reconcile eventual GitHub PR/commit visibility without authorizing drift."""
+    delays = (0.5, 1.0, 2.0, 4.0, 8.0)
+    for index in range(len(delays) + 1):
+        observed = api_get(repo, f"pulls/{number}")
+        metadata = api_get(repo, f"commits/{published}")
+        state, current = observed.get("state"), (observed.get("head") or {}).get("sha")
+        current_base = (observed.get("base") or {}).get("sha")
+        parents = [p.get("sha") for p in metadata.get("parents") or []]
+        files = {item.get("filename") for item in metadata.get("files") or []}
+        if (state == "open" and current == published and current_base == base
+                and parents == [head] and files == set(changed)):
+            return
+        if state != "open" or current not in {head, published} or current_base != base:
+            block("postpublication PR changed to an unexpected target")
+        if index < len(delays):
+            time.sleep(delays[index])
+    block("fresh postpublication GitHub read did not confirm terminal identity after bounded retries")
+
+
 def publish(event_path: Path, *, base_ref: str | None = None,
             producer_path: str = ".github/workflows/handoff-evidence.yml",
             required_checks: set[str] | None = None) -> str:
@@ -356,9 +391,7 @@ def publish(event_path: Path, *, base_ref: str | None = None,
         check_material_ci(repo, head, pr_number, required_checks)
 
         material_parent = material_parent_snapshots(source, temp, head)
-        existing = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
-        if existing - set(paths):
-            block("material HEAD contains stale audit paths outside the certificate allowlist")
+        ensure_historical_audit_unchanged(source, base, head, paths)
         for path in paths:
             dest = source / path
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -384,12 +417,7 @@ def publish(event_path: Path, *, base_ref: str | None = None,
         if fresh.get("state") != "open" or fresh["head"]["sha"] != head or fresh["base"]["sha"] != base:
             block("PR moved before the atomic fast-forward publication")
         command("git", "push", "origin", f"{published}:refs/heads/{branch}", cwd=source)
-        observed = api_get(repo, f"pulls/{pr_number}")
-        published_metadata = api_get(repo, f"commits/{published}")
-        if (observed.get("state") != "open" or observed["head"]["sha"] != published
-                or [p.get("sha") for p in published_metadata.get("parents") or []] != [head]
-                or {f["filename"] for f in published_metadata.get("files") or []} != set(changed)):
-            block("fresh postpublication GitHub read failed the terminal identity check")
+        confirm_published_result(repo, pr_number, head, base, published, changed)
         command(*terminal_args(cert, repo, pr_number, head, base, published,
                                changed, source / PREFIX, branch, material_parent, base_ref), cwd=trusted)
         return published
