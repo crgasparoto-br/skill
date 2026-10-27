@@ -367,6 +367,16 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         refreshed, _ = target(repo, number, issue_number, (ROOT / POLICY_PATH).read_bytes())
         require(refreshed == initial == packet["identity"], "target changed before publication")
         require(authorized_operator(repo, selected["user"]), "reviewer permission changed")
+        # Repeat the mutable-review check after every other revalidation. A review
+        # edited, deleted, rejected or superseded while the target/evidence checks
+        # were running must never leave a stale success behind.
+        final_review = api(f"/repos/{repo}/issues/comments/{selected['id']}")
+        require(final_review == selected, "review changed during final publication revalidation")
+        final_selected = latest_review(
+            pages(repo, f"issues/{number}/comments"), policy, watermark=selected["id"]
+        )
+        require(final_selected == selected,
+                "a newer review superseded this approval during final publication revalidation")
         summary = "Verified evidence-bound session review. Session separation is operator-attested, NOT third-party identity."
         publish(repo, head, "success", summary, receipt, os.environ.get("GITHUB_RUN_ID", ""), check_id)
         print(summary)
