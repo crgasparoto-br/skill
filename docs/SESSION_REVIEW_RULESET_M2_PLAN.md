@@ -23,7 +23,8 @@ Ele nao executa PUT/PATCH, altera regras, registra parecer nem faz merge.
     python3 scripts/plan_session_ruleset_m2.py --repo crgasparoto-br/skill --branch main --ruleset-id 24821457
 
 A proposta exige PR, strict status checks, protecao de exclusao e force-push,
-check tecnico e origem GitHub Actions (app 15368). Somente o check
+checks tecnicos, autorizacao offline, certificado exact-SHA e origem
+GitHub Actions (app 15368) em ambas as branches. Somente o check
 legado Verify independent audit (exact SHA) pode ser retirado e trocado
 pelo check de sessao; os demais contextos e regras sao preservados.
 Propoe 0 reviews humanos e enforcement active para ambas as branches.
