@@ -18,7 +18,7 @@
         "classname": "tests.test_session_review_runner",
         "name": "test_evaluate_rejects_changed_initial_identity[head_sha]"
       },
-      "evidence": "tests/test_session_review_runner.py:278-287 (case test_evaluate_rejects_changed_initial_identity[head_sha]; JUnit classname tests.test_session_review_runner). O runner captura identidade inicial e compara pacote preparado e leitura final contra ela. Repo/PR/issue e todos os SHAs/digests do parecer devem coincidir com o pacote autenticado. O check continua vinculado ao HEAD inicial; drift bloqueia e nao escreve pacote apto. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+      "evidence": "tests/test_session_review_runner.py:310-319 (case test_evaluate_rejects_changed_initial_identity[head_sha]; JUnit classname tests.test_session_review_runner). O runner captura identidade inicial e compara pacote preparado e leitura final contra ela. Repo/PR/issue e todos os SHAs/digests do parecer devem coincidir com o pacote autenticado. O check continua vinculado ao HEAD inicial; drift bloqueia e nao escreve pacote apto. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
       "evidence_path": "tests/test_session_review_runner.py",
       "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
       "id": "INHERITED-R127-03",
@@ -27,7 +27,7 @@
       "dimension": "initial-head-drift",
       "failure_mode": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial.",
       "plausible_wrong_implementation": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial.",
-      "procedure": "Execute the pytest case identified by junit_case and manifest.test_bindings at tests/test_session_review_runner.py:278-287 (case test_evaluate_rejects_changed_initial_identity[head_sha]; JUnit classname tests.test_session_review_runner) with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: initial-head-drift.",
+      "procedure": "Execute the pytest case identified by junit_case and manifest.test_bindings at tests/test_session_review_runner.py:310-319 (case test_evaluate_rejects_changed_initial_identity[head_sha]; JUnit classname tests.test_session_review_runner) with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: initial-head-drift.",
       "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
       "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
       "sibling_cases": [
@@ -40,7 +40,7 @@
             "classname": "tests.test_session_review_runner",
             "name": "test_evaluate_rejects_changed_initial_identity[issue_sha256]"
           },
-          "evidence": "tests/test_session_review_runner.py:278-287 (case test_evaluate_rejects_changed_initial_identity[issue_sha256]; JUnit classname tests.test_session_review_runner); source oracle reviewed, execution required by manifest.test_bindings."
+          "evidence": "tests/test_session_review_runner.py:310-319 (case test_evaluate_rejects_changed_initial_identity[issue_sha256]; JUnit classname tests.test_session_review_runner); source oracle reviewed, execution required by manifest.test_bindings."
         },
         {
           "id": "NEG-R127-03-01-S2",
@@ -51,7 +51,7 @@
             "classname": "tests.test_session_review_runner",
             "name": "test_evaluate_rejects_changed_initial_identity[policy_sha256]"
           },
-          "evidence": "tests/test_session_review_runner.py:278-287 (case test_evaluate_rejects_changed_initial_identity[policy_sha256]; JUnit classname tests.test_session_review_runner); source oracle reviewed, execution required by manifest.test_bindings."
+          "evidence": "tests/test_session_review_runner.py:310-319 (case test_evaluate_rejects_changed_initial_identity[policy_sha256]; JUnit classname tests.test_session_review_runner); source oracle reviewed, execution required by manifest.test_bindings."
         }
       ],
       "attack_control_id": "NEG-R127-03-01",
@@ -66,7 +66,7 @@
         "classname": "tests.test_session_review_runner",
         "name": "test_evaluate_preserves_revocation_across_pages_and_reuse"
       },
-      "evidence": "tests/test_session_review_runner.py:311-322 (case test_evaluate_preserves_revocation_across_pages_and_reuse; JUnit classname tests.test_session_review_runner). O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+      "evidence": "tests/test_session_review_runner.py:343-354 (case test_evaluate_preserves_revocation_across_pages_and_reuse; JUnit classname tests.test_session_review_runner). O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
       "evidence_path": "tests/test_session_review_runner.py",
       "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
       "id": "INHERITED-R127-06",
@@ -75,7 +75,7 @@
       "dimension": "watermark-beyond-first-page",
       "failure_mode": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
       "plausible_wrong_implementation": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
-      "procedure": "Execute the pytest case identified by junit_case and manifest.test_bindings at tests/test_session_review_runner.py:311-322 (case test_evaluate_preserves_revocation_across_pages_and_reuse; JUnit classname tests.test_session_review_runner) with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: watermark-beyond-first-page.",
+      "procedure": "Execute the pytest case identified by junit_case and manifest.test_bindings at tests/test_session_review_runner.py:343-354 (case test_evaluate_preserves_revocation_across_pages_and_reuse; JUnit classname tests.test_session_review_runner) with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: watermark-beyond-first-page.",
       "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
       "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
       "sibling_cases": [
@@ -88,7 +88,7 @@
             "classname": "tests.test_session_review_runner",
             "name": "test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]"
           },
-          "evidence": "tests/test_session_review_runner.py:358-385 (case test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]; JUnit classname tests.test_session_review_runner); source oracle reviewed, execution required by manifest.test_bindings."
+          "evidence": "tests/test_session_review_runner.py:390-417 (case test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]; JUnit classname tests.test_session_review_runner); source oracle reviewed, execution required by manifest.test_bindings."
         },
         {
           "id": "NEG-R127-06-02-S2",
@@ -99,7 +99,7 @@
             "classname": "tests.test_session_review_runner",
             "name": "test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]"
           },
-          "evidence": "tests/test_session_review_runner.py:358-385 (case test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]; JUnit classname tests.test_session_review_runner); source oracle reviewed, execution required by manifest.test_bindings."
+          "evidence": "tests/test_session_review_runner.py:390-417 (case test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]; JUnit classname tests.test_session_review_runner); source oracle reviewed, execution required by manifest.test_bindings."
         }
       ],
       "attack_control_id": "NEG-R127-06-02",

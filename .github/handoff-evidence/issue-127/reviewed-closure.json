@@ -9,7 +9,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "A politica versionada identifica crgasparoto-br por ID 255721831 e login, permanece desabilitada por padrao e o contrato aceita develop/main. A identidade da PR e vinculada pelo coletor; os testes usam contas sinteticas para verificar o algoritmo, nao representam autorizacao operacional M2."
+      "rationale": "A politica versionada identifica crgasparoto-br por ID 255721831 e login, nasceu desabilitada por padrao; a ativacao candidata para operador autorizado ainda exige instalacao nas bases confiaveis e o contrato aceita develop/main. A identidade da PR e vinculada pelo coletor; os testes usam contas sinteticas para verificar o algoritmo, nao representam autorizacao operacional M2."
     },
     "64be7f653a4698d2d2fceaed88ebf8fcc5d38fe600af485313f4845a49607ae3": {
       "disposition": "covered",
@@ -119,7 +119,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "As duas rotas usam runner ubuntu-latest do GitHub e GITHUB_TOKEN; o parecer vem do ChatGPT web. Nao ha chamada de IA, segredo de IA, infraestrutura externa, API de merge ou rulesets nessas rotas. O shell passa campos de evento como dados e propaga rejeicao em vez de transformar coleta em aprovacao."
+      "rationale": "As duas rotas usam runner ubuntu-latest do GitHub e GITHUB_TOKEN; o parecer vem do ChatGPT web. Nao ha chamada de IA, segredo de IA, infraestrutura externa, API de merge ou rulesets nessas rotas. O shell passa campos de evento como dados e propaga rejeicao em vez de transformar coleta em aprovacao. O publicador confiavel passa a selecionar develop/main a partir da PR autenticada; testes distinguem main valido de base nao permitida e evento falso. Homologacao em origin confiavel permanece pendente."
     },
     "2ba444ea6b713643184ce67b4999081e273563eb7c78e78bcbd7c771e1ac1416": {
       "disposition": "covered",
@@ -560,11 +560,11 @@
             "Verify session review (exact SHA) check conclusion and summary"
           ],
           "scenario_ids": [
-            "tests/test_session_review_runner.py:300-308 (case test_evaluate_reads_complete_journal_beyond_one_page[205]; JUnit classname tests.test_session_review_runner)"
+            "tests/test_session_review_runner.py:332-340 (case test_evaluate_reads_complete_journal_beyond_one_page[205]; JUnit classname tests.test_session_review_runner)"
           ],
           "negative_control_evidence": [
-            "tests/test_session_review_runner.py:311-322 (case test_evaluate_preserves_revocation_across_pages_and_reuse; JUnit classname tests.test_session_review_runner)",
-            "tests/test_session_review_runner.py:333-345 (case test_evaluate_publishes_failure_when_journal_is_unreadable; JUnit classname tests.test_session_review_runner)"
+            "tests/test_session_review_runner.py:343-354 (case test_evaluate_preserves_revocation_across_pages_and_reuse; JUnit classname tests.test_session_review_runner)",
+            "tests/test_session_review_runner.py:365-377 (case test_evaluate_publishes_failure_when_journal_is_unreadable; JUnit classname tests.test_session_review_runner)"
           ]
         }
       ],
@@ -594,11 +594,11 @@
             "scripts/session_review.py:139-183"
           ],
           "scenario_ids": [
-            "tests/test_session_review_runner.py:92-104 (case test_publication_reuses_same_verified_fingerprint[develop]; JUnit classname tests.test_session_review_runner)"
+            "tests/test_session_review_runner.py:124-136 (case test_publication_reuses_same_verified_fingerprint[develop]; JUnit classname tests.test_session_review_runner)"
           ],
           "negative_control_evidence": [
-            "tests/test_session_review_runner.py:278-287 (case test_evaluate_rejects_changed_initial_identity[head_sha]; JUnit classname tests.test_session_review_runner)",
-            "tests/test_session_review_runner.py:290-297 (case test_evaluate_rejects_target_change_before_publication[head_sha]; JUnit classname tests.test_session_review_runner)"
+            "tests/test_session_review_runner.py:310-319 (case test_evaluate_rejects_changed_initial_identity[head_sha]; JUnit classname tests.test_session_review_runner)",
+            "tests/test_session_review_runner.py:322-329 (case test_evaluate_rejects_target_change_before_publication[head_sha]; JUnit classname tests.test_session_review_runner)"
           ],
           "divergent_fixture": {
             "canonical_value": "initial HEAD a*40",

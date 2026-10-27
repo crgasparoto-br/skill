@@ -66,6 +66,29 @@ O bootstrap e uma decisao administrativa unica: a politica antiga, que exige out
 
 Antes da migracao M2, guardar o inventario anterior e o plano de retorno: JSON de rulesets e branch protection aplicaveis, regras efetivas, bypasses, nomes e apps dos required checks, contagem de reviews, revisoes de workflows e bytes/hash da politica em cada base. Registrar tambem o proprietario responsavel e os links da decisao, do certificado e dos runs. Esse snapshot e a referencia do rollback; exemplos de checks neste guia nao substituem as regras reais do repositorio.
 
+### Preparacao da ativacao e observabilidade
+
+Antes de exigir o check de sessao nos rulesets, publicar e revisar a mesma
+politica `enabled` com operador explicito nas branches confiaveis `develop`
+e `main` (default). Uma politica apenas na branch candidata nao concede
+autoridade, e a instalacao inicial exige a decisao administrativa registrada
+na issue vinculada e a preservacao dos checks tecnicos existentes.
+
+O workflow de `push` avalia PRs abertas e pode registrar falhas de sessao
+para PRs antigas sem o vinculo canonico ou com base ainda anterior a
+instalacao. O vinculo deve ser uma linha isolada `Refs #<numero>`,
+`Fixes #<numero>` ou `Closes #<numero>`; uma referencia solta no texto,
+um ponto final ou varias issues ambiguas nao autorizam a revisao.
+A falha deve continuar negando aprovacao, nunca virar `success` por
+ausencia de prova. Diagnosticos do GitHub CLI mostram metodo, recurso sem
+query e status HTTP quando presente; o corpo de erro e o token permanecem
+ocultos.
+
+O check `Verify session review (exact SHA)` so deve ser exigido depois
+de prova positiva e negativa real em PR aberta e de read-back das regras
+ativas em ambas as branches. Ate la, `mode=enabled` no codigo e apenas
+preparacao tecnica: a adocao operacional M2 permanece pendente.
+
 ## Rollback do modo de sessao
 
 O proprietario aciona o retorno quando a garantia atestada deixar de ser aceita, houver defeito no verificador ou as provas operacionais falharem. O retorno preserva PR obrigatoria, checks tecnicos, certificacao, atualizacao estrita e bloqueios de force-push/exclusao durante toda a transicao.
@@ -86,3 +109,17 @@ O coletor de handoff suporta as duas bases. O modo de sessao exige certificado e
 Antes de ativar o required check, comprovar em execucao real o caso positivo e os negativos de adulteracao, exclusao de parecer, mudanca de issue, base/HEAD e permissao. Os testes automatizados exercitam a implementacao, mas **nao sao evidencia de que um auditor real revisou esta PR**.
 
 A issue permanece aberta ate completar a certificacao da entrega e a adocao operacional. O implementador desta migracao nao publica o proprio parecer como revisao separada. A PR nao e declarada aprovada por CI verde, pacote neutro ou recibo de pre-auditoria.
+
+### Publicador confiavel com duas branches
+
+O publicador do workflow `Publish certified handoff (trusted)` executa
+exclusivamente codigo da `main` e, quando nenhum `--base-ref` explicito
+e fornecido, seleciona `develop` ou `main` por meio do registro
+**autenticado** da PR no GitHub, nao por campos manipulaveis do evento.
+Depois, `target_from_event` revalida estado, SHA, origem, path do
+workflow e a base selecionada; eventos antigos ou alterados bloqueiam.
+Bases diferentes sao permitidas apenas na interface de configuracao
+explicita para repositorios consumidores, nunca pela autodeteccao.
+
+Esse ajuste e condicao de M2 para que PRs de release contra `main`
+nao sejam interpretadas como PRs contra `develop`.

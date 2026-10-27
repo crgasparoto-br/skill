@@ -41,7 +41,13 @@ def api(path: str, *, method: str = "GET", data: dict | None = None, binary: boo
         command.extend(["--input", "-"])
     result = subprocess.run(command, input=canonical(data) if data is not None else None,
                             capture_output=True, check=False, timeout=90)
-    require(result.returncode == 0, "authenticated GitHub request failed")
+    if result.returncode != 0:
+        # GitHub CLI reports HTTP status on stderr. Never print stderr, which
+        # could contain sensitive response data, or query parameters.
+        match = re.search(rb"\bHTTP\s+([1-5][0-9]{2})\b", result.stderr, re.IGNORECASE)
+        status = f"HTTP {match.group(1).decode('ascii')}" if match else "HTTP status unavailable"
+        resource = path.split("?", 1)[0]
+        raise ValueError(f"authenticated GitHub {method} {resource} request failed ({status})")
     require(len(result.stdout) <= MAX_BYTES, "GitHub response exceeds size limit")
     return result.stdout if binary else json.loads(result.stdout)
 
