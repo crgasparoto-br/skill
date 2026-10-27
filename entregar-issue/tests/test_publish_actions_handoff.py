@@ -537,7 +537,7 @@ def test_publication_readback_fails_closed_on_foreign_or_unverified_target(
 
     monkeypatch.setattr(publisher, "api_get", api)
     monkeypatch.setattr(publisher.time, "sleep", sleeps.append)
-    with pytest.raises(ValueError, match="postpublication PR changed|fresh postpublication GitHub read"):
+    with pytest.raises(ValueError, match=r"postpublication PR changed|fresh postpublication GitHub read"):
         publisher.publish(harness.event)
     assert harness.pushed is not None
     assert len(harness.terminal_proofs) == 1  # Prepublication guard, no false post-write approval.
