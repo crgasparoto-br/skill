@@ -1,15 +1,20 @@
 """Trust-boundary and real shell controls for web-only review entrypoints."""
 from __future__ import annotations
 
+import base64
+import importlib
 import json
 import os
 import subprocess
+import urllib.error
 from pathlib import Path
 
 import pytest
 import yaml
 
 from tests.test_session_review_runner import runner
+
+publisher = importlib.import_module('entregar-issue.tests.test_publish_actions_handoff').publisher
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ("session-review.yml", "prepare-neutral-audit-packet.yml")
@@ -188,3 +193,69 @@ def test_begin_check_rejects_states_that_could_bypass_review(monkeypatch, status
     monkeypatch.setattr(runner, "api", api)
     with pytest.raises(ValueError, match="fail-closed state not confirmed"):
         runner.begin_check("owner/repo", head, {}, [])
+
+
+@pytest.mark.parametrize("mode,expected", [("enabled", True), ("disabled", False)])
+def test_session_routing_requires_policy_bytes_on_trusted_default_and_base(tmp_path, monkeypatch, mode, expected):
+    local = tmp_path / ".github/session-review-policy.json"
+    local.parent.mkdir()
+    real = json.loads((ROOT / ".github/session-review-policy.json").read_text())
+    real["mode"] = mode
+    real["operators"] = real["operators"] if expected else []
+    raw = json.dumps(real).encode()
+    local.write_bytes(raw)
+    monkeypatch.setattr(publisher, "SCRIPT_ROOT", tmp_path / "entregar-issue/scripts")
+    queried = []
+
+    def api(repo, endpoint):
+        queried.append(endpoint)
+        return {"type": "file", "encoding": "base64", "content": base64.b64encode(raw).decode()}
+
+    monkeypatch.setattr(publisher, "api_get", api)
+    assert publisher.session_mode_active("owner/repo", "a" * 40) is expected
+    assert queried == ["contents/.github/session-review-policy.json?ref=" + "a" * 40]
+
+
+@pytest.mark.parametrize("tamper", ["different-base", "invalid-operator", "missing-file", "invalid-ref"])
+def test_session_routing_refuses_policy_drift_and_invalid_authority(tmp_path, monkeypatch, tamper):
+    local = tmp_path / ".github/session-review-policy.json"
+    local.parent.mkdir()
+    policy = json.loads((ROOT / ".github/session-review-policy.json").read_text())
+    local.write_text(json.dumps(policy))
+    monkeypatch.setattr(publisher, "SCRIPT_ROOT", tmp_path / "entregar-issue/scripts")
+    if tamper == "invalid-ref":
+        with pytest.raises(ValueError, match="protected-base SHA"):
+            publisher.session_mode_active("owner/repo", "not-a-commit")
+        return
+    if tamper == "missing-file":
+        local.unlink()
+    if tamper == "invalid-operator":
+        policy["operators"] = [{"id": 0, "login": "invalid"}]
+        local.write_text(json.dumps(policy))
+    candidate = json.dumps(policy).encode()
+    if tamper == "different-base":
+        candidate += b" "
+    monkeypatch.setattr(publisher, "api_get", lambda *_: {
+        "type": "file", "encoding": "base64", "content": base64.b64encode(candidate).decode()})
+    with pytest.raises(ValueError, match="differs|policy is missing|operator identity"):
+        publisher.session_mode_active("owner/repo", "a" * 40)
+
+
+def test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides(tmp_path, monkeypatch):
+    monkeypatch.setattr(publisher, "SCRIPT_ROOT", tmp_path / "entregar-issue/scripts")
+    def missing(*_):
+        raise urllib.error.HTTPError("https://api.github.com", 404, "Not Found", None, None)
+    monkeypatch.setattr(publisher, "api_get", missing)
+    assert publisher.session_mode_active("owner/repo", "a" * 40) is False
+
+
+def test_session_routing_never_silently_downgrades_policy_missing_from_base(tmp_path, monkeypatch):
+    policy = tmp_path / ".github/session-review-policy.json"
+    policy.parent.mkdir()
+    policy.write_text((ROOT / ".github/session-review-policy.json").read_text())
+    monkeypatch.setattr(publisher, "SCRIPT_ROOT", tmp_path / "entregar-issue/scripts")
+    def missing(*_):
+        raise urllib.error.HTTPError("https://api.github.com", 404, "Not Found", None, None)
+    monkeypatch.setattr(publisher, "api_get", missing)
+    with pytest.raises(ValueError, match="protected-base session policy unavailable"):
+        publisher.session_mode_active("owner/repo", "a" * 40)

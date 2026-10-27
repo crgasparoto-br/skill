@@ -346,6 +346,7 @@ def certified_publisher(tmp_path, monkeypatch, request):
     monkeypatch.chdir(candidate["repo"])
     monkeypatch.setattr(publisher, "command", harness.command)
     monkeypatch.setattr(publisher, "api_get", harness.api_get)
+    monkeypatch.setattr(publisher, "session_mode_active", lambda repo, base: False)
     return harness
 
 
@@ -579,3 +580,11 @@ def test_trusted_historical_audit_files_are_immutable(tmp_path, change):
     changed = git(repo, "rev-parse", "HEAD")
     with pytest.raises(ValueError, match="outside certificate scope"):
         publisher.ensure_historical_audit_unchanged(repo, base, changed, [publisher.CERTIFICATE])
+
+
+def test_enabled_session_mode_preserves_material_sha_without_result_child(certified_publisher, monkeypatch):
+    harness = certified_publisher
+    monkeypatch.setattr(publisher, "session_mode_active", lambda repo, base: True)
+    assert publisher.publish(harness.event) is None
+    assert harness.pushed is None
+    assert harness.validators == []

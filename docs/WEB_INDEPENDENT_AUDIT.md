@@ -166,3 +166,25 @@ com o filho `result-only` exato, parent material exato e **todos** os arquivos
 exatamente na allowlist. Um terceiro SHA, base alterada ou timeout bloqueiam
 a publicacao. O guard terminal de pos-publicacao continua sendo executado
 apos a leitura confirmada; a espera nao concede nenhuma aprovacao.
+
+
+### Isolamento entre handoff legado e auditoria por sessao
+
+Quando a politica `.github/session-review-policy.json` estiver `enabled` na
+branch default **e com os mesmos bytes na base autenticada da PR**, o
+publicador de `workflow_run` nao cria um novo commit `result-only`.
+O workflow de certificacao continua obrigatorio e o auditor de sessao
+consome diretamente o artefato e os checks do **HEAD material imutavel**.
+Isso evita a corrida entre o coletor neutro e um novo commit que mudaria
+o alvo enquanto o revisor ainda le os arquivos e faria falhar o exact-SHA.
+
+A selecao da modalidade consulta a politica pela API autenticada no SHA da
+base e exige coincidencia byte a byte com a politica do codigo confiavel da
+default branch; nunca deriva de marcador ou conteudo da PR. Politica
+invalida, identidade divergente, arquivo ausente apenas de um lado ou
+erro de acesso bloqueiam em vez de degradar silenciosamente. Somente
+repositorios sem politica nos dois lados ou com politica explicitamente
+`disabled` preservam a publicacao do filho de resultados como antes.
+O sucesso da etapa de roteamento nao emite parecer, certificado artificial
+ou check aprovado. O fluxo de sessao permanece obrigado a verificar todo
+o pacote real e a revisao em conversa separada.
