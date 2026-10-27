@@ -118,6 +118,7 @@ def test_connector_rejects_foreign_base_before_executing_postcondition_verifier(
     called = []
     monkeypatch.syspath_prepend(str(ROOT / "scripts"))
     monkeypatch.setitem(sys.modules, "handoff_postcondition", SimpleNamespace(
+        require_final_phase=lambda _cert: None,
         verify_finalization=lambda *args: called.append(args),
     ))
     spec = importlib.util.spec_from_file_location("connector_preflight_boundary", SCRIPT)
@@ -307,12 +308,13 @@ def enable_previous_rejection(cert: Path, manifest: Path, *, rejection_id: str, 
     manifest.write_text(json.dumps(manifest_data), encoding="utf-8")
 
 
-def test_connector_preflight_cross_checks_latest_independent_rejection_semantics():
+def test_connector_preflight_cross_checks_latest_independent_rejection_semantics_then_requires_proof():
     with tempfile.TemporaryDirectory() as d:
         cert, manifest = make(Path(d))
         enable_previous_rejection(cert, manifest, rejection_id="audit-rejection:synthetic-001")
         proc = run(cert, manifest)
-        assert proc.returncode == 0, proc.stdout
+        assert proc.returncode == 2, proc.stdout
+        assert "postcondition proof is required after an independent rejection" in proc.stdout
 
 
 def test_connector_preflight_rejects_learning_rejection_missing_from_escape_semantics():
