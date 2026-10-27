@@ -7,101 +7,33 @@
   "replacements": [],
   "test_decisions": [
     {
-      "path": "tests/test_session_review_workflows.py",
-      "operation": "modified",
-      "scenario": "Terminal GitHub check cannot be reopened. Preserve exact identity and create a new pending check; altered ID, SHA or name blocks fallback.",
-      "requirement": "R127-06 and R127-07",
-      "search": {
-        "queries": [
-          "rg -n 'def test_|def begin_check|git.add|GITHUB_REF_NAME' tests/test_session_review_workflows.py scripts/verify_session_review.py entregar-issue/scripts/publish_actions_handoff.py"
-        ],
-        "scope": "Existing session runner, trusted publisher and release-version tests and their official pytest runner.",
-        "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
-        "candidates": [
-          {
-            "path": "tests/test_session_review_workflows.py",
-            "case": "test_completed_check_that_cannot_reopen_creates_new_pending_check",
-            "oracle": "Existing tests and runtime behavior are compared against the now-observed failing GitHub Actions boundary.",
-            "comparison": "Extend existing tests without removing previous identity, publication or release checks."
-          },
-          {
-            "path": "tests/test_session_review_runner.py",
-            "case": "test_completed_check_that_cannot_reopen_creates_new_pending_check",
-            "oracle": "Existing tests and runtime behavior are compared against the now-observed failing GitHub Actions boundary.",
-            "comparison": "Extend existing tests without removing previous identity, publication or release checks."
-          }
-        ]
-      },
-      "decision": "extend-existing",
-      "justification": "Reuse existing module and add a discriminating positive/negative control for each observed failure. Preserve test discovery and original assertions.",
-      "disposition": "keep",
-      "verification": {
-        "status": "unknown",
-        "reason": "awaiting-exact-SHA-JUnit"
-      }
-    },
-    {
       "path": "entregar-issue/tests/test_publish_actions_handoff.py",
       "operation": "modified",
-      "scenario": "Git ignores .audit/ and explicit force staging must remain strictly restricted to certified allowed paths.",
-      "requirement": "R127-09 and R127-10",
+      "scenario": "Trusted publisher may see a temporarily stale PR head after successful git push. Exact parent, base, allowed changed files and postpublication terminal guard remain mandatory even after bounded retries.",
+      "requirement": "R127-09 / R127-10: a robust trusted GitHub publication must remain fail-closed.",
       "search": {
         "queries": [
-          "rg -n 'def test_|def begin_check|git.add|GITHUB_REF_NAME' entregar-issue/tests/test_publish_actions_handoff.py scripts/verify_session_review.py entregar-issue/scripts/publish_actions_handoff.py"
+          "rg -n 'confirm_published_result|postpublication|test_publication_readback' entregar-issue/scripts/publish_actions_handoff.py entregar-issue/tests/test_publish_actions_handoff.py"
         ],
-        "scope": "Existing session runner, trusted publisher and release-version tests and their official pytest runner.",
+        "scope": "Reused existing trusted publisher and full Git integration tests without introducing another publisher.",
         "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
         "candidates": [
           {
             "path": "entregar-issue/tests/test_publish_actions_handoff.py",
-            "case": "test_trusted_publisher_can_stage_gitignored_certified_results",
-            "oracle": "Existing tests and runtime behavior are compared against the now-observed failing GitHub Actions boundary.",
-            "comparison": "Extend existing tests without removing previous identity, publication or release checks."
+            "case": "test_publisher_materializes_certified_execution_before_grounding",
+            "oracle": "Two validated terminal guard executions, exact material parent and no unauthorized result paths.",
+            "comparison": "Extend with stale-read success and permanent drift failures."
           },
           {
-            "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
             "case": "test_trusted_publisher_can_stage_gitignored_certified_results",
-            "oracle": "Existing tests and runtime behavior are compared against the now-observed failing GitHub Actions boundary.",
-            "comparison": "Extend existing tests without removing previous identity, publication or release checks."
+            "oracle": "Existing forced staging must remain within the certificate allowlist.",
+            "comparison": "Preserve prior staging regression; add authenticated readback behavior."
           }
         ]
       },
       "decision": "extend-existing",
-      "justification": "Reuse existing module and add a discriminating positive/negative control for each observed failure. Preserve test discovery and original assertions.",
-      "disposition": "keep",
-      "verification": {
-        "status": "unknown",
-        "reason": "awaiting-exact-SHA-JUnit"
-      }
-    },
-    {
-      "path": "tests/test_versioning.py",
-      "operation": "modified",
-      "scenario": "Synthetic Git-less test fixture is isolated from GITHUB_REF_NAME and GITHUB_ACTIONS; the live main release gate still rejects missing Git.",
-      "requirement": "R127-11",
-      "search": {
-        "queries": [
-          "rg -n 'def test_|def begin_check|git.add|GITHUB_REF_NAME' tests/test_versioning.py scripts/verify_session_review.py entregar-issue/scripts/publish_actions_handoff.py"
-        ],
-        "scope": "Existing session runner, trusted publisher and release-version tests and their official pytest runner.",
-        "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
-        "candidates": [
-          {
-            "path": "tests/test_versioning.py",
-            "case": "test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main",
-            "oracle": "Existing tests and runtime behavior are compared against the now-observed failing GitHub Actions boundary.",
-            "comparison": "Extend existing tests without removing previous identity, publication or release checks."
-          },
-          {
-            "path": "scripts/validate_versioning.py",
-            "case": "test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main",
-            "oracle": "Existing tests and runtime behavior are compared against the now-observed failing GitHub Actions boundary.",
-            "comparison": "Extend existing tests without removing previous identity, publication or release checks."
-          }
-        ]
-      },
-      "decision": "extend-existing",
-      "justification": "Reuse existing module and add a discriminating positive/negative control for each observed failure. Preserve test discovery and original assertions.",
+      "justification": "A real trusted publisher run proved the exact failure; the existing harness faithfully records Git push, terminal guards and API reads.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",

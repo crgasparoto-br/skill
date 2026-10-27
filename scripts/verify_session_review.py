@@ -280,8 +280,15 @@ def begin_check(repo: str, sha: str, receipt: dict, previous: list[dict]) -> int
             result = api(f"/repos/{repo}/check-runs", method="POST", data={**body, "head_sha": sha})
     else:
         result = api(f"/repos/{repo}/check-runs", method="POST", data={**body, "head_sha": sha})
-    require(result.get("head_sha") == sha and result.get("status") == "in_progress"
-            and type(result.get("id")) is int, "pending check identity was not confirmed")
+    # GitHub can finalize a POST immediately. The verification may continue only
+    # if the observed state cannot satisfy a required check without this review.
+    status, conclusion = result.get("status"), result.get("conclusion")
+    blocked = ((status in {"queued", "in_progress"} and conclusion is None)
+               or (status == "completed" and conclusion == "failure"))
+    observed = status if status in {"queued", "in_progress", "completed"} else "unexpected"
+    require(result.get("head_sha") == sha and type(result.get("id")) is int
+            and result["id"] > 0 and blocked,
+            f"check identity or fail-closed state not confirmed ({observed})")
     return result["id"]
 
 

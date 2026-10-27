@@ -141,3 +141,28 @@ autorizados pelo certificado, porque `.audit/` esta corretamente no
 aceitam caminhos de codigo fora da allowlist. A CI de `main` isola
 `GITHUB_REF_NAME` e `GITHUB_ACTIONS` nos testes de versionamento com
 repositorio sintetico; o gate de release sobre o checkout real continua ativo.
+
+
+### Estados retornados pela Checks API no bootstrap M2
+
+O executor confere a identidade do check em `head_sha` e `id` autenticados,
+mas o GitHub pode devolver `completed/failure` imediatamente apos uma
+escrita de inicio. Esse resultado e **bloqueante**, nao uma aprovacao:
+a verificacao prossegue e publica conclusao final somente apos as fontes
+e o parecer atestado serem revalidados. `queued` e `in_progress` sao
+permitidos apenas sem conclusao. Estados `completed/success`,
+`completed/neutral`, `completed/skipped`, conclusoes antecipadas e
+identidades divergentes sao sempre recusados. O diagnóstico expõe apenas
+a classe do estado, nao corpo de API, token ou entrada do operador.
+
+
+### Read-back pos-push do publicador confiavel
+
+O GitHub pode devolver temporariamente o HEAD anterior da PR depois de um
+`git push` concluido, enquanto os metadados de commit ja estao visiveis.
+O publicador repete a leitura por um numero limitado de tentativas com
+espera curta. O resultado so e aceito se a PR estiver aberta, na mesma base,
+com o filho `result-only` exato, parent material exato e **todos** os arquivos
+exatamente na allowlist. Um terceiro SHA, base alterada ou timeout bloqueiam
+a publicacao. O guard terminal de pos-publicacao continua sendo executado
+apos a leitura confirmada; a espera nao concede nenhuma aprovacao.
