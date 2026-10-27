@@ -54,6 +54,7 @@ def test_exact_branch_plan_preserves_all_protections_and_upgrades_to_session(bra
 
 @pytest.mark.parametrize("mutation,match", [
     (lambda r: r.pop("bypass_actors"), "bypass actors"),
+    (lambda r: r["bypass_actors"].append({"actor_type": "User", "actor_id": 1, "bypass_mode": "always"}), "nonempty bypass"),
     (lambda r: r["conditions"]["ref_name"]["include"].append("refs/heads/main"), "does not target"),
     (lambda r: r["rules"].pop(0), "deletion"),
     (lambda r: r["rules"].pop(1), "non_fast_forward"),
