@@ -188,3 +188,20 @@ repositorios sem politica nos dois lados ou com politica explicitamente
 O sucesso da etapa de roteamento nao emite parecer, certificado artificial
 ou check aprovado. O fluxo de sessao permanece obrigado a verificar todo
 o pacote real e a revisao em conversa separada.
+
+## Ensaio de aceitacao M2 com HEAD estavel
+
+Este ensaio de revisao web so e valido com a politica de sessao autenticada e
+instalada com os mesmos bytes na default `main` e na base `develop`.
+A certificacao semanticamente vinculada ao SHA material deve ficar verde
+antes da coleta do pacote neutro. O pacote confirma os 16 candidatos e
+controles reais, mas nao constitui o parecer de outra conversa.
+
+O operador revisa o pacote em uma conversa ChatGPT realmente separada da
+implementacao, declara a separacao com referencias reais e registra o
+parecer `SOLVERIT_SESSION_REVIEW_V1` no GitHub. O emissor verifica fontes,
+controles, conta GitHub e SHA; sucesso sem comentario autorizado continua
+bloqueado. Depois do caso positivo, os ensaios reais de adulteracao,
+revogacao e mudanca de alvo devem retirar a aprovacao. Revalidar todas
+as regras antes da ativacao dos rulesets; nenhum ensaio desta secao
+substitui o parecer independente.
