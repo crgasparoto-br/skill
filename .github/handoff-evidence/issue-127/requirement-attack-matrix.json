@@ -1,0 +1,1753 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "requirements": [
+    {
+      "requirement_id": "R127-01",
+      "obligation_ids": [
+        "OBL-003"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "R127-01: Implementar o modo de sessão com declaração explícita do limite de garantia, sem confundir seu resultado com aprovação humana independente ou assinatura Ed25519."
+      ],
+      "plausible_wrong_implementation": "Reutilizar um recibo do operador como aprovacao humana ou Ed25519 faria um check mais fraco parecer prova de identidade independente.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review: session_review.py usa modo e acknowledgement distintos e publica Verify session review (exact SHA). Os fluxos humano e Ed25519 conservam seus emissores e verificadores. A documentacao separa essas garantias e os testes rejeitam troca de assurance. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review.py",
+        "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>0]: session_review.py usa modo e acknowledgement distintos e publica Verify session review (exact SHA). Os fluxos humano e Ed25519 conservam seus emissores e verificadores. A documentacao separa essas garantias e os testes rejeitam troca de assurance. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424",
+          "id": "NEG-R127-01-01",
+          "risk_family": "semantic-effect",
+          "surface": "assurance-separation",
+          "dimension": "foreign-assurance-in-review",
+          "failure_mode": "Reutilizar um recibo do operador como aprovacao humana ou Ed25519 faria um check mais fraco parecer prova de identidade independente.",
+          "plausible_wrong_implementation": "Reutilizar um recibo do operador como aprovacao humana ou Ed25519 faria um check mais fraco parecer prova de identidade independente.",
+          "procedure": "Execute tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>0] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: foreign-assurance-in-review.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-01-01-S1",
+              "surface": "assurance-separation",
+              "dimension": "foreign-assurance-in-policy",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review::test_policy_cannot_silently_downgrade_existing_guarantee[assurance-third-party]",
+              "evidence": "tests.test_session_review::test_policy_cannot_silently_downgrade_existing_guarantee[assurance-third-party]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_verify_web_external_audit::test_accepts_exact_target_after_signature_verification: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_verify_web_external_audit.py",
+          "evidence_sha256": "4a9e857121197b62abda79d1fc707b1fe4e1827a7d2c37299586423dbc76003c"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-003",
+          "primary_negative_control_id": "NEG-R127-01-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "assurance-separation",
+          "reason": "Reutilizar um recibo do operador como aprovacao humana ou Ed25519 faria um check mais fraco parecer prova de identidade independente."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-02",
+      "obligation_ids": [
+        "OBL-004"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "R127-02: Validar política optativa e conta autorizada por ID e login; política ausente, desabilitada, malformada ou conta sem autorização reprova."
+      ],
+      "plausible_wrong_implementation": "Tratar uma politica desabilitada como enabled ou aceitar somente o nome da conta concederia aprovacao sem a autorizacao administrativa exigida.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review: A politica optativa exige esquema inteiro estrito, modo enabled, declaracao de garantia e allowlist ID+login. O runner consulta permissao atual ou propriedade autenticada do repositorio. Falha de leitura/parse ou politica desabilitada bloqueia antes de verificar o parecer. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review.py",
+        "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review::test_policy_cannot_silently_downgrade_existing_guarantee[mode-disabled]: A politica optativa exige esquema inteiro estrito, modo enabled, declaracao de garantia e allowlist ID+login. O runner consulta permissao atual ou propriedade autenticada do repositorio. Falha de leitura/parse ou politica desabilitada bloqueia antes de verificar o parecer. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424",
+          "id": "NEG-R127-02-01",
+          "risk_family": "authorization",
+          "surface": "policy-and-account",
+          "dimension": "disabled-policy",
+          "failure_mode": "Tratar uma politica desabilitada como enabled ou aceitar somente o nome da conta concederia aprovacao sem a autorizacao administrativa exigida.",
+          "plausible_wrong_implementation": "Tratar uma politica desabilitada como enabled ou aceitar somente o nome da conta concederia aprovacao sem a autorizacao administrativa exigida.",
+          "procedure": "Execute tests.test_session_review::test_policy_cannot_silently_downgrade_existing_guarantee[mode-disabled] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: disabled-policy.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-02-01-S1",
+              "surface": "policy-and-account",
+              "dimension": "wrong-numeric-id",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[id-999]",
+              "evidence": "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[id-999]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-02-01-S2",
+              "surface": "policy-and-account",
+              "dimension": "wrong-login",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[login-another]",
+              "evidence": "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[login-another]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-004",
+          "primary_negative_control_id": "NEG-R127-02-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "policy-and-account",
+          "reason": "Tratar uma politica desabilitada como enabled ou aceitar somente o nome da conta concederia aprovacao sem a autorizacao administrativa exigida."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-03",
+      "obligation_ids": [
+        "OBL-005"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "R127-03: Validar repositório, PR, issue, base ref/SHA, HEAD, merge preview e digests da issue e da política contra fontes confiáveis."
+      ],
+      "plausible_wrong_implementation": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]: O runner captura identidade inicial e compara pacote preparado e leitura final contra ela. Repo/PR/issue e todos os SHAs/digests do parecer devem coincidir com o pacote autenticado. O check continua vinculado ao HEAD inicial; drift bloqueia e nao escreve pacote apto. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review_runner.py",
+        "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[head_sha]: O runner captura identidade inicial e compara pacote preparado e leitura final contra ela. Repo/PR/issue e todos os SHAs/digests do parecer devem coincidir com o pacote autenticado. O check continua vinculado ao HEAD inicial; drift bloqueia e nao escreve pacote apto. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+          "id": "NEG-R127-03-01",
+          "risk_family": "semantic-effect",
+          "surface": "target-observation",
+          "dimension": "initial-head-drift",
+          "failure_mode": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial.",
+          "plausible_wrong_implementation": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial.",
+          "procedure": "Execute tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[head_sha] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: initial-head-drift.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-03-01-S1",
+              "surface": "target-observation",
+              "dimension": "initial-issue-digest-drift",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[issue_sha256]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[issue_sha256]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-03-01-S2",
+              "surface": "target-observation",
+              "dimension": "initial-policy-digest-drift",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[policy_sha256]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[policy_sha256]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_packet_collection_rejects_initial_head_drift_without_writing: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review::test_main_is_bound_to_same_exact_evidence_requirements: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-005",
+          "primary_negative_control_id": "NEG-R127-03-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "target-observation",
+          "reason": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-04",
+      "obligation_ids": [
+        "OBL-006"
+      ],
+      "risk_families": [
+        "semantic-effect",
+        "structural-contract"
+      ],
+      "source_texts": [
+        "R127-04: Reconciliar todas as obrigações extraídas pelo parser oficial com análise do revisor e trechos de fonte existentes, vinculados por linha e SHA-256."
+      ],
+      "plausible_wrong_implementation": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates: A extracao oficial gera 16 candidatos; o overlay identifica cada um por candidate_key imutavel. Revisao ausente, key estrangeira, analise vazia, fonte inexistente, linha fora do blob ou SHA-256 divergente bloqueia. Os testes mutam o contrato de entrada e usam o merge oficial, nao uma lista paralela de requisitos. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review_dossier.py",
+        "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>8]: A extracao oficial gera 16 candidatos; o overlay identifica cada um por candidate_key imutavel. Revisao ausente, key estrangeira, analise vazia, fonte inexistente, linha fora do blob ou SHA-256 divergente bloqueia. Os testes mutam o contrato de entrada e usam o merge oficial, nao uma lista paralela de requisitos. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424",
+          "id": "NEG-R127-04-01",
+          "risk_family": "semantic-effect",
+          "surface": "source-coverage",
+          "dimension": "foreign-candidate-key",
+          "failure_mode": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
+          "plausible_wrong_implementation": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
+          "procedure": "Execute tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>8] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: foreign-candidate-key.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-04-01-S1",
+              "surface": "source-coverage",
+              "dimension": "wrong-source-hash",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>9]",
+              "evidence": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>9]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-04-01-S2",
+              "surface": "source-coverage",
+              "dimension": "source-lines-outside-blob",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>11]",
+              "evidence": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>11]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]: A extracao oficial gera 16 candidatos; o overlay identifica cada um por candidate_key imutavel. Revisao ausente, key estrangeira, analise vazia, fonte inexistente, linha fora do blob ou SHA-256 divergente bloqueia. Os testes mutam o contrato de entrada e usam o merge oficial, nao uma lista paralela de requisitos. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_dossier.py",
+          "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7",
+          "id": "NEG-R127-04-02",
+          "risk_family": "structural-contract",
+          "surface": "semantic-mutation-saturation",
+          "dimension": "changed-normative-obligation",
+          "failure_mode": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
+          "plausible_wrong_implementation": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
+          "procedure": "Execute tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: changed-normative-obligation.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-04-02-S1",
+              "surface": "semantic-mutation-saturation",
+              "dimension": "additional-normative-obligation",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+              "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-04-02-S2",
+              "surface": "semantic-mutation-saturation",
+              "dimension": "removed-normative-obligation",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
+              "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_immutable_obligation_identity_cannot_be_rewritten: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+          "evidence_sha256": "f7c89dd67e98a71be8a2ccf3072437b25c6d524d16405007c9f7126fd2325293"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-006",
+          "primary_negative_control_id": "NEG-R127-04-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "source-coverage",
+          "reason": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente."
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "semantic-mutation-saturation",
+          "reason": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-05",
+      "obligation_ids": [
+        "OBL-007"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "R127-05: Exigir controles positivos, negativos e de regressão distintos e realmente aprovados no JUnit do HEAD exato; evidência ausente, falha ou ignorada reprova."
+      ],
+      "plausible_wrong_implementation": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review: O verificador exige tres IDs diferentes por obrigacao no parecer. O produtor cruza os bindings revisados com JUnit/log e subject SHA exatos, recusando absent/failed/skipped. O indice e factual e requirement_mapping=UNKNOWN; a analise semantica e fornecida no dossie, nunca inferida de nomes. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review.py",
+        "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>12]: O verificador exige tres IDs diferentes por obrigacao no parecer. O produtor cruza os bindings revisados com JUnit/log e subject SHA exatos, recusando absent/failed/skipped. O indice e factual e requirement_mapping=UNKNOWN; a analise semantica e fornecida no dossie, nunca inferida de nomes. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424",
+          "id": "NEG-R127-05-01",
+          "risk_family": "semantic-effect",
+          "surface": "executed-control-binding",
+          "dimension": "duplicate-positive-negative",
+          "failure_mode": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado.",
+          "plausible_wrong_implementation": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado.",
+          "procedure": "Execute tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>12] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: duplicate-positive-negative.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-05-01-S1",
+              "surface": "executed-control-binding",
+              "dimension": "skipped-evidence",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]",
+              "evidence": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-05-01-S2",
+              "surface": "executed-control-binding",
+              "dimension": "missing-evidence",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
+              "evidence": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_bind_grounding_execution::test_grounding_binding_rejects_unreached_skipped_and_mismatched_cases[mismatched]: O verificador exige tres IDs diferentes por obrigacao no parecer. O produtor cruza os bindings revisados com JUnit/log e subject SHA exatos, recusando absent/failed/skipped. O indice e factual e requirement_mapping=UNKNOWN; a analise semantica e fornecida no dossie, nunca inferida de nomes. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_bind_grounding_execution.py",
+          "evidence_sha256": "59b8d045f01bf8d6cde234823e7c80c535de39dff4946711efc47e87adb27720",
+          "id": "NEG-R127-05-02",
+          "risk_family": "semantic-effect",
+          "surface": "grounding-execution-proof",
+          "dimension": "different-junit-case",
+          "failure_mode": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado.",
+          "plausible_wrong_implementation": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado.",
+          "procedure": "Execute entregar-issue.tests.test_bind_grounding_execution::test_grounding_binding_rejects_unreached_skipped_and_mismatched_cases[mismatched] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: different-junit-case.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-05-02-S1",
+              "surface": "grounding-execution-proof",
+              "dimension": "skipped-grounding-case",
+              "status": "passed",
+              "test_case_id": "entregar-issue.tests.test_bind_grounding_execution::test_grounding_binding_rejects_unreached_skipped_and_mismatched_cases[skipped]",
+              "evidence": "entregar-issue.tests.test_bind_grounding_execution::test_grounding_binding_rejects_unreached_skipped_and_mismatched_cases[skipped]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-05-02-S2",
+              "surface": "grounding-execution-proof",
+              "dimension": "tampered-grounding-log",
+              "status": "passed",
+              "test_case_id": "entregar-issue.tests.test_bind_grounding_execution::test_grounding_binding_rejects_tampered_or_stale_execution[log]",
+              "evidence": "entregar-issue.tests.test_bind_grounding_execution::test_grounding_binding_rejects_tampered_or_stale_execution[log]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_forged_candidate_index_is_rejected: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+          "evidence_sha256": "f7c89dd67e98a71be8a2ccf3072437b25c6d524d16405007c9f7126fd2325293"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_tampered_runner_provenance_is_rejected: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+          "evidence_sha256": "f7c89dd67e98a71be8a2ccf3072437b25c6d524d16405007c9f7126fd2325293"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_bind_grounding_execution::test_existing_attested_and_unrelated_unknown_decisions_are_preserved: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_bind_grounding_execution.py",
+          "evidence_sha256": "59b8d045f01bf8d6cde234823e7c80c535de39dff4946711efc47e87adb27720"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-007",
+          "primary_negative_control_id": "NEG-R127-05-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "executed-control-binding",
+          "reason": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado."
+        },
+        {
+          "risk_family": "semantic-effect",
+          "surface": "grounding-execution-proof",
+          "reason": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-06",
+      "obligation_ids": [
+        "OBL-008"
+      ],
+      "risk_families": [
+        "historical-immutability",
+        "idempotency",
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "R127-06: Revogar parecer editado, excluído, rejeitado ou supersedido; impedir retorno silencioso a aprovação antiga; conservar fingerprint e ordem das revisões."
+      ],
+      "plausible_wrong_implementation": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]: O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review_runner.py",
+        "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]: O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+          "id": "NEG-R127-06-01",
+          "risk_family": "semantic-effect",
+          "surface": "latest-review-selection",
+          "dimension": "edited-review-revokes",
+          "failure_mode": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+          "plausible_wrong_implementation": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+          "procedure": "Execute tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: edited-review-revokes.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-06-01-S1",
+              "surface": "latest-review-selection",
+              "dimension": "deleted-review-revokes",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-06-01-S2",
+              "surface": "latest-review-selection",
+              "dimension": "rejected-review-supersedes",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse: O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+          "id": "NEG-R127-06-02",
+          "risk_family": "historical-immutability",
+          "surface": "revocation-order",
+          "dimension": "watermark-beyond-first-page",
+          "failure_mode": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+          "plausible_wrong_implementation": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+          "procedure": "Execute tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: watermark-beyond-first-page.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-06-02-S1",
+              "surface": "revocation-order",
+              "dimension": "deleted-newest-no-fallback",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-06-02-S2",
+              "surface": "revocation-order",
+              "dimension": "rejected-newest-no-fallback",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_evaluate_publishes_failure_when_journal_is_unreadable: O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+          "id": "NEG-R127-06-03",
+          "risk_family": "idempotency",
+          "surface": "receipt-reuse",
+          "dimension": "unreadable-journal-fails-once",
+          "failure_mode": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+          "plausible_wrong_implementation": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+          "procedure": "Execute tests.test_session_review_runner::test_evaluate_publishes_failure_when_journal_is_unreadable through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: unreadable-journal-fails-once.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-06-03-S1",
+              "surface": "receipt-reuse",
+              "dimension": "edited-receipt-reused",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-06-03-S2",
+              "surface": "receipt-reuse",
+              "dimension": "deleted-receipt-reused",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_evaluate_reads_complete_journal_beyond_one_page[99]: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_evaluate_reads_complete_journal_beyond_one_page[100]: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_evaluate_reads_complete_journal_beyond_one_page[101]: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_evaluate_reads_complete_journal_beyond_one_page[205]: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[main]: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-008",
+          "primary_negative_control_id": "NEG-R127-06-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "latest-review-selection",
+          "reason": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela."
+        },
+        {
+          "risk_family": "historical-immutability",
+          "surface": "revocation-order",
+          "reason": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela."
+        },
+        {
+          "risk_family": "idempotency",
+          "surface": "receipt-reuse",
+          "reason": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-07",
+      "obligation_ids": [
+        "OBL-009"
+      ],
+      "risk_families": [
+        "authorization",
+        "reference-liveness",
+        "temporal-consistency"
+      ],
+      "source_texts": [
+        "R127-07: Revalidar conta, parecer, alvo, certificado e checks confiáveis antes de publicar o check específico de sessão, sem executar código da PR no verificador."
+      ],
+      "plausible_wrong_implementation": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]: Workflows de revisao/pacote nao aceitam dispatch/call/pull_request selecionaveis pelo candidato. O checkout usa workflow_sha de evento protegido, sem credenciais persistidas. evaluate revalida politica, operador, comentario, identidade, certificado e checks; publish confirma receipt e destino imediatamente antes da escrita. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review_runner.py",
+        "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]: Workflows de revisao/pacote nao aceitam dispatch/call/pull_request selecionaveis pelo candidato. O checkout usa workflow_sha de evento protegido, sem credenciais persistidas. evaluate revalida politica, operador, comentario, identidade, certificado e checks; publish confirma receipt e destino imediatamente antes da escrita. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_workflows.py",
+          "evidence_sha256": "f857d3be031e8c42ef75e0e791db82b20201fbcfae039fd3f5672c1ed873b6c9",
+          "id": "NEG-R127-07-01",
+          "risk_family": "authorization",
+          "surface": "trusted-workflow-source",
+          "dimension": "candidate-session-dispatch",
+          "failure_mode": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
+          "plausible_wrong_implementation": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
+          "procedure": "Execute tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: candidate-session-dispatch.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-07-01-S1",
+              "surface": "trusted-workflow-source",
+              "dimension": "candidate-packet-dispatch",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]",
+              "evidence": "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-07-01-S2",
+              "surface": "trusted-workflow-source",
+              "dimension": "foreign-packet-trigger",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_workflows::test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment",
+              "evidence": "tests.test_session_review_workflows::test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[head_sha]: Workflows de revisao/pacote nao aceitam dispatch/call/pull_request selecionaveis pelo candidato. O checkout usa workflow_sha de evento protegido, sem credenciais persistidas. evaluate revalida politica, operador, comentario, identidade, certificado e checks; publish confirma receipt e destino imediatamente antes da escrita. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+          "id": "NEG-R127-07-02",
+          "risk_family": "reference-liveness",
+          "surface": "publication-readback",
+          "dimension": "head-changed-before-publication",
+          "failure_mode": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
+          "plausible_wrong_implementation": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
+          "procedure": "Execute tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[head_sha] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: head-changed-before-publication.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-07-02-S1",
+              "surface": "publication-readback",
+              "dimension": "issue-changed-before-publication",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[issue_sha256]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[issue_sha256]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-07-02-S2",
+              "surface": "publication-readback",
+              "dimension": "policy-changed-before-publication",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[policy_sha256]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[policy_sha256]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_publish_rejects_receipt_for_another_sha_before_writing: Workflows de revisao/pacote nao aceitam dispatch/call/pull_request selecionaveis pelo candidato. O checkout usa workflow_sha de evento protegido, sem credenciais persistidas. evaluate revalida politica, operador, comentario, identidade, certificado e checks; publish confirma receipt e destino imediatamente antes da escrita. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+          "id": "NEG-R127-07-03",
+          "risk_family": "temporal-consistency",
+          "surface": "publication-sequence",
+          "dimension": "receipt-on-another-sha",
+          "failure_mode": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
+          "plausible_wrong_implementation": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
+          "procedure": "Execute tests.test_session_review_runner::test_publish_rejects_receipt_for_another_sha_before_writing through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: receipt-on-another-sha.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-07-03-S1",
+              "surface": "publication-sequence",
+              "dimension": "base-changed-before-write",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[base_sha]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[base_sha]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-07-03-S2",
+              "surface": "publication-sequence",
+              "dimension": "preview-changed-before-write",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[merge_preview_sha]",
+              "evidence": "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[merge_preview_sha]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[main]: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_workflows::test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_workflows.py",
+          "evidence_sha256": "f857d3be031e8c42ef75e0e791db82b20201fbcfae039fd3f5672c1ed873b6c9"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-009",
+          "primary_negative_control_id": "NEG-R127-07-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "trusted-workflow-source",
+          "reason": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar."
+        },
+        {
+          "risk_family": "reference-liveness",
+          "surface": "publication-readback",
+          "reason": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar."
+        },
+        {
+          "risk_family": "temporal-consistency",
+          "surface": "publication-sequence",
+          "reason": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-08",
+      "obligation_ids": [
+        "OBL-010"
+      ],
+      "risk_families": [
+        "public-boundary",
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "R127-08: Produzir pacote neutro com issue, obrigações, blobs completos da base e do HEAD, diff e testes executados; rejeitar truncamento, caminhos inseguros e arquivo de evidência adulterado."
+      ],
+      "plausible_wrong_implementation": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review_runner::test_packet_rebuilds_full_diff_from_immutable_blobs_not_truncated_patch: O pacote usa issue autenticada, parser oficial e blobs completos base/head; o diff e reconstruido desses bytes. Patches truncados nao viram evidencia completa. Extracao recusa traversal, symlink, duplicatas/aliases, e collector rejeita log/indice adulterado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review_runner.py",
+        "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_archive_rejects_traversal_duplicates_symlink: O pacote usa issue autenticada, parser oficial e blobs completos base/head; o diff e reconstruido desses bytes. Patches truncados nao viram evidencia completa. Extracao recusa traversal, symlink, duplicatas/aliases, e collector rejeita log/indice adulterado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+          "id": "NEG-R127-08-01",
+          "risk_family": "semantic-effect",
+          "surface": "neutral-source-packet",
+          "dimension": "archive-traversal-and-alias",
+          "failure_mode": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro.",
+          "plausible_wrong_implementation": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro.",
+          "procedure": "Execute tests.test_session_review_runner::test_archive_rejects_traversal_duplicates_symlink through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: archive-traversal-and-alias.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-08-01-S1",
+              "surface": "neutral-source-packet",
+              "dimension": "dot-alias",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_archive_rejects_path_aliases[a/./b]",
+              "evidence": "tests.test_session_review_runner::test_archive_rejects_path_aliases[a/./b]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-08-01-S2",
+              "surface": "neutral-source-packet",
+              "dimension": "double-separator-alias",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_archive_rejects_path_aliases[a//b]",
+              "evidence": "tests.test_session_review_runner::test_archive_rejects_path_aliases[a//b]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_tampered_runner_provenance_is_rejected: O pacote usa issue autenticada, parser oficial e blobs completos base/head; o diff e reconstruido desses bytes. Patches truncados nao viram evidencia completa. Extracao recusa traversal, symlink, duplicatas/aliases, e collector rejeita log/indice adulterado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+          "evidence_sha256": "f7c89dd67e98a71be8a2ccf3072437b25c6d524d16405007c9f7126fd2325293",
+          "id": "NEG-R127-08-02",
+          "risk_family": "public-boundary",
+          "surface": "artifact-ingress",
+          "dimension": "tampered-runner-log",
+          "failure_mode": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro.",
+          "plausible_wrong_implementation": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro.",
+          "procedure": "Execute entregar-issue.tests.test_produce_actions_handoff_evidence::test_tampered_runner_provenance_is_rejected through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: tampered-runner-log.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-08-02-S1",
+              "surface": "artifact-ingress",
+              "dimension": "forged-test-index",
+              "status": "passed",
+              "test_case_id": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_forged_candidate_index_is_rejected",
+              "evidence": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_forged_candidate_index_is_rejected; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-08-02-S2",
+              "surface": "artifact-ingress",
+              "dimension": "archive-symlink",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_runner::test_archive_rejects_traversal_duplicates_symlink",
+              "evidence": "tests.test_session_review_runner::test_archive_rejects_traversal_duplicates_symlink; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_full_pagination_not_first_page_only: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_forged_candidate_index_is_rejected: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+          "evidence_sha256": "f7c89dd67e98a71be8a2ccf3072437b25c6d524d16405007c9f7126fd2325293"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-010",
+          "primary_negative_control_id": "NEG-R127-08-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "neutral-source-packet",
+          "reason": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro."
+        },
+        {
+          "risk_family": "public-boundary",
+          "surface": "artifact-ingress",
+          "reason": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-09",
+      "obligation_ids": [
+        "OBL-011"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "R127-09: Executar o fluxo no ChatGPT web e em GitHub-hosted Actions, sem API de IA, VPS, runner self-hosted, segredo de IA, merge automático ou alteração automática de rulesets."
+      ],
+      "plausible_wrong_implementation": "Interpolar entrada do comentario como shell ou continuar apos certificado rejeitado permitiria executar comando estranho ou publicar pacote inapto no fluxo web.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[all-live-targets]: As duas rotas usam runner ubuntu-latest do GitHub e GITHUB_TOKEN; o parecer vem do ChatGPT web. Nao ha chamada de IA, segredo de IA, infraestrutura externa, API de merge ou rulesets nessas rotas. O shell passa campos de evento como dados e propaga rejeicao em vez de transformar coleta em aprovacao. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review_workflows.py",
+        "evidence_sha256": "f857d3be031e8c42ef75e0e791db82b20201fbcfae039fd3f5672c1ed873b6c9"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[certificate-failure]: As duas rotas usam runner ubuntu-latest do GitHub e GITHUB_TOKEN; o parecer vem do ChatGPT web. Nao ha chamada de IA, segredo de IA, infraestrutura externa, API de merge ou rulesets nessas rotas. O shell passa campos de evento como dados e propaga rejeicao em vez de transformar coleta em aprovacao. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_workflows.py",
+          "evidence_sha256": "f857d3be031e8c42ef75e0e791db82b20201fbcfae039fd3f5672c1ed873b6c9",
+          "id": "NEG-R127-09-01",
+          "risk_family": "semantic-effect",
+          "surface": "web-hosted-entrypoint",
+          "dimension": "certificate-failure-propagation",
+          "failure_mode": "Interpolar entrada do comentario como shell ou continuar apos certificado rejeitado permitiria executar comando estranho ou publicar pacote inapto no fluxo web.",
+          "plausible_wrong_implementation": "Interpolar entrada do comentario como shell ou continuar apos certificado rejeitado permitiria executar comando estranho ou publicar pacote inapto no fluxo web.",
+          "procedure": "Execute tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[certificate-failure] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: certificate-failure-propagation.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-09-01-S1",
+              "surface": "web-hosted-entrypoint",
+              "dimension": "no-eligible-target",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[no-eligible-target]",
+              "evidence": "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[no-eligible-target]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_runner::test_no_recursive_workflow_trigger: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-011",
+          "primary_negative_control_id": "NEG-R127-09-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "web-hosted-entrypoint",
+          "reason": "Interpolar entrada do comentario como shell ou continuar apos certificado rejeitado permitiria executar comando estranho ou publicar pacote inapto no fluxo web."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-10",
+      "obligation_ids": [
+        "OBL-012"
+      ],
+      "risk_families": [
+        "documentation",
+        "rollback"
+      ],
+      "source_texts": [
+        "R127-10: Documentar ativação, responsabilidades, limites de confiança, bootstrap, rollback e dois marcos de entrega; preservar as vias humana independente e Ed25519 fora do modo de sessão."
+      ],
+      "plausible_wrong_implementation": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "procedure",
+        "evidence_kind": "documentation",
+        "evidence_path": "docs/WEB_INDEPENDENT_AUDIT.md",
+        "evidence_sha256": "d3ce5f710fafa496afe526e560bce2398955511002325952aa42b57febd92647",
+        "evidence": "Manual semantic review traced activation actor, trusted-base requirement, administrative bootstrap, separate M1/M2 completion and ordered rollback in this guide against issue127 lines 20 and 33. This records document review, not an executed ruleset migration."
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "procedure",
+          "evidence_kind": "documentation",
+          "evidence": "Manual document counterexample review of the guide: missing previous snapshot, unavailable legacy issuer, obsolete independence claim and premature M2 closure. Source hash binds the reviewed wording; no operational experiment or future CI pass is claimed.",
+          "evidence_path": "docs/WEB_INDEPENDENT_AUDIT.md",
+          "evidence_sha256": "d3ce5f710fafa496afe526e560bce2398955511002325952aa42b57febd92647",
+          "id": "NEG-R127-10-01",
+          "risk_family": "rollback",
+          "surface": "administrative-recovery",
+          "dimension": "phase-contract-replaced",
+          "failure_mode": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo.",
+          "plausible_wrong_implementation": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo.",
+          "procedure": "Trace the proposed recovery with (a) the previous policy/ruleset snapshot absent and (b) the legacy issuer unable to produce evidence. Check whether the written steps keep integrations blocked and restore the old protection before removing the session requirement. Compare assurance and phase statements with issue127 lines 7, 20 and 33.",
+          "expected": "The documented recovery must stop on either absent input, preserve technical/PR protections, restore the legacy gate before removing session protection, and require readback of develop/main. M2 must remain deferred.",
+          "observed": "Rollback steps 2 and 3 explicitly keep integration blocked when the snapshot or valid legacy evidence is unavailable; steps 3 through 6 order restoration, readback, session removal and final verification. The milestones and closing paragraph retain issue127 open and do not assert M2 execution.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-10-01-S1",
+              "surface": "administrative-recovery",
+              "dimension": "phase-contract-removed",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
+              "evidence": "Reviewed documentation counterexample, supported by the distinct source-drift regression tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]. The automated regression protects canonical mapping; the manual trace checks procedure semantics and does not stand for an operational rollback."
+            },
+            {
+              "id": "NEG-R127-10-01-S2",
+              "surface": "administrative-recovery",
+              "dimension": "phase-contract-expanded",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+              "evidence": "Reviewed documentation counterexample, supported by the distinct source-drift regression tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]. The automated regression protects canonical mapping; the manual trace checks procedure semantics and does not stand for an operational rollback."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "procedure",
+          "evidence_kind": "documentation",
+          "evidence": "Manual document counterexample review of the guide: missing previous snapshot, unavailable legacy issuer, obsolete independence claim and premature M2 closure. Source hash binds the reviewed wording; no operational experiment or future CI pass is claimed.",
+          "evidence_path": "docs/WEB_INDEPENDENT_AUDIT.md",
+          "evidence_sha256": "d3ce5f710fafa496afe526e560bce2398955511002325952aa42b57febd92647",
+          "id": "NEG-R127-10-02",
+          "risk_family": "documentation",
+          "surface": "canonical-claims",
+          "dimension": "obsolete-contract-overlay",
+          "failure_mode": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo.",
+          "plausible_wrong_implementation": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo.",
+          "procedure": "Trace the proposed recovery with (a) the previous policy/ruleset snapshot absent and (b) the legacy issuer unable to produce evidence. Check whether the written steps keep integrations blocked and restore the old protection before removing the session requirement. Compare assurance and phase statements with issue127 lines 7, 20 and 33.",
+          "expected": "The documented recovery must stop on either absent input, preserve technical/PR protections, restore the legacy gate before removing session protection, and require readback of develop/main. M2 must remain deferred.",
+          "observed": "Rollback steps 2 and 3 explicitly keep integration blocked when the snapshot or valid legacy evidence is unavailable; steps 3 through 6 order restoration, readback, session removal and final verification. The milestones and closing paragraph retain issue127 open and do not assert M2 execution.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-10-02-S1",
+              "surface": "canonical-claims",
+              "dimension": "missing-current-obligation",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
+              "evidence": "Reviewed documentation counterexample, supported by the distinct source-drift regression tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]. The automated regression protects canonical mapping; the manual trace checks procedure semantics and does not stand for an operational rollback."
+            },
+            {
+              "id": "NEG-R127-10-02-S2",
+              "surface": "canonical-claims",
+              "dimension": "added-unreviewed-obligation",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+              "evidence": "Reviewed documentation counterexample, supported by the distinct source-drift regression tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]. The automated regression protects canonical mapping; the manual trace checks procedure semantics and does not stand for an operational rollback."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_dossier::test_m2_is_excluded_from_implementation_bindings_and_retains_parent: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_dossier.py",
+          "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_verify_web_external_audit::test_accepts_exact_target_after_signature_verification: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_verify_web_external_audit.py",
+          "evidence_sha256": "4a9e857121197b62abda79d1fc707b1fe4e1827a7d2c37299586423dbc76003c"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-012",
+          "primary_negative_control_id": "NEG-R127-10-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "rollback",
+          "surface": "administrative-recovery",
+          "reason": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo."
+        },
+        {
+          "risk_family": "documentation",
+          "surface": "canonical-claims",
+          "reason": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R127-11",
+      "obligation_ids": [
+        "OBL-013"
+      ],
+      "risk_families": [
+        "public-boundary",
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "R127-11: Aprovar testes de contrato, controles adversariais e regressões das duas bases, análise estática, higiene e certificação exact-SHA da implementação, sem aumentar limites nem inventar provas."
+      ],
+      "plausible_wrong_implementation": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates: O dossie critical vincula os controles reais de contrato, adversarios e regressao ao JUnit do futuro SHA material. Gates de higiene, analise estatica e certificacao continuam obrigatorios sem alterar limites. A prova bruta de grounding nasce no runner e precisa acompanhar o artifact ate o worktree limpo do publicador, antes da revalidacao pelo gate oficial; os controles do publicador verificam essa materializacao restrita. Esta linha mapeia a implementacao e seus controles; nao declara certificado emitido: A-004 continua implemented-unverified no ledger ate replay real do gate original, cuja dependencia circular e registrada sem exit 0 inventado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review_dossier.py",
+        "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]: O dossie critical vincula os controles reais de contrato, adversarios e regressao ao JUnit do futuro SHA material. Gates de higiene, analise estatica e certificacao continuam obrigatorios sem alterar limites. A prova bruta de grounding nasce no runner e precisa acompanhar o artifact ate o worktree limpo do publicador, antes da revalidacao pelo gate oficial; os controles do publicador verificam essa materializacao restrita. Esta linha mapeia a implementacao e seus controles; nao declara certificado emitido: A-004 continua implemented-unverified no ledger ate replay real do gate original, cuja dependencia circular e registrada sem exit 0 inventado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_dossier.py",
+          "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7",
+          "id": "NEG-R127-11-01",
+          "risk_family": "semantic-effect",
+          "surface": "certification-preconditions",
+          "dimension": "missing-control-evidence",
+          "failure_mode": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo.",
+          "plausible_wrong_implementation": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo.",
+          "procedure": "Execute tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: missing-control-evidence.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-11-01-S1",
+              "surface": "certification-preconditions",
+              "dimension": "failed-control-evidence",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[failed]",
+              "evidence": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[failed]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-01-S2",
+              "surface": "certification-preconditions",
+              "dimension": "skipped-control-evidence",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]",
+              "evidence": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[proof-hash]: O dossie critical vincula os controles reais de contrato, adversarios e regressao ao JUnit do futuro SHA material. Gates de higiene, analise estatica e certificacao continuam obrigatorios sem alterar limites. A prova bruta de grounding nasce no runner e precisa acompanhar o artifact ate o worktree limpo do publicador, antes da revalidacao pelo gate oficial; os controles do publicador verificam essa materializacao restrita. Esta linha mapeia a implementacao e seus controles; nao declara certificado emitido: A-004 continua implemented-unverified no ledger ate replay real do gate original, cuja dependencia circular e registrada sem exit 0 inventado. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_publish_actions_handoff.py",
+          "evidence_sha256": "6e7b3e195e1a08bd27fede9528706fcdd1f873f9bd93d280eabe86fbb19aa61d",
+          "id": "NEG-R127-11-02",
+          "risk_family": "public-boundary",
+          "surface": "published-grounding-proof",
+          "dimension": "tampered-certified-proof",
+          "failure_mode": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo.",
+          "plausible_wrong_implementation": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo.",
+          "procedure": "Execute entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[proof-hash] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: tampered-certified-proof.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-11-02-S1",
+              "surface": "published-grounding-proof",
+              "dimension": "proof-outside-certificate-allowlist",
+              "status": "passed",
+              "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[missing-allowlist]",
+              "evidence": "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[missing-allowlist]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-R127-11-02-S2",
+              "surface": "published-grounding-proof",
+              "dimension": "proof-parent-symlink",
+              "status": "passed",
+              "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[parent-symlink]",
+              "evidence": "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[parent-symlink]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_require_actions_handoff_certificate::test_stale_or_misleading_receipt_fails_closed: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_require_actions_handoff_certificate.py",
+          "evidence_sha256": "365206c44c79bc93a0a006e059140e0bbdd04c911ab5dfe900c5a47186562b7f"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review::test_main_is_bound_to_same_exact_evidence_requirements: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_identity_substitution_is_scoped_to_identity_fields: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+          "evidence_sha256": "f7c89dd67e98a71be8a2ccf3072437b25c6d524d16405007c9f7126fd2325293"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_prepare_actions_handoff::test_certification_requires_real_closure_and_calls_official_gates: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+          "evidence_sha256": "9976acd1cb0edb7146a6e06075f3883280eccffef2cad751bee569ccb50aed36"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_code_growth_comparison_preserves_recorded_start_and_real_ancestry[remediation-start]: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+          "evidence_sha256": "f7c89dd67e98a71be8a2ccf3072437b25c6d524d16405007c9f7126fd2325293"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_produce_actions_handoff_evidence::test_code_growth_comparison_preserves_recorded_start_and_real_ancestry[descendant-pr-base]: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+          "evidence_sha256": "f7c89dd67e98a71be8a2ccf3072437b25c6d524d16405007c9f7126fd2325293"
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "entregar-issue.tests.test_publish_actions_handoff::test_parent_control_snapshots_are_immutable: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "entregar-issue/tests/test_publish_actions_handoff.py",
+          "evidence_sha256": "6e7b3e195e1a08bd27fede9528706fcdd1f873f9bd93d280eabe86fbb19aa61d"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-013",
+          "primary_negative_control_id": "NEG-R127-11-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "certification-preconditions",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo."
+        },
+        {
+          "risk_family": "public-boundary",
+          "surface": "published-grounding-proof",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "SPEC-L3",
+      "obligation_ids": [
+        "OBL-001"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Modelo: `operator-attested-session-review`. Operador: `crgasparoto-br` (GitHub ID 255721831). Bases: `develop` e `main`. PR de implementação: #128."
+      ],
+      "plausible_wrong_implementation": "Comparar apenas o login visivel permitiria que um ID diferente ou ator Bot emitisse recibo como operador autorizado.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review: A politica versionada identifica crgasparoto-br por ID 255721831 e login, permanece desabilitada por padrao e o contrato aceita develop/main. A identidade da PR e vinculada pelo coletor; os testes usam contas sinteticas para verificar o algoritmo, nao representam autorizacao operacional M2. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review.py",
+        "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[id-999]: A politica versionada identifica crgasparoto-br por ID 255721831 e login, permanece desabilitada por padrao e o contrato aceita develop/main. A identidade da PR e vinculada pelo coletor; os testes usam contas sinteticas para verificar o algoritmo, nao representam autorizacao operacional M2. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424",
+          "id": "NEG-SPEC-L3-01",
+          "risk_family": "semantic-effect",
+          "surface": "operator-and-base-identity",
+          "dimension": "wrong-account-id",
+          "failure_mode": "Comparar apenas o login visivel permitiria que um ID diferente ou ator Bot emitisse recibo como operador autorizado.",
+          "plausible_wrong_implementation": "Comparar apenas o login visivel permitiria que um ID diferente ou ator Bot emitisse recibo como operador autorizado.",
+          "procedure": "Execute tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[id-999] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: wrong-account-id.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-SPEC-L3-01-S1",
+              "surface": "operator-and-base-identity",
+              "dimension": "wrong-login",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[login-another]",
+              "evidence": "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[login-another]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-SPEC-L3-01-S2",
+              "surface": "operator-and-base-identity",
+              "dimension": "bot-actor",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[type-Bot]",
+              "evidence": "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[type-Bot]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review::test_main_is_bound_to_same_exact_evidence_requirements: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-001",
+          "primary_negative_control_id": "NEG-SPEC-L3-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "operator-and-base-identity",
+          "reason": "Comparar apenas o login visivel permitiria que um ID diferente ou ator Bot emitisse recibo como operador autorizado."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "SPEC-L33",
+      "obligation_ids": [
+        "OBL-016"
+      ],
+      "risk_families": [
+        "authorization",
+        "reference-liveness"
+      ],
+      "source_texts": [
+        "R127-12 e R127-13 são adoção posterior ao handoff M1, autorizada pelo proprietário. Seu fechamento é `deferred` no certificado de implementação, com referência a esta decisão e `parent_issue_must_remain_open=true`, alvo #127. O certificado M1 não afirma que M2 ocorreu e não autoriza o encerramento desta issue. O proprietário conserva a decisão administrativa de instalação inicial do SHA revisado; a automação não cria seu próprio parecer nem executa merge."
+      ],
+      "plausible_wrong_implementation": "Reutilizar a decisao de fase antiga depois de a issue mudar, ou contar os requisitos M2 como cobertos pelo JUnit M1, atribuiria ao implementador uma autorizacao que pertence ao proprietario.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates: A decisao vigente da issue e vinculante: R127-12 e R127-13 ficam deferred com source SHA/linha 33, target_issue=127 e parent_issue_must_remain_open=true. M1 nao e uma atestacao de operacao M2, nao aprova merge e nao concede encerramento da issue. A alteracao futura do texto invalida o overlay por candidate_key. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review_dossier.py",
+        "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]: A decisao vigente da issue e vinculante: R127-12 e R127-13 ficam deferred com source SHA/linha 33, target_issue=127 e parent_issue_must_remain_open=true. M1 nao e uma atestacao de operacao M2, nao aprova merge e nao concede encerramento da issue. A alteracao futura do texto invalida o overlay por candidate_key. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_dossier.py",
+          "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7",
+          "id": "NEG-SPEC-L33-01",
+          "risk_family": "authorization",
+          "surface": "phase-decision",
+          "dimension": "replaced-owner-decision",
+          "failure_mode": "Reutilizar a decisao de fase antiga depois de a issue mudar, ou contar os requisitos M2 como cobertos pelo JUnit M1, atribuiria ao implementador uma autorizacao que pertence ao proprietario.",
+          "plausible_wrong_implementation": "Reutilizar a decisao de fase antiga depois de a issue mudar, ou contar os requisitos M2 como cobertos pelo JUnit M1, atribuiria ao implementador uma autorizacao que pertence ao proprietario.",
+          "procedure": "Execute tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: replaced-owner-decision.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-SPEC-L33-01-S1",
+              "surface": "phase-decision",
+              "dimension": "removed-phase-obligation",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
+              "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-SPEC-L33-01-S2",
+              "surface": "phase-decision",
+              "dimension": "new-phase-obligation",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+              "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]: A decisao vigente da issue e vinculante: R127-12 e R127-13 ficam deferred com source SHA/linha 33, target_issue=127 e parent_issue_must_remain_open=true. M1 nao e uma atestacao de operacao M2, nao aprova merge e nao concede encerramento da issue. A alteracao futura do texto invalida o overlay por candidate_key. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_dossier.py",
+          "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7",
+          "id": "NEG-SPEC-L33-02",
+          "risk_family": "reference-liveness",
+          "surface": "canonical-phase-source",
+          "dimension": "phase-source-digest-drift",
+          "failure_mode": "Reutilizar a decisao de fase antiga depois de a issue mudar, ou contar os requisitos M2 como cobertos pelo JUnit M1, atribuiria ao implementador uma autorizacao que pertence ao proprietario.",
+          "plausible_wrong_implementation": "Reutilizar a decisao de fase antiga depois de a issue mudar, ou contar os requisitos M2 como cobertos pelo JUnit M1, atribuiria ao implementador uma autorizacao que pertence ao proprietario.",
+          "procedure": "Execute tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: phase-source-digest-drift.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-SPEC-L33-02-S1",
+              "surface": "canonical-phase-source",
+              "dimension": "source-addition-invalidates-overlay",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+              "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-SPEC-L33-02-S2",
+              "surface": "canonical-phase-source",
+              "dimension": "source-removal-invalidates-overlay",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
+              "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review_dossier::test_m2_is_excluded_from_implementation_bindings_and_retains_parent: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review_dossier.py",
+          "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-016",
+          "primary_negative_control_id": "NEG-SPEC-L33-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "phase-decision",
+          "reason": "Reutilizar a decisao de fase antiga depois de a issue mudar, ou contar os requisitos M2 como cobertos pelo JUnit M1, atribuiria ao implementador uma autorizacao que pertence ao proprietario."
+        },
+        {
+          "risk_family": "reference-liveness",
+          "surface": "canonical-phase-source",
+          "reason": "Reutilizar a decisao de fase antiga depois de a issue mudar, ou contar os requisitos M2 como cobertos pelo JUnit M1, atribuiria ao implementador uma autorizacao que pertence ao proprietario."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "SPEC-L7",
+      "obligation_ids": [
+        "OBL-002"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "A garantia deste modelo é revisão em contexto declarado como separado, com evidências autenticadas pelo GitHub. Não é autenticação criptográfica da identidade de outra pessoa ou da sessão ChatGPT."
+      ],
+      "plausible_wrong_implementation": "Aceitar assurance criptograficamente independente ou a mesma referencia de conversa mudaria a garantia sem uma revisao separada declarada.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "evidence": "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review: O recibo declara third_party_identity_proven=false e session_separation=operator-declared. GitHub autentica a conta e as fontes; as referencias fornecidas para as conversas apenas documentam a atestacao. Nenhuma prova criptografica de outra pessoa ou sessao e produzida. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+        "evidence_path": "tests/test_session_review.py",
+        "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>0]: O recibo declara third_party_identity_proven=false e session_separation=operator-declared. GitHub autentica a conta e as fontes; as referencias fornecidas para as conversas apenas documentam a atestacao. Nenhuma prova criptografica de outra pessoa ou sessao e produzida. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424",
+          "id": "NEG-SPEC-L7-01",
+          "risk_family": "authorization",
+          "surface": "declared-assurance",
+          "dimension": "false-third-party-identity",
+          "failure_mode": "Aceitar assurance criptograficamente independente ou a mesma referencia de conversa mudaria a garantia sem uma revisao separada declarada.",
+          "plausible_wrong_implementation": "Aceitar assurance criptograficamente independente ou a mesma referencia de conversa mudaria a garantia sem uma revisao separada declarada.",
+          "procedure": "Execute tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>0] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: false-third-party-identity.",
+          "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+          "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+          "sibling_cases": [
+            {
+              "id": "NEG-SPEC-L7-01-S1",
+              "surface": "declared-assurance",
+              "dimension": "same-context-reference",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>1]",
+              "evidence": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>1]; source oracle reviewed, execution required by manifest.test_bindings."
+            },
+            {
+              "id": "NEG-SPEC-L7-01-S2",
+              "surface": "declared-assurance",
+              "dimension": "missing-separation-attestation",
+              "status": "passed",
+              "test_case_id": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>2]",
+              "evidence": "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>2]; source oracle reviewed, execution required by manifest.test_bindings."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "evidence": "tests.test_verify_web_external_audit::test_accepts_exact_target_after_signature_verification: Retains the reviewed contract on a distinct regression case; see the test assertion and reviewed rationale for its scope. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+          "evidence_path": "tests/test_verify_web_external_audit.py",
+          "evidence_sha256": "4a9e857121197b62abda79d1fc707b1fe4e1827a7d2c37299586423dbc76003c"
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-002",
+          "primary_negative_control_id": "NEG-SPEC-L7-01"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "declared-assurance",
+          "reason": "Aceitar assurance criptograficamente independente ou a mesma referencia de conversa mudaria a garantia sem uma revisao separada declarada."
+        }
+      ],
+      "quantitative_evidence_required": false
+    }
+  ],
+  "uncovered_requirements": []
+}

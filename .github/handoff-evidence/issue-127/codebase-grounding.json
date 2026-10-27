@@ -1,0 +1,263 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [
+    {
+      "path": "entregar-issue/scripts/bind_grounding_execution.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "rg -n 'REACHED:|reached_tests|execution.*log_sha256|test-execution-facts' entregar-issue/scripts entregar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing official handoff collector, JUnit indexer and grounding validator in entregar-issue.",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/produce_actions_handoff_evidence.py",
+            "reason_not_reused": "Reused as orchestrator and source authenticator; a narrow helper keeps execution-file derivation separate from reviewed semantic staging and below existing size limits."
+          },
+          {
+            "path": "entregar-issue/scripts/build_test_candidate_index.py",
+            "reason_not_reused": "Reused to rebuild factual JUnit identities/statuses; it intentionally has no reviewed mappings and must not infer coverage."
+          },
+          {
+            "path": "entregar-issue/scripts/validate_codebase_grounding.py",
+            "reason_not_reused": "Reused unchanged as verification authority. It validates proof files but cannot create runner evidence without crossing validator/producer separation."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "The former producer could bind identity tokens but could not supply the raw exact-SHA reached-test evidence required by the existing grounding contract. The helper derives only authenticated runtime fields from explicitly reviewed case mappings and preserves semantic fields/statuses outside the opt-in pending execution marker."
+    }
+  ],
+  "references": [],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "tests/test_session_review_runner.py",
+      "operation": "modified",
+      "scenario": "Initial/prepared/final target divergence; full multi-page journal with reusable check and revocation watermark.",
+      "requirement": "R127-03, R127-06, R127-07; targeted findings A-002/A-003.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "tests/test_session_review.py",
+            "case": "fixtures, policy",
+            "oracle": "Strict review-contract fixtures reject altered identity and revocation at the pure gate.",
+            "comparison": "Reused fixture bytes; the existing pure oracle did not exercise actual evaluate/check publication sequence or a 205-entry journal."
+          },
+          {
+            "path": "tests/test_session_review_runner.py",
+            "case": "test_publication_reuses_same_verified_fingerprint",
+            "oracle": "Fingerprint identity should survive revalidation on develop and main.",
+            "comparison": "Extended the existing test to two integrated evaluate calls with actual check reuse and live recheck counts; prior scenarios remain covered."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the existing runner test module and reuse policy/report fixtures; no parallel protocol model or weaker replacement test.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "tests/test_session_review_workflows.py",
+      "operation": "added",
+      "scenario": "Candidate-selected workflow entrypoints cannot gain a publisher; authenticated packet shell routes real targets and propagates rejection.",
+      "requirement": "R127-07/R127-09; A-001.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "tests/test_session_review_runner.py",
+            "case": "test_no_recursive_workflow_trigger",
+            "oracle": "Review workflow must not invoke another self-approval cycle.",
+            "comparison": "Retained; the existing assertion did not parse permitted event sources or run the actual packet shell with hostile event data."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "A separate focused YAML/shell suite observes workflow entrypoints, protected checkout and execution rather than duplicating the Python review parser.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "tests/test_session_review_dossier.py",
+      "operation": "added",
+      "scenario": "Actual 16-candidate dossier reconciles through the canonical parser; mutations fail, M2 remains deferred and unexecuted tests cannot count.",
+      "requirement": "R127-04/R127-05/R127-10/R127-11 and SPEC-L33; A-004/A-005.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+            "case": "test_immutable_obligation_identity_cannot_be_rewritten",
+            "oracle": "Reviewed overlay cannot edit immutable fields.",
+            "comparison": "Retained generic unit test; it does not consume the concrete issue127 snapshot or verify all 16 reviewed candidate bindings and M2 decisions."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "Use real official parser/merge/binding functions against the reviewed source, with add/remove/replace counterexamples. This is concrete integration coverage and does not assert operational M2 or document behavior from token presence.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+      "operation": "modified",
+      "scenario": "Identity placeholders bind only declared current-identity fields; real reviewed mappings permit factual grounding, missing mappings block, and code-growth comparison preserves recorded remediation start ancestry.",
+      "requirement": "R127-05/R127-11; A-004 factual evidence production.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+            "case": "test_identity_substitution_is_scoped_to_identity_fields",
+            "oracle": "Only explicit current identity slots may be substituted.",
+            "comparison": "Extended for candidate_head_sha/material_head_sha while refusing audited/historical SHA and digest substitution."
+          },
+          {
+            "path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
+            "case": "test_stages_reviewed_light_bundle_without_declaring_certificate",
+            "oracle": "Staging does not emit a certificate.",
+            "comparison": "Retained; the added real-run integration covers pending grounding source authentication through the producer."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend existing producer tests rather than duplicate staging; the new integration uses a real fixture Git commit and actual pytest/JUnit, separate from the candidate repository.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_bind_grounding_execution.py",
+      "operation": "added",
+      "scenario": "Raw grounded execution comes only from authenticated real JUnit/log with matching explicit test IDs; tampering, stale identity and unsafe destinations fail.",
+      "requirement": "R127-05/R127-11; A-004 producer gap.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_codebase_grounding.py",
+            "case": "test decisions / reached evidence cases",
+            "oracle": "Official validator rejects absent, stale or tampered reached-test proof.",
+            "comparison": "Reused unchanged as consumer oracle. Existing tests do not produce factual proof from real JUnit/log or check anti-mixing between reviewed test IDs."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "New helper needs discriminating production tests using real pytest output, including skipped cases, stale identities, replacement reachability, preserved unknown statuses and path-safety negatives.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+      "operation": "modified",
+      "scenario": "Certification publishes only the already authenticated execution proof path alongside required closure artifacts.",
+      "requirement": "R127-11; A-004 certificate input handoff.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+            "case": "test_certification_requires_real_closure_and_calls_official_gates",
+            "oracle": "Builder receives real mandatory semantic artifacts and gates.",
+            "comparison": "Extended the existing gate-invocation test with exact allow-result-path from validated grounding proof; existing certification-precondition cases are retained."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Reuse the existing certification integration oracle; add the new exact path effect so arbitrary execution directories cannot be smuggled into result commits.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+      "operation": "modified",
+      "scenario": "A fresh material worktree receives only certified raw execution proofs before the grounding gate; tampered bytes, an absent certificate allowlist entry or a symlink parent fail before publication.",
+      "requirement": "R127-11; A-004 factual-proof delivery to the trusted publisher.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+            "case": "test_bundle_paths_reject_symlink_and_absence",
+            "oracle": "Bundle paths must be regular safe files.",
+            "comparison": "Retained source-path oracle; it did not exercise validate_certificate/publish with a proof initially present only in the artifact."
+          },
+          {
+            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+            "case": "test_parent_control_snapshots_are_immutable",
+            "oracle": "Material-parent evidence snapshots cannot change when result artifacts are installed.",
+            "comparison": "Retained as a distinct regression when proofs are staged earlier for validation."
+          },
+          {
+            "path": "entregar-issue/tests/test_handoff_certificate_contract.py",
+            "case": "build_valid_delivery",
+            "oracle": "Existing valid-delivery fixture exercises the official certificate contract.",
+            "comparison": "Reused by the publisher integration to avoid constructing a competing certificate format."
+          },
+          {
+            "path": "entregar-issue/tests/test_codebase_grounding.py",
+            "case": "candidate",
+            "oracle": "Existing Git-backed grounding fixture proves the changed-test inventory.",
+            "comparison": "Reused for real repository history and official grounding revalidation instead of a mocked reached-test gate."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the existing publisher suite and reuse official delivery/grounding fixtures. The positive case traverses publish with real Git/certificate/grounding/terminal gates, while only transport operations are simulated; negative evidence rejects altered proof bytes before publication.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}

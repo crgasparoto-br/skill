@@ -15,12 +15,6 @@ on:
     types: [completed]
   push:
     branches: [develop, main]
-  workflow_dispatch:
-    inputs:
-      pull_request:
-        description: "Open PR number to revalidate (no AI execution)"
-        required: true
-        type: number
 
 permissions:
   contents: read
@@ -36,7 +30,14 @@ concurrency:
 
 jobs:
   verify:
-    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
+    # No caller-selected workflow ref: every trigger below uses a protected base
+    # or the default branch before the runner receives permission to write checks.
+    if: >-
+      (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') &&
+      (github.event_name != 'issue_comment' || github.event.issue.pull_request) &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

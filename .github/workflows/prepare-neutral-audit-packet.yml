@@ -1,15 +1,12 @@
 name: Prepare neutral independent audit packet
+# Both events load the workflow from the default branch. The candidate supplies
+# data only; no manual dispatch can select its workflow or Python source.
 on:
-  workflow_dispatch:
-    inputs:
-      pull_request:
-        description: "Open pull request number"
-        required: true
-        type: number
-      issue:
-        description: "Canonical issue number"
-        required: true
-        type: number
+  workflow_run:
+    workflows: ["Collect and certify exact-SHA handoff"]
+    types: [completed]
+  issue_comment:
+    types: [created]
 permissions:
   contents: read
   issues: read
@@ -19,6 +16,15 @@ permissions:
 jobs:
   packet:
     name: Generate neutral audit packet
+    if: >-
+      (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      ((github.event_name == 'workflow_run' &&
+        github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_repository.full_name == github.repository) ||
+       (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+        github.event.comment.body == '/solverit-audit-packet'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -35,12 +41,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ inputs.pull_request }}
-          ISSUE_NUMBER: ${{ inputs.issue }}
+          PACKET_ROOT: ${{ runner.temp }}/audit-packet
         run: |
-          python scripts/verify_session_review.py --repo "$REPOSITORY" \
-            --pr "$PR_NUMBER" --issue "$ISSUE_NUMBER" \
-            --packet-out "$RUNNER_TEMP/audit-packet/review-packet.json"
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          from verify_session_review import evaluate, resolve_targets
+          repo = os.environ["REPOSITORY"]
+          event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_bytes())
+          targets = resolve_targets(repo, event)
+          if not targets:
+              raise SystemExit("BLOCK: no eligible PR for this packet request")
+          destination = Path(os.environ["PACKET_ROOT"])
+          results = [evaluate(repo, number, issue, destination / f"pr-{number}" / "review-packet.json")
+                     for number, issue in targets]
+          raise SystemExit(max(results))
+          PY
       - name: Upload neutral packet
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

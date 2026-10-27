@@ -42,14 +42,25 @@ def api(path: str, *, method: str = "GET", data: dict | None = None, binary: boo
     return result.stdout if binary else json.loads(result.stdout)
 
 
-def pages(repo: str, endpoint: str) -> list[dict]:
+def pages(repo: str, endpoint: str, *, field: str | None = None) -> list[dict]:
     output = []
+    total = None
     for page in range(1, 26):
         separator = "&" if "?" in endpoint else "?"
         batch = api(f"/repos/{repo}/{endpoint}{separator}per_page=100&page={page}")
+        if field:
+            count = batch.get("total_count") if isinstance(batch, dict) else None
+            require(type(count) is int and count >= 0 and (total is None or total == count),
+                    "paginated inventory changed or is malformed")
+            total, batch = count, batch.get(field)
         require(isinstance(batch, list) and all(isinstance(x, dict) for x in batch), "invalid paginated response")
         output.extend(batch)
+        if total is not None:
+            require(len(output) <= total, "paginated inventory exceeds declared total")
+            if len(output) == total:
+                return output
         if len(batch) < 100:
+            require(total is None, "paginated inventory truncated")
             return output
     raise ValueError("incomplete paginated inventory")
 
@@ -64,8 +75,8 @@ def content(repo: str, path: str, sha: str) -> tuple[bytes, str]:
     return raw, obj["sha"]
 
 
-def target(repo: str, number: int, issue_number: int, policy_raw: bytes) -> tuple[dict, dict]:
-    pr = api(f"/repos/{repo}/pulls/{number}")
+def target(repo: str, number: int, issue_number: int, policy_raw: bytes, *, pr: dict | None = None) -> tuple[dict, dict]:
+    pr = api(f"/repos/{repo}/pulls/{number}") if pr is None else pr
     issue = api(f"/repos/{repo}/issues/{issue_number}")
     require(pr.get("state") == "open" and not pr.get("draft"), "open, non-draft PR required")
     require(pr["head"]["repo"]["full_name"] == repo and pr["base"]["repo"]["full_name"] == repo,
@@ -222,16 +233,18 @@ def prepare(repo: str, number: int, issue_number: int, *, require_enabled: bool)
 
 
 def review_journal(repo: str, sha: str) -> tuple[int, list[dict]]:
-    result = api(f"/repos/{repo}/commits/{sha}/check-runs?check_name={quote(CHECK_NAME)}&filter=all&per_page=100")
-    require(result.get("total_count", 0) <= len(result.get("check_runs", [])), "review journal truncated")
     watermark = 0
     entries = []
-    for check in result.get("check_runs", []):
+    checks = pages(repo, f"commits/{sha}/check-runs?check_name={quote(CHECK_NAME)}&filter=all", field="check_runs")
+    require(len({check.get("id") for check in checks}) == len(checks), "duplicated review journal entry")
+    for check in checks:
         if check.get("name") != CHECK_NAME or (check.get("app") or {}).get("id") != 15368:
             continue
+        require(type(check.get("id")) is int and check["id"] > 0 and check.get("head_sha") == sha,
+                "review journal check identity mismatch")
         try:
-            receipt = json.loads((check.get("output") or {}).get("text") or "{}")
-        except ValueError:
+            receipt = strict_json((check.get("output") or {}).get("text") or "{}")
+        except (ValueError, RecursionError):
             raise ValueError("invalid prior review receipt") from None
         value = receipt.get("review_comment_id", 0)
         minimum = receipt.get("minimum_comment_id", 0)
@@ -239,6 +252,19 @@ def review_journal(repo: str, sha: str) -> tuple[int, list[dict]]:
         watermark = max(watermark, value, minimum)
         entries.append(check)
     return watermark, entries
+
+
+def begin_check(repo: str, sha: str, receipt: dict, previous: list[dict]) -> int:
+    """The workflow serializes writers; retain the watermark when reusing its check."""
+    latest = max(previous, key=lambda item: item["id"]) if previous else None
+    body = {"name": CHECK_NAME, "status": "in_progress",
+            "output": {"title": "Revalidating session review", "text": json.dumps(receipt, sort_keys=True),
+                       "summary": "Approval is withheld until live evidence is verified."}}
+    result = (api(f"/repos/{repo}/check-runs/{latest['id']}", method="PATCH", data=body) if latest else
+              api(f"/repos/{repo}/check-runs", method="POST", data={**body, "head_sha": sha}))
+    require(result.get("head_sha") == sha and result.get("status") == "in_progress"
+            and type(result.get("id")) is int, "pending check identity was not confirmed")
+    return result["id"]
 
 
 def event_review_id(policy: dict) -> int:
@@ -274,21 +300,21 @@ def publish(repo: str, sha: str, conclusion: str, summary: str, receipt: dict, r
             check_id: int | None = None) -> None:
     require(run_id.isdecimal(), "authenticated Actions run required for publication")
     require(conclusion in {"success", "failure"}, "invalid check conclusion")
+    require(conclusion != "success" or (receipt.get("identity") or {}).get("head_sha") == sha,
+            "approved evidence does not authorize this check SHA")
     body = {"name": CHECK_NAME, "head_sha": sha, "status": "completed", "conclusion": conclusion,
             "external_id": receipt.get("fingerprint", "blocked"),
             "details_url": f"https://github.com/{repo}/actions/runs/{run_id}",
             "output": {"title": "Operator-attested session review", "summary": summary,
                        "text": json.dumps(receipt, sort_keys=True)}}
-    # An unchanged validated fingerprint reuses the latest receipt. No commit or
-    # recursive audit is generated. A failing check always revokes earlier success.
-    _, previous = review_journal(repo, sha)
-    if check_id is None and conclusion == "success" and previous:
-        latest = max(previous, key=lambda item: item["id"])
-        if latest.get("conclusion") == "success" and latest.get("external_id") == body["external_id"]:
-            return
+    # Failure publication must remain possible when reading the journal failed.
     if check_id is None:
         result = api(f"/repos/{repo}/check-runs", method="POST", data=body)
     else:
+        current = api(f"/repos/{repo}/check-runs/{check_id}")
+        require(current.get("head_sha") == sha and current.get("name") == CHECK_NAME
+                and (current.get("app") or {}).get("id") == 15368,
+                "existing check belongs to another target or publisher")
         body.pop("head_sha")
         result = api(f"/repos/{repo}/check-runs/{check_id}", method="PATCH", data=body)
     require(result.get("head_sha") == sha and result.get("conclusion") == conclusion,
@@ -300,18 +326,20 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
     pr = api(f"/repos/{repo}/pulls/{number}")
     head = pr["head"]["sha"]
     check_id = None
-    if not packet_out:
-        pending = api(f"/repos/{repo}/check-runs", method="POST", data={
-            "name": CHECK_NAME, "head_sha": head, "status": "in_progress",
-            "output": {"title": "Revalidating session review", "summary": "Approval is withheld until live evidence is verified."}})
-        check_id = pending["id"]
     try:
-        watermark, _ = review_journal(repo, head) if not packet_out else (0, [])
-        local_policy = strict_json((ROOT / POLICY_PATH).read_text(encoding="utf-8"))
+        watermark, previous = review_journal(repo, head) if not packet_out else (0, [])
+        receipt["minimum_comment_id"] = watermark
+        if not packet_out:
+            check_id = begin_check(repo, head, receipt, previous)
+        policy_raw = (ROOT / POLICY_PATH).read_bytes()
+        local_policy = strict_json(policy_raw.decode())
         watermark = max(watermark, event_review_id(local_policy)) if not packet_out else watermark
         receipt["minimum_comment_id"] = watermark
         require(type(issue_number) is int and issue_number > 0, "canonical issue reference missing or ambiguous")
+        initial, _ = target(repo, number, issue_number, policy_raw, pr=pr)
         packet, policy, files, passed = prepare(repo, number, issue_number, require_enabled=not packet_out)
+        require(packet["identity"] == initial and initial["head_sha"] == head,
+                "target changed between initial observation and evidence collection")
         if packet_out:
             packet_out.parent.mkdir(parents=True, exist_ok=True)
             packet_out.write_bytes(canonical(packet) + b"\n")
@@ -333,7 +361,7 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         require(selected_now == selected, "a newer review superseded this approval")
         recheck_inputs(packet)
         refreshed, _ = target(repo, number, issue_number, (ROOT / POLICY_PATH).read_bytes())
-        require(refreshed == packet["identity"], "target changed before publication")
+        require(refreshed == initial == packet["identity"], "target changed before publication")
         require(authorized_operator(repo, selected["user"]), "reviewer permission changed")
         summary = "Verified evidence-bound session review. Session separation is operator-attested, NOT third-party identity."
         publish(repo, head, "success", summary, receipt, os.environ.get("GITHUB_RUN_ID", ""), check_id)

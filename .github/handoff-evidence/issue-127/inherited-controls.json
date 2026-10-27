@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "source_audits": [
+    {
+      "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+      "audited_head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+      "evidence": "audit-source-result.json preserves the current independently reported rejection; no previous versioned escape closure was found for this target, and issue-126 lineage is not imported."
+    }
+  ],
+  "controls": [
+    {
+      "status": "passed",
+      "head_sha": "__MATERIAL_HEAD_SHA__",
+      "control_type": "test",
+      "evidence_kind": "behavioral",
+      "evidence": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[head_sha]: O runner captura identidade inicial e compara pacote preparado e leitura final contra ela. Repo/PR/issue e todos os SHAs/digests do parecer devem coincidir com o pacote autenticado. O check continua vinculado ao HEAD inicial; drift bloqueia e nao escreve pacote apto. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+      "evidence_path": "tests/test_session_review_runner.py",
+      "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+      "id": "INHERITED-R127-03",
+      "risk_family": "semantic-effect",
+      "surface": "target-observation",
+      "dimension": "initial-head-drift",
+      "failure_mode": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial.",
+      "plausible_wrong_implementation": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial.",
+      "procedure": "Execute tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[head_sha] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: initial-head-drift.",
+      "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+      "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+      "sibling_cases": [
+        {
+          "id": "NEG-R127-03-01-S1",
+          "surface": "target-observation",
+          "dimension": "initial-issue-digest-drift",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[issue_sha256]",
+          "evidence": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[issue_sha256]; source oracle reviewed, execution required by manifest.test_bindings."
+        },
+        {
+          "id": "NEG-R127-03-01-S2",
+          "surface": "target-observation",
+          "dimension": "initial-policy-digest-drift",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[policy_sha256]",
+          "evidence": "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[policy_sha256]; source oracle reviewed, execution required by manifest.test_bindings."
+        }
+      ],
+      "attack_control_id": "NEG-R127-03-01",
+      "subject_sha": "__MATERIAL_HEAD_SHA__"
+    },
+    {
+      "status": "passed",
+      "head_sha": "__MATERIAL_HEAD_SHA__",
+      "control_type": "test",
+      "evidence_kind": "behavioral",
+      "evidence": "tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse: O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+      "evidence_path": "tests/test_session_review_runner.py",
+      "evidence_sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+      "id": "INHERITED-R127-06",
+      "risk_family": "historical-immutability",
+      "surface": "revocation-order",
+      "dimension": "watermark-beyond-first-page",
+      "failure_mode": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+      "plausible_wrong_implementation": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+      "procedure": "Execute tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: watermark-beyond-first-page.",
+      "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+      "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+      "sibling_cases": [
+        {
+          "id": "NEG-R127-06-02-S1",
+          "surface": "revocation-order",
+          "dimension": "deleted-newest-no-fallback",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]",
+          "evidence": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]; source oracle reviewed, execution required by manifest.test_bindings."
+        },
+        {
+          "id": "NEG-R127-06-02-S2",
+          "surface": "revocation-order",
+          "dimension": "rejected-newest-no-fallback",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]",
+          "evidence": "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]; source oracle reviewed, execution required by manifest.test_bindings."
+        }
+      ],
+      "attack_control_id": "NEG-R127-06-02",
+      "subject_sha": "__MATERIAL_HEAD_SHA__"
+    },
+    {
+      "status": "passed",
+      "head_sha": "__MATERIAL_HEAD_SHA__",
+      "control_type": "test",
+      "evidence_kind": "behavioral",
+      "evidence": "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]: Workflows de revisao/pacote nao aceitam dispatch/call/pull_request selecionaveis pelo candidato. O checkout usa workflow_sha de evento protegido, sem credenciais persistidas. evaluate revalida politica, operador, comentario, identidade, certificado e checks; publish confirma receipt e destino imediatamente antes da escrita. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+      "evidence_path": "tests/test_session_review_workflows.py",
+      "evidence_sha256": "f857d3be031e8c42ef75e0e791db82b20201fbcfae039fd3f5672c1ed873b6c9",
+      "id": "INHERITED-R127-07",
+      "risk_family": "authorization",
+      "surface": "trusted-workflow-source",
+      "dimension": "candidate-session-dispatch",
+      "failure_mode": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
+      "plausible_wrong_implementation": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
+      "procedure": "Execute tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: candidate-session-dispatch.",
+      "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+      "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+      "sibling_cases": [
+        {
+          "id": "NEG-R127-07-01-S1",
+          "surface": "trusted-workflow-source",
+          "dimension": "candidate-packet-dispatch",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]",
+          "evidence": "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]; source oracle reviewed, execution required by manifest.test_bindings."
+        },
+        {
+          "id": "NEG-R127-07-01-S2",
+          "surface": "trusted-workflow-source",
+          "dimension": "foreign-packet-trigger",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_workflows::test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment",
+          "evidence": "tests.test_session_review_workflows::test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment; source oracle reviewed, execution required by manifest.test_bindings."
+        }
+      ],
+      "attack_control_id": "NEG-R127-07-01",
+      "subject_sha": "__MATERIAL_HEAD_SHA__"
+    },
+    {
+      "status": "passed",
+      "head_sha": "__MATERIAL_HEAD_SHA__",
+      "control_type": "test",
+      "evidence_kind": "behavioral",
+      "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]: A extracao oficial gera 16 candidatos; o overlay identifica cada um por candidate_key imutavel. Revisao ausente, key estrangeira, analise vazia, fonte inexistente, linha fora do blob ou SHA-256 divergente bloqueia. Os testes mutam o contrato de entrada e usam o merge oficial, nao uma lista paralela de requisitos. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
+      "evidence_path": "tests/test_session_review_dossier.py",
+      "evidence_sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7",
+      "id": "INHERITED-R127-04",
+      "risk_family": "structural-contract",
+      "surface": "semantic-mutation-saturation",
+      "dimension": "changed-normative-obligation",
+      "failure_mode": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
+      "plausible_wrong_implementation": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
+      "procedure": "Execute tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace] through pytest with the mutated input and the real validator/entrypoint under test. Inspect the assertion which differentiates: changed-normative-obligation.",
+      "expected": "The altered input is rejected or the safety invariant is retained as asserted; no success is accepted for the competing behavior.",
+      "observed": "The reviewed oracle asserts the stated rejection/invariant. Runtime passed status must be confirmed by authenticated same-SHA JUnit before this report is staged; no historical run is rebound.",
+      "sibling_cases": [
+        {
+          "id": "NEG-R127-04-02-S1",
+          "surface": "semantic-mutation-saturation",
+          "dimension": "additional-normative-obligation",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+          "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]; source oracle reviewed, execution required by manifest.test_bindings."
+        },
+        {
+          "id": "NEG-R127-04-02-S2",
+          "surface": "semantic-mutation-saturation",
+          "dimension": "removed-normative-obligation",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
+          "evidence": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]; source oracle reviewed, execution required by manifest.test_bindings."
+        }
+      ],
+      "attack_control_id": "NEG-R127-04-02",
+      "subject_sha": "__MATERIAL_HEAD_SHA__"
+    },
+    {
+      "status": "passed",
+      "head_sha": "__MATERIAL_HEAD_SHA__",
+      "control_type": "procedure",
+      "evidence_kind": "documentation",
+      "evidence": "Manual document counterexample review of the guide: missing previous snapshot, unavailable legacy issuer, obsolete independence claim and premature M2 closure. Source hash binds the reviewed wording; no operational experiment or future CI pass is claimed.",
+      "evidence_path": "docs/WEB_INDEPENDENT_AUDIT.md",
+      "evidence_sha256": "d3ce5f710fafa496afe526e560bce2398955511002325952aa42b57febd92647",
+      "id": "INHERITED-R127-10",
+      "risk_family": "documentation",
+      "surface": "canonical-claims",
+      "dimension": "obsolete-contract-overlay",
+      "failure_mode": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo.",
+      "plausible_wrong_implementation": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo.",
+      "procedure": "Trace the proposed recovery with (a) the previous policy/ruleset snapshot absent and (b) the legacy issuer unable to produce evidence. Check whether the written steps keep integrations blocked and restore the old protection before removing the session requirement. Compare assurance and phase statements with issue127 lines 7, 20 and 33.",
+      "expected": "The documented recovery must stop on either absent input, preserve technical/PR protections, restore the legacy gate before removing session protection, and require readback of develop/main. M2 must remain deferred.",
+      "observed": "Rollback steps 2 and 3 explicitly keep integration blocked when the snapshot or valid legacy evidence is unavailable; steps 3 through 6 order restoration, readback, session removal and final verification. The milestones and closing paragraph retain issue127 open and do not assert M2 execution.",
+      "sibling_cases": [
+        {
+          "id": "NEG-R127-10-02-S1",
+          "surface": "canonical-claims",
+          "dimension": "missing-current-obligation",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
+          "evidence": "Reviewed documentation counterexample, supported by the distinct source-drift regression tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]. The automated regression protects canonical mapping; the manual trace checks procedure semantics and does not stand for an operational rollback."
+        },
+        {
+          "id": "NEG-R127-10-02-S2",
+          "surface": "canonical-claims",
+          "dimension": "added-unreviewed-obligation",
+          "status": "passed",
+          "test_case_id": "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+          "evidence": "Reviewed documentation counterexample, supported by the distinct source-drift regression tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]. The automated regression protects canonical mapping; the manual trace checks procedure semantics and does not stand for an operational rollback."
+        }
+      ],
+      "attack_control_id": "NEG-R127-10-02",
+      "subject_sha": "__MATERIAL_HEAD_SHA__"
+    }
+  ],
+  "retired_controls": [],
+  "unresolved_controls": []
+}

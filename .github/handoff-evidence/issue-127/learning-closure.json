@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "classification": "implementation-only",
+  "source_event": {
+    "kind": "independent-rejection",
+    "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+    "finding_ids": [
+      "A-001",
+      "A-002",
+      "A-003",
+      "A-004",
+      "A-005"
+    ],
+    "audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4",
+    "audited_head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+    "report_origin": "Read-only review before this implementation, preserved byte-for-byte from the prior user-visible audit report."
+  },
+  "generalized_learning": {
+    "promotion_status": "not-required",
+    "reason": "All five source findings are classified targeted-remediation. Existing trusted-origin, exact-identity, complete-history, semantic-closure and documentation invariants already forbid the observed implementations. The fixes add focused regressions and reviewed evidence; no global approval rule is relaxed or newly promoted."
+  },
+  "skill_changes": []
+}

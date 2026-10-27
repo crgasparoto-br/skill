@@ -20,6 +20,8 @@ REF = re.compile(r"(?:feat|fix|chore|docs)/[A-Za-z0-9_.-]+\Z")
 PREFIX = ".audit/entregar-issue/"
 CERTIFICATE = PREFIX + "handoff-ready.json"
 SCRIPT_ROOT = Path(__file__).resolve().parent
+MAX_EXECUTION_PROOF_BYTES = 2 * 1024 * 1024
+MAX_EXECUTION_BYTES = 16 * 1024 * 1024
 
 
 def block(message: str) -> None:
@@ -106,6 +108,55 @@ def safe_bundle_path(bundle: Path, relative: str) -> Path:
     return path
 
 
+def materialize_grounding_proofs(source: Path, bundle: Path, cert: dict,
+                                 grounded: Path, head: str) -> None:
+    """Install only authenticated execution data before the trusted grounding gate."""
+    from audit_artifact_io import artifact_metadata, load_json_artifact
+    from bind_grounding_execution import EXECUTION_PREFIX, execution_path, sha256
+    from validate_codebase_grounding import check_passed_test_evidence
+
+    authorized = set(allowed_paths(cert))
+    expected = cert["artifacts"]["codebase_grounding"]
+    if PREFIX + expected["name"] not in authorized or artifact_metadata(grounded)["sha256"] != expected["sha256"]:
+        block("grounding report is not an authenticated, allowlisted artifact")
+    report = load_json_artifact(grounded, require_object=True)
+    if report.get("subject_sha") != head:
+        block("grounding execution report belongs to another material SHA")
+    decisions = report.get("test_decisions", [])
+    if not isinstance(decisions, list) or any(not isinstance(item, dict) for item in decisions):
+        block("grounding test decision inventory is malformed")
+    copies = {}
+    for item in decisions:
+        proof = item.get("verification") or {}
+        if not isinstance(proof, dict):
+            block("grounding execution proof is malformed")
+        relative = proof.get("evidence_path")
+        if not isinstance(relative, str) or not relative.startswith(EXECUTION_PREFIX):
+            continue  # Existing attested evidence outside the producer stays in the material tree.
+        if proof.get("status") != "passed" or relative not in authorized:
+            block("grounding execution proof is not explicitly authorized by the certificate")
+        artifact = execution_path(bundle, relative)
+        if not artifact.is_file() or artifact.stat().st_size > MAX_EXECUTION_PROOF_BYTES:
+            block("grounding execution proof is missing or exceeds its size bound")
+        errors = []
+        check_passed_test_evidence(item, bundle, head, errors)
+        if errors:
+            block("; ".join(errors))
+        raw = artifact.read_bytes()
+        if sha256(raw) != proof.get("evidence_sha256"):
+            block("grounding execution proof changed after authentication")
+        destination = execution_path(source, relative)
+        if destination.exists() and (not destination.is_file() or destination.read_bytes() != raw):
+            block("grounding execution destination contains conflicting material")
+        copies[relative] = (destination, raw)
+        if sum(len(data) for _, data in copies.values()) > MAX_EXECUTION_BYTES:
+            block("grounding execution proof inventory exceeds its size bound")
+    # Do not write a partial set when any later proof fails authentication.
+    for destination, raw in copies.values():
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(raw)
+
+
 def validate_certificate(repo: str, pr: int, head: str, base: str, source: Path,
                          bundle: Path, cert: dict, branch: str, base_ref: str = "develop") -> None:
     subject = cert.get("subject") or {}
@@ -140,6 +191,7 @@ def validate_certificate(repo: str, pr: int, head: str, base: str, source: Path,
     grounding = reports.get("codebase_grounding")
     if isinstance(grounding, dict) and grounding.get("name"):
         grounded = safe_bundle_path(bundle, PREFIX + grounding["name"])
+        materialize_grounding_proofs(source, bundle, cert, grounded, head)
         command("python", str(SCRIPT_ROOT / "validate_codebase_grounding.py"),
                 "--repo", str(source), "--report", str(grounded),
                 "--base-sha", start, "--head-sha", head)

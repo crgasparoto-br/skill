@@ -1,7 +1,13 @@
 """Trusted post-certification publisher: only exact, allowlisted GitHub evidence."""
 from __future__ import annotations
 
+import hashlib
+import importlib
 import importlib.util
+import json
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -127,3 +133,206 @@ def test_consumer_required_check_names_are_enforced(monkeypatch):
     publisher.check_material_ci("team/skill", HEAD, 113, {"My custom quality check"})
     with pytest.raises(ValueError, match="not present"):
         publisher.check_material_ci("team/skill", HEAD, 113, {"Other required check"})
+
+
+class PublicationHarness:
+    """Real Git and trusted validators; only remote transport is simulated."""
+
+    proof_path = publisher.PREFIX + "execution/ground-tests-proof.log"
+    branch = "feat/42-publication"
+
+    def __init__(self, candidate, bundle, event):
+        self.candidate, self.bundle, self.event = candidate, bundle, event
+        self.head, self.base = candidate["head"], candidate["base"]
+        self.repo = candidate["repo"]
+        self.real_command = publisher.command
+        self.pushed = None
+        self.staged = False
+        self.proof_absent_at_checkout = False
+        self.conflicting_material = False
+        self.validators = []
+        self.grounding_bytes = None
+
+    def command(self, *values, cwd=None):
+        if values[:3] == ("gh", "run", "download"):
+            shutil.copytree(self.bundle, values[-1], dirs_exist_ok=True, symlinks=True)
+            return ""
+        if values[:2] == ("git", "fetch"):
+            return ""  # The exact material commit already exists in the fixture repository.
+        if values[:2] == ("git", "push"):
+            self.pushed = values[-1].split(":", 1)[0]
+            return ""
+        if values[:2] == ("git", "add"):
+            self.staged = True
+        if values[0] == "python":
+            script = Path(values[1])
+            assert script.parent == publisher.SCRIPT_ROOT
+            self.validators.append(script.name)
+            if script.name == "validate_codebase_grounding.py":
+                source = Path(values[values.index("--repo") + 1])
+                self.grounding_bytes = (source / self.proof_path).read_bytes()
+            values = (sys.executable, *values[1:])
+        result = self.real_command(*values, cwd=cwd)
+        if values[:3] == ("git", "worktree", "add"):
+            destination = Path(values[-2]) / self.proof_path
+            self.proof_absent_at_checkout = not destination.exists()
+            if self.conflicting_material:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(b"preexisting conflicting material")
+        return result
+
+    def api_get(self, repository, endpoint):
+        assert repository == "owner/repo"
+        if endpoint == "pulls/99":
+            return {"state": "open", "head": {
+                "sha": self.pushed or self.head, "ref": self.branch,
+                "repo": {"full_name": repository}},
+                "base": {"sha": self.base, "ref": "develop"}}
+        if endpoint.startswith("actions/runs/7/artifacts"):
+            return {"artifacts": [{"name": f"handoff-evidence-99-{self.head}", "expired": False}]}
+        if endpoint.startswith("actions/runs?head_sha="):
+            return {"total_count": 3, "workflow_runs": [
+                {"workflow_id": index, "name": name, "head_sha": self.head,
+                 "event": "pull_request", "pull_requests": [{"number": 99}],
+                 "run_number": 1, "status": "completed", "conclusion": "success"}
+                for index, name in enumerate(("Validate skills", "Validate GitHub Audit MCP",
+                                             "Collect and certify exact-SHA handoff"))]}
+        if endpoint == f"commits/{self.pushed}" and self.pushed:
+            paths = self.real_command("git", "diff", "--name-only", self.head, self.pushed, cwd=self.repo)
+            parent = self.real_command("git", "rev-parse", self.pushed + "^", cwd=self.repo)
+            return {"parents": [{"sha": parent}], "files": [{"filename": name} for name in paths.splitlines()]}
+        pytest.fail(f"unexpected API request: {endpoint}")
+
+    def refresh_grounding_hash(self, report):
+        from audit_artifact_io import artifact_metadata
+
+        path = self.bundle / publisher.PREFIX / "codebase-grounding.json"
+        path.write_text(json.dumps(report), encoding="utf-8")
+        certificate = self.bundle / publisher.CERTIFICATE
+        cert = json.loads(certificate.read_text(encoding="utf-8"))
+        cert["artifacts"]["codebase_grounding"] = artifact_metadata(path)
+        certificate.write_text(json.dumps(cert), encoding="utf-8")
+
+
+@pytest.fixture()
+def certified_publisher(tmp_path, monkeypatch):
+    grounding = importlib.import_module("entregar-issue.tests.test_codebase_grounding")
+    delivery = importlib.import_module("entregar-issue.tests.test_handoff_certificate_contract")
+    candidate = grounding.candidate.__wrapped__(tmp_path)
+    bundle = tmp_path / "certified-artifact"
+    audit = bundle / publisher.PREFIX
+    audit.mkdir(parents=True)
+    files = delivery.build_valid_delivery(audit)
+    proof = bundle / PublicationHarness.proof_path
+    proof.parent.mkdir()
+    shutil.move(str(candidate["repo"] / "verification.log"), proof)
+    report = candidate["report"]
+    report["test_decisions"][0]["verification"]["evidence_path"] = PublicationHarness.proof_path
+    grounded = audit / "codebase-grounding.json"
+    grounded.write_text(json.dumps(report), encoding="utf-8")
+    growth = audit / "code-growth.json"
+    result = delivery.run("check_code_growth.py", "--repo", str(candidate["repo"]),
+                          "--base-sha", candidate["base"], "--head-sha", candidate["head"], "--out", str(growth))
+    assert result.returncode == 0, result.stdout
+    paths = grounding.git(candidate["repo"], "diff", "--name-only", "--no-renames",
+                          candidate["base"], candidate["head"]).splitlines()
+    args = []
+    for path in paths:
+        args.extend(["--issue-changed-path", path])
+    snapshot = json.loads(files["snapshot"].read_text(encoding="utf-8"))
+    for source in snapshot["sources"]:
+        args.extend(["--allow-result-path", publisher.PREFIX + source["path"]])
+    result = delivery.run(
+        "build_handoff_certificate.py", "--repository", "owner/repo", "--issue-number", "42",
+        "--work-item-kind", "pr", "--work-item-number", "99", "--pull-request-number", "99",
+        "--base-ref", "develop", "--head-ref", PublicationHarness.branch,
+        "--work-item-start-sha", candidate["base"], "--head-sha", candidate["head"],
+        "--base-sha", candidate["base"], "--evidence-profile", "light",
+        "--specification-snapshot", str(files["snapshot"]), "--requirement-closure", str(files["closure"]),
+        "--codebase-grounding", str(grounded), "--code-growth", str(growth),
+        "--source-repository-root", str(candidate["repo"]),
+        "--allow-result-path", PublicationHarness.proof_path, "--out", str(bundle / publisher.CERTIFICATE), *args,
+    )
+    assert result.returncode == 0, result.stdout
+    (bundle / "handoff-certification-status.json").write_text(json.dumps({
+        "status": "certificate-generated", "material_head_sha": candidate["head"],
+        "terminal_ready": False, "certificate_published": False}), encoding="utf-8")
+    event = tmp_path / "event.json"
+    event.write_text(json.dumps({"repository": {"full_name": "owner/repo"}, "workflow_run": {
+        "id": 7, "status": "completed", "conclusion": "success", "event": "pull_request",
+        "path": ".github/workflows/handoff-evidence.yml", "head_sha": candidate["head"],
+        "pull_requests": [{"number": 99}]}}), encoding="utf-8")
+    harness = PublicationHarness(candidate, bundle, event)
+    monkeypatch.chdir(candidate["repo"])
+    monkeypatch.setattr(publisher, "command", harness.command)
+    monkeypatch.setattr(publisher, "api_get", harness.api_get)
+    return harness
+
+
+def test_publisher_materializes_certified_execution_before_grounding(certified_publisher):
+    harness = certified_publisher
+    expected = (harness.bundle / harness.proof_path).read_bytes()
+    published = publisher.publish(harness.event)
+    assert harness.proof_absent_at_checkout
+    assert harness.grounding_bytes == expected
+    assert harness.pushed == published
+    assert harness.validators == ["validate_handoff_certificate.py", "validate_codebase_grounding.py",
+                                  "check_code_growth.py", "validate_terminal_handoff.py", "validate_terminal_handoff.py"]
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    assert git(harness.repo, "rev-parse", published + "^") == harness.head
+    assert git(harness.repo, "show", f"{published}:{harness.proof_path}") == expected.decode().strip()
+    changed = set(git(harness.repo, "diff", "--name-only", harness.head, published).splitlines())
+    cert = json.loads((harness.bundle / publisher.CERTIFICATE).read_text(encoding="utf-8"))
+    assert changed == set(publisher.allowed_paths(cert))
+
+
+@pytest.mark.parametrize("mutation,reason", [
+    ("proof-hash", "evidence hash mismatch"),
+    ("missing-allowlist", "explicitly authorized"),
+    ("report-hash", "hash"),
+    ("wrong-identity", "subject"),
+    ("parent-symlink", "symlink"),
+    ("missing-proof", "missing or unsafe"),
+    ("oversized-proof", "size bound"),
+    ("proof-markers", "raw evidence missing"),
+    ("conflicting-material", "conflicting material"),
+], ids=["proof-hash", "missing-allowlist", "report-hash", "wrong-identity", "parent-symlink",
+        "missing-proof", "oversized-proof", "proof-markers", "conflicting-material"])
+def test_publisher_rejects_untrusted_execution_before_publication(certified_publisher, mutation, reason):
+    harness = certified_publisher
+    proof = harness.bundle / harness.proof_path
+    report = harness.candidate["report"]
+    certificate = harness.bundle / publisher.CERTIFICATE
+    cert = json.loads(certificate.read_text(encoding="utf-8"))
+    if mutation == "proof-hash":
+        proof.write_bytes(proof.read_bytes() + b"tampered")
+    elif mutation == "missing-allowlist":
+        cert["certificate_commit_policy"]["allowed_paths"].remove(harness.proof_path)
+    elif mutation == "report-hash":
+        report["test_decisions"][0]["scenario"] = "changed after certification"
+        (harness.bundle / publisher.PREFIX / "codebase-grounding.json").write_text(json.dumps(report), encoding="utf-8")
+    elif mutation == "wrong-identity":
+        cert["identity"]["material_head_sha"] = "c" * 40
+    elif mutation == "parent-symlink":
+        alias = proof.parent.with_name("execution-alias")
+        proof.parent.rename(alias)
+        proof.parent.symlink_to(alias.name, target_is_directory=True)
+    elif mutation == "missing-proof":
+        proof.unlink()
+    elif mutation == "oversized-proof":
+        proof.write_bytes(proof.read_bytes() + b"x" * publisher.MAX_EXECUTION_PROOF_BYTES)
+    elif mutation == "proof-markers":
+        proof.write_bytes(proof.read_bytes().replace(b"REACHED:", b"NOT_REACHED:"))
+    elif mutation == "conflicting-material":
+        harness.conflicting_material = True
+    certificate.write_text(json.dumps(cert), encoding="utf-8")
+    if mutation in {"oversized-proof", "proof-markers"}:
+        report["test_decisions"][0]["verification"]["evidence_sha256"] = hashlib.sha256(proof.read_bytes()).hexdigest()
+        harness.refresh_grounding_hash(report)
+    with pytest.raises((ValueError, subprocess.CalledProcessError)) as caught:
+        publisher.publish(harness.event)
+    error = caught.value
+    details = str(error) + str(getattr(error, "stdout", "")) + str(getattr(error, "stderr", ""))
+    assert reason.lower() in details.lower(), details
+    assert not harness.staged and harness.pushed is None
+    assert "validate_codebase_grounding.py" not in harness.validators
