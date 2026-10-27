@@ -49,6 +49,38 @@ def test_canonical_requirements_use_existing_issue_parser():
     assert len(runner.requirements("owner/repo", issue)) == 3
 
 
+
+@pytest.mark.parametrize(("stderr", "status"), [
+    (b"gh: HTTP 404 Not Found (request may include secrets)", "HTTP 404"),
+    (b"gh: HTTP 403 Forbidden (request may include secrets)", "HTTP 403"),
+    (b"gh: unexpected failure token=secret-value", "HTTP status unavailable"),
+])
+def test_api_http_failure_reports_status_without_leaking_response_or_query(monkeypatch, stderr, status):
+    commands = []
+
+    def failed(args, **kwargs):
+        commands.append((args, kwargs))
+        return runner.subprocess.CompletedProcess(args, 1, b"", stderr)
+
+    monkeypatch.setattr(runner.subprocess, "run", failed)
+    endpoint = "/repos/owner/repo/contents/.github/session-review-policy.json?ref=" + "f" * 40
+    with pytest.raises(ValueError) as raised:
+        runner.api(endpoint)
+    message = str(raised.value)
+    assert status in message
+    assert "GET /repos/owner/repo/contents/.github/session-review-policy.json" in message
+    assert "?ref=" not in message and "secret" not in message
+    assert commands[0][0][-1] == endpoint
+
+
+def test_api_http_success_keeps_authenticated_data_without_diagnostics(monkeypatch):
+    def succeeded(args, **kwargs):
+        return runner.subprocess.CompletedProcess(args, 0, b'{"checked": true}', b"")
+
+    monkeypatch.setattr(runner.subprocess, "run", succeeded)
+    assert runner.api("/repos/owner/repo") == {"checked": True}
+
+
 def test_full_pagination_not_first_page_only(monkeypatch):
     calls = []
     def api(path):

@@ -66,6 +66,29 @@ O bootstrap e uma decisao administrativa unica: a politica antiga, que exige out
 
 Antes da migracao M2, guardar o inventario anterior e o plano de retorno: JSON de rulesets e branch protection aplicaveis, regras efetivas, bypasses, nomes e apps dos required checks, contagem de reviews, revisoes de workflows e bytes/hash da politica em cada base. Registrar tambem o proprietario responsavel e os links da decisao, do certificado e dos runs. Esse snapshot e a referencia do rollback; exemplos de checks neste guia nao substituem as regras reais do repositorio.
 
+### Preparacao da ativacao e observabilidade
+
+Antes de exigir o check de sessao nos rulesets, publicar e revisar a mesma
+politica `enabled` com operador explicito nas branches confiaveis `develop`
+e `main` (default). Uma politica apenas na branch candidata nao concede
+autoridade, e a instalacao inicial exige a decisao administrativa registrada
+na issue vinculada e a preservacao dos checks tecnicos existentes.
+
+O workflow de `push` avalia PRs abertas e pode registrar falhas de sessao
+para PRs antigas sem o vinculo canonico ou com base ainda anterior a
+instalacao. O vinculo deve ser uma linha isolada `Refs #<numero>`,
+`Fixes #<numero>` ou `Closes #<numero>`; uma referencia solta no texto,
+um ponto final ou varias issues ambiguas nao autorizam a revisao.
+A falha deve continuar negando aprovacao, nunca virar `success` por
+ausencia de prova. Diagnosticos do GitHub CLI mostram metodo, recurso sem
+query e status HTTP quando presente; o corpo de erro e o token permanecem
+ocultos.
+
+O check `Verify session review (exact SHA)` so deve ser exigido depois
+de prova positiva e negativa real em PR aberta e de read-back das regras
+ativas em ambas as branches. Ate la, `mode=enabled` no codigo e apenas
+preparacao tecnica: a adocao operacional M2 permanece pendente.
+
 ## Rollback do modo de sessao
 
 O proprietario aciona o retorno quando a garantia atestada deixar de ser aceita, houver defeito no verificador ou as provas operacionais falharem. O retorno preserva PR obrigatoria, checks tecnicos, certificacao, atualizacao estrita e bloqueios de force-push/exclusao durante toda a transicao.
