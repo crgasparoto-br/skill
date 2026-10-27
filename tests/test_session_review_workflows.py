@@ -241,7 +241,7 @@ def test_session_routing_refuses_policy_drift_and_invalid_authority(tmp_path, mo
         candidate += b" "
     monkeypatch.setattr(publisher, "api_get", lambda *_: {
         "type": "file", "encoding": "base64", "content": b64encode(candidate).decode()})
-    with pytest.raises(ValueError, match="differs|policy is missing|operator identity"):
+    with pytest.raises(ValueError, match=r"differs|policy is missing|operator identity"):
         publisher.session_mode_active("owner/repo", "a" * 40)
 
 
