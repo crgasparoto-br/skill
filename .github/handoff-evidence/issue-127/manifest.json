@@ -2,21 +2,20 @@
   "schema_version": 1,
   "repository": "crgasparoto-br/skill",
   "issue_number": 127,
-  "pull_request_number": 138,
+  "pull_request_number": 140,
   "base_ref": "develop",
-  "head_ref": "fix/127-session-stable-material-head",
-  "work_item_start_sha": "bd66edac00779260750789712062a5128932d04a",
+  "head_ref": "chore/127-session-review-live-acceptance-v2",
+  "work_item_start_sha": "b64dbcf4a685e5f5bb73ea81c2b36d510ac1ef7b",
   "evidence_profile": "critical",
-  "risk_justification": "Critical trust boundary: prevent a protected-base policy route from bypassing exact-SHA certification or enabling untrusted PR-authored changes to the publisher, while preserving the legacy result-only handoff path and error-denial behavior.",
+  "risk_justification": "Critical operational acceptance of the source-authenticated M2 session-review trust boundary. The only changed material file is the review-process documentation; the technical controls already installed in trusted develop/main must still prove exact-SHA packet and independent operator attestation.",
   "audit_history": "verified-no-rejection",
-  "audit_history_evidence": "This PR #138 has no independent review rejection against its material candidate. The observed neutral-packet run 40554906886 failed because the result-only publisher moved the pilot HEAD during collection; this is genuine technical failure evidence, not an independent approval.",
-  "review_scope": "Universal resolution of the race observed in pilot #134: certified artifact and technical checks remain mandatory, opt-in session transport does not append a result-only child, legacy mode still does, and default/base policy bytes are authenticated and equal. M2 independent review and ruleset migration remain deferred until real GitHub evidence, never self-certified.",
+  "audit_history_evidence": "PR #140 is a new document-only acceptance pilot. It has no prior independent audit rejection for its own material SHA; historical PR #134 head race and PR #138 implementation results remain factual inputs, not approvals transferred to this PR.",
+  "review_scope": "PR #140 changes only docs/WEB_INDEPENDENT_AUDIT.md and its PR-specific evidence identity. There are no modified test files relative to base, so no pending grounding test decisions may be inherited from PR #138. The 16 canonical issue obligations and passed technical JUnit controls remain required. R127-12 and R127-13 remain deferred pending separate review and rulesets read-back.",
   "artifact_sha256": {
     "reviewed-closure.json": "7ba506ec3efe353d3d0928d78e404f344f2e5c8f70fbe93534f633abcb4bcfe2",
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
-    "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
-    "codebase-grounding.json": "5166c0c69475a964d16f830716f50118d159db50951ebdc596bd3caa65e8ed0d"
+    "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a"
   },
   "test_bindings": {
     "SPEC-L3": {
@@ -347,19 +346,5 @@
         "tests.test_session_review_dossier::test_m2_is_excluded_from_implementation_bindings_and_retains_parent"
       ]
     }
-  },
-  "grounding_test_bindings": {
-    "entregar-issue/tests/test_publish_actions_handoff.py": [
-      {
-        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_enabled_session_mode_preserves_material_sha_without_result_child",
-        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_enabled_session_mode_preserves_material_sha_without_result_child"
-      }
-    ],
-    "tests/test_session_review_workflows.py": [
-      {
-        "case": "tests/test_session_review_workflows.py::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides",
-        "test_case_id": "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
-      }
-    ]
   }
 }
