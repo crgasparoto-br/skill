@@ -14,7 +14,7 @@ Ele nao executa PUT/PATCH, altera regras, registra parecer nem faz merge.
 3. Runs reais de sucesso e negativos: adulteracao, revogacao e mudanca
    de issue/base/HEAD, com links e logs autenticados.
 4. Captura completa do ruleset, inclusive bypass_actors; resposta sem esse
-   campo bloqueia o planejamento em vez de presumir lista vazia.
+   campo ou bypass nao vazio bloqueia o planejamento ate revisao administrativa.
 5. Backup do estado anterior e autorizacao administrativa rastreavel.
 
 ## Gerar somente a previa em ambiente com GitHub CLI autenticado
