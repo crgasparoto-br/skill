@@ -204,13 +204,15 @@
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[certificate-failure]",
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[no-eligible-target]",
         "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_unsupported_base_before_publication",
-        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[unexpected-head]"
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[unexpected-head]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_historical_audit_files_are_immutable[edit]"
       ],
       "regression": [
         "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret",
         "tests.test_session_review_runner::test_no_recursive_workflow_trigger",
         "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_untrusted_run_without_api_access",
-        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[permanent-stale]"
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[permanent-stale]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_historical_audit_files_are_immutable[remove]"
       ]
     },
     "R127-10": {
