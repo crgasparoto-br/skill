@@ -261,7 +261,7 @@ def material_parent_snapshots(source: Path, temp: Path, head: str) -> Path:
 
 def check_material_ci(repository: str, head: str, pr_number: int,
                       required_checks: set[str] | None = None) -> None:
-    """Require a terminal success from every observed PR workflow at this material SHA."""
+    """Require terminal success only from the explicitly required PR workflows at this material SHA."""
     result = api_get(repository, f"actions/runs?head_sha={head}&per_page=100")
     observed = [
         row for row in result.get("workflow_runs") or []
@@ -286,7 +286,7 @@ def check_material_ci(repository: str, head: str, pr_number: int,
     if not required.issubset(names):
         block("required current material PR checks are not present")
     required_rows = [row for row in latest.values() if row.get("name") in required]
-    if {row.get("name") for row in required_rows} != required:
+    if any(sum(row.get("name") == name for row in required_rows) != 1 for name in required):
         block("required current material PR checks are not uniquely observable")
     if any(row.get("status") != "completed" or row.get("conclusion") != "success"
            for row in required_rows):
