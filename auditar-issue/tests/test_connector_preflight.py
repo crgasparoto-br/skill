@@ -48,6 +48,51 @@ def test_connector_preflight_rejects_preparation_even_with_legacy_ready_fields(t
     assert "preparation is not a final handoff" in result.stdout
 
 
+@pytest.mark.parametrize("marker,value", [
+    ("release_authority", False),
+    ("prepared_files", []),
+    ("postcondition_plan", {"name": "plan.json", "sha256": "f" * 64}),
+    ("preparation_sha256", "f" * 64),
+])
+def test_connector_preflight_rejects_all_nonterminal_preparation_markers(tmp_path, marker, value):
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["phase"] = "final"
+    data[marker] = value
+    cert.write_text(json.dumps(data))
+    result = run(cert, manifest)
+    assert result.returncode == 2, result.stdout
+    assert "does not authorize final handoff" in result.stdout
+
+
+def test_connector_preflight_requires_postcondition_after_independent_rejection(tmp_path):
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["previous_independent_rejection"] = True
+    data["remediation_mode"] = "targeted-remediation"
+    data["artifacts"]["audit_remediation"] = {"name": "audit-remediation.json", "sha256": "8" * 64}
+    data["artifacts"]["audit_source_result"] = {"name": "audit-source-result.json", "sha256": "9" * 64}
+    for name in ("audit-remediation.json", "audit-source-result.json"):
+        data["certificate_commit_policy"]["allowed_paths"].append(f".audit/entregar-issue/{name}")
+    cert.write_text(json.dumps(data))
+
+    claims = json.loads(manifest.read_text())
+    claims["candidate_changed_paths"] = data["certificate_commit_policy"]["allowed_paths"]
+    claims["artifacts"]["audit_remediation"] = artifact(
+        ".audit/entregar-issue/audit-remediation.json",
+        {"candidate_head_sha": MATERIAL, "resolution_policy": "all-actionable-items",
+         "all_actionable_items_closed": True},
+    )
+    claims["artifacts"]["audit_source_result"] = artifact(
+        ".audit/entregar-issue/audit-source-result.json",
+        {"rejection_id": "audit-rejection:required-proof"},
+    )
+    manifest.write_text(json.dumps(claims))
+    result = run(cert, manifest)
+    assert result.returncode == 2, result.stdout
+    assert "postcondition proof is required after an independent rejection" in result.stdout
+
+
 def test_connector_postcondition_requires_materialized_proof_not_semantic_booleans(tmp_path):
     cert, manifest = make(tmp_path)
     data = json.loads(cert.read_text())
