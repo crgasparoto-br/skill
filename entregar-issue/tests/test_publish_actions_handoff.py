@@ -545,3 +545,37 @@ def test_publication_readback_fails_closed_on_foreign_or_unverified_target(
         assert len(sleeps) == 5
     else:
         assert sleeps == []
+
+
+@pytest.mark.parametrize("change", ["add", "edit", "remove"])
+def test_trusted_historical_audit_files_are_immutable(tmp_path, change):
+    repo = tmp_path / "source"
+    repo.mkdir()
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    git(repo, "init", "-q")
+    historical = repo / ".audit" / "entregar-issue" / "prior.json"
+    historical.parent.mkdir(parents=True)
+    historical.write_text('{"version":1}', encoding="utf-8")
+    git(repo, "add", "-f", "--", ".audit/entregar-issue/prior.json")
+    git(repo, "commit", "-q", "-m", "existing certified history")
+    base = git(repo, "rev-parse", "HEAD")
+    (repo / "README.md").write_text("new candidate", encoding="utf-8")
+    git(repo, "add", "README.md")
+    git(repo, "commit", "-q", "-m", "new candidate")
+    material = git(repo, "rev-parse", "HEAD")
+    publisher.ensure_historical_audit_unchanged(repo, base, material, [publisher.CERTIFICATE])
+
+    if change == "add":
+        novel = historical.parent / "extra.json"
+        novel.write_text('{"version":2}', encoding="utf-8")
+        git(repo, "add", "-f", "--", ".audit/entregar-issue/extra.json")
+    elif change == "edit":
+        historical.write_text('{"version":2}', encoding="utf-8")
+        git(repo, "add", "-f", "--", ".audit/entregar-issue/prior.json")
+    else:
+        historical.unlink()
+        git(repo, "add", "-u", "--", ".audit/entregar-issue/prior.json")
+    git(repo, "commit", "-q", "-m", "change historical evidence")
+    changed = git(repo, "rev-parse", "HEAD")
+    with pytest.raises(ValueError, match="outside certificate scope"):
+        publisher.ensure_historical_audit_unchanged(repo, base, changed, [publisher.CERTIFICATE])
