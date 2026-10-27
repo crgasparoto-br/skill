@@ -75,7 +75,7 @@ def test_reject_live_pr_sha_drift(monkeypatch):
         publisher.target_from_event(event)
 
 
-def test_material_ci_requires_every_observed_check_green(monkeypatch):
+def test_material_ci_requires_every_required_check_green(monkeypatch):
     def response(status):
         return {"total_count": 3, "workflow_runs": [
             {"workflow_id": index, "name": name, "head_sha": HEAD,
@@ -90,6 +90,28 @@ def test_material_ci_requires_every_observed_check_green(monkeypatch):
         publisher.check_material_ci("team/skill", HEAD, 113)
     monkeypatch.setattr(publisher, "api_get", lambda *_: response("success"))
     publisher.check_material_ci("team/skill", HEAD, 113)
+
+def test_material_ci_ignores_unrelated_red_audit_workflow(monkeypatch):
+    required = (
+        "Validate skills", "Validate GitHub Audit MCP",
+        "Collect and certify exact-SHA handoff",
+    )
+    workflows = [
+        {"workflow_id": index, "name": name, "head_sha": HEAD,
+         "event": "pull_request", "pull_requests": [{"number": 113}],
+         "run_number": 1, "status": "completed", "conclusion": "success"}
+        for index, name in enumerate(required, 1)
+    ]
+    workflows.append({
+        "workflow_id": 99, "name": "Independent audit (exact SHA)", "head_sha": HEAD,
+        "event": "pull_request", "pull_requests": [{"number": 113}],
+        "run_number": 1, "status": "completed", "conclusion": "failure",
+    })
+    monkeypatch.setattr(publisher, "api_get", lambda *_: {
+        "total_count": len(workflows), "workflow_runs": workflows,
+    })
+    publisher.check_material_ci("team/skill", HEAD, 113)
+
 
 def test_parent_control_snapshots_are_immutable(tmp_path):
     source = tmp_path / "source"
