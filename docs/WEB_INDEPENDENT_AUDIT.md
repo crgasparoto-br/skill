@@ -141,3 +141,18 @@ autorizados pelo certificado, porque `.audit/` esta corretamente no
 aceitam caminhos de codigo fora da allowlist. A CI de `main` isola
 `GITHUB_REF_NAME` e `GITHUB_ACTIONS` nos testes de versionamento com
 repositorio sintetico; o gate de release sobre o checkout real continua ativo.
+
+## Piloto de homologacao operacional M2
+
+Uma PR dedicada a esta etapa deve provar, com fontes autenticadas, o check
+`Verify session review (exact SHA)` sobre material ainda aberto, com policy
+`enabled` e bytes de tooling iguais nas branches confiaveis `develop`/`main`.
+O pacote neutro e um insumo de revisao, nao um parecer, e a declaracao de
+sessao separada precisa ser feita pelo operador em outra conversa real.
+
+O piloto so passa na condicao positiva quando o GitHub comprova o comentario
+autorizado e cada obrigacao possui fontes e tres controles aprovados no JUnit.
+Os ensaios negativos devem revogar o check por adulteracao, exclusao/edicao
+de parecer e alteracao de PR/base/HEAD/issue. Falha real deve permanecer
+registrada; nao registrar check verde manualmente e nao habilitar rulesets
+antes de provar todos os ensaios.
