@@ -5,7 +5,8 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
+
+import pytest
 
 from scripts.catalog import load_catalog
 from scripts.validate_versioning import (
@@ -15,10 +16,6 @@ from scripts.validate_versioning import (
     validate_json_schema,
     validate_versioning,
 )
-
-if TYPE_CHECKING:
-    import pytest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -879,3 +876,20 @@ def test_versioning_ignores_tilde_code_fences(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     assert validate_versioning(root) == []
+
+
+@pytest.fixture(autouse=True)
+def _isolate_synthetic_versioning_tests_from_outer_actions_ref(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The real checkout has its own release gate. Test fixtures must not borrow
+    # GITHUB_REF_NAME=main from the outer job when they have no Git repository.
+    monkeypatch.delenv("GITHUB_REF_NAME", raising=False)
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+
+
+def test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("GITHUB_REF_NAME", "main")
+    assert any("nao esta em repositorio git" in error
+               for error in release_alignment_errors(tmp_path))

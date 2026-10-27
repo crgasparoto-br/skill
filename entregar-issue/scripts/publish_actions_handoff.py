@@ -363,7 +363,9 @@ def publish(event_path: Path, *, base_ref: str | None = None,
             dest = source / path
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_bytes(safe_bundle_path(bundle, path).read_bytes())
-        command("git", "add", "--", *paths, cwd=source)
+        # The repository ignores .audit/ by default; stage only certified allowlisted
+        # results explicitly, without changing the repository-wide ignore policy.
+        command("git", "add", "-f", "--", *paths, cwd=source)
         changed = command("git", "diff", "--cached", "--name-only", cwd=source).splitlines()
         if not changed or not set(changed).issubset(paths) or CERTIFICATE not in changed:
             block("result-only candidate differs from the certified allowlist")

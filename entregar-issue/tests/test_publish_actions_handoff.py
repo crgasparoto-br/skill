@@ -478,3 +478,16 @@ def test_default_publisher_rejects_untrusted_run_without_api_access(monkeypatch)
     monkeypatch.setattr(publisher, "api_get", lambda *_: pytest.fail("must not access API"))
     with pytest.raises(ValueError, match="authenticated successful PR"):
         publisher.trusted_default_base_ref(event, ".github/workflows/handoff-evidence.yml")
+
+
+def test_trusted_publisher_can_stage_gitignored_certified_results(certified_publisher):
+    harness = certified_publisher
+    exclude = harness.repo / ".git" / "info" / "exclude"
+    exclude.write_text(exclude.read_text(encoding="utf-8") + "\n.audit/\n", encoding="utf-8")
+    published = publisher.publish(harness.event)
+    assert harness.pushed == published
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    cert = json.loads((harness.bundle / publisher.CERTIFICATE).read_text(encoding="utf-8"))
+    changed = set(git(harness.repo, "diff", "--name-only", harness.head, published).splitlines())
+    assert changed == set(publisher.allowed_paths(cert))
+    assert all(path.startswith(publisher.PREFIX) for path in changed)
