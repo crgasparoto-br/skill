@@ -199,7 +199,7 @@
         },
         {
           "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
-          "sha256": "5cbcf2f3f9921011c5d3abbbe6c838990595e06284e99f9531baaecba5bd2d3d",
+          "sha256": "3d08a98bc40590ae750e9cfb49f2216ea1310286e7f3f73452c564f32f5e8b05",
           "kind": "reviewed-source-definition",
           "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
         },

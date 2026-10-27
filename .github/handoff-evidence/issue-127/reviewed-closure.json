@@ -631,7 +631,7 @@
           ],
           "scenario_ids": [
             "entregar-issue/tests/test_handoff_postcondition.py:121-147 (case test_official_critical_postcondition_replays_historical_gate_before_final_handoff; JUnit classname entregar-issue.tests.test_handoff_postcondition)",
-            "entregar-issue/tests/test_handoff_postcondition_records.py:299-320 (case test_finalization_requires_real_replay_and_exact_prepared_records; JUnit classname entregar-issue.tests.test_handoff_postcondition_records)"
+            "entregar-issue/tests/test_handoff_postcondition_records.py:299-322 (case test_finalization_requires_real_replay_and_exact_prepared_records; JUnit classname entregar-issue.tests.test_handoff_postcondition_records)"
           ],
           "negative_control_evidence": [
             "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[rehashed-record]; JUnit classname entregar-issue.tests.test_handoff_postcondition)",

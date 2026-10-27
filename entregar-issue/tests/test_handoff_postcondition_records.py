@@ -311,10 +311,12 @@ def test_finalization_requires_real_replay_and_exact_prepared_records(authentica
     swapped["items"][0]["validations"].append("a different semantic check")
     with pytest.raises(ValueError, match="differs from authenticated preparation"):
         finalized(case, ledger=swapped)
-    receipt = json.loads((case["output"] / "receipt.json").read_bytes())
+    receipt_path = case["output"] / "receipt.json"
+    receipt = json.loads(receipt_path.read_bytes())
     receipt["execution"]["exit_code"] = None
-    forged = case["output"] / "forged-receipt.json"
-    literal_fixture.write_json(forged, receipt)
+    receipt_path.chmod(0o600)
+    literal_fixture.write_json(receipt_path, receipt)
+    receipt_path.chmod(0o400)
     with pytest.raises(ValueError, match="successful authenticated execution"):
-        finalized(case, receipt_path=forged)
+        finalized(case, receipt_path=receipt_path)
     assert {name: case[name].read_bytes() for name in before} == before
