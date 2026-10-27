@@ -2,21 +2,21 @@
   "schema_version": 1,
   "repository": "crgasparoto-br/skill",
   "issue_number": 127,
-  "pull_request_number": 129,
+  "pull_request_number": 132,
   "base_ref": "develop",
-  "head_ref": "feat/127-session-review-m2",
-  "work_item_start_sha": "164f8a43ada901b26742972bcbcbeada1da33272",
+  "head_ref": "fix/127-session-bootstrap-runtime",
+  "work_item_start_sha": "dee3bd681d2c8c83f38e651425fcf2be4909de70",
   "evidence_profile": "critical",
-  "risk_justification": "Critical authorization boundary: candidate session policy activation, GitHub error semantics, potential credential disclosure in logs, immutable artifact checks and operator attestation. A protected-branch deployment and real adverse reviews remain required.",
+  "risk_justification": "Critical authorization, revocation and trusted publishing boundary, including completed check identity, exact-SHA GitHub Actions output, allowlisted ignored evidence and the release-line CI policy. Independent reviewer assurance is not inferred from technical tests.",
   "audit_history": "verified-no-rejection",
-  "audit_history_evidence": "This PR has no independently registered audit rejection against its material SHA; previous independent audit reports relate to merged PR #128 and are retained only as historical evidence.",
-  "review_scope": "M2 preparation reviewed for six material paths (session transport, policy, trusted publisher, tests and web review docs). Exact-SHA JUnit must validate both changed test modules. M1 evidence remains historical and R127-12/13 remain deferred until real separate review and effective rule protection.",
+  "audit_history_evidence": "No separate independent audit rejected this new PR #132 yet. The observed failures are real GitHub Actions logs from pilot #131 and the main branch; they are now remediation input, never asserted to be approved independent findings.",
+  "review_scope": "Remediation of the observed failure signatures under R127-06/07/09/11 in three pre-existing test modules. This remains implementation context: session review by a separate conversation and ruleset migration R127-12/13 are still deferred.",
   "artifact_sha256": {
-    "reviewed-closure.json": "ca13efef0ed075c6b4b69908f14de50d51cc37242e2f90f4a2f5efff5f263526",
+    "reviewed-closure.json": "970cd285a5f52e84d15eb7c4a4702783012b8ecf347ad6db711dac37d2e6089e",
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
     "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
-    "codebase-grounding.json": "0dc3d0152b675e04d9acae59ffe8722e84c4a991c4b8abb00d7da78a4018d220"
+    "codebase-grounding.json": "273115c5836d5e08a7f20503656e4cf9417b471dc0780b43041ec8fb28431774"
   },
   "test_bindings": {
     "SPEC-L3": {
@@ -135,14 +135,16 @@
     },
     "R127-06": {
       "positive": [
-        "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]"
+        "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]",
+        "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
       ],
       "negative": [
         "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]",
         "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]",
         "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]",
         "tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse",
-        "tests.test_session_review_runner::test_evaluate_publishes_failure_when_journal_is_unreadable"
+        "tests.test_session_review_runner::test_evaluate_publishes_failure_when_journal_is_unreadable",
+        "tests.test_session_review_workflows::test_reopen_response_identity_drift_is_not_recovered_by_new_check[head_sha]"
       ],
       "regression": [
         "tests.test_session_review_runner::test_evaluate_reads_complete_journal_beyond_one_page[99]",
@@ -155,7 +157,8 @@
     "R127-07": {
       "positive": [
         "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]",
-        "tests.test_session_review_runner::test_api_http_success_keeps_authenticated_data_without_diagnostics"
+        "tests.test_session_review_runner::test_api_http_success_keeps_authenticated_data_without_diagnostics",
+        "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
       ],
       "negative": [
         "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]",
@@ -167,7 +170,8 @@
         "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[issue_sha256]",
         "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[policy_sha256]",
         "tests.test_session_review_runner::test_publish_rejects_receipt_for_another_sha_before_writing",
-        "tests.test_session_review_runner::test_api_http_failure_reports_status_without_leaking_response_or_query[gh: HTTP 403 Forbidden (request may include secrets)-HTTP 403]"
+        "tests.test_session_review_runner::test_api_http_failure_reports_status_without_leaking_response_or_query[gh: HTTP 403 Forbidden (request may include secrets)-HTTP 403]",
+        "tests.test_session_review_workflows::test_reopen_response_identity_drift_is_not_recovered_by_new_check[id]"
       ],
       "regression": [
         "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[main]",
@@ -192,7 +196,8 @@
     "R127-09": {
       "positive": [
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[all-live-targets]",
-        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_selects_main_from_trusted_api"
+        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_selects_main_from_trusted_api",
+        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_publisher_can_stage_gitignored_certified_results"
       ],
       "negative": [
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[certificate-failure]",
@@ -202,7 +207,8 @@
       "regression": [
         "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret",
         "tests.test_session_review_runner::test_no_recursive_workflow_trigger",
-        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_untrusted_run_without_api_access"
+        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_untrusted_run_without_api_access",
+        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_publisher_can_stage_gitignored_certified_results"
       ]
     },
     "R127-10": {
@@ -232,7 +238,8 @@
         "entregar-issue.tests.test_handoff_postcondition_records::test_finalization_requires_real_replay_and_exact_prepared_records",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_literal_replay_executes_frozen_gate_and_reverifies_real_output",
         "auditar-issue.tests.test_evidence_profile_preflight::test_preflight_revalidates_anchors_in_supplied_source_checkout",
-        "tests.test_session_review_dossier::test_complete_dossier_passes_official_auditor_saturation"
+        "tests.test_session_review_dossier::test_complete_dossier_passes_official_auditor_saturation",
+        "tests.test_versioning::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main"
       ],
       "negative": [
         "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
@@ -325,16 +332,22 @@
     }
   },
   "grounding_test_bindings": {
-    "tests/test_session_review_runner.py": [
+    "tests/test_session_review_workflows.py": [
       {
-        "case": "tests/test_session_review_runner.py::test_api_http_success_keeps_authenticated_data_without_diagnostics",
-        "test_case_id": "tests.test_session_review_runner::test_api_http_success_keeps_authenticated_data_without_diagnostics"
+        "case": "tests/test_session_review_workflows.py::test_completed_check_that_cannot_reopen_creates_new_pending_check",
+        "test_case_id": "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
       }
     ],
     "entregar-issue/tests/test_publish_actions_handoff.py": [
       {
-        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_default_publisher_selects_main_from_trusted_api",
-        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_selects_main_from_trusted_api"
+        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_trusted_publisher_can_stage_gitignored_certified_results",
+        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_trusted_publisher_can_stage_gitignored_certified_results"
+      }
+    ],
+    "tests/test_versioning.py": [
+      {
+        "case": "tests/test_versioning.py::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main",
+        "test_case_id": "tests.test_versioning::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main"
       }
     ]
   }
