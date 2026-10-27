@@ -491,3 +491,57 @@ def test_trusted_publisher_can_stage_gitignored_certified_results(certified_publ
     changed = set(git(harness.repo, "diff", "--name-only", harness.head, published).splitlines())
     assert changed == set(publisher.allowed_paths(cert))
     assert all(path.startswith(publisher.PREFIX) for path in changed)
+
+
+def test_publication_retries_only_stale_pr_readback(certified_publisher, monkeypatch):
+    harness = certified_publisher
+    original = publisher.api_get
+    stale = []
+    delays = []
+
+    def api(repository, endpoint):
+        result = original(repository, endpoint)
+        if endpoint == "pulls/99" and harness.pushed and not stale:
+            stale.append(True)
+            return {**result, "head": {**result["head"], "sha": harness.head}}
+        return result
+
+    monkeypatch.setattr(publisher, "api_get", api)
+    monkeypatch.setattr(publisher.time, "sleep", delays.append)
+    published = publisher.publish(harness.event)
+    assert published == harness.pushed
+    assert stale == [True] and delays == [0.5]
+    assert len(harness.terminal_proofs) == 2
+
+
+@pytest.mark.parametrize("mutation", ["unexpected-head", "changed-base", "permanent-stale"])
+def test_publication_readback_fails_closed_on_foreign_or_unverified_target(
+    certified_publisher, monkeypatch, mutation,
+):
+    harness = certified_publisher
+    original = publisher.api_get
+    sleeps = []
+
+    def api(repository, endpoint):
+        result = original(repository, endpoint)
+        if endpoint != "pulls/99" or not harness.pushed:
+            return result
+        result = dict(result)
+        result["head"] = dict(result["head"])
+        result["base"] = dict(result["base"])
+        if mutation == "changed-base":
+            result["base"]["sha"] = "f" * 40
+        else:
+            result["head"]["sha"] = "f" * 40 if mutation == "unexpected-head" else harness.head
+        return result
+
+    monkeypatch.setattr(publisher, "api_get", api)
+    monkeypatch.setattr(publisher.time, "sleep", sleeps.append)
+    with pytest.raises(ValueError, match="postpublication PR changed|fresh postpublication GitHub read"):
+        publisher.publish(harness.event)
+    assert harness.pushed is not None
+    assert len(harness.terminal_proofs) == 1  # Prepublication guard, no false post-write approval.
+    if mutation == "permanent-stale":
+        assert len(sleeps) == 5
+    else:
+        assert sleeps == []
