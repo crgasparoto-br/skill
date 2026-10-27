@@ -2,21 +2,20 @@
   "schema_version": 1,
   "repository": "crgasparoto-br/skill",
   "issue_number": 127,
-  "pull_request_number": 132,
+  "pull_request_number": 134,
   "base_ref": "develop",
-  "head_ref": "fix/127-session-bootstrap-runtime",
-  "work_item_start_sha": "dee3bd681d2c8c83f38e651425fcf2be4909de70",
+  "head_ref": "chore/127-session-review-live-pilot",
+  "work_item_start_sha": "3f7b574201c19662425cc11881573f241f9ac9cf",
   "evidence_profile": "critical",
-  "risk_justification": "Critical authorization, revocation and trusted publishing boundary, including completed check identity, exact-SHA GitHub Actions output, allowlisted ignored evidence and the release-line CI policy. Independent reviewer assurance is not inferred from technical tests.",
+  "risk_justification": "Este piloto documental exercita o mecanismo de revisão por sessão exata e seus efeitos de autorização; requer evidências autenticadas e negativas reais de edição, exclusão, rejeição e mudança de alvo.",
   "audit_history": "verified-no-rejection",
-  "audit_history_evidence": "No separate independent audit rejected this new PR #132 yet. The observed failures are real GitHub Actions logs from pilot #131 and the main branch; they are now remediation input, never asserted to be approved independent findings.",
-  "review_scope": "Remediation of the observed failure signatures under R127-06/07/09/11 in three pre-existing test modules. This remains implementation context: session review by a separate conversation and ruleset migration R127-12/13 are still deferred.",
+  "audit_history_evidence": "A PR #134 é piloto novo sem rejeição independente de auditor contra seu HEAD material. Evidências de #128/#129/#132 são históricas e não são confundidas com parecer do novo piloto.",
+  "review_scope": "Somente extensão documental para plano M2, derivada da base develop após correção de runtime #132. M1 já possui certificado histórico, mas este piloto exige certificado próprio do SHA material, pacote neutro e revisão realmente separada; R127-12/13 não encerrados.",
   "artifact_sha256": {
     "reviewed-closure.json": "970cd285a5f52e84d15eb7c4a4702783012b8ecf347ad6db711dac37d2e6089e",
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
-    "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
-    "codebase-grounding.json": "273115c5836d5e08a7f20503656e4cf9417b471dc0780b43041ec8fb28431774"
+    "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a"
   },
   "test_bindings": {
     "SPEC-L3": {
@@ -329,25 +328,5 @@
         "tests.test_session_review_dossier::test_m2_is_excluded_from_implementation_bindings_and_retains_parent"
       ]
     }
-  },
-  "grounding_test_bindings": {
-    "tests/test_session_review_workflows.py": [
-      {
-        "case": "tests/test_session_review_workflows.py::test_completed_check_that_cannot_reopen_creates_new_pending_check",
-        "test_case_id": "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
-      }
-    ],
-    "entregar-issue/tests/test_publish_actions_handoff.py": [
-      {
-        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_trusted_publisher_can_stage_gitignored_certified_results",
-        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_trusted_publisher_can_stage_gitignored_certified_results"
-      }
-    ],
-    "tests/test_versioning.py": [
-      {
-        "case": "tests/test_versioning.py::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main",
-        "test_case_id": "tests.test_versioning::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main"
-      }
-    ]
   }
 }
