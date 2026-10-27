@@ -50,6 +50,8 @@ def plan_m2(current: dict, branch: str, ruleset_id: int) -> dict:
         "ruleset does not target only the requested branch")
     require(isinstance(current.get("bypass_actors"), list),
             "bypass actors are not visible: authenticated admin read required")
+    require(current["bypass_actors"] == [],
+            "nonempty bypass actors require administrative exception review")
     original = current.get("rules")
     require(isinstance(original, list), "ruleset rules unavailable")
     rules = copy.deepcopy(original)
