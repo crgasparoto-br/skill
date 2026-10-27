@@ -16,6 +16,7 @@ from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
 from handoff_origin import connector_origin_is_same_base_blob, subject_matches_target
+from handoff_postcondition import require_final_phase, verify_finalization
 
 SHA40 = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 REQUIRED_ARTIFACTS = {"specification_snapshot", "requirement_closure"}
@@ -71,8 +72,10 @@ def main() -> int:
         print(f"BLOCK: invalid connector preflight input: {exc}")
         return 2
 
-    if cert.get("phase") not in (None, "final") or "prepared_artifacts" in cert:
-        print("BLOCK: certificate preparation is not a final handoff")
+    try:
+        require_final_phase(cert)
+    except ValueError as exc:
+        print(f"BLOCK: certificate preparation is not a final handoff: {exc}")
         return 2
 
     errors: list[str] = []
@@ -370,14 +373,17 @@ def main() -> int:
                     + ", ".join(missing_findings)
                 )
 
-    # Do not execute even a historical gate before the independently observed
-    # identity and immutable connector inventory have been checked.
-    if "postcondition_proof" in cert and not errors and not limitations:
-        if args.artifacts_dir is None or args.source_repository_root is None:
+    # Match the canonical certificate validator: a prior independent rejection
+    # makes the finalization proof mandatory even if the descriptor was removed
+    # from the candidate. Semantic connector booleans never replace those bytes.
+    proof_required = bool(cert.get("previous_independent_rejection") or "postcondition_proof" in cert)
+    if proof_required and not errors and not limitations:
+        if "postcondition_proof" not in cert:
+            errors.append("certificate postcondition proof is required after an independent rejection")
+        elif args.artifacts_dir is None or args.source_repository_root is None:
             limitations.append("certificate postcondition proof requires materialized artifacts and trusted Git source")
         else:
             try:
-                from handoff_postcondition import verify_finalization
                 verify_finalization(cert, args.artifacts_dir, args.source_repository_root,
                                     expected_base=base_sha, require_repository=True)
             except Exception as exc:
