@@ -32,3 +32,19 @@ Propoe 0 reviews humanos e enforcement active para ambas as branches.
 A aplicacao e o read-back das regras efetivas devem ser realizados por
 administrador apos a prova operacional M2. O script e intencionalmente
 somente leitura, impedindo conclusoes e ativacoes autoatestadas.
+
+
+## Verificacao de regras efetivas apos aplicacao pelo administrador
+
+Quando o administrador tiver aplicado a proposta e restaurado a protecao de
+ambas as branches, executar novamente leituras autenticadas:
+
+    python3 scripts/plan_session_ruleset_m2.py --repo crgasparoto-br/skill --branch develop --ruleset-id 24821474 --readback
+    python3 scripts/plan_session_ruleset_m2.py --repo crgasparoto-br/skill --branch main --ruleset-id 24821457 --readback
+
+O modo readback recusa enforcement desativado, review humano diferente de zero,
+check legado ainda exigido, falta de qualquer check tecnico/certificacao,
+origem divergente ou bypass nao reconciliado. O status devolvido comprova
+somente a estrutura das regras; NAO comprova revisao de sessao, negativos
+operacionais ou satisfacao integral de R127-12/R127-13. Nunca aplicar
+uma proposta para forcar teste verde ou sem antes conferir os ensaios M2.

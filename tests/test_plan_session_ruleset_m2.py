@@ -114,3 +114,38 @@ def test_plan_does_not_perform_remote_mutation(monkeypatch, capsys):
     output = capsys.readouterr().out
     assert '"status": "READ_ONLY_PROPOSAL_NOT_M2_APPROVAL"' in output
     assert '"requires_prior_real_positive_and_negative_M2_acceptance": true' in output
+
+@pytest.mark.parametrize("branch", ["develop", "main"])
+def test_live_readback_accepts_only_fully_active_session_ruleset(branch):
+    original = baseline(branch)
+    active = {**original, **plan.plan_m2(original, branch, 17)}
+    result = plan.verify_live_ruleset(active, branch, 17)
+    assert result["status"] == "ACTIVE_RULESET_STRUCTURE_VERIFIED_NOT_M2_APPROVAL"
+    assert result["session_review_or_negative_controls_verified"] is False
+    assert {item["context"] for item in result["required_checks"]} == set(plan.REQUIRED[branch])
+
+
+@pytest.mark.parametrize("mutation,match", [
+    (lambda r: r.update(enforcement="disabled"), "not enforced"),
+    (lambda r: r["rules"][2]["parameters"].update(required_approving_review_count=1), "legacy audit gate"),
+    (lambda r: r["rules"][3]["parameters"]["required_status_checks"].pop(), "rules"),
+    (lambda r: r["bypass_actors"].append({"actor_id": 1}), "nonempty bypass"),
+])
+def test_live_readback_rejects_incomplete_or_unsafe_rulesets(mutation, match):
+    current = baseline()
+    active = {**current, **plan.plan_m2(current, "develop", 17)}
+    mutation(active)
+    with pytest.raises(ValueError, match=match):
+        plan.verify_live_ruleset(active, "develop", 17)
+
+
+def test_readback_cli_is_read_only(monkeypatch, capsys):
+    import sys
+    prior = baseline()
+    active = {**prior, **plan.plan_m2(prior, "develop", 17)}
+    monkeypatch.setattr(plan, "read_ruleset", lambda _repo, _id: active)
+    monkeypatch.setattr(sys, "argv", [
+        "plan_session_ruleset_m2", "--repo", "crgasparoto-br/skill",
+        "--branch", "develop", "--ruleset-id", "17", "--readback"])
+    plan.main()
+    assert "ACTIVE_RULESET_STRUCTURE_VERIFIED_NOT_M2_APPROVAL" in capsys.readouterr().out

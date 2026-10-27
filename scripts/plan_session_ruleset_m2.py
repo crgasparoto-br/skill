@@ -118,6 +118,23 @@ def plan_m2(current: dict, branch: str, ruleset_id: int) -> dict:
     return planned
 
 
+def verify_live_ruleset(current: dict, branch: str, ruleset_id: int) -> dict:
+    """Check effective M2 rule structure only; not proof of a valid session review."""
+    require(current.get("enforcement") == "active", "ruleset is not enforced")
+    expected = plan_m2(current, branch, ruleset_id)
+    for field in ("name", "target", "enforcement", "conditions", "bypass_actors", "rules"):
+        require(current.get(field) == expected[field],
+                f"effective ruleset differs from required M2 policy: {field}")
+    status = next(r for r in current["rules"] if r["type"] == "required_status_checks")
+    return {
+        "status": "ACTIVE_RULESET_STRUCTURE_VERIFIED_NOT_M2_APPROVAL",
+        "branch": branch,
+        "ruleset_id": ruleset_id,
+        "required_checks": status["parameters"]["required_status_checks"],
+        "session_review_or_negative_controls_verified": False,
+    }
+
+
 def read_ruleset(repository: str, ruleset_id: int) -> dict:
     result = subprocess.run(
         ["gh", "api", f"/repos/{repository}/rulesets/{ruleset_id}"],
@@ -134,11 +151,17 @@ def main() -> None:
     parser.add_argument("--repo", required=True)
     parser.add_argument("--branch", required=True, choices=list(REQUIRED))
     parser.add_argument("--ruleset-id", type=int, required=True)
+    parser.add_argument("--readback", action="store_true",
+                        help="verify active M2 rules without mutating settings")
     options = parser.parse_args()
     require(re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", options.repo) is not None,
             "repository must be owner/name")
     require(options.ruleset_id > 0, "invalid ruleset ID")
     current = read_ruleset(options.repo, options.ruleset_id)
+    if options.readback:
+        print(json.dumps(verify_live_ruleset(current, options.branch, options.ruleset_id),
+                         ensure_ascii=False, indent=2))
+        return
     planned = plan_m2(current, options.branch, options.ruleset_id)
     print(json.dumps({
         "status": "READ_ONLY_PROPOSAL_NOT_M2_APPROVAL",
