@@ -23,7 +23,12 @@ REQUIRED = {
         "collect / Require certified semantic handoff (exact SHA)",
         SESSION,
     ),
-    "main": ("Structure and tests", SESSION),
+    "main": (
+        "Structure and tests",
+        "Offline authorization tests",
+        "collect / Require certified semantic handoff (exact SHA)",
+        SESSION,
+    ),
 }
 
 
