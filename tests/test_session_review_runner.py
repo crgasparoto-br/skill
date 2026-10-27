@@ -264,7 +264,11 @@ class ReviewBackend:
         if path.endswith("/issues/10/comments"):
             return copy.deepcopy(self.comments[(page - 1) * 100:page * 100])
         if "/issues/comments/" in path:
-            return copy.deepcopy(next(c for c in self.comments if c["id"] == int(path.rsplit("/", 1)[1])))
+            comment_id = int(path.rsplit("/", 1)[1])
+            matches = [c for c in self.comments if c["id"] == comment_id]
+            if not matches:
+                raise OSError("comment not found")
+            return copy.deepcopy(matches[0])
         if "/check-runs/" in path:
             return copy.deepcopy(next(c for c in self.checks if c["id"] == int(path.rsplit("/", 1)[1])))
         raise AssertionError(endpoint)
@@ -383,6 +387,30 @@ def test_evaluate_revocation_survives_reuse_and_old_approval_fallback(review_bac
     backend.comments[0]["id"] = 23
     assert backend.run() == 0
     assert len(backend.checks) == 1
+
+
+@pytest.mark.parametrize("action", ["edited", "deleted", "rejected"])
+def test_evaluate_rejects_review_revoked_during_final_revalidation(review_backend, action):
+    backend = review_backend
+    original = copy.deepcopy(backend.comments[0])
+
+    def revoke():
+        if action == "deleted":
+            backend.comments = []
+            return
+        changed = copy.deepcopy(original)
+        if action == "edited":
+            changed["body"] = "marker removed during verification"
+        else:
+            report = copy.deepcopy(backend.report)
+            report["conclusion"] = "rejected"
+            changed["body"] = runner.PREFIX + json.dumps(report)
+        backend.comments = [changed]
+
+    backend.on_recheck = revoke
+    assert backend.run() == 2
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert not any(body.get("conclusion") == "success" for _, body in backend.writes)
 
 
 def test_packet_collection_rejects_initial_head_drift_without_writing(review_backend, tmp_path):
