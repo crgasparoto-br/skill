@@ -9,31 +9,65 @@
     {
       "path": "entregar-issue/tests/test_publish_actions_handoff.py",
       "operation": "modified",
-      "scenario": "Trusted publisher may see a temporarily stale PR head after successful git push. Exact parent, base, allowed changed files and postpublication terminal guard remain mandatory even after bounded retries.",
-      "requirement": "R127-09 / R127-10: a robust trusted GitHub publication must remain fail-closed.",
+      "scenario": "R127-06 / R127-07: preserving certified material HEAD after an authenticated session-mode selection prevents trusted publisher race with a neutral packet.",
+      "requirement": "R127-06 / R127-07: preserving certified material HEAD after an authenticated session-mode selection prevents trusted publisher race with a neutral packet.",
       "search": {
         "queries": [
-          "rg -n 'confirm_published_result|postpublication|test_publication_readback' entregar-issue/scripts/publish_actions_handoff.py entregar-issue/tests/test_publish_actions_handoff.py"
+          "rg -n 'session_mode_active|session_routing|test_enabled_session_mode|test_session_routing_' entregar-issue/scripts/publish_actions_handoff.py entregar-issue/tests/test_publish_actions_handoff.py tests/test_session_review_workflows.py"
         ],
-        "scope": "Reused existing trusted publisher and full Git integration tests without introducing another publisher.",
+        "scope": "Reused the existing trusted publisher unit harness and session workflow/contract suite; no duplicate publisher or transport was created.",
         "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
         "candidates": [
           {
             "path": "entregar-issue/tests/test_publish_actions_handoff.py",
             "case": "test_publisher_materializes_certified_execution_before_grounding",
-            "oracle": "Two validated terminal guard executions, exact material parent and no unauthorized result paths.",
-            "comparison": "Extend with stale-read success and permanent drift failures."
+            "oracle": "Existing GitHub-hosted artifact, parent and policy authorization scenarios remain binding, and the newly observed head-race is discriminated by the session/legacy tests.",
+            "comparison": "Extended the existing scoped test suite while retaining all prior negative and regression tests."
           },
           {
             "path": "entregar-issue/tests/test_publish_actions_handoff.py",
             "case": "test_trusted_publisher_can_stage_gitignored_certified_results",
-            "oracle": "Existing forced staging must remain within the certificate allowlist.",
-            "comparison": "Preserve prior staging regression; add authenticated readback behavior."
+            "oracle": "Existing GitHub-hosted artifact, parent and policy authorization scenarios remain binding, and the newly observed head-race is discriminated by the session/legacy tests.",
+            "comparison": "Extended the existing scoped test suite while retaining all prior negative and regression tests."
           }
         ]
       },
       "decision": "extend-existing",
-      "justification": "A real trusted publisher run proved the exact failure; the existing harness faithfully records Git push, terminal guards and API reads.",
+      "justification": "The existing integration-level test module already owns the publication mode boundary; extend it with real policy and no-new-commit cases.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "tests/test_session_review_workflows.py",
+      "operation": "modified",
+      "scenario": "R127-09 / R127-10: trusted base policy controls session selection; absent policy on both sides retains legacy; drift or invalid authority blocks without downgrade.",
+      "requirement": "R127-09 / R127-10: trusted base policy controls session selection; absent policy on both sides retains legacy; drift or invalid authority blocks without downgrade.",
+      "search": {
+        "queries": [
+          "rg -n 'session_mode_active|session_routing|test_enabled_session_mode|test_session_routing_' entregar-issue/scripts/publish_actions_handoff.py entregar-issue/tests/test_publish_actions_handoff.py tests/test_session_review_workflows.py"
+        ],
+        "scope": "Reused the existing trusted publisher unit harness and session workflow/contract suite; no duplicate publisher or transport was created.",
+        "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
+        "candidates": [
+          {
+            "path": "tests/test_session_review_workflows.py",
+            "case": "test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment",
+            "oracle": "Existing GitHub-hosted artifact, parent and policy authorization scenarios remain binding, and the newly observed head-race is discriminated by the session/legacy tests.",
+            "comparison": "Extended the existing scoped test suite while retaining all prior negative and regression tests."
+          },
+          {
+            "path": "tests/test_session_review_workflows.py",
+            "case": "test_begin_check_rejects_states_that_could_bypass_review",
+            "oracle": "Existing GitHub-hosted artifact, parent and policy authorization scenarios remain binding, and the newly observed head-race is discriminated by the session/legacy tests.",
+            "comparison": "Extended the existing scoped test suite while retaining all prior negative and regression tests."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "The existing integration-level test module already owns the publication mode boundary; extend it with real policy and no-new-commit cases.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",

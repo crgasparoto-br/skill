@@ -2,21 +2,21 @@
   "schema_version": 1,
   "repository": "crgasparoto-br/skill",
   "issue_number": 127,
-  "pull_request_number": 136,
+  "pull_request_number": 138,
   "base_ref": "develop",
-  "head_ref": "fix/127-handoff-readback-retry",
-  "work_item_start_sha": "1e9a5d4efca3c479abe2093433232a72840d1fb0",
+  "head_ref": "fix/127-session-stable-material-head",
+  "work_item_start_sha": "bd66edac00779260750789712062a5128932d04a",
   "evidence_profile": "critical",
-  "risk_justification": "Critical GitHub postpublication trust boundary: transient stale reads can be retried, never unauthorized SHA, branch, base, direct parent or changed paths.",
+  "risk_justification": "Critical trust boundary: prevent a protected-base policy route from bypassing exact-SHA certification or enabling untrusted PR-authored changes to the publisher, while preserving the legacy result-only handoff path and error-denial behavior.",
   "audit_history": "verified-no-rejection",
-  "audit_history_evidence": "No independent auditor rejection was registered for the new PR #136 SHA. Run 40544565514 is an observed post-push technical failure, not a source of independent approval.",
-  "review_scope": "Trusted publisher read-after-write and its existing integration tests, distinct positive/negative/regression controls. Operational separate reviewer and ruleset migration R127-12/13 remain open.",
+  "audit_history_evidence": "This PR #138 has no independent review rejection against its material candidate. The observed neutral-packet run 40554906886 failed because the result-only publisher moved the pilot HEAD during collection; this is genuine technical failure evidence, not an independent approval.",
+  "review_scope": "Universal resolution of the race observed in pilot #134: certified artifact and technical checks remain mandatory, opt-in session transport does not append a result-only child, legacy mode still does, and default/base policy bytes are authenticated and equal. M2 independent review and ruleset migration remain deferred until real GitHub evidence, never self-certified.",
   "artifact_sha256": {
-    "reviewed-closure.json": "08ad7ecbd85ef7bf27b215f5f88d9ad78ad5d6448a2c5946bfcd1a0ea38eb71c",
+    "reviewed-closure.json": "7ba506ec3efe353d3d0928d78e404f344f2e5c8f70fbe93534f633abcb4bcfe2",
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
     "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
-    "codebase-grounding.json": "618d67e6cf2dab69b518fe0c3307c7869b671b6e54ae9d35e0e82f876397101e"
+    "codebase-grounding.json": "5166c0c69475a964d16f830716f50118d159db50951ebdc596bd3caa65e8ed0d"
   },
   "test_bindings": {
     "SPEC-L3": {
@@ -136,7 +136,8 @@
     "R127-06": {
       "positive": [
         "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]",
-        "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
+        "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check",
+        "entregar-issue.tests.test_publish_actions_handoff::test_enabled_session_mode_preserves_material_sha_without_result_child"
       ],
       "negative": [
         "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]",
@@ -158,7 +159,8 @@
       "positive": [
         "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]",
         "tests.test_session_review_runner::test_api_http_success_keeps_authenticated_data_without_diagnostics",
-        "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
+        "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check",
+        "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
       ],
       "negative": [
         "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]",
@@ -171,7 +173,8 @@
         "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[policy_sha256]",
         "tests.test_session_review_runner::test_publish_rejects_receipt_for_another_sha_before_writing",
         "tests.test_session_review_runner::test_api_http_failure_reports_status_without_leaking_response_or_query[gh: HTTP 403 Forbidden (request may include secrets)-HTTP 403]",
-        "tests.test_session_review_workflows::test_reopen_response_identity_drift_is_not_recovered_by_new_check[id]"
+        "tests.test_session_review_workflows::test_reopen_response_identity_drift_is_not_recovered_by_new_check[id]",
+        "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[different-base]"
       ],
       "regression": [
         "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[main]",
@@ -180,7 +183,8 @@
     },
     "R127-08": {
       "positive": [
-        "tests.test_session_review_runner::test_packet_rebuilds_full_diff_from_immutable_blobs_not_truncated_patch"
+        "tests.test_session_review_runner::test_packet_rebuilds_full_diff_from_immutable_blobs_not_truncated_patch",
+        "entregar-issue.tests.test_publish_actions_handoff::test_enabled_session_mode_preserves_material_sha_without_result_child"
       ],
       "negative": [
         "tests.test_session_review_runner::test_archive_rejects_traversal_duplicates_symlink",
@@ -198,33 +202,38 @@
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[all-live-targets]",
         "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_selects_main_from_trusted_api",
         "entregar-issue.tests.test_publish_actions_handoff::test_trusted_publisher_can_stage_gitignored_certified_results",
-        "entregar-issue.tests.test_publish_actions_handoff::test_publication_retries_only_stale_pr_readback"
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_retries_only_stale_pr_readback",
+        "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
       ],
       "negative": [
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[certificate-failure]",
         "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[no-eligible-target]",
         "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_unsupported_base_before_publication",
         "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[unexpected-head]",
-        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_historical_audit_files_are_immutable[edit]"
+        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_historical_audit_files_are_immutable[edit]",
+        "tests.test_session_review_workflows::test_session_routing_never_silently_downgrades_policy_missing_from_base"
       ],
       "regression": [
         "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret",
         "tests.test_session_review_runner::test_no_recursive_workflow_trigger",
         "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_untrusted_run_without_api_access",
         "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[permanent-stale]",
-        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_historical_audit_files_are_immutable[remove]"
+        "entregar-issue.tests.test_publish_actions_handoff::test_trusted_historical_audit_files_are_immutable[remove]",
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
       ]
     },
     "R127-10": {
       "positive": [
         "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates",
-        "entregar-issue.tests.test_publish_actions_handoff::test_publication_retries_only_stale_pr_readback"
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_retries_only_stale_pr_readback",
+        "entregar-issue.tests.test_publish_actions_handoff::test_enabled_session_mode_preserves_material_sha_without_result_child"
       ],
       "negative": [
         "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]",
         "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
         "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
-        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[unexpected-head]"
+        "entregar-issue.tests.test_publish_actions_handoff::test_publication_readback_fails_closed_on_foreign_or_unverified_target[unexpected-head]",
+        "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[invalid-operator]"
       ],
       "regression": [
         "tests.test_session_review_dossier::test_m2_is_excluded_from_implementation_bindings_and_retains_parent",
@@ -246,7 +255,8 @@
         "entregar-issue.tests.test_certificate_postcondition_replay::test_literal_replay_executes_frozen_gate_and_reverifies_real_output",
         "auditar-issue.tests.test_evidence_profile_preflight::test_preflight_revalidates_anchors_in_supplied_source_checkout",
         "tests.test_session_review_dossier::test_complete_dossier_passes_official_auditor_saturation",
-        "tests.test_versioning::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main"
+        "tests.test_versioning::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main",
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
       ],
       "negative": [
         "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
@@ -341,8 +351,14 @@
   "grounding_test_bindings": {
     "entregar-issue/tests/test_publish_actions_handoff.py": [
       {
-        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_publication_retries_only_stale_pr_readback",
-        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_publication_retries_only_stale_pr_readback"
+        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_enabled_session_mode_preserves_material_sha_without_result_child",
+        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_enabled_session_mode_preserves_material_sha_without_result_child"
+      }
+    ],
+    "tests/test_session_review_workflows.py": [
+      {
+        "case": "tests/test_session_review_workflows.py::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides",
+        "test_case_id": "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
       }
     ]
   }
