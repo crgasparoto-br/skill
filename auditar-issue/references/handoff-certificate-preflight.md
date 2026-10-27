@@ -27,6 +27,26 @@ Artefatos por perfil:
 - qualquer perfil cujo `scope.issue_changed_paths` toque codigo: `codebase_grounding` exact-material-head; a aplicabilidade e recalculada do escopo certificado e nao pode ser rebaixada pelo certificado;
 - rejeicao independente anterior: sempre exigir `audit_remediation` + `audit_source_result`; usar perfil de risco real. Exigir `critical` + `audit_escape_closure` + `learning_closure` + historico somente quando `remediation_mode=systemic-remediation|mixed-remediation`.
 
+## Pos-condicao de certificacao
+
+Preparacao nao e certificado final: rejeitar `phase=preparation` e o inventario
+`prepared_artifacts`, inclusive quando os campos de compatibilidade historica
+contenham `schema_version=2` e `status=ready`. Essa vista existe somente para
+executar o gate historico dependente; nao libera auditoria nem publicacao.
+
+Quando houver `postcondition_proof`, conferir a cadeia de
+`CERTIFICATE-POSTCONDITION-001` com os bytes materializados e a fonte Git confiavel.
+Passar `--source-repository-root` ao agregador de preflight. Conferir o comando
+original, a execucao factual, os hashes e a transformacao restrita entre a
+preparacao imutavel e o fechamento final. A mesma opcao tambem permite recalcular
+as referencias de codigo no checkout material.
+
+No fallback por connector, booleanos de um manifesto semantico nao substituem a
+prova de replay. Fornecer tambem `--artifacts-dir` e `--source-repository-root` a
+`check_connector_preflight.py`. Se o runtime nao puder materializar esses inputs,
+registrar a limitacao e usar os fallbacks de runtime; nao converter a falta de
+prova em sucesso. Uma prova materializada inconsistente continua bloqueando.
+
 ## Artefato herdado da base
 
 Um `handoff-ready.json` presente no head nao e automaticamente handoff da entrega corrente. Quando o mesmo caminho ja existir no SHA imutavel da base:

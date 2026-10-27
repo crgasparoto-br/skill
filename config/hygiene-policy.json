@@ -79,7 +79,7 @@
     "complexity": {
       "state": "reported",
       "max_complexity": 30,
-      "baseline": 52,
+      "baseline": 51,
       "limits": "Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento entre módulos. Mede só o corpo da própria função: função aninhada é medida por si, ramo de default de parâmetro e de decorator não entra, with não conta como ramo e lambda não é medida.",
       "baseline_history": [
         {
@@ -105,6 +105,10 @@
         {
           "value": 52,
           "reason": "O verificador autenticado GitHub adicionou validacao de completude de reviews e checks; medicao CI 38167497623, mantendo a classe reported e o limite de complexidade existente."
+        },
+        {
+          "value": 51,
+          "reason": "A separacao da validacao de pos-condicoes em helpers coesos reduziu a contagem medida de 52 para 51; limiar 30, escopo de varredura e demais excecoes preservados."
         }
       ]
     }

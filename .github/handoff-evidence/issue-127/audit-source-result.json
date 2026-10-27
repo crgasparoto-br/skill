@@ -1,0 +1,472 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "repository": "crgasparoto-br/skill",
+    "base_sha": "2366dd6da7ac9d8c5defe9b40f53dd3c4a0c650f",
+    "head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0"
+  },
+  "verdict": "REPROVADA",
+  "coverage": "limited",
+  "discovery_closed": true,
+  "requirements": [
+    {
+      "id": "SPEC-L3",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/session_review.py",
+      "evidence_sha256": "a9ad9b60d4d33762ddfa6e97513ad8716f949c0a2622cc45841013b81e039189"
+    },
+    {
+      "id": "SPEC-L7",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/session_review.py",
+      "evidence_sha256": "a9ad9b60d4d33762ddfa6e97513ad8716f949c0a2622cc45841013b81e039189"
+    },
+    {
+      "id": "R127-01",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/session_review.py",
+      "evidence_sha256": "a9ad9b60d4d33762ddfa6e97513ad8716f949c0a2622cc45841013b81e039189"
+    },
+    {
+      "id": "R127-02",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/session_review.py",
+      "evidence_sha256": "a9ad9b60d4d33762ddfa6e97513ad8716f949c0a2622cc45841013b81e039189"
+    },
+    {
+      "id": "R127-03",
+      "status": "covered",
+      "evidence_path": "probes/probe_runner_identity.json",
+      "evidence_sha256": "b1c2c4b1c30d582597663391f7f7c37923198c45fa5e6fa41a2e9cb8a0228812"
+    },
+    {
+      "id": "R127-04",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/session_review.py",
+      "evidence_sha256": "a9ad9b60d4d33762ddfa6e97513ad8716f949c0a2622cc45841013b81e039189"
+    },
+    {
+      "id": "R127-05",
+      "status": "covered",
+      "evidence_path": "evidence/pytest-exact-head.xml",
+      "evidence_sha256": "543e704200a8e1bfed692bdf3d1c3a030ab8ce2b9fb0f9749d83c6e140330b89"
+    },
+    {
+      "id": "R127-06",
+      "status": "covered",
+      "evidence_path": "probes/probe_session_journal.log",
+      "evidence_sha256": "47ee2ef6bee6ae55e72a08e794a85a0270685882c6838b12155d0b166c28b3cb"
+    },
+    {
+      "id": "R127-07",
+      "status": "covered",
+      "evidence_path": "probes/probe_dispatch_origin.json",
+      "evidence_sha256": "c728945a6cf2da8363b703ce49935b1f4d0dd4195c44b11c881327aa2736b629"
+    },
+    {
+      "id": "R127-08",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/verify_session_review.py",
+      "evidence_sha256": "ec47f9103398d9bae35b1a5be5b61c6f8b1aa0b44138580ea3d70168a520e104"
+    },
+    {
+      "id": "R127-09",
+      "status": "covered",
+      "evidence_path": "candidate/.github/workflows/session-review.yml",
+      "evidence_sha256": "a378a5e70c88f2123e6683eb89544212f5490689f1cdde0c935348291ea2d6c3"
+    },
+    {
+      "id": "R127-10",
+      "status": "covered",
+      "evidence_path": "candidate/docs/WEB_INDEPENDENT_AUDIT.md",
+      "evidence_sha256": "e61dee45204066ff6e6e6fb85d7f15e140d60e25e8450b628ba188a61cebf062"
+    },
+    {
+      "id": "R127-11",
+      "status": "covered",
+      "evidence_path": "logs/certificate-replay.log",
+      "evidence_sha256": "18fa0f55a69661bdcf815596026445a97ae7e270f0297f13547c66de7623dc8a"
+    },
+    {
+      "id": "R127-12",
+      "status": "not-applicable",
+      "evidence_path": "snapshots/issue-decision.json",
+      "evidence_sha256": "db17d5bb1ac9ce5914d3aa216dc6108b5e1b280db36b7e2a25a640c106b99531",
+      "reason": "Operational adoption M2 is explicitly deferred beyond M1 handoff by the authenticated owner decision; obligation remains open, not waived."
+    },
+    {
+      "id": "R127-13",
+      "status": "not-applicable",
+      "evidence_path": "snapshots/issue-decision.json",
+      "evidence_sha256": "db17d5bb1ac9ce5914d3aa216dc6108b5e1b280db36b7e2a25a640c106b99531",
+      "reason": "Operational adoption M2 is explicitly deferred beyond M1 handoff by the authenticated owner decision; obligation remains open, not waived."
+    },
+    {
+      "id": "SPEC-L33",
+      "status": "covered",
+      "evidence_path": "snapshots/issue-decision.json",
+      "evidence_sha256": "db17d5bb1ac9ce5914d3aa216dc6108b5e1b280db36b7e2a25a640c106b99531"
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "S-ASSURANCE",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/session_review.py",
+      "evidence_sha256": "a9ad9b60d4d33762ddfa6e97513ad8716f949c0a2622cc45841013b81e039189"
+    },
+    {
+      "id": "S-POLICY",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/session_review.py",
+      "evidence_sha256": "a9ad9b60d4d33762ddfa6e97513ad8716f949c0a2622cc45841013b81e039189"
+    },
+    {
+      "id": "S-TARGET",
+      "status": "covered",
+      "evidence_path": "probes/probe_runner_identity.json",
+      "evidence_sha256": "b1c2c4b1c30d582597663391f7f7c37923198c45fa5e6fa41a2e9cb8a0228812"
+    },
+    {
+      "id": "S-OBLIGATIONS",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/session_review.py",
+      "evidence_sha256": "a9ad9b60d4d33762ddfa6e97513ad8716f949c0a2622cc45841013b81e039189"
+    },
+    {
+      "id": "S-TESTS",
+      "status": "covered",
+      "evidence_path": "evidence/pytest-exact-head.xml",
+      "evidence_sha256": "543e704200a8e1bfed692bdf3d1c3a030ab8ce2b9fb0f9749d83c6e140330b89"
+    },
+    {
+      "id": "S-JOURNAL",
+      "status": "covered",
+      "evidence_path": "probes/probe_session_journal.log",
+      "evidence_sha256": "47ee2ef6bee6ae55e72a08e794a85a0270685882c6838b12155d0b166c28b3cb"
+    },
+    {
+      "id": "S-ORIGIN",
+      "status": "covered",
+      "evidence_path": "probes/probe_dispatch_origin.json",
+      "evidence_sha256": "c728945a6cf2da8363b703ce49935b1f4d0dd4195c44b11c881327aa2736b629"
+    },
+    {
+      "id": "S-RECHECK",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/verify_session_review.py",
+      "evidence_sha256": "ec47f9103398d9bae35b1a5be5b61c6f8b1aa0b44138580ea3d70168a520e104"
+    },
+    {
+      "id": "S-PACKET",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/verify_session_review.py",
+      "evidence_sha256": "ec47f9103398d9bae35b1a5be5b61c6f8b1aa0b44138580ea3d70168a520e104"
+    },
+    {
+      "id": "S-WEB",
+      "status": "covered",
+      "evidence_path": "candidate/.github/workflows/session-review.yml",
+      "evidence_sha256": "a378a5e70c88f2123e6683eb89544212f5490689f1cdde0c935348291ea2d6c3"
+    },
+    {
+      "id": "S-DOCS",
+      "status": "covered",
+      "evidence_path": "candidate/docs/WEB_INDEPENDENT_AUDIT.md",
+      "evidence_sha256": "e61dee45204066ff6e6e6fb85d7f15e140d60e25e8450b628ba188a61cebf062"
+    },
+    {
+      "id": "S-CERT",
+      "status": "covered",
+      "evidence_path": "logs/certificate-replay.log",
+      "evidence_sha256": "18fa0f55a69661bdcf815596026445a97ae7e270f0297f13547c66de7623dc8a"
+    },
+    {
+      "id": "S-GROWTH",
+      "status": "covered",
+      "evidence_path": "evidence/.audit/entregar-issue/code-growth.json",
+      "evidence_sha256": "fa3df67d8029ff439509e686b75a343d3874356525524273a0b94e093a27e9c1"
+    },
+    {
+      "id": "S-M2REVIEW",
+      "status": "covered",
+      "evidence_path": "snapshots/issue-decision.json",
+      "evidence_sha256": "db17d5bb1ac9ce5914d3aa216dc6108b5e1b280db36b7e2a25a640c106b99531"
+    },
+    {
+      "id": "S-M2RULES",
+      "status": "covered",
+      "evidence_path": "snapshots/issue-decision.json",
+      "evidence_sha256": "db17d5bb1ac9ce5914d3aa216dc6108b5e1b280db36b7e2a25a640c106b99531"
+    },
+    {
+      "id": "S-ED25519",
+      "status": "covered",
+      "evidence_path": "candidate/scripts/verify_web_external_audit.py",
+      "evidence_sha256": "0183c9e6f7258492af57d92378085044d3fa3769b9f1d8c4f9bc44d716a0080a"
+    },
+    {
+      "id": "S-LIVE-DISPATCH",
+      "status": "not-executed",
+      "reason": "No remote adversarial dispatch or check mutation was performed during the read-only audit. The code boundary violation is established by complete workflow inspection, official platform documentation and harmless local execution; additional remote experimentation is unnecessary after proven blockers."
+    }
+  ],
+  "changed_path_reviews": [
+    {
+      "id": ".github/handoff-evidence/issue-127/code-growth-justifications.json",
+      "status": "covered",
+      "surface_ids": [
+        "S-GROWTH"
+      ],
+      "evidence_path": "candidate/.github/handoff-evidence/issue-127/code-growth-justifications.json",
+      "evidence_sha256": "d26d797d89c926cb7ffe0c7520cb50fbbe095ea14739beedc6c4e044ab40d689"
+    },
+    {
+      "id": ".github/handoff-evidence/issue-127/manifest.json",
+      "status": "covered",
+      "surface_ids": [
+        "S-CERT"
+      ],
+      "evidence_path": "candidate/.github/handoff-evidence/issue-127/manifest.json",
+      "evidence_sha256": "1ccd32e6b1fc350ef89e3c8b76e34500d67789c7a1c9ca668fd60d1b7faee877"
+    },
+    {
+      "id": ".github/handoff-evidence/issue-127/reviewed-closure.json",
+      "status": "covered",
+      "surface_ids": [
+        "S-CERT"
+      ],
+      "evidence_path": "candidate/.github/handoff-evidence/issue-127/reviewed-closure.json",
+      "evidence_sha256": "fa0addf721b7f833dee20dd8f1a68b380a7f9be9e2c3f9a7cb24d07dda1d4958"
+    },
+    {
+      "id": ".github/session-review-policy.json",
+      "status": "covered",
+      "surface_ids": [
+        "S-POLICY"
+      ],
+      "evidence_path": "candidate/.github/session-review-policy.json",
+      "evidence_sha256": "4453fca4e2e3741da9c6f446f475a648ec1937ca7d9ca9bb8c5e827676423fe1"
+    },
+    {
+      "id": ".github/workflows/handoff-evidence.yml",
+      "status": "covered",
+      "surface_ids": [
+        "S-CERT",
+        "S-WEB"
+      ],
+      "evidence_path": "candidate/.github/workflows/handoff-evidence.yml",
+      "evidence_sha256": "ef5fc19ffdb0eee3bff3a0bdf4283cf872a44a64db2b92c09696375664395e0d"
+    },
+    {
+      "id": ".github/workflows/prepare-neutral-audit-packet.yml",
+      "status": "covered",
+      "surface_ids": [
+        "S-PACKET",
+        "S-ORIGIN"
+      ],
+      "evidence_path": "candidate/.github/workflows/prepare-neutral-audit-packet.yml",
+      "evidence_sha256": "70975ad76084bedad232b8a16315ed4a2df6fba672d6455c2b4315b027121d51"
+    },
+    {
+      "id": ".github/workflows/session-review.yml",
+      "status": "covered",
+      "surface_ids": [
+        "S-ORIGIN",
+        "S-WEB",
+        "S-JOURNAL"
+      ],
+      "evidence_path": "candidate/.github/workflows/session-review.yml",
+      "evidence_sha256": "a378a5e70c88f2123e6683eb89544212f5490689f1cdde0c935348291ea2d6c3"
+    },
+    {
+      "id": "docs/WEB_INDEPENDENT_AUDIT.md",
+      "status": "covered",
+      "surface_ids": [
+        "S-DOCS",
+        "S-ASSURANCE",
+        "S-M2RULES"
+      ],
+      "evidence_path": "candidate/docs/WEB_INDEPENDENT_AUDIT.md",
+      "evidence_sha256": "e61dee45204066ff6e6e6fb85d7f15e140d60e25e8450b628ba188a61cebf062"
+    },
+    {
+      "id": "scripts/session_review.py",
+      "status": "covered",
+      "surface_ids": [
+        "S-ASSURANCE",
+        "S-POLICY",
+        "S-OBLIGATIONS",
+        "S-TESTS"
+      ],
+      "evidence_path": "candidate/scripts/session_review.py",
+      "evidence_sha256": "a9ad9b60d4d33762ddfa6e97513ad8716f949c0a2622cc45841013b81e039189"
+    },
+    {
+      "id": "scripts/verify_session_review.py",
+      "status": "covered",
+      "surface_ids": [
+        "S-TARGET",
+        "S-JOURNAL",
+        "S-RECHECK",
+        "S-PACKET"
+      ],
+      "evidence_path": "candidate/scripts/verify_session_review.py",
+      "evidence_sha256": "ec47f9103398d9bae35b1a5be5b61c6f8b1aa0b44138580ea3d70168a520e104"
+    },
+    {
+      "id": "scripts/verify_web_external_audit.py",
+      "status": "covered",
+      "surface_ids": [
+        "S-ED25519"
+      ],
+      "evidence_path": "candidate/scripts/verify_web_external_audit.py",
+      "evidence_sha256": "0183c9e6f7258492af57d92378085044d3fa3769b9f1d8c4f9bc44d716a0080a"
+    },
+    {
+      "id": "tests/test_session_review.py",
+      "status": "covered",
+      "surface_ids": [
+        "S-POLICY",
+        "S-OBLIGATIONS",
+        "S-TESTS"
+      ],
+      "evidence_path": "candidate/tests/test_session_review.py",
+      "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
+    },
+    {
+      "id": "tests/test_session_review_runner.py",
+      "status": "covered",
+      "surface_ids": [
+        "S-TARGET",
+        "S-JOURNAL",
+        "S-PACKET",
+        "S-ORIGIN"
+      ],
+      "evidence_path": "candidate/tests/test_session_review_runner.py",
+      "evidence_sha256": "9f5fd789678fc9f70ad9d04784ca5be97ebdb653630865f8095cd4cdf08ae88a"
+    },
+    {
+      "id": "tests/test_verify_web_external_audit.py",
+      "status": "covered",
+      "surface_ids": [
+        "S-ED25519"
+      ],
+      "evidence_path": "candidate/tests/test_verify_web_external_audit.py",
+      "evidence_sha256": "4a9e857121197b62abda79d1fc707b1fe4e1827a7d2c37299586423dbc76003c"
+    }
+  ],
+  "previous_findings": [],
+  "findings": [
+    {
+      "id": "A-001",
+      "requirement_id": "R127-07",
+      "surface_id": "S-ORIGIN",
+      "root_cause": "Privileged workflow_dispatch selects executable source through the selected workflow SHA before any protected-source validation.",
+      "disposition": "blocking",
+      "severity": "Alta",
+      "remediation_mode": "targeted-remediation",
+      "locations": [
+        ".github/workflows/session-review.yml:18-30",
+        ".github/workflows/session-review.yml:39-56",
+        ".github/workflows/prepare-neutral-audit-packet.yml:25-43"
+      ],
+      "evidence_path": "probes/probe_dispatch_origin.json",
+      "evidence_sha256": "c728945a6cf2da8363b703ce49935b1f4d0dd4195c44b11c881327aa2736b629"
+    },
+    {
+      "id": "A-002",
+      "requirement_id": "R127-03",
+      "surface_id": "S-TARGET",
+      "root_cause": "The initial check HEAD is not compared with the later prepared and finally revalidated identity.",
+      "disposition": "blocking",
+      "severity": "Alta",
+      "remediation_mode": "targeted-remediation",
+      "locations": [
+        "scripts/verify_session_review.py:298-314",
+        "scripts/verify_session_review.py:328-339"
+      ],
+      "evidence_path": "probes/probe_runner_identity.json",
+      "evidence_sha256": "b1c2c4b1c30d582597663391f7f7c37923198c45fa5e6fa41a2e9cb8a0228812"
+    },
+    {
+      "id": "A-003",
+      "requirement_id": "R127-06",
+      "surface_id": "S-JOURNAL",
+      "root_cause": "Every evaluate creates a new check while history is limited to 100 records and failure publication rereads the same truncated journal.",
+      "disposition": "blocking",
+      "severity": "Alta",
+      "remediation_mode": "targeted-remediation",
+      "locations": [
+        "scripts/verify_session_review.py:224-240",
+        "scripts/verify_session_review.py:273-345"
+      ],
+      "evidence_path": "probes/probe_session_journal.log",
+      "evidence_sha256": "47ee2ef6bee6ae55e72a08e794a85a0270685882c6838b12155d0b166c28b3cb"
+    },
+    {
+      "id": "A-004",
+      "requirement_id": "R127-11",
+      "surface_id": "S-CERT",
+      "root_cause": "The producer dossier still contains only the prior issue obligations and does not emit certification inputs or a certificate.",
+      "disposition": "blocking",
+      "severity": "Alta",
+      "remediation_mode": "targeted-remediation",
+      "locations": [
+        ".github/handoff-evidence/issue-127/manifest.json:9-12",
+        ".github/handoff-evidence/issue-127/reviewed-closure.json:1-91"
+      ],
+      "evidence_path": "logs/certificate-replay.log",
+      "evidence_sha256": "18fa0f55a69661bdcf815596026445a97ae7e270f0297f13547c66de7623dc8a",
+      "failed_gate": {
+        "name": "Require certified semantic handoff (exact SHA)",
+        "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python /workspace/scratch/feec0c916f9c/pr128-audit/trusted/entregar-issue/scripts/require_actions_handoff_certificate.py --evidence-dir /workspace/scratch/feec0c916f9c/pr128-audit/evidence --event /workspace/scratch/feec0c916f9c/pr128-audit/trusted-event.json --base-ref develop",
+        "deterministic": true,
+        "head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+        "exit_code": 2,
+        "evidence_path": "logs/certificate-replay.log",
+        "evidence_sha256": "18fa0f55a69661bdcf815596026445a97ae7e270f0297f13547c66de7623dc8a"
+      }
+    },
+    {
+      "id": "A-005",
+      "requirement_id": "R127-10",
+      "surface_id": "S-DOCS",
+      "root_cause": "The session adoption guide does not define rollback and the approved M1/M2 deferral representation.",
+      "disposition": "blocking",
+      "severity": "Média",
+      "remediation_mode": "targeted-remediation",
+      "locations": [
+        "docs/WEB_INDEPENDENT_AUDIT.md:42-58"
+      ],
+      "evidence_path": "candidate/docs/WEB_INDEPENDENT_AUDIT.md",
+      "evidence_sha256": "e61dee45204066ff6e6e6fb85d7f15e140d60e25e8450b628ba188a61cebf062"
+    }
+  ],
+  "blocking_ids": [
+    "A-001",
+    "A-002",
+    "A-003",
+    "A-004",
+    "A-005"
+  ],
+  "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+  "rejection_lineage": {
+    "mode": "new"
+  },
+  "audit_transport": "certified-handoff",
+  "trusted_anchor_sha": "2366dd6da7ac9d8c5defe9b40f53dd3c4a0c650f",
+  "blocker_bounded": true,
+  "formal_completeness_gate": "blocked-by-auditor-runtime",
+  "release_gate_satisfied": false,
+  "independent_review_context": "Read-only audit session; no implementation changes made in this session; no signed external approval emitted.",
+  "limitations": [
+    {
+      "id": "LIM-001",
+      "category": "audit-runtime-limitation",
+      "reason": "Local Git transport failed; authenticated exact-head artifacts contain no repository.bundle. Formal reconciliation against real base/head Git objects cannot run; source bytes and changed paths were verified through the authenticated connector.",
+      "evidence_path": "completeness-template/git-preflight.json",
+      "evidence_sha256": "4149482928c03cc810c2aace2c15d025d85dde10e9ce14a7f422ef6133eaf625"
+    }
+  ]
+}

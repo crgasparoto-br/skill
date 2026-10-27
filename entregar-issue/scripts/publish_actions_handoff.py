@@ -20,6 +20,8 @@ REF = re.compile(r"(?:feat|fix|chore|docs)/[A-Za-z0-9_.-]+\Z")
 PREFIX = ".audit/entregar-issue/"
 CERTIFICATE = PREFIX + "handoff-ready.json"
 SCRIPT_ROOT = Path(__file__).resolve().parent
+MAX_EXECUTION_PROOF_BYTES = 2 * 1024 * 1024
+MAX_EXECUTION_BYTES = 16 * 1024 * 1024
 
 
 def block(message: str) -> None:
@@ -79,7 +81,29 @@ def target_from_event(event: dict, base_ref: str = "develop",
     return repo, pr_number, head, base
 
 
+def trusted_default_base_ref(event: dict, producer_path: str) -> str:
+    """Select only a trusted supported base, not a caller-provided event claim."""
+    run = event.get("workflow_run") or {}
+    repo = (event.get("repository") or {}).get("full_name")
+    prs = run.get("pull_requests") or []
+    if (not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", str(repo))
+            or not re.fullmatch(r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml", producer_path)
+            or run.get("status") != "completed" or run.get("conclusion") != "success"
+            or run.get("event") != "pull_request" or run.get("path") != producer_path
+            or not HEX_SHA.fullmatch(str(run.get("head_sha")))
+            or not isinstance(prs, list) or len(prs) != 1
+            or type(prs[0].get("number")) is not int or prs[0]["number"] < 1):
+        block("only one authenticated successful PR evidence event may select the default base")
+    pr = api_get(repo, f"pulls/{prs[0]['number']}")
+    base_ref = (pr.get("base") or {}).get("ref")
+    if base_ref not in {"develop", "main"}:
+        block("trusted publisher default base must be develop or main")
+    return base_ref
+
+
 def allowed_paths(cert: dict) -> list[str]:
+    from handoff_postcondition import require_final_phase
+    require_final_phase(cert)
     policy = cert.get("certificate_commit_policy") or {}
     paths = policy.get("allowed_paths")
     if policy.get("mode") != "result-only-child" or not isinstance(paths, list):
@@ -104,6 +128,55 @@ def safe_bundle_path(bundle: Path, relative: str) -> Path:
     if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(bundle.resolve()):
         block(f"missing or unsafe certified artifact: {relative}")
     return path
+
+
+def materialize_grounding_proofs(source: Path, bundle: Path, cert: dict,
+                                 grounded: Path, head: str) -> None:
+    """Install only authenticated execution data before the trusted grounding gate."""
+    from audit_artifact_io import artifact_metadata, load_json_artifact
+    from bind_grounding_execution import EXECUTION_PREFIX, execution_path, sha256
+    from validate_codebase_grounding import check_passed_test_evidence
+
+    authorized = set(allowed_paths(cert))
+    expected = cert["artifacts"]["codebase_grounding"]
+    if PREFIX + expected["name"] not in authorized or artifact_metadata(grounded)["sha256"] != expected["sha256"]:
+        block("grounding report is not an authenticated, allowlisted artifact")
+    report = load_json_artifact(grounded, require_object=True)
+    if report.get("subject_sha") != head:
+        block("grounding execution report belongs to another material SHA")
+    decisions = report.get("test_decisions", [])
+    if not isinstance(decisions, list) or any(not isinstance(item, dict) for item in decisions):
+        block("grounding test decision inventory is malformed")
+    copies = {}
+    for item in decisions:
+        proof = item.get("verification") or {}
+        if not isinstance(proof, dict):
+            block("grounding execution proof is malformed")
+        relative = proof.get("evidence_path")
+        if not isinstance(relative, str) or not relative.startswith(EXECUTION_PREFIX):
+            continue  # Existing attested evidence outside the producer stays in the material tree.
+        if proof.get("status") != "passed" or relative not in authorized:
+            block("grounding execution proof is not explicitly authorized by the certificate")
+        artifact = execution_path(bundle, relative)
+        if not artifact.is_file() or artifact.stat().st_size > MAX_EXECUTION_PROOF_BYTES:
+            block("grounding execution proof is missing or exceeds its size bound")
+        errors = []
+        check_passed_test_evidence(item, bundle, head, errors)
+        if errors:
+            block("; ".join(errors))
+        raw = artifact.read_bytes()
+        if sha256(raw) != proof.get("evidence_sha256"):
+            block("grounding execution proof changed after authentication")
+        destination = execution_path(source, relative)
+        if destination.exists() and (not destination.is_file() or destination.read_bytes() != raw):
+            block("grounding execution destination contains conflicting material")
+        copies[relative] = (destination, raw)
+        if sum(len(data) for _, data in copies.values()) > MAX_EXECUTION_BYTES:
+            block("grounding execution proof inventory exceeds its size bound")
+    # Do not write a partial set when any later proof fails authentication.
+    for destination, raw in copies.values():
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(raw)
 
 
 def validate_certificate(repo: str, pr: int, head: str, base: str, source: Path,
@@ -140,6 +213,7 @@ def validate_certificate(repo: str, pr: int, head: str, base: str, source: Path,
     grounding = reports.get("codebase_grounding")
     if isinstance(grounding, dict) and grounding.get("name"):
         grounded = safe_bundle_path(bundle, PREFIX + grounding["name"])
+        materialize_grounding_proofs(source, bundle, cert, grounded, head)
         command("python", str(SCRIPT_ROOT / "validate_codebase_grounding.py"),
                 "--repo", str(source), "--report", str(grounded),
                 "--base-sha", start, "--head-sha", head)
@@ -168,6 +242,7 @@ def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, publishe
         "--material-head-sha", head, "--published-head-sha", published,
         "--published-parent-sha", head, "--current-head-sha", published,
         "--current-parent-sha", head, "--base-sha", base,
+        "--material-parent-repository", str(audit.parents[1]),
     ]
     for path in changed:
         args.extend(["--published-changed-path", path, "--current-changed-path", path])
@@ -191,20 +266,22 @@ def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, publishe
     return args
 
 
-def material_parent_snapshots(source: Path, temp: Path) -> Path:
-    """Capture immutable pre-handoff control ledgers before staging new bytes."""
+def material_parent_snapshots(source: Path, temp: Path, head: str) -> Path:
+    """Capture exact material blobs; absence stays absence until the terminal Git proof."""
+    from validate_terminal_handoff import material_parent_blob
+
     folder = temp / "material-parent-snapshots"
     folder.mkdir()
     for name in ("inherited-controls.json", "audit-escape-closure.json"):
-        old = source / PREFIX / name
-        if old.is_file() and not old.is_symlink():
-            (folder / name).write_bytes(old.read_bytes())
+        raw = material_parent_blob(source, head, PREFIX + name)
+        if raw is not None:
+            (folder / name).write_bytes(raw)
     return folder
 
 
 def check_material_ci(repository: str, head: str, pr_number: int,
                       required_checks: set[str] | None = None) -> None:
-    """Require a terminal success from every observed PR workflow at this material SHA."""
+    """Require terminal success only from the explicitly required PR workflows at this material SHA."""
     result = api_get(repository, f"actions/runs?head_sha={head}&per_page=100")
     observed = [
         row for row in result.get("workflow_runs") or []
@@ -228,16 +305,21 @@ def check_material_ci(repository: str, head: str, pr_number: int,
         block("at least one explicit CI workflow name is mandatory")
     if not required.issubset(names):
         block("required current material PR checks are not present")
+    required_rows = [row for row in latest.values() if row.get("name") in required]
+    if any(sum(row.get("name") == name for row in required_rows) != 1 for name in required):
+        block("required current material PR checks are not uniquely observable")
     if any(row.get("status") != "completed" or row.get("conclusion") != "success"
-           for row in latest.values()):
-        block("material PR workflow run is not terminal success")
+           for row in required_rows):
+        block("required material PR workflow run is not terminal success")
 
 
-def publish(event_path: Path, *, base_ref: str = "develop",
+def publish(event_path: Path, *, base_ref: str | None = None,
             producer_path: str = ".github/workflows/handoff-evidence.yml",
             required_checks: set[str] | None = None) -> str:
     event = json.loads(event_path.read_text(encoding="utf-8"))
-    repo, pr_number, head, base = target_from_event(event, base_ref, producer_path)
+    selected_base = trusted_default_base_ref(event, producer_path) if base_ref is None else base_ref
+    repo, pr_number, head, base = target_from_event(event, selected_base, producer_path)
+    base_ref = selected_base
     run_id = event["workflow_run"]["id"]
     name = f"handoff-evidence-{pr_number}-{head}"
     listed = api_get(repo, f"actions/runs/{run_id}/artifacts?per_page=100")
@@ -273,7 +355,7 @@ def publish(event_path: Path, *, base_ref: str = "develop",
         validate_certificate(repo, pr_number, head, base, source, bundle, cert, branch, base_ref)
         check_material_ci(repo, head, pr_number, required_checks)
 
-        material_parent = material_parent_snapshots(source, temp)
+        material_parent = material_parent_snapshots(source, temp, head)
         existing = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
         if existing - set(paths):
             block("material HEAD contains stale audit paths outside the certificate allowlist")
@@ -314,7 +396,7 @@ def publish(event_path: Path, *, base_ref: str = "develop",
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True, type=Path)
-    parser.add_argument("--base-ref", default="develop")
+    parser.add_argument("--base-ref", default=None)
     parser.add_argument("--producer-path", default=".github/workflows/handoff-evidence.yml")
     parser.add_argument("--required-checks-csv", default="")
     args = parser.parse_args()

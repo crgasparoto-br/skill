@@ -60,6 +60,15 @@ def check_checkout(repo_root: Path, head: str) -> None:
         fail("checked-out HEAD differs from the pull_request head SHA")
 
 
+def code_growth_comparison_base(root: Path, start: str, pr_base: str) -> str:
+    """Keep the recorded issue start when the PR base predates remediation."""
+    result = subprocess.run(["git", "merge-base", "--is-ancestor", start, pr_base],
+                            cwd=root, capture_output=True, text=True, check=False)
+    if result.returncode not in {0, 1}:
+        fail(f"cannot resolve code-growth comparison ancestry: {result.stderr.strip()}")
+    return pr_base if result.returncode == 0 else start
+
+
 def issue_body(repository: str, issue: int, token: str) -> str:
     if not token:
         fail("missing GITHUB_TOKEN; issue source cannot be authenticated")
@@ -257,6 +266,36 @@ def _resolve_certification_requirements(out: Path, args: argparse.Namespace,
     return inputs, start, profile, changed, resolved
 
 
+def result_path_arguments(root: Path, out: Path, inputs: dict, resolved: dict) -> list[str]:
+    """Authorize the exact result files needed to retain validated evidence."""
+    arguments = []
+    if "codebase_grounding" in resolved:
+        from bind_grounding_execution import grounding_result_paths
+        for relative in grounding_result_paths(root, out, _load_record(resolved["codebase_grounding"])):
+            arguments.extend(["--allow-result-path", relative])
+    if "previous_audit_escape_closure" in resolved:
+        arguments.extend(["--allow-result-path",
+                          ".audit/entregar-issue/previous-audit-escape-closure.json"])
+    if inputs.get("remediation_mode") in {"systemic-remediation", "mixed-remediation"}:
+        arguments.extend(["--allow-result-path",
+                          ".audit/entregar-issue/previous-inherited-controls.json"])
+    # The certificate must authorize the exact issue source bytes it references.
+    snapshot = _load_record(resolved["specification_snapshot"])
+    for source in snapshot.get("sources", []):
+        if not isinstance(source, dict) or not isinstance(source.get("path"), str):
+            fail("malformed specification source path")
+        relative = source["path"]
+        if not relative.startswith("specification-sources/") or ".." in Path(relative).parts:
+            fail("specification source must remain under specification-sources")
+        source_path = out / ".audit" / "entregar-issue" / relative
+        if not source_path.is_file() or source_path.is_symlink():
+            fail("required specification source bytes are missing")
+        if hashlib.sha256(source_path.read_bytes()).hexdigest() != source.get("sha256"):
+            fail("specification source bytes differ from the immutable snapshot")
+        arguments.extend(["--allow-result-path", f".audit/entregar-issue/{relative}"])
+    return arguments
+
+
 def certify(args: argparse.Namespace) -> None:
     """Certify only authenticated, complete evidence; NEVER perform a repository write."""
     if args.event is None:
@@ -266,6 +305,7 @@ def certify(args: argparse.Namespace) -> None:
     out = args.out.resolve()
     audit = out / ".audit" / "entregar-issue"
     _record_status(out, "blocked", "unverified-requirement-controls", head)
+    (audit / "handoff-ready.json").unlink(missing_ok=True)
     inputs, start, profile, changed, resolved = _resolve_certification_requirements(
         out, args, repo, pr, issue, head, base)
 
@@ -275,7 +315,7 @@ def certify(args: argparse.Namespace) -> None:
                    "--base-sha", start, "--head-sha", head)
     if "code_growth" in resolved:
         growth_args = ["--repo", str(args.root), "--base-sha", start,
-                       "--comparison-base-sha", base, "--head-sha", head,
+                       "--comparison-base-sha", code_growth_comparison_base(args.root, start, base), "--head-sha", head,
                        "--out", str(resolved["code_growth"])]
         justification_path = (args.root / ".github" / "handoff-evidence"
                               / f"issue-{issue}" / "code-growth-justifications.json")
@@ -296,26 +336,7 @@ def certify(args: argparse.Namespace) -> None:
     ]
     for path in changed:
         builder.extend(["--issue-changed-path", path])
-    if "previous_audit_escape_closure" in resolved:
-        builder.extend(["--allow-result-path",
-                        ".audit/entregar-issue/previous-audit-escape-closure.json"])
-    if inputs.get("remediation_mode") in {"systemic-remediation", "mixed-remediation"}:
-        builder.extend(["--allow-result-path",
-                        ".audit/entregar-issue/previous-inherited-controls.json"])
-    # The certificate must authorize the exact issue source bytes it references.
-    snapshot = _load_record(resolved["specification_snapshot"])
-    for source in snapshot.get("sources", []):
-        if not isinstance(source, dict) or not isinstance(source.get("path"), str):
-            fail("malformed specification source path")
-        relative = source["path"]
-        if not relative.startswith("specification-sources/") or ".." in Path(relative).parts:
-            fail("specification source must remain under specification-sources")
-        source_path = audit / relative
-        if not source_path.is_file() or source_path.is_symlink():
-            fail("required specification source bytes are missing")
-        if hashlib.sha256(source_path.read_bytes()).hexdigest() != source.get("sha256"):
-            fail("specification source bytes differ from the immutable snapshot")
-        builder.extend(["--allow-result-path", f".audit/entregar-issue/{relative}"])
+    builder.extend(result_path_arguments(args.root, out, inputs, resolved))
 
     switches = {
         "standard_evidence": "--standard-evidence", "attack_matrix": "--attack-matrix",
@@ -342,6 +363,9 @@ def certify(args: argparse.Namespace) -> None:
                         str(_audit_path(out, "previous-inherited-controls.json"))])
 
     try:
+        if "audit_source_result" in resolved:
+            from certify_handoff_postcondition import prepare_replay_finalization
+            builder = prepare_replay_finalization(args, builder, resolved, head, base, run_script)
         run_script("build_handoff_certificate.py", *builder)
         run_script("validate_handoff_certificate.py",
                    "--certificate", str(audit / "handoff-ready.json"),
@@ -354,7 +378,7 @@ def certify(args: argparse.Namespace) -> None:
                    "--base-ref", args.base_ref, "--head-ref", inputs["head_ref"],
                    *(arg for path in changed for arg in ("--issue-changed-path", path)),
                    "--source-repository-root", str(args.root.resolve()))
-    except subprocess.CalledProcessError:
+    except (ValueError, OSError, subprocess.CalledProcessError):
         (audit / "handoff-ready.json").unlink(missing_ok=True)
         raise
     _record_status(out, "certificate-generated", "publication-and-terminal-guard-still-required", head)

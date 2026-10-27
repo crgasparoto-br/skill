@@ -106,6 +106,8 @@ tecnica foi valida. A etapa de upload `if: always()` preserva
 `handoff-certification-status.json`, o worklist e os logs para remediacao
 no mesmo SHA.
 
+Replay: [pos-condicoes](certificate-postconditions.md).
+
 ## Produtor de evidencias revisadas (Actions)
 
 O caller do repositorio `skill` executa
@@ -136,13 +138,56 @@ Um dossie completo consiste em:
 - Relatorios aplicaveis (standard, matriz de ataque, saturacao, controles
   herdados, grounding, reauditoria e lineage) com hashes SHA-256 declarados
   individualmente em `artifact_sha256`. O produtor permite apenas
-  nomes na allowlist e amarra campos `head_sha`/`subject_sha` e
+  nomes na allowlist e amarra campos `head_sha`/`subject_sha`,
+  `candidate_head_sha`/`revalidated_head_sha` e
   `base_sha` a identidades do runner; textos de prova nao podem
   conter placeholders.
 - `test_bindings` associa cada requisito `covered` a casos JUnit
   positivos, negativos e de regressao **presentes e aprovados** no
   material HEAD. Isso valida apenas existencia/execucao: oraculo,
   falha discriminante e abrangencia exigem inspecao e validadores oficiais.
+
+Para `GROUND-TEST-001`, uma decisao semanticamente revisada pode aguardar
+apenas execucao com `verification: {"status": "unknown",
+"reason": "awaiting-exact-SHA-JUnit"}`. Nesse caso, o manifesto inclui
+`grounding_test_bindings`, indexado pelo `path` de cada decisao pendente,
+com entradas explicitas `{"case": "tests/test_example.py::test_case",
+"test_case_id": "tests.test_example::test_case"}`. Exclusoes precisam
+atingir cada `replacement_tests`; renomeacoes apontam para o caminho novo.
+Esse mapa e revisado junto ao dossie; nao se deriva cobertura de nomes.
+
+O helper [bind_grounding_execution.py](../scripts/bind_grounding_execution.py)
+confere o HEAD, exit code, hashes do log/JUnit e o resultado `PASSED` do
+mesmo caso nos dois formatos. Somente a identidade padrao do pytest e
+suportada automaticamente; caso ausente, ignorado, falho, ambiguo ou
+customizado permanece bloqueante. O produtor preenche apenas `verification`,
+preservando cenarios, oraculos, buscas, decisoes, disposicoes e o dossie
+versionado. Provas ja atestadas e outros motivos `unknown` nao sao reescritos.
+
+A prova factual e criada apos os testes sob
+`.audit/entregar-issue/execution/`, no checkout e no artefato, com o HEAD,
+comando, exit code, casos alcancados e hashes das fontes. O certificado
+autoriza individualmente apenas caminhos seguros cujas copias tenham o
+mesmo digest, pela opcao existente `--allow-result-path`; nenhum prefixo
+inteiro ganha permissao. Assim a prova acompanha o filho de resultados sem
+exigir que o dossie contenha uma prova autorreferente do proprio commit.
+Os validadores oficiais continuam obrigatorios e o binding nao emite
+certificado nem aprovacao semantica.
+
+O publicador confiavel autentica primeiro o certificado, o relatorio de
+grounding e cada prova de execucao autorizada. Confere caminhos canonicos,
+ausencia de symlinks, hashes, identidade e marcadores da execucao, com limites
+de tamanho; entao materializa somente essas provas no checkout material,
+antes de reexecutar o validador oficial de grounding. Nenhum codigo do
+candidato e executado nessa etapa. Conflitos com arquivos existentes ou
+provas ausentes, alteradas ou fora da allowlist bloqueiam a publicacao.
+
+Na medicao de crescimento, `work_item_start_sha` continua sendo o inicio
+registrado da entrega e a ancora da politica. Quando a base da PR antecede
+esse inicio, como em uma remediacao, os chamadores medem `start..HEAD`;
+uma base da PR descendente do inicio continua elegivel como comparacao.
+`code-growth.json` registra ambos em `base_sha` e `comparison_base_sha`,
+sem mudar os limites ou o teste de ancestralidade do validador oficial.
 
 Exemplo de cabecalho do `manifest.json` (valores ilustrativos, nao
 evidencias nem certificado):
@@ -187,6 +232,13 @@ confiavel, copia apenas de caminhos allowlisted, simulacao
 `validate_terminal_handoff.py` do commit filho local, push fast-forward
 sem force ou merge, releitura GitHub apos a escrita e gate terminal real.
 O SHA do filho nao altera o SHA material certificado.
+
+O publicador captura os ledgers existentes diretamente dos blobs do commit
+material e informa `--material-parent-repository` ao guard terminal. Na
+primeira publicacao, caminhos ausentes recebem prova de ausencia pelo Git
+desse SHA; nenhum snapshot vazio e fabricado. Ledgers existentes exigem
+snapshots identicos aos blobs, e o historico externo da rejeicao continua
+separado dessa verificacao do parent imediato.
 
 Enquanto a evidencia semantica ainda nao foi produzida, a certificacao
 reprova e o `workflow_run` nao publica. Nao emitir `READY` nem

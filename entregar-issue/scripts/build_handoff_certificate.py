@@ -109,8 +109,24 @@ def main() -> int:
     parser.add_argument("--artifact-repo-dir", default=DEFAULT_REPO_DIR)
     parser.add_argument("--certificate-repo-path", default=DEFAULT_CERT_PATH)
     parser.add_argument("--allow-result-path", action="append", default=[])
+    parser.add_argument("--phase", choices=("final", "preparation"), default="final")
+    parser.add_argument("--postcondition-plan", help="Authenticated plan; preparation phase only")
+    parser.add_argument("--postcondition-proof", help="Complete replay proof; final phase only")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
+
+    preparation_args = []
+    if args.phase == "preparation":
+        if (not args.previous_independent_rejection or not args.postcondition_plan
+                or not args.source_repository_root or args.postcondition_proof
+                or args.artifact_repo_dir != DEFAULT_REPO_DIR or args.certificate_repo_path != DEFAULT_CERT_PATH):
+            print("BLOCK: preparation requires original rejection, source repository and typed plan")
+            return 2
+        preparation_args = ["--phase", "preparation", "--postcondition-plan", args.postcondition_plan,
+                            "--repository", args.source_repository_root, "--base-sha", args.base_sha]
+    elif args.postcondition_plan:
+        print("BLOCK: final certification cannot use a preparation plan")
+        return 2
 
     profile = args.evidence_profile
     if profile == "auto":
@@ -272,7 +288,7 @@ def main() -> int:
                 sys.executable, str(ROOT / "scripts" / "validate_audit_remediation.py"),
                 "--ledger", str(files["audit_remediation"]),
                 "--audit-result", str(files["audit_source_result"]),
-                "--head-sha", args.head_sha,
+                "--head-sha", args.head_sha, *preparation_args,
             ])
             handoff_args.extend([
                 "--previous-independent-rejection",
@@ -290,6 +306,9 @@ def main() -> int:
             handoff_args.extend(["--audit-escape-closure", str(files["audit_escape_closure"])])
         if "learning_closure" in files:
             handoff_args.extend(["--learning-closure", str(files["learning_closure"])])
+        if preparation_args:
+            handoff_args.extend([*preparation_args, "--audit-result", str(files["audit_source_result"]),
+                                 "--audit-remediation", str(files["audit_remediation"])])
         run(handoff_args)
         source_paths = [files[k] for k in ("requirement_closure", "standard_evidence", "requirement_attack_matrix", "risk_saturation", "inherited_controls") if k in files]
         declared = candidate_locations(source_paths)
@@ -363,6 +382,7 @@ def main() -> int:
     payload = {
         "schema_version": 2,
         "status": "ready",
+        "phase": "final",
         "created_at": datetime.now(UTC).isoformat(),
         "identity": {
             # head_sha is retained as a compatibility alias for material_head_sha.
@@ -410,9 +430,24 @@ def main() -> int:
         "previous_independent_rejection": bool(args.previous_independent_rejection),
     }
     out = Path(args.out).resolve()
+    try:
+        if args.phase == "preparation":
+            from handoff_postcondition import prepare_payload
+            payload = prepare_payload(payload, files, out, Path(args.postcondition_plan))
+        elif args.postcondition_proof or args.previous_independent_rejection:
+            from handoff_postcondition import file_metadata, finalization_paths, verify_finalization
+            audit = files["requirement_closure"].parent
+            if args.postcondition_proof:
+                payload["postcondition_proof"] = file_metadata(Path(args.postcondition_proof), audit)
+                payload["certificate_commit_policy"]["allowed_paths"] = finalization_paths(audit, payload["postcondition_proof"])
+            verify_finalization(payload, audit, Path(args.source_repository_root) if args.source_repository_root else None,
+                                expected_base=args.base_sha, require_repository=True)
+    except Exception as exc:
+        print(f"BLOCK: handoff {args.phase} not created: {exc}")
+        return 2
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"READY: {out}")
+    print(f"{'PREPARED' if args.phase == 'preparation' else 'READY'}: {out}")
     return 0
 
 

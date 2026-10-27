@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 127,
+  "pull_request_number": 129,
+  "base_ref": "develop",
+  "head_ref": "feat/127-session-review-m2",
+  "work_item_start_sha": "164f8a43ada901b26742972bcbcbeada1da33272",
+  "evidence_profile": "critical",
+  "risk_justification": "Critical authorization boundary: candidate session policy activation, GitHub error semantics, potential credential disclosure in logs, immutable artifact checks and operator attestation. A protected-branch deployment and real adverse reviews remain required.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "This PR has no independently registered audit rejection against its material SHA; previous independent audit reports relate to merged PR #128 and are retained only as historical evidence.",
+  "review_scope": "M2 preparation reviewed for six material paths (session transport, policy, trusted publisher, tests and web review docs). Exact-SHA JUnit must validate both changed test modules. M1 evidence remains historical and R127-12/13 remain deferred until real separate review and effective rule protection.",
+  "artifact_sha256": {
+    "reviewed-closure.json": "ca13efef0ed075c6b4b69908f14de50d51cc37242e2f90f4a2f5efff5f263526",
+    "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
+    "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
+    "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
+    "codebase-grounding.json": "0dc3d0152b675e04d9acae59ffe8722e84c4a991c4b8abb00d7da78a4018d220"
+  },
+  "test_bindings": {
+    "SPEC-L3": {
+      "positive": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ],
+      "negative": [
+        "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[id-999]",
+        "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[login-another]",
+        "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[type-Bot]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_main_is_bound_to_same_exact_evidence_requirements"
+      ]
+    },
+    "SPEC-L7": {
+      "positive": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ],
+      "negative": [
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>0]",
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>1]",
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>2]"
+      ],
+      "regression": [
+        "tests.test_verify_web_external_audit::test_accepts_exact_target_after_signature_verification"
+      ]
+    },
+    "R127-01": {
+      "positive": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ],
+      "negative": [
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>0]",
+        "tests.test_session_review::test_policy_cannot_silently_downgrade_existing_guarantee[assurance-third-party]"
+      ],
+      "regression": [
+        "tests.test_verify_web_external_audit::test_accepts_exact_target_after_signature_verification"
+      ]
+    },
+    "R127-02": {
+      "positive": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ],
+      "negative": [
+        "tests.test_session_review::test_policy_cannot_silently_downgrade_existing_guarantee[mode-disabled]",
+        "tests.test_session_review::test_policy_cannot_silently_downgrade_existing_guarantee[schema_version-True]",
+        "tests.test_session_review::test_policy_cannot_silently_downgrade_existing_guarantee[operators-value3]",
+        "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[id-999]",
+        "tests.test_session_review::test_operator_is_authenticated_by_account_id_and_login[login-another]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret"
+      ]
+    },
+    "R127-03": {
+      "positive": [
+        "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[head_sha]",
+        "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[base_sha]",
+        "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[base_ref]",
+        "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[merge_preview_sha]",
+        "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[issue_sha256]",
+        "tests.test_session_review_runner::test_evaluate_rejects_changed_initial_identity[policy_sha256]",
+        "tests.test_session_review::test_stale_or_foreign_report_fails[repository-other/repo]",
+        "tests.test_session_review::test_stale_or_foreign_report_fails[pull_request-11]",
+        "tests.test_session_review::test_stale_or_foreign_report_fails[issue-10]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_packet_collection_rejects_initial_head_drift_without_writing",
+        "tests.test_session_review::test_main_is_bound_to_same_exact_evidence_requirements"
+      ]
+    },
+    "R127-04": {
+      "positive": [
+        "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates",
+        "tests.test_session_review_runner::test_canonical_requirements_use_existing_issue_parser"
+      ],
+      "negative": [
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]",
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]",
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>6]",
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>7]",
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>8]",
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>9]",
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>10]",
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>11]"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_immutable_obligation_identity_cannot_be_rewritten"
+      ]
+    },
+    "R127-05": {
+      "positive": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review",
+        "entregar-issue.tests.test_bind_grounding_execution::test_binds_only_reviewed_execution_fields_from_real_pytest"
+      ],
+      "negative": [
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>12]",
+        "tests.test_session_review::test_counterexamples_cannot_be_approved[<lambda>14]",
+        "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
+        "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[failed]",
+        "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]",
+        "entregar-issue.tests.test_bind_grounding_execution::test_grounding_binding_rejects_unreached_skipped_and_mismatched_cases[mismatched]",
+        "entregar-issue.tests.test_bind_grounding_execution::test_grounding_binding_rejects_unreached_skipped_and_mismatched_cases[skipped]",
+        "entregar-issue.tests.test_bind_grounding_execution::test_grounding_binding_rejects_tampered_or_stale_execution[log]"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_forged_candidate_index_is_rejected",
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_tampered_runner_provenance_is_rejected",
+        "entregar-issue.tests.test_bind_grounding_execution::test_existing_attested_and_unrelated_unknown_decisions_are_preserved"
+      ]
+    },
+    "R127-06": {
+      "positive": [
+        "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]",
+        "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[deleted]",
+        "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[rejected]",
+        "tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse",
+        "tests.test_session_review_runner::test_evaluate_publishes_failure_when_journal_is_unreadable"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_evaluate_reads_complete_journal_beyond_one_page[99]",
+        "tests.test_session_review_runner::test_evaluate_reads_complete_journal_beyond_one_page[100]",
+        "tests.test_session_review_runner::test_evaluate_reads_complete_journal_beyond_one_page[101]",
+        "tests.test_session_review_runner::test_evaluate_reads_complete_journal_beyond_one_page[205]",
+        "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[main]"
+      ]
+    },
+    "R127-07": {
+      "positive": [
+        "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[develop]",
+        "tests.test_session_review_runner::test_api_http_success_keeps_authenticated_data_without_diagnostics"
+      ],
+      "negative": [
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]",
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]",
+        "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[head_sha]",
+        "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[base_sha]",
+        "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[base_ref]",
+        "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[merge_preview_sha]",
+        "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[issue_sha256]",
+        "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[policy_sha256]",
+        "tests.test_session_review_runner::test_publish_rejects_receipt_for_another_sha_before_writing",
+        "tests.test_session_review_runner::test_api_http_failure_reports_status_without_leaking_response_or_query[gh: HTTP 403 Forbidden (request may include secrets)-HTTP 403]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_publication_reuses_same_verified_fingerprint[main]",
+        "tests.test_session_review_workflows::test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment"
+      ]
+    },
+    "R127-08": {
+      "positive": [
+        "tests.test_session_review_runner::test_packet_rebuilds_full_diff_from_immutable_blobs_not_truncated_patch"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_archive_rejects_traversal_duplicates_symlink",
+        "tests.test_session_review_runner::test_archive_rejects_path_aliases[a/./b]",
+        "tests.test_session_review_runner::test_archive_rejects_path_aliases[a//b]",
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_tampered_runner_provenance_is_rejected"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_full_pagination_not_first_page_only",
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_forged_candidate_index_is_rejected"
+      ]
+    },
+    "R127-09": {
+      "positive": [
+        "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[all-live-targets]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_selects_main_from_trusted_api"
+      ],
+      "negative": [
+        "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[certificate-failure]",
+        "tests.test_session_review_workflows::test_packet_shell_routes_live_targets_and_propagates_rejection[no-eligible-target]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_unsupported_base_before_publication"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret",
+        "tests.test_session_review_runner::test_no_recursive_workflow_trigger",
+        "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_rejects_untrusted_run_without_api_access"
+      ]
+    },
+    "R127-10": {
+      "positive": [
+        "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates"
+      ],
+      "negative": [
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]",
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]"
+      ],
+      "regression": [
+        "tests.test_session_review_dossier::test_m2_is_excluded_from_implementation_bindings_and_retains_parent",
+        "tests.test_verify_web_external_audit::test_accepts_exact_target_after_signature_verification"
+      ]
+    },
+    "R127-11": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_postcondition::test_official_critical_postcondition_replays_historical_gate_before_final_handoff",
+        "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates",
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_certificate_generated_requires_exact_issue_head_and_result_only_policy",
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_producer_binds_grounding_from_committed_review_and_real_run[reviewed]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publisher_materializes_certified_execution_before_grounding",
+        "entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_accepts_exact_snapshot",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_postcondition_records_preserve_history_and_close_only_verified_fields",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_finalization_requires_real_replay_and_exact_prepared_records",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_literal_replay_executes_frozen_gate_and_reverifies_real_output",
+        "auditar-issue.tests.test_evidence_profile_preflight::test_preflight_revalidates_anchors_in_supplied_source_checkout",
+        "tests.test_session_review_dossier::test_complete_dossier_passes_official_auditor_saturation"
+      ],
+      "negative": [
+        "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
+        "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[failed]",
+        "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]",
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_missing_semantic_closure_is_blocked_even_when_technical_facts_exist",
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_producer_binds_grounding_from_committed_review_and_real_run[missing-binding]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[proof-hash]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_rejects_unproved_parent_absence[critical-targeted]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_unauthorized_source_before_execution[candidate-anchor]",
+        "entregar-issue.tests.test_handoff_postcondition::test_preparation_cannot_authorize_current_handoff_consumers[intact]",
+        "entregar-issue.tests.test_handoff_postcondition::test_final_certificate_rejects_tampered_postcondition_chain[rehashed-record]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_unsafe_layout_without_overwriting[parent-symlink]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_failed_literal_gate_records_real_failure_without_promoting_preparation",
+        "tests.test_session_review_dossier::test_dossier_rejects_unsaturated_active_inherited_family[missing]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[missing-allowlist]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[parent-symlink]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-tampered]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-commit]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-parent-symlink]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_unauthorized_source_before_execution[repository]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_unauthorized_source_before_execution[event-base]",
+        "auditar-issue.tests.test_connector_preflight::test_connector_rejects_foreign_base_before_executing_postcondition_verifier",
+        "entregar-issue.tests.test_handoff_postcondition::test_certificate_identity_rejection_precedes_postcondition_execution[base]",
+        "entregar-issue.tests.test_handoff_postcondition::test_certificate_identity_rejection_precedes_postcondition_execution[head]",
+        "entregar-issue.tests.test_handoff_postcondition::test_certificate_identity_rejection_precedes_postcondition_execution[repository]",
+        "entregar-issue.tests.test_handoff_postcondition::test_preparation_cannot_authorize_current_handoff_consumers[phase-removed]",
+        "entregar-issue.tests.test_handoff_postcondition::test_preparation_cannot_authorize_current_handoff_consumers[map-removed]",
+        "entregar-issue.tests.test_handoff_postcondition::test_preparation_without_markers_still_lacks_legacy_artifact_authority",
+        "auditar-issue.tests.test_connector_preflight::test_connector_postcondition_requires_materialized_proof_not_semantic_booleans",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_default_remediation_validation_rejects_blocked_preparation",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_rejects_learning_from_another_audit[readiness]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_postcondition_plan_recomputes_immutable_source_and_external_base",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_postcondition_transition_rejects_substituted_replay_facts[wrong-head]",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_postcondition_transition_rejects_substituted_replay_facts[wrong-command]",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_postcondition_transition_rejects_substituted_replay_facts[wrong-source]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_proof_rejects_substitution[preparation]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_authenticates_bounded_prepared_inventory[snapshot-hash]",
+        "entregar-issue.tests.test_handoff_postcondition::test_final_certificate_rejects_tampered_postcondition_chain[missing-proof]",
+        "entregar-issue.tests.test_handoff_postcondition::test_final_certificate_rejects_tampered_postcondition_chain[raw-log]",
+        "entregar-issue.tests.test_handoff_postcondition::test_final_certificate_rejects_tampered_postcondition_chain[snapshot-bytes]",
+        "entregar-issue.tests.test_handoff_postcondition::test_final_certificate_rejects_tampered_postcondition_chain[unlisted-snapshot]",
+        "entregar-issue.tests.test_handoff_postcondition::test_final_certificate_rejects_tampered_postcondition_chain[missing-snapshot]",
+        "entregar-issue.tests.test_handoff_postcondition::test_final_certificate_rejects_tampered_postcondition_chain[rehashed-receipt]",
+        "entregar-issue.tests.test_handoff_postcondition::test_final_certificate_rejects_tampered_postcondition_chain[allowlist]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_unsafe_layout_without_overwriting[collision]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_unsafe_layout_without_overwriting[system-path]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_unsafe_layout_without_overwriting[interpreter]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_foreign_venv_before_startup_code",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_non_regular_input_without_waiting",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_semantic_reexecution_rejects_fabricated_success_log",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_proof_rejects_substitution[boolean-exit]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_log_is_bounded_during_actual_process_execution",
+        "tests.test_session_review_dossier::test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]",
+        "auditar-issue.tests.test_delivery_saturation_preflight::test_preflight_rejects_unsaturated_material_family"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_stale_or_misleading_receipt_fails_closed",
+        "tests.test_session_review::test_main_is_bound_to_same_exact_evidence_requirements",
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_identity_substitution_is_scoped_to_identity_fields",
+        "entregar-issue.tests.test_prepare_actions_handoff::test_certification_requires_real_closure_and_calls_official_gates",
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_code_growth_comparison_preserves_recorded_start_and_real_ancestry[remediation-start]",
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_code_growth_comparison_preserves_recorded_start_and_real_ancestry[descendant-pr-base]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_parent_control_snapshots_are_immutable",
+        "tests.test_session_review_dossier::test_complete_dossier_passes_official_source_location_gate",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_keeps_unrelated_failed_gate_strict",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_validators_authenticate_plan_and_keep_final_blocked[remediation]",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_validators_authenticate_plan_and_keep_final_blocked[lineage]",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_validators_authenticate_plan_and_keep_final_blocked[rejection]",
+        "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]",
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_literal_replay_uses_only_trusted_runtime_and_clean_environment",
+        "auditar-issue.tests.test_connector_preflight::test_connector_preflight_accepts_immutable_snapshot",
+        "auditar-issue.tests.test_evidence_profile_preflight::test_audit_preflight_is_profile_aware"
+      ]
+    },
+    "SPEC-L33": {
+      "positive": [
+        "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates"
+      ],
+      "negative": [
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]",
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[add]",
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[remove]"
+      ],
+      "regression": [
+        "tests.test_session_review_dossier::test_m2_is_excluded_from_implementation_bindings_and_retains_parent"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "tests/test_session_review_runner.py": [
+      {
+        "case": "tests/test_session_review_runner.py::test_api_http_success_keeps_authenticated_data_without_diagnostics",
+        "test_case_id": "tests.test_session_review_runner::test_api_http_success_keeps_authenticated_data_without_diagnostics"
+      }
+    ],
+    "entregar-issue/tests/test_publish_actions_handoff.py": [
+      {
+        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_default_publisher_selects_main_from_trusted_api",
+        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_default_publisher_selects_main_from_trusted_api"
+      }
+    ]
+  }
+}

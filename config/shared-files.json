@@ -68,6 +68,54 @@
         "fluxos-conversacionais/tests/test_delivery_contract.py",
         "revisar-issue/tests/test_delivery_contract.py"
       ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/certificate_replay_io.py",
+      "copies": [
+        "auditar-issue/scripts/certificate_replay_io.py"
+      ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/certificate_replay_source.py",
+      "copies": [
+        "auditar-issue/scripts/certificate_replay_source.py"
+      ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/certificate_postcondition_replay.py",
+      "copies": [
+        "auditar-issue/scripts/certificate_postcondition_replay.py"
+      ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/handoff_postcondition_records.py",
+      "copies": [
+        "auditar-issue/scripts/handoff_postcondition_records.py"
+      ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/handoff_postcondition.py",
+      "copies": [
+        "auditar-issue/scripts/handoff_postcondition.py"
+      ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/certificate_replay_inputs.py",
+      "copies": [
+        "auditar-issue/scripts/certificate_replay_inputs.py"
+      ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/validate_audit_escape_lineage.py",
+      "copies": [
+        "auditar-issue/scripts/validate_audit_escape_lineage.py"
+      ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/handoff_semantic_guards.py",
+      "copies": [
+        "auditar-issue/scripts/handoff_semantic_guards.py"
+      ]
     }
   ]
 }

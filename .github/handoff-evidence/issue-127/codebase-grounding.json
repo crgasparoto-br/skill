@@ -1,0 +1,78 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [],
+  "references": [],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "tests/test_session_review_runner.py",
+      "operation": "modified",
+      "scenario": "HTTP 403 and 404 are explicit failures; unrecognized status also fails; stdout success remains parseable; secret-bearing CLI stderr and query values are never logged.",
+      "requirement": "R127-02 and R127-07: authorization and GitHub transport failure should remain fail-closed and avoid secret disclosure.",
+      "search": {
+        "queries": [
+          "rg -n 'def api\\(|test_api_http_' scripts/verify_session_review.py tests/test_session_review_runner.py"
+        ],
+        "scope": "Reused established API transport and its existing runner test suite; no new alternate API implementation.",
+        "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
+        "candidates": [
+          {
+            "path": "tests/test_session_review_runner.py",
+            "case": "test_api_http_success_keeps_authenticated_data_without_diagnostics",
+            "oracle": "Valid JSON is returned when authenticated gh command exits successfully; failure cases reject while showing status only.",
+            "comparison": "Extend existing runner module with a positive and three negative scenarios rather than creating a second suite."
+          },
+          {
+            "path": "tests/test_session_review.py",
+            "case": "test_policy_cannot_silently_downgrade_existing_guarantee",
+            "oracle": "The pre-existing policy unit suite checks authorization and assurance, not HTTP transport error behavior.",
+            "comparison": "Keep existing policy checks and add transport-specific cases in existing runner module."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "An existing integration-level module already exercises GitHub API transport; extend it and preserve existing negative identity controls.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+      "operation": "modified",
+      "scenario": "Default-branch trusted publisher derives the live PR base from authenticated GitHub metadata, accepts main, and rejects unsupported base or invalid workflow run before publication.",
+      "requirement": "R127-09 and R127-10: both protected bases must be supported by trusted GitHub Actions without running PR code with write credentials.",
+      "search": {
+        "queries": [
+          "rg -n 'def publish|target_from_event|test_trusted_publisher_accepts_configured' entregar-issue/scripts/publish_actions_handoff.py entregar-issue/tests/test_publish_actions_handoff.py"
+        ],
+        "scope": "Reused current trusted publisher and existing publication tests; extended to authenticated main base resolution.",
+        "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+            "case": "test_trusted_publisher_accepts_configured_producer_and_base",
+            "oracle": "Explicit configured base integration remains supported for consumers; default base needs protected branch selection.",
+            "comparison": "Retain existing explicit-base test and add positive main, negative unsupported base and invalid-event checks."
+          },
+          {
+            "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+            "case": "test_first_terminal_handoff_validates_material_parent_absence",
+            "oracle": "Terminal guard checks result-only lineage but does not select main/develop via GitHub API.",
+            "comparison": "Reuse published result and ledger checks without duplicating terminal guard tests."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Trusted publication has an existing dedicated test module and target_from_event guard; extend its entrypoint coverage with no alternative publisher.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}
