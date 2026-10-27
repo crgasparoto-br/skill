@@ -37,7 +37,7 @@
       "disposition": "keep",
       "verification": {
         "status": "unknown",
-        "reason": "awaiting exact-SHA JUnit from this PR"
+        "reason": "awaiting-exact-SHA-JUnit"
       }
     },
     {
@@ -71,7 +71,7 @@
       "disposition": "keep",
       "verification": {
         "status": "unknown",
-        "reason": "awaiting exact-SHA JUnit from this PR"
+        "reason": "awaiting-exact-SHA-JUnit"
       }
     }
   ]

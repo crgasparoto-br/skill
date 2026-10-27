@@ -16,7 +16,7 @@
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
     "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
-    "codebase-grounding.json": "9845792a126c9155e24404d963bbc588c0c8c5b14b251f0d750ab0105a024fd4"
+    "codebase-grounding.json": "5166c0c69475a964d16f830716f50118d159db50951ebdc596bd3caa65e8ed0d"
   },
   "test_bindings": {
     "SPEC-L3": {
