@@ -141,3 +141,16 @@ autorizados pelo certificado, porque `.audit/` esta corretamente no
 aceitam caminhos de codigo fora da allowlist. A CI de `main` isola
 `GITHUB_REF_NAME` e `GITHUB_ACTIONS` nos testes de versionamento com
 repositorio sintetico; o gate de release sobre o checkout real continua ativo.
+
+
+### Estados retornados pela Checks API no bootstrap M2
+
+O executor confere a identidade do check em `head_sha` e `id` autenticados,
+mas o GitHub pode devolver `completed/failure` imediatamente apos uma
+escrita de inicio. Esse resultado e **bloqueante**, nao uma aprovacao:
+a verificacao prossegue e publica conclusao final somente apos as fontes
+e o parecer atestado serem revalidados. `queued` e `in_progress` sao
+permitidos apenas sem conclusao. Estados `completed/success`,
+`completed/neutral`, `completed/skipped`, conclusoes antecipadas e
+identidades divergentes sao sempre recusados. O diagnóstico expõe apenas
+a classe do estado, nao corpo de API, token ou entrada do operador.
