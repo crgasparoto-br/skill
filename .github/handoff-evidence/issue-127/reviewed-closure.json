@@ -89,7 +89,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa. Check terminal antigo que nao reabre: exige mesma identidade autenticada, cria novo check pending e mantem watermark para impedir aprovacao obsoleta."
+      "rationale": "O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa. Check terminal antigo que nao reabre: exige mesma identidade autenticada, cria novo check pending e mantem watermark para impedir aprovacao obsoleta. O emissor somente prossegue sob estado nao autorizante autenticado: queued/in_progress sem conclusao ou completed/failure; success, neutral, skipped e estados malformed seguem BLOCK. Os casos novos exercitam esta fronteira."
     },
     "97ed1b1f5dbeb6dc1a654c45b2a0b7d89ba46cddf9f2930eb93f8e947a1d1f38": {
       "disposition": "covered",
@@ -99,7 +99,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Workflows de revisao/pacote nao aceitam dispatch/call/pull_request selecionaveis pelo candidato. O checkout usa workflow_sha de evento protegido, sem credenciais persistidas. evaluate revalida politica, operador, comentario, identidade, certificado e checks; publish confirma receipt e destino imediatamente antes da escrita. Response do PATCH que altera ID, SHA ou nome e recusado; permissao e certificado continuam exigidos antes do sucesso."
+      "rationale": "Workflows de revisao/pacote nao aceitam dispatch/call/pull_request selecionaveis pelo candidato. O checkout usa workflow_sha de evento protegido, sem credenciais persistidas. evaluate revalida politica, operador, comentario, identidade, certificado e checks; publish confirma receipt e destino imediatamente antes da escrita. Response do PATCH que altera ID, SHA ou nome e recusado; permissao e certificado continuam exigidos antes do sucesso. O emissor somente prossegue sob estado nao autorizante autenticado: queued/in_progress sem conclusao ou completed/failure; success, neutral, skipped e estados malformed seguem BLOCK. Os casos novos exercitam esta fronteira."
     },
     "f7b4e2f25c9370a5aa02a5d667d69aa22183324d1d5630c53d0425b19c576352": {
       "disposition": "covered",
