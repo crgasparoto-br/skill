@@ -7,15 +7,12 @@ while the privileged GITHUB_TOKEN is available.
 from __future__ import annotations
 
 import argparse
-import base64
 import json
 import os
 import re
-import sys
 import subprocess
 import tempfile
 import time
-import urllib.error
 import urllib.request
 from pathlib import Path, PurePosixPath
 
@@ -352,52 +349,12 @@ def confirm_published_result(repo: str, number: int, head: str, base: str,
 
 
 
-def session_mode_active(repo: str, base: str) -> bool:
-    """Route only a trusted-base opt-in; never let a candidate skip handoff."""
-    if not HEX_SHA.fullmatch(base):
-        block("invalid protected-base SHA for session routing")
-    root = SCRIPT_ROOT.parents[1]
-    local = root / ".github/session-review-policy.json"
-    try:
-        response = api_get(repo, f"contents/.github/session-review-policy.json?ref={base}")
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404 and not local.exists():
-            return False  # Legacy repository without this optional policy.
-        block("protected-base session policy unavailable")
-    if (not local.is_file() or response.get("type") != "file"
-            or response.get("encoding") != "base64"
-            or not isinstance(response.get("content"), str)):
-        block("trusted session policy is missing or malformed")
-    try:
-        raw = base64.b64decode("".join(response["content"].split()), validate=True)
-    except ValueError:
-        block("protected-base session policy is not valid base64")
-    if raw != local.read_bytes():
-        block("session policy differs between trusted default and protected base")
-    sys.path.insert(0, str(root))
-    from scripts.session_review import ACKNOWLEDGEMENT, ASSURANCE, strict_json, validate_policy
-    policy = strict_json(raw.decode("utf-8"))
-    if policy.get("mode") == "enabled":
-        validate_policy(policy)
-        return True
-    if (policy.get("mode") != "disabled"
-            or set(policy) != {"schema_version", "mode", "assurance", "acknowledgement", "operators"}
-            or policy["schema_version"] != 1 or policy["assurance"] != ASSURANCE
-            or policy["acknowledgement"] != ACKNOWLEDGEMENT or policy["operators"] != []):
-        block("unsupported disabled session policy")
-    return False
-
-
 def publish(event_path: Path, *, base_ref: str | None = None,
             producer_path: str = ".github/workflows/handoff-evidence.yml",
             required_checks: set[str] | None = None) -> str | None:
     event = json.loads(event_path.read_text(encoding="utf-8"))
     selected_base = trusted_default_base_ref(event, producer_path) if base_ref is None else base_ref
     repo, pr_number, head, base = target_from_event(event, selected_base, producer_path)
-    if session_mode_active(repo, base):
-        # Session review binds the certified material SHA directly; a result-only
-        # child would invalidate its neutral packet and reviewer identity.
-        return None
     base_ref = selected_base
     run_id = event["workflow_run"]["id"]
     name = f"handoff-evidence-{pr_number}-{head}"
@@ -434,6 +391,10 @@ def publish(event_path: Path, *, base_ref: str | None = None,
         validate_certificate(repo, pr_number, head, base, source, bundle, cert, branch, base_ref)
         check_material_ci(repo, head, pr_number, required_checks)
 
+        # Exact-SHA session review uses this certified material HEAD directly;
+        # publishing a child here would race the neutral packet and revoke it.
+        if session_mode_active(repo, base):
+            return None
         material_parent = material_parent_snapshots(source, temp, head)
         ensure_historical_audit_unchanged(source, base, head, paths)
         for path in paths:
@@ -465,6 +426,48 @@ def publish(event_path: Path, *, base_ref: str | None = None,
         command(*terminal_args(cert, repo, pr_number, head, base, published,
                                changed, source / PREFIX, branch, material_parent, base_ref), cwd=trusted)
         return published
+
+
+
+def session_mode_active(repo: str, base: str) -> bool:
+    """Route only a trusted-base opt-in; never let a candidate skip handoff."""
+    import base64
+    import sys
+    import urllib.error
+
+    if not HEX_SHA.fullmatch(base):
+        block("invalid protected-base SHA for session routing")
+    root = SCRIPT_ROOT.parents[1]
+    local = root / ".github/session-review-policy.json"
+    try:
+        response = api_get(repo, f"contents/.github/session-review-policy.json?ref={base}")
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404 and not local.exists():
+            return False  # Legacy repository without this optional policy.
+        block("protected-base session policy unavailable")
+    if (not local.is_file() or response.get("type") != "file"
+            or response.get("encoding") != "base64"
+            or not isinstance(response.get("content"), str)):
+        block("trusted session policy is missing or malformed")
+    try:
+        raw = base64.b64decode("".join(response["content"].split()), validate=True)
+    except ValueError:
+        block("protected-base session policy is not valid base64")
+    if raw != local.read_bytes():
+        block("session policy differs between trusted default and protected base")
+    sys.path.insert(0, str(root))
+    from scripts.session_review import ACKNOWLEDGEMENT, ASSURANCE, strict_json, validate_policy
+    policy = strict_json(raw.decode("utf-8"))
+    if policy.get("mode") == "enabled":
+        validate_policy(policy)
+        return True
+    if (policy.get("mode") != "disabled"
+            or set(policy) != {"schema_version", "mode", "assurance", "acknowledgement", "operators"}
+            or policy["schema_version"] != 1 or policy["assurance"] != ASSURANCE
+            or policy["acknowledgement"] != ACKNOWLEDGEMENT or policy["operators"] != []):
+        block("unsupported disabled session policy")
+    return False
+
 
 
 def main() -> int:
