@@ -490,4 +490,3 @@ def test_review_journal_rejects_inconsistent_pages(review_backend, monkeypatch, 
     monkeypatch.setattr(runner, "api", api)
     with pytest.raises(ValueError, match=r"inventory|duplicated"):
         runner.review_journal("owner/repo", "a" * 40)
-
