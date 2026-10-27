@@ -285,9 +285,12 @@ def check_material_ci(repository: str, head: str, pr_number: int,
         block("at least one explicit CI workflow name is mandatory")
     if not required.issubset(names):
         block("required current material PR checks are not present")
+    required_rows = [row for row in latest.values() if row.get("name") in required]
+    if {row.get("name") for row in required_rows} != required:
+        block("required current material PR checks are not uniquely observable")
     if any(row.get("status") != "completed" or row.get("conclusion") != "success"
-           for row in latest.values()):
-        block("material PR workflow run is not terminal success")
+           for row in required_rows):
+        block("required material PR workflow run is not terminal success")
 
 
 def publish(event_path: Path, *, base_ref: str = "develop",
