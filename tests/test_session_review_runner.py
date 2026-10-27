@@ -490,3 +490,45 @@ def test_review_journal_rejects_inconsistent_pages(review_backend, monkeypatch, 
     monkeypatch.setattr(runner, "api", api)
     with pytest.raises(ValueError, match=r"inventory|duplicated"):
         runner.review_journal("owner/repo", "a" * 40)
+
+
+def test_completed_check_that_cannot_reopen_creates_new_pending_check(monkeypatch):
+    sha = "a" * 40
+    previous = [{"id": 88, "head_sha": sha, "name": runner.CHECK_NAME,
+                 "status": "completed", "conclusion": "failure"}]
+    writes = []
+
+    def api(path, *, method="GET", data=None):
+        writes.append((method, path, data))
+        if method == "PATCH":
+            return dict(previous[0])  # GitHub preserved the terminal failure state.
+        if method == "POST":
+            return {"id": 89, "head_sha": sha, "name": runner.CHECK_NAME,
+                    "status": "in_progress"}
+        raise AssertionError("unexpected GitHub request")
+
+    monkeypatch.setattr(runner, "api", api)
+    assert runner.begin_check("owner/repo", sha, {"minimum_comment_id": 100}, previous) == 89
+    assert [method for method, _, _ in writes] == ["PATCH", "POST"]
+    assert writes[1][2]["head_sha"] == sha
+    assert "minimum_comment_id" in writes[1][2]["output"]["text"]
+
+
+@pytest.mark.parametrize("mutation", ["head_sha", "id", "name"])
+def test_reopen_response_identity_drift_is_not_recovered_by_new_check(monkeypatch, mutation):
+    sha = "a" * 40
+    previous = [{"id": 88, "head_sha": sha, "name": runner.CHECK_NAME,
+                 "status": "completed", "conclusion": "failure"}]
+    changed = dict(previous[0])
+    changed[mutation] = "b" * 40 if mutation == "head_sha" else (99 if mutation == "id" else "other")
+    writes = []
+
+    def api(path, *, method="GET", data=None):
+        writes.append(method)
+        assert method == "PATCH"
+        return changed
+
+    monkeypatch.setattr(runner, "api", api)
+    with pytest.raises(ValueError, match="existing check identity changed"):
+        runner.begin_check("owner/repo", sha, {}, previous)
+    assert writes == ["PATCH"]

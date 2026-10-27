@@ -270,8 +270,16 @@ def begin_check(repo: str, sha: str, receipt: dict, previous: list[dict]) -> int
     body = {"name": CHECK_NAME, "status": "in_progress",
             "output": {"title": "Revalidating session review", "text": json.dumps(receipt, sort_keys=True),
                        "summary": "Approval is withheld until live evidence is verified."}}
-    result = (api(f"/repos/{repo}/check-runs/{latest['id']}", method="PATCH", data=body) if latest else
-              api(f"/repos/{repo}/check-runs", method="POST", data={**body, "head_sha": sha}))
+    if latest:
+        result = api(f"/repos/{repo}/check-runs/{latest['id']}", method="PATCH", data=body)
+        require(result.get("head_sha") == sha and result.get("id") == latest["id"]
+                and result.get("name") == CHECK_NAME, "existing check identity changed during revalidation")
+        if result.get("status") == "completed":
+            # GitHub can retain a terminal status instead of reopening the old check.
+            # Start a new pending check so a stale approved result cannot remain latest.
+            result = api(f"/repos/{repo}/check-runs", method="POST", data={**body, "head_sha": sha})
+    else:
+        result = api(f"/repos/{repo}/check-runs", method="POST", data={**body, "head_sha": sha})
     require(result.get("head_sha") == sha and result.get("status") == "in_progress"
             and type(result.get("id")) is int, "pending check identity was not confirmed")
     return result["id"]
