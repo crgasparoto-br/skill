@@ -93,7 +93,19 @@
         "prevention_rule": "Keep the full preparation immutable and without release authority; recognize the historical gate from its trusted source, execute the literal command on authenticated current inputs, and derive only the allowed record closure after actual success.",
         "detection_rule": "Recompute the entire preparation-to-final transition and independently reexecute the trusted historical gate; reject any source, target, input, output, hash or phase substitution before publication."
       }
-    ]
+    ],
+    "consumer_consistency_note": {
+      "origin": "Internal remediation verification of the same original rejection event; no new independent verdict.",
+      "failure_pattern": "A producer can validate a canonical minimum risk list while its consumer requires every active inherited and matrix family; producer success alone does not establish consumer readiness.",
+      "rule": "Preserve declared classifications and controls, include their complete union in risk saturation, and exercise the actual auditor consumer before the material freeze.",
+      "source": "tests/test_session_review_dossier.py",
+      "cases": [
+        "test_complete_dossier_passes_official_auditor_saturation",
+        "test_dossier_rejects_unsaturated_active_inherited_family[missing]",
+        "test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]"
+      ],
+      "execution_binding": "Definitions are bound in manifest.test_bindings and grounding_test_bindings; current-SHA execution must come from authenticated log/JUnit."
+    }
   },
   "skill_changes": [
     {
@@ -213,5 +225,5 @@
       "verification": "Focused checks exercise actual literal execution and independent reexecution, source/base/target substitution, forged output, input integrity, preparation rejection and strict record transitions. They do not constitute independent approval."
     }
   ],
-  "classification_reason": "Internal remediation exposed generic composition gaps in material-parent absence and in a certification gate that consumes its own prerequisite. The same original rejection event is preserved; both reusable controls have real synthetic transfer cases and separate prevention/detection changes. No new independent finding or approval is asserted."
+  "classification_reason": "Internal remediation exposed generic composition gaps in material-parent absence and in a certification gate that consumes its own prerequisite. The same original rejection event is preserved; both reusable controls have real synthetic transfer cases and separate prevention/detection changes. The producer-to-auditor risk-inventory composition is also covered by the actual consumer and adversarial dossier cases. No new independent finding or approval is asserted."
 }

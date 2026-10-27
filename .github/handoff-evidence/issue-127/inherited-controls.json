@@ -164,7 +164,7 @@
       },
       "evidence": "tests/test_session_review_dossier.py:64-74 (case test_changed_canonical_contract_rejects_reviewed_overlay[replace]; JUnit classname tests.test_session_review_dossier). A extracao oficial gera 16 candidatos; o overlay identifica cada um por candidate_key imutavel. Revisao ausente, key estrangeira, analise vazia, fonte inexistente, linha fora do blob ou SHA-256 divergente bloqueia. Os testes mutam o contrato de entrada e usam o merge oficial, nao uma lista paralela de requisitos. Source-oracle digest (not execution-log digest); execution is separately required from authenticated same-SHA JUnit by manifest.test_bindings.",
       "evidence_path": "tests/test_session_review_dossier.py",
-      "evidence_sha256": "0566c4ce1aa67aeeda793d99372db3e6c9161ef459b3e441982ee8de27767764",
+      "evidence_sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
       "id": "INHERITED-R127-04",
       "risk_family": "structural-contract",
       "surface": "semantic-mutation-saturation",

@@ -138,3 +138,40 @@ def test_complete_dossier_passes_official_source_location_gate(tmp_path):
     result = subprocess.run(command, check=False, capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "READY: validated" in result.stdout
+
+
+@pytest.fixture
+def auditor_saturation_packet(tmp_path):
+    head = "a" * 40
+    command = [sys.executable, str(ROOT / "auditar-issue/scripts/check_delivery_saturation.py"),
+               "--head-sha", head]
+    for flag, name in (("--attack-matrix", "requirement-attack-matrix.json"),
+                       ("--risk-saturation", "risk-saturation.json"),
+                       ("--inherited-controls", "inherited-controls.json")):
+        path = tmp_path / name
+        value = producer.bind_identity(load(name), head, load("manifest.json")["work_item_start_sha"])
+        path.write_text(json.dumps(value), encoding="utf-8")
+        command.extend([flag, str(path)])
+    return command, tmp_path / "risk-saturation.json"
+
+
+def test_complete_dossier_passes_official_auditor_saturation(auditor_saturation_packet):
+    command, _ = auditor_saturation_packet
+    result = subprocess.run(command, check=False, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "READY: delivery packet is saturated" in result.stdout
+
+
+@pytest.mark.parametrize("mutation", ["missing", "not-applicable"])
+def test_dossier_rejects_unsaturated_active_inherited_family(auditor_saturation_packet, mutation):
+    command, path = auditor_saturation_packet
+    risk = json.loads(path.read_text(encoding="utf-8"))
+    family = next(item for item in risk["families"] if item["family"] == "semantic-effect")
+    if mutation == "missing":
+        risk["families"].remove(family)
+    else:
+        family.update({"applicable": False, "status": "not-applicable"})
+    path.write_text(json.dumps(risk), encoding="utf-8")
+    result = subprocess.run(command, check=False, capture_output=True, text=True)
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "active inherited control INHERITED-R127-03 requires risk family semantic-effect" in result.stdout

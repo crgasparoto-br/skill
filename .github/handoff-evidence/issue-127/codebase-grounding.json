@@ -405,7 +405,7 @@
       "path": "tests/test_session_review_dossier.py",
       "operation": "added",
       "scenario": "Actual 16-candidate dossier reconciles through the canonical parser; mutations fail, M2 remains deferred, unexecuted tests cannot count, and the complete certificate source-evidence set passes the official source-location gate with available versioned issue bytes.",
-      "requirement": "R127-04/R127-05/R127-10/R127-11 and SPEC-L33; A-004/A-005 and latent source-location finding I-002.",
+      "requirement": "R127-04/R127-05/R127-10/R127-11 and SPEC-L33; A-004/A-005, source-location finding I-002 and auditor-consumer saturation finding I-005.",
       "search": {
         "queries": [
           "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests auditar-issue/tests -g '*.py'"
@@ -422,7 +422,7 @@
         ]
       },
       "decision": "new-test-required",
-      "justification": "Use real official parser/merge/binding functions against the reviewed source, with add/remove/replace counterexamples. Extend this module for I-002 by executing the real source-location validator on the complete critical-profile input set used by the certificate builder, preserving each JUnit case identity and checking the versioned issue bytes. This is concrete integration coverage and does not assert operational M2 or document behavior from token presence.",
+      "justification": "Use real official parser/merge/binding functions against the reviewed source, with add/remove/replace counterexamples. Execute the real source-location validator on the complete builder input set and the auditor saturation consumer on the concrete reviewed packet. Removing or demoting an active inherited family must fail even when the family is additional to the canonical starter. Preserve original family classification, controls, JUnit case identities and issue bytes. This integration does not assert operational M2 or derive document behavior from token presence.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",

@@ -277,14 +277,14 @@
       "plausible_wrong_implementation": "The producer dossier still contains only the prior issue obligations and does not emit certification inputs or a certificate.",
       "literal_case": {
         "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
-        "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
+        "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Risk saturation covers every family declared by the attack matrix and active inherited controls, including semantic-effect; the official auditor saturation consumer checks that composition. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
         "status": "not-passed",
         "evidence": {
           "path": "tests/test_session_review_dossier.py",
-          "sha256": "0566c4ce1aa67aeeda793d99372db3e6c9161ef459b3e441982ee8de27767764",
+          "sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
           "evidence_kind": "reviewed-source-and-test-definition",
           "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
-          "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
+          "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Risk saturation covers every family declared by the attack matrix and active inherited controls, including semantic-effect; the official auditor saturation consumer checks that composition. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
           "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
         }
       },
@@ -296,7 +296,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_session_review_dossier.py",
-            "sha256": "0566c4ce1aa67aeeda793d99372db3e6c9161ef459b3e441982ee8de27767764",
+            "sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
             "evidence_kind": "reviewed-source-and-test-definition",
             "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
             "observed": "The official overlay rejects changed candidate inventories instead of silently inheriting prior requirements.",
@@ -310,7 +310,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_session_review_dossier.py",
-            "sha256": "0566c4ce1aa67aeeda793d99372db3e6c9161ef459b3e441982ee8de27767764",
+            "sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
             "evidence_kind": "reviewed-source-and-test-definition",
             "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
             "observed": "Operational adoption remains deferred and is excluded from implementation test bindings.",
@@ -337,7 +337,7 @@
       ],
       "prevention_change": {
         "skill_or_code": ".github/handoff-evidence/issue-127/manifest.json",
-        "evidence": "Bind the reviewed overlay to every current canonical candidate and verified source anchor, carry factual execution proof through publication, prove material-parent presence or absence from the exact Git object, preserve the actual work-item start, and keep M2 deferred under the recorded owner decision with the parent issue open."
+        "evidence": "Bind the reviewed overlay to every current canonical candidate and verified source anchor, cover the complete matrix/inherited risk inventory through the real auditor consumer, carry factual execution proof through publication, prove material-parent presence or absence from the exact Git object, preserve the actual work-item start, and keep M2 deferred under the recorded owner decision with the parent issue open."
       },
       "detection_change": {
         "skill_or_gate": "tests/test_session_review_dossier.py",

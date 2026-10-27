@@ -14,14 +14,14 @@
   "review_scope": "Reviewed semantic mappings only. Collector must verify live issue keys and actual exact-SHA tests. The A-004 seed retains blocked/null replay facts; an authenticated complete preparation, actual literal replay and strict final phase may close it at runtime. This template asserts no final-SHA certificate, publication or separate-context approval. M2 remains deferred and issue127 remains open.",
   "artifact_sha256": {
     "reviewed-closure.json": "f4b455948cbefcdf2dcf29b7d2d92612d9c3edf65415f70183c0bcf0064dce3d",
-    "requirement-attack-matrix.json": "c857cdf2699f714fc46bf7b54c245cd936f249fab7539dd44086214d4c351628",
-    "risk-saturation.json": "62a35b10b8f71b4e028a3928546e38d79664356c2f4f203d79837fbc80c2d4d8",
-    "inherited-controls.json": "1fe61f350110afe8719def6024a52e17f7d3a129da44e551f0e071a9a6a327c6",
-    "codebase-grounding.json": "962a2f2ef1ff28d887d6269634d0b9fe537aec1de5d45d411849b6ed9729f8d9",
+    "requirement-attack-matrix.json": "7045884db5906388b6ae7ddd0211704a86b887b7e31e224a1aa3e349ab2ef169",
+    "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
+    "inherited-controls.json": "c28cc0f8879c09495d780cba15dcc5a98ece42d0f126317bb3cde179e1c73445",
+    "codebase-grounding.json": "8a547dd24ff6e874df1b702ab49430bbe6405c8af560b4c1553d782d71b765c5",
     "audit-source-result.json": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4",
-    "audit-remediation.json": "9b50a30bd0c4ec227f2262c60e3c167a4869d98bd2084ff56f61aaa8a2577587",
-    "learning-closure.json": "14d3aae17c51184e75e4f5e80d5ba9798986464ee6d640ad96002f25cdcc5cc2",
-    "audit-escape-closure.json": "fb78bd53e2f7f0eb9bd452be0f1042065604d4f13539f6db7bd2b81b4187dd36",
+    "audit-remediation.json": "28dd5dc60fac568839e6d88d26da8da0859b91185d0288199f0f1717b2bdfbb3",
+    "learning-closure.json": "117f9b671efe7d06f0d21d656406784e2bd4a0b8a3d878dda718a7ee6b696a43",
+    "audit-escape-closure.json": "1b21db6e2b9d7006b118a445853b92814dd65a51d969b62d86c62d918151ee35",
     "previous-audit-escape-closure.json": "42d52e4e13b6f8a96aadfcc0ae74882cb35a4168a379cba1cc816b58d4a42ce7"
   },
   "test_bindings": {
@@ -232,7 +232,8 @@
         "entregar-issue.tests.test_handoff_postcondition_records::test_postcondition_records_preserve_history_and_close_only_verified_fields",
         "entregar-issue.tests.test_handoff_postcondition_records::test_finalization_requires_real_replay_and_exact_prepared_records",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_literal_replay_executes_frozen_gate_and_reverifies_real_output",
-        "auditar-issue.tests.test_evidence_profile_preflight::test_preflight_revalidates_anchors_in_supplied_source_checkout"
+        "auditar-issue.tests.test_evidence_profile_preflight::test_preflight_revalidates_anchors_in_supplied_source_checkout",
+        "tests.test_session_review_dossier::test_complete_dossier_passes_official_auditor_saturation"
       ],
       "negative": [
         "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
@@ -247,6 +248,7 @@
         "entregar-issue.tests.test_handoff_postcondition::test_final_certificate_rejects_tampered_postcondition_chain[rehashed-record]",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_unsafe_layout_without_overwriting[parent-symlink]",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_failed_literal_gate_records_real_failure_without_promoting_preparation",
+        "tests.test_session_review_dossier::test_dossier_rejects_unsaturated_active_inherited_family[missing]",
         "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[missing-allowlist]",
         "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[parent-symlink]",
         "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence]",
@@ -285,7 +287,9 @@
         "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_rejects_non_regular_input_without_waiting",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_semantic_reexecution_rejects_fabricated_success_log",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_proof_rejects_substitution[boolean-exit]",
-        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_log_is_bounded_during_actual_process_execution"
+        "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_log_is_bounded_during_actual_process_execution",
+        "tests.test_session_review_dossier::test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]",
+        "auditar-issue.tests.test_delivery_saturation_preflight::test_preflight_rejects_unsaturated_material_family"
       ],
       "regression": [
         "entregar-issue.tests.test_require_actions_handoff_certificate::test_stale_or_misleading_receipt_fails_closed",
@@ -382,6 +386,18 @@
       {
         "case": "tests/test_session_review_dossier.py::test_complete_dossier_passes_official_source_location_gate",
         "test_case_id": "tests.test_session_review_dossier::test_complete_dossier_passes_official_source_location_gate"
+      },
+      {
+        "case": "tests/test_session_review_dossier.py::test_complete_dossier_passes_official_auditor_saturation",
+        "test_case_id": "tests.test_session_review_dossier::test_complete_dossier_passes_official_auditor_saturation"
+      },
+      {
+        "case": "tests/test_session_review_dossier.py::test_dossier_rejects_unsaturated_active_inherited_family[missing]",
+        "test_case_id": "tests.test_session_review_dossier::test_dossier_rejects_unsaturated_active_inherited_family[missing]"
+      },
+      {
+        "case": "tests/test_session_review_dossier.py::test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]",
+        "test_case_id": "tests.test_session_review_dossier::test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]"
       }
     ],
     "entregar-issue/tests/test_produce_actions_handoff_evidence.py": [

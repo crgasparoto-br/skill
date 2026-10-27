@@ -246,9 +246,18 @@
       "reason": "The source obligation and reviewed matrix identify this family; every declared surface has a discriminating negative oracle tied to mandatory live JUnit evidence.",
       "control_ids": [
         "NEG-R127-04-02",
-        "NEG-R127-11-05"
+        "NEG-R127-11-05",
+        "NEG-R127-11-09"
       ],
       "dimensions": [
+        {
+          "surface": "auditor-saturation-consumption",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "control_ids": [
+            "NEG-R127-11-09"
+          ],
+          "status": "passed"
+        },
         {
           "surface": "certificate-preparation-state",
           "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
@@ -281,6 +290,115 @@
           "reason": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo.",
           "control_ids": [
             "NEG-R127-10-02"
+          ],
+          "status": "passed"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "family": "semantic-effect",
+      "applicable": true,
+      "reason": "The source obligation and reviewed matrix identify this family; every declared surface has a discriminating negative oracle tied to mandatory live JUnit evidence.",
+      "control_ids": [
+        "NEG-R127-01-01",
+        "NEG-R127-03-01",
+        "NEG-R127-04-01",
+        "NEG-R127-05-01",
+        "NEG-R127-05-02",
+        "NEG-R127-06-01",
+        "NEG-R127-08-01",
+        "NEG-R127-09-01",
+        "NEG-R127-11-01",
+        "NEG-R127-11-08",
+        "NEG-SPEC-L3-01"
+      ],
+      "dimensions": [
+        {
+          "surface": "assurance-separation",
+          "reason": "Reutilizar um recibo do operador como aprovacao humana ou Ed25519 faria um check mais fraco parecer prova de identidade independente.",
+          "control_ids": [
+            "NEG-R127-01-01"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "certification-preconditions",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "control_ids": [
+            "NEG-R127-11-01"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "executed-control-binding",
+          "reason": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado.",
+          "control_ids": [
+            "NEG-R127-05-01"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "grounding-execution-proof",
+          "reason": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado.",
+          "control_ids": [
+            "NEG-R127-05-02"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "latest-review-selection",
+          "reason": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
+          "control_ids": [
+            "NEG-R127-06-01"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "literal-replay-outcome",
+          "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
+          "control_ids": [
+            "NEG-R127-11-08"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "neutral-source-packet",
+          "reason": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro.",
+          "control_ids": [
+            "NEG-R127-08-01"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "operator-and-base-identity",
+          "reason": "Comparar apenas o login visivel permitiria que um ID diferente ou ator Bot emitisse recibo como operador autorizado.",
+          "control_ids": [
+            "NEG-SPEC-L3-01"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "source-coverage",
+          "reason": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
+          "control_ids": [
+            "NEG-R127-04-01"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "target-observation",
+          "reason": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial.",
+          "control_ids": [
+            "NEG-R127-03-01"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "web-hosted-entrypoint",
+          "reason": "Interpolar entrada do comentario como shell ou continuar apos certificado rejeitado permitiria executar comando estranho ou publicar pacote inapto no fluxo web.",
+          "control_ids": [
+            "NEG-R127-09-01"
           ],
           "status": "passed"
         }
