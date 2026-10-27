@@ -98,8 +98,8 @@
     {
       "path": "tests/test_session_review_dossier.py",
       "operation": "added",
-      "scenario": "Actual 16-candidate dossier reconciles through the canonical parser; mutations fail, M2 remains deferred and unexecuted tests cannot count.",
-      "requirement": "R127-04/R127-05/R127-10/R127-11 and SPEC-L33; A-004/A-005.",
+      "scenario": "Actual 16-candidate dossier reconciles through the canonical parser; mutations fail, M2 remains deferred, unexecuted tests cannot count, and the complete certificate source-evidence set passes the official source-location gate with available versioned issue bytes.",
+      "requirement": "R127-04/R127-05/R127-10/R127-11 and SPEC-L33; A-004/A-005 and latent source-location finding I-002.",
       "search": {
         "queries": [
           "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
@@ -116,7 +116,7 @@
         ]
       },
       "decision": "new-test-required",
-      "justification": "Use real official parser/merge/binding functions against the reviewed source, with add/remove/replace counterexamples. This is concrete integration coverage and does not assert operational M2 or document behavior from token presence.",
+      "justification": "Use real official parser/merge/binding functions against the reviewed source, with add/remove/replace counterexamples. Extend this module for I-002 by executing the real source-location validator on the complete critical-profile input set used by the certificate builder, preserving each JUnit case identity and checking the versioned issue bytes. This is concrete integration coverage and does not assert operational M2 or document behavior from token presence.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",
@@ -216,8 +216,8 @@
     {
       "path": "entregar-issue/tests/test_publish_actions_handoff.py",
       "operation": "modified",
-      "scenario": "A fresh material worktree receives only certified raw execution proofs before the grounding gate; tampered bytes, an absent certificate allowlist entry or a symlink parent fail before publication.",
-      "requirement": "R127-11; A-004 factual-proof delivery to the trusted publisher.",
+      "scenario": "A fresh material worktree receives only certified raw execution proofs before the grounding gate; tampered bytes, an absent certificate allowlist entry or a symlink parent fail before publication. A first critical targeted re-audit also proves lineage absence in the exact material Git commit before either terminal guard can permit the result child.",
+      "requirement": "R127-11; A-004 factual-proof delivery and I-003 exact-material lineage in the trusted publisher.",
       "search": {
         "queries": [
           "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
@@ -248,11 +248,57 @@
             "case": "candidate",
             "oracle": "Existing Git-backed grounding fixture proves the changed-test inventory.",
             "comparison": "Reused for real repository history and official grounding revalidation instead of a mocked reached-test gate."
+          },
+          {
+            "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+            "case": "test_terminal_guard_requires_material_parent_snapshots_for_lineage_artifacts",
+            "oracle": "Missing material-parent lineage evidence blocks the terminal handoff.",
+            "comparison": "Retained negative boundary; the new publisher integration adds the first critical-targeted result child with real Git proof of absence, not an invented empty historical snapshot."
           }
         ]
       },
       "decision": "extend-existing",
-      "justification": "Extend the existing publisher suite and reuse official delivery/grounding fixtures. The positive case traverses publish with real Git/certificate/grounding/terminal gates, while only transport operations are simulated; negative evidence rejects altered proof bytes before publication.",
+      "justification": "Extend the existing publisher suite and reuse official delivery/grounding/rejection fixtures. The positive cases traverse publish with real Git/certificate/grounding/terminal gates, including critical targeted re-audit, while only transport operations are simulated. Negative evidence rejects altered proof bytes or unproved material-parent absence before push; the production rejection report is never changed by synthetic fixtures.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+      "operation": "modified",
+      "scenario": "Material-parent controls are read from exact Git history: authentic snapshots pass, while forged absence from a later child, tampering, missing commits and symlink paths fail.",
+      "requirement": "R127-11; I-003 terminal lineage authentication within A-004.",
+      "search": {
+        "queries": [
+          "rg -n '^def test_|reached_tests|REACHED:' tests/test_session_review* entregar-issue/tests -g '*.py'"
+        ],
+        "scope": "Existing session-review protocol/runner/workflow and official collector/certification test suites.",
+        "runner": "python -m pytest --import-mode=importlib; pytest.ini excludes integrations subtree",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+            "case": "test_terminal_guard_requires_material_parent_snapshots_for_lineage_artifacts",
+            "oracle": "Unproved omitted material-parent snapshots block changed lineage artifacts.",
+            "comparison": "Retained; the new cases add a real repository and commit proof to distinguish absent history from a missing or tampered snapshot."
+          },
+          {
+            "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+            "case": "test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child",
+            "oracle": "Historical escape identifiers cannot disappear in a result-only child.",
+            "comparison": "Retained as a distinct monotonic-lineage regression when the guard gains an authenticated first-handoff path."
+          },
+          {
+            "path": "entregar-issue/tests/test_codebase_grounding.py",
+            "case": "git",
+            "oracle": "Shared fixture helper executes real Git commands with deterministic local identity.",
+            "comparison": "Reused by the existing terminal module to create actual material and child commits instead of a parallel Git model."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the existing terminal contract suite and its real CLI harness. The new counterexamples deliberately keep different material and current HEAD values and compare snapshot bytes to immutable blobs; existing snapshot-required and historical escape-preservation assertions remain in place.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",

@@ -231,6 +231,13 @@ confiavel, copia apenas de caminhos allowlisted, simulacao
 sem force ou merge, releitura GitHub apos a escrita e gate terminal real.
 O SHA do filho nao altera o SHA material certificado.
 
+O publicador captura os ledgers existentes diretamente dos blobs do commit
+material e informa `--material-parent-repository` ao guard terminal. Na
+primeira publicacao, caminhos ausentes recebem prova de ausencia pelo Git
+desse SHA; nenhum snapshot vazio e fabricado. Ledgers existentes exigem
+snapshots identicos aos blobs, e o historico externo da rejeicao continua
+separado dessa verificacao do parent imediato.
+
 Enquanto a evidencia semantica ainda nao foi produzida, a certificacao
 reprova e o `workflow_run` nao publica. Nao emitir `READY` nem
 convocar `auditar-issue` apenas pelo status verde do coletor.

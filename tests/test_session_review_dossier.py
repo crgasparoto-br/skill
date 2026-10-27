@@ -105,3 +105,36 @@ def test_dossier_cannot_promote_unexecuted_controls(tmp_path, state):
         tests[target] = state
     with pytest.raises(ValueError, match="unreached/skipped/nonpassing"):
         producer.validate_test_bindings(bindings, merged, tests)
+
+
+def test_complete_dossier_passes_official_source_location_gate(tmp_path):
+    """A blocked remediation ledger must not mask invalid downstream citations."""
+    merged = producer.merge_closure(starter(tmp_path), load("reviewed-closure.json"))
+    source_digest = hashlib.sha256((DOSSIER / "reviewed-source-issue.md").read_bytes()).hexdigest()
+    assert {row["source_sha256"] for row in merged["obligations"]} == {source_digest}
+    closure = tmp_path / "requirement-closure.json"
+    closure.write_text(json.dumps(merged), encoding="utf-8")
+    inputs = [closure, *(DOSSIER / name for name in (
+        "requirement-attack-matrix.json", "risk-saturation.json", "inherited-controls.json"
+    ))]
+    bindings = load("manifest.json")["test_bindings"]
+    matrix = load("requirement-attack-matrix.json")
+    for row in matrix["requirements"]:
+        identities = {case for cases in bindings[row["requirement_id"]].values() for case in cases}
+        controls = [row["positive_control"], *row["negative_controls"], *row["regression_controls"]]
+        for control in controls:
+            cases = [control, *control.get("sibling_cases", [])]
+            for case in cases:
+                identity = case.get("junit_case")
+                if identity is None:
+                    assert case.get("control_type") == "procedure"
+                    continue
+                assert set(identity) == {"classname", "name"}
+                assert identity["classname"] + "::" + identity["name"] in identities
+    command = [sys.executable, str(SCRIPTS / "validate_evidence_source_locations.py"),
+               "--repository-root", str(ROOT)]
+    for path in inputs:
+        command.extend(["--evidence", str(path)])
+    result = subprocess.run(command, check=False, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "READY: validated" in result.stdout

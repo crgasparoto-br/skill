@@ -13,15 +13,15 @@
   "audit_history_evidence": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8 is the current independently reported rejection at f16a1362f081397c7f0e7f0167f2f45fd65819d0; no previous versioned escape closure was found for this target. The source report is preserved verbatim and each of A-001..A-005 is tracked. A-004 remains unverified until its original failed gate has real replay evidence.",
   "review_scope": "These are reviewed semantic mappings, not a certificate or separate-context approval. Collector must verify live issue keys and actual exact-SHA tests; certification must reject the open A-004 replay. M2 remains deferred and issue127 remains open.",
   "artifact_sha256": {
-    "reviewed-closure.json": "2b80ff90db10609dc3517cc2b29fcbb261628e73c89bbfbaf3979f98e26e39db",
-    "requirement-attack-matrix.json": "517a1a4de17977579c855bb14a1a184e26425ac1f988e8613d8635676de6905a",
-    "risk-saturation.json": "98507aeed9581ee5a7cd6cc8d7cb44db08e07c764e77f7650394d779f9285c87",
-    "inherited-controls.json": "b8237c5bd55d60dbc828b7738a681b91d21397e9da579ca5b9daf4162f5c236e",
-    "codebase-grounding.json": "e91fd2e0ef3c96cb592af797174e07c7905b52889331d763c8fdcb287381f89a",
+    "reviewed-closure.json": "5a2f1eeffb0aeb3289c95cb31f05f6847f479eab05ab6dcb455f4517a8e0f71f",
+    "requirement-attack-matrix.json": "349a7a0c93bfff8bbd846585a26ef3f01d4f56cfe0c1f30bc8e493d082ee315a",
+    "risk-saturation.json": "21c5547eff5a2f17ae85b31a2482fccb25e1d5b587bddf562dfe8dbaa907fe13",
+    "inherited-controls.json": "1fe61f350110afe8719def6024a52e17f7d3a129da44e551f0e071a9a6a327c6",
+    "codebase-grounding.json": "9ba6a544a216660361c011907b5a1f313e9934dcb09a3d4b2f549ef95bd0fb23",
     "audit-source-result.json": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4",
-    "audit-remediation.json": "e3457fca5686efb40c6d2ef73f4868900b4763688bf7fb8e93d0c06dc723e287",
-    "learning-closure.json": "50bdfb9fc008143b83d473adbfa22c709074a6962615bf53d84987a2c66beab1",
-    "audit-escape-closure.json": "787e1eea3ec0bc441a59b8654b8bf133407f8a61f8154bd0a77e2dd4f0d9b118",
+    "audit-remediation.json": "25c2c28312b60749f818ba0ca39e4d27c3b0e1ca5409c93abd182be01b013b9c",
+    "learning-closure.json": "d3a27df37a1eb18483a52d29b707848ac2acb8d002dc646a9bb33386b0df5c89",
+    "audit-escape-closure.json": "93fc24c875fbe2f602d87d37059bbbb7ae06bab20981918220eea2d7ecfda425",
     "previous-audit-escape-closure.json": "42d52e4e13b6f8a96aadfcc0ae74882cb35a4168a379cba1cc816b58d4a42ce7"
   },
   "test_bindings": {
@@ -225,7 +225,9 @@
         "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates",
         "entregar-issue.tests.test_require_actions_handoff_certificate::test_certificate_generated_requires_exact_issue_head_and_result_only_policy",
         "entregar-issue.tests.test_produce_actions_handoff_evidence::test_producer_binds_grounding_from_committed_review_and_real_run[reviewed]",
-        "entregar-issue.tests.test_publish_actions_handoff::test_publisher_materializes_certified_execution_before_grounding"
+        "entregar-issue.tests.test_publish_actions_handoff::test_publisher_materializes_certified_execution_before_grounding",
+        "entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_accepts_exact_snapshot"
       ],
       "negative": [
         "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
@@ -234,8 +236,13 @@
         "entregar-issue.tests.test_require_actions_handoff_certificate::test_missing_semantic_closure_is_blocked_even_when_technical_facts_exist",
         "entregar-issue.tests.test_produce_actions_handoff_evidence::test_producer_binds_grounding_from_committed_review_and_real_run[missing-binding]",
         "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[proof-hash]",
+        "entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_rejects_unproved_parent_absence[critical-targeted]",
         "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[missing-allowlist]",
-        "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[parent-symlink]"
+        "entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[parent-symlink]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-tampered]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-commit]",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-parent-symlink]"
       ],
       "regression": [
         "entregar-issue.tests.test_require_actions_handoff_certificate::test_stale_or_misleading_receipt_fails_closed",
@@ -244,7 +251,9 @@
         "entregar-issue.tests.test_prepare_actions_handoff::test_certification_requires_real_closure_and_calls_official_gates",
         "entregar-issue.tests.test_produce_actions_handoff_evidence::test_code_growth_comparison_preserves_recorded_start_and_real_ancestry[remediation-start]",
         "entregar-issue.tests.test_produce_actions_handoff_evidence::test_code_growth_comparison_preserves_recorded_start_and_real_ancestry[descendant-pr-base]",
-        "entregar-issue.tests.test_publish_actions_handoff::test_parent_control_snapshots_are_immutable"
+        "entregar-issue.tests.test_publish_actions_handoff::test_parent_control_snapshots_are_immutable",
+        "tests.test_session_review_dossier::test_complete_dossier_passes_official_source_location_gate",
+        "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child"
       ]
     },
     "SPEC-L33": {
@@ -318,6 +327,10 @@
       {
         "case": "tests/test_session_review_dossier.py::test_dossier_cannot_promote_unexecuted_controls[skipped]",
         "test_case_id": "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]"
+      },
+      {
+        "case": "tests/test_session_review_dossier.py::test_complete_dossier_passes_official_source_location_gate",
+        "test_case_id": "tests.test_session_review_dossier::test_complete_dossier_passes_official_source_location_gate"
       }
     ],
     "entregar-issue/tests/test_produce_actions_handoff_evidence.py": [
@@ -386,6 +399,40 @@
       {
         "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_parent_control_snapshots_are_immutable",
         "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_parent_control_snapshots_are_immutable"
+      },
+      {
+        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]",
+        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
+      },
+      {
+        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_first_critical_reaudit_rejects_unproved_parent_absence[critical-targeted]",
+        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_rejects_unproved_parent_absence[critical-targeted]"
+      }
+    ],
+    "entregar-issue/tests/test_terminal_handoff_contract.py": [
+      {
+        "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_terminal_parent_git_proof_accepts_exact_snapshot",
+        "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_accepts_exact_snapshot"
+      },
+      {
+        "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence]",
+        "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence]"
+      },
+      {
+        "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-tampered]",
+        "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-tampered]"
+      },
+      {
+        "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-commit]",
+        "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-commit]"
+      },
+      {
+        "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-parent-symlink]",
+        "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-parent-symlink]"
+      },
+      {
+        "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child",
+        "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child"
       }
     ]
   }

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "classification": "implementation-only",
+  "classification": "systemic-escape",
   "source_event": {
     "kind": "independent-rejection",
     "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
@@ -16,8 +16,100 @@
     "report_origin": "Read-only review before this implementation, preserved byte-for-byte from the prior user-visible audit report."
   },
   "generalized_learning": {
-    "promotion_status": "not-required",
-    "reason": "All five source findings are classified targeted-remediation. Existing trusted-origin, exact-identity, complete-history, semantic-closure and documentation invariants already forbid the observed implementations. The fixes add focused regressions and reviewed evidence; no global approval rule is relaxed or newly promoted."
+    "escape_class": "material-parent-evidence-state-conflation",
+    "generalized_failure_pattern": "A result publisher and terminal guard fail to distinguish an existing historical blob, a path proven absent in the exact material tree, and an unavailable or failed observation. Testing only a light first-delivery fixture misses the cumulative-ledger requirements of a critical re-audit.",
+    "plausible_wrong_implementation": "Treat a missing snapshot as proof of absence, fabricate an empty historical ledger, consult the later child HEAD instead of the material commit, or accept mutable snapshot bytes without comparison to the Git object.",
+    "trigger_signals": [
+      "first creation of a cumulative ledger",
+      "replacement of an existing ledger",
+      "material-parent lineage verification",
+      "critical result-only publication"
+    ],
+    "risk_families": [
+      "historical-immutability",
+      "public-boundary"
+    ],
+    "reusable_control": {
+      "id": "TERMINAL-MATERIAL-PARENT-001",
+      "procedure": "Inspect the exact material Git tree with replacement objects disabled; authenticate existing snapshots against immutable blob bytes or record absence only after a successful path lookup. Run current-artifact semantic and historical lineage guards before and after publication."
+    },
+    "prevention_rule": "A present material blob requires an identical snapshot. Proven absence requires a successful lookup of the exact material commit and safe path types. Unavailable objects, read errors, unsafe paths and inconsistent snapshots remain blocking. External rejection snapshots remain separate and mandatory when applicable.",
+    "detection_rule": "Exercise critical targeted re-audit publication with real Git and both terminal guards, then reject forged absence, omitted or changed snapshots, symlinks, missing objects and observation of the later child in place of the material parent.",
+    "transfer_cases": [
+      {
+        "id": "first-critical-ledger-publication",
+        "surface": "result publisher introducing cumulative ledgers",
+        "status": "passed",
+        "procedure": "Run the complete synthetic critical re-audit publication with external rejection snapshots and no versioned audit subtree in the material parent.",
+        "expected": "The real guards accept Git-proven absence and retain external rejection history after the child is created.",
+        "evidence": {
+          "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+          "classname": "entregar-issue.tests.test_publish_actions_handoff",
+          "name": "test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
+        }
+      },
+      {
+        "id": "existing-ledger-snapshot-integrity",
+        "surface": "terminal validation of an existing material ledger",
+        "status": "passed",
+        "procedure": "Supply altered snapshot bytes for a ledger whose original bytes exist in an immutable synthetic Git commit.",
+        "expected": "The actual terminal guard rejects the snapshot before it can serve as lineage evidence.",
+        "evidence": {
+          "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+          "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+          "name": "test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-tampered]"
+        }
+      }
+    ],
+    "promotion_status": "promoted"
   },
-  "skill_changes": []
+  "skill_changes": [
+    {
+      "role": "prevention",
+      "status": "passed",
+      "control_id": "TERMINAL-MATERIAL-PARENT-001",
+      "evidence": [
+        {
+          "path": "entregar-issue/references/terminal-handoff.md",
+          "sha256": "55f8064cbf0f628b46900d49acaabb3e50d707a24c5d8737d6dd2cb29e94d211",
+          "kind": "reviewed-source-definition",
+          "execution_binding": "Focused tests actually passed; final material execution remains independently required by the exact-SHA runner and manifest bindings."
+        },
+        {
+          "path": "entregar-issue/scripts/validate_terminal_handoff.py",
+          "sha256": "b2ba753affd581dad0b70d841baf245733ae2a019545b9acd4defeace6667d6a",
+          "kind": "reviewed-source-definition",
+          "execution_binding": "Focused tests actually passed; final material execution remains independently required by the exact-SHA runner and manifest bindings."
+        },
+        {
+          "path": "entregar-issue/scripts/publish_actions_handoff.py",
+          "sha256": "468582c5c2cf5c8b1a338e3f97a67171b3e5ab7bab56df0e2f2f2335f6bb8861",
+          "kind": "reviewed-source-definition",
+          "execution_binding": "Focused tests actually passed; final material execution remains independently required by the exact-SHA runner and manifest bindings."
+        }
+      ],
+      "verification": "Implementation, normative procedure and compatible receipt consumers reviewed; documentation, lint and hygiene gates passed."
+    },
+    {
+      "role": "detection",
+      "status": "passed",
+      "control_id": "TERMINAL-MATERIAL-PARENT-001",
+      "evidence": [
+        {
+          "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+          "sha256": "b7a56a415e297d1e8576d611f4c42f5251a7399d3f3c2545008265160a901206",
+          "kind": "reviewed-source-definition",
+          "execution_binding": "Focused tests actually passed; final material execution remains independently required by the exact-SHA runner and manifest bindings."
+        },
+        {
+          "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+          "sha256": "553c218e1658e0544b94244dc67412b56d4147af3a025b4c0464c8e6d3db1a39",
+          "kind": "reviewed-source-definition",
+          "execution_binding": "Focused tests actually passed; final material execution remains independently required by the exact-SHA runner and manifest bindings."
+        }
+      ],
+      "verification": "125 focused tests passed, including full critical targeted publication, adversarial parent proofs and receipt consumers. Final exact-SHA CI remains mandatory."
+    }
+  ],
+  "classification_reason": "Internal remediation exposed a generic composition gap between the first publication of cumulative ledgers and a terminal guard that required historical files without a representation of verified absence. This continues the same rejection event and does not introduce new independent finding IDs."
 }

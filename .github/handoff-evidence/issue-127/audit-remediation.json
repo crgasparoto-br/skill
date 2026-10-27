@@ -103,11 +103,15 @@
         "entregar-issue/scripts/produce_actions_handoff_evidence.py",
         "entregar-issue/scripts/prepare_actions_handoff.py",
         "entregar-issue/scripts/publish_actions_handoff.py",
+        "entregar-issue/scripts/validate_terminal_handoff.py",
+        "entregar-issue/references/terminal-handoff.md",
+        "entregar-issue/references/github-actions-evidence.md",
         "tests/test_session_review_dossier.py",
         "entregar-issue/tests/test_bind_grounding_execution.py",
         "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
         "entregar-issue/tests/test_prepare_actions_handoff.py",
-        "entregar-issue/tests/test_publish_actions_handoff.py"
+        "entregar-issue/tests/test_publish_actions_handoff.py",
+        "entregar-issue/tests/test_terminal_handoff_contract.py"
       ],
       "evidence": [
         "tests/test_session_review_dossier.py"
@@ -117,10 +121,10 @@
       ],
       "internal_review": {
         "path": "tests/test_session_review_dossier.py",
-        "sha256": "127340547165e29ab6c6e26375597c64715053f9e080134e7d1ea6ca40869ba7",
+        "sha256": "0566c4ce1aa67aeeda793d99372db3e6c9161ef459b3e441982ee8de27767764",
         "evidence_kind": "reviewed-source-and-test-definition",
         "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
-        "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Execution binding requires matching exact-SHA log and JUnit facts; publication must materialize individually authenticated proof files before grounding validation. The original certificate replay is not passed: it is itself required before generating the certificate it checks.",
+        "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The original certificate replay is not passed: it is itself required before generating the certificate it checks.",
         "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
       },
       "original_failed_gate": {

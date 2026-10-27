@@ -220,6 +220,7 @@ def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, publishe
         "--material-head-sha", head, "--published-head-sha", published,
         "--published-parent-sha", head, "--current-head-sha", published,
         "--current-parent-sha", head, "--base-sha", base,
+        "--material-parent-repository", str(audit.parents[1]),
     ]
     for path in changed:
         args.extend(["--published-changed-path", path, "--current-changed-path", path])
@@ -243,14 +244,16 @@ def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, publishe
     return args
 
 
-def material_parent_snapshots(source: Path, temp: Path) -> Path:
-    """Capture immutable pre-handoff control ledgers before staging new bytes."""
+def material_parent_snapshots(source: Path, temp: Path, head: str) -> Path:
+    """Capture exact material blobs; absence stays absence until the terminal Git proof."""
+    from validate_terminal_handoff import material_parent_blob
+
     folder = temp / "material-parent-snapshots"
     folder.mkdir()
     for name in ("inherited-controls.json", "audit-escape-closure.json"):
-        old = source / PREFIX / name
-        if old.is_file() and not old.is_symlink():
-            (folder / name).write_bytes(old.read_bytes())
+        raw = material_parent_blob(source, head, PREFIX + name)
+        if raw is not None:
+            (folder / name).write_bytes(raw)
     return folder
 
 
@@ -325,7 +328,7 @@ def publish(event_path: Path, *, base_ref: str = "develop",
         validate_certificate(repo, pr_number, head, base, source, bundle, cert, branch, base_ref)
         check_material_ci(repo, head, pr_number, required_checks)
 
-        material_parent = material_parent_snapshots(source, temp)
+        material_parent = material_parent_snapshots(source, temp, head)
         existing = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
         if existing - set(paths):
             block("material HEAD contains stale audit paths outside the certificate allowlist")

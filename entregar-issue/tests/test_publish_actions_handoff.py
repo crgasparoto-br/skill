@@ -96,7 +96,12 @@ def test_parent_control_snapshots_are_immutable(tmp_path):
     audit = source / ".audit" / "entregar-issue"
     audit.mkdir(parents=True)
     (audit / "inherited-controls.json").write_bytes(b'{"v":"material"}')
-    destination = publisher.material_parent_snapshots(source, tmp_path)
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    git(source, "init", "-q")
+    git(source, "add", "-A")
+    git(source, "commit", "-q", "-m", "material controls")
+    head = git(source, "rev-parse", "HEAD")
+    destination = publisher.material_parent_snapshots(source, tmp_path, head)
     assert (destination / "inherited-controls.json").read_bytes() == b'{"v":"material"}'
     (audit / "inherited-controls.json").write_bytes(b'{"v":"new"}')
     assert (destination / "inherited-controls.json").read_bytes() == b'{"v":"material"}'
@@ -152,6 +157,8 @@ class PublicationHarness:
         self.conflicting_material = False
         self.validators = []
         self.grounding_bytes = None
+        self.terminal_proofs = []
+        self.omit_parent_repository = False
 
     def command(self, *values, cwd=None):
         if values[:3] == ("gh", "run", "download"):
@@ -171,8 +178,18 @@ class PublicationHarness:
             if script.name == "validate_codebase_grounding.py":
                 source = Path(values[values.index("--repo") + 1])
                 self.grounding_bytes = (source / self.proof_path).read_bytes()
+            if script.name == "validate_terminal_handoff.py":
+                values = list(values)
+                source = Path(values[values.index("--material-parent-repository") + 1])
+                assert self.real_command("git", "rev-parse", "HEAD", cwd=source) != self.head
+                if self.omit_parent_repository:
+                    index = values.index("--material-parent-repository")
+                    del values[index:index + 2]
+                values.extend(["--proof-out", str(source.parent / "terminal-proof.json")])
             values = (sys.executable, *values[1:])
         result = self.real_command(*values, cwd=cwd)
+        if "--proof-out" in values:
+            self.terminal_proofs.append(json.loads(Path(values[-1]).read_text(encoding="utf-8")))
         if values[:3] == ("git", "worktree", "add"):
             destination = Path(values[-2]) / self.proof_path
             self.proof_absent_at_checkout = not destination.exists()
@@ -214,8 +231,45 @@ class PublicationHarness:
         certificate.write_text(json.dumps(cert), encoding="utf-8")
 
 
+def critical_reaudit_arguments(files, candidate):
+    """Compose existing synthetic rejection fixtures; no production audit is changed."""
+    rejection = importlib.import_module("entregar-issue.tests.test_independent_rejection_closure")
+    replay = importlib.import_module("entregar-issue.tests.test_audit_remediation_gate_replay")
+    audit = files["snapshot"].parent
+    for name in ("attack", "risk", "inherited"):
+        raw = files[name].read_text(encoding="utf-8")
+        files[name].write_text(raw.replace(json.dumps(HEAD), json.dumps(candidate["head"])), encoding="utf-8")
+    source = audit / "audit-source-result.json"
+    replay.write(source, replay.audit(candidate["base"]))
+    rid = replay.audit(candidate["base"])["rejection_id"]
+    escape = rejection.escape(rid, "F-GATE-001")
+    escape["revalidated_head_sha"] = candidate["head"]
+    escape["required_risk_families"] = ["documentation"]
+    escape["required_attack_dimensions"] = [
+        {"risk_family": "documentation", "surface": "canonical-doc-surface", "dimension": dimension}
+        for dimension in ("stale-equivalent-claim", "alternate-current-claim")]
+    previous = dict(escape, status="blocked", revalidated_head_sha=candidate["base"])
+    learning = rejection.learning(rejection_id=rid)
+    learning["source_event"]["finding_ids"] = ["F-GATE-001"]
+    values = {
+        "audit-remediation": replay.ledger(source, candidate["base"], candidate["head"], "npm run format:check"),
+        "audit-escape-closure": {"schema_version": 1, "escapes": [escape]},
+        "previous-audit-escape-closure": {"schema_version": 1, "escapes": [previous]},
+        "learning-closure": learning,
+    }
+    args = ["--previous-independent-rejection", "--remediation-mode", "targeted-remediation",
+            "--attack-matrix", str(files["attack"]), "--risk-saturation", str(files["risk"]),
+            "--inherited-controls", str(files["inherited"]), "--audit-source-result", str(source),
+            "--allow-result-path", publisher.PREFIX + "previous-audit-escape-closure.json"]
+    for name, value in values.items():
+        path = audit / (name + ".json")
+        rejection.write(path, value)
+        args.extend(["--" + name, str(path)])
+    return args
+
+
 @pytest.fixture()
-def certified_publisher(tmp_path, monkeypatch):
+def certified_publisher(tmp_path, monkeypatch, request):
     grounding = importlib.import_module("entregar-issue.tests.test_codebase_grounding")
     delivery = importlib.import_module("entregar-issue.tests.test_handoff_certificate_contract")
     candidate = grounding.candidate.__wrapped__(tmp_path)
@@ -237,6 +291,10 @@ def certified_publisher(tmp_path, monkeypatch):
     paths = grounding.git(candidate["repo"], "diff", "--name-only", "--no-renames",
                           candidate["base"], candidate["head"]).splitlines()
     args = []
+    profile = "light"
+    if getattr(request, "param", None) == "critical-targeted":
+        profile = "critical"
+        args.extend(critical_reaudit_arguments(files, candidate))
     for path in paths:
         args.extend(["--issue-changed-path", path])
     snapshot = json.loads(files["snapshot"].read_text(encoding="utf-8"))
@@ -247,7 +305,7 @@ def certified_publisher(tmp_path, monkeypatch):
         "--work-item-kind", "pr", "--work-item-number", "99", "--pull-request-number", "99",
         "--base-ref", "develop", "--head-ref", PublicationHarness.branch,
         "--work-item-start-sha", candidate["base"], "--head-sha", candidate["head"],
-        "--base-sha", candidate["base"], "--evidence-profile", "light",
+        "--base-sha", candidate["base"], "--evidence-profile", profile,
         "--specification-snapshot", str(files["snapshot"]), "--requirement-closure", str(files["closure"]),
         "--codebase-grounding", str(grounded), "--code-growth", str(growth),
         "--source-repository-root", str(candidate["repo"]),
@@ -284,6 +342,33 @@ def test_publisher_materializes_certified_execution_before_grounding(certified_p
     changed = set(git(harness.repo, "diff", "--name-only", harness.head, published).splitlines())
     cert = json.loads((harness.bundle / publisher.CERTIFICATE).read_text(encoding="utf-8"))
     assert changed == set(publisher.allowed_paths(cert))
+
+
+@pytest.mark.parametrize("certified_publisher", ["critical-targeted"], indirect=True)
+def test_first_critical_reaudit_handoff_proves_material_parent_absence(certified_publisher):
+    harness = certified_publisher
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    assert git(harness.repo, "ls-tree", "-r", "--name-only", harness.head, "--", publisher.PREFIX) == ""
+    published = publisher.publish(harness.event)
+    assert harness.pushed == published and harness.proof_absent_at_checkout
+    assert len(harness.terminal_proofs) == 2
+    for proof in harness.terminal_proofs:
+        assert proof["material_head_sha"] == harness.head
+        assert proof["material_parent_absent_paths"] == [publisher.PREFIX + name for name in (
+            "audit-escape-closure.json", "inherited-controls.json")]
+    cert = json.loads((harness.bundle / publisher.CERTIFICATE).read_text(encoding="utf-8"))
+    assert cert["evidence_profile"] == "critical" and cert["previous_independent_rejection"]
+    assert cert["remediation_mode"] == "targeted-remediation"
+
+
+@pytest.mark.parametrize("certified_publisher", ["critical-targeted"], indirect=True)
+def test_first_critical_reaudit_rejects_unproved_parent_absence(certified_publisher):
+    harness = certified_publisher
+    harness.omit_parent_repository = True
+    with pytest.raises(subprocess.CalledProcessError) as caught:
+        publisher.publish(harness.event)
+    assert "without material-parent snapshot" in caught.value.stdout
+    assert harness.pushed is None
 
 
 @pytest.mark.parametrize("mutation,reason", [

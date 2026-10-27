@@ -47,6 +47,22 @@ Nao abrir PR substituta enquanto a PR original for recuperavel por esse protocol
 4. Registrar separadamente `published_handoff_head_sha` no momento da publicacao e, **depois da ultima escrita no repositorio**, fazer uma nova leitura remota para obter `current_head_sha`, parent e changed paths. Nao reutilizar como observacao terminal a resposta da API que criou o commit nem metadata capturada antes de uma escrita posterior. Reclassificar o pacote publicado contra `repository/work item/PR/base/head` terminais e exigir `current-target`; no modo local, `controller_cli.py refresh-context` deve atualizar `artifact_reuse`, e em `connector-only` executar `delivery_target_binding.py` sobre os bytes materializados do head remoto. Depois executar `scripts/validate_terminal_handoff.py` passando **as duas identidades** (`published_handoff_head_sha` e `current_head_sha`) imediatamente antes de uma resposta que possa liberar auditoria independente. Em reauditoria, passar `--previous-audit-escape-closure` para preservar o ledger de rejeicoes; passar tambem `--previous-inherited-controls` somente quando o perfil/remediacao exigir controles herdados (`critical` sistemico/misto). O guard deve preservar o `evidence_profile` e o `remediation_mode` certificados ao revalidar semanticamente os artefatos finais, incluindo o vinculo `learning-closure.source_event.rejection_id -> audit-escape-closure.source_audit.rejection_id`, sem promover silenciosamente `standard` para `critical`. Se o `result-only-child` alterar `inherited-controls.json` ou `audit-escape-closure.json`, materializar tambem as versoes desses arquivos no **material parent** e passar `--material-parent-inherited-controls`/`--material-parent-audit-escape-closure`. O guard deve provar monotonicidade contra o parent imediato alem do snapshot historico externo; um filho de resultados nunca pode apagar controle/escape que estava presente no candidato congelado.
 5. CI `pending-no-run`, `queued`, `in_progress` ou `waiting` nao autoriza retorno nem handoff terminal: encerrar o modo `delivery-snapshot`, transferir ownership para `corrigir-ci` e continuar a mesma invocacao ate terminal. Gerar/publicar o handoff terminal somente depois de CI material verde; se `corrigir-ci` mudar o material, executar `post-write-refreeze` primeiro.
 
+A primeira criacao de um ledger segue `TERMINAL-MATERIAL-PARENT-001`: a ausencia no material parent
+precisa de prova propria; nao criar `{}` ou listas vazias como se fossem
+snapshots historicos. Com checkout Git, passar `--material-parent-repository`
+ao guard. Ele consulta explicitamente o `material_head_sha`, mesmo quando o
+HEAD do worktree ja for o filho, e aceita ausencia somente depois de leitura
+Git bem-sucedida desse commit. Objeto indisponivel, erro de leitura, symlink
+ou tipo inesperado em qualquer componente do caminho bloqueiam. Quando o
+blob existe, o snapshot continua obrigatorio e seus bytes devem coincidir
+com o blob material. Um snapshot apresentado para um caminho ausente tambem
+e inconsistente. Os validadores semanticos dos artefatos atuais e os snapshots
+externos de rejeicoes anteriores permanecem obrigatorios quando aplicaveis.
+Sem repositorio Git, permanece a interface legada de snapshots; omissao nao
+constitui prova de ausencia. O recibo terminal registra separadamente os
+`material_parent_absent_paths` comprovados, sem atribuir controles ou escapes
+ao commit que nao os continha.
+
 ## Barreira universal pos-escrita
 
 Se a invocacao iniciou com handoff existente ou publicou qualquer arquivo/commit, nenhum retorno pode contornar reconciliacao terminal de identidade. Registrar `last_material_write_sha`, reconsultar o remoto e provar um estado:
