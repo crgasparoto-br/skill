@@ -560,11 +560,11 @@
             "Verify session review (exact SHA) check conclusion and summary"
           ],
           "scenario_ids": [
-            "tests/test_session_review_runner.py:300-308 (case test_evaluate_reads_complete_journal_beyond_one_page[205]; JUnit classname tests.test_session_review_runner)"
+            "tests/test_session_review_runner.py:332-340 (case test_evaluate_reads_complete_journal_beyond_one_page[205]; JUnit classname tests.test_session_review_runner)"
           ],
           "negative_control_evidence": [
-            "tests/test_session_review_runner.py:311-322 (case test_evaluate_preserves_revocation_across_pages_and_reuse; JUnit classname tests.test_session_review_runner)",
-            "tests/test_session_review_runner.py:333-345 (case test_evaluate_publishes_failure_when_journal_is_unreadable; JUnit classname tests.test_session_review_runner)"
+            "tests/test_session_review_runner.py:343-354 (case test_evaluate_preserves_revocation_across_pages_and_reuse; JUnit classname tests.test_session_review_runner)",
+            "tests/test_session_review_runner.py:365-377 (case test_evaluate_publishes_failure_when_journal_is_unreadable; JUnit classname tests.test_session_review_runner)"
           ]
         }
       ],
@@ -594,11 +594,11 @@
             "scripts/session_review.py:139-183"
           ],
           "scenario_ids": [
-            "tests/test_session_review_runner.py:92-104 (case test_publication_reuses_same_verified_fingerprint[develop]; JUnit classname tests.test_session_review_runner)"
+            "tests/test_session_review_runner.py:124-136 (case test_publication_reuses_same_verified_fingerprint[develop]; JUnit classname tests.test_session_review_runner)"
           ],
           "negative_control_evidence": [
-            "tests/test_session_review_runner.py:278-287 (case test_evaluate_rejects_changed_initial_identity[head_sha]; JUnit classname tests.test_session_review_runner)",
-            "tests/test_session_review_runner.py:290-297 (case test_evaluate_rejects_target_change_before_publication[head_sha]; JUnit classname tests.test_session_review_runner)"
+            "tests/test_session_review_runner.py:310-319 (case test_evaluate_rejects_changed_initial_identity[head_sha]; JUnit classname tests.test_session_review_runner)",
+            "tests/test_session_review_runner.py:322-329 (case test_evaluate_rejects_target_change_before_publication[head_sha]; JUnit classname tests.test_session_review_runner)"
           ],
           "divergent_fixture": {
             "canonical_value": "initial HEAD a*40",

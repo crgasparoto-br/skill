@@ -12,7 +12,7 @@
   "audit_history_evidence": "This PR has no independently registered audit rejection against its material SHA; previous independent audit reports relate to merged PR #128 and are retained only as historical evidence.",
   "review_scope": "Issue #127 M1 evidence historically belongs to PR #128. PR #129 revalidates issue-obligation mappings, supplies reviewed source-line shifts for inserted tests, and binds only its new test changes to exact-SHA JUnit. M2 review/policy installation/ruleset migration remains deferred until operational proof.",
   "artifact_sha256": {
-    "reviewed-closure.json": "a4d49af6025cf2caaef53449215d89019d5f9297c50266dd9b7b0f78512697e1",
+    "reviewed-closure.json": "b42da489f439009d0cad4c9667c72c18f8c4b9aae10ce884c4e0c26e64c5141f",
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
     "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
