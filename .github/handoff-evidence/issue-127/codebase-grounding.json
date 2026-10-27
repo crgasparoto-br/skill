@@ -2,72 +2,60 @@
   "schema_version": 2,
   "subject_sha": "__MATERIAL_HEAD_SHA__",
   "base_sha": "__WORK_ITEM_START_SHA__",
-  "creations": [],
+  "creations": [
+    {
+      "path": "scripts/plan_session_ruleset_m2.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "GitHub fetch_file scripts/configurar_ruleset.py at develop; compare existing plan(current, ...) behavior",
+          "GitHub fetch_file tests/test_configurar_ruleset.py at develop; inspect legacy independent-gate assertions"
+        ],
+        "scope": "Inspected the existing administrative ruleset configuration helper and its tests. It is deliberately legacy and requires one human review plus the independent gate; it cannot prepare the M2 session migration without changing that existing contract.",
+        "candidates": [
+          {
+            "path": "scripts/configurar_ruleset.py",
+            "reason_not_reused": "Existing installer intentionally preserves >=1 human approving review and the independent-audit gate. Reusing or modifying that authority would conflate legacy and M2, rather than creating a separate fail-closed, read-only proposal."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "The new file has no ruleset-write path; it only plans M2 after separate certified acceptance, preserves technical checks and fails on unknown bypasses. Separate functionality avoids changing the legacy administrative procedure."
+    }
+  ],
   "references": [],
   "replacements": [],
   "test_decisions": [
     {
-      "path": "entregar-issue/tests/test_publish_actions_handoff.py",
-      "operation": "modified",
-      "scenario": "R127-06 / R127-07: preserving certified material HEAD after an authenticated session-mode selection prevents trusted publisher race with a neutral packet.",
-      "requirement": "R127-06 / R127-07: preserving certified material HEAD after an authenticated session-mode selection prevents trusted publisher race with a neutral packet.",
+      "path": "tests/test_plan_session_ruleset_m2.py",
+      "operation": "added",
+      "scenario": "R127-13 preparation: preserve exact-SHA certification and all technical checks on both develop/main while rejecting hidden bypasses, unexpected origins and required-review regressions; maintain read-only planner behavior.",
+      "requirement": "R127-13 remains deferred until real session review, operational positive and adversarial runs, protected ruleset installation and read-back; tests exercise only the M2 migration plan, not operational adoption.",
       "search": {
         "queries": [
-          "rg -n 'session_mode_active|session_routing|test_enabled_session_mode|test_session_routing_' entregar-issue/scripts/publish_actions_handoff.py entregar-issue/tests/test_publish_actions_handoff.py tests/test_session_review_workflows.py"
+          "GitHub fetch_file tests/test_configurar_ruleset.py at develop; inspect existing legacy requirements and test case inventory",
+          "GitHub fetch_file scripts/configurar_ruleset.py at develop; compare existing planner and independent-gate assertions",
+          "GitHub fetch_file tests/test_plan_session_ruleset_m2.py at candidate SHA; inspect new positive/negative/regression oracles"
         ],
-        "scope": "Reused the existing trusted publisher unit harness and session workflow/contract suite; no duplicate publisher or transport was created.",
+        "scope": "Existing ruleset tests enforce the legacy independent-review policy with review count >= 1. No existing test covered session-specific read-only migration to review count zero with mandatory exact-SHA checks on main and fail-closed bypass preservation.",
         "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
         "candidates": [
           {
-            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
-            "case": "test_publisher_materializes_certified_execution_before_grounding",
-            "oracle": "Existing GitHub-hosted artifact, parent and policy authorization scenarios remain binding, and the newly observed head-race is discriminated by the session/legacy tests.",
-            "comparison": "Extended the existing scoped test suite while retaining all prior negative and regression tests."
+            "path": "tests/test_configurar_ruleset.py",
+            "case": "test_ruleset_raises_zero_review_approval_to_one_and_preserves_stronger_policy",
+            "oracle": "Legacy regression guarantees review count of at least one; M2 migration must not alter this legacy command.",
+            "comparison": "New independent test suite is needed because the desired M2 session policy intentionally differs; retaining the old case avoids weakening legacy assurance."
           },
           {
-            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
-            "case": "test_trusted_publisher_can_stage_gitignored_certified_results",
-            "oracle": "Existing GitHub-hosted artifact, parent and policy authorization scenarios remain binding, and the newly observed head-race is discriminated by the session/legacy tests.",
-            "comparison": "Extended the existing scoped test suite while retaining all prior negative and regression tests."
+            "path": "tests/test_configurar_ruleset.py",
+            "case": "test_existing_required_checks_remain_mandatory",
+            "oracle": "Legacy tool preserves pre-existing technical checks and rejects unexpected origins.",
+            "comparison": "New M2 tests reuse that security invariant and add a session-specific requirement to preserve exact-SHA certification on both bases."
           }
         ]
       },
-      "decision": "extend-existing",
-      "justification": "The existing integration-level test module already owns the publication mode boundary; extend it with real policy and no-new-commit cases.",
-      "disposition": "keep",
-      "verification": {
-        "status": "unknown",
-        "reason": "awaiting-exact-SHA-JUnit"
-      }
-    },
-    {
-      "path": "tests/test_session_review_workflows.py",
-      "operation": "modified",
-      "scenario": "R127-09 / R127-10: trusted base policy controls session selection; absent policy on both sides retains legacy; drift or invalid authority blocks without downgrade.",
-      "requirement": "R127-09 / R127-10: trusted base policy controls session selection; absent policy on both sides retains legacy; drift or invalid authority blocks without downgrade.",
-      "search": {
-        "queries": [
-          "rg -n 'session_mode_active|session_routing|test_enabled_session_mode|test_session_routing_' entregar-issue/scripts/publish_actions_handoff.py entregar-issue/tests/test_publish_actions_handoff.py tests/test_session_review_workflows.py"
-        ],
-        "scope": "Reused the existing trusted publisher unit harness and session workflow/contract suite; no duplicate publisher or transport was created.",
-        "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
-        "candidates": [
-          {
-            "path": "tests/test_session_review_workflows.py",
-            "case": "test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment",
-            "oracle": "Existing GitHub-hosted artifact, parent and policy authorization scenarios remain binding, and the newly observed head-race is discriminated by the session/legacy tests.",
-            "comparison": "Extended the existing scoped test suite while retaining all prior negative and regression tests."
-          },
-          {
-            "path": "tests/test_session_review_workflows.py",
-            "case": "test_begin_check_rejects_states_that_could_bypass_review",
-            "oracle": "Existing GitHub-hosted artifact, parent and policy authorization scenarios remain binding, and the newly observed head-race is discriminated by the session/legacy tests.",
-            "comparison": "Extended the existing scoped test suite while retaining all prior negative and regression tests."
-          }
-        ]
-      },
-      "decision": "extend-existing",
-      "justification": "The existing integration-level test module already owns the publication mode boundary; extend it with real policy and no-new-commit cases.",
+      "decision": "new-test-required",
+      "justification": "The existing legacy helper test suite forbids a zero-review state by design. Added a separate test module that validates protected M2 preview for both branches and fail-closed rejection of policy weakening and authorization drift without changing legacy tests.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",

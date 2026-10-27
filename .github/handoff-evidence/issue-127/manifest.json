@@ -2,21 +2,21 @@
   "schema_version": 1,
   "repository": "crgasparoto-br/skill",
   "issue_number": 127,
-  "pull_request_number": 138,
+  "pull_request_number": 141,
   "base_ref": "develop",
-  "head_ref": "fix/127-session-stable-material-head",
-  "work_item_start_sha": "bd66edac00779260750789712062a5128932d04a",
+  "head_ref": "fix/127-session-m2-ruleset-planner",
+  "work_item_start_sha": "b64dbcf4a685e5f5bb73ea81c2b36d510ac1ef7b",
   "evidence_profile": "critical",
-  "risk_justification": "Critical trust boundary: prevent a protected-base policy route from bypassing exact-SHA certification or enabling untrusted PR-authored changes to the publisher, while preserving the legacy result-only handoff path and error-denial behavior.",
+  "risk_justification": "Critical administrative trust-boundary preparation: plan future M2 migration from legacy independent review to operator-attested session review without altering live rulesets, bypass visibility, exact-SHA certification, technical checks, or default branch. No M2 operational approval is asserted.",
   "audit_history": "verified-no-rejection",
-  "audit_history_evidence": "This PR #138 has no independent review rejection against its material candidate. The observed neutral-packet run 40554906886 failed because the result-only publisher moved the pilot HEAD during collection; this is genuine technical failure evidence, not an independent approval.",
-  "review_scope": "Universal resolution of the race observed in pilot #134: certified artifact and technical checks remain mandatory, opt-in session transport does not append a result-only child, legacy mode still does, and default/base policy bytes are authenticated and equal. M2 independent review and ruleset migration remain deferred until real GitHub evidence, never self-certified.",
+  "audit_history_evidence": "PR #141 has no prior independent audit rejection against its own candidate; the existing red checks are technical/approval gates, and the previously certified PR #140 is not reused as an approval or evidence identity.",
+  "review_scope": "PR #141 adds a separate read-only M2 ruleset migration planner with positive, negative and regression pytest cases, plus operational instructions. The existing 16 issue obligations remain canonical; requirements R127-12/R127-13 are still deferred until external session review and administrative ruleset read-back. The older M1 issue-controls are unchanged, but the new test and creation surfaces are separately grounded.",
   "artifact_sha256": {
     "reviewed-closure.json": "7ba506ec3efe353d3d0928d78e404f344f2e5c8f70fbe93534f633abcb4bcfe2",
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
     "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
-    "codebase-grounding.json": "5166c0c69475a964d16f830716f50118d159db50951ebdc596bd3caa65e8ed0d"
+    "codebase-grounding.json": "8cf49298811e74144b742e1fc2df8aeb199dc908ffc59192efbb668597e712bc"
   },
   "test_bindings": {
     "SPEC-L3": {
@@ -256,7 +256,8 @@
         "auditar-issue.tests.test_evidence_profile_preflight::test_preflight_revalidates_anchors_in_supplied_source_checkout",
         "tests.test_session_review_dossier::test_complete_dossier_passes_official_auditor_saturation",
         "tests.test_versioning::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main",
-        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides",
+        "tests.test_plan_session_ruleset_m2::test_exact_branch_plan_preserves_all_protections_and_upgrades_to_session[main]"
       ],
       "negative": [
         "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
@@ -312,7 +313,8 @@
         "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_proof_rejects_substitution[boolean-exit]",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_log_is_bounded_during_actual_process_execution",
         "tests.test_session_review_dossier::test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]",
-        "auditar-issue.tests.test_delivery_saturation_preflight::test_preflight_rejects_unsaturated_material_family"
+        "auditar-issue.tests.test_delivery_saturation_preflight::test_preflight_rejects_unsaturated_material_family",
+        "tests.test_plan_session_ruleset_m2::test_rejects_migration_when_legacy_gate_is_missing_or_untrusted"
       ],
       "regression": [
         "entregar-issue.tests.test_require_actions_handoff_certificate::test_stale_or_misleading_receipt_fails_closed",
@@ -331,7 +333,8 @@
         "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_literal_replay_uses_only_trusted_runtime_and_clean_environment",
         "auditar-issue.tests.test_connector_preflight::test_connector_preflight_accepts_immutable_snapshot",
-        "auditar-issue.tests.test_evidence_profile_preflight::test_audit_preflight_is_profile_aware"
+        "auditar-issue.tests.test_evidence_profile_preflight::test_audit_preflight_is_profile_aware",
+        "tests.test_plan_session_ruleset_m2::test_plan_does_not_perform_remote_mutation"
       ]
     },
     "SPEC-L33": {
@@ -349,16 +352,18 @@
     }
   },
   "grounding_test_bindings": {
-    "entregar-issue/tests/test_publish_actions_handoff.py": [
+    "tests/test_plan_session_ruleset_m2.py": [
       {
-        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_enabled_session_mode_preserves_material_sha_without_result_child",
-        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_enabled_session_mode_preserves_material_sha_without_result_child"
-      }
-    ],
-    "tests/test_session_review_workflows.py": [
+        "case": "tests/test_plan_session_ruleset_m2.py::test_exact_branch_plan_preserves_all_protections_and_upgrades_to_session[main]",
+        "test_case_id": "tests.test_plan_session_ruleset_m2::test_exact_branch_plan_preserves_all_protections_and_upgrades_to_session[main]"
+      },
       {
-        "case": "tests/test_session_review_workflows.py::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides",
-        "test_case_id": "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+        "case": "tests/test_plan_session_ruleset_m2.py::test_rejects_migration_when_legacy_gate_is_missing_or_untrusted",
+        "test_case_id": "tests.test_plan_session_ruleset_m2::test_rejects_migration_when_legacy_gate_is_missing_or_untrusted"
+      },
+      {
+        "case": "tests/test_plan_session_ruleset_m2.py::test_plan_does_not_perform_remote_mutation",
+        "test_case_id": "tests.test_plan_session_ruleset_m2::test_plan_does_not_perform_remote_mutation"
       }
     ]
   }
