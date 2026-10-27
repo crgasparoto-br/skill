@@ -15,7 +15,7 @@
     "reviewed-closure.json": "a4d49af6025cf2caaef53449215d89019d5f9297c50266dd9b7b0f78512697e1",
     "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
     "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
-    "inherited-controls.json": "c28cc0f8879c09495d780cba15dcc5a98ece42d0f126317bb3cde179e1c73445",
+    "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
     "codebase-grounding.json": "45596bdd868f97374db0d5986c182bc821f62b54524e6eee296fafd2cbe8ca33"
   },
   "test_bindings": {
