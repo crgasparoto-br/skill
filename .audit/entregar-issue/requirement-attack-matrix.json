@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+  "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
   "requirements": [
     {
       "requirement_id": "R127-01",
@@ -16,7 +16,7 @@
       "plausible_wrong_implementation": "Reutilizar um recibo do operador como aprovacao humana ou Ed25519 faria um check mais fraco parecer prova de identidade independente.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -30,7 +30,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -67,7 +67,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -108,7 +108,7 @@
       "plausible_wrong_implementation": "Tratar uma politica desabilitada como enabled ou aceitar somente o nome da conta concederia aprovacao sem a autorizacao administrativa exigida.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -122,7 +122,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -170,7 +170,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -211,7 +211,7 @@
       "plausible_wrong_implementation": "Ler HEAD A para criar o check e preparar evidencias de HEAD B pode publicar sucesso de B em A sem comparar a observacao inicial.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -225,7 +225,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -273,7 +273,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -286,7 +286,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -328,7 +328,7 @@
       "plausible_wrong_implementation": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -342,7 +342,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -388,7 +388,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -436,7 +436,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -482,7 +482,7 @@
       "plausible_wrong_implementation": "Usar o mesmo teste positivo como negativo ou tratar caso skipped como passed faria a cobertura parecer completa sem um contraexemplo executado.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -496,7 +496,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -542,7 +542,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -590,7 +590,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -603,7 +603,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -616,7 +616,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -664,7 +664,7 @@
       "plausible_wrong_implementation": "Consultar so os primeiros cem checks perderia revogacao antiga; criar um novo recibo em cada execucao faria o caminho de erro tambem ultrapassar a propria janela.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -678,7 +678,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -724,7 +724,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -770,7 +770,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -818,7 +818,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -831,7 +831,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -844,7 +844,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -857,7 +857,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -870,7 +870,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -923,7 +923,7 @@
       "plausible_wrong_implementation": "Um workflow_dispatch da branch candidata executaria seu proprio script com checks:write antes da comparacao de bytes; uma releitura incompleta permitiria publicar depois de o alvo mudar.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -937,7 +937,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -983,7 +983,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1029,7 +1029,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1077,7 +1077,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1090,7 +1090,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1142,7 +1142,7 @@
       "plausible_wrong_implementation": "Usar somente patch da API ou extrair ZIP sem validar aliases e tipos permitiria omitir fonte ou sobrescrever evidencia fora do pacote neutro.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -1156,7 +1156,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1202,7 +1202,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1250,7 +1250,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1263,7 +1263,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1309,7 +1309,7 @@
       "plausible_wrong_implementation": "Interpolar entrada do comentario como shell ou continuar apos certificado rejeitado permitiria executar comando estranho ou publicar pacote inapto no fluxo web.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -1323,7 +1323,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1360,7 +1360,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1373,7 +1373,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1415,7 +1415,7 @@
       "plausible_wrong_implementation": "Documentar desabilitacao da politica antes de restaurar os emissores/checks antigos criaria uma janela sem a protecao acordada; tratar M2 como concluida por teste fecharia a issue cedo.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "procedure",
         "evidence_kind": "documentation",
         "evidence_path": "docs/WEB_INDEPENDENT_AUDIT.md",
@@ -1425,7 +1425,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "procedure",
           "evidence_kind": "documentation",
           "junit_case": {
@@ -1471,7 +1471,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "procedure",
           "evidence_kind": "documentation",
           "junit_case": {
@@ -1519,7 +1519,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1532,7 +1532,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1582,7 +1582,7 @@
       "plausible_wrong_implementation": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -1596,7 +1596,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1642,7 +1642,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1688,7 +1688,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1756,7 +1756,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1846,7 +1846,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -1947,7 +1947,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2103,7 +2103,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2182,7 +2182,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2239,7 +2239,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2287,7 +2287,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2300,7 +2300,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2313,7 +2313,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2326,7 +2326,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2339,7 +2339,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2352,7 +2352,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2365,7 +2365,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2378,7 +2378,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2391,7 +2391,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2404,7 +2404,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2417,7 +2417,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2430,7 +2430,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2443,7 +2443,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2456,7 +2456,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2469,7 +2469,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2482,7 +2482,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2495,7 +2495,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2576,7 +2576,7 @@
       "plausible_wrong_implementation": "Comparar apenas o login visivel permitiria que um ID diferente ou ator Bot emitisse recibo como operador autorizado.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -2590,7 +2590,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2638,7 +2638,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2680,7 +2680,7 @@
       "plausible_wrong_implementation": "Reutilizar a decisao de fase antiga depois de a issue mudar, ou contar os requisitos M2 como cobertos pelo JUnit M1, atribuiria ao implementador uma autorizacao que pertence ao proprietario.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -2694,7 +2694,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2740,7 +2740,7 @@
         },
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2788,7 +2788,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2834,7 +2834,7 @@
       "plausible_wrong_implementation": "Aceitar assurance criptograficamente independente ou a mesma referencia de conversa mudaria a garantia sem uma revisao separada declarada.",
       "positive_control": {
         "status": "passed",
-        "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+        "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
         "control_type": "test",
         "evidence_kind": "behavioral",
         "junit_case": {
@@ -2848,7 +2848,7 @@
       "negative_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {
@@ -2896,7 +2896,7 @@
       "regression_controls": [
         {
           "status": "passed",
-          "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+          "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
           "control_type": "test",
           "evidence_kind": "behavioral",
           "junit_case": {

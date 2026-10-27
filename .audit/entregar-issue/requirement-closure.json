@@ -2,7 +2,7 @@
   "schema_version": 3,
   "specification_snapshot": {
     "path": "/tmp/handoff-evidence/.audit/entregar-issue/specification-snapshot.json",
-    "sha256": "90b17a5a76d615840f95ca1ebd100afa5ba0f7d61fa49e97bf6de4e5b75f5a4d"
+    "sha256": "f261abd9bf5b29c87f7f6d1a45faae67dd888b2ef7f2f93932dd64ebba4fc58e"
   },
   "primary_issue_source_id": "SRC-ISSUE-127",
   "obligations": [
@@ -221,7 +221,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "As duas rotas usam runner ubuntu-latest do GitHub e GITHUB_TOKEN; o parecer vem do ChatGPT web. Nao ha chamada de IA, segredo de IA, infraestrutura externa, API de merge ou rulesets nessas rotas. O shell passa campos de evento como dados e propaga rejeicao em vez de transformar coleta em aprovacao. O publicador confiavel passa a selecionar develop/main a partir da PR autenticada; testes distinguem main valido de base nao permitida e evento falso. Homologacao em origin confiavel permanece pendente. Git ignora .audit; publicador da main usa force somente com allowed_paths do certificado e preserva validação de parent e SHA."
+      "rationale": "As duas rotas usam runner ubuntu-latest do GitHub e GITHUB_TOKEN; o parecer vem do ChatGPT web. Nao ha chamada de IA, segredo de IA, infraestrutura externa, API de merge ou rulesets nessas rotas. O shell passa campos de evento como dados e propaga rejeicao em vez de transformar coleta em aprovacao. O publicador confiavel passa a selecionar develop/main a partir da PR autenticada; testes distinguem main valido de base nao permitida e evento falso. Homologacao em origin confiavel permanece pendente. Git ignora .audit; publicador da main usa force somente com allowed_paths do certificado e preserva validação de parent e SHA. Read-back pos-push: repetir por tempo limitado, exigir PR aberta, mesmo base, parent e exatamente os arquivos autorizados. Mudanca de HEAD por terceiro ou timeout continua bloqueando."
     },
     {
       "id": "OBL-012",
@@ -238,7 +238,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Revisao semantica de docs/WEB_INDEPENDENT_AUDIT.md conferiu ator, ativacao na base confiavel, bootstrap administrativo, M1/M2 e rollback ordenado: restaurar protecao antiga e ler regras efetivas antes de retirar check de sessao/desabilitar politica. Isso documenta procedimento; nao afirma rollback ou migracao M2 executados. Testes preservam decisao de fase e rejeitam drift do contrato."
+      "rationale": "Revisao semantica de docs/WEB_INDEPENDENT_AUDIT.md conferiu ator, ativacao na base confiavel, bootstrap administrativo, M1/M2 e rollback ordenado: restaurar protecao antiga e ler regras efetivas antes de retirar check de sessao/desabilitar politica. Isso documenta procedimento; nao afirma rollback ou migracao M2 executados. Testes preservam decisao de fase e rejeitam drift do contrato. Read-back pos-push: repetir por tempo limitado, exigir PR aberta, mesmo base, parent e exatamente os arquivos autorizados. Mudanca de HEAD por terceiro ou timeout continua bloqueando."
     },
     {
       "id": "OBL-013",

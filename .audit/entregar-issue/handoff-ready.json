@@ -2,44 +2,37 @@
   "schema_version": 2,
   "status": "ready",
   "phase": "final",
-  "created_at": "2026-10-27T16:48:26.966113+00:00",
+  "created_at": "2026-10-27T17:53:50.489483+00:00",
   "identity": {
-    "head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
-    "material_head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
-    "base_sha": "3f7b574201c19662425cc11881573f241f9ac9cf",
+    "head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
+    "material_head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
+    "base_sha": "bd66edac00779260750789712062a5128932d04a",
     "merge_preview_sha": null,
     "material_merge_preview_sha": null
   },
   "subject": {
     "repository": "crgasparoto-br/skill",
     "issue_number": 127,
-    "pull_request_number": 135,
+    "pull_request_number": 134,
     "work_item_kind": "pr",
-    "work_item_number": 135,
-    "pull_request": 135,
+    "work_item_number": 134,
+    "pull_request": 134,
     "base_ref": "develop",
-    "head_ref": "fix/127-session-check-fail-closed-transition"
+    "head_ref": "chore/127-session-review-live-pilot"
   },
   "scope": {
     "schema_version": 1,
-    "work_item_start_sha": "3f7b574201c19662425cc11881573f241f9ac9cf",
-    "material_head_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+    "work_item_start_sha": "bd66edac00779260750789712062a5128932d04a",
+    "material_head_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
     "issue_changed_paths": [
-      ".github/handoff-evidence/issue-127/codebase-grounding.json",
       ".github/handoff-evidence/issue-127/manifest.json",
-      ".github/handoff-evidence/issue-127/reviewed-closure.json",
-      "docs/WEB_INDEPENDENT_AUDIT.md",
-      "scripts/verify_session_review.py",
-      "tests/test_session_review_workflows.py"
+      "docs/WEB_INDEPENDENT_AUDIT.md"
     ],
-    "issue_delta_sha256": "43b7f9e67ea4022ebd403d6a4a6774e4ba242271cd0d176dffedfeee2808314f"
+    "issue_delta_sha256": "79cb29028b9865319fd50d24f06a2259bf9128b35b933431f0be268ede0a413f"
   },
   "certificate_commit_policy": {
     "mode": "result-only-child",
     "allowed_paths": [
-      ".audit/entregar-issue/code-growth.json",
-      ".audit/entregar-issue/codebase-grounding.json",
-      ".audit/entregar-issue/execution/ground-tests-154492f53976-b37a58b1cfb931c5.log",
       ".audit/entregar-issue/handoff-ready.json",
       ".audit/entregar-issue/inherited-controls.json",
       ".audit/entregar-issue/requirement-attack-matrix.json",
@@ -54,7 +47,7 @@
   "remediation_mode": null,
   "producer": {
     "skill": "entregar-issue",
-    "skill_sha256": "36e50288069478e68e5f9718ecdc47631d5b4163aeda2e9d93279b4b57a8368e"
+    "skill_sha256": "85aeafe49419f4068eaff79c2aaf9c8508fbc89be08bb3b22aefdc6a0705f777"
   },
   "validators": {
     "validate_specification_coverage.py": "097d0d56edd5495f2a0fc3cc0606514a972d6995e6e8977d56e7595ceeb139e3",
@@ -79,8 +72,8 @@
   "artifacts": {
     "specification_snapshot": {
       "name": "specification-snapshot.json",
-      "sha256": "90b17a5a76d615840f95ca1ebd100afa5ba0f7d61fa49e97bf6de4e5b75f5a4d",
-      "logical_sha256": "90b17a5a76d615840f95ca1ebd100afa5ba0f7d61fa49e97bf6de4e5b75f5a4d",
+      "sha256": "f261abd9bf5b29c87f7f6d1a45faae67dd888b2ef7f2f93932dd64ebba4fc58e",
+      "logical_sha256": "f261abd9bf5b29c87f7f6d1a45faae67dd888b2ef7f2f93932dd64ebba4fc58e",
       "logical_size": 563,
       "artifact_transport": {
         "format": "plain-json",
@@ -89,9 +82,9 @@
     },
     "requirement_closure": {
       "name": "requirement-closure.json",
-      "sha256": "d1c15c03bb458cfc09890841a94df4e3f6687a63fb5e4589085f30d163af8d5f",
-      "logical_sha256": "d1c15c03bb458cfc09890841a94df4e3f6687a63fb5e4589085f30d163af8d5f",
-      "logical_size": 53348,
+      "sha256": "844a56f326cf691b86f2b6fafb6ef4ee89f365f0bb53c52047922017ddd50dfc",
+      "logical_sha256": "844a56f326cf691b86f2b6fafb6ef4ee89f365f0bb53c52047922017ddd50dfc",
+      "logical_size": 53716,
       "artifact_transport": {
         "format": "plain-json",
         "version": 1
@@ -99,8 +92,8 @@
     },
     "requirement_attack_matrix": {
       "name": "requirement-attack-matrix.json",
-      "sha256": "d1d39e621e1554b0e46f75372d98a3cfa7aaf2f33d0175991029ae6bbb519c8f",
-      "logical_sha256": "d1d39e621e1554b0e46f75372d98a3cfa7aaf2f33d0175991029ae6bbb519c8f",
+      "sha256": "f515435d5b0f9d29f5eddae741f52591babd6523b7484375ee8a0e513d5fd498",
+      "logical_sha256": "f515435d5b0f9d29f5eddae741f52591babd6523b7484375ee8a0e513d5fd498",
       "logical_size": 237195,
       "artifact_transport": {
         "format": "plain-json",
@@ -109,8 +102,8 @@
     },
     "risk_saturation": {
       "name": "risk-saturation.json",
-      "sha256": "f2ac1c3e6b756a82310b29562901404c92118937600a9981ef37e958463a5650",
-      "logical_sha256": "f2ac1c3e6b756a82310b29562901404c92118937600a9981ef37e958463a5650",
+      "sha256": "92573c64a96e51a0ed0abb8cacfcded12b8493239116180a9bd90397eaabf206",
+      "logical_sha256": "92573c64a96e51a0ed0abb8cacfcded12b8493239116180a9bd90397eaabf206",
       "logical_size": 19116,
       "artifact_transport": {
         "format": "plain-json",
@@ -119,29 +112,9 @@
     },
     "inherited_controls": {
       "name": "inherited-controls.json",
-      "sha256": "ff5e37c7e79796d07c5f49d60b5d23ee59d13594e0b046f99f7da448397a1bbe",
-      "logical_sha256": "ff5e37c7e79796d07c5f49d60b5d23ee59d13594e0b046f99f7da448397a1bbe",
+      "sha256": "8914f2470efdf9bf67116092964c8969536726be47eae4b6c0684da2434bace6",
+      "logical_sha256": "8914f2470efdf9bf67116092964c8969536726be47eae4b6c0684da2434bace6",
       "logical_size": 20090,
-      "artifact_transport": {
-        "format": "plain-json",
-        "version": 1
-      }
-    },
-    "codebase_grounding": {
-      "name": "codebase-grounding.json",
-      "sha256": "501ec12ed25f2f4e104d81734a9b993ee7923ea9e7a7147323d27cd2e7bacc88",
-      "logical_sha256": "501ec12ed25f2f4e104d81734a9b993ee7923ea9e7a7147323d27cd2e7bacc88",
-      "logical_size": 2998,
-      "artifact_transport": {
-        "format": "plain-json",
-        "version": 1
-      }
-    },
-    "code_growth": {
-      "name": "code-growth.json",
-      "sha256": "472ea6ef381ecbb6764fd53c05b2e7f4be0a729fd0d67c14115e8963284eda17",
-      "logical_sha256": "472ea6ef381ecbb6764fd53c05b2e7f4be0a729fd0d67c14115e8963284eda17",
-      "logical_size": 691,
       "artifact_transport": {
         "format": "plain-json",
         "version": 1
@@ -150,16 +123,16 @@
   },
   "controls": {
     "codebase_grounding": {
-      "applicable": true
+      "applicable": false
     },
     "code_growth": {
-      "applicable": true
+      "applicable": false
     },
     "source_locations": {
       "applicable": true,
       "status": "passed",
       "checked": 295,
-      "subject_sha": "154492f53976410a08f4998f71dc4467e9315ef5",
+      "subject_sha": "ff6669db1aaf834e9054dc625ea95a5df95508d6",
       "evidence_artifacts": [
         "requirement_closure",
         "requirement_attack_matrix",
