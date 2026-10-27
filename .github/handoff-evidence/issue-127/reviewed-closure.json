@@ -9,7 +9,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "A politica versionada identifica crgasparoto-br por ID 255721831 e login, permanece desabilitada por padrao e o contrato aceita develop/main. A identidade da PR e vinculada pelo coletor; os testes usam contas sinteticas para verificar o algoritmo, nao representam autorizacao operacional M2."
+      "rationale": "A politica versionada identifica crgasparoto-br por ID 255721831 e login, nasceu desabilitada por padrao; a ativacao candidata para operador autorizado ainda exige instalacao nas bases confiaveis e o contrato aceita develop/main. A identidade da PR e vinculada pelo coletor; os testes usam contas sinteticas para verificar o algoritmo, nao representam autorizacao operacional M2."
     },
     "64be7f653a4698d2d2fceaed88ebf8fcc5d38fe600af485313f4845a49607ae3": {
       "disposition": "covered",
