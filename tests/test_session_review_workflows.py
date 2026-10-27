@@ -250,7 +250,7 @@ def test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides(tm
     from urllib.error import HTTPError
     monkeypatch.setattr(publisher, "SCRIPT_ROOT", tmp_path / "entregar-issue/scripts")
     def missing(*_):
-        raise HTTPError("https://api.github.com", 404, "Not Found", None, None)
+        raise HTTPError("https://example.invalid", 404, "Not Found", None, None)
     monkeypatch.setattr(publisher, "api_get", missing)
     assert publisher.session_mode_active("owner/repo", "a" * 40) is False
 
@@ -263,7 +263,7 @@ def test_session_routing_never_silently_downgrades_policy_missing_from_base(tmp_
     policy.write_text((ROOT / ".github/session-review-policy.json").read_text())
     monkeypatch.setattr(publisher, "SCRIPT_ROOT", tmp_path / "entregar-issue/scripts")
     def missing(*_):
-        raise HTTPError("https://api.github.com", 404, "Not Found", None, None)
+        raise HTTPError("https://example.invalid", 404, "Not Found", None, None)
     monkeypatch.setattr(publisher, "api_get", missing)
     with pytest.raises(ValueError, match="protected-base session policy unavailable"):
         publisher.session_mode_active("owner/repo", "a" * 40)
