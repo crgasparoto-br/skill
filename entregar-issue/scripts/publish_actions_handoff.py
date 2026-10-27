@@ -315,6 +315,18 @@ def check_material_ci(repository: str, head: str, pr_number: int,
 
 
 
+def ensure_historical_audit_unchanged(source: Path, base: str, head: str,
+                                      authorized: list[str]) -> None:
+    """Confirm that noncurrent audit files are exactly inherited from trusted base."""
+    current = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
+    original = set(command("git", "ls-tree", "-r", "--name-only", base,
+                           "--", PREFIX, cwd=source).splitlines())
+    modified = set(command("git", "diff", "--name-only", base, head,
+                           "--", PREFIX, cwd=source).splitlines())
+    if (current - set(authorized)) - original or modified - set(authorized):
+        block("material HEAD has changed audit paths outside certificate scope")
+
+
 def confirm_published_result(repo: str, number: int, head: str, base: str,
                              published: str, changed: list[str]) -> None:
     """Reconcile eventual GitHub PR/commit visibility without authorizing drift."""
@@ -379,16 +391,7 @@ def publish(event_path: Path, *, base_ref: str | None = None,
         check_material_ci(repo, head, pr_number, required_checks)
 
         material_parent = material_parent_snapshots(source, temp, head)
-        existing = set(command("git", "ls-files", "--", PREFIX, cwd=source).splitlines())
-        inherited = set(command("git", "ls-tree", "-r", "--name-only", base,
-                                "--", PREFIX, cwd=source).splitlines())
-        modified = set(command("git", "diff", "--name-only", base, head,
-                               "--", PREFIX, cwd=source).splitlines())
-        # Previously certified material from the trusted base is immutable
-        # history. Do not mistake its unchanged files for current PR results.
-        # New, removed or altered audit paths outside this certificate remain blocked.
-        if (existing - set(paths)) - inherited or modified - set(paths):
-            block("material HEAD changed unallowlisted or non-inherited audit paths")
+        ensure_historical_audit_unchanged(source, base, head, paths)
         for path in paths:
             dest = source / path
             dest.parent.mkdir(parents=True, exist_ok=True)
