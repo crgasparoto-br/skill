@@ -16,6 +16,7 @@ from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
 from handoff_origin import connector_origin_is_same_base_blob, subject_matches_target
+from handoff_postcondition import require_final_phase, verify_finalization
 
 SHA40 = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 REQUIRED_ARTIFACTS = {"specification_snapshot", "requirement_closure"}
@@ -60,6 +61,8 @@ def main() -> int:
     parser.add_argument("--certificate", required=True)
     parser.add_argument("--connector-manifest", required=True)
     parser.add_argument("--contract-version", required=True)
+    parser.add_argument("--artifacts-dir", type=Path, help="Materialized bytes required for certificate postcondition proofs")
+    parser.add_argument("--source-repository-root", type=Path, help="Git source for independently checking the historical gate")
     args = parser.parse_args()
 
     try:
@@ -67,6 +70,12 @@ def main() -> int:
         manifest = load(Path(args.connector_manifest))
     except Exception as exc:
         print(f"BLOCK: invalid connector preflight input: {exc}")
+        return 2
+
+    try:
+        require_final_phase(cert)
+    except ValueError as exc:
+        print(f"BLOCK: certificate preparation is not a final handoff: {exc}")
         return 2
 
     errors: list[str] = []
@@ -363,6 +372,22 @@ def main() -> int:
                     f"independent rejection {rejection_id} lacks connector semantic closure for finding ids: "
                     + ", ".join(missing_findings)
                 )
+
+    # Match the canonical certificate validator: a prior independent rejection
+    # makes the finalization proof mandatory even if the descriptor was removed
+    # from the candidate. Semantic connector booleans never replace those bytes.
+    proof_required = bool(cert.get("previous_independent_rejection") or "postcondition_proof" in cert)
+    if proof_required and not errors and not limitations:
+        if "postcondition_proof" not in cert:
+            errors.append("certificate postcondition proof is required after an independent rejection")
+        elif args.artifacts_dir is None or args.source_repository_root is None:
+            limitations.append("certificate postcondition proof requires materialized artifacts and trusted Git source")
+        else:
+            try:
+                verify_finalization(cert, args.artifacts_dir, args.source_repository_root,
+                                    expected_base=base_sha, require_repository=True)
+            except Exception as exc:
+                errors.append(f"certificate postcondition proof failed: {exc}")
 
     if target_mismatch:
         recovery = "fresh-handoff-required"

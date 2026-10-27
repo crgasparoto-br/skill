@@ -1,0 +1,446 @@
+{
+  "schema_version": 1,
+  "escapes": [
+    {
+      "escape_id": "A-001",
+      "escape_class": "candidate-selected-privileged-execution",
+      "source_audit": {
+        "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+        "head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+        "finding_id": "A-001",
+        "audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4"
+      },
+      "plausible_wrong_implementation": "Privileged workflow_dispatch selects executable source through the selected workflow SHA before any protected-source validation.",
+      "literal_case": {
+        "procedure": "Exercise both workflow entrypoints, the restricted event set and the actual packet shell using hostile event strings and live-target routing fixtures.",
+        "observed": "The tested workflows expose no candidate-selected dispatch. Packet collection is read-only and routes event data without evaluating it as shell or Python.",
+        "status": "passed",
+        "evidence": {
+          "path": "tests/test_session_review_workflows.py",
+          "sha256": "f857d3be031e8c42ef75e0e791db82b20201fbcfae039fd3f5672c1ed873b6c9",
+          "evidence_kind": "reviewed-source-and-test-definition",
+          "procedure": "Exercise both workflow entrypoints, the restricted event set and the actual packet shell using hostile event strings and live-target routing fixtures.",
+          "observed": "The tested workflows expose no candidate-selected dispatch. Packet collection is read-only and routes event data without evaluating it as shell or Python.",
+          "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+        }
+      },
+      "sibling_cases": [
+        {
+          "id": "packet-read-only-origin",
+          "surface": "packet-executor",
+          "dimension": "read-only-emitter",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_session_review_workflows.py",
+            "sha256": "f857d3be031e8c42ef75e0e791db82b20201fbcfae039fd3f5672c1ed873b6c9",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Exercise both workflow entrypoints, the restricted event set and the actual packet shell using hostile event strings and live-target routing fixtures.",
+            "observed": "The packet workflow has only read permissions and uses the default-branch source.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        },
+        {
+          "id": "hostile-comment-data",
+          "surface": "packet-shell",
+          "dimension": "input-injection",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_session_review_workflows.py",
+            "sha256": "f857d3be031e8c42ef75e0e791db82b20201fbcfae039fd3f5672c1ed873b6c9",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Exercise both workflow entrypoints, the restricted event set and the actual packet shell using hostile event strings and live-target routing fixtures.",
+            "observed": "Hostile shell fragments in event fields remain data; no injected file is created.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        }
+      ],
+      "required_attack_dimensions": [
+        {
+          "risk_family": "authorization",
+          "surface": "trusted-workflow-source",
+          "dimension": "candidate-session-dispatch"
+        },
+        {
+          "risk_family": "authorization",
+          "surface": "trusted-workflow-source",
+          "dimension": "candidate-packet-dispatch"
+        },
+        {
+          "risk_family": "authorization",
+          "surface": "trusted-workflow-source",
+          "dimension": "foreign-packet-trigger"
+        }
+      ],
+      "prevention_change": {
+        "skill_or_code": ".github/workflows/session-review.yml",
+        "evidence": "Remove manual dispatch from both entrypoints and use protected default/base events before checkout and execution."
+      },
+      "detection_change": {
+        "skill_or_gate": "tests/test_session_review_workflows.py",
+        "control_id": "NEG-R127-07-01",
+        "evidence": "python -m pytest -q tests/test_session_review_workflows.py; semantic review and executed test outcomes remain separate."
+      },
+      "trigger_terms": [
+        "candidate-selected-privileged-execution"
+      ],
+      "required_risk_families": [
+        "authorization"
+      ],
+      "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
+      "status": "passed"
+    },
+    {
+      "escape_id": "A-002",
+      "escape_class": "receipt-publication-target-drift",
+      "source_audit": {
+        "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+        "head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+        "finding_id": "A-002",
+        "audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4"
+      },
+      "plausible_wrong_implementation": "The initial check HEAD is not compared with the later prepared and finally revalidated identity.",
+      "literal_case": {
+        "procedure": "Run evaluate with a different initial/prepared identity, a late identity mutation and a receipt/check belonging to another SHA or publisher.",
+        "observed": "Every tested identity drift rejects approval. The stable develop and main controls publish to the same frozen SHA and retain the verified receipt identity.",
+        "status": "passed",
+        "evidence": {
+          "path": "tests/test_session_review_runner.py",
+          "sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+          "evidence_kind": "reviewed-source-and-test-definition",
+          "procedure": "Run evaluate with a different initial/prepared identity, a late identity mutation and a receipt/check belonging to another SHA or publisher.",
+          "observed": "Every tested identity drift rejects approval. The stable develop and main controls publish to the same frozen SHA and retain the verified receipt identity.",
+          "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+        }
+      },
+      "sibling_cases": [
+        {
+          "id": "late-target-drift",
+          "surface": "final-revalidation",
+          "dimension": "late-mutation",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_session_review_runner.py",
+            "sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Run evaluate with a different initial/prepared identity, a late identity mutation and a receipt/check belonging to another SHA or publisher.",
+            "observed": "A mutation immediately before publication causes failure rather than success on the original check.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        },
+        {
+          "id": "foreign-check-publication",
+          "surface": "check-publication",
+          "dimension": "sha-and-app-mismatch",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_session_review_runner.py",
+            "sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Run evaluate with a different initial/prepared identity, a late identity mutation and a receipt/check belonging to another SHA or publisher.",
+            "observed": "A receipt or check for a different SHA/app is rejected before a success write.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        }
+      ],
+      "required_attack_dimensions": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "target-observation",
+          "dimension": "initial-head-drift"
+        },
+        {
+          "risk_family": "semantic-effect",
+          "surface": "target-observation",
+          "dimension": "initial-issue-digest-drift"
+        },
+        {
+          "risk_family": "semantic-effect",
+          "surface": "target-observation",
+          "dimension": "initial-policy-digest-drift"
+        }
+      ],
+      "prevention_change": {
+        "skill_or_code": "scripts/verify_session_review.py",
+        "evidence": "Freeze PR, issue and policy identity before preparation; compare initial, prepared and final identities and enforce receipt/check SHA and publisher at publication."
+      },
+      "detection_change": {
+        "skill_or_gate": "tests/test_session_review_runner.py",
+        "control_id": "NEG-R127-03-01",
+        "evidence": "python -m pytest -q tests/test_session_review_runner.py; semantic review and executed test outcomes remain separate."
+      },
+      "trigger_terms": [
+        "receipt-publication-target-drift"
+      ],
+      "required_risk_families": [
+        "semantic-effect"
+      ],
+      "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
+      "status": "passed"
+    },
+    {
+      "escape_id": "A-003",
+      "escape_class": "bounded-history-retry-stall",
+      "source_audit": {
+        "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+        "head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+        "finding_id": "A-003",
+        "audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4"
+      },
+      "plausible_wrong_implementation": "Every evaluate creates a new check while history is limited to 100 records and failure publication rereads the same truncated journal.",
+      "literal_case": {
+        "procedure": "Run evaluate with 99,100,101,205 and 2500 existing records, repeat the same review, mutate/delete/reject the latest review and make the journal unreadable.",
+        "observed": "Complete history through 2500 records is read, the check is reused, the maximum watermark survives and an unreadable journal produces a terminal failure. 2501 records fail the declared collection budget.",
+        "status": "passed",
+        "evidence": {
+          "path": "tests/test_session_review_runner.py",
+          "sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+          "evidence_kind": "reviewed-source-and-test-definition",
+          "procedure": "Run evaluate with 99,100,101,205 and 2500 existing records, repeat the same review, mutate/delete/reject the latest review and make the journal unreadable.",
+          "observed": "Complete history through 2500 records is read, the check is reused, the maximum watermark survives and an unreadable journal produces a terminal failure. 2501 records fail the declared collection budget.",
+          "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+        }
+      },
+      "sibling_cases": [
+        {
+          "id": "revocation-on-second-page",
+          "surface": "review-journal",
+          "dimension": "watermark-pagination",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_session_review_runner.py",
+            "sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Run evaluate with 99,100,101,205 and 2500 existing records, repeat the same review, mutate/delete/reject the latest review and make the journal unreadable.",
+            "observed": "A newer watermark on another page prevents fallback to an older approval across reuse.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        },
+        {
+          "id": "journal-read-failure",
+          "surface": "failure-publication",
+          "dimension": "truncated-or-unreadable-history",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_session_review_runner.py",
+            "sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Run evaluate with 99,100,101,205 and 2500 existing records, repeat the same review, mutate/delete/reject the latest review and make the journal unreadable.",
+            "observed": "A journal error causes a completed failure and does not leave a new in-progress record.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        }
+      ],
+      "required_attack_dimensions": [
+        {
+          "risk_family": "historical-immutability",
+          "surface": "revocation-order",
+          "dimension": "watermark-beyond-first-page"
+        },
+        {
+          "risk_family": "historical-immutability",
+          "surface": "revocation-order",
+          "dimension": "deleted-newest-no-fallback"
+        },
+        {
+          "risk_family": "historical-immutability",
+          "surface": "revocation-order",
+          "dimension": "rejected-newest-no-fallback"
+        }
+      ],
+      "prevention_change": {
+        "skill_or_code": "scripts/verify_session_review.py",
+        "evidence": "Paginate with stable total_count, reuse the existing check in evaluate and publish failure without consulting the failed journal again."
+      },
+      "detection_change": {
+        "skill_or_gate": "tests/test_session_review_runner.py",
+        "control_id": "NEG-R127-06-02",
+        "evidence": "python -m pytest -q tests/test_session_review_runner.py; semantic review and executed test outcomes remain separate."
+      },
+      "trigger_terms": [
+        "bounded-history-retry-stall"
+      ],
+      "required_risk_families": [
+        "historical-immutability"
+      ],
+      "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
+      "status": "passed"
+    },
+    {
+      "escape_id": "A-004",
+      "escape_class": "stale-semantic-dossier",
+      "source_audit": {
+        "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+        "head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+        "finding_id": "A-004",
+        "audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4"
+      },
+      "plausible_wrong_implementation": "The producer dossier still contains only the prior issue obligations and does not emit certification inputs or a certificate.",
+      "literal_case": {
+        "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
+        "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Risk saturation covers every family declared by the attack matrix and active inherited controls, including semantic-effect; the official auditor saturation consumer checks that composition. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
+        "status": "not-passed",
+        "evidence": {
+          "path": "tests/test_session_review_dossier.py",
+          "sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
+          "evidence_kind": "reviewed-source-and-test-definition",
+          "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
+          "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Risk saturation covers every family declared by the attack matrix and active inherited controls, including semantic-effect; the official auditor saturation consumer checks that composition. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
+          "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+        }
+      },
+      "sibling_cases": [
+        {
+          "id": "changed-issue-contract",
+          "surface": "canonical-parser",
+          "dimension": "addition-removal-replacement",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_session_review_dossier.py",
+            "sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
+            "observed": "The official overlay rejects changed candidate inventories instead of silently inheriting prior requirements.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        },
+        {
+          "id": "deferred-operational-adoption",
+          "surface": "phase-boundary",
+          "dimension": "false-m2-coverage",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_session_review_dossier.py",
+            "sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
+            "observed": "Operational adoption remains deferred and is excluded from implementation test bindings.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        }
+      ],
+      "required_attack_dimensions": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "semantic-mutation-saturation",
+          "dimension": "changed-normative-obligation"
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "semantic-mutation-saturation",
+          "dimension": "additional-normative-obligation"
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "semantic-mutation-saturation",
+          "dimension": "removed-normative-obligation"
+        }
+      ],
+      "prevention_change": {
+        "skill_or_code": ".github/handoff-evidence/issue-127/manifest.json",
+        "evidence": "Bind the reviewed overlay to every current canonical candidate and verified source anchor, cover the complete matrix/inherited risk inventory through the real auditor consumer, carry factual execution proof through publication, prove material-parent presence or absence from the exact Git object, preserve the actual work-item start, and keep M2 deferred under the recorded owner decision with the parent issue open."
+      },
+      "detection_change": {
+        "skill_or_gate": "tests/test_session_review_dossier.py",
+        "control_id": "NEG-R127-04-02",
+        "evidence": "python -m pytest -q tests/test_session_review_dossier.py; semantic review and executed test outcomes remain separate."
+      },
+      "trigger_terms": [
+        "stale-semantic-dossier"
+      ],
+      "required_risk_families": [
+        "structural-contract"
+      ],
+      "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
+      "status": "blocked"
+    },
+    {
+      "escape_id": "A-005",
+      "escape_class": "missing-operational-rollback",
+      "source_audit": {
+        "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+        "head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+        "finding_id": "A-005",
+        "audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4"
+      },
+      "plausible_wrong_implementation": "The session adoption guide does not define rollback and the approved M1/M2 deferral representation.",
+      "literal_case": {
+        "procedure": "Inspect the guide against the current phase decision and trace rollback with protection available, prior evidence missing and a legacy reviewer/check unavailable; run documentation-link validation.",
+        "observed": "The guide restores and verifies the previous protections before removing the session requirement, keeps the parent issue open for M2 and preserves human/Ed25519 routes. This is internal semantic review of the procedure, not execution of M2.",
+        "status": "passed",
+        "evidence": {
+          "path": "docs/WEB_INDEPENDENT_AUDIT.md",
+          "sha256": "d3ce5f710fafa496afe526e560bce2398955511002325952aa42b57febd92647",
+          "evidence_kind": "reviewed-source-and-test-definition",
+          "procedure": "Inspect the guide against the current phase decision and trace rollback with protection available, prior evidence missing and a legacy reviewer/check unavailable; run documentation-link validation.",
+          "observed": "The guide restores and verifies the previous protections before removing the session requirement, keeps the parent issue open for M2 and preserves human/Ed25519 routes. This is internal semantic review of the procedure, not execution of M2.",
+          "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+        }
+      },
+      "sibling_cases": [
+        {
+          "id": "missing-protection-snapshot",
+          "surface": "rollback-provenance",
+          "dimension": "missing-prior-policy",
+          "status": "passed",
+          "evidence": {
+            "path": "docs/WEB_INDEPENDENT_AUDIT.md",
+            "sha256": "d3ce5f710fafa496afe526e560bce2398955511002325952aa42b57febd92647",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Inspect the guide against the current phase decision and trace rollback with protection available, prior evidence missing and a legacy reviewer/check unavailable; run documentation-link validation.",
+            "observed": "The procedure blocks and requires reconstruction of verifiable prior policy; it does not substitute a permissive configuration.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        },
+        {
+          "id": "legacy-check-unavailable",
+          "surface": "rollback-protection",
+          "dimension": "unavailable-old-route",
+          "status": "passed",
+          "evidence": {
+            "path": "docs/WEB_INDEPENDENT_AUDIT.md",
+            "sha256": "d3ce5f710fafa496afe526e560bce2398955511002325952aa42b57febd92647",
+            "evidence_kind": "reviewed-source-and-test-definition",
+            "procedure": "Inspect the guide against the current phase decision and trace rollback with protection available, prior evidence missing and a legacy reviewer/check unavailable; run documentation-link validation.",
+            "observed": "The procedure keeps integration blocked until the restored human/check route is effective; it does not lower protection to obtain green.",
+            "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+          }
+        }
+      ],
+      "required_attack_dimensions": [
+        {
+          "risk_family": "documentation",
+          "surface": "canonical-claims",
+          "dimension": "obsolete-contract-overlay"
+        },
+        {
+          "risk_family": "documentation",
+          "surface": "canonical-claims",
+          "dimension": "missing-current-obligation"
+        },
+        {
+          "risk_family": "documentation",
+          "surface": "canonical-claims",
+          "dimension": "added-unreviewed-obligation"
+        }
+      ],
+      "prevention_change": {
+        "skill_or_code": "docs/WEB_INDEPENDENT_AUDIT.md",
+        "evidence": "Add explicit M1/M2 responsibilities, pre-migration snapshots and an ordered rollback preserving protection during overlap."
+      },
+      "detection_change": {
+        "skill_or_gate": "docs/WEB_INDEPENDENT_AUDIT.md",
+        "control_id": "NEG-R127-10-02",
+        "evidence": "python scripts/validate_docs.py --root .; semantic review and executed test outcomes remain separate."
+      },
+      "trigger_terms": [
+        "missing-operational-rollback"
+      ],
+      "required_risk_families": [
+        "documentation"
+      ],
+      "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
+      "status": "passed"
+    }
+  ],
+  "status": "blocked"
+}

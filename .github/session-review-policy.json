@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "mode": "disabled",
+  "assurance": "operator-attested-session-review",
+  "acknowledgement": "separate-context-declared-not-cryptographically-proven",
+  "operators": []
+}

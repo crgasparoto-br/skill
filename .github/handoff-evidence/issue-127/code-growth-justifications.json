@@ -1,0 +1,4 @@
+{
+  "entregar-issue/scripts/handoff_postcondition_records.py": "The source-bound preparation ledger schema and exact closure transition form one verification boundary. Keeping the selected identifiers, permitted field changes and immutable projection in one canonical module avoids producer/consumer divergence. Its responsibilities are bounded and below the unchanged 500-line hard limit; the auditor copy is generated from that same source and is not independently maintained.",
+  "auditar-issue/scripts/handoff_postcondition_records.py": "The source-bound preparation ledger schema and exact closure transition form one verification boundary. Keeping the selected identifiers, permitted field changes and immutable projection in one canonical module avoids producer/consumer divergence. Its responsibilities are bounded and below the unchanged 500-line hard limit; the auditor copy is generated from that same source and is not independently maintained."
+}

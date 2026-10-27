@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "escapes": [],
+  "history_status": "no-previous-versioned-escape-closure-for-this-target",
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 127,
+  "audited_head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+  "source_audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4",
+  "evidence": "The preserved audit records rejection_lineage.mode=new. The delivery-target preflight found no reusable .audit/entregar-issue package at the audited HEAD. This empty predecessor records the absence of a previous versioned closure for this target; it does not claim there were no earlier reviews or blocked deliveries."
+}

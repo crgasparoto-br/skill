@@ -1,0 +1,859 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "d0c4628857e08f0824052e73d0f9e0d7c92d3727b04f05b67c16cc3251ae5013": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "SPEC-L3"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A politica versionada identifica crgasparoto-br por ID 255721831 e login, permanece desabilitada por padrao e o contrato aceita develop/main. A identidade da PR e vinculada pelo coletor; os testes usam contas sinteticas para verificar o algoritmo, nao representam autorizacao operacional M2."
+    },
+    "64be7f653a4698d2d2fceaed88ebf8fcc5d38fe600af485313f4845a49607ae3": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "SPEC-L7"
+      ],
+      "inventory_ids": [
+        "INV-001"
+      ],
+      "assertion_ids": [
+        "OBS-001"
+      ],
+      "scope_decision": null,
+      "rationale": "O recibo declara third_party_identity_proven=false e session_separation=operator-declared. GitHub autentica a conta e as fontes; as referencias fornecidas para as conversas apenas documentam a atestacao. Nenhuma prova criptografica de outra pessoa ou sessao e produzida."
+    },
+    "42feb2b244730f12e32962818cf9f56e346eff4a809420c5260922eeec28078c": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "session_review.py usa modo e acknowledgement distintos e publica Verify session review (exact SHA). Os fluxos humano e Ed25519 conservam seus emissores e verificadores. A documentacao separa essas garantias e os testes rejeitam troca de assurance."
+    },
+    "9baee43665dde1feb2a4c3300b37a45f2ca692386f46b8a89c6f66b3afa99917": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-02"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A politica optativa exige esquema inteiro estrito, modo enabled, declaracao de garantia e allowlist ID+login. O runner consulta permissao atual ou propriedade autenticada do repositorio. Falha de leitura/parse ou politica desabilitada bloqueia antes de verificar o parecer."
+    },
+    "7418c44481650678dad2de5b34fb0a1c01576b55dcd2cec48e07313e19ac7e79": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-03"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O runner captura identidade inicial e compara pacote preparado e leitura final contra ela. Repo/PR/issue e todos os SHAs/digests do parecer devem coincidir com o pacote autenticado. O check continua vinculado ao HEAD inicial; drift bloqueia e nao escreve pacote apto."
+    },
+    "88a7603b46c875077124d883fa19c30c86907837ed5ddae37c59794da9df520e": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-04"
+      ],
+      "inventory_ids": [
+        "INV-001"
+      ],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A extracao oficial gera 16 candidatos; o overlay identifica cada um por candidate_key imutavel. Revisao ausente, key estrangeira, analise vazia, fonte inexistente, linha fora do blob ou SHA-256 divergente bloqueia. Os testes mutam o contrato de entrada e usam o merge oficial, nao uma lista paralela de requisitos."
+    },
+    "aaaa0345e6f433ce0b5df99a4310f42fd4de5ebce5d0c762881ba2bfb696b89c": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-05"
+      ],
+      "inventory_ids": [
+        "INV-002"
+      ],
+      "assertion_ids": [
+        "OBS-002"
+      ],
+      "scope_decision": null,
+      "rationale": "O verificador exige tres IDs diferentes por obrigacao no parecer. O produtor cruza os bindings revisados com JUnit/log e subject SHA exatos, recusando absent/failed/skipped. O indice e factual e requirement_mapping=UNKNOWN; a analise semantica e fornecida no dossie, nunca inferida de nomes."
+    },
+    "052b5214eeb3cbd24d84300884d60f3254a43e1384f35ef8800055421d2f105d": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O historico e paginado ate o total declarado, mantendo watermark maximo. O check confiavel existente e atualizado sem criar um novo a cada revalidacao. Edicao, exclusao e rejeicao nova impedem voltar a parecer antigo; falha do journal finaliza failure sem repetir a leitura defeituosa."
+    },
+    "97ed1b1f5dbeb6dc1a654c45b2a0b7d89ba46cddf9f2930eb93f8e947a1d1f38": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-07"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Workflows de revisao/pacote nao aceitam dispatch/call/pull_request selecionaveis pelo candidato. O checkout usa workflow_sha de evento protegido, sem credenciais persistidas. evaluate revalida politica, operador, comentario, identidade, certificado e checks; publish confirma receipt e destino imediatamente antes da escrita."
+    },
+    "f7b4e2f25c9370a5aa02a5d667d69aa22183324d1d5630c53d0425b19c576352": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-08"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O pacote usa issue autenticada, parser oficial e blobs completos base/head; o diff e reconstruido desses bytes. Patches truncados nao viram evidencia completa. Extracao recusa traversal, symlink, duplicatas/aliases, e collector rejeita log/indice adulterado."
+    },
+    "c476dbb710a610a2361398b5d979c093c49c1cb170ef7c83e182d5208c2df8de": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-09"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "As duas rotas usam runner ubuntu-latest do GitHub e GITHUB_TOKEN; o parecer vem do ChatGPT web. Nao ha chamada de IA, segredo de IA, infraestrutura externa, API de merge ou rulesets nessas rotas. O shell passa campos de evento como dados e propaga rejeicao em vez de transformar coleta em aprovacao."
+    },
+    "2ba444ea6b713643184ce67b4999081e273563eb7c78e78bcbd7c771e1ac1416": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-10"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Revisao semantica de docs/WEB_INDEPENDENT_AUDIT.md conferiu ator, ativacao na base confiavel, bootstrap administrativo, M1/M2 e rollback ordenado: restaurar protecao antiga e ler regras efetivas antes de retirar check de sessao/desabilitar politica. Isso documenta procedimento; nao afirma rollback ou migracao M2 executados. Testes preservam decisao de fase e rejeitam drift do contrato."
+    },
+    "0a3ce0c67b2c4f89a78f46ef5ad0a232ade031f971883063075933bbfd9e44d3": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R127-11"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O dossie critical vincula controles reais de contrato, adversarios e regressao ao JUnit do SHA material. A prova bruta de grounding acompanha o artifact ate o worktree do publicador, antes do gate oficial. I-002 usa declaracoes de fonte reais e o source gate completo; I-003 prova snapshots ou ausencia no commit material exato. CERTIFICATE-POSTCONDITION-001 separa preparacao completa e sem autoridade terminal, replay literal autenticado e finalizacao estrita. O plano deriva somente pos-condicoes reconhecidas na auditoria imutavel, com base externa autenticada antes de executar codigo. O seed de A-004 permanece blocked/null; somente o receipt real permite ao oraculo unico fechar campos enumerados, preservando fonte, historia, comando, modo e demais artefatos. Todos os gates finais sao reexecutados. Este mapeamento descreve implementacao e controles; nao afirma certificado do novo SHA, publicacao, aprovacao independente ou M2 executada."
+    },
+    "331962011f0d8a45ced3696e1c4a3c3efaf7c1842af93b5865c4a787853a41bc": {
+      "disposition": "deferred",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-127",
+        "decision_source_sha256": "252b9564fd843f0fb3fd5498354ee94bb458a0b8c1c3ddd77eb8fd416335bd59",
+        "decision_locator": "Issue #127, body line 33; owner decision https://github.com/crgasparoto-br/skill/issues/127#issuecomment-6427516623",
+        "target_issue": 127,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "Adocao operacional M2 expressamente diferida pela decisao de fase da issue vigente, apos handoff M1 certificado. Revisao em conversa separada, instalacao, provas reais e rulesets nao foram executados nem sao afirmados por este dossie de implementacao. A issue #127 deve permanecer aberta; esta decisao nao dispensa M2."
+    },
+    "084e9953a1acaa8a98221269d1a6fc527f2104b770389a45a2f2b5b1e935b797": {
+      "disposition": "deferred",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-127",
+        "decision_source_sha256": "252b9564fd843f0fb3fd5498354ee94bb458a0b8c1c3ddd77eb8fd416335bd59",
+        "decision_locator": "Issue #127, body line 33; owner decision https://github.com/crgasparoto-br/skill/issues/127#issuecomment-6427516623",
+        "target_issue": 127,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "Adocao operacional M2 expressamente diferida pela decisao de fase da issue vigente, apos handoff M1 certificado. Revisao em conversa separada, instalacao, provas reais e rulesets nao foram executados nem sao afirmados por este dossie de implementacao. A issue #127 deve permanecer aberta; esta decisao nao dispensa M2."
+    },
+    "c1f5f814dcbfbe4af34c63aa4340ddac27108873fea159dac4be05eb3adf1a0d": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "SPEC-L33"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A decisao vigente da issue e vinculante: R127-12 e R127-13 ficam deferred com source SHA/linha 33, target_issue=127 e parent_issue_must_remain_open=true. M1 nao e uma atestacao de operacao M2, nao aprova merge e nao concede encerramento da issue. A alteracao futura do texto invalida o overlay por candidate_key."
+    }
+  },
+  "controls": {
+    "domain_inventories": [
+      {
+        "id": "INV-001",
+        "name": "Canonical issue-127 obligation inventory",
+        "closed_world": true,
+        "producer_sources": [
+          "SRC-ISSUE-127 sha256:252b9564fd843f0fb3fd5498354ee94bb458a0b8c1c3ddd77eb8fd416335bd59",
+          "entregar-issue/scripts/specification.py"
+        ],
+        "consumer_sources": [
+          "scripts/verify_session_review.py:99-116",
+          "scripts/session_review.py:139-183",
+          "entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+        ],
+        "values": [
+          {
+            "value": "d0c4628857e08f0824052e73d0f9e0d7c92d3727b04f05b67c16cc3251ae5013",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L3"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key d0c4628857e08f0824052e73d0f9e0d7c92d3727b04f05b67c16cc3251ae5013 in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "64be7f653a4698d2d2fceaed88ebf8fcc5d38fe600af485313f4845a49607ae3",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L7"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 64be7f653a4698d2d2fceaed88ebf8fcc5d38fe600af485313f4845a49607ae3 in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "42feb2b244730f12e32962818cf9f56e346eff4a809420c5260922eeec28078c",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L11"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 42feb2b244730f12e32962818cf9f56e346eff4a809420c5260922eeec28078c in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "9baee43665dde1feb2a4c3300b37a45f2ca692386f46b8a89c6f66b3afa99917",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L12"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 9baee43665dde1feb2a4c3300b37a45f2ca692386f46b8a89c6f66b3afa99917 in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "7418c44481650678dad2de5b34fb0a1c01576b55dcd2cec48e07313e19ac7e79",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L13"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 7418c44481650678dad2de5b34fb0a1c01576b55dcd2cec48e07313e19ac7e79 in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "88a7603b46c875077124d883fa19c30c86907837ed5ddae37c59794da9df520e",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L14"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 88a7603b46c875077124d883fa19c30c86907837ed5ddae37c59794da9df520e in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "aaaa0345e6f433ce0b5df99a4310f42fd4de5ebce5d0c762881ba2bfb696b89c",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L15"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key aaaa0345e6f433ce0b5df99a4310f42fd4de5ebce5d0c762881ba2bfb696b89c in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "052b5214eeb3cbd24d84300884d60f3254a43e1384f35ef8800055421d2f105d",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L16"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 052b5214eeb3cbd24d84300884d60f3254a43e1384f35ef8800055421d2f105d in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "97ed1b1f5dbeb6dc1a654c45b2a0b7d89ba46cddf9f2930eb93f8e947a1d1f38",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L17"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 97ed1b1f5dbeb6dc1a654c45b2a0b7d89ba46cddf9f2930eb93f8e947a1d1f38 in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "f7b4e2f25c9370a5aa02a5d667d69aa22183324d1d5630c53d0425b19c576352",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L18"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key f7b4e2f25c9370a5aa02a5d667d69aa22183324d1d5630c53d0425b19c576352 in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "c476dbb710a610a2361398b5d979c093c49c1cb170ef7c83e182d5208c2df8de",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L19"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key c476dbb710a610a2361398b5d979c093c49c1cb170ef7c83e182d5208c2df8de in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "2ba444ea6b713643184ce67b4999081e273563eb7c78e78bcbd7c771e1ac1416",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L20"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 2ba444ea6b713643184ce67b4999081e273563eb7c78e78bcbd7c771e1ac1416 in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "0a3ce0c67b2c4f89a78f46ef5ad0a232ade031f971883063075933bbfd9e44d3",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L24"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 0a3ce0c67b2c4f89a78f46ef5ad0a232ade031f971883063075933bbfd9e44d3 in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "331962011f0d8a45ced3696e1c4a3c3efaf7c1842af93b5865c4a787853a41bc",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L28"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 331962011f0d8a45ced3696e1c4a3c3efaf7c1842af93b5865c4a787853a41bc in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "084e9953a1acaa8a98221269d1a6fc527f2104b770389a45a2f2b5b1e935b797",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L29"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key 084e9953a1acaa8a98221269d1a6fc527f2104b770389a45a2f2b5b1e935b797 in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "c1f5f814dcbfbe4af34c63aa4340ddac27108873fea159dac4be05eb3adf1a0d",
+            "producer_evidence": [
+              "SRC-ISSUE-127:L33"
+            ],
+            "consumer_evidence": [
+              "Reviewed candidate_key c1f5f814dcbfbe4af34c63aa4340ddac27108873fea159dac4be05eb3adf1a0d in .github/handoff-evidence/issue-127/reviewed-closure.json; consumed by entregar-issue/scripts/produce_actions_handoff_evidence.py:93-115"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+            ]
+          }
+        ],
+        "unmapped_values": [],
+        "fallback_policy": "none",
+        "rationale": "16 canonical candidates from the exact current source; 14 mapped M1/context and 2 explicitly deferred M2. Any source drift fails merge."
+      },
+      {
+        "id": "INV-002",
+        "name": "Required execution-control classes",
+        "closed_world": true,
+        "producer_sources": [
+          "GitHub Actions exact-SHA pytest JUnit; build_test_candidate_index.py"
+        ],
+        "consumer_sources": [
+          "scripts/session_review.py:139-183",
+          "entregar-issue/scripts/produce_actions_handoff_evidence.py:247-263"
+        ],
+        "values": [
+          {
+            "value": "positive",
+            "producer_evidence": [
+              "Exact JUnit IDs in .github/handoff-evidence/issue-127/manifest.json, field test_bindings; verified by entregar-issue/scripts/produce_actions_handoff_evidence.py:247-263"
+            ],
+            "consumer_evidence": [
+              "scripts/session_review.py:139-183"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review.py:90-111 (case test_counterexamples_cannot_be_approved[<lambda>12]; JUnit classname tests.test_session_review)",
+              "tests/test_session_review_dossier.py:96-107 (case test_dossier_cannot_promote_unexecuted_controls[skipped]; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "negative",
+            "producer_evidence": [
+              "Exact JUnit IDs in .github/handoff-evidence/issue-127/manifest.json, field test_bindings; verified by entregar-issue/scripts/produce_actions_handoff_evidence.py:247-263"
+            ],
+            "consumer_evidence": [
+              "scripts/session_review.py:139-183"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review.py:90-111 (case test_counterexamples_cannot_be_approved[<lambda>12]; JUnit classname tests.test_session_review)",
+              "tests/test_session_review_dossier.py:96-107 (case test_dossier_cannot_promote_unexecuted_controls[skipped]; JUnit classname tests.test_session_review_dossier)"
+            ]
+          },
+          {
+            "value": "regression",
+            "producer_evidence": [
+              "Exact JUnit IDs in .github/handoff-evidence/issue-127/manifest.json, field test_bindings; verified by entregar-issue/scripts/produce_actions_handoff_evidence.py:247-263"
+            ],
+            "consumer_evidence": [
+              "scripts/session_review.py:139-183"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review.py:90-111 (case test_counterexamples_cannot_be_approved[<lambda>12]; JUnit classname tests.test_session_review)",
+              "tests/test_session_review_dossier.py:96-107 (case test_dossier_cannot_promote_unexecuted_controls[skipped]; JUnit classname tests.test_session_review_dossier)"
+            ]
+          }
+        ],
+        "unmapped_values": [],
+        "fallback_policy": "none",
+        "rationale": "All three classes must identify distinct cases with real passed evidence; missing, skipped or failed cases cannot count."
+      }
+    ],
+    "observable_assertions": [
+      {
+        "id": "OBS-001",
+        "description": "Receipt labels single-operator assurance without asserting third-party identity.",
+        "requirement_ids": [
+          "SPEC-L7"
+        ],
+        "obligation_ids": [
+          "OBL-002"
+        ],
+        "evidence_ids": [
+          "scripts/session_review.py",
+          "docs/WEB_INDEPENDENT_AUDIT.md"
+        ],
+        "scenario_ids": [
+          "tests/test_session_review.py:54-60 (case test_single_account_can_submit_only_explicitly_limited_review; JUnit classname tests.test_session_review)"
+        ],
+        "negative_control_evidence": [
+          "tests/test_session_review.py:90-111 (case test_counterexamples_cannot_be_approved[<lambda>0]; JUnit classname tests.test_session_review)"
+        ]
+      },
+      {
+        "id": "OBS-002",
+        "description": "Missing, failed, skipped or duplicated controls cannot approve the review.",
+        "requirement_ids": [
+          "R127-05"
+        ],
+        "obligation_ids": [
+          "OBL-007"
+        ],
+        "evidence_ids": [
+          "scripts/session_review.py:139-183",
+          "Exact JUnit IDs in .github/handoff-evidence/issue-127/manifest.json, field test_bindings"
+        ],
+        "scenario_ids": [
+          "tests/test_session_review.py:54-60 (case test_single_account_can_submit_only_explicitly_limited_review; JUnit classname tests.test_session_review)"
+        ],
+        "negative_control_evidence": [
+          "tests/test_session_review.py:90-111 (case test_counterexamples_cannot_be_approved[<lambda>12]; JUnit classname tests.test_session_review)",
+          "tests/test_session_review_dossier.py:96-107 (case test_dossier_cannot_promote_unexecuted_controls[skipped]; JUnit classname tests.test_session_review_dossier)"
+        ]
+      }
+    ],
+    "structural_invariant_closures": {
+      "status": "passed",
+      "applicability_reason": "Official parser and protected workflow entrypoint are implementation-form invariants material to the session-review contract.",
+      "entries": [
+        {
+          "id": "SIC-001",
+          "kind": "canonical-path-parity",
+          "requirement_ids": [
+            "R127-04"
+          ],
+          "obligation_ids": [
+            "OBL-006"
+          ],
+          "plausible_wrong_implementation": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
+          "canonical_path": "entregar-issue/scripts/specification.py:199-250",
+          "competing_paths": [
+            "candidate supplied obligation list",
+            "superseded issue-127 dossier"
+          ],
+          "evidence_ids": [
+            "scripts/verify_session_review.py:99-116"
+          ],
+          "scenario_ids": [
+            "tests/test_session_review_runner.py:42-49 (case test_canonical_requirements_use_existing_issue_parser; JUnit classname tests.test_session_review_runner)",
+            "tests/test_session_review_dossier.py:52-61 (case test_current_dossier_reconciles_all_canonical_candidates; JUnit classname tests.test_session_review_dossier)"
+          ],
+          "negative_control_evidence": [
+            "tests/test_session_review_dossier.py:64-74 (case test_changed_canonical_contract_rejects_reviewed_overlay[replace]; JUnit classname tests.test_session_review_dossier)"
+          ]
+        }
+      ],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "passed",
+      "applicability_reason": "Review journal projects trusted historical check receipts, preserves revocation ordering and reuses the current check.",
+      "entries": [
+        {
+          "id": "RMC-001",
+          "contract_kind": "pagination",
+          "requirement_ids": [
+            "R127-06",
+            "R127-07"
+          ],
+          "required_fields": [
+            "head_sha",
+            "app.id",
+            "name",
+            "conclusion",
+            "review_comment_id",
+            "minimum_comment_id",
+            "fingerprint"
+          ],
+          "producer_evidence": [
+            "scripts/verify_session_review.py:303-325"
+          ],
+          "public_projection_evidence": [
+            "GitHub Checks API check_runs and output.text"
+          ],
+          "consumer_evidence": [
+            "scripts/verify_session_review.py:239-258",
+            "scripts/verify_session_review.py:328-379"
+          ],
+          "visible_surface_evidence": [
+            "Verify session review (exact SHA) check conclusion and summary"
+          ],
+          "scenario_ids": [
+            "tests/test_session_review_runner.py:300-308 (case test_evaluate_reads_complete_journal_beyond_one_page[205]; JUnit classname tests.test_session_review_runner)"
+          ],
+          "negative_control_evidence": [
+            "tests/test_session_review_runner.py:311-322 (case test_evaluate_preserves_revocation_across_pages_and_reuse; JUnit classname tests.test_session_review_runner)",
+            "tests/test_session_review_runner.py:333-345 (case test_evaluate_publishes_failure_when_journal_is_unreadable; JUnit classname tests.test_session_review_runner)"
+          ]
+        }
+      ],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "passed",
+      "applicability_reason": "Issue candidates and initial/prepared/final identity must agree across collection, review and publication.",
+      "entries": [
+        {
+          "id": "CSC-001",
+          "semantic_field": "exact review target",
+          "canonical_source": "Authenticated initial repository/PR/issue/policy snapshot in evaluate",
+          "alternative_sources": [
+            "prepared packet identity",
+            "final revalidation identity",
+            "review supplied identity"
+          ],
+          "surfaces": [
+            "check creation",
+            "packet preparation",
+            "final publication"
+          ],
+          "evidence_ids": [
+            "scripts/verify_session_review.py:328-379",
+            "scripts/session_review.py:139-183"
+          ],
+          "scenario_ids": [
+            "tests/test_session_review_runner.py:92-104 (case test_publication_reuses_same_verified_fingerprint[develop]; JUnit classname tests.test_session_review_runner)"
+          ],
+          "negative_control_evidence": [
+            "tests/test_session_review_runner.py:278-287 (case test_evaluate_rejects_changed_initial_identity[head_sha]; JUnit classname tests.test_session_review_runner)",
+            "tests/test_session_review_runner.py:290-297 (case test_evaluate_rejects_target_change_before_publication[head_sha]; JUnit classname tests.test_session_review_runner)"
+          ],
+          "divergent_fixture": {
+            "canonical_value": "initial HEAD a*40",
+            "alternative_values": [
+              "prepared HEAD f*40",
+              "final HEAD f*40"
+            ]
+          }
+        },
+        {
+          "id": "CSC-002",
+          "semantic_field": "certificate postcondition preparation and final records",
+          "canonical_source": "Immutable source audit, externally authenticated base, prepared snapshots and verified literal replay receipt",
+          "alternative_sources": [
+            "candidate-authored success fields",
+            "legacy compatibility view",
+            "rehashed final semantic records"
+          ],
+          "surfaces": [
+            "official preparation",
+            "literal replay",
+            "deterministic record closure",
+            "final certificate and consumers"
+          ],
+          "evidence_ids": [
+            "entregar-issue/scripts/handoff_postcondition_records.py:279-311",
+            "entregar-issue/scripts/certify_handoff_postcondition.py:29-75",
+            "entregar-issue/scripts/handoff_postcondition.py:187-237",
+            "entregar-issue/scripts/certificate_replay_source.py:42-60"
+          ],
+          "scenario_ids": [
+            "entregar-issue/tests/test_handoff_postcondition.py:121-147 (case test_official_critical_postcondition_replays_historical_gate_before_final_handoff; JUnit classname entregar-issue.tests.test_handoff_postcondition)",
+            "entregar-issue/tests/test_handoff_postcondition_records.py:299-322 (case test_finalization_requires_real_replay_and_exact_prepared_records; JUnit classname entregar-issue.tests.test_handoff_postcondition_records)"
+          ],
+          "negative_control_evidence": [
+            "entregar-issue/tests/test_handoff_postcondition.py:156-208 (case test_final_certificate_rejects_tampered_postcondition_chain[rehashed-record]; JUnit classname entregar-issue.tests.test_handoff_postcondition)",
+            "entregar-issue/tests/test_certificate_postcondition_replay.py:224-245 (case test_replay_rejects_unauthorized_source_before_execution[candidate-anchor]; JUnit classname entregar-issue.tests.test_certificate_postcondition_replay)"
+          ],
+          "divergent_fixture": {
+            "canonical_value": "Authenticated preparation and actual exit/log receipt for its fixed material identity",
+            "alternative_values": [
+              "same-label record with changed semantic bytes",
+              "candidate-selected trust anchor outside the external base"
+            ]
+          }
+        }
+      ],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "The guide describes opt-in session assurance, M1/M2 and rollback. The canonical certificate protocol now separates complete blocked preparation, real literal replay and strict final certification; existing independent/human/Ed25519 policies and terminal publication requirements still apply.",
+      "old_contract_terms": [
+        "independent audit",
+        "Ed25519",
+        "review humano independente"
+      ],
+      "new_contract_terms": [
+        "operator-attested-session-review",
+        "parent_issue_must_remain_open",
+        "Rollback do modo de sessao",
+        "CERTIFICATE-POSTCONDITION-001",
+        "phase=preparation"
+      ],
+      "occurrences": [
+        {
+          "path": "docs/WEB_INDEPENDENT_AUDIT.md",
+          "line": 5,
+          "text": "Uma conta GitHub nao comprova que duas pessoas diferentes revisaram o codigo. Um hash, uma chave gerada pelo implementador ou uma URL de conversa tambem nao comprovam essa separacao. O modo novo chama-se **operator-attested-session-review**, nunca auditoria criptograficamente independente.",
+          "term": "operator-attested-session-review",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "docs/WEB_INDEPENDENT_AUDIT.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "docs/WEB_INDEPENDENT_AUDIT.md",
+          "line": 52,
+          "text": "| M1 — implementacao certificada | Codigo, documentacao, testes positivos/negativos/regressoes, gates tecnicos e certificado semantico do SHA material | O implementador produz e valida a entrega. O certificado nao e parecer de uma conversa separada nem prova de instalacao. |",
+          "term": "M1 —",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "docs/WEB_INDEPENDENT_AUDIT.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "docs/WEB_INDEPENDENT_AUDIT.md",
+          "line": 69,
+          "text": "## Rollback do modo de sessao",
+          "term": "Rollback",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "docs/WEB_INDEPENDENT_AUDIT.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "docs/SECURITY.md",
+          "line": 56,
+          "text": "1. gerar o par Ed25519 com `generate_auditor_keypair.py`, com a chave privada cifrada por senha, fora do repositório e fora do contexto de implementação;",
+          "term": "Ed25519",
+          "classification": "compatibility",
+          "evidence_ids": [
+            "docs/SECURITY.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "docs/CI_POST_ORQUESTRADOR.md",
+          "line": 122,
+          "text": "`Verify independent audit (exact SHA)` para PRs destinadas a `develop` e `main`.",
+          "term": "Verify independent audit",
+          "classification": "compatibility",
+          "evidence_ids": [
+            "docs/CI_POST_ORQUESTRADOR.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "AGENTS.md",
+          "line": 91,
+          "text": "- Distinguir verificação interna de auditoria independente; trocar de skill no mesmo contexto não cria independência.",
+          "term": "Distinguir verificação interna",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "AGENTS.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "entregar-issue/references/certificate-postconditions.md",
+          "line": 7,
+          "text": "produzir. Esta referencia define `CERTIFICATE-POSTCONDITION-001`.",
+          "term": "CERTIFICATE-POSTCONDITION-001",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "entregar-issue/references/certificate-postconditions.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "entregar-issue/references/certificate-postconditions.md",
+          "line": 44,
+          "text": "Ela tem `phase=preparation`, inventario `prepared_artifacts`, ausencia do mapa",
+          "term": "phase=preparation",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "entregar-issue/references/certificate-postconditions.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "entregar-issue/references/handoff-certificate.md",
+          "line": 45,
+          "text": "aplicar [CERTIFICATE-POSTCONDITION-001](certificate-postconditions.md). A preparacao",
+          "term": "aplicar [CERTIFICATE-POSTCONDITION-001]",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "entregar-issue/references/handoff-certificate.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "auditar-issue/references/handoff-certificate-preflight.md",
+          "line": 32,
+          "text": "Preparacao nao e certificado final: rejeitar `phase=preparation` e o inventario",
+          "term": "Preparacao nao e certificado final",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "auditar-issue/references/handoff-certificate-preflight.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        },
+        {
+          "path": "entregar-issue/references/github-actions-evidence.md",
+          "line": 109,
+          "text": "Replay: [pos-condicoes](certificate-postconditions.md).",
+          "term": "Replay: [pos-condicoes]",
+          "classification": "current-contract",
+          "evidence_ids": [
+            "entregar-issue/references/github-actions-evidence.md",
+            "SRC-ISSUE-127:L33"
+          ]
+        }
+      ],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "rg -n -i 'operator-attested-session-review|ed25519|independent audit|auditoria independente|review humano' AGENTS.md auditar-issue entregar-issue docs .github/workflows .github/session-review-policy.json -g '*.md' -g '*.json' -g '*.yml'",
+        "Reviewed outside-diff SECURITY.md, CI_POST_ORQUESTRADOR.md, CI_STANDARD.md, AGENTS.md, auditar-issue evidence-rules.md; their independent/human/Ed25519 constraints still govern their own paths.",
+        "Manually checked rollback sequence against current issue R127-10 and phase decision: preserve protections, restore legacy before removing session check, read back both bases, retain issue open. No operational rollback is claimed.",
+        "rg -n -i 'prepar|postcondition|terminal|block|ready' entregar-issue/references/handoff-certificate.md auditar-issue/references/handoff-certificate-preflight.md auditar-issue/references/reaudit-readiness.md entregar-issue/references/github-actions-evidence.md",
+        "Reviewed the new canonical postcondition reference against outside-diff AGENTS.md, SECURITY.md, CI_STANDARD.md and the existing delivery/audit contracts: preparation is not final readiness or an independent approval, all non-postcondition obligations remain strict, and final publication still needs authenticated identity and cumulative controls."
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": [
+        {
+          "path": ".github/handoff-evidence/issue-127/reviewed-source-issue.md",
+          "line": 33,
+          "text": "R127-12 e R127-13 são adoção posterior ao handoff M1, autorizada pelo proprietário. Seu fechamento é `deferred` no certificado de implementação, com referência a esta decisão e `parent_issue_must_remain_open=true`, alvo #127. O certificado M1 não afirma que M2 ocorreu e não autoriza o encerramento desta issue. O proprietário conserva a decisão administrativa de instalação inicial do SHA revisado; a automação não cria seu próprio parecer nem executa merge.",
+          "disposition": "canonical-decision",
+          "decision_source_id": "SRC-ISSUE-127",
+          "rationale": "Owner-approved revised contract explicitly defers operational M2 after certified M1; earlier independent-identity proposal is superseded, not silently waived."
+        }
+      ]
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "SPEC-L3",
+        "SPEC-L7",
+        "R127-01",
+        "R127-02",
+        "R127-03",
+        "R127-04",
+        "R127-05",
+        "R127-06",
+        "R127-07",
+        "R127-08",
+        "R127-09",
+        "R127-10",
+        "R127-11",
+        "SPEC-L33"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-002",
+        "OBL-003",
+        "OBL-004",
+        "OBL-005",
+        "OBL-006",
+        "OBL-007",
+        "OBL-008",
+        "OBL-009",
+        "OBL-010",
+        "OBL-011",
+        "OBL-012",
+        "OBL-013",
+        "OBL-016"
+      ],
+      "evidence": [
+        "SRC-ISSUE-127 sha256:252b9564fd843f0fb3fd5498354ee94bb458a0b8c1c3ddd77eb8fd416335bd59",
+        ".github/handoff-evidence/issue-127/reviewed-source-issue.md:3-33",
+        "Reviewed actual assertions in session_review, runner, workflow and dossier tests; producer/consumer identity and revocation paths.",
+        "Semantic mapping is reviewed implementation evidence. The versioned A-004 seed remains blocked until its actual authenticated replay; only the completed final phase may assert certification. No final-SHA certificate, M2 rollout or independent approval is asserted by this reviewed template."
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}

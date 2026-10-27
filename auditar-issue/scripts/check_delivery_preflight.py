@@ -34,6 +34,7 @@ def main() -> int:
     parser.add_argument("--certificate", required=True)
     parser.add_argument("--base-certificate", help="handoff-ready.json read from the immutable base SHA, when present")
     parser.add_argument("--artifacts-dir", required=True)
+    parser.add_argument("--source-repository-root", help="Exact material checkout and trusted Git objects for certificate proofs")
     parser.add_argument("--standard-evidence")
     parser.add_argument("--attack-matrix")
     parser.add_argument("--risk-saturation")
@@ -101,6 +102,8 @@ def main() -> int:
         "--work-item-kind", args.work_item_kind,
         "--work-item-number", str(args.work_item_number),
     ]
+    if args.source_repository_root is not None:
+        cert_args.extend(["--source-repository-root", args.source_repository_root])
     if args.issue_number is not None:
         cert_args.extend(["--issue-number", str(args.issue_number)])
     pull_request_number = args.pull_request_number if args.pull_request_number is not None else args.pull_request

@@ -11,6 +11,15 @@ Antes de qualquer preflight pesado, verificar se a tentativa corrente realmente 
 
 Se essa prova estiver ausente, divergente ou o mesmo gate oficial continuar vermelho, encerrar em `blocker-bounded` como `remediation-incomplete`/`same-finding-still-open` sem consumir matriz de ataques, saturacao, browser ou suites caras nao relacionadas. Reutilizar o `rejection_id` e o finding ID anteriores; uma continuacao do mesmo finding nao cria uma nova rejeicao nem um novo evento de aprendizado. Gerar novo `rejection_id` somente quando houver finding materialmente novo ou quando a causa/fingerprint anterior tiver sido realmente fechada antes do novo finding.
 
+Quando o comando original consumir a propria certificacao, exigir a cadeia final
+de `CERTIFICATE-POSTCONDITION-001`: preparacao imutavel sem autoridade terminal,
+replay literal real e fechamento posterior vinculado aos mesmos inputs. Uma
+preparacao isolada, mesmo que o verificador historico reconheca seus campos de
+compatibilidade, nao e certificado final nem fechamento do finding. O consumidor
+normal deve rejeita-la, conferir a fonte confiavel do gate e validar que somente
+os campos derivados do replay mudaram antes da certificacao final. Essa verificacao
+nao substitui a auditoria independente do contrato alterado.
+
 ## Aplicabilidade
 
 Aplicar quando houver evidencia de auditoria independente anterior `REPROVADA` para a mesma issue, PR, branch ou familia de candidato e houver nova tentativa de auditoria apos remediacao.

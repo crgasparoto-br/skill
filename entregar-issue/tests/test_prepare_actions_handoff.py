@@ -1,6 +1,7 @@
 """Fail-closed checks for GitHub-hosted handoff evidence preparation."""
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -165,6 +166,14 @@ def test_certification_requires_real_closure_and_calls_official_gates(tmp_path, 
                  "codebase-grounding.json", "code-growth.json"]
     for filename in filenames:
         (audit / filename).write_text(json.dumps({"subject_sha": HEAD}))
+    proof_path = ".audit/entregar-issue/execution/ground-tests-proof.log"
+    raw = f"HEAD: {HEAD}\nCOMMAND: python -m pytest\nEXIT_CODE: 0\nREACHED: tests/test_example.py::test_control\n".encode()
+    for location in (args.root / proof_path, args.out / proof_path):
+        location.parent.mkdir(parents=True, exist_ok=True)
+        location.write_bytes(raw)
+    (audit / "codebase-grounding.json").write_text(json.dumps({
+        "subject_sha": HEAD, "test_decisions": [{"verification": {
+            "status": "passed", "evidence_path": proof_path, "evidence_sha256": hashlib.sha256(raw).hexdigest()}}]}))
 
     def fake_git(cmd, **_kwargs):
         if cmd[1] == "merge-base":
@@ -185,6 +194,8 @@ def test_certification_requires_real_closure_and_calls_official_gates(tmp_path, 
     assert "--codebase-grounding" in calls[2][1]
     assert "--code-growth" in calls[2][1]
     assert "--issue-changed-path" in calls[2][1]
+    assert calls[2][1][calls[2][1].index("--allow-result-path") + 1] == proof_path
+    assert calls[1][1][calls[1][1].index("--comparison-base-sha") + 1] == BASE
     result = json.loads((args.out / "handoff-certification-status.json").read_text())
     assert result["status"] == "certificate-generated"
     assert result["terminal_ready"] is False
