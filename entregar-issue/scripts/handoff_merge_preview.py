@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
