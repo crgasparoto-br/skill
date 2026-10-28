@@ -8,39 +8,13 @@ acceptance and then apply the reviewed plan through the GitHub UI.
 from __future__ import annotations
 
 import argparse
-import fnmatch
 import json
 import re
 import subprocess
 
-from session_ruleset_policy import APP_ID, LEGACY, REQUIRED, plan_m2, require
-
-
-def _matches_ref(pattern: str, ref: str, default_ref: str) -> bool:
-    if pattern == "~ALL":
-        return True
-    if pattern == "~DEFAULT_BRANCH":
-        return ref == default_ref
-    return fnmatch.fnmatchcase(ref, pattern)
-
-
-def ruleset_applies_to_branch(ruleset: dict, branch: str, default_branch: str) -> bool:
-    """Conservatively decide whether an active branch ruleset affects this branch."""
-    if ruleset.get("target") != "branch":
-        return False
-    ref = f"refs/heads/{branch}"
-    default_ref = f"refs/heads/{default_branch}"
-    ref_name = (ruleset.get("conditions") or {}).get("ref_name")
-    require(isinstance(ref_name, dict), "active ruleset ref conditions unavailable")
-    include = ref_name.get("include")
-    exclude = ref_name.get("exclude")
-    require(isinstance(include, list) and isinstance(exclude, list),
-            "active ruleset ref conditions malformed")
-    require(all(isinstance(item, str) for item in include + exclude),
-            "active ruleset ref pattern malformed")
-    included = any(_matches_ref(pattern, ref, default_ref) for pattern in include)
-    excluded = any(_matches_ref(pattern, ref, default_ref) for pattern in exclude)
-    return included and not excluded
+from session_ruleset_policy import (
+    APP_ID, LEGACY, REQUIRED, plan_m2, require, ruleset_applies_to_branch,
+)
 
 
 def verify_classic_protection(protection: dict | None, branch: str) -> None:
