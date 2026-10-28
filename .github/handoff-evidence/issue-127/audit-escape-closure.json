@@ -440,6 +440,67 @@
       ],
       "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
       "status": "passed"
+    },
+    {
+      "escape_id": "PR141-A-001-effective-state-readback",
+      "escape_class": "partial-effective-protection-readback",
+      "source_audit": {
+        "rejection_id": "audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c",
+        "head_sha": "fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457",
+        "finding_id": "A-001",
+        "audit_report_sha256": "e7b92a30146ecfd80cefa115c290fc03a2240b984805421b8a6f7dcf0b4d4f26"
+      },
+      "plausible_wrong_implementation": "Validate only the selected ruleset by ID and report M2 read-back success while another active or classic protection source still changes the branch's effective merge requirements.",
+      "literal_case": {
+        "procedure": "Run the complete effective-state verifier with the target M2 ruleset active and a second active ruleset that also matches the protected branch.",
+        "observed": "The verifier rejects the competing active ruleset instead of reporting complete effective-state verification.",
+        "status": "passed",
+        "evidence": {
+          "path": "tests/test_plan_session_ruleset_m2.py",
+          "sha256": "62b35b2068135d6655aecef9a8bf8366d30fbe11684add227b90638a06554c08",
+          "evidence_kind": "reviewed-source-and-test-definition",
+          "procedure": "Execute test_effective_readback_rejects_second_active_applicable_ruleset against the complete-state verifier.",
+          "observed": "A second active applicable ruleset raises ValueError with the additional-active-ruleset diagnostic.",
+          "execution_binding": "manifest.test_bindings and exact-SHA JUnit collected by GitHub Actions."
+        }
+      },
+      "sibling_cases": [
+        {
+          "id": "classic-human-review-residual",
+          "surface": "classic-branch-protection",
+          "dimension": "residual-human-review-gate",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_plan_session_ruleset_m2.py",
+            "sha256": "62b35b2068135d6655aecef9a8bf8366d30fbe11684add227b90638a06554c08",
+            "procedure": "Execute test_effective_readback_rejects_classic_human_review_or_legacy_gate with a residual classic approval requirement.",
+            "observed": "The verifier blocks because classic protection still requires human review."
+          }
+        },
+        {
+          "id": "hidden-bypass-inventory",
+          "surface": "ruleset-inventory",
+          "dimension": "bypass-visibility",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_plan_session_ruleset_m2.py",
+            "sha256": "62b35b2068135d6655aecef9a8bf8366d30fbe11684add227b90638a06554c08",
+            "procedure": "Execute test_read_effective_state_requires_bypass_visibility_for_every_ruleset with an inventoried ruleset lacking bypass_actors.",
+            "observed": "The authenticated read-back fails closed when bypass actors are not visible."
+          }
+        }
+      ],
+      "prevention_change": {
+        "skill_or_code": "scripts/plan_session_ruleset_m2.py",
+        "evidence": "--readback now inventories repository/inherited rulesets with includes_parents=true, fetches each detail, requires visible bypass actors, checks applicability, and reconciles classic branch protection."
+      },
+      "detection_change": {
+        "skill_or_gate": "tests/test_plan_session_ruleset_m2.py",
+        "control_id": "NEG-R127-13-EFFECTIVE-STATE",
+        "evidence": "Dedicated adversarial controls fail on a second active applicable ruleset, residual classic human review/legacy gate, and hidden bypass inventory."
+      },
+      "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
+      "status": "passed"
     }
   ],
   "status": "blocked"

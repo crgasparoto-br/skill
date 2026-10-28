@@ -9,7 +9,7 @@
   "evidence_profile": "critical",
   "risk_justification": "Critical administrative trust-boundary preparation: plan future M2 migration from legacy independent review to operator-attested session review without altering live rulesets, bypass visibility, exact-SHA certification, technical checks, or default branch. No M2 operational approval is asserted.",
   "audit_history": "previous-rejection",
-  "audit_history_evidence": "Independent audit of PR #141 at HEAD fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457 rejected A-001 under rejection audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c because --readback verified only one ruleset by ID. This candidate records targeted remediation and does not treat CI as independent approval.",
+  "audit_history_evidence": "Independent audit of PR #141 at HEAD fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457 rejected A-001 under rejection audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c because --readback verified only one ruleset by ID. The cumulative escape ledger now preserves the pre-remediation snapshot and records exact-head targeted controls for complete effective-state verification; this is remediation evidence, not independent approval.",
   "review_scope": "PR #141 remediates independent finding A-001 by upgrading the read-only M2 read-back from target-ruleset-only verification to complete effective-state verification across applicable/inherited rulesets and classic branch protection. R127-12/R127-13 remain operationally deferred until separate session review, real positive/negative M2 runs, protected installation and final read-back.",
   "artifact_sha256": {
     "reviewed-closure.json": "7ba506ec3efe353d3d0928d78e404f344f2e5c8f70fbe93534f633abcb4bcfe2",
@@ -19,9 +19,9 @@
     "codebase-grounding.json": "4f6fba856420dbe0ad2798d5029fd9c14681ac91e1c570882e71ac6a97752159",
     "audit-remediation.json": "0ed02ad7916f5396a240e4ab309a8f5c2f72804f612033b42f9546cd82df25f4",
     "audit-source-result.json": "e7b92a30146ecfd80cefa115c290fc03a2240b984805421b8a6f7dcf0b4d4f26",
-    "learning-closure.json": "117f9b671efe7d06f0d21d656406784e2bd4a0b8a3d878dda718a7ee6b696a43",
-    "audit-escape-closure.json": "1b21db6e2b9d7006b118a445853b92814dd65a51d969b62d86c62d918151ee35",
-    "previous-audit-escape-closure.json": "42d52e4e13b6f8a96aadfcc0ae74882cb35a4168a379cba1cc816b58d4a42ce7"
+    "learning-closure.json": "c9723ce7cbf0692e34ecc56d998b78dda246aa90b3d2c0c45b8d35de31b82e51",
+    "audit-escape-closure.json": "86b6ff1c4e6f809b132ad0b7aaec33b8364df7ba835d4a0f8a9e4762825d6305",
+    "previous-audit-escape-closure.json": "c944870e0171180319e4a6dbe5f091d77f5993b485b0002a158cc55f3fe12e02"
   },
   "test_bindings": {
     "SPEC-L3": {
