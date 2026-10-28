@@ -25,17 +25,9 @@ def _actual_runner_event(event_path: Path) -> bool:
     return os.path.realpath(source) == os.path.realpath(event_path)
 
 
-def _current_github_preview(repository: str, number: int, head: str,
-                            base: str, base_ref: str) -> str:
-    """Require runner merge SHA to equal authenticated current GitHub PR state."""
-    runner_sha = os.environ.get("GITHUB_SHA")
-    if (not isinstance(runner_sha, str) or SHA.fullmatch(runner_sha) is None
-            or os.environ.get("GITHUB_REF") != f"refs/pull/{number}/merge"
-            or os.environ.get("GITHUB_EVENT_NAME") != "pull_request"):
-        raise ValueError("runner context is not an exact pull-request merge ref")
-    token = os.environ.get("GITHUB_TOKEN")
-    if not token:
-        raise ValueError("read-only GitHub API credential unavailable at certification")
+
+def _github_api_origin(repository: str) -> str:
+    """Trust only a runner-provided HTTPS GitHub API origin bound to its server."""
     # GitHub Actions owns both origins. Allow standard dot-api and Enterprise
     # /api/v3, never an arbitrary URL from the PR or the webhook payload.
     api = os.environ.get("GITHUB_API_URL", "").rstrip("/")
@@ -53,6 +45,21 @@ def _current_github_preview(repository: str, number: int, head: str,
             or server_url.query or server_url.fragment
             or not (standard or enterprise) or REPO.fullmatch(repository) is None):
         raise ValueError("unexpected GitHub API origin or repository identity")
+    return api
+
+
+def _current_github_preview(repository: str, number: int, head: str,
+                            base: str, base_ref: str) -> str:
+    """Require runner merge SHA to equal authenticated current GitHub PR state."""
+    runner_sha = os.environ.get("GITHUB_SHA")
+    if (not isinstance(runner_sha, str) or SHA.fullmatch(runner_sha) is None
+            or os.environ.get("GITHUB_REF") != f"refs/pull/{number}/merge"
+            or os.environ.get("GITHUB_EVENT_NAME") != "pull_request"):
+        raise ValueError("runner context is not an exact pull-request merge ref")
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        raise ValueError("read-only GitHub API credential unavailable at certification")
+    api = _github_api_origin(repository)
     request = urllib.request.Request(
         f"{api}/repos/{repository}/pulls/{number}",
         headers={"Authorization": f"Bearer {token}",
