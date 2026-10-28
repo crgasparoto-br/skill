@@ -28,12 +28,25 @@ O executor e o coletor de pacote nao oferecem `workflow_dispatch`: uma branch se
 Depois de um run bem-sucedido de `Collect and certify exact-SHA handoff`, o workflow `Prepare neutral independent audit packet` gera o pacote. Para solicita-lo novamente pela interface web, publicar na PR um comentario contendo somente `/solverit-audit-packet`. Abrir o run correspondente em Actions e baixar o artifact do pacote; conferir nele repositorio, PR, issue e SHAs antes de entrega-lo a conversa revisora. O comentario solicita coleta, nao constitui parecer nem aprovacao. Falha de identidade, certificado ou politica impede produzir pacote apto.
 
 O certificado de handoff emitido por GitHub Actions associa o merge preview
-do evento autenticado da PR ao HEAD e a base materiais. O produtor passa
-`--merge-preview-sha` ao builder e ao validador; o gate de certificacao
-reconfere o mesmo SHA no recibo. Ausencia ou divergencia bloqueia a
-certificacao, sem substituir o preview por um hash escolhido pelo candidato.
-Se a base ou o HEAD mudar, produzir certificado e parecer novos para a
-identidade atual; o preview anterior nao e prova transferivel.
+ao HEAD e a base materiais. O valor do evento pode estar atrasado durante a recomputacao do merge
+ou ser explicitamente `null` no evento `pull_request.opened`.
+Somente o modo de leitura confiavel, autenticado e com pais verificados
+pode resolver esse `null`; campo ausente, valor nao nulo malformado
+ou replay offline sem preview valido continuam bloqueando. Antes dos
+testes do candidato, o produtor confiavel
+ativa `SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW=1` com `GITHUB_TOKEN` somente
+leitura, valida pela API autenticada a PR e o objeto Git de merge, e confirma
+os pais ordenados (base, HEAD). Grava um evento minimo normalizado nas
+evidencias, usado na certificacao material posterior sem repassar o token ao
+passo que roda depois dos testes. O job confiavel separado de certificacao
+exige novamente a consulta autenticada, a mesma identidade e o mesmo preview,
+rejeitando adulteracao do evento normalizado pelo candidato, incluindo
+titulo, corpo, numero, issue implicita, base e HEAD originais. As consultas
+admitem ate quatro tentativas; ausencia, mudanca de alvo ou objeto antigo
+bloqueiam. Replays historicos literais rodam com ambiente sanitizado e nao
+reivindicam autoridade para publicar checks.
+Se a base ou HEAD mudar, produzir novo certificado e parecer para a
+identidade atual; nenhum preview antigo e prova transferivel.
 
 Somente uma alteracao material ou uma evidencia realmente diferente exige nova revisao. Findings sao consolidados na mesma rodada. Credencial, dossie ou permissao ausente gera BLOCK com causa concreta, nao um ciclo automatico de tentativa.
 

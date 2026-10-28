@@ -82,6 +82,11 @@ def test_prepare_preserves_pending_and_never_builds_certificate(tmp_path, monkey
     closure = json.loads((out / ".audit/entregar-issue/requirement-closure.json").read_text())
     assert status["status"] == "blocked"
     assert status["identity"]["material_head_sha"] == HEAD
+    assert status["identity"]["merge_preview_sha"] == MERGE
+    recorded = json.loads((out / "certification-event.json").read_text())
+    assert recorded["pull_request"]["merge_commit_sha"] == MERGE
+    assert recorded["pull_request"]["head"]["sha"] == HEAD
+    assert recorded["pull_request"]["base"]["sha"] == BASE
     assert "handoff-certificate" in status["unverified"]
     assert closure["status"] == "pending"
     assert not (out / ".audit/entregar-issue/handoff-ready.json").exists()
