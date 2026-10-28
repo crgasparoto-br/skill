@@ -2,10 +2,9 @@
 import json
 from pathlib import Path
 
+import handoff_merge_preview as tool
 import pytest
 import yaml
-
-import handoff_merge_preview as tool
 
 REPO = "team/repo"
 BASE = "b" * 40

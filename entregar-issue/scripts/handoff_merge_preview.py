@@ -54,8 +54,8 @@ def _check_live_identity(pr: dict, repository: str, number: int,
         raise ValueError("live GitHub PR identity differs from authenticated event")
 
 
-def require_event_merge_preview(event_path: Path, repository: str, number: int,
-                                head: str, base: str) -> str:
+def _event_identity(event_path: Path, repository: str, number: int,
+                    head: str, base: str) -> tuple[str, str]:
     """Bind the current test merge to the exact PR, never certifying an old event SHA.
 
     GitHub may deliver an old merge_commit_sha in a synchronize event during
@@ -83,14 +83,10 @@ def require_event_merge_preview(event_path: Path, repository: str, number: int,
     if not isinstance(event_preview, str) or SHA.fullmatch(event_preview) is None:
         raise ValueError("authenticated PR event lacks a valid merge preview SHA")
 
-    mode = os.environ.get("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW")
-    if mode is None:
-        # Historical literal replays run in a sanitized environment without
-        # authority to emit a GitHub CI check. Preserve their deterministic input.
-        return event_preview
-    if mode != "1":
-        raise ValueError("invalid trusted merge-preview verification mode")
+    return event_preview, base_ref
 
+
+def _live_preview(repository: str, number: int, head: str, base: str, base_ref: str) -> str:
     path = f"repos/{repository}/pulls/{number}"
     for attempt in range(MAX_PREVIEW_READS):
         live = _read_json(path)
@@ -110,3 +106,14 @@ def require_event_merge_preview(event_path: Path, repository: str, number: int,
         if attempt + 1 < MAX_PREVIEW_READS:
             time.sleep(2)
     raise ValueError("live GitHub merge preview is stale or not bound to exact base/HEAD")
+
+def require_event_merge_preview(event_path: Path, repository: str, number: int,
+                                head: str, base: str) -> str:
+    """Use a verified live preview for trusted CI; keep historical replays deterministic."""
+    event_preview, base_ref = _event_identity(event_path, repository, number, head, base)
+    mode = os.environ.get("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW")
+    if mode is None:
+        return event_preview
+    if mode != "1":
+        raise ValueError("invalid trusted merge-preview verification mode")
+    return _live_preview(repository, number, head, base, base_ref)
