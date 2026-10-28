@@ -109,7 +109,7 @@ def test_offline_historical_replay_never_contacts_github(monkeypatch, tmp_path):
 
 def test_required_mode_fails_closed_without_token(monkeypatch, tmp_path):
     monkeypatch.setenv("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW", "1")
-    monkeypatch.setenv("GITHUB_API_URL", "https://api.github.com")
+    monkeypatch.setenv("GITHUB_API_URL", "https://example.com")
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
     with pytest.raises(ValueError, match="context is unavailable"):
         tool.require_event_merge_preview(event(tmp_path), REPO, 141, HEAD, BASE)
