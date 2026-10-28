@@ -27,13 +27,20 @@ O executor e o coletor de pacote nao oferecem `workflow_dispatch`: uma branch se
 
 Depois de um run bem-sucedido de `Collect and certify exact-SHA handoff`, o workflow `Prepare neutral independent audit packet` gera o pacote. Para solicita-lo novamente pela interface web, publicar na PR um comentario contendo somente `/solverit-audit-packet`. Abrir o run correspondente em Actions e baixar o artifact do pacote; conferir nele repositorio, PR, issue e SHAs antes de entrega-lo a conversa revisora. O comentario solicita coleta, nao constitui parecer nem aprovacao. Falha de identidade, certificado ou politica impede produzir pacote apto.
 
-O certificado de handoff emitido por GitHub Actions associa o merge preview
-do evento autenticado da PR ao HEAD e a base materiais. O produtor passa
-`--merge-preview-sha` ao builder e ao validador; o gate de certificacao
-reconfere o mesmo SHA no recibo. Ausencia ou divergencia bloqueia a
-certificacao, sem substituir o preview por um hash escolhido pelo candidato.
+O certificado de handoff emitido por GitHub Actions usa a identidade
+`GITHUB_SHA` da ref `refs/pull/<PR>/merge` confirmada por um GET autenticado
+e somente leitura ao estado corrente da PR: repositorio, numero, base, HEAD e
+merge preview devem coincidir. O campo `pull_request.merge_commit_sha` do
+evento pode ficar defasado apos um novo commit; nao constitui fonte de verdade
+para a certificacao real. Somente o passo confiavel de certificacao e o gate
+posterior recebem um token de leitura do GitHub; nunca o comando de testes
+do candidato. Eventos sinteticos de testes sao tratados separadamente.
+
+O produtor passa `--merge-preview-sha` ao builder e ao validador; o gate
+reconfere o mesmo SHA no recibo. Falta de permissao, resposta remota incoerente,
+preview anterior ou mudanca da identidade bloqueiam a certificacao.
 Se a base ou o HEAD mudar, produzir certificado e parecer novos para a
-identidade atual; o preview anterior nao e prova transferivel.
+identidade atual; nenhuma prova e transferida automaticamente.
 
 Somente uma alteracao material ou uma evidencia realmente diferente exige nova revisao. Findings sao consolidados na mesma rodada. Credencial, dossie ou permissao ausente gera BLOCK com causa concreta, nao um ciclo automatico de tentativa.
 
