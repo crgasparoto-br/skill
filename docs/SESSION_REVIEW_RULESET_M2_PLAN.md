@@ -46,7 +46,10 @@ O modo readback nao valida apenas o ruleset informado. Ele consulta o inventario
 de rulesets com parents, obtem os detalhes de cada ruleset para exigir
 visibilidade de bypass_actors, valida o ruleset-alvo ativo, recusa qualquer
 outro ruleset ativo aplicavel a mesma branch e verifica a branch protection
-classica quando presente. Protecao classica que reintroduza review humano,
+classica quando presente. Um ruleset de push ativo tem alcance em todo o
+repositorio e bloqueia o read-back, mesmo sem seletor de branch. Patterns
+de branch seguem File::FNM_PATHNAME: * nao cruza barras e sintaxe ambigua
+bloqueia a verificacao. Protecao classica que reintroduza review humano,
 code-owner/last-push review, bypass, check legado, origem inesperada, force-push
 ou exclusao e bloqueante.
 
