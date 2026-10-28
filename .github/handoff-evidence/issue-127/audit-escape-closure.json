@@ -278,7 +278,7 @@
       "literal_case": {
         "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
         "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Risk saturation covers every family declared by the attack matrix and active inherited controls, including semantic-effect; the official auditor saturation consumer checks that composition. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
-        "status": "not-passed",
+        "status": "passed",
         "evidence": {
           "path": "tests/test_session_review_dossier.py",
           "sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
@@ -286,6 +286,18 @@
           "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
           "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Risk saturation covers every family declared by the attack matrix and active inherited controls, including semantic-effect; the official auditor saturation consumer checks that composition. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
           "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+        },
+        "replay_evidence": {
+          "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python /workspace/scratch/feec0c916f9c/pr128-audit/trusted/entregar-issue/scripts/require_actions_handoff_certificate.py --evidence-dir /workspace/scratch/feec0c916f9c/pr128-audit/evidence --event /workspace/scratch/feec0c916f9c/pr128-audit/trusted-event.json --base-ref develop",
+          "exit_code": 0,
+          "material_head_sha": "dae23537f46f81a7e70dc6aba4a33c87b16f4ff6",
+          "preparation_sha256": "faac5a2e1de94845e6b04dac88adc1ba82e838a0c33c6e82c4719b39b672dbeb",
+          "raw_log_sha256": "1126436ff0bb0a5922d12f4f09021fb89778e283250b8d19670683a7c862c0ad",
+          "receipt_sha256": "c96260148d9bf4606029eb3a09245371070bf0b363cd98b7fd4a78d63bc9485f",
+          "source_id": "A-004",
+          "source_kind": "finding",
+          "trusted_anchor_sha": "2366dd6da7ac9d8c5defe9b40f53dd3c4a0c650f",
+          "type": "certificate-postcondition-literal-replay"
         }
       },
       "sibling_cases": [
@@ -351,7 +363,15 @@
         "structural-contract"
       ],
       "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
-      "status": "blocked"
+      "status": "passed",
+      "historical_replay_source": {
+        "repository": "crgasparoto-br/skill",
+        "pull_request": 128,
+        "workflow_run_id": 40446268572,
+        "artifact_id": 12708916486,
+        "artifact_digest_sha256": "011c99d784d93244707af5ce881c294c87e621a91a4fed16ca7195768c6d634c",
+        "evidence_note": "Authenticated prior finalization of the same historical rejection A-004; current exact-head tests revalidate the prevention/detection controls while preserving the original replay receipt."
+      }
     },
     {
       "escape_id": "A-005",
