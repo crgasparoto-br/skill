@@ -4,11 +4,15 @@ from __future__ import annotations
 import copy
 import io
 import json
+import sys
 import zipfile
+from pathlib import Path
 
 import pytest
 
 from tests.test_session_review_runner import runner
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "entregar-issue" / "scripts"))
 
 REPO = "owner/repo"
 BASE = "b" * 40
