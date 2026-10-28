@@ -3,10 +3,13 @@ from __future__ import annotations
 
 import io
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import handoff_merge_preview as target
 import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 BASE = "b" * 40
 HEAD = "a" * 40
@@ -63,7 +66,7 @@ def test_mismatched_authenticated_remote_pr_blocks_certification(
         tmp_path, monkeypatch, mutation):
     path = event(tmp_path, monkeypatch)
     api(monkeypatch, **mutation)
-    with pytest.raises(ValueError, match="authenticated GitHub PR|runner merge SHA"):
+    with pytest.raises(ValueError, match=r"authenticated GitHub PR|runner merge SHA"):
         target.require_event_merge_preview(path, "owner/repo", 77, HEAD, BASE)
 
 
