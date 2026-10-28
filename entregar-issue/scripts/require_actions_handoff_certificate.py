@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -52,6 +53,20 @@ def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
     require_final_phase(cert)
     expected_preview = require_event_merge_preview(
         event_path, identity["repository"], pr["number"], head, pr["base"]["sha"])
+    # The candidate's test runner can modify the evidence directory after
+    # the pre-test snapshot. The trusted job must compare that snapshot to
+    # the original event independently, allowing ONLY the refreshed preview.
+    if os.environ.get("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW") == "1":
+        recorded = load(evidence, "certification-event.json")
+        original_pr = {
+            "number": pr["number"], "title": pr.get("title") or "",
+            "body": pr.get("body") or "", "merge_commit_sha": expected_preview,
+            "head": {"sha": head, "repo": {"full_name": identity["repository"]}},
+            "base": {"sha": pr["base"]["sha"], "ref": base_ref},
+        }
+        if recorded != {"repository": {"full_name": identity["repository"]},
+                        "pull_request": original_pr}:
+            raise ValueError("pre-test normalized event differs from authenticated PR event")
     cert_identity = cert.get("identity") or {}
     if (cert_identity.get("material_merge_preview_sha") != expected_preview
             or cert_identity.get("merge_preview_sha") != expected_preview):

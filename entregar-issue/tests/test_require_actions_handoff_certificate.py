@@ -121,3 +121,35 @@ def test_certificate_refuses_event_without_valid_merge_preview(tmp_path, preview
     put(event, payload)
     with pytest.raises(ValueError, match="authenticated PR event lacks"):
         gate.verify(evidence, event, "develop")
+
+
+@pytest.mark.parametrize("tamper", ["title", "body", "head", "base", "preview"])
+def test_trusted_gate_rejects_changed_pretest_event(tmp_path, monkeypatch, tamper):
+    evidence, event = fixture(tmp_path, state="certificate-generated")
+    # The actual live-parent oracle is exercised in test_handoff_merge_preview;
+    # this test isolates the event snapshot binding in the trusted job.
+    monkeypatch.setenv("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW", "1")
+    monkeypatch.setattr(gate, "require_event_merge_preview", lambda *_: MERGE)
+    recorded = {"repository": {"full_name": "team/repo"},
+                "pull_request": {
+                    "number": 113, "title": "", "body": "",
+                    "merge_commit_sha": MERGE,
+                    "head": {"sha": HEAD, "repo": {"full_name": "team/repo"}},
+                    "base": {"sha": "b" * 40, "ref": "develop"}}}
+    path = evidence / "certification-event.json"
+    put(path, recorded)
+    gate.verify(evidence, event, "develop")
+    candidate = json.loads(path.read_text())
+    if tamper == "title":
+        candidate["pull_request"]["title"] = "Issue #999"
+    elif tamper == "body":
+        candidate["pull_request"]["body"] = "Refs #999"
+    elif tamper == "head":
+        candidate["pull_request"]["head"]["sha"] = "d" * 40
+    elif tamper == "base":
+        candidate["pull_request"]["base"]["sha"] = "d" * 40
+    else:
+        candidate["pull_request"]["merge_commit_sha"] = "d" * 40
+    put(path, candidate)
+    with pytest.raises(ValueError, match="normalized event differs"):
+        gate.verify(evidence, event, "develop")

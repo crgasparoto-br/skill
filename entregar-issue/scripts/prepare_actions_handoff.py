@@ -104,6 +104,19 @@ def prepare(args: argparse.Namespace) -> None:
     body = issue_body(repo, issue, os.environ.get("GITHUB_TOKEN", ""))
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
+    # Resolve the authoritative merge before candidate tests; a separate
+    # trusted certification job independently revalidates its ordered parents.
+    preview = require_event_merge_preview(args.event, repo, pr, head, base)
+    original = json.loads(args.event.read_text(encoding="utf-8"))["pull_request"]
+    write_json(out / "certification-event.json", {
+        "repository": {"full_name": repo},
+        "pull_request": {
+            "number": pr, "title": original.get("title") or "", "body": original.get("body") or "",
+            "merge_commit_sha": preview,
+            "head": {"sha": head, "repo": {"full_name": repo}},
+            "base": {"ref": args.base_ref, "sha": base},
+        },
+    })
     source = out / "issue-body.md"
     source.write_text(body, encoding="utf-8")
     audit = out / ".audit" / "entregar-issue"
@@ -116,7 +129,8 @@ def prepare(args: argparse.Namespace) -> None:
     metadata = {
         "schema_version": 1, "status": "blocked", "reason": "unverified-requirement-controls",
         "identity": {"repository": repo, "issue_number": issue, "pull_request_number": pr,
-                     "material_head_sha": head, "base_sha": base},
+                     "material_head_sha": head, "base_sha": base,
+                     "merge_preview_sha": preview},
         "source": {"issue_body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                    "uri": f"https://github.com/{repo}/issues/{issue}"},
         "unverified": ["requirement-closure", "test-decision-evidence", "codebase-grounding",
