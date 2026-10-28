@@ -28,8 +28,12 @@ O executor e o coletor de pacote nao oferecem `workflow_dispatch`: uma branch se
 Depois de um run bem-sucedido de `Collect and certify exact-SHA handoff`, o workflow `Prepare neutral independent audit packet` gera o pacote. Para solicita-lo novamente pela interface web, publicar na PR um comentario contendo somente `/solverit-audit-packet`. Abrir o run correspondente em Actions e baixar o artifact do pacote; conferir nele repositorio, PR, issue e SHAs antes de entrega-lo a conversa revisora. O comentario solicita coleta, nao constitui parecer nem aprovacao. Falha de identidade, certificado ou politica impede produzir pacote apto.
 
 O certificado de handoff emitido por GitHub Actions associa o merge preview
-ao HEAD e a base materiais. O valor do evento pode estar atrasado durante
-a recomputacao do merge. Antes dos testes do candidato, o produtor confiavel
+ao HEAD e a base materiais. O valor do evento pode estar atrasado durante a recomputacao do merge
+ou ser explicitamente `null` no evento `pull_request.opened`.
+Somente o modo de leitura confiavel, autenticado e com pais verificados
+pode resolver esse `null`; campo ausente, valor nao nulo malformado
+ou replay offline sem preview valido continuam bloqueando. Antes dos
+testes do candidato, o produtor confiavel
 ativa `SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW=1` com `GITHUB_TOKEN` somente
 leitura, valida pela API autenticada a PR e o objeto Git de merge, e confirma
 os pais ordenados (base, HEAD). Grava um evento minimo normalizado nas
