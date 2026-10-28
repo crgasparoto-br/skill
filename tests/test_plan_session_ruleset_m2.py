@@ -219,7 +219,8 @@ def test_read_effective_state_requires_bypass_visibility_for_every_ruleset(monke
     responses = {
         "/repos/crgasparoto-br/skill": {"default_branch": "main"},
         "/repos/crgasparoto-br/skill/rulesets?includes_parents=true": [
-            {"id": 17}, {"id": 99}
+            {"id": 17, "target": "branch", "enforcement": "disabled"},
+            {"id": 99, "target": "branch", "enforcement": "active"},
         ],
         "/repos/crgasparoto-br/skill/rulesets/17": {**baseline(), "bypass_actors": []},
         "/repos/crgasparoto-br/skill/rulesets/99": {

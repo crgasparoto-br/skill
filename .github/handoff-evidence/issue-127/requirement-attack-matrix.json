@@ -2294,7 +2294,7 @@
           },
           "evidence": "tests/test_plan_session_ruleset_m2.py: test_second_page_competing_ruleset_blocks_effective_readback exercises paginated collection and rejects a later-page competitor. Runtime evidence must be collected in exact-SHA GitHub Actions JUnit.",
           "evidence_path": "tests/test_plan_session_ruleset_m2.py",
-          "evidence_sha256": "16020203d038af6ddae770fcfafceed5a2a3b7bac2184818f062c11aadfefe9d",
+          "evidence_sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
           "id": "NEG-R127-11-10",
           "risk_family": "structural-contract",
           "surface": "effective-protection-readback",

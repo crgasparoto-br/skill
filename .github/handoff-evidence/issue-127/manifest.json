@@ -13,14 +13,14 @@
   "review_scope": "PR #141 remediates independent finding A-001 by upgrading the read-only M2 read-back from target-ruleset-only verification to complete effective-state verification across applicable/inherited rulesets and classic branch protection. R127-12/R127-13 remain operationally deferred until separate session review, real positive/negative M2 runs, protected installation and final read-back. Follow-up readback tests cover pagination and hidden classic metadata without claiming M2 completion.",
   "artifact_sha256": {
     "reviewed-closure.json": "7ba506ec3efe353d3d0928d78e404f344f2e5c8f70fbe93534f633abcb4bcfe2",
-    "requirement-attack-matrix.json": "4faf21e165356760f8a3a99317cbc6f0ddb510555de330513761f7a5f8253fec",
+    "requirement-attack-matrix.json": "2f4189112b0d38eca7d8c723cdd399a54e80fd8f1490f4e48215d87bfa515241",
     "risk-saturation.json": "23e076fb89c729cb7fd3392d48817d92dc136ffc8877869314de6fdc786e9408",
     "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
     "codebase-grounding.json": "a71f899beeab22827d09c1ef60701d7a3d0c585373faa80bc7bd63e215ea4353",
     "audit-remediation.json": "201880099ac2e78426778a7190b62a96ef4d91931f0bccbd1649d575fb7ad418",
     "audit-source-result.json": "e7b92a30146ecfd80cefa115c290fc03a2240b984805421b8a6f7dcf0b4d4f26",
     "learning-closure.json": "c9723ce7cbf0692e34ecc56d998b78dda246aa90b3d2c0c45b8d35de31b82e51",
-    "audit-escape-closure.json": "174f78f54e3c7a05f7e4e3c217c8d0b3b8fed3fe4c406d455e119558de626bbd",
+    "audit-escape-closure.json": "fafa5b4004976c53feceeabc77dc659c31e1e63384dfc7ad11a080df8fd6ead8",
     "previous-audit-escape-closure.json": "c944870e0171180319e4a6dbe5f091d77f5993b485b0002a158cc55f3fe12e02"
   },
   "test_bindings": {

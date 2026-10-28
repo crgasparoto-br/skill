@@ -477,7 +477,7 @@
         "status": "passed",
         "evidence": {
           "path": "tests/test_plan_session_ruleset_m2.py",
-          "sha256": "16020203d038af6ddae770fcfafceed5a2a3b7bac2184818f062c11aadfefe9d",
+          "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
           "evidence_kind": "reviewed-source-and-test-definition",
           "procedure": "Run test_second_page_competing_ruleset_blocks_effective_readback against the real entrypoint with stubbed paginated API responses.",
           "observed": "The verifier fetches both pages and refuses the second-page conflicting ruleset; execution is checked by exact-SHA JUnit.",
@@ -492,7 +492,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "16020203d038af6ddae770fcfafceed5a2a3b7bac2184818f062c11aadfefe9d",
+            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
             "procedure": "Execute test_effective_readback_rejects_classic_human_review_or_legacy_gate with a residual classic approval requirement.",
             "observed": "The verifier blocks because classic protection still requires human review."
           }
@@ -504,7 +504,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "16020203d038af6ddae770fcfafceed5a2a3b7bac2184818f062c11aadfefe9d",
+            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
             "procedure": "Execute test_read_effective_state_requires_bypass_visibility_for_every_ruleset with an inventoried ruleset lacking bypass_actors.",
             "observed": "The authenticated read-back fails closed when bypass actors are not visible."
           }
@@ -516,7 +516,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "16020203d038af6ddae770fcfafceed5a2a3b7bac2184818f062c11aadfefe9d",
+            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
             "procedure": "Run test_classic_review_bypass_inventory_must_be_explicit for missing/partial/populated actor lists.",
             "observed": "Missing or nonempty classic review bypass inventories are denied."
           }
@@ -528,7 +528,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "16020203d038af6ddae770fcfafceed5a2a3b7bac2184818f062c11aadfefe9d",
+            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
             "procedure": "Run test_classic_checks_cannot_hide_legacy_gate_outside_contexts.",
             "observed": "A legacy check hidden only in the checks array is rejected."
           }
@@ -540,7 +540,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "16020203d038af6ddae770fcfafceed5a2a3b7bac2184818f062c11aadfefe9d",
+            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
             "procedure": "Run test_classic_review_fields_cannot_be_inferred for missing review count, code-owner and last-push fields.",
             "observed": "The verifier refuses to infer zero/false from missing classic review fields."
           }
