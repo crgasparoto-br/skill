@@ -141,6 +141,8 @@ jobs:
         shell: bash
         env:
           BASE_REF: ${{ inputs.base-ref }}
+          GITHUB_TOKEN: ${{ github.token }}
+          SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW: "1"
         run: |
           set +e
           python "$HANDOFF_TOOLING/entregar-issue/scripts/prepare_actions_handoff.py" \
@@ -192,6 +194,8 @@ jobs:
       - name: Require authentic certified evidence (not merely passing tests)
         env:
           BASE_REF: ${{ inputs.base-ref }}
+          GITHUB_TOKEN: ${{ github.token }}
+          SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW: "1"
         run: |
           python .trusted-handoff-gate/entregar-issue/scripts/require_actions_handoff_certificate.py \
             --event "$GITHUB_EVENT_PATH" --base-ref "$BASE_REF" \

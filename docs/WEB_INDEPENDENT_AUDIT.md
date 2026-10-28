@@ -28,12 +28,18 @@ O executor e o coletor de pacote nao oferecem `workflow_dispatch`: uma branch se
 Depois de um run bem-sucedido de `Collect and certify exact-SHA handoff`, o workflow `Prepare neutral independent audit packet` gera o pacote. Para solicita-lo novamente pela interface web, publicar na PR um comentario contendo somente `/solverit-audit-packet`. Abrir o run correspondente em Actions e baixar o artifact do pacote; conferir nele repositorio, PR, issue e SHAs antes de entrega-lo a conversa revisora. O comentario solicita coleta, nao constitui parecer nem aprovacao. Falha de identidade, certificado ou politica impede produzir pacote apto.
 
 O certificado de handoff emitido por GitHub Actions associa o merge preview
-do evento autenticado da PR ao HEAD e a base materiais. O produtor passa
-`--merge-preview-sha` ao builder e ao validador; o gate de certificacao
-reconfere o mesmo SHA no recibo. Ausencia ou divergencia bloqueia a
-certificacao, sem substituir o preview por um hash escolhido pelo candidato.
-Se a base ou o HEAD mudar, produzir certificado e parecer novos para a
-identidade atual; o preview anterior nao e prova transferivel.
+ao HEAD e a base materiais. O valor do evento pode estar atrasado durante
+a recomputacao do merge pela plataforma; por isso, no produtor e no gate de
+certificacao confiaveis, `SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW=1` exige
+`GITHUB_TOKEN` somente leitura, consulta autenticada da PR e do objeto Git
+de merge, e confirma os dois pais ordenados (base, HEAD) contra a identidade
+exata do evento. Uma nova leitura da PR deve confirmar o mesmo preview.
+Ha no maximo quatro leituras; ausencia, mudanca do alvo ou objeto antigo
+bloqueiam sem certificacao. O certificado usa somente o preview assim
+revalidado e o gate o confere novamente. Replays historicos literais rodam
+com ambiente sanitizado e nao reivindicam autoridade para publicar checks.
+Se a base ou HEAD mudar, produzir novo certificado e parecer para a
+identidade atual; nenhum preview antigo e prova transferivel.
 
 Somente uma alteracao material ou uma evidencia realmente diferente exige nova revisao. Findings sao consolidados na mesma rodada. Credencial, dossie ou permissao ausente gera BLOCK com causa concreta, nao um ciclo automatico de tentativa.
 
