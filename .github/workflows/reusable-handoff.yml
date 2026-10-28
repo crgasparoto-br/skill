@@ -94,6 +94,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           BASE_REF: ${{ inputs.base-ref }}
+          SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW: "1"
         run: |
           python "$HANDOFF_TOOLING/entregar-issue/scripts/prepare_actions_handoff.py" \
             --phase prepare --event "$GITHUB_EVENT_PATH" --root . \
@@ -141,12 +142,10 @@ jobs:
         shell: bash
         env:
           BASE_REF: ${{ inputs.base-ref }}
-          GITHUB_TOKEN: ${{ github.token }}
-          SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW: "1"
         run: |
           set +e
           python "$HANDOFF_TOOLING/entregar-issue/scripts/prepare_actions_handoff.py" \
-            --phase certify --event "$GITHUB_EVENT_PATH" --root . \
+            --phase certify --event "$EVIDENCE_DIR/certification-event.json" --root . \
             --base-ref "$BASE_REF" --out "$EVIDENCE_DIR"
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"

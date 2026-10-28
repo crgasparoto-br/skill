@@ -119,9 +119,14 @@ def test_official_certification_and_producer_must_enforce_live_preview():
     workflow = Path(__file__).resolve().parents[2] / ".github/workflows/reusable-handoff.yml"
     jobs = yaml.safe_load(workflow.read_text(encoding="utf-8"))["jobs"]
     for job, name in (
-        ("evidence", "Validate evidence and build handoff certificate, fail closed"),
+        ("evidence", "Capture canonical PR/issue identity and initialize closure"),
         ("certification", "Require authentic certified evidence (not merely passing tests)"),
     ):
         step = next(item for item in jobs[job]["steps"] if item.get("name") == name)
         assert step["env"]["SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW"] == "1"
         assert step["env"]["GITHUB_TOKEN"] == "${{ github.token }}"
+    late = next(item for item in jobs["evidence"]["steps"]
+                if item.get("name") == "Validate evidence and build handoff certificate, fail closed")
+    assert "GITHUB_TOKEN" not in late["env"]
+    assert "SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW" not in late["env"]
+    assert "certification-event.json" in late["run"]

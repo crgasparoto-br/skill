@@ -29,15 +29,17 @@ Depois de um run bem-sucedido de `Collect and certify exact-SHA handoff`, o work
 
 O certificado de handoff emitido por GitHub Actions associa o merge preview
 ao HEAD e a base materiais. O valor do evento pode estar atrasado durante
-a recomputacao do merge pela plataforma; por isso, no produtor e no gate de
-certificacao confiaveis, `SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW=1` exige
-`GITHUB_TOKEN` somente leitura, consulta autenticada da PR e do objeto Git
-de merge, e confirma os dois pais ordenados (base, HEAD) contra a identidade
-exata do evento. Uma nova leitura da PR deve confirmar o mesmo preview.
-Ha no maximo quatro leituras; ausencia, mudanca do alvo ou objeto antigo
-bloqueiam sem certificacao. O certificado usa somente o preview assim
-revalidado e o gate o confere novamente. Replays historicos literais rodam
-com ambiente sanitizado e nao reivindicam autoridade para publicar checks.
+a recomputacao do merge. Antes dos testes do candidato, o produtor confiavel
+ativa `SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW=1` com `GITHUB_TOKEN` somente
+leitura, valida pela API autenticada a PR e o objeto Git de merge, e confirma
+os pais ordenados (base, HEAD). Grava um evento minimo normalizado nas
+evidencias, usado na certificacao material posterior sem repassar o token ao
+passo que roda depois dos testes. O job confiavel separado de certificacao
+exige novamente a consulta autenticada, a mesma identidade e o mesmo preview,
+rejeitando adulteracao do evento normalizado pelo candidato. As consultas
+admitem ate quatro tentativas; ausencia, mudanca de alvo ou objeto antigo
+bloqueiam. Replays historicos literais rodam com ambiente sanitizado e nao
+reivindicam autoridade para publicar checks.
 Se a base ou HEAD mudar, produzir novo certificado e parecer para a
 identidade atual; nenhum preview antigo e prova transferivel.
 
