@@ -27,7 +27,8 @@ def event(tmp_path: Path, monkeypatch, preview=STALE) -> Path:
     monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
     monkeypatch.setenv("GITHUB_REF", "refs/pull/77/merge")
     monkeypatch.setenv("GITHUB_SHA", CURRENT)
-    monkeypatch.setenv("GITHUB_API_URL", "https://api.github.com")
+    monkeypatch.setenv("GITHUB_SERVER_URL", "https://example.com")
+    monkeypatch.setenv("GITHUB_API_URL", "https://api.example.com")
     monkeypatch.setenv("GITHUB_TOKEN", "test-fixture-token")
     return path
 
@@ -39,7 +40,7 @@ def api(monkeypatch, **changes) -> None:
 
     def read(request, timeout):
         assert timeout == 15
-        assert request.full_url == "https://api.github.com/repos/owner/repo/pulls/77"
+        assert request.full_url == "https://api.example.com/repos/owner/repo/pulls/77"
         assert request.get_header("Authorization") == "Bearer test-fixture-token"
         return io.BytesIO(json.dumps(payload).encode("utf-8"))
 
