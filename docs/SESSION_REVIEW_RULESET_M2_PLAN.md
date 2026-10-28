@@ -54,3 +54,19 @@ O status devolvido comprova somente a estrutura administrativa efetiva observada
 NAO comprova revisao de sessao, negativos operacionais ou satisfacao integral de
 R127-12/R127-13. Nunca aplicar uma proposta para forcar teste verde ou sem antes
 conferir os ensaios M2.
+
+## Integridade da coleta e disponibilidade dos checks
+
+O inventario administrativo e coletado com `gh api --paginate --slurp` e
+`includes_parents=true&per_page=100`. A listagem completa e obrigatoria;
+objetos malformados, IDs duplicados, sumarios divergentes e bypasses ocultos
+bloqueiam, assim como checks legados presentes apenas em `checks` da protecao
+classica. HTTP 404 sem permissao administrativa comprovada nao prova ausencia
+de branch protection.
+
+Antes de aplicar uma proposta a `main`, o administrador deve comprovar em
+uma PR real contra `main` que `Offline authorization tests` e
+`collect / Require certified semantic handoff (exact SHA)` sao emitidos pela
+aplicacao GitHub Actions exigida e podem concluir com sucesso. O ruleset
+atual da `main` nao exige esses dois checks. Sem provas operacionais,
+nao aplicar a proposta nem ativar as regras: manter a configuracao anterior.

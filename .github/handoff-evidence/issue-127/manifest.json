@@ -10,17 +10,17 @@
   "risk_justification": "Critical administrative trust-boundary preparation: plan future M2 migration from legacy independent review to operator-attested session review without altering live rulesets, bypass visibility, exact-SHA certification, technical checks, or default branch. No M2 operational approval is asserted.",
   "audit_history": "previous-rejection",
   "audit_history_evidence": "Independent audit of PR #141 at HEAD fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457 rejected A-001 under rejection audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c because --readback verified only one ruleset by ID. The cumulative escape ledger now preserves the pre-remediation snapshot and records exact-head targeted controls for complete effective-state verification; this is remediation evidence, not independent approval. Historical A-004 is hydrated from certified PR #128 artifact 12708916486/run 40446268572, whose official postcondition replay recorded exit 0 and raw-log SHA-256 1126436ff0bb0a5922d12f4f09021fb89778e283250b8d19670683a7c862c0ad; the replay remains historical evidence and is not a new independent approval. Aggregate audit-escape-closure status is now passed because every current escape entry and literal case is evidence-backed passed; the immutable previous-audit-escape-closure remains blocked at the rejected SHA.",
-  "review_scope": "PR #141 remediates independent finding A-001 by upgrading the read-only M2 read-back from target-ruleset-only verification to complete effective-state verification across applicable/inherited rulesets and classic branch protection. R127-12/R127-13 remain operationally deferred until separate session review, real positive/negative M2 runs, protected installation and final read-back.",
+  "review_scope": "PR #141 remediates independent finding A-001 by upgrading the read-only M2 read-back from target-ruleset-only verification to complete effective-state verification across applicable/inherited rulesets and classic branch protection. R127-12/R127-13 remain operationally deferred until separate session review, real positive/negative M2 runs, protected installation and final read-back. Follow-up readback tests cover pagination and hidden classic metadata without claiming M2 completion.",
   "artifact_sha256": {
     "reviewed-closure.json": "7ba506ec3efe353d3d0928d78e404f344f2e5c8f70fbe93534f633abcb4bcfe2",
-    "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
-    "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
+    "requirement-attack-matrix.json": "aec219fbeb2ad50b14dc657a561a07564c2e0bb9b0c0330f8baf31b338286751",
+    "risk-saturation.json": "23e076fb89c729cb7fd3392d48817d92dc136ffc8877869314de6fdc786e9408",
     "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
-    "codebase-grounding.json": "4f6fba856420dbe0ad2798d5029fd9c14681ac91e1c570882e71ac6a97752159",
-    "audit-remediation.json": "0ed02ad7916f5396a240e4ab309a8f5c2f72804f612033b42f9546cd82df25f4",
+    "codebase-grounding.json": "be98e354df88992c45e790254669843548428672fbf3d1439b22c6b661c9801d",
+    "audit-remediation.json": "0455e84812625b89ed66c0d19e7d165ec71571b63ab93f844287a2179f3a3520",
     "audit-source-result.json": "e7b92a30146ecfd80cefa115c290fc03a2240b984805421b8a6f7dcf0b4d4f26",
     "learning-closure.json": "c9723ce7cbf0692e34ecc56d998b78dda246aa90b3d2c0c45b8d35de31b82e51",
-    "audit-escape-closure.json": "4f281084f6b9d17ffe523ec416f2a592966e648aa9753fd5216c1c858c5d8571",
+    "audit-escape-closure.json": "a872bd50d115677f00a3128b91f7b8f56aaa46a43ed66e81d87640eeaf27df51",
     "previous-audit-escape-closure.json": "c944870e0171180319e4a6dbe5f091d77f5993b485b0002a158cc55f3fe12e02"
   },
   "test_bindings": {
@@ -263,7 +263,8 @@
         "tests.test_versioning::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main",
         "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides",
         "tests.test_plan_session_ruleset_m2::test_exact_branch_plan_preserves_all_protections_and_upgrades_to_session[main]",
-        "tests.test_plan_session_ruleset_m2::test_live_readback_accepts_only_fully_active_session_ruleset[develop]"
+        "tests.test_plan_session_ruleset_m2::test_live_readback_accepts_only_fully_active_session_ruleset[develop]",
+        "tests.test_plan_session_ruleset_m2::test_read_all_rulesets_slurps_every_page"
       ],
       "negative": [
         "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
@@ -322,7 +323,10 @@
         "auditar-issue.tests.test_delivery_saturation_preflight::test_preflight_rejects_unsaturated_material_family",
         "tests.test_plan_session_ruleset_m2::test_rejects_migration_when_legacy_gate_is_missing_or_untrusted",
         "tests.test_plan_session_ruleset_m2::test_effective_readback_rejects_second_active_applicable_ruleset",
-        "tests.test_plan_session_ruleset_m2::test_effective_readback_rejects_classic_human_review_or_legacy_gate"
+        "tests.test_plan_session_ruleset_m2::test_effective_readback_rejects_classic_human_review_or_legacy_gate",
+        "tests.test_plan_session_ruleset_m2::test_second_page_competing_ruleset_blocks_effective_readback",
+        "tests.test_plan_session_ruleset_m2::test_classic_review_bypass_inventory_must_be_explicit[None]",
+        "tests.test_plan_session_ruleset_m2::test_classic_checks_cannot_hide_legacy_gate_outside_contexts"
       ],
       "regression": [
         "entregar-issue.tests.test_require_actions_handoff_certificate::test_stale_or_misleading_receipt_fails_closed",
@@ -343,7 +347,9 @@
         "auditar-issue.tests.test_connector_preflight::test_connector_preflight_accepts_immutable_snapshot",
         "auditar-issue.tests.test_evidence_profile_preflight::test_audit_preflight_is_profile_aware",
         "tests.test_plan_session_ruleset_m2::test_plan_does_not_perform_remote_mutation",
-        "tests.test_plan_session_ruleset_m2::test_readback_cli_uses_complete_effective_state"
+        "tests.test_plan_session_ruleset_m2::test_readback_cli_uses_complete_effective_state",
+        "tests.test_plan_session_ruleset_m2::test_effective_readback_rejects_duplicate_ruleset_ids",
+        "tests.test_plan_session_ruleset_m2::test_classic_404_without_verified_admin_rights_is_not_absence"
       ]
     },
     "SPEC-L33": {

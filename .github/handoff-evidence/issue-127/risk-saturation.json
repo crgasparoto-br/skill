@@ -247,7 +247,8 @@
       "control_ids": [
         "NEG-R127-04-02",
         "NEG-R127-11-05",
-        "NEG-R127-11-09"
+        "NEG-R127-11-09",
+        "NEG-R127-11-10"
       ],
       "dimensions": [
         {
@@ -271,6 +272,14 @@
           "reason": "Manter as onze keys do texto antigo ou aceitar apenas parte das fontes permitiria aprovar um dossie que nao corresponde a issue vigente.",
           "control_ids": [
             "NEG-R127-04-02"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "effective-protection-readback",
+          "reason": "Paginated rulesets, explicit classic bypass inventory and legacy checks outside contexts are all covered by distinct adversarial assertions.",
+          "control_ids": [
+            "NEG-R127-11-10"
           ],
           "status": "passed"
         }

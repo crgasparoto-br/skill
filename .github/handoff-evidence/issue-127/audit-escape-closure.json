@@ -472,15 +472,15 @@
       },
       "plausible_wrong_implementation": "Validate only the selected ruleset by ID and report M2 read-back success while another active or classic protection source still changes the branch's effective merge requirements.",
       "literal_case": {
-        "procedure": "Run the complete effective-state verifier with the target M2 ruleset active and a second active ruleset that also matches the protected branch.",
-        "observed": "The verifier rejects the competing active ruleset instead of reporting complete effective-state verification.",
+        "procedure": "Exercise the actual paginated read-back with an active competing ruleset returned on the second GitHub API page.",
+        "observed": "The verifier fetches both pages and refuses the second-page conflicting ruleset; execution is checked by exact-SHA JUnit.",
         "status": "passed",
         "evidence": {
           "path": "tests/test_plan_session_ruleset_m2.py",
-          "sha256": "62b35b2068135d6655aecef9a8bf8366d30fbe11684add227b90638a06554c08",
+          "sha256": "7220426c9a569f9aacf9a511bec98848bd4a2f51ebfcf8ca9e0e96ad6717d3b9",
           "evidence_kind": "reviewed-source-and-test-definition",
-          "procedure": "Execute test_effective_readback_rejects_second_active_applicable_ruleset against the complete-state verifier.",
-          "observed": "A second active applicable ruleset raises ValueError with the additional-active-ruleset diagnostic.",
+          "procedure": "Run test_second_page_competing_ruleset_blocks_effective_readback against the real entrypoint with stubbed paginated API responses.",
+          "observed": "The verifier fetches both pages and refuses the second-page conflicting ruleset; execution is checked by exact-SHA JUnit.",
           "execution_binding": "manifest.test_bindings and exact-SHA JUnit collected by GitHub Actions."
         }
       },
@@ -492,7 +492,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "62b35b2068135d6655aecef9a8bf8366d30fbe11684add227b90638a06554c08",
+            "sha256": "7220426c9a569f9aacf9a511bec98848bd4a2f51ebfcf8ca9e0e96ad6717d3b9",
             "procedure": "Execute test_effective_readback_rejects_classic_human_review_or_legacy_gate with a residual classic approval requirement.",
             "observed": "The verifier blocks because classic protection still requires human review."
           }
@@ -504,23 +504,67 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "62b35b2068135d6655aecef9a8bf8366d30fbe11684add227b90638a06554c08",
+            "sha256": "7220426c9a569f9aacf9a511bec98848bd4a2f51ebfcf8ca9e0e96ad6717d3b9",
             "procedure": "Execute test_read_effective_state_requires_bypass_visibility_for_every_ruleset with an inventoried ruleset lacking bypass_actors.",
             "observed": "The authenticated read-back fails closed when bypass actors are not visible."
+          }
+        },
+        {
+          "id": "classic-hidden-bypass",
+          "surface": "classic-branch-protection",
+          "dimension": "missing-classic-review-bypass",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_plan_session_ruleset_m2.py",
+            "sha256": "7220426c9a569f9aacf9a511bec98848bd4a2f51ebfcf8ca9e0e96ad6717d3b9",
+            "procedure": "Run test_classic_review_bypass_inventory_must_be_explicit for missing/partial/populated actor lists.",
+            "observed": "Missing or nonempty classic review bypass inventories are denied."
+          }
+        },
+        {
+          "id": "classic-legacy-checks-array",
+          "surface": "classic-branch-protection",
+          "dimension": "legacy-only-in-classic-checks",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_plan_session_ruleset_m2.py",
+            "sha256": "7220426c9a569f9aacf9a511bec98848bd4a2f51ebfcf8ca9e0e96ad6717d3b9",
+            "procedure": "Run test_classic_checks_cannot_hide_legacy_gate_outside_contexts.",
+            "observed": "A legacy check hidden only in the checks array is rejected."
           }
         }
       ],
       "prevention_change": {
         "skill_or_code": "scripts/plan_session_ruleset_m2.py",
-        "evidence": "--readback now inventories repository/inherited rulesets with includes_parents=true, fetches each detail, requires visible bypass actors, checks applicability, and reconciles classic branch protection."
+        "evidence": "Paginated all repository and inherited rulesets, verified summary/detail continuity, denied missing bypass information in classic protection, and rejected legacy checks outside contexts."
       },
       "detection_change": {
         "skill_or_gate": "tests/test_plan_session_ruleset_m2.py",
         "control_id": "NEG-R127-13-EFFECTIVE-STATE",
-        "evidence": "Dedicated adversarial controls fail on a second active applicable ruleset, residual classic human review/legacy gate, and hidden bypass inventory."
+        "evidence": "Negative tests exercise second-page competitors, malformed page shapes, classic bypass visibility, legacy checks hidden in checks arrays, duplicate ruleset IDs, and ambiguous HTTP 404."
       },
       "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
-      "status": "passed"
+      "status": "passed",
+      "required_risk_families": [
+        "structural-contract"
+      ],
+      "required_attack_dimensions": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "effective-protection-readback",
+          "dimension": "second-page-applicable-ruleset"
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "effective-protection-readback",
+          "dimension": "missing-classic-review-bypass"
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "effective-protection-readback",
+          "dimension": "legacy-only-in-classic-checks"
+        }
+      ]
     }
   ],
   "status": "passed"

@@ -229,7 +229,13 @@ def test_read_effective_state_requires_bypass_visibility_for_every_ruleset(monke
         },
     }
     monkeypatch.setattr(plan, "gh_api", lambda _repo, path: responses[path])
-    monkeypatch.setattr(plan, "read_classic_protection", lambda _repo, _branch: None)
+    monkeypatch.setattr(
+        plan, "read_all_rulesets",
+        lambda _repo: responses["/repos/crgasparoto-br/skill/rulesets?includes_parents=true"],
+    )
+    monkeypatch.setattr(
+        plan, "read_classic_protection", lambda _repo, _branch, **_kwargs: None
+    )
     with pytest.raises(ValueError, match="bypass actors are not visible"):
         plan.read_effective_state("crgasparoto-br/skill", "develop", 17)
 
@@ -246,3 +252,144 @@ def test_readback_cli_uses_complete_effective_state(monkeypatch, capsys):
     output = capsys.readouterr().out
     assert "ACTIVE_RULESET_STRUCTURE_VERIFIED_NOT_M2_APPROVAL" in output
     assert '"effective_sources_verified": true' in output
+
+
+def test_read_all_rulesets_slurps_every_page(monkeypatch):
+    import json
+    from types import SimpleNamespace
+
+    calls = []
+
+    def fake_run(args, **_kwargs):
+        calls.append(args)
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps([[{"id": 17}], [{"id": 99}]]),
+            stderr="",
+        )
+
+    monkeypatch.setattr(plan.subprocess, "run", fake_run)
+    assert plan.read_all_rulesets("crgasparoto-br/skill") == [{"id": 17}, {"id": 99}]
+    assert calls == [[
+        "gh", "api", "--paginate", "--slurp",
+        "/repos/crgasparoto-br/skill/rulesets?includes_parents=true&per_page=100",
+    ]]
+
+
+@pytest.mark.parametrize("pages", [
+    [{"id": 17}],
+    {"rulesets": [{"id": 17}]},
+    [[{"id": 17}], {"id": 99}],
+])
+def test_read_all_rulesets_rejects_non_paginated_or_malformed_shapes(monkeypatch, pages):
+    import json
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        plan.subprocess, "run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0, stdout=json.dumps(pages), stderr=""
+        ),
+    )
+    with pytest.raises(ValueError, match="paginated ruleset inventory"):
+        plan.read_all_rulesets("crgasparoto-br/skill")
+
+
+def test_second_page_competing_ruleset_blocks_effective_readback(monkeypatch):
+    import json
+    from types import SimpleNamespace
+
+    target = active_state()["target_ruleset"]
+    competitor = copy.deepcopy(target)
+    competitor.update(id=99, name="Inherited branch-wide rule")
+    competitor["conditions"]["ref_name"]["include"] = ["refs/heads/*"]
+
+    def fake_run(_args, **_kwargs):
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps([
+                [{"id": 17, "target": "branch", "enforcement": "active"}],
+                [{"id": 99, "target": "branch", "enforcement": "active"}],
+            ]),
+            stderr="",
+        )
+
+    responses = {
+        "/repos/crgasparoto-br/skill": {
+            "default_branch": "main", "permissions": {"admin": True},
+        },
+        "/repos/crgasparoto-br/skill/rulesets/17": target,
+        "/repos/crgasparoto-br/skill/rulesets/99": competitor,
+    }
+    monkeypatch.setattr(plan.subprocess, "run", fake_run)
+    monkeypatch.setattr(plan, "gh_api", lambda _repo, path: responses[path])
+    monkeypatch.setattr(
+        plan, "read_classic_protection", lambda _repo, _branch, **_kw: None
+    )
+    state = plan.read_effective_state("crgasparoto-br/skill", "develop", 17)
+    assert len(state["rulesets"]) == 2
+    with pytest.raises(ValueError, match="additional active ruleset"):
+        plan.verify_effective_state(state, "develop", 17)
+
+
+@pytest.mark.parametrize("bypass", [
+    None,
+    {},
+    {"users": [], "teams": []},
+    {"users": [], "teams": [], "apps": None},
+    {"users": [], "teams": [], "apps": [{"id": 3}]},
+])
+def test_classic_review_bypass_inventory_must_be_explicit(bypass):
+    state = active_state()
+    reviews = {
+        "required_approving_review_count": 0,
+        "require_code_owner_reviews": False,
+        "require_last_push_approval": False,
+    }
+    if bypass is not None:
+        reviews["bypass_pull_request_allowances"] = bypass
+    state["classic_protection"] = {
+        "allow_force_pushes": {"enabled": False},
+        "allow_deletions": {"enabled": False},
+        "required_pull_request_reviews": reviews,
+    }
+    with pytest.raises(ValueError, match="bypass"):
+        plan.verify_effective_state(state, "develop", 17)
+
+
+def test_classic_checks_cannot_hide_legacy_gate_outside_contexts():
+    state = active_state()
+    state["classic_protection"] = {
+        "allow_force_pushes": {"enabled": False},
+        "allow_deletions": {"enabled": False},
+        "required_status_checks": {
+            "strict": True, "contexts": [],
+            "checks": [{"context": plan.LEGACY, "app_id": 15368}],
+        },
+    }
+    with pytest.raises(ValueError, match="legacy audit gate"):
+        plan.verify_effective_state(state, "develop", 17)
+
+
+def test_effective_readback_rejects_duplicate_ruleset_ids():
+    state = active_state()
+    state["rulesets"].append(copy.deepcopy(state["target_ruleset"]))
+    with pytest.raises(ValueError, match="duplicate ruleset id"):
+        plan.verify_effective_state(state, "develop", 17)
+
+
+def test_classic_404_without_verified_admin_rights_is_not_absence(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        plan.subprocess, "run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=1, stdout="", stderr="gh: Not Found (HTTP 404)"
+        ),
+    )
+    with pytest.raises(ValueError, match="ambiguous without authenticated admin"):
+        plan.read_classic_protection("crgasparoto-br/skill", "develop")
+    assert plan.read_classic_protection(
+        "crgasparoto-br/skill", "develop", admin_confirmed=True
+    ) is None
+

@@ -29,14 +29,15 @@
     {
       "path": "tests/test_plan_session_ruleset_m2.py",
       "operation": "added",
-      "scenario": "R127-13 preparation and audit remediation: verify the complete effective branch protection state, including competing/inherited rulesets and classic branch protection, while preserving read-only behavior.",
+      "scenario": "R127-13 preparation and audit remediation: verify the complete effective branch protection state, including competing/inherited rulesets and classic branch protection, while preserving read-only behavior. New negative tests cover second-page rules, hidden classic bypass actors and legacy checks in the checks-only representation.",
       "requirement": "R127-13 remains deferred until real session review, operational positive and adversarial runs, protected ruleset installation and read-back; tests exercise only the M2 migration plan, not operational adoption.",
       "search": {
         "queries": [
           "GitHub fetch_file tests/test_configurar_ruleset.py at develop; inspect existing legacy requirements and test case inventory",
           "GitHub fetch_file scripts/configurar_ruleset.py at develop; compare existing planner and independent-gate assertions",
           "GitHub fetch_file tests/test_plan_session_ruleset_m2.py at candidate SHA; inspect new positive/negative/regression oracles",
-          "GitHub fetch_file scripts/plan_session_ruleset_m2.py at audited PR #141 HEAD fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457; inspect single-ruleset --readback path identified by A-001"
+          "GitHub fetch_file scripts/plan_session_ruleset_m2.py at audited PR #141 HEAD fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457; inspect single-ruleset --readback path identified by A-001",
+          "Review GitHub Actions blocker from 40679292291 and second-page/hidden-bypass checks at candidate e880be6d7d3842fab645b2603ce34448caada571"
         ],
         "scope": "Existing ruleset tests enforce the legacy independent-review policy with review count >= 1. No existing test covered session-specific read-only migration to review count zero with mandatory exact-SHA checks on main and fail-closed bypass preservation.",
         "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
@@ -56,7 +57,7 @@
         ]
       },
       "decision": "new-test-required",
-      "justification": "Extended the dedicated M2 suite because the independent audit found that single-ruleset read-back could miss concurrent effective protection sources. New controls distinguish complete effective-state verification from target-ruleset-only verification.",
+      "justification": "Extended the dedicated M2 suite because the independent audit found that single-ruleset read-back could miss concurrent effective protection sources. New controls distinguish complete effective-state verification from target-ruleset-only verification. This targeted extension addresses otherwise undetected pagination and classic bypass surfaces without replacing legacy controls.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",

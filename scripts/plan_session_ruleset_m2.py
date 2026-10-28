@@ -165,21 +165,32 @@ def verify_classic_protection(protection: dict | None, branch: str) -> None:
                 "classic protection still requires code-owner review")
         require(reviews.get("require_last_push_approval", False) is False,
                 "classic protection still requires last-push review")
-        bypass = reviews.get("bypass_pull_request_allowances", {})
+        require("bypass_pull_request_allowances" in reviews,
+                "classic review bypass inventory missing")
+        bypass = reviews["bypass_pull_request_allowances"]
         require(isinstance(bypass, dict), "classic review bypass inventory malformed")
         for key in ("users", "teams", "apps"):
-            require(bypass.get(key, []) == [], f"classic protection has {key} review bypasses")
+            require(key in bypass and isinstance(bypass[key], list),
+                    f"classic {key} bypass inventory missing")
+            require(not bypass[key], f"classic protection has {key} review bypasses")
 
     statuses = protection.get("required_status_checks")
     if statuses is not None:
         require(isinstance(statuses, dict) and statuses.get("strict") is True,
                 "classic required checks are not strict")
-        contexts = statuses.get("contexts", [])
+        contexts = statuses.get("contexts")
         require(isinstance(contexts, list) and all(isinstance(x, str) for x in contexts),
                 "classic required check contexts malformed")
+        require(len(contexts) == len(set(contexts)),
+                "duplicate classic required check contexts")
         require(LEGACY not in contexts, "classic protection still requires legacy audit gate")
-        checks = statuses.get("checks", [])
-        require(isinstance(checks, list), "classic required check origin inventory malformed")
+        checks = statuses.get("checks")
+        require(isinstance(checks, list), "classic required check origin inventory missing")
+        check_names = [item.get("context") for item in checks if isinstance(item, dict)]
+        require(len(check_names) == len(checks) and len(check_names) == len(set(check_names)),
+                "duplicate or malformed classic required checks")
+        require(LEGACY not in check_names,
+                "classic protection still requires legacy audit gate")
         for check in checks:
             require(isinstance(check, dict) and isinstance(check.get("context"), str),
                     "classic required check malformed")
@@ -189,7 +200,7 @@ def verify_classic_protection(protection: dict | None, branch: str) -> None:
 
 
 def verify_effective_state(state: dict, branch: str, ruleset_id: int) -> dict:
-    """Verify all effective protection sources, not only one ruleset by ID."""
+    """Verify the selected rule and every observed effective protection source."""
     require(branch in REQUIRED, "unsupported protected branch")
     require(isinstance(state, dict), "effective state missing")
     default_branch = state.get("default_branch")
@@ -201,22 +212,33 @@ def verify_effective_state(state: dict, branch: str, ruleset_id: int) -> dict:
 
     inventory = state.get("rulesets")
     require(isinstance(inventory, list), "ruleset inventory unavailable")
-    seen_target = False
-    competitors = []
-    for item in inventory:
-        require(isinstance(item, dict), "ruleset inventory item malformed")
-        if item.get("id") == ruleset_id:
-            seen_target = True
-            require(item.get("enforcement") == "active", "target ruleset is not active in inventory")
+    seen_ids = set()
+    found_target = False
+    competing = []
+    for rule in inventory:
+        require(isinstance(rule, dict) and type(rule.get("id")) is int,
+                "ruleset inventory item malformed")
+        rule_id = rule["id"]
+        require(rule_id not in seen_ids, "duplicate ruleset id in effective inventory")
+        seen_ids.add(rule_id)
+        require(rule.get("target") in {"branch", "tag", "push"},
+                "ruleset inventory target unavailable")
+        require(rule.get("enforcement") in {"active", "disabled", "evaluate"},
+                "ruleset inventory enforcement unavailable")
+        require(isinstance(rule.get("bypass_actors"), list),
+                "ruleset bypass inventory unavailable")
+        if rule_id == ruleset_id:
+            found_target = True
+            require(rule == target, "target ruleset differs from inventory detail")
+            require(rule["enforcement"] == "active",
+                    "target ruleset is not active in inventory")
             continue
-        if item.get("enforcement") != "active":
-            continue
-        if ruleset_applies_to_branch(item, branch, default_branch):
-            competitors.append(item.get("id"))
-    require(seen_target, "target ruleset missing from complete inventory")
-    require(not competitors,
-            f"additional active ruleset applies to branch: {competitors}")
-
+        if rule["enforcement"] == "active" and ruleset_applies_to_branch(
+            rule, branch, default_branch
+        ):
+            competing.append(rule_id)
+    require(found_target, "target ruleset missing from complete inventory")
+    require(not competing, f"additional active ruleset applies to branch: {competing}")
     verify_classic_protection(state.get("classic_protection"), branch)
     return {
         **verified,
@@ -224,7 +246,6 @@ def verify_effective_state(state: dict, branch: str, ruleset_id: int) -> dict:
         "active_competing_rulesets": [],
         "classic_protection_checked": True,
     }
-
 
 def verify_live_ruleset(current: dict, branch: str, ruleset_id: int) -> dict:
     """Check the target M2 ruleset structure; not proof of complete effective state."""
@@ -253,13 +274,30 @@ def gh_api(repository: str, path: str) -> object:
     return json.loads(result.stdout)
 
 
+def read_all_rulesets(repository: str) -> list[dict]:
+    """Require full GitHub pagination; a partial ruleset list is not a snapshot."""
+    path = f"/repos/{repository}/rulesets?includes_parents=true&per_page=100"
+    result = subprocess.run(
+        ["gh", "api", "--paginate", "--slurp", path],
+        capture_output=True, text=True, check=False,
+    )
+    require(result.returncode == 0,
+            "authenticated paginated ruleset GET failed; no changes were made")
+    pages = json.loads(result.stdout)
+    require(isinstance(pages, list) and all(isinstance(page, list) for page in pages),
+            "paginated ruleset inventory shape is incomplete or malformed")
+    return [rule for page in pages for rule in page]
+
+
 def read_ruleset(repository: str, ruleset_id: int) -> dict:
     data = gh_api(repository, f"/repos/{repository}/rulesets/{ruleset_id}")
     require(isinstance(data, dict), "GitHub ruleset response is not an object")
     return data
 
 
-def read_classic_protection(repository: str, branch: str) -> dict | None:
+def read_classic_protection(
+    repository: str, branch: str, *, admin_confirmed: bool = False
+) -> dict | None:
     result = subprocess.run(
         ["gh", "api", f"/repos/{repository}/branches/{branch}/protection"],
         capture_output=True, text=True, check=False,
@@ -269,6 +307,8 @@ def read_classic_protection(repository: str, branch: str) -> dict | None:
         require(isinstance(data, dict), "classic branch protection response is not an object")
         return data
     if "HTTP 404" in result.stderr or "Branch not protected" in result.stderr:
+        require(admin_confirmed,
+                "classic protection HTTP 404 is ambiguous without authenticated admin rights")
         return None
     raise ValueError("authenticated classic branch protection GET failed; no changes were made")
 
@@ -280,27 +320,42 @@ def read_effective_state(repository: str, branch: str, ruleset_id: int) -> dict:
     require(isinstance(default_branch, str) and default_branch,
             "repository default branch unavailable")
 
-    summaries = gh_api(repository, f"/repos/{repository}/rulesets?includes_parents=true")
-    require(isinstance(summaries, list), "GitHub ruleset inventory is not a list")
+    summaries = read_all_rulesets(repository)
+    seen_ids = set()
     details = []
     for item in summaries:
         require(isinstance(item, dict) and type(item.get("id")) is int,
                 "ruleset inventory item lacks numeric id")
-        detail = gh_api(repository, f"/repos/{repository}/rulesets/{item['id']}")
+        rule_id = item["id"]
+        require(rule_id > 0 and rule_id not in seen_ids,
+                "duplicate or invalid ruleset id in paginated inventory")
+        seen_ids.add(rule_id)
+        require(item.get("target") in {"branch", "tag", "push"},
+                "ruleset summary target unavailable")
+        require(item.get("enforcement") in {"active", "disabled", "evaluate"},
+                "ruleset summary enforcement unavailable")
+        detail = gh_api(repository, f"/repos/{repository}/rulesets/{rule_id}")
         require(isinstance(detail, dict), "GitHub ruleset detail is not an object")
+        require(detail.get("id") == rule_id and detail.get("target") == item["target"],
+                "ruleset identity changed between summary and detail")
+        require(detail.get("enforcement") == item["enforcement"],
+                "ruleset enforcement changed during inventory collection")
         require(isinstance(detail.get("bypass_actors"), list),
                 "bypass actors are not visible for an inventoried ruleset")
         details.append(detail)
 
     target = next((item for item in details if item.get("id") == ruleset_id), None)
     require(target is not None, "target ruleset not found in complete inventory")
+    permissions = repo_meta.get("permissions")
+    admin_confirmed = isinstance(permissions, dict) and permissions.get("admin") is True
     return {
         "default_branch": default_branch,
         "target_ruleset": target,
         "rulesets": details,
-        "classic_protection": read_classic_protection(repository, branch),
+        "classic_protection": read_classic_protection(
+            repository, branch, admin_confirmed=admin_confirmed
+        ),
     }
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
