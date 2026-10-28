@@ -12,8 +12,8 @@ import re
 import sys
 from pathlib import Path
 
-from handoff_postcondition import require_final_phase
 from handoff_merge_preview import require_event_merge_preview
+from handoff_postcondition import require_final_phase
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
