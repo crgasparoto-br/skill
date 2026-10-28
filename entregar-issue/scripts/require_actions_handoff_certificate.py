@@ -12,6 +12,7 @@ import re
 import sys
 from pathlib import Path
 
+from handoff_merge_preview import require_event_merge_preview
 from handoff_postcondition import require_final_phase
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -49,6 +50,12 @@ def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
         raise ValueError("certificate receipt falsely claims final publication")
     cert = load(evidence, ".audit/entregar-issue/handoff-ready.json")
     require_final_phase(cert)
+    expected_preview = require_event_merge_preview(
+        event_path, identity["repository"], pr["number"], head, pr["base"]["sha"])
+    cert_identity = cert.get("identity") or {}
+    if (cert_identity.get("material_merge_preview_sha") != expected_preview
+            or cert_identity.get("merge_preview_sha") != expected_preview):
+        raise ValueError("certificate merge preview differs from authenticated PR event")
     subject = cert.get("subject") or {}
     if (cert.get("schema_version") != 2 or cert.get("status") != "ready"
             or (cert.get("identity") or {}).get("material_head_sha") != head

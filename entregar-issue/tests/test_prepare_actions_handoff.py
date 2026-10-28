@@ -20,12 +20,13 @@ mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 HEAD = "a" * 40
 BASE = "b" * 40
+MERGE = "c" * 40
 
 
 def event(*, title="Issue #112: test policy", body="Related to Issue #112",
           head=HEAD, fork=False, base="develop"):
     return {"repository": {"full_name": "team/skill"}, "pull_request": {
-        "number": 113, "title": title, "body": body,
+        "number": 113, "title": title, "body": body, "merge_commit_sha": MERGE,
         "head": {"sha": head, "repo": {"full_name": "other/fork" if fork else "team/skill"}},
         "base": {"sha": BASE, "ref": base}}}
 
@@ -194,6 +195,8 @@ def test_certification_requires_real_closure_and_calls_official_gates(tmp_path, 
     assert "--codebase-grounding" in calls[2][1]
     assert "--code-growth" in calls[2][1]
     assert "--issue-changed-path" in calls[2][1]
+    for args_list in (calls[2][1], calls[3][1]):
+        assert args_list[args_list.index("--merge-preview-sha") + 1] == MERGE
     assert calls[2][1][calls[2][1].index("--allow-result-path") + 1] == proof_path
     assert calls[1][1][calls[1][1].index("--comparison-base-sha") + 1] == BASE
     result = json.loads((args.out / "handoff-certification-status.json").read_text())
@@ -248,3 +251,13 @@ def test_reusable_handoff_isolates_tooling_from_consumer_tests(tmp_path):
                    cwd=consumer, env=env, capture_output=True, text=True, check=True)
     assert (checkout / "test_duplicate.py").is_file()
     assert not target.exists()
+
+@pytest.mark.parametrize("preview", [None, "short", "f" * 39, 123])
+def test_certification_refuses_missing_or_invalid_authenticated_merge_preview(
+        tmp_path, monkeypatch, preview):
+    args, _audit = _certification_fixture(tmp_path, monkeypatch)
+    event_value = json.loads(args.event.read_text())
+    event_value["pull_request"]["merge_commit_sha"] = preview
+    args.event.write_text(json.dumps(event_value))
+    with pytest.raises(ValueError, match="merge preview SHA"):
+        mod.require_event_merge_preview(args.event, "team/skill", 113, HEAD, BASE)

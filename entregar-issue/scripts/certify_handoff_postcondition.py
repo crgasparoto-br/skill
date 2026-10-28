@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from audit_artifact_io import load_json_artifact
 from certificate_postcondition_replay import execute_replay, recognize_postconditions
 from certificate_replay_io import json_bytes, read_object
+from handoff_merge_preview import require_event_merge_preview
 from handoff_postcondition import PROOF_KIND, file_metadata
 from handoff_postcondition_records import finalize_records
 
@@ -20,8 +21,11 @@ def material_event(event_path: Path, head: str, base: str) -> dict:
     pr = event.get("pull_request") or {}
     if (pr.get("head") or {}).get("sha") != head or (pr.get("base") or {}).get("sha") != base:
         raise ValueError("postcondition event differs from the externally authenticated material/base")
+    merge_preview = require_event_merge_preview(
+        event_path, event["repository"]["full_name"], pr["number"], head, base)
     return {"repository": {"full_name": event["repository"]["full_name"]}, "pull_request": {
-        "number": pr["number"], "base": {"sha": base, "ref": pr["base"]["ref"]},
+        "number": pr["number"], "merge_commit_sha": merge_preview,
+        "base": {"sha": base, "ref": pr["base"]["ref"]},
         "head": {"sha": head, "repo": {"full_name": pr["head"]["repo"]["full_name"]}},
     }}
 
