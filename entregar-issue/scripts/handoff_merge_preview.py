@@ -55,7 +55,7 @@ def _check_live_identity(pr: dict, repository: str, number: int,
 
 
 def _event_identity(event_path: Path, repository: str, number: int,
-                    head: str, base: str) -> tuple[str, str]:
+                    head: str, base: str) -> tuple[str | None, str]:
     """Bind the current test merge to the exact PR, never certifying an old event SHA.
 
     GitHub may deliver an old merge_commit_sha in a synchronize event during
@@ -67,8 +67,10 @@ def _event_identity(event_path: Path, repository: str, number: int,
             or not isinstance(base, str) or SHA.fullmatch(base) is None):
         raise ValueError("invalid merge-preview target identity")
     event = json.loads(event_path.read_text(encoding="utf-8"))
+    if not isinstance(event, dict):
+        raise ValueError("authenticated PR event shape is malformed")
     pr = event.get("pull_request") or {}
-    if (not isinstance(event, dict) or not isinstance(pr, dict)
+    if (not isinstance(pr, dict)
             or not isinstance(pr.get("head"), dict) or not isinstance(pr.get("base"), dict)
             or not isinstance(pr["head"].get("repo"), dict)):
         raise ValueError("authenticated PR event shape is malformed")
@@ -80,7 +82,11 @@ def _event_identity(event_path: Path, repository: str, number: int,
             or (pr.get("base") or {}).get("sha") != base
             or not isinstance(base_ref, str) or not base_ref):
         raise ValueError("authenticated PR event identity differs from expected material/base")
-    if not isinstance(event_preview, str) or SHA.fullmatch(event_preview) is None:
+    # GitHub can send an explicit null during pull_request.opened while the
+    # live test merge is still being computed. Only the authenticated live
+    # resolver may replace that null; missing fields and corrupt SHAs fail.
+    if ("merge_commit_sha" not in pr or (event_preview is not None
+            and (not isinstance(event_preview, str) or SHA.fullmatch(event_preview) is None))):
         raise ValueError("authenticated PR event lacks a valid merge preview SHA")
 
     return event_preview, base_ref
@@ -113,6 +119,8 @@ def require_event_merge_preview(event_path: Path, repository: str, number: int,
     event_preview, base_ref = _event_identity(event_path, repository, number, head, base)
     mode = os.environ.get("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW")
     if mode is None:
+        if event_preview is None:
+            raise ValueError("authenticated PR event lacks a valid merge preview SHA")
         return event_preview
     if mode != "1":
         raise ValueError("invalid trusted merge-preview verification mode")

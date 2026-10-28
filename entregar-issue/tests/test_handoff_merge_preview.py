@@ -130,3 +130,63 @@ def test_official_certification_and_producer_must_enforce_live_preview():
     assert "GITHUB_TOKEN" not in late["env"]
     assert "SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW" not in late["env"]
     assert "certification-event.json" in late["run"]
+
+
+def test_opened_event_null_preview_resolves_real_live_merge(monkeypatch, tmp_path):
+    """GitHub pull_request.opened may contain null until test merge exists."""
+    monkeypatch.setenv("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW", "1")
+    seen = []
+
+    def read(path):
+        seen.append(path)
+        if path.endswith("/pulls/141"):
+            return live()
+        if path.endswith(FRESH):
+            return {"sha": FRESH, "parents": [{"sha": BASE}, {"sha": HEAD}]}
+        pytest.fail(f"unexpected trusted API path: {path}")
+
+    monkeypatch.setattr(tool, "_read_json", read)
+    monkeypatch.setattr(tool.time, "sleep", lambda _: pytest.fail("no retry expected"))
+    assert tool.require_event_merge_preview(event(tmp_path, None), REPO, 141, HEAD, BASE) == FRESH
+    assert len(seen) == 3
+
+
+def test_null_event_preview_cannot_bypass_parent_verification(monkeypatch, tmp_path):
+    monkeypatch.setenv("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW", "1")
+
+    def read(path):
+        if path.endswith("/pulls/141"):
+            return live()
+        return {"sha": FRESH, "parents": [{"sha": BASE}, {"sha": "f" * 40}]}
+
+    monkeypatch.setattr(tool, "_read_json", read)
+    monkeypatch.setattr(tool.time, "sleep", lambda _: None)
+    with pytest.raises(ValueError, match="stale or not bound"):
+        tool.require_event_merge_preview(event(tmp_path, None), REPO, 141, HEAD, BASE)
+
+
+def test_absent_merge_field_is_not_equivalent_to_explicit_github_null(monkeypatch, tmp_path):
+    monkeypatch.setenv("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW", "1")
+    monkeypatch.setattr(tool, "_read_json", lambda _: pytest.fail("should not call live GitHub API"))
+    path = event(tmp_path, None)
+    payload = json.loads(path.read_text())
+    del payload["pull_request"]["merge_commit_sha"]
+    path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="valid merge preview"):
+        tool.require_event_merge_preview(path, REPO, 141, HEAD, BASE)
+
+
+@pytest.mark.parametrize("bad", [False, 123, "invalid", "f" * 39])
+def test_malformed_non_null_preview_fails_even_with_trusted_mode(monkeypatch, tmp_path, bad):
+    monkeypatch.setenv("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW", "1")
+    monkeypatch.setattr(tool, "_read_json", lambda _: pytest.fail("should not call live GitHub API"))
+    with pytest.raises(ValueError, match="valid merge preview"):
+        tool.require_event_merge_preview(event(tmp_path, bad), REPO, 141, HEAD, BASE)
+
+
+def test_non_object_github_event_blocks_without_unhandled_exception(monkeypatch, tmp_path):
+    monkeypatch.setenv("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW", "1")
+    path = tmp_path / "event.json"
+    path.write_text("[]")
+    with pytest.raises(ValueError, match="event shape is malformed"):
+        tool.require_event_merge_preview(path, REPO, 141, HEAD, BASE)
