@@ -48,6 +48,12 @@ reivindicam autoridade para publicar checks.
 Se a base ou HEAD mudar, produzir novo certificado e parecer para a
 identidade atual; nenhum preview antigo e prova transferivel.
 
+O leitor confiavel do pacote neutro e da revisao por sessao recompõe o evento
+normalizado consultando a PR e o commit de merge autenticados no GitHub,
+exigindo base SHA, HEAD, preview e pais Git ordenados exatos. Compara o evento
+reconstruido ao snapshot pre-testes do artifact antes de validar o certificado;
+dados alterados, ausentes ou obsoletos bloqueiam, sem criar parecer.
+
 Somente uma alteracao material ou uma evidencia realmente diferente exige nova revisao. Findings sao consolidados na mesma rodada. Credencial, dossie ou permissao ausente gera BLOCK com causa concreta, nao um ciclo automatico de tentativa.
 
 ## Contrato do parecer
