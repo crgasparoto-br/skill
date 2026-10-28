@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import re
 
 APP_ID = 15368
 LEGACY = "Verify independent audit (exact SHA)"
@@ -27,6 +28,59 @@ def require(ok: bool, why: str) -> None:
     if not ok:
         raise ValueError(why)
 
+
+
+def _matches_ref(pattern: str, ref: str, default_ref: str) -> bool:
+    """Match GitHub FNM_PATHNAME branch patterns; reject ambiguous syntax."""
+    if pattern == "~ALL":
+        return True
+    if pattern == "~DEFAULT_BRANCH":
+        return ref == default_ref
+    require(isinstance(pattern, str) and "\\" not in pattern
+            and not any(ch in pattern for ch in "[]{}"),
+            "unsupported GitHub ruleset ref pattern; read-back cannot prove applicability")
+    parts = []
+    index = 0
+    while index < len(pattern):
+        if pattern.startswith("**/", index):
+            parts.append("(?:.*/)?")
+            index += 3
+        elif pattern.startswith("**", index):
+            parts.append(".*")
+            index += 2
+        elif pattern[index] == "*":
+            parts.append("[^/]*")
+            index += 1
+        elif pattern[index] == "?":
+            parts.append("[^/]")
+            index += 1
+        else:
+            parts.append(re.escape(pattern[index]))
+            index += 1
+    return re.fullmatch("".join(parts), ref) is not None
+
+
+def ruleset_applies_to_branch(ruleset: dict, branch: str, default_branch: str) -> bool:
+    """Conservatively identify every active ruleset capable of affecting a branch."""
+    target = ruleset.get("target")
+    if target == "push":
+        # Push rulesets are repository-wide: there are no branch selectors.
+        return True
+    if target == "tag":
+        return False
+    require(target == "branch", "unknown ruleset target")
+    ref = f"refs/heads/{branch}"
+    default_ref = f"refs/heads/{default_branch}"
+    ref_name = (ruleset.get("conditions") or {}).get("ref_name")
+    require(isinstance(ref_name, dict), "active ruleset ref conditions unavailable")
+    include = ref_name.get("include")
+    exclude = ref_name.get("exclude")
+    require(isinstance(include, list) and isinstance(exclude, list),
+            "active ruleset ref conditions malformed")
+    require(all(isinstance(item, str) for item in include + exclude),
+            "active ruleset ref pattern malformed")
+    return (any(_matches_ref(pattern, ref, default_ref) for pattern in include)
+            and not any(_matches_ref(pattern, ref, default_ref) for pattern in exclude))
 
 def exactly_one(rules: list[dict], kind: str) -> dict:
     found = [r for r in rules if r.get("type") == kind]
