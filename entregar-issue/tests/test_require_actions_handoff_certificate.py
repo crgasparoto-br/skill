@@ -15,6 +15,7 @@ assert spec and spec.loader
 gate = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gate)
 HEAD = "a" * 40
+MERGE = "c" * 40
 
 
 def put(path: Path, value: dict) -> None:
@@ -27,7 +28,8 @@ def fixture(tmp_path: Path, *, state: str = "blocked") -> tuple[Path, Path]:
     evidence.mkdir()
     event = tmp_path / "event.json"
     put(event, {"repository": {"full_name": "team/repo"}, "pull_request": {
-        "number": 113, "head": {"sha": HEAD, "repo": {"full_name": "team/repo"}},
+        "number": 113, "merge_commit_sha": MERGE,
+        "head": {"sha": HEAD, "repo": {"full_name": "team/repo"}},
         "base": {"ref": "develop", "sha": "b" * 40},
     }})
     put(evidence / "handoff-preflight.json", {"identity": {
@@ -41,7 +43,8 @@ def fixture(tmp_path: Path, *, state: str = "blocked") -> tuple[Path, Path]:
     if state == "certificate-generated":
         put(evidence / ".audit/entregar-issue/handoff-ready.json", {
             "schema_version": 2, "status": "ready",
-            "identity": {"material_head_sha": HEAD},
+            "identity": {"material_head_sha": HEAD, "merge_preview_sha": MERGE,
+                         "material_merge_preview_sha": MERGE},
             "subject": {"repository": "team/repo", "issue_number": 112,
                         "pull_request_number": 113, "base_ref": "develop"},
             "certificate_commit_policy": {"mode": "result-only-child"},
@@ -98,3 +101,23 @@ def test_workflow_separates_collecting_and_certifying_without_publish_bypass():
     # Entire producer workflow still fails if the required certificate gate fails.
     publish = yaml.safe_load((ROOT.parents[0] / ".github/workflows/publish-handoff.yml").read_text())
     assert publish["jobs"]["publish"]["if"] .find("conclusion == 'success'") >= 0
+
+@pytest.mark.parametrize("field", ["merge_preview_sha", "material_merge_preview_sha"])
+def test_certificate_refuses_missing_or_stale_merge_preview_field(tmp_path, field):
+    evidence, event = fixture(tmp_path, state="certificate-generated")
+    cert_path = evidence / ".audit/entregar-issue/handoff-ready.json"
+    cert = json.loads(cert_path.read_text())
+    cert["identity"][field] = None
+    put(cert_path, cert)
+    with pytest.raises(ValueError, match="certificate merge preview differs"):
+        gate.verify(evidence, event, "develop")
+
+
+@pytest.mark.parametrize("preview", [None, "g" * 40, "f" * 39])
+def test_certificate_refuses_event_without_valid_merge_preview(tmp_path, preview):
+    evidence, event = fixture(tmp_path, state="certificate-generated")
+    payload = json.loads(event.read_text())
+    payload["pull_request"]["merge_commit_sha"] = preview
+    put(event, payload)
+    with pytest.raises(ValueError, match="authenticated PR event lacks"):
+        gate.verify(evidence, event, "develop")

@@ -17,6 +17,8 @@ import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
+from handoff_merge_preview import require_event_merge_preview
+
 SCRIPTS = Path(__file__).resolve().parent
 ISSUE_REF = re.compile(r"\b(?:issue|fixes|closes|resolves)\s*#(\d+)\b", re.IGNORECASE)
 SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -308,6 +310,7 @@ def certify(args: argparse.Namespace) -> None:
     (audit / "handoff-ready.json").unlink(missing_ok=True)
     inputs, start, profile, changed, resolved = _resolve_certification_requirements(
         out, args, repo, pr, issue, head, base)
+    merge_preview = require_event_merge_preview(args.event, repo, pr, head, base)
 
     if "codebase_grounding" in resolved:
         run_script("validate_codebase_grounding.py", "--repo", str(args.root),
@@ -331,6 +334,7 @@ def certify(args: argparse.Namespace) -> None:
         "--head-ref", inputs["head_ref"],
         "--requirement-closure", str(resolved["requirement_closure"]),
         "--evidence-profile", profile, "--head-sha", head, "--base-sha", base,
+        "--merge-preview-sha", merge_preview,
         "--source-repository-root", str(args.root.resolve()),
         "--out", str(audit / "handoff-ready.json"),
     ]
@@ -371,6 +375,7 @@ def certify(args: argparse.Namespace) -> None:
                    "--certificate", str(audit / "handoff-ready.json"),
                    "--artifacts-dir", str(audit),
                    "--head-sha", head, "--base-sha", base,
+                   "--merge-preview-sha", merge_preview,
                    "--repository", repo, "--issue-number", str(issue),
                    "--work-item-kind", "pr", "--work-item-number", str(pr),
                    "--pull-request-number", str(pr),
