@@ -17,6 +17,8 @@ import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
+from handoff_merge_preview import require_event_merge_preview
+
 SCRIPTS = Path(__file__).resolve().parent
 ISSUE_REF = re.compile(r"\b(?:issue|fixes|closes|resolves)\s*#(\d+)\b", re.IGNORECASE)
 SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -102,6 +104,19 @@ def prepare(args: argparse.Namespace) -> None:
     body = issue_body(repo, issue, os.environ.get("GITHUB_TOKEN", ""))
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
+    # Resolve the authoritative merge before candidate tests; a separate
+    # trusted certification job independently revalidates its ordered parents.
+    preview = require_event_merge_preview(args.event, repo, pr, head, base)
+    original = json.loads(args.event.read_text(encoding="utf-8"))["pull_request"]
+    write_json(out / "certification-event.json", {
+        "repository": {"full_name": repo},
+        "pull_request": {
+            "number": pr, "title": original.get("title") or "", "body": original.get("body") or "",
+            "merge_commit_sha": preview,
+            "head": {"sha": head, "repo": {"full_name": repo}},
+            "base": {"ref": args.base_ref, "sha": base},
+        },
+    })
     source = out / "issue-body.md"
     source.write_text(body, encoding="utf-8")
     audit = out / ".audit" / "entregar-issue"
@@ -114,7 +129,8 @@ def prepare(args: argparse.Namespace) -> None:
     metadata = {
         "schema_version": 1, "status": "blocked", "reason": "unverified-requirement-controls",
         "identity": {"repository": repo, "issue_number": issue, "pull_request_number": pr,
-                     "material_head_sha": head, "base_sha": base},
+                     "material_head_sha": head, "base_sha": base,
+                     "merge_preview_sha": preview},
         "source": {"issue_body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                    "uri": f"https://github.com/{repo}/issues/{issue}"},
         "unverified": ["requirement-closure", "test-decision-evidence", "codebase-grounding",
@@ -308,6 +324,7 @@ def certify(args: argparse.Namespace) -> None:
     (audit / "handoff-ready.json").unlink(missing_ok=True)
     inputs, start, profile, changed, resolved = _resolve_certification_requirements(
         out, args, repo, pr, issue, head, base)
+    merge_preview = require_event_merge_preview(args.event, repo, pr, head, base)
 
     if "codebase_grounding" in resolved:
         run_script("validate_codebase_grounding.py", "--repo", str(args.root),
@@ -331,6 +348,7 @@ def certify(args: argparse.Namespace) -> None:
         "--head-ref", inputs["head_ref"],
         "--requirement-closure", str(resolved["requirement_closure"]),
         "--evidence-profile", profile, "--head-sha", head, "--base-sha", base,
+        "--merge-preview-sha", merge_preview,
         "--source-repository-root", str(args.root.resolve()),
         "--out", str(audit / "handoff-ready.json"),
     ]
@@ -371,6 +389,7 @@ def certify(args: argparse.Namespace) -> None:
                    "--certificate", str(audit / "handoff-ready.json"),
                    "--artifacts-dir", str(audit),
                    "--head-sha", head, "--base-sha", base,
+                   "--merge-preview-sha", merge_preview,
                    "--repository", repo, "--issue-number", str(issue),
                    "--work-item-kind", "pr", "--work-item-number", str(pr),
                    "--pull-request-number", str(pr),

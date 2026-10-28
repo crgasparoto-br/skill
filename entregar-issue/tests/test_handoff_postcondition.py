@@ -41,6 +41,7 @@ def critical_case(tmp_path):
     source = json.loads(case["audit"].read_bytes())
     event = {"repository": {"full_name": "owner/repo"}, "pull_request": {
         "number": 99, "title": "Issue #42: public contract", "body": "",
+        "merge_commit_sha": "c" * 40,
         "base": {"sha": case["base"], "ref": "develop"},
         "head": {"sha": case["head"], "repo": {"full_name": "owner/repo"}},
     }}
@@ -115,6 +116,7 @@ def validation_args(case: dict) -> list[str]:
             "--head-sha", case["head"], "--base-sha", case["base"], "--repository", "owner/repo",
             "--issue-number", "42", "--work-item-kind", "pr", "--work-item-number", "99",
             "--pull-request-number", "99", "--base-ref", "develop", "--head-ref", "feature/contract",
+            "--merge-preview-sha", "c" * 40,
             "--source-repository-root", str(case["repo"]), "--contract-version", "2026-08-20.3"]
 
 

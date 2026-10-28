@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
+from handoff_merge_preview import require_event_merge_preview
 from handoff_postcondition import require_final_phase
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -49,6 +51,26 @@ def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
         raise ValueError("certificate receipt falsely claims final publication")
     cert = load(evidence, ".audit/entregar-issue/handoff-ready.json")
     require_final_phase(cert)
+    expected_preview = require_event_merge_preview(
+        event_path, identity["repository"], pr["number"], head, pr["base"]["sha"])
+    # The candidate's test runner can modify the evidence directory after
+    # the pre-test snapshot. The trusted job must compare that snapshot to
+    # the original event independently, allowing ONLY the refreshed preview.
+    if os.environ.get("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW") == "1":
+        recorded = load(evidence, "certification-event.json")
+        original_pr = {
+            "number": pr["number"], "title": pr.get("title") or "",
+            "body": pr.get("body") or "", "merge_commit_sha": expected_preview,
+            "head": {"sha": head, "repo": {"full_name": identity["repository"]}},
+            "base": {"sha": pr["base"]["sha"], "ref": base_ref},
+        }
+        if recorded != {"repository": {"full_name": identity["repository"]},
+                        "pull_request": original_pr}:
+            raise ValueError("pre-test normalized event differs from authenticated PR event")
+    cert_identity = cert.get("identity") or {}
+    if (cert_identity.get("material_merge_preview_sha") != expected_preview
+            or cert_identity.get("merge_preview_sha") != expected_preview):
+        raise ValueError("certificate merge preview differs from authenticated PR event")
     subject = cert.get("subject") or {}
     if (cert.get("schema_version") != 2 or cert.get("status") != "ready"
             or (cert.get("identity") or {}).get("material_head_sha") != head
