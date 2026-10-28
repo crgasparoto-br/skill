@@ -34,6 +34,17 @@ def baseline(branch="develop"):
                           "required_status_checks": checks}}]}
 
 
+def active_state(branch="develop"):
+    old = baseline(branch)
+    active = {**old, **plan.plan_m2(old, branch, 17)}
+    return {
+        "default_branch": "main",
+        "target_ruleset": active,
+        "rulesets": [active],
+        "classic_protection": None,
+    }
+
+
 @pytest.mark.parametrize("branch", ["develop", "main"])
 def test_exact_branch_plan_preserves_all_protections_and_upgrades_to_session(branch):
     old = baseline(branch)
@@ -115,13 +126,15 @@ def test_plan_does_not_perform_remote_mutation(monkeypatch, capsys):
     assert '"status": "READ_ONLY_PROPOSAL_NOT_M2_APPROVAL"' in output
     assert '"requires_prior_real_positive_and_negative_M2_acceptance": true' in output
 
+
 @pytest.mark.parametrize("branch", ["develop", "main"])
 def test_live_readback_accepts_only_fully_active_session_ruleset(branch):
-    original = baseline(branch)
-    active = {**original, **plan.plan_m2(original, branch, 17)}
-    result = plan.verify_live_ruleset(active, branch, 17)
+    result = plan.verify_effective_state(active_state(branch), branch, 17)
     assert result["status"] == "ACTIVE_RULESET_STRUCTURE_VERIFIED_NOT_M2_APPROVAL"
     assert result["session_review_or_negative_controls_verified"] is False
+    assert result["effective_sources_verified"] is True
+    assert result["active_competing_rulesets"] == []
+    assert result["classic_protection_checked"] is True
     assert {item["context"] for item in result["required_checks"]} == set(plan.REQUIRED[branch])
 
 
@@ -131,21 +144,105 @@ def test_live_readback_accepts_only_fully_active_session_ruleset(branch):
     (lambda r: r["rules"][3]["parameters"]["required_status_checks"].pop(), "rules"),
     (lambda r: r["bypass_actors"].append({"actor_id": 1}), "nonempty bypass"),
 ])
-def test_live_readback_rejects_incomplete_or_unsafe_rulesets(mutation, match):
-    current = baseline()
-    active = {**current, **plan.plan_m2(current, "develop", 17)}
-    mutation(active)
+def test_live_readback_rejects_incomplete_or_unsafe_target_ruleset(mutation, match):
+    state = active_state()
+    mutation(state["target_ruleset"])
     with pytest.raises(ValueError, match=match):
-        plan.verify_live_ruleset(active, "develop", 17)
+        plan.verify_effective_state(state, "develop", 17)
 
 
-def test_readback_cli_is_read_only(monkeypatch, capsys):
+def test_effective_readback_rejects_second_active_applicable_ruleset():
+    state = active_state()
+    competing = copy.deepcopy(state["target_ruleset"])
+    competing["id"] = 99
+    competing["name"] = "Inherited temporary exception"
+    competing["conditions"] = {"ref_name": {"include": ["refs/heads/*"], "exclude": []}}
+    state["rulesets"].append(competing)
+    with pytest.raises(ValueError, match="additional active ruleset"):
+        plan.verify_effective_state(state, "develop", 17)
+
+
+def test_effective_readback_ignores_disabled_or_nonmatching_ruleset():
+    state = active_state()
+    disabled = copy.deepcopy(state["target_ruleset"])
+    disabled.update(id=98, enforcement="disabled")
+    other = copy.deepcopy(state["target_ruleset"])
+    other.update(id=99, name="Other branch")
+    other["conditions"] = {"ref_name": {"include": ["refs/heads/release"], "exclude": []}}
+    state["rulesets"].extend([disabled, other])
+    assert plan.verify_effective_state(state, "develop", 17)["effective_sources_verified"] is True
+
+
+def test_effective_readback_rejects_classic_human_review_or_legacy_gate():
+    state = active_state()
+    state["classic_protection"] = {
+        "allow_force_pushes": {"enabled": False},
+        "allow_deletions": {"enabled": False},
+        "required_pull_request_reviews": {
+            "required_approving_review_count": 1,
+            "require_code_owner_reviews": False,
+            "require_last_push_approval": False,
+            "bypass_pull_request_allowances": {"users": [], "teams": [], "apps": []},
+        },
+        "required_status_checks": {"strict": True, "contexts": [], "checks": []},
+    }
+    with pytest.raises(ValueError, match="still requires human review"):
+        plan.verify_effective_state(state, "develop", 17)
+
+    state["classic_protection"]["required_pull_request_reviews"]["required_approving_review_count"] = 0
+    state["classic_protection"]["required_status_checks"]["contexts"] = [plan.LEGACY]
+    with pytest.raises(ValueError, match="legacy audit gate"):
+        plan.verify_effective_state(state, "develop", 17)
+
+
+def test_effective_readback_accepts_compatible_classic_protection():
+    state = active_state()
+    state["classic_protection"] = {
+        "allow_force_pushes": {"enabled": False},
+        "allow_deletions": {"enabled": False},
+        "required_pull_request_reviews": {
+            "required_approving_review_count": 0,
+            "require_code_owner_reviews": False,
+            "require_last_push_approval": False,
+            "bypass_pull_request_allowances": {"users": [], "teams": [], "apps": []},
+        },
+        "required_status_checks": {
+            "strict": True,
+            "contexts": ["Structure and tests"],
+            "checks": [{"context": "Structure and tests", "app_id": 15368}],
+        },
+    }
+    assert plan.verify_effective_state(state, "develop", 17)["classic_protection_checked"] is True
+
+
+def test_read_effective_state_requires_bypass_visibility_for_every_ruleset(monkeypatch):
+    responses = {
+        "/repos/crgasparoto-br/skill": {"default_branch": "main"},
+        "/repos/crgasparoto-br/skill/rulesets?includes_parents=true": [
+            {"id": 17}, {"id": 99}
+        ],
+        "/repos/crgasparoto-br/skill/rulesets/17": {**baseline(), "bypass_actors": []},
+        "/repos/crgasparoto-br/skill/rulesets/99": {
+            "id": 99, "target": "branch", "enforcement": "active",
+            "conditions": {"ref_name": {"include": ["~ALL"], "exclude": []}},
+            "rules": [],
+        },
+    }
+    monkeypatch.setattr(plan, "gh_api", lambda _repo, path: responses[path])
+    monkeypatch.setattr(plan, "read_classic_protection", lambda _repo, _branch: None)
+    with pytest.raises(ValueError, match="bypass actors are not visible"):
+        plan.read_effective_state("crgasparoto-br/skill", "develop", 17)
+
+
+def test_readback_cli_uses_complete_effective_state(monkeypatch, capsys):
     import sys
-    prior = baseline()
-    active = {**prior, **plan.plan_m2(prior, "develop", 17)}
-    monkeypatch.setattr(plan, "read_ruleset", lambda _repo, _id: active)
+    monkeypatch.setattr(plan, "read_effective_state", lambda _repo, _branch, _id: active_state())
+    monkeypatch.setattr(plan, "read_ruleset",
+                        lambda *_args: pytest.fail("single-ruleset read must not drive --readback"))
     monkeypatch.setattr(sys, "argv", [
         "plan_session_ruleset_m2", "--repo", "crgasparoto-br/skill",
         "--branch", "develop", "--ruleset-id", "17", "--readback"])
     plan.main()
-    assert "ACTIVE_RULESET_STRUCTURE_VERIFIED_NOT_M2_APPROVAL" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "ACTIVE_RULESET_STRUCTURE_VERIFIED_NOT_M2_APPROVAL" in output
+    assert '"effective_sources_verified": true' in output

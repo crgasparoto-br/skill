@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import fnmatch
 import json
 import re
 import subprocess
@@ -66,7 +67,6 @@ def plan_m2(current: dict, branch: str, ruleset_id: int) -> dict:
     require(isinstance(approvals, dict), "PR protection parameters unavailable")
     old_count = approvals.get("required_approving_review_count")
     require(type(old_count) is int and 0 <= old_count <= 10, "invalid previous review count")
-    # A review count of zero must not silently preserve other human-review gates.
     require(approvals.get("required_reviewers", []) == [], "required team reviewers still configured")
     require(approvals.get("require_code_owner_review") is False,
             "code-owner review requirement must be evaluated separately")
@@ -88,7 +88,6 @@ def plan_m2(current: dict, branch: str, ruleset_id: int) -> dict:
         name = item["context"]
         require(name not in indexed, f"duplicate required check: {name}")
         indexed[name] = copy.deepcopy(item)
-    # Do not remove, loosen or change the origin of any technical/custom check.
     for name in REQUIRED[branch]:
         if name in indexed:
             require(indexed[name].get("integration_id") == APP_ID,
@@ -118,8 +117,117 @@ def plan_m2(current: dict, branch: str, ruleset_id: int) -> dict:
     return planned
 
 
+def _matches_ref(pattern: str, ref: str, default_ref: str) -> bool:
+    if pattern == "~ALL":
+        return True
+    if pattern == "~DEFAULT_BRANCH":
+        return ref == default_ref
+    return fnmatch.fnmatchcase(ref, pattern)
+
+
+def ruleset_applies_to_branch(ruleset: dict, branch: str, default_branch: str) -> bool:
+    """Conservatively decide whether an active branch ruleset affects this branch."""
+    if ruleset.get("target") != "branch":
+        return False
+    ref = f"refs/heads/{branch}"
+    default_ref = f"refs/heads/{default_branch}"
+    ref_name = (ruleset.get("conditions") or {}).get("ref_name")
+    require(isinstance(ref_name, dict), "active ruleset ref conditions unavailable")
+    include = ref_name.get("include")
+    exclude = ref_name.get("exclude")
+    require(isinstance(include, list) and isinstance(exclude, list),
+            "active ruleset ref conditions malformed")
+    require(all(isinstance(item, str) for item in include + exclude),
+            "active ruleset ref pattern malformed")
+    included = any(_matches_ref(pattern, ref, default_ref) for pattern in include)
+    excluded = any(_matches_ref(pattern, ref, default_ref) for pattern in exclude)
+    return included and not excluded
+
+
+def verify_classic_protection(protection: dict | None, branch: str) -> None:
+    """Reject classic protection that reintroduces M2 gates or weakens safety."""
+    if protection is None:
+        return
+    require(isinstance(protection, dict), "classic branch protection response malformed")
+    force = protection.get("allow_force_pushes")
+    deletion = protection.get("allow_deletions")
+    require(isinstance(force, dict) and force.get("enabled") is False,
+            "classic protection permits force-push")
+    require(isinstance(deletion, dict) and deletion.get("enabled") is False,
+            "classic protection permits deletion")
+
+    reviews = protection.get("required_pull_request_reviews")
+    if reviews is not None:
+        require(isinstance(reviews, dict), "classic PR review protection malformed")
+        require(reviews.get("required_approving_review_count", 0) == 0,
+                "classic protection still requires human review")
+        require(reviews.get("require_code_owner_reviews", False) is False,
+                "classic protection still requires code-owner review")
+        require(reviews.get("require_last_push_approval", False) is False,
+                "classic protection still requires last-push review")
+        bypass = reviews.get("bypass_pull_request_allowances", {})
+        require(isinstance(bypass, dict), "classic review bypass inventory malformed")
+        for key in ("users", "teams", "apps"):
+            require(bypass.get(key, []) == [], f"classic protection has {key} review bypasses")
+
+    statuses = protection.get("required_status_checks")
+    if statuses is not None:
+        require(isinstance(statuses, dict) and statuses.get("strict") is True,
+                "classic required checks are not strict")
+        contexts = statuses.get("contexts", [])
+        require(isinstance(contexts, list) and all(isinstance(x, str) for x in contexts),
+                "classic required check contexts malformed")
+        require(LEGACY not in contexts, "classic protection still requires legacy audit gate")
+        checks = statuses.get("checks", [])
+        require(isinstance(checks, list), "classic required check origin inventory malformed")
+        for check in checks:
+            require(isinstance(check, dict) and isinstance(check.get("context"), str),
+                    "classic required check malformed")
+            if check["context"] in REQUIRED[branch]:
+                require(check.get("app_id") == APP_ID,
+                        f"classic protection has unexpected app origin for {check['context']}")
+
+
+def verify_effective_state(state: dict, branch: str, ruleset_id: int) -> dict:
+    """Verify all effective protection sources, not only one ruleset by ID."""
+    require(branch in REQUIRED, "unsupported protected branch")
+    require(isinstance(state, dict), "effective state missing")
+    default_branch = state.get("default_branch")
+    require(isinstance(default_branch, str) and default_branch,
+            "repository default branch unavailable")
+    target = state.get("target_ruleset")
+    require(isinstance(target, dict), "target ruleset unavailable")
+    verified = verify_live_ruleset(target, branch, ruleset_id)
+
+    inventory = state.get("rulesets")
+    require(isinstance(inventory, list), "ruleset inventory unavailable")
+    seen_target = False
+    competitors = []
+    for item in inventory:
+        require(isinstance(item, dict), "ruleset inventory item malformed")
+        if item.get("id") == ruleset_id:
+            seen_target = True
+            require(item.get("enforcement") == "active", "target ruleset is not active in inventory")
+            continue
+        if item.get("enforcement") != "active":
+            continue
+        if ruleset_applies_to_branch(item, branch, default_branch):
+            competitors.append(item.get("id"))
+    require(seen_target, "target ruleset missing from complete inventory")
+    require(not competitors,
+            f"additional active ruleset applies to branch: {competitors}")
+
+    verify_classic_protection(state.get("classic_protection"), branch)
+    return {
+        **verified,
+        "effective_sources_verified": True,
+        "active_competing_rulesets": [],
+        "classic_protection_checked": True,
+    }
+
+
 def verify_live_ruleset(current: dict, branch: str, ruleset_id: int) -> dict:
-    """Check effective M2 rule structure only; not proof of a valid session review."""
+    """Check the target M2 ruleset structure; not proof of complete effective state."""
     require(current.get("enforcement") == "active", "ruleset is not enforced")
     expected = plan_m2(current, branch, ruleset_id)
     for field in ("name", "target", "enforcement", "conditions", "bypass_actors", "rules"):
@@ -135,15 +243,63 @@ def verify_live_ruleset(current: dict, branch: str, ruleset_id: int) -> dict:
     }
 
 
-def read_ruleset(repository: str, ruleset_id: int) -> dict:
+def gh_api(repository: str, path: str) -> object:
     result = subprocess.run(
-        ["gh", "api", f"/repos/{repository}/rulesets/{ruleset_id}"],
+        ["gh", "api", path],
         capture_output=True, text=True, check=False,
     )
-    require(result.returncode == 0, "authenticated ruleset GET failed; no changes were made")
-    data = json.loads(result.stdout)
+    require(result.returncode == 0,
+            f"authenticated GitHub GET failed for {path}; no changes were made")
+    return json.loads(result.stdout)
+
+
+def read_ruleset(repository: str, ruleset_id: int) -> dict:
+    data = gh_api(repository, f"/repos/{repository}/rulesets/{ruleset_id}")
     require(isinstance(data, dict), "GitHub ruleset response is not an object")
     return data
+
+
+def read_classic_protection(repository: str, branch: str) -> dict | None:
+    result = subprocess.run(
+        ["gh", "api", f"/repos/{repository}/branches/{branch}/protection"],
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode == 0:
+        data = json.loads(result.stdout)
+        require(isinstance(data, dict), "classic branch protection response is not an object")
+        return data
+    if "HTTP 404" in result.stderr or "Branch not protected" in result.stderr:
+        return None
+    raise ValueError("authenticated classic branch protection GET failed; no changes were made")
+
+
+def read_effective_state(repository: str, branch: str, ruleset_id: int) -> dict:
+    repo_meta = gh_api(repository, f"/repos/{repository}")
+    require(isinstance(repo_meta, dict), "repository metadata response is not an object")
+    default_branch = repo_meta.get("default_branch")
+    require(isinstance(default_branch, str) and default_branch,
+            "repository default branch unavailable")
+
+    summaries = gh_api(repository, f"/repos/{repository}/rulesets?includes_parents=true")
+    require(isinstance(summaries, list), "GitHub ruleset inventory is not a list")
+    details = []
+    for item in summaries:
+        require(isinstance(item, dict) and type(item.get("id")) is int,
+                "ruleset inventory item lacks numeric id")
+        detail = gh_api(repository, f"/repos/{repository}/rulesets/{item['id']}")
+        require(isinstance(detail, dict), "GitHub ruleset detail is not an object")
+        require(isinstance(detail.get("bypass_actors"), list),
+                "bypass actors are not visible for an inventoried ruleset")
+        details.append(detail)
+
+    target = next((item for item in details if item.get("id") == ruleset_id), None)
+    require(target is not None, "target ruleset not found in complete inventory")
+    return {
+        "default_branch": default_branch,
+        "target_ruleset": target,
+        "rulesets": details,
+        "classic_protection": read_classic_protection(repository, branch),
+    }
 
 
 def main() -> None:
@@ -152,16 +308,17 @@ def main() -> None:
     parser.add_argument("--branch", required=True, choices=list(REQUIRED))
     parser.add_argument("--ruleset-id", type=int, required=True)
     parser.add_argument("--readback", action="store_true",
-                        help="verify active M2 rules without mutating settings")
+                        help="verify complete effective M2 protection state without mutating settings")
     options = parser.parse_args()
     require(re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", options.repo) is not None,
             "repository must be owner/name")
     require(options.ruleset_id > 0, "invalid ruleset ID")
-    current = read_ruleset(options.repo, options.ruleset_id)
     if options.readback:
-        print(json.dumps(verify_live_ruleset(current, options.branch, options.ruleset_id),
+        state = read_effective_state(options.repo, options.branch, options.ruleset_id)
+        print(json.dumps(verify_effective_state(state, options.branch, options.ruleset_id),
                          ensure_ascii=False, indent=2))
         return
+    current = read_ruleset(options.repo, options.ruleset_id)
     planned = plan_m2(current, options.branch, options.ruleset_id)
     print(json.dumps({
         "status": "READ_ONLY_PROPOSAL_NOT_M2_APPROVAL",
