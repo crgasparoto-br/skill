@@ -9,7 +9,12 @@ SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "plan_session_ruleset
 spec = importlib.util.spec_from_file_location("plan_session_ruleset_m2", SCRIPT)
 assert spec and spec.loader
 plan = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(plan)
+import sys
+sys.path.insert(0, str(SCRIPT.parent))
+try:
+    spec.loader.exec_module(plan)
+finally:
+    sys.path.remove(str(SCRIPT.parent))
 
 
 def baseline(branch="develop"):

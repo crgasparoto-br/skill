@@ -74,3 +74,9 @@ nao aplicar a proposta nem ativar as regras: manter a configuracao anterior.
 Campos de contagem de review, code-owner, last-push e lista de revisores
 obrigatorios devem estar explicitamente observaveis. Omissao nao representa
 zero revisores nem permissao para prosseguir.
+
+O planejador importa o contrato puro de `scripts/session_ruleset_policy.py`.
+Essa extracao preserva o comportamento e os testes existentes, mantendo cada
+arquivo de producao abaixo de 300 linhas. O publicador confiavel consegue
+revalidar CODE-GROWTH-001 sem flexibilizar limites ou depender de justificacao
+na chamada de leitura final.

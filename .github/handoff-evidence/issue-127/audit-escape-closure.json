@@ -477,7 +477,7 @@
         "status": "passed",
         "evidence": {
           "path": "tests/test_plan_session_ruleset_m2.py",
-          "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
+          "sha256": "b3c7d915af43d36c74c500701932b499840738ca5dc0799b0c75e7687772fa1b",
           "evidence_kind": "reviewed-source-and-test-definition",
           "procedure": "Run test_second_page_competing_ruleset_blocks_effective_readback against the real entrypoint with stubbed paginated API responses.",
           "observed": "The verifier fetches both pages and refuses the second-page conflicting ruleset; execution is checked by exact-SHA JUnit.",
@@ -492,7 +492,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
+            "sha256": "b3c7d915af43d36c74c500701932b499840738ca5dc0799b0c75e7687772fa1b",
             "procedure": "Execute test_effective_readback_rejects_classic_human_review_or_legacy_gate with a residual classic approval requirement.",
             "observed": "The verifier blocks because classic protection still requires human review."
           }
@@ -504,7 +504,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
+            "sha256": "b3c7d915af43d36c74c500701932b499840738ca5dc0799b0c75e7687772fa1b",
             "procedure": "Execute test_read_effective_state_requires_bypass_visibility_for_every_ruleset with an inventoried ruleset lacking bypass_actors.",
             "observed": "The authenticated read-back fails closed when bypass actors are not visible."
           }
@@ -516,7 +516,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
+            "sha256": "b3c7d915af43d36c74c500701932b499840738ca5dc0799b0c75e7687772fa1b",
             "procedure": "Run test_classic_review_bypass_inventory_must_be_explicit for missing/partial/populated actor lists.",
             "observed": "Missing or nonempty classic review bypass inventories are denied."
           }
@@ -528,7 +528,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
+            "sha256": "b3c7d915af43d36c74c500701932b499840738ca5dc0799b0c75e7687772fa1b",
             "procedure": "Run test_classic_checks_cannot_hide_legacy_gate_outside_contexts.",
             "observed": "A legacy check hidden only in the checks array is rejected."
           }
@@ -540,7 +540,7 @@
           "status": "passed",
           "evidence": {
             "path": "tests/test_plan_session_ruleset_m2.py",
-            "sha256": "e8d94b4931ffdae04932fdfba44f655c5ca073cfeaf8c6da0ec6e562aa146854",
+            "sha256": "b3c7d915af43d36c74c500701932b499840738ca5dc0799b0c75e7687772fa1b",
             "procedure": "Run test_classic_review_fields_cannot_be_inferred for missing review count, code-owner and last-push fields.",
             "observed": "The verifier refuses to infer zero/false from missing classic review fields."
           }
@@ -548,7 +548,7 @@
       ],
       "prevention_change": {
         "skill_or_code": "scripts/plan_session_ruleset_m2.py",
-        "evidence": "Paginated all repository and inherited rulesets, verified summary/detail continuity, denied missing bypass information in classic protection, and rejected legacy checks outside contexts. Unknown required human-review fields and required team reviewer lists now fail closed."
+        "evidence": "Paginated all repository and inherited rulesets, verified summary/detail continuity, denied missing bypass information in classic protection, and rejected legacy checks outside contexts. Unknown required human-review fields and required team reviewer lists now fail closed. The pure policy module is extracted to satisfy the trusted final publisher's independent source-size gate."
       },
       "detection_change": {
         "skill_or_gate": "tests/test_plan_session_ruleset_m2.py",
