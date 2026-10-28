@@ -135,6 +135,33 @@ def unpack(raw: bytes, directory: Path) -> None:
         archive.extractall(directory)
 
 
+def authenticated_certificate_event(identity: dict) -> dict:
+    """Rebuild the certificate event using live GitHub PR and ordered merge parents."""
+    repo, number = identity["repository"], identity["pull_request"]
+    pr = api(f"/repos/{repo}/pulls/{number}")
+    require(isinstance(pr, dict), "malformed authenticated PR response")
+    head, base = pr.get("head") or {}, pr.get("base") or {}
+    require(isinstance(head, dict) and isinstance(base, dict), "malformed PR base/head")
+    preview = pr.get("merge_commit_sha")
+    require(pr.get("number") == number and pr.get("state") == "open" and pr.get("draft") is False
+            and head.get("sha") == identity["head_sha"]
+            and base.get("sha") == identity["base_sha"] and base.get("ref") == identity["base_ref"]
+            and (head.get("repo") or {}).get("full_name") == repo
+            and (base.get("repo") or {}).get("full_name") == repo
+            and isinstance(preview, str) and re.fullmatch("[0-9a-f]{40}", preview)
+            and preview == identity["merge_preview_sha"], "PR identity/preview drift")
+    merge = api(f"/repos/{repo}/git/commits/{preview}")
+    parents = merge.get("parents") if isinstance(merge, dict) else None
+    require(isinstance(merge, dict) and merge.get("sha") == preview and isinstance(parents, list)
+            and len(parents) == 2 and all(isinstance(p, dict) for p in parents)
+            and [p.get("sha") for p in parents] == [identity["base_sha"], identity["head_sha"]],
+            "merge preview has incorrect ordered base/HEAD parents")
+    return {"repository": {"full_name": repo}, "pull_request": {
+        "number": number, "title": pr.get("title") or "", "body": pr.get("body") or "",
+        "merge_commit_sha": preview, "base": {"ref": identity["base_ref"], "sha": identity["base_sha"]},
+        "head": {"sha": identity["head_sha"], "repo": {"full_name": repo}}}}
+
+
 def certified_evidence(identity: dict, checks: dict, directory: Path) -> tuple[dict, set[str]]:
     """Technical workflow authentication is reused, not replaced by check-name matching."""
     from verify_independent_pr_audit import HANDOFF, required_checks_green, trusted_workflow_check
@@ -160,8 +187,9 @@ def certified_evidence(identity: dict, checks: dict, directory: Path) -> tuple[d
     sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
     from build_test_candidate_index import collect
     from require_actions_handoff_certificate import verify
-    event = {"repository": {"full_name": repo}, "pull_request": {"number": number,
-             "base": {"ref": identity["base_ref"]}, "head": {"sha": head, "repo": {"full_name": repo}}}}
+    event = authenticated_certificate_event(identity)
+    recorded = json.loads((directory / "certification-event.json").read_bytes())
+    require(recorded == event, "certification event altered or stale against authenticated PR")
     event_path = directory / "trusted-event.json"
     event_path.write_bytes(canonical(event))
     verify(directory, event_path, identity["base_ref"])
