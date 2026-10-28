@@ -13,7 +13,7 @@ import json
 import re
 import subprocess
 
-from session_ruleset_policy import APP_ID, LEGACY, REQUIRED, SESSION, plan_m2, require
+from session_ruleset_policy import APP_ID, LEGACY, REQUIRED, plan_m2, require
 
 
 def _matches_ref(pattern: str, ref: str, default_ref: str) -> bool:
