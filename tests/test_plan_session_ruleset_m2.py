@@ -429,3 +429,42 @@ def test_classic_review_fields_cannot_be_inferred(missing):
     with pytest.raises(ValueError):
         plan.verify_effective_state(state, "develop", 17)
 
+
+
+@pytest.mark.parametrize("branch", ["develop", "main"])
+@pytest.mark.parametrize("bypasses", [[], [{"actor_id": 88, "actor_type": "Integration", "bypass_mode": "always"}]])
+def test_active_push_ruleset_blocks_effective_readback(branch, bypasses):
+    state = active_state(branch)
+    state["rulesets"].append({
+        "id": 99, "name": "Repository-wide push restriction",
+        "target": "push", "enforcement": "active", "bypass_actors": bypasses,
+        "rules": [{"type": "file_path_restriction",
+                   "parameters": {"restricted_file_paths": ["scripts/**"]}}],
+    })
+    with pytest.raises(ValueError, match="additional active ruleset"):
+        plan.verify_effective_state(state, branch, 17)
+
+
+@pytest.mark.parametrize("branch", ["develop", "main"])
+def test_inactive_push_and_active_tag_rules_do_not_block_branch_readback(branch):
+    state = active_state(branch)
+    state["rulesets"].extend([
+        {"id": 89, "target": "push", "enforcement": "disabled",
+         "bypass_actors": [], "rules": []},
+        {"id": 90, "target": "tag", "enforcement": "active",
+         "bypass_actors": [], "rules": []},
+    ])
+    assert plan.verify_effective_state(state, branch, 17)["effective_sources_verified"]
+
+
+def test_github_fnmatch_pathname_does_not_cross_slashes_and_supports_double_star():
+    match = plan.ruleset_applies_to_branch
+    def rule(pattern):
+        return {"target": "branch", "conditions": {"ref_name": {
+            "include": [pattern], "exclude": []}}}
+    assert not match(rule("refs/heads/release/*"), "release/v1/stable", "main")
+    assert match(rule("refs/heads/release/**"), "release/v1/stable", "main")
+    assert match(rule("refs/heads/release/**/*"), "release/v1/stable", "main")
+    assert match(rule("refs/heads/*"), "develop", "main")
+    with pytest.raises(ValueError, match="unsupported GitHub ruleset ref pattern"):
+        match(rule("refs/heads/[dm]*"), "develop", "main")
