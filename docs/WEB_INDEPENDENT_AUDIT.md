@@ -36,7 +36,8 @@ os pais ordenados (base, HEAD). Grava um evento minimo normalizado nas
 evidencias, usado na certificacao material posterior sem repassar o token ao
 passo que roda depois dos testes. O job confiavel separado de certificacao
 exige novamente a consulta autenticada, a mesma identidade e o mesmo preview,
-rejeitando adulteracao do evento normalizado pelo candidato. As consultas
+rejeitando adulteracao do evento normalizado pelo candidato, incluindo
+titulo, corpo, numero, issue implicita, base e HEAD originais. As consultas
 admitem ate quatro tentativas; ausencia, mudanca de alvo ou objeto antigo
 bloqueiam. Replays historicos literais rodam com ambiente sanitizado e nao
 reivindicam autoridade para publicar checks.
