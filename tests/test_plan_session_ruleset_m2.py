@@ -393,3 +393,33 @@ def test_classic_404_without_verified_admin_rights_is_not_absence(monkeypatch):
         "crgasparoto-br/skill", "develop", admin_confirmed=True
     ) is None
 
+
+def test_m2_plan_requires_visible_required_team_reviewer_inventory():
+    item = baseline()
+    item["rules"][2]["parameters"].pop("required_reviewers")
+    with pytest.raises(ValueError, match="team reviewer inventory unavailable"):
+        plan.plan_m2(item, "develop", 17)
+
+
+@pytest.mark.parametrize("missing", [
+    "required_approving_review_count",
+    "require_code_owner_reviews",
+    "require_last_push_approval",
+])
+def test_classic_review_fields_cannot_be_inferred(missing):
+    state = active_state()
+    reviews = {
+        "required_approving_review_count": 0,
+        "require_code_owner_reviews": False,
+        "require_last_push_approval": False,
+        "bypass_pull_request_allowances": {"users": [], "teams": [], "apps": []},
+    }
+    reviews.pop(missing)
+    state["classic_protection"] = {
+        "allow_force_pushes": {"enabled": False},
+        "allow_deletions": {"enabled": False},
+        "required_pull_request_reviews": reviews,
+    }
+    with pytest.raises(ValueError):
+        plan.verify_effective_state(state, "develop", 17)
+

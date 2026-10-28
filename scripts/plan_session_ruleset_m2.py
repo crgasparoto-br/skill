@@ -67,7 +67,10 @@ def plan_m2(current: dict, branch: str, ruleset_id: int) -> dict:
     require(isinstance(approvals, dict), "PR protection parameters unavailable")
     old_count = approvals.get("required_approving_review_count")
     require(type(old_count) is int and 0 <= old_count <= 10, "invalid previous review count")
-    require(approvals.get("required_reviewers", []) == [], "required team reviewers still configured")
+    require(isinstance(approvals.get("required_reviewers"), list),
+            "required team reviewer inventory unavailable")
+    require(approvals["required_reviewers"] == [],
+            "required team reviewers still configured")
     require(approvals.get("require_code_owner_review") is False,
             "code-owner review requirement must be evaluated separately")
     require(approvals.get("require_last_push_approval") is False,
@@ -159,11 +162,12 @@ def verify_classic_protection(protection: dict | None, branch: str) -> None:
     reviews = protection.get("required_pull_request_reviews")
     if reviews is not None:
         require(isinstance(reviews, dict), "classic PR review protection malformed")
-        require(reviews.get("required_approving_review_count", 0) == 0,
-                "classic protection still requires human review")
-        require(reviews.get("require_code_owner_reviews", False) is False,
+        count = reviews.get("required_approving_review_count")
+        require(type(count) is int and count == 0,
+                "classic protection still requires human review or count is unavailable")
+        require(reviews.get("require_code_owner_reviews") is False,
                 "classic protection still requires code-owner review")
-        require(reviews.get("require_last_push_approval", False) is False,
+        require(reviews.get("require_last_push_approval") is False,
                 "classic protection still requires last-push review")
         require("bypass_pull_request_allowances" in reviews,
                 "classic review bypass inventory missing")

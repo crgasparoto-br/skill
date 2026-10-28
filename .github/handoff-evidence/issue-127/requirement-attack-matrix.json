@@ -2294,7 +2294,7 @@
           },
           "evidence": "tests/test_plan_session_ruleset_m2.py: test_second_page_competing_ruleset_blocks_effective_readback exercises paginated collection and rejects a later-page competitor. Runtime evidence must be collected in exact-SHA GitHub Actions JUnit.",
           "evidence_path": "tests/test_plan_session_ruleset_m2.py",
-          "evidence_sha256": "7220426c9a569f9aacf9a511bec98848bd4a2f51ebfcf8ca9e0e96ad6717d3b9",
+          "evidence_sha256": "16020203d038af6ddae770fcfafceed5a2a3b7bac2184818f062c11aadfefe9d",
           "id": "NEG-R127-11-10",
           "risk_family": "structural-contract",
           "surface": "effective-protection-readback",
@@ -2326,6 +2326,17 @@
                 "name": "test_classic_checks_cannot_hide_legacy_gate_outside_contexts"
               },
               "evidence": "tests/test_plan_session_ruleset_m2.py: test_classic_checks_cannot_hide_legacy_gate_outside_contexts rejects legacy check listed only in classic checks; exact-SHA JUnit required."
+            },
+            {
+              "id": "NEG-R127-11-10-S3",
+              "surface": "effective-protection-readback",
+              "dimension": "missing-classic-review-field",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_plan_session_ruleset_m2",
+                "name": "test_classic_review_fields_cannot_be_inferred[required_approving_review_count]"
+              },
+              "evidence": "tests/test_plan_session_ruleset_m2.py: test_classic_review_fields_cannot_be_inferred requires observed review metadata rather than treating omitted values as zero; exact-SHA JUnit required."
             }
           ]
         }

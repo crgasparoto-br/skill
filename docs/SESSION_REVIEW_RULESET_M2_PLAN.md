@@ -70,3 +70,7 @@ uma PR real contra `main` que `Offline authorization tests` e
 aplicacao GitHub Actions exigida e podem concluir com sucesso. O ruleset
 atual da `main` nao exige esses dois checks. Sem provas operacionais,
 nao aplicar a proposta nem ativar as regras: manter a configuracao anterior.
+
+Campos de contagem de review, code-owner, last-push e lista de revisores
+obrigatorios devem estar explicitamente observaveis. Omissao nao representa
+zero revisores nem permissao para prosseguir.

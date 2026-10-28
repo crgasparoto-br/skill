@@ -29,7 +29,7 @@
     {
       "path": "tests/test_plan_session_ruleset_m2.py",
       "operation": "added",
-      "scenario": "R127-13 preparation and audit remediation: verify the complete effective branch protection state, including competing/inherited rulesets and classic branch protection, while preserving read-only behavior. New negative tests cover second-page rules, hidden classic bypass actors and legacy checks in the checks-only representation.",
+      "scenario": "R127-13 preparation and audit remediation: verify the complete effective branch protection state, including competing/inherited rulesets and classic branch protection, while preserving read-only behavior. New negative tests cover second-page rules, hidden classic bypass actors and legacy checks in the checks-only representation. Absent review-count, code-owner, last-push and team-reviewer inventories now fail closed.",
       "requirement": "R127-13 remains deferred until real session review, operational positive and adversarial runs, protected ruleset installation and read-back; tests exercise only the M2 migration plan, not operational adoption.",
       "search": {
         "queries": [
@@ -57,7 +57,7 @@
         ]
       },
       "decision": "new-test-required",
-      "justification": "Extended the dedicated M2 suite because the independent audit found that single-ruleset read-back could miss concurrent effective protection sources. New controls distinguish complete effective-state verification from target-ruleset-only verification. This targeted extension addresses otherwise undetected pagination and classic bypass surfaces without replacing legacy controls.",
+      "justification": "Extended the dedicated M2 suite because the independent audit found that single-ruleset read-back could miss concurrent effective protection sources. New controls distinguish complete effective-state verification from target-ruleset-only verification. This targeted extension addresses otherwise undetected pagination and classic bypass surfaces without replacing legacy controls. Tests distinguish absent reviewer metadata from verified zero and false values.",
       "disposition": "keep",
       "verification": {
         "status": "unknown",
