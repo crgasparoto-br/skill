@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import urllib.parse
 import urllib.request
 from typing import TYPE_CHECKING
 
@@ -35,8 +36,22 @@ def _current_github_preview(repository: str, number: int, head: str,
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
         raise ValueError("read-only GitHub API credential unavailable at certification")
-    api = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
-    if api != "https://api.github.com" or REPO.fullmatch(repository) is None:
+    # GitHub Actions owns both origins. Allow standard dot-api and Enterprise
+    # /api/v3, never an arbitrary URL from the PR or the webhook payload.
+    api = os.environ.get("GITHUB_API_URL", "").rstrip("/")
+    server = os.environ.get("GITHUB_SERVER_URL", "").rstrip("/")
+    api_url = urllib.parse.urlsplit(api)
+    server_url = urllib.parse.urlsplit(server)
+    standard = (api_url.hostname == f"api.{server_url.hostname}"
+                and api_url.path in ("", "/"))
+    enterprise = (api_url.hostname == server_url.hostname
+                  and api_url.path == "/api/v3")
+    if (api_url.scheme != "https" or server_url.scheme != "https"
+            or not api_url.hostname or not server_url.hostname
+            or api_url.username or api_url.password or api_url.query or api_url.fragment
+            or server_url.username or server_url.password or server_url.path not in ("", "/")
+            or server_url.query or server_url.fragment
+            or not (standard or enterprise) or REPO.fullmatch(repository) is None):
         raise ValueError("unexpected GitHub API origin or repository identity")
     request = urllib.request.Request(
         f"{api}/repos/{repository}/pulls/{number}",
