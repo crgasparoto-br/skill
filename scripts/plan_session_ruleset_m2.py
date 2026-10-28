@@ -13,7 +13,12 @@ import re
 import subprocess
 
 from session_ruleset_policy import (
-    APP_ID, LEGACY, REQUIRED, plan_m2, require, ruleset_applies_to_branch,
+    APP_ID,
+    LEGACY,
+    REQUIRED,
+    plan_m2,
+    require,
+    ruleset_applies_to_branch,
 )
 
 
