@@ -1,7 +1,23 @@
 # Planejamento seguro da migracao M2 (issue #127)
 
-A PR #140 continua com seu HEAD material certificado. Este planejamento nao
-constitui a revisao de sessao exigida para M2.
+A PR #140 conserva seu HEAD material historicamente certificado; qualquer
+mudanca posterior na base exige novas provas de identidade para aprovacao corrente.
+Este planejamento nao constitui a revisao de sessao exigida para M2.
+
+## Dependencia de bootstrap e recertificacao sem looping
+
+A PR #142 instalou em `develop` (merge
+`bb21afb76aaff88064b2fa19377f2039f2cfdf8c`) o certificador que recebe
+`merge_commit_sha` do evento GitHub, o confere com repo/PR/base/HEAD e exige os
+mesmos bytes na identidade do certificado e na validacao posterior. A
+propagacao para `main` foi proposta na PR #143; nenhuma dessas instalacoes
+substitui o parecer independente do candidato ou o teste M2 real.
+
+No novo HEAD desta PR, recertificar contra a base protegida efetiva: jamais
+reutilizar o merge preview, JUnit ou certificado de PR/base/HEAD antigos.
+A-001 e A-002 sao causas distintas e possuem testes negativos separados.
+Nao migrar os rulesets apenas para obter check verde e nao marcar
+R127-12/R127-13 como cumpridos antes de ensaios reais e read-back.
 
 O script scripts/plan_session_ruleset_m2.py apenas prepara um JSON.
 Ele nao executa PUT/PATCH, altera regras, registra parecer nem faz merge.
