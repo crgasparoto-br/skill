@@ -2282,6 +2282,63 @@
               "evidence": "auditar-issue/tests/test_delivery_saturation_preflight.py:22-31 (case test_preflight_rejects_unsaturated_material_family; JUnit classname auditar-issue.tests.test_delivery_saturation_preflight); source oracle reviewed, execution required by manifest.test_bindings."
             }
           ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_plan_session_ruleset_m2",
+            "name": "test_second_page_competing_ruleset_blocks_effective_readback"
+          },
+          "evidence": "tests/test_plan_session_ruleset_m2.py: test_second_page_competing_ruleset_blocks_effective_readback exercises paginated collection and rejects a later-page competitor. Runtime evidence must be collected in exact-SHA GitHub Actions JUnit.",
+          "evidence_path": "tests/test_plan_session_ruleset_m2.py",
+          "evidence_sha256": "d40cd01d30e2d5b429b7959175cb6e647d2abebfb5b6f68cd9e08f9cde77bcab",
+          "id": "NEG-R127-11-10",
+          "risk_family": "structural-contract",
+          "surface": "effective-protection-readback",
+          "dimension": "second-page-applicable-ruleset",
+          "failure_mode": "An unpaged query can falsely report complete effective-state protection despite an active conflicting ruleset on a subsequent page.",
+          "plausible_wrong_implementation": "Only retrieve the first ruleset API page and mark verification successful although an inherited conflicting rule exists on the second page.",
+          "procedure": "Run test_second_page_competing_ruleset_blocks_effective_readback with two response pages, complete target and competitor details and the real verifier.",
+          "expected": "The later-page competitor must be observed and rejected; missing classic bypass visibility and a legacy check outside contexts must also reject.",
+          "observed": "The reviewed test assertions require paginated retrieval and fail-closed rejection; passed execution must be verified from exact-SHA JUnit.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R127-11-10-S1",
+              "surface": "effective-protection-readback",
+              "dimension": "missing-classic-review-bypass",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_plan_session_ruleset_m2",
+                "name": "test_classic_review_bypass_inventory_must_be_explicit[None]"
+              },
+              "evidence": "tests/test_plan_session_ruleset_m2.py: test_classic_review_bypass_inventory_must_be_explicit rejects absent classic bypass inventory; exact-SHA JUnit required."
+            },
+            {
+              "id": "NEG-R127-11-10-S2",
+              "surface": "effective-protection-readback",
+              "dimension": "legacy-only-in-classic-checks",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_plan_session_ruleset_m2",
+                "name": "test_classic_checks_cannot_hide_legacy_gate_outside_contexts"
+              },
+              "evidence": "tests/test_plan_session_ruleset_m2.py: test_classic_checks_cannot_hide_legacy_gate_outside_contexts rejects legacy check listed only in classic checks; exact-SHA JUnit required."
+            },
+            {
+              "id": "NEG-R127-11-10-S3",
+              "surface": "effective-protection-readback",
+              "dimension": "missing-classic-review-field",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_plan_session_ruleset_m2",
+                "name": "test_classic_review_fields_cannot_be_inferred[required_approving_review_count]"
+              },
+              "evidence": "tests/test_plan_session_ruleset_m2.py: test_classic_review_fields_cannot_be_inferred requires observed review metadata rather than treating omitted values as zero; exact-SHA JUnit required."
+            }
+          ]
         }
       ],
       "regression_controls": [
@@ -2558,6 +2615,11 @@
           "risk_family": "structural-contract",
           "surface": "auditor-saturation-consumption",
           "reason": "Confundir coleta factual com certificado ou promover testes ausentes a passed permitiria liberar um handoff sem o replay e a verificacao exact-SHA obrigatorios. O publicador tambem nao pode aceitar prova bruta adulterada, fora da allowlist certificada ou por alias symlink ao reconstruir o checkout limpo. Inferir ausencia de historico pelo worktree posterior, em vez de consultar o commit material, permitiria omitir controles existentes ou bloquear incorretamente o primeiro handoff."
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "effective-protection-readback",
+          "reason": "Effective protection verification must inspect every page, reconcile competing rules, and refuse hidden classic bypasses and legacy required checks."
         }
       ],
       "quantitative_evidence_required": false

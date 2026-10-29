@@ -278,7 +278,7 @@
       "literal_case": {
         "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
         "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Risk saturation covers every family declared by the attack matrix and active inherited controls, including semantic-effect; the official auditor saturation consumer checks that composition. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
-        "status": "not-passed",
+        "status": "passed",
         "evidence": {
           "path": "tests/test_session_review_dossier.py",
           "sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
@@ -286,6 +286,18 @@
           "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
           "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Risk saturation covers every family declared by the attack matrix and active inherited controls, including semantic-effect; the official auditor saturation consumer checks that composition. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
           "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
+        },
+        "replay_evidence": {
+          "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python /workspace/scratch/feec0c916f9c/pr128-audit/trusted/entregar-issue/scripts/require_actions_handoff_certificate.py --evidence-dir /workspace/scratch/feec0c916f9c/pr128-audit/evidence --event /workspace/scratch/feec0c916f9c/pr128-audit/trusted-event.json --base-ref develop",
+          "exit_code": 0,
+          "material_head_sha": "dae23537f46f81a7e70dc6aba4a33c87b16f4ff6",
+          "preparation_sha256": "faac5a2e1de94845e6b04dac88adc1ba82e838a0c33c6e82c4719b39b672dbeb",
+          "raw_log_sha256": "1126436ff0bb0a5922d12f4f09021fb89778e283250b8d19670683a7c862c0ad",
+          "receipt_sha256": "c96260148d9bf4606029eb3a09245371070bf0b363cd98b7fd4a78d63bc9485f",
+          "source_id": "A-004",
+          "source_kind": "finding",
+          "trusted_anchor_sha": "2366dd6da7ac9d8c5defe9b40f53dd3c4a0c650f",
+          "type": "certificate-postcondition-literal-replay"
         }
       },
       "sibling_cases": [
@@ -351,7 +363,15 @@
         "structural-contract"
       ],
       "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
-      "status": "blocked"
+      "status": "passed",
+      "historical_replay_source": {
+        "repository": "crgasparoto-br/skill",
+        "pull_request": 128,
+        "workflow_run_id": 40446268572,
+        "artifact_id": 12708916486,
+        "artifact_digest_sha256": "011c99d784d93244707af5ce881c294c87e621a91a4fed16ca7195768c6d634c",
+        "evidence_note": "Authenticated prior finalization of the same historical rejection A-004; current exact-head tests revalidate the prevention/detection controls while preserving the original replay receipt."
+      }
     },
     {
       "escape_id": "A-005",
@@ -440,7 +460,129 @@
       ],
       "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
       "status": "passed"
+    },
+    {
+      "escape_id": "PR141-A-001-effective-state-readback",
+      "escape_class": "partial-effective-protection-readback",
+      "source_audit": {
+        "rejection_id": "audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c",
+        "head_sha": "fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457",
+        "finding_id": "A-001",
+        "audit_report_sha256": "e7b92a30146ecfd80cefa115c290fc03a2240b984805421b8a6f7dcf0b4d4f26"
+      },
+      "plausible_wrong_implementation": "Validate only the selected ruleset by ID and report M2 read-back success while another active or classic protection source still changes the branch's effective merge requirements.",
+      "literal_case": {
+        "procedure": "Exercise the actual paginated read-back with an active competing ruleset returned on the second GitHub API page.",
+        "observed": "The verifier fetches both pages and refuses the second-page conflicting ruleset; execution is checked by exact-SHA JUnit.",
+        "status": "passed",
+        "evidence": {
+          "path": "tests/test_plan_session_ruleset_m2.py",
+          "sha256": "d40cd01d30e2d5b429b7959175cb6e647d2abebfb5b6f68cd9e08f9cde77bcab",
+          "evidence_kind": "reviewed-source-and-test-definition",
+          "procedure": "Run test_second_page_competing_ruleset_blocks_effective_readback against the real entrypoint with stubbed paginated API responses.",
+          "observed": "The verifier fetches both pages and refuses the second-page conflicting ruleset; execution is checked by exact-SHA JUnit.",
+          "execution_binding": "manifest.test_bindings and exact-SHA JUnit collected by GitHub Actions."
+        }
+      },
+      "sibling_cases": [
+        {
+          "id": "classic-human-review-residual",
+          "surface": "classic-branch-protection",
+          "dimension": "residual-human-review-gate",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_plan_session_ruleset_m2.py",
+            "sha256": "d40cd01d30e2d5b429b7959175cb6e647d2abebfb5b6f68cd9e08f9cde77bcab",
+            "procedure": "Execute test_effective_readback_rejects_classic_human_review_or_legacy_gate with a residual classic approval requirement.",
+            "observed": "The verifier blocks because classic protection still requires human review."
+          }
+        },
+        {
+          "id": "hidden-bypass-inventory",
+          "surface": "ruleset-inventory",
+          "dimension": "bypass-visibility",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_plan_session_ruleset_m2.py",
+            "sha256": "d40cd01d30e2d5b429b7959175cb6e647d2abebfb5b6f68cd9e08f9cde77bcab",
+            "procedure": "Execute test_read_effective_state_requires_bypass_visibility_for_every_ruleset with an inventoried ruleset lacking bypass_actors.",
+            "observed": "The authenticated read-back fails closed when bypass actors are not visible."
+          }
+        },
+        {
+          "id": "classic-hidden-bypass",
+          "surface": "classic-branch-protection",
+          "dimension": "missing-classic-review-bypass",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_plan_session_ruleset_m2.py",
+            "sha256": "d40cd01d30e2d5b429b7959175cb6e647d2abebfb5b6f68cd9e08f9cde77bcab",
+            "procedure": "Run test_classic_review_bypass_inventory_must_be_explicit for missing/partial/populated actor lists.",
+            "observed": "Missing or nonempty classic review bypass inventories are denied."
+          }
+        },
+        {
+          "id": "classic-legacy-checks-array",
+          "surface": "classic-branch-protection",
+          "dimension": "legacy-only-in-classic-checks",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_plan_session_ruleset_m2.py",
+            "sha256": "d40cd01d30e2d5b429b7959175cb6e647d2abebfb5b6f68cd9e08f9cde77bcab",
+            "procedure": "Run test_classic_checks_cannot_hide_legacy_gate_outside_contexts.",
+            "observed": "A legacy check hidden only in the checks array is rejected."
+          }
+        },
+        {
+          "id": "classic-hidden-review-field",
+          "surface": "classic-branch-protection",
+          "dimension": "missing-classic-review-field",
+          "status": "passed",
+          "evidence": {
+            "path": "tests/test_plan_session_ruleset_m2.py",
+            "sha256": "d40cd01d30e2d5b429b7959175cb6e647d2abebfb5b6f68cd9e08f9cde77bcab",
+            "procedure": "Run test_classic_review_fields_cannot_be_inferred for missing review count, code-owner and last-push fields.",
+            "observed": "The verifier refuses to infer zero/false from missing classic review fields."
+          }
+        }
+      ],
+      "prevention_change": {
+        "skill_or_code": "scripts/plan_session_ruleset_m2.py",
+        "evidence": "Paginated all repository and inherited rulesets, verified summary/detail continuity, denied missing bypass information in classic protection, and rejected legacy checks outside contexts. Unknown required human-review fields and required team reviewer lists now fail closed. The pure policy module is extracted to satisfy the trusted final publisher's independent source-size gate."
+      },
+      "detection_change": {
+        "skill_or_gate": "tests/test_plan_session_ruleset_m2.py",
+        "control_id": "NEG-R127-13-EFFECTIVE-STATE",
+        "evidence": "Negative tests exercise second-page competitors, malformed page shapes, classic bypass visibility, legacy checks hidden in checks arrays, duplicate ruleset IDs, and ambiguous HTTP 404. Missing review metadata is covered by parametrized negative tests."
+      },
+      "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
+      "status": "passed",
+      "required_risk_families": [
+        "structural-contract"
+      ],
+      "required_attack_dimensions": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "effective-protection-readback",
+          "dimension": "second-page-applicable-ruleset"
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "effective-protection-readback",
+          "dimension": "missing-classic-review-bypass"
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "effective-protection-readback",
+          "dimension": "legacy-only-in-classic-checks"
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "effective-protection-readback",
+          "dimension": "missing-classic-review-field"
+        }
+      ]
     }
   ],
-  "status": "blocked"
+  "status": "passed"
 }

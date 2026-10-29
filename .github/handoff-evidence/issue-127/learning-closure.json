@@ -1,229 +1,249 @@
 {
   "schema_version": 1,
-  "classification": "systemic-escape",
+  "classification": "implementation-only",
   "source_event": {
     "kind": "independent-rejection",
-    "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+    "rejection_id": "audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c",
     "finding_ids": [
-      "A-001",
-      "A-002",
-      "A-003",
-      "A-004",
-      "A-005"
+      "A-001"
     ],
-    "audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4",
-    "audited_head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
-    "report_origin": "Read-only review before this implementation, preserved byte-for-byte from the prior user-visible audit report."
+    "audit_report_sha256": "e7b92a30146ecfd80cefa115c290fc03a2240b984805421b8a6f7dcf0b4d4f26",
+    "audited_head_sha": "fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457",
+    "report_origin": "Independent review of PR #141 before this targeted remediation; the source result is preserved in audit-source-result.json."
   },
   "generalized_learning": {
-    "escape_class": "material-parent-evidence-state-conflation",
-    "generalized_failure_pattern": "A result publisher and terminal guard fail to distinguish an existing historical blob, a path proven absent in the exact material tree, and an unavailable or failed observation. Testing only a light first-delivery fixture misses the cumulative-ledger requirements of a critical re-audit.",
-    "plausible_wrong_implementation": "Treat a missing snapshot as proof of absence, fabricate an empty historical ledger, consult the later child HEAD instead of the material commit, or accept mutable snapshot bytes without comparison to the Git object.",
-    "trigger_signals": [
-      "first creation of a cumulative ledger",
-      "replacement of an existing ledger",
-      "material-parent lineage verification",
-      "critical result-only publication"
-    ],
-    "risk_families": [
-      "historical-immutability",
-      "public-boundary"
-    ],
-    "reusable_control": {
-      "id": "TERMINAL-MATERIAL-PARENT-001",
-      "procedure": "Inspect the exact material Git tree with replacement objects disabled; authenticate existing snapshots against immutable blob bytes or record absence only after a successful path lookup. Run current-artifact semantic and historical lineage guards before and after publication."
-    },
-    "prevention_rule": "A present material blob requires an identical snapshot. Proven absence requires a successful lookup of the exact material commit and safe path types. Unavailable objects, read errors, unsafe paths and inconsistent snapshots remain blocking. External rejection snapshots remain separate and mandatory when applicable.",
-    "detection_rule": "Exercise critical targeted re-audit publication with real Git and both terminal guards, then reject forged absence, omitted or changed snapshots, symlinks, missing objects and observation of the later child in place of the material parent.",
-    "transfer_cases": [
-      {
-        "id": "first-critical-ledger-publication",
-        "surface": "result publisher introducing cumulative ledgers",
-        "status": "passed",
-        "procedure": "Run the complete synthetic critical re-audit publication with external rejection snapshots and no versioned audit subtree in the material parent.",
-        "expected": "The real guards accept Git-proven absence and retain external rejection history after the child is created.",
-        "evidence": {
-          "path": "entregar-issue/tests/test_publish_actions_handoff.py",
-          "classname": "entregar-issue.tests.test_publish_actions_handoff",
-          "name": "test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
-        }
-      },
-      {
-        "id": "existing-ledger-snapshot-integrity",
-        "surface": "terminal validation of an existing material ledger",
-        "status": "passed",
-        "procedure": "Supply altered snapshot bytes for a ledger whose original bytes exist in an immutable synthetic Git commit.",
-        "expected": "The actual terminal guard rejects the snapshot before it can serve as lineage evidence.",
-        "evidence": {
-          "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
-          "classname": "entregar-issue.tests.test_terminal_handoff_contract",
-          "name": "test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-tampered]"
-        }
-      },
-      {
-        "id": "critical-certificate-postcondition",
-        "surface": "official preparation and final certification",
-        "status": "passed",
-        "procedure": "Run a synthetic critical targeted re-audit through the real builder, immutable historical gate, literal replay, record finalization, final validator and audit preflight.",
-        "expected": "Preparation retains the blocked records and has no publication authority; only actual replay permits the final certificate and the audit preflight.",
-        "evidence": {
-          "path": "entregar-issue/tests/test_handoff_postcondition.py",
-          "classname": "entregar-issue.tests.test_handoff_postcondition",
-          "name": "test_official_critical_postcondition_replays_historical_gate_before_final_handoff"
-        }
-      },
-      {
-        "id": "external-base-before-replay",
-        "surface": "connector consumer trust boundary",
-        "status": "passed",
-        "procedure": "Supply a certificate with a substituted base and a postcondition descriptor to the real connector preflight; observe whether the executable verifier is reached.",
-        "expected": "The independently observed base mismatch blocks before the postcondition verifier can execute any source.",
-        "evidence": {
-          "path": "auditar-issue/tests/test_connector_preflight.py",
-          "classname": "auditar-issue.tests.test_connector_preflight",
-          "name": "test_connector_rejects_foreign_base_before_executing_postcondition_verifier"
-        }
-      }
-    ],
-    "promotion_status": "promoted",
-    "related_controls": [
-      {
-        "id": "CERTIFICATE-POSTCONDITION-001",
-        "generalized_failure_pattern": "A gate that consumes certification metadata cannot be a prerequisite for producing that same metadata. Conflating preparation, observed execution and terminal authority creates either a dependency cycle or a false approval.",
-        "prevention_rule": "Keep the full preparation immutable and without release authority; recognize the historical gate from its trusted source, execute the literal command on authenticated current inputs, and derive only the allowed record closure after actual success.",
-        "detection_rule": "Recompute the entire preparation-to-final transition and independently reexecute the trusted historical gate; reject any source, target, input, output, hash or phase substitution before publication."
-      }
-    ],
-    "consumer_consistency_note": {
-      "origin": "Internal remediation verification of the same original rejection event; no new independent verdict.",
-      "failure_pattern": "A producer can validate a canonical minimum risk list while its consumer requires every active inherited and matrix family; producer success alone does not establish consumer readiness.",
-      "rule": "Preserve declared classifications and controls, include their complete union in risk saturation, and exercise the actual auditor consumer before the material freeze.",
-      "source": "tests/test_session_review_dossier.py",
-      "cases": [
-        "test_complete_dossier_passes_official_auditor_saturation",
-        "test_dossier_rejects_unsaturated_active_inherited_family[missing]",
-        "test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]"
-      ],
-      "execution_binding": "Definitions are bound in manifest.test_bindings and grounding_test_bindings; current-SHA execution must come from authenticated log/JUnit."
-    }
+    "promotion_status": "not-required",
+    "reason": "The rejection identified a target-specific completeness defect in the M2 administrative read-back. The existing audit framework already requires effective-rule evidence and fail-closed controls; no generalized or recurring Skill-control failure was demonstrated, so remediation remains targeted."
   },
-  "skill_changes": [
+  "historical_learning": [
     {
-      "role": "prevention",
-      "status": "passed",
-      "control_id": "TERMINAL-MATERIAL-PARENT-001",
-      "evidence": [
+      "schema_version": 1,
+      "classification": "systemic-escape",
+      "source_event": {
+        "kind": "independent-rejection",
+        "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
+        "finding_ids": [
+          "A-001",
+          "A-002",
+          "A-003",
+          "A-004",
+          "A-005"
+        ],
+        "audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4",
+        "audited_head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
+        "report_origin": "Read-only review before this implementation, preserved byte-for-byte from the prior user-visible audit report."
+      },
+      "generalized_learning": {
+        "escape_class": "material-parent-evidence-state-conflation",
+        "generalized_failure_pattern": "A result publisher and terminal guard fail to distinguish an existing historical blob, a path proven absent in the exact material tree, and an unavailable or failed observation. Testing only a light first-delivery fixture misses the cumulative-ledger requirements of a critical re-audit.",
+        "plausible_wrong_implementation": "Treat a missing snapshot as proof of absence, fabricate an empty historical ledger, consult the later child HEAD instead of the material commit, or accept mutable snapshot bytes without comparison to the Git object.",
+        "trigger_signals": [
+          "first creation of a cumulative ledger",
+          "replacement of an existing ledger",
+          "material-parent lineage verification",
+          "critical result-only publication"
+        ],
+        "risk_families": [
+          "historical-immutability",
+          "public-boundary"
+        ],
+        "reusable_control": {
+          "id": "TERMINAL-MATERIAL-PARENT-001",
+          "procedure": "Inspect the exact material Git tree with replacement objects disabled; authenticate existing snapshots against immutable blob bytes or record absence only after a successful path lookup. Run current-artifact semantic and historical lineage guards before and after publication."
+        },
+        "prevention_rule": "A present material blob requires an identical snapshot. Proven absence requires a successful lookup of the exact material commit and safe path types. Unavailable objects, read errors, unsafe paths and inconsistent snapshots remain blocking. External rejection snapshots remain separate and mandatory when applicable.",
+        "detection_rule": "Exercise critical targeted re-audit publication with real Git and both terminal guards, then reject forged absence, omitted or changed snapshots, symlinks, missing objects and observation of the later child in place of the material parent.",
+        "transfer_cases": [
+          {
+            "id": "first-critical-ledger-publication",
+            "surface": "result publisher introducing cumulative ledgers",
+            "status": "passed",
+            "procedure": "Run the complete synthetic critical re-audit publication with external rejection snapshots and no versioned audit subtree in the material parent.",
+            "expected": "The real guards accept Git-proven absence and retain external rejection history after the child is created.",
+            "evidence": {
+              "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+              "classname": "entregar-issue.tests.test_publish_actions_handoff",
+              "name": "test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
+            }
+          },
+          {
+            "id": "existing-ledger-snapshot-integrity",
+            "surface": "terminal validation of an existing material ledger",
+            "status": "passed",
+            "procedure": "Supply altered snapshot bytes for a ledger whose original bytes exist in an immutable synthetic Git commit.",
+            "expected": "The actual terminal guard rejects the snapshot before it can serve as lineage evidence.",
+            "evidence": {
+              "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+              "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+              "name": "test_terminal_parent_git_proof_rejects_untrusted_snapshots[snapshot-tampered]"
+            }
+          },
+          {
+            "id": "critical-certificate-postcondition",
+            "surface": "official preparation and final certification",
+            "status": "passed",
+            "procedure": "Run a synthetic critical targeted re-audit through the real builder, immutable historical gate, literal replay, record finalization, final validator and audit preflight.",
+            "expected": "Preparation retains the blocked records and has no publication authority; only actual replay permits the final certificate and the audit preflight.",
+            "evidence": {
+              "path": "entregar-issue/tests/test_handoff_postcondition.py",
+              "classname": "entregar-issue.tests.test_handoff_postcondition",
+              "name": "test_official_critical_postcondition_replays_historical_gate_before_final_handoff"
+            }
+          },
+          {
+            "id": "external-base-before-replay",
+            "surface": "connector consumer trust boundary",
+            "status": "passed",
+            "procedure": "Supply a certificate with a substituted base and a postcondition descriptor to the real connector preflight; observe whether the executable verifier is reached.",
+            "expected": "The independently observed base mismatch blocks before the postcondition verifier can execute any source.",
+            "evidence": {
+              "path": "auditar-issue/tests/test_connector_preflight.py",
+              "classname": "auditar-issue.tests.test_connector_preflight",
+              "name": "test_connector_rejects_foreign_base_before_executing_postcondition_verifier"
+            }
+          }
+        ],
+        "promotion_status": "promoted",
+        "related_controls": [
+          {
+            "id": "CERTIFICATE-POSTCONDITION-001",
+            "generalized_failure_pattern": "A gate that consumes certification metadata cannot be a prerequisite for producing that same metadata. Conflating preparation, observed execution and terminal authority creates either a dependency cycle or a false approval.",
+            "prevention_rule": "Keep the full preparation immutable and without release authority; recognize the historical gate from its trusted source, execute the literal command on authenticated current inputs, and derive only the allowed record closure after actual success.",
+            "detection_rule": "Recompute the entire preparation-to-final transition and independently reexecute the trusted historical gate; reject any source, target, input, output, hash or phase substitution before publication."
+          }
+        ],
+        "consumer_consistency_note": {
+          "origin": "Internal remediation verification of the same original rejection event; no new independent verdict.",
+          "failure_pattern": "A producer can validate a canonical minimum risk list while its consumer requires every active inherited and matrix family; producer success alone does not establish consumer readiness.",
+          "rule": "Preserve declared classifications and controls, include their complete union in risk saturation, and exercise the actual auditor consumer before the material freeze.",
+          "source": "tests/test_session_review_dossier.py",
+          "cases": [
+            "test_complete_dossier_passes_official_auditor_saturation",
+            "test_dossier_rejects_unsaturated_active_inherited_family[missing]",
+            "test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]"
+          ],
+          "execution_binding": "Definitions are bound in manifest.test_bindings and grounding_test_bindings; current-SHA execution must come from authenticated log/JUnit."
+        }
+      },
+      "skill_changes": [
         {
-          "path": "entregar-issue/references/terminal-handoff.md",
-          "sha256": "adfe192b472335f602d2356ac7b784e2040eb56f68933beff00352c611236e31",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+          "role": "prevention",
+          "status": "passed",
+          "control_id": "TERMINAL-MATERIAL-PARENT-001",
+          "evidence": [
+            {
+              "path": "entregar-issue/references/terminal-handoff.md",
+              "sha256": "adfe192b472335f602d2356ac7b784e2040eb56f68933beff00352c611236e31",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "entregar-issue/scripts/validate_terminal_handoff.py",
+              "sha256": "ae4076f07925f3f4480ce618197d44927de593d5d545d0b5b7deba82e33cca06",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "entregar-issue/scripts/publish_actions_handoff.py",
+              "sha256": "92394e0d5ca111aac897cf7a6a70b2b3f388f5b373d5f9caee2d2522cb8e2118",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            }
+          ],
+          "verification": "Implementation, normative procedure and compatible receipt consumers reviewed; documentation, lint and hygiene gates passed."
         },
         {
-          "path": "entregar-issue/scripts/validate_terminal_handoff.py",
-          "sha256": "ae4076f07925f3f4480ce618197d44927de593d5d545d0b5b7deba82e33cca06",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+          "role": "detection",
+          "status": "passed",
+          "control_id": "TERMINAL-MATERIAL-PARENT-001",
+          "evidence": [
+            {
+              "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+              "sha256": "b7a56a415e297d1e8576d611f4c42f5251a7399d3f3c2545008265160a901206",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+              "sha256": "553c218e1658e0544b94244dc67412b56d4147af3a025b4c0464c8e6d3db1a39",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            }
+          ],
+          "verification": "125 focused tests passed, including full critical targeted publication, adversarial parent proofs and receipt consumers. Final exact-SHA CI remains mandatory."
         },
         {
-          "path": "entregar-issue/scripts/publish_actions_handoff.py",
-          "sha256": "92394e0d5ca111aac897cf7a6a70b2b3f388f5b373d5f9caee2d2522cb8e2118",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+          "role": "prevention",
+          "status": "passed",
+          "control_id": "CERTIFICATE-POSTCONDITION-001",
+          "evidence": [
+            {
+              "path": "entregar-issue/references/certificate-postconditions.md",
+              "sha256": "177d2e65fcada9fe86d8a354158fc58e1402e945e2a63bddcd88d5d8734c7d06",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "entregar-issue/scripts/handoff_postcondition.py",
+              "sha256": "63c8e244b4572e3a3edbc8ef0993b7440dcd3cd7dd55f2ae34a24476b6df8ea3",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "entregar-issue/scripts/handoff_postcondition_records.py",
+              "sha256": "464aee2059ab5054082b894eebc64a258df1fc34817d6ba3894a1c6f7833ae0f",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "entregar-issue/scripts/certificate_postcondition_replay.py",
+              "sha256": "75a3124bdb9cc9438ac62d700295a7469275569b625287f1111f9deca123f5c8",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "entregar-issue/scripts/certificate_replay_source.py",
+              "sha256": "48c60ae6e51a8816b4e9001b2451f1f1e8ba870e294857103f76850af0a6f0ee",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            }
+          ],
+          "verification": "The real critical preparation/replay/finalization and audit preflight passed in a synthetic Git target. Current source definitions preserve blocked preparation and strict final validation; final material execution remains required."
+        },
+        {
+          "role": "detection",
+          "status": "passed",
+          "control_id": "CERTIFICATE-POSTCONDITION-001",
+          "evidence": [
+            {
+              "path": "entregar-issue/tests/test_handoff_postcondition.py",
+              "sha256": "9a46e9eee3f8ca4ebc4dbbe8f9e81471b14806432c9d3e9f957a814916457e9f",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "entregar-issue/tests/test_certificate_postcondition_replay.py",
+              "sha256": "f484fab6fdd4edd8b51665004bfcc7cce96e074a836e48ec1f28a3e717ea2f07",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+              "sha256": "3d08a98bc40590ae750e9cfb49f2216ea1310286e7f3f73452c564f32f5e8b05",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            },
+            {
+              "path": "auditar-issue/tests/test_connector_preflight.py",
+              "sha256": "51dc575657a940979d432494e7c7e7d3e3494abc01bc49405023a037c2528666",
+              "kind": "reviewed-source-definition",
+              "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
+            }
+          ],
+          "verification": "Focused checks exercise actual literal execution and independent reexecution, source/base/target substitution, forged output, input integrity, preparation rejection and strict record transitions. They do not constitute independent approval."
         }
       ],
-      "verification": "Implementation, normative procedure and compatible receipt consumers reviewed; documentation, lint and hygiene gates passed."
-    },
-    {
-      "role": "detection",
-      "status": "passed",
-      "control_id": "TERMINAL-MATERIAL-PARENT-001",
-      "evidence": [
-        {
-          "path": "entregar-issue/tests/test_publish_actions_handoff.py",
-          "sha256": "b7a56a415e297d1e8576d611f4c42f5251a7399d3f3c2545008265160a901206",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        },
-        {
-          "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
-          "sha256": "553c218e1658e0544b94244dc67412b56d4147af3a025b4c0464c8e6d3db1a39",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        }
-      ],
-      "verification": "125 focused tests passed, including full critical targeted publication, adversarial parent proofs and receipt consumers. Final exact-SHA CI remains mandatory."
-    },
-    {
-      "role": "prevention",
-      "status": "passed",
-      "control_id": "CERTIFICATE-POSTCONDITION-001",
-      "evidence": [
-        {
-          "path": "entregar-issue/references/certificate-postconditions.md",
-          "sha256": "177d2e65fcada9fe86d8a354158fc58e1402e945e2a63bddcd88d5d8734c7d06",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        },
-        {
-          "path": "entregar-issue/scripts/handoff_postcondition.py",
-          "sha256": "63c8e244b4572e3a3edbc8ef0993b7440dcd3cd7dd55f2ae34a24476b6df8ea3",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        },
-        {
-          "path": "entregar-issue/scripts/handoff_postcondition_records.py",
-          "sha256": "464aee2059ab5054082b894eebc64a258df1fc34817d6ba3894a1c6f7833ae0f",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        },
-        {
-          "path": "entregar-issue/scripts/certificate_postcondition_replay.py",
-          "sha256": "75a3124bdb9cc9438ac62d700295a7469275569b625287f1111f9deca123f5c8",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        },
-        {
-          "path": "entregar-issue/scripts/certificate_replay_source.py",
-          "sha256": "48c60ae6e51a8816b4e9001b2451f1f1e8ba870e294857103f76850af0a6f0ee",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        }
-      ],
-      "verification": "The real critical preparation/replay/finalization and audit preflight passed in a synthetic Git target. Current source definitions preserve blocked preparation and strict final validation; final material execution remains required."
-    },
-    {
-      "role": "detection",
-      "status": "passed",
-      "control_id": "CERTIFICATE-POSTCONDITION-001",
-      "evidence": [
-        {
-          "path": "entregar-issue/tests/test_handoff_postcondition.py",
-          "sha256": "9a46e9eee3f8ca4ebc4dbbe8f9e81471b14806432c9d3e9f957a814916457e9f",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        },
-        {
-          "path": "entregar-issue/tests/test_certificate_postcondition_replay.py",
-          "sha256": "f484fab6fdd4edd8b51665004bfcc7cce96e074a836e48ec1f28a3e717ea2f07",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        },
-        {
-          "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
-          "sha256": "3d08a98bc40590ae750e9cfb49f2216ea1310286e7f3f73452c564f32f5e8b05",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        },
-        {
-          "path": "auditar-issue/tests/test_connector_preflight.py",
-          "sha256": "51dc575657a940979d432494e7c7e7d3e3494abc01bc49405023a037c2528666",
-          "kind": "reviewed-source-definition",
-          "execution_binding": "This digest identifies the source definition. Execution facts are obtained independently from the exact-SHA log/JUnit and explicit manifest bindings."
-        }
-      ],
-      "verification": "Focused checks exercise actual literal execution and independent reexecution, source/base/target substitution, forged output, input integrity, preparation rejection and strict record transitions. They do not constitute independent approval."
+      "classification_reason": "Internal remediation exposed generic composition gaps in material-parent absence and in a certification gate that consumes its own prerequisite. The same original rejection event is preserved; both reusable controls have real synthetic transfer cases and separate prevention/detection changes. The producer-to-auditor risk-inventory composition is also covered by the actual consumer and adversarial dossier cases. No new independent finding or approval is asserted."
     }
-  ],
-  "classification_reason": "Internal remediation exposed generic composition gaps in material-parent absence and in a certification gate that consumes its own prerequisite. The same original rejection event is preserved; both reusable controls have real synthetic transfer cases and separate prevention/detection changes. The producer-to-auditor risk-inventory composition is also covered by the actual consumer and adversarial dossier cases. No new independent finding or approval is asserted."
+  ]
 }
