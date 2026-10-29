@@ -159,6 +159,96 @@
         "status": "unknown",
         "reason": "awaiting-exact-SHA-JUnit"
       }
+    },
+    {
+      "path": "entregar-issue/tests/test_handoff_postcondition.py",
+      "operation": "modified",
+      "scenario": "Bind the current issue/PR/material SHA on the critical-targeted postcondition escape; preserve historical base lineage",
+      "requirement": "Issue 125: explicit escape target binding, postcondition lineage and unchanged security controls",
+      "search": {
+        "queries": [
+          "audit escape closure subject",
+          "critical targeted handoff",
+          "postcondition readiness identity"
+        ],
+        "scope": "entregar-issue/tests: official postcondition, authenticated preparation and publisher",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+            "case": "Bind the current issue/PR/material SHA on the critical-targeted postcondition escape; preserve historical base lineage",
+            "oracle": "A legacy fixture cannot be treated as current-target evidence without explicit repository, issue, PR and SHA linkage.",
+            "comparison": "Postcondition records test exercises direct readiness but not the official certificate builder's critical replay"
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the historical positive, negative and critical replay fixtures to the tightened target contract; no production exemption.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+      "operation": "modified",
+      "scenario": "Separate trusted checkout repository path from explicit current-target identity during authenticated preparation",
+      "requirement": "Issue 125: explicit escape target binding, postcondition lineage and unchanged security controls",
+      "search": {
+        "queries": [
+          "audit escape closure subject",
+          "critical targeted handoff",
+          "postcondition readiness identity"
+        ],
+        "scope": "entregar-issue/tests: official postcondition, authenticated preparation and publisher",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_handoff_postcondition.py",
+            "case": "Separate trusted checkout repository path from explicit current-target identity during authenticated preparation",
+            "oracle": "A legacy fixture cannot be treated as current-target evidence without explicit repository, issue, PR and SHA linkage.",
+            "comparison": "The official certificate test covers builder forwarding, not the direct preparation-phase readiness CLI"
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the historical positive, negative and critical replay fixtures to the tightened target contract; no production exemption.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+      "operation": "modified",
+      "scenario": "Preserve exact-target binding in critical-targeted publisher fixture without waiving material-parent checks",
+      "requirement": "Issue 125: explicit escape target binding, postcondition lineage and unchanged security controls",
+      "search": {
+        "queries": [
+          "audit escape closure subject",
+          "critical targeted handoff",
+          "postcondition readiness identity"
+        ],
+        "scope": "entregar-issue/tests: official postcondition, authenticated preparation and publisher",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_handoff_certificate_contract.py",
+            "case": "Preserve exact-target binding in critical-targeted publisher fixture without waiving material-parent checks",
+            "oracle": "A legacy fixture cannot be treated as current-target evidence without explicit repository, issue, PR and SHA linkage.",
+            "comparison": "The certificate contract suite does not exercise the publisher's material-parent absence proof"
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the historical positive, negative and critical replay fixtures to the tightened target contract; no production exemption.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
     }
   ]
 }

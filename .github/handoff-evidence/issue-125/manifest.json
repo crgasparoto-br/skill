@@ -14,7 +14,7 @@
   "artifact_sha256": {
     "reviewed-closure.json": "ce5cb0d9f80d17f5d8a3901b94962db7fe9454f9e2390fa38a6694572688d6e6",
     "standard-evidence.json": "abd46070f560d36662ca9b35be18e275e1a841bd48534052634d02108c4077ad",
-    "codebase-grounding.json": "fb63c31f57eb70f2c10f40b2d98c6cb1dc94845f4aff7c233ae7a41107786c67"
+    "codebase-grounding.json": "c7670491465253eced31a437fa1a1918550e1f42b83136c2130718802b5f4050"
   },
   "test_bindings": {
     "REQ-001": {
@@ -107,6 +107,24 @@
       {
         "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_terminal_guard_forwards_target_binding_for_previous_rejection_success",
         "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_guard_forwards_target_binding_for_previous_rejection_success"
+      }
+    ],
+    "entregar-issue/tests/test_handoff_postcondition.py": [
+      {
+        "case": "entregar-issue/tests/test_handoff_postcondition.py::test_official_critical_postcondition_replays_historical_gate_before_final_handoff",
+        "test_case_id": "entregar-issue.tests.test_handoff_postcondition::test_official_critical_postcondition_replays_historical_gate_before_final_handoff"
+      }
+    ],
+    "entregar-issue/tests/test_handoff_postcondition_records.py": [
+      {
+        "case": "entregar-issue/tests/test_handoff_postcondition_records.py::test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]",
+        "test_case_id": "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]"
+      }
+    ],
+    "entregar-issue/tests/test_publish_actions_handoff.py": [
+      {
+        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]",
+        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
       }
     ]
   }

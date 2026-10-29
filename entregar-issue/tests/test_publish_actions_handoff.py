@@ -275,7 +275,11 @@ def critical_reaudit_arguments(files, candidate):
     learning["source_event"]["finding_ids"] = ["F-GATE-001"]
     values = {
         "audit-remediation": replay.ledger(source, candidate["base"], candidate["head"], "npm run format:check"),
-        "audit-escape-closure": {"schema_version": 1, "escapes": [escape]},
+        "audit-escape-closure": {"schema_version": 1,
+                                 "subject": {"repository": "owner/repo", "issue_number": 42,
+                                             "pull_request_number": 99,
+                                             "material_head_sha": candidate["head"]},
+                                 "escapes": [escape]},
         "previous-audit-escape-closure": {"schema_version": 1, "escapes": [previous]},
         "learning-closure": learning,
     }
