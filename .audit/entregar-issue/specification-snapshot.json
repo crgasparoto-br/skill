@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue": 127,
+  "created_at": "2026-10-27T16:42:10.291918+00:00",
+  "primary_source_id": "SRC-ISSUE-127",
+  "sources": [
+    {
+      "id": "SRC-ISSUE-127",
+      "kind": "issue-body",
+      "path": "specification-sources/SRC-ISSUE-127.txt",
+      "locator": "/tmp/handoff-evidence/issue-body.md",
+      "sha256": "252b9564fd843f0fb3fd5498354ee94bb458a0b8c1c3ddd77eb8fd416335bd59",
+      "textual": true,
+      "extract_source_id": null,
+      "required": true,
+      "line_count": 39
+    }
+  ]
+}

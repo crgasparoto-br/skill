@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
+from handoff_postcondition import require_final_phase
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CERT_REPO_PATH = ".audit/entregar-issue/handoff-ready.json"
@@ -27,6 +29,58 @@ def load(path: Path) -> dict:
     if not isinstance(value, dict):
         raise ValueError("expected object")
     return value
+
+
+def material_parent_blob(repository: Path, material: str, relative: str) -> bytes | None:
+    """Read a regular blob, or prove its absence, from the exact material commit."""
+    if not re.fullmatch(r"[0-9a-f]{40}", material):
+        raise ValueError("material-parent verification requires an exact commit SHA")
+    prefix = ["git", "--no-replace-objects", "-C", str(repository)]
+    subprocess.run([*prefix, "cat-file", "-e", material + "^{commit}"], check=True, capture_output=True)
+    parts = Path(relative).parts
+    entry = []
+    for index in range(1, len(parts) + 1):
+        name = "/".join(parts[:index])
+        result = subprocess.run([*prefix, "ls-tree", "-z", material, "--", name], check=True, capture_output=True)
+        if not result.stdout:
+            return None
+        metadata, observed = result.stdout.removesuffix(b"\0").split(b"\t", 1)
+        entry = metadata.decode("ascii").split()
+        if observed.decode("utf-8") != name or len(entry) != 3:
+            raise ValueError("material-parent Git tree returned an unexpected entry")
+        expected = {"040000"} if index < len(parts) else {"100644", "100755"}
+        kind = "tree" if index < len(parts) else "blob"
+        if entry[0] not in expected or entry[1] != kind:
+            raise ValueError(f"material-parent path has an unsafe Git type or symlink: {name}")
+    return subprocess.run([*prefix, "cat-file", "blob", entry[2]], check=True, capture_output=True).stdout
+
+
+def verify_material_parent_snapshots(repository: str | None, material: str, changed: set[str],
+                                     snapshots: dict[str, str | None], errors: list[str]) -> set[str]:
+    """An omitted snapshot is valid only when Git proves the material path absent."""
+    absent = set()
+    for relative, snapshot in snapshots.items():
+        if relative not in changed and not snapshot:
+            continue
+        missing = f"result-only child changed {Path(relative).name} without material-parent snapshot"
+        if repository is None:
+            if not snapshot:
+                errors.append(missing)
+            continue
+        try:
+            raw = material_parent_blob(Path(repository), material, relative)
+            if raw is None:
+                if snapshot:
+                    raise ValueError("snapshot supplied for an absent material-parent path")
+                absent.add(relative)
+            elif not snapshot:
+                raise ValueError(missing)
+            elif (any(path.is_symlink() for path in (Path(snapshot), *Path(snapshot).parents))
+                  or not Path(snapshot).is_file() or Path(snapshot).read_bytes() != raw):
+                raise ValueError("material-parent snapshot bytes differ from the exact Git blob or are unsafe")
+        except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+            errors.append(f"cannot verify material-parent {relative}: {exc}")
+    return absent
 
 
 def main() -> int:
@@ -62,6 +116,7 @@ def main() -> int:
     parser.add_argument("--previous-audit-escape-closure")
     parser.add_argument("--material-parent-inherited-controls")
     parser.add_argument("--material-parent-audit-escape-closure")
+    parser.add_argument("--material-parent-repository", help="Git data used to authenticate snapshots or prove exact-material absence")
     parser.add_argument("--proof-out", help="Write a machine-readable READY proof after all terminal guards pass")
     args = parser.parse_args()
 
@@ -73,6 +128,11 @@ def main() -> int:
         print(f"BLOCK: invalid handoff certificate: {exc}")
         return 2
 
+    try:
+        require_final_phase(cert)
+    except ValueError as exc:
+        print(f"BLOCK: {exc}")
+        return 2
     identity = cert.get("identity") or {}
     material = identity.get("material_head_sha") or identity.get("head_sha")
     policy = cert.get("certificate_commit_policy") or {}
@@ -181,10 +241,10 @@ def main() -> int:
     if args.certificate_repo_path not in changed:
         errors.append("published handoff commit does not contain handoff-ready.json")
 
-    if INHERITED_CONTROLS_REPO_PATH in changed and not args.material_parent_inherited_controls:
-        errors.append("result-only child changed inherited-controls.json without material-parent snapshot")
-    if AUDIT_ESCAPE_CLOSURE_REPO_PATH in changed and not args.material_parent_audit_escape_closure:
-        errors.append("result-only child changed audit-escape-closure.json without material-parent snapshot")
+    absent = verify_material_parent_snapshots(args.material_parent_repository, args.material_head_sha, changed, {
+        INHERITED_CONTROLS_REPO_PATH: args.material_parent_inherited_controls,
+        AUDIT_ESCAPE_CLOSURE_REPO_PATH: args.material_parent_audit_escape_closure,
+    }, errors)
 
     if previous_rejection:
         if not args.previous_audit_escape_closure:
@@ -209,6 +269,8 @@ def main() -> int:
         cmd.extend(["--candidate-changed-path", path])
     if args.contract_version:
         cmd.extend(["--contract-version", args.contract_version])
+    if args.material_parent_repository:
+        cmd.extend(["--source-repository-root", args.material_parent_repository])
     proc = subprocess.run(cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if proc.returncode != 0:
         print(proc.stdout.strip() or "BLOCK: handoff certificate validation failed")
@@ -220,22 +282,24 @@ def main() -> int:
         item = artifacts.get(key) or {}
         return artifacts_dir / str(item.get("name") or "")
 
-    if args.material_parent_audit_escape_closure:
+    if args.material_parent_audit_escape_closure or AUDIT_ESCAPE_CLOSURE_REPO_PATH in absent:
         current_escape = artifact_path("audit_escape_closure")
         if not current_escape.is_file():
             print("BLOCK: result-only child changed audit-escape-closure.json but certificate lacks the published artifact")
             return 2
-        proc = subprocess.run([
+        escape_cmd = [
             sys.executable, str(ROOT / "scripts" / "validate_audit_escape_lineage.py"),
             "--closure", str(current_escape),
-            "--previous-closure", str(Path(args.material_parent_audit_escape_closure).resolve()),
-            "--require-previous",
-        ], check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ]
+        if args.material_parent_audit_escape_closure:
+            escape_cmd.extend(["--previous-closure", str(Path(args.material_parent_audit_escape_closure).resolve()),
+                               "--require-previous"])
+        proc = subprocess.run(escape_cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if proc.returncode != 0:
             print(proc.stdout.strip() or "BLOCK: result-only child audit escape lineage regressed from material parent")
             return 2
 
-    if args.material_parent_inherited_controls:
+    if args.material_parent_inherited_controls or INHERITED_CONTROLS_REPO_PATH in absent:
         current_inherited = artifact_path("inherited_controls")
         current_attack = artifact_path("requirement_attack_matrix")
         current_closure = artifact_path("requirement_closure")
@@ -246,8 +310,9 @@ def main() -> int:
             sys.executable, str(ROOT / "scripts" / "validate_inherited_controls.py"),
             "--inherited-controls", str(current_inherited),
             "--head-sha", args.material_head_sha,
-            "--previous-inherited-controls", str(Path(args.material_parent_inherited_controls).resolve()),
         ]
+        if args.material_parent_inherited_controls:
+            inherited_cmd.extend(["--previous-inherited-controls", str(Path(args.material_parent_inherited_controls).resolve())])
         if current_attack.is_file():
             inherited_cmd.extend(["--attack-matrix", str(current_attack)])
         if current_closure.is_file():
@@ -319,6 +384,7 @@ def main() -> int:
         "current_parent_sha": args.current_parent_sha,
         "published_changed_paths": sorted(changed),
         "current_changed_paths": sorted(current_changed),
+        "material_parent_absent_paths": sorted(absent),
     }
     if args.proof_out:
         proof_out = Path(args.proof_out).resolve()

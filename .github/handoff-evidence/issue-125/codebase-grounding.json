@@ -36,19 +36,6 @@
         "command": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
         "exit_code": 0
       }
-    },
-    {
-      "symbol": "stage_verified_test_grounding",
-      "kind": "local",
-      "used_in": "entregar-issue/scripts/produce_actions_handoff_evidence.py",
-      "defined_at": {
-        "path": "entregar-issue/scripts/produce_actions_handoff_evidence.py",
-        "line": 191
-      },
-      "verified_by": {
-        "command": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
-        "exit_code": 0
-      }
     }
   ],
   "replacements": [],
@@ -79,7 +66,8 @@
       "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
       "disposition": "keep",
       "verification": {
-        "status": "passed"
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
       }
     },
     {
@@ -108,36 +96,8 @@
       "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
       "disposition": "keep",
       "verification": {
-        "status": "passed"
-      }
-    },
-    {
-      "path": "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
-      "operation": "modified",
-      "scenario": "Exact material SHA JUnit provenance generation with skipped/unrelated and forged-proof negative controls",
-      "requirement": "Runtime evidence provenance for exact-SHA semantic certification",
-      "search": {
-        "queries": [
-          "audit escape target binding",
-          "foreign audit escape risk saturation",
-          "handoff semantic JUnit provenance"
-        ],
-        "scope": "entregar-issue/tests, tests and GitHub Actions test runner",
-        "runner": "python -m pytest -vv with exact-SHA JUnit",
-        "candidates": [
-          {
-            "path": "entregar-issue/tests/test_prepare_actions_handoff.py",
-            "case": "Exact material SHA JUnit provenance generation with skipped/unrelated and forged-proof negative controls",
-            "oracle": "Negative controls distinguish a foreign target from current-target binding at the caller boundary.",
-            "comparison": "The existing collector checks identities, not the production of grounded per-test proof from JUnit."
-          }
-        ]
-      },
-      "decision": "extend-existing",
-      "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
-      "disposition": "keep",
-      "verification": {
-        "status": "passed"
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
       }
     },
     {
@@ -166,7 +126,8 @@
       "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
       "disposition": "keep",
       "verification": {
-        "status": "passed"
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
       }
     },
     {
@@ -195,7 +156,8 @@
       "justification": "Extend the existing terminal handoff suite rather than duplicating its synthetic certificate fixture.",
       "disposition": "keep",
       "verification": {
-        "status": "passed"
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
       }
     }
   ]

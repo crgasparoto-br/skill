@@ -5,7 +5,7 @@
   "pull_request_number": 126,
   "base_ref": "develop",
   "head_ref": "fix/125-risk-escape-target-binding",
-  "work_item_start_sha": "2366dd6da7ac9d8c5defe9b40f53dd3c4a0c650f",
+  "work_item_start_sha": "3b311f646619d7fa9b62c6212772d8327dccb9df",
   "review_state": "approved",
   "evidence_profile": "standard",
   "risk_justification": "Six obligation-specific CLI contracts with positive, negative and regression controls; canonical issue flags contain no isolation, atomicity or reference-liveness requirement demanding critical profile. Document and test impacts are explicitly included.",
@@ -14,7 +14,7 @@
   "artifact_sha256": {
     "reviewed-closure.json": "ce5cb0d9f80d17f5d8a3901b94962db7fe9454f9e2390fa38a6694572688d6e6",
     "standard-evidence.json": "abd46070f560d36662ca9b35be18e275e1a841bd48534052634d02108c4077ad",
-    "codebase-grounding.json": "e86748dc7ef9a8112fe653f7bd2adcd7ab15d21f8a795839a7a0cef6910cf409"
+    "codebase-grounding.json": "fb63c31f57eb70f2c10f40b2d98c6cb1dc94845f4aff7c233ae7a41107786c67"
   },
   "test_bindings": {
     "REQ-001": {
@@ -83,5 +83,31 @@
         "entregar-issue.tests.test_cross_surface_saturation::test_previous_rejection_cannot_infer_foreign_escape_from_neighboring_file"
       ]
     }
+  },
+  "grounding_test_bindings": {
+    "entregar-issue/tests/test_canonical_path_escape.py": [
+      {
+        "case": "entregar-issue/tests/test_canonical_path_escape.py::test_handoff_accepts_canon_divergence_control_and_closed_escape",
+        "test_case_id": "entregar-issue.tests.test_canonical_path_escape::test_handoff_accepts_canon_divergence_control_and_closed_escape"
+      }
+    ],
+    "entregar-issue/tests/test_cross_surface_saturation.py": [
+      {
+        "case": "entregar-issue/tests/test_cross_surface_saturation.py::test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions",
+        "test_case_id": "entregar-issue.tests.test_cross_surface_saturation::test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions"
+      }
+    ],
+    "tests/test_risk_saturation_target_binding.py": [
+      {
+        "case": "tests/test_risk_saturation_target_binding.py::test_foreign_closure_is_not_inferred_from_neighboring_file",
+        "test_case_id": "tests.test_risk_saturation_target_binding::test_foreign_closure_is_not_inferred_from_neighboring_file"
+      }
+    ],
+    "entregar-issue/tests/test_terminal_handoff_contract.py": [
+      {
+        "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_terminal_guard_forwards_target_binding_for_previous_rejection_success",
+        "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_guard_forwards_target_binding_for_previous_rejection_success"
+      }
+    ]
   }
 }

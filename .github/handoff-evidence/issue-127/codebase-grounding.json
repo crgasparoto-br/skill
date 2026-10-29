@@ -1,0 +1,88 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [
+    {
+      "path": "scripts/plan_session_ruleset_m2.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "GitHub fetch_file scripts/configurar_ruleset.py at develop; compare existing plan(current, ...) behavior",
+          "GitHub fetch_file tests/test_configurar_ruleset.py at develop; inspect legacy independent-gate assertions"
+        ],
+        "scope": "Inspected the existing administrative ruleset configuration helper and its tests. It is deliberately legacy and requires one human review plus the independent gate; it cannot prepare the M2 session migration without changing that existing contract.",
+        "candidates": [
+          {
+            "path": "scripts/configurar_ruleset.py",
+            "reason_not_reused": "Existing installer intentionally preserves >=1 human approving review and the independent-audit gate. Reusing or modifying that authority would conflate legacy and M2, rather than creating a separate fail-closed, read-only proposal."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "The new file has no ruleset-write path; it only plans M2 after separate certified acceptance, preserves technical checks and fails on unknown bypasses. Separate functionality avoids changing the legacy administrative procedure."
+    },
+    {
+      "path": "scripts/session_ruleset_policy.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "GitHub fetch_file scripts/configurar_ruleset.py at develop; compare trusted legacy ruleset behavior",
+          "GitHub fetch_file scripts/plan_session_ruleset_m2.py at 83bf6910a6e04700ccd17f038a6db3b110e1e66e; locate unchanged policy transformation contract"
+        ],
+        "scope": "Reviewed existing legacy configurator and current M2 planner; the new module is a pure extraction of the existing M2 transformation to remain under the trusted publisher's original code-growth soft limit.",
+        "candidates": [
+          {
+            "path": "scripts/plan_session_ruleset_m2.py",
+            "reason_not_reused": "The existing 398-line new planner exceeds the trusted publisher's independent 300-line soft bound; preserving all behavior in one module would block terminal certification. This extraction changes no migration decision or remote permissions."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "Move the existing tested constants, require helper and pure plan_m2 operation to a small reusable module; keep the readback/CLI separate and under the unchanged CODE-GROWTH-001 limits."
+    }
+  ],
+  "references": [],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "tests/test_plan_session_ruleset_m2.py",
+      "operation": "added",
+      "scenario": "R127-13 preparation and audit remediation: verify the complete effective branch protection state, including competing/inherited rulesets and classic branch protection, while preserving read-only behavior. New negative tests cover second-page rules, hidden classic bypass actors and legacy checks in the checks-only representation. Absent review-count, code-owner, last-push and team-reviewer inventories now fail closed. Existing plan_m2 tests now import the extracted pure policy module via the entrypoint, preserving negative and regression oracles.",
+      "requirement": "R127-13 remains deferred until real session review, operational positive and adversarial runs, protected ruleset installation and read-back; tests exercise only the M2 migration plan, not operational adoption.",
+      "search": {
+        "queries": [
+          "GitHub fetch_file tests/test_configurar_ruleset.py at develop; inspect existing legacy requirements and test case inventory",
+          "GitHub fetch_file scripts/configurar_ruleset.py at develop; compare existing planner and independent-gate assertions",
+          "GitHub fetch_file tests/test_plan_session_ruleset_m2.py at candidate SHA; inspect new positive/negative/regression oracles",
+          "GitHub fetch_file scripts/plan_session_ruleset_m2.py at audited PR #141 HEAD fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457; inspect single-ruleset --readback path identified by A-001",
+          "Review GitHub Actions blocker from 40679292291 and second-page/hidden-bypass checks at candidate e880be6d7d3842fab645b2603ce34448caada571",
+          "GitHub fetch_file scripts/session_ruleset_policy.py at upcoming PR #141 HEAD to verify pure extracted plan_m2 and no remote mutation; inspect test import loader"
+        ],
+        "scope": "Existing ruleset tests enforce the legacy independent-review policy with review count >= 1. No existing test covered session-specific read-only migration to review count zero with mandatory exact-SHA checks on main and fail-closed bypass preservation.",
+        "runner": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
+        "candidates": [
+          {
+            "path": "tests/test_configurar_ruleset.py",
+            "case": "test_ruleset_raises_zero_review_approval_to_one_and_preserves_stronger_policy",
+            "oracle": "Legacy regression guarantees review count of at least one; M2 migration must not alter this legacy command.",
+            "comparison": "New independent test suite is needed because the desired M2 session policy intentionally differs; retaining the old case avoids weakening legacy assurance."
+          },
+          {
+            "path": "tests/test_configurar_ruleset.py",
+            "case": "test_existing_required_checks_remain_mandatory",
+            "oracle": "Legacy tool preserves pre-existing technical checks and rejects unexpected origins.",
+            "comparison": "New M2 tests reuse that security invariant and add a session-specific requirement to preserve exact-SHA certification on both bases."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "Extended the dedicated M2 suite because the independent audit found that single-ruleset read-back could miss concurrent effective protection sources. New controls distinguish complete effective-state verification from target-ruleset-only verification. This targeted extension addresses otherwise undetected pagination and classic bypass surfaces without replacing legacy controls. Tests distinguish absent reviewer metadata from verified zero and false values. The test loader includes the sibling scripts path only while loading the module, exercising the production import without modifying the policy or its assertions.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}

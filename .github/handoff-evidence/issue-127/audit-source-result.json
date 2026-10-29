@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "head_sha": "fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457",
+  "identity": {
+    "repository": "crgasparoto-br/skill",
+    "base_sha": "b64dbcf4a685e5f5bb73ea81c2b36d510ac1ef7b",
+    "head_sha": "fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457",
+    "pull_request_number": 141,
+    "issue_number": 127
+  },
+  "verdict": "REPROVADA",
+  "coverage": "focused-remediation",
+  "discovery_closed": true,
+  "findings": [
+    {
+      "id": "A-001",
+      "status": "open",
+      "disposition": "blocking",
+      "actionable": true,
+      "remediation_mode": "targeted-remediation",
+      "requirement_ids": [
+        "R127-13"
+      ],
+      "summary": "Read-back administrativo valida somente o ruleset informado por ID e nao comprova as regras efetivas completas da branch.",
+      "evidence": "scripts/plan_session_ruleset_m2.py:121-145 no audited HEAD; read_ruleset consultava somente /repos/{repository}/rulesets/{ruleset_id} e verify_live_ruleset comparava apenas esse objeto."
+    }
+  ],
+  "recommendations": [],
+  "rejection_id": "audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c",
+  "rejection_lineage": {
+    "mode": "new"
+  }
+}

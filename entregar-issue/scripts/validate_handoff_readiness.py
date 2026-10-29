@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
+from handoff_postcondition_records import validated_preparation_plan
 from handoff_semantic_guards import validate_terminal_requirement_closure
 from validate_risk_saturation import validate_escape_target
 
@@ -53,9 +54,34 @@ def main() -> int:
     parser.add_argument("--remediation-mode", choices=("targeted-remediation", "systemic-remediation", "mixed-remediation"), default="targeted-remediation")
     parser.add_argument("--head-sha")
     parser.add_argument("--contract-version", default="2026-08-20.3")
+    parser.add_argument("--phase", choices=("final", "preparation"), default="final")
+    parser.add_argument("--postcondition-plan", type=Path)
+    parser.add_argument("--repository", type=Path)
+    parser.add_argument("--audit-result", type=Path)
+    parser.add_argument("--audit-remediation", type=Path)
+    parser.add_argument("--base-sha")
     args = parser.parse_args()
 
     errors: list[str] = []
+    try:
+        plan = validated_preparation_plan(
+            phase=args.phase, plan_path=args.postcondition_plan, audit_result=args.audit_result,
+            ledger_path=args.audit_remediation, repository=args.repository, head_sha=args.head_sha,
+            base_sha=args.base_sha,
+        )
+    except Exception as exc:
+        print(f"BLOCK: invalid handoff preparation: {exc}")
+        return 2
+    phase_arguments: list[str] = []
+    if plan is not None:
+        if not args.previous_independent_rejection:
+            errors.append("certificate preparation requires the original independent rejection")
+        phase_arguments = [
+            "--phase", "preparation", "--postcondition-plan", str(args.postcondition_plan),
+            "--repository", str(args.repository), "--audit-result", str(args.audit_result),
+            "--audit-remediation", str(args.audit_remediation),
+            "--base-sha", str(args.base_sha),
+        ]
     closure_path = Path(args.requirement_closure)
     closure = load(closure_path)
     validate_terminal_requirement_closure(closure, errors)
@@ -239,18 +265,23 @@ def main() -> int:
                     "--require-previous",
                     "--previous-closure", args.previous_audit_escape_closure,
                 ])
+            escape_args.extend(phase_arguments)
             run_validator(escape_args, errors)
     if args.previous_independent_rejection and learning_path and escape_path and learning_path.is_file() and escape_path.is_file():
         run_validator([
             sys.executable, str(ROOT / "scripts" / "validate_independent_rejection_closure.py"),
             "--learning-closure", str(learning_path), "--closure", str(escape_path),
+            "--head-sha", head_sha, *phase_arguments,
         ], errors)
 
     if errors:
         for error in errors:
             print(error if error.startswith("BLOCK:") else f"BLOCK: {error}")
         return 2
-    print(f"READY: {args.evidence_profile} handoff readiness is closed")
+    if plan is not None:
+        print(f"PREPARED: {args.evidence_profile} semantic evidence validated; certificate postconditions remain blocked")
+    else:
+        print(f"READY: {args.evidence_profile} handoff readiness is closed")
     return 0
 
 

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "validate_terminal_handoff.py"
@@ -75,6 +78,7 @@ def _run(
     previous_escape: Path | None = None, current: str | None = None,
     current_parent: str | None = None, current_paths: list[str] | None = None,
     post_handoff_paths: list[str] | None = None, proof_out: Path | None = None,
+    material_parent_repository: Path | None = None,
 ):
     cmd = [
         sys.executable, str(SCRIPT),
@@ -102,6 +106,8 @@ def _run(
         cmd += ["--material-parent-inherited-controls", str(material_parent_inherited)]
     if material_parent_escape is not None:
         cmd += ["--material-parent-audit-escape-closure", str(material_parent_escape)]
+    if material_parent_repository is not None:
+        cmd += ["--material-parent-repository", str(material_parent_repository)]
     if previous_inherited is not None:
         cmd += ["--previous-inherited-controls", str(previous_inherited)]
     if previous_escape is not None:
@@ -521,3 +527,93 @@ def test_terminal_guard_rejects_escape_removed_between_material_parent_and_resul
         )
         assert proc.returncode == 2
         assert "previous escape ids disappeared: A-003" in proc.stdout
+
+
+@pytest.mark.parametrize("mutation,reason", [
+    ("snapshot-missing", "without material-parent snapshot"),
+    ("snapshot-tampered", "snapshot bytes differ"),
+    ("snapshot-symlink", "snapshot bytes differ"),
+    ("snapshot-parent-symlink", "snapshot bytes differ"),
+    ("false-absence", "without material-parent snapshot"),
+    ("absent-snapshot", "snapshot supplied for an absent"),
+    ("missing-commit", "cannot verify material-parent"),
+    ("missing-repository", "cannot verify material-parent"),
+    ("parent-symlink", "unsafe Git type or symlink"),
+    ("ancestor-symlink", "unsafe Git type or symlink"),
+    ("parent-directory", "unsafe Git type or symlink"),
+], ids=["snapshot-missing", "snapshot-tampered", "snapshot-symlink", "snapshot-parent-symlink", "false-absence", "absent-snapshot",
+        "missing-commit", "missing-repository", "parent-symlink", "ancestor-symlink", "parent-directory"])
+def test_terminal_parent_git_proof_rejects_untrusted_snapshots(tmp_path, mutation, reason):
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q")
+    (repo / "README.md").write_text("synthetic parent fixture\n", encoding="utf-8")
+    relative = ".audit/entregar-issue/inherited-controls.json"
+    parent = repo / relative
+    parent.parent.mkdir(parents=True)
+    raw = b'{"schema_version":1,"controls":[{"id":"historical-control"}]}\n'
+    if mutation == "parent-directory":
+        parent.mkdir()
+        (parent / "entry.json").write_bytes(raw)
+    elif mutation == "parent-symlink":
+        parent.symlink_to("../../../README.md")
+    elif mutation != "absent-snapshot":
+        parent.write_bytes(raw)
+    if mutation == "ancestor-symlink":
+        (repo / ".audit").rename(repo / "elsewhere")
+        (repo / ".audit").symlink_to("elsewhere", target_is_directory=True)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "material lineage")
+    material = git(repo, "rev-parse", "HEAD")
+    snapshot = tmp_path / "parent-inherited.json"
+    snapshot.write_bytes(raw)
+    if mutation in {"snapshot-missing", "false-absence"}:
+        snapshot = None
+    elif mutation == "snapshot-tampered":
+        snapshot.write_text('{"controls":[]}', encoding="utf-8")
+    elif mutation == "snapshot-symlink":
+        snapshot.unlink()
+        snapshot.symlink_to(parent)
+    elif mutation == "snapshot-parent-symlink":
+        (tmp_path / "snapshot-alias").symlink_to(repo, target_is_directory=True)
+        snapshot = tmp_path / "snapshot-alias" / relative
+    if mutation == "false-absence":
+        git(repo, "rm", "-q", relative)
+        git(repo, "commit", "-q", "-m", "later child removes lineage")
+    if mutation == "missing-commit":
+        material = "f" * 40
+    cert, artifacts, _ = _fixture(tmp_path, material)
+    result = _run(cert, artifacts, material, "d" * 40, material,
+                  [".audit/entregar-issue/handoff-ready.json", relative],
+                  material_parent_inherited=snapshot,
+                  material_parent_repository=tmp_path / "unavailable" if mutation == "missing-repository" else repo)
+    assert result.returncode == 2, result.stdout
+    assert reason in result.stdout
+
+
+def test_terminal_parent_git_proof_accepts_exact_snapshot(tmp_path):
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    repo = tmp_path / "repo"
+    relative = ".audit/entregar-issue/inherited-controls.json"
+    parent = repo / relative
+    parent.parent.mkdir(parents=True)
+    ledger = {"schema_version": 1, "head_sha": "a" * 40,
+              "controls": [], "source_audits": [], "unresolved_controls": []}
+    _write_json(parent, ledger)
+    git(repo, "init", "-q")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "material controls")
+    material = git(repo, "rev-parse", "HEAD")
+    snapshot = tmp_path / "material-inherited.json"
+    snapshot.write_bytes(parent.read_bytes())
+    cert, artifacts, _ = _fixture(tmp_path, material)
+    current = artifacts / "inherited-controls.json"
+    _write_json(current, dict(ledger, head_sha=material))
+    certificate = json.loads(cert.read_text(encoding="utf-8"))
+    certificate["artifacts"]["inherited_controls"]["sha256"] = hashlib.sha256(current.read_bytes()).hexdigest()
+    _write_json(cert, certificate)
+    result = _run(cert, artifacts, material, "d" * 40, material,
+                  [".audit/entregar-issue/handoff-ready.json", relative],
+                  material_parent_inherited=snapshot, material_parent_repository=repo)
+    assert result.returncode == 0, result.stdout

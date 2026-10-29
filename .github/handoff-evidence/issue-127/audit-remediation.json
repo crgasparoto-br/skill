@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "contract_version": "2026-08-20.3",
+  "resolution_policy": "all-actionable-items",
+  "source": {
+    "rejection_id": "audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c",
+    "audit_report_sha256": "e7b92a30146ecfd80cefa115c290fc03a2240b984805421b8a6f7dcf0b4d4f26",
+    "audited_head_sha": "fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457"
+  },
+  "candidate_head_sha": "__MATERIAL_HEAD_SHA__",
+  "remediation_mode": "targeted-remediation",
+  "items": [
+    {
+      "source_kind": "finding",
+      "source_id": "A-001",
+      "remediation_mode": "targeted-remediation",
+      "status": "fixed",
+      "closure_kind": "behavioral-fix",
+      "changed_files": [
+        "scripts/plan_session_ruleset_m2.py",
+        "tests/test_plan_session_ruleset_m2.py",
+        "docs/SESSION_REVIEW_RULESET_M2_PLAN.md",
+        "scripts/session_ruleset_policy.py"
+      ],
+      "evidence": [
+        "tests/test_plan_session_ruleset_m2.py::test_effective_readback_rejects_second_active_applicable_ruleset",
+        "tests/test_plan_session_ruleset_m2.py::test_effective_readback_rejects_classic_human_review_or_legacy_gate",
+        "tests/test_plan_session_ruleset_m2.py::test_readback_cli_uses_complete_effective_state",
+        "tests/test_plan_session_ruleset_m2.py::test_second_page_competing_ruleset_blocks_effective_readback",
+        "tests/test_plan_session_ruleset_m2.py::test_classic_review_bypass_inventory_must_be_explicit[None]",
+        "tests/test_plan_session_ruleset_m2.py::test_classic_checks_cannot_hide_legacy_gate_outside_contexts",
+        "tests/test_plan_session_ruleset_m2.py::test_classic_review_fields_cannot_be_inferred[required_approving_review_count]",
+        "tests/test_plan_session_ruleset_m2.py::test_m2_plan_requires_visible_required_team_reviewer_inventory"
+      ],
+      "validations": [
+        "python -m pytest -q tests/test_plan_session_ruleset_m2.py"
+      ],
+      "reason": "Read-back now inventories all repository/inherited rulesets, requires bypass visibility for every inventoried ruleset, rejects any additional active ruleset applicable to the branch, validates compatible classic branch protection, and routes --readback through the complete effective-state verifier. Follow-up tests reject second-page conflicting rulesets, missing classic bypass visibility and legacy checks hidden outside contexts. Missing human-review fields are rejected rather than inferred as zero/false. Trusted publisher CODE-GROWTH-001 is restored by an actual source extraction below 300 lines, without changing the base policy or gate."
+    }
+  ],
+  "status": "closed",
+  "approval": "No independent approval is asserted by this implementation context."
+}
