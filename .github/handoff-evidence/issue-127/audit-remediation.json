@@ -3,9 +3,9 @@
   "contract_version": "2026-08-20.3",
   "resolution_policy": "all-actionable-items",
   "source": {
-    "rejection_id": "audit-rejection:3dd53905-3486-4611-8516-b640d3a6c5c8",
-    "audit_report_sha256": "b7d21c0e7b2288974d4c656e6049c1a327e87c9d22034fffe355f78bd449e8d4",
-    "audited_head_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0"
+    "rejection_id": "audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c",
+    "audit_report_sha256": "e7b92a30146ecfd80cefa115c290fc03a2240b984805421b8a6f7dcf0b4d4f26",
+    "audited_head_sha": "fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457"
   },
   "candidate_head_sha": "__MATERIAL_HEAD_SHA__",
   "remediation_mode": "targeted-remediation",
@@ -17,181 +17,27 @@
       "status": "fixed",
       "closure_kind": "behavioral-fix",
       "changed_files": [
-        ".github/workflows/session-review.yml",
-        ".github/workflows/prepare-neutral-audit-packet.yml",
-        "tests/test_session_review_workflows.py"
+        "scripts/plan_session_ruleset_m2.py",
+        "tests/test_plan_session_ruleset_m2.py",
+        "docs/SESSION_REVIEW_RULESET_M2_PLAN.md",
+        "scripts/session_ruleset_policy.py"
       ],
       "evidence": [
-        "tests/test_session_review_workflows.py"
+        "tests/test_plan_session_ruleset_m2.py::test_effective_readback_rejects_second_active_applicable_ruleset",
+        "tests/test_plan_session_ruleset_m2.py::test_effective_readback_rejects_classic_human_review_or_legacy_gate",
+        "tests/test_plan_session_ruleset_m2.py::test_readback_cli_uses_complete_effective_state",
+        "tests/test_plan_session_ruleset_m2.py::test_second_page_competing_ruleset_blocks_effective_readback",
+        "tests/test_plan_session_ruleset_m2.py::test_classic_review_bypass_inventory_must_be_explicit[None]",
+        "tests/test_plan_session_ruleset_m2.py::test_classic_checks_cannot_hide_legacy_gate_outside_contexts",
+        "tests/test_plan_session_ruleset_m2.py::test_classic_review_fields_cannot_be_inferred[required_approving_review_count]",
+        "tests/test_plan_session_ruleset_m2.py::test_m2_plan_requires_visible_required_team_reviewer_inventory"
       ],
       "validations": [
-        "python -m pytest -q tests/test_session_review_workflows.py"
+        "python -m pytest -q tests/test_plan_session_ruleset_m2.py"
       ],
-      "internal_review": {
-        "path": "tests/test_session_review_workflows.py",
-        "sha256": "f857d3be031e8c42ef75e0e791db82b20201fbcfae039fd3f5672c1ed873b6c9",
-        "evidence_kind": "reviewed-source-and-test-definition",
-        "procedure": "Exercise both workflow entrypoints, the restricted event set and the actual packet shell using hostile event strings and live-target routing fixtures.",
-        "observed": "The tested workflows expose no candidate-selected dispatch. Packet collection is read-only and routes event data without evaluating it as shell or Python.",
-        "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
-      }
-    },
-    {
-      "source_kind": "finding",
-      "source_id": "A-002",
-      "remediation_mode": "targeted-remediation",
-      "status": "fixed",
-      "closure_kind": "behavioral-fix",
-      "changed_files": [
-        "scripts/verify_session_review.py",
-        "tests/test_session_review_runner.py"
-      ],
-      "evidence": [
-        "tests/test_session_review_runner.py"
-      ],
-      "validations": [
-        "python -m pytest -q tests/test_session_review_runner.py"
-      ],
-      "internal_review": {
-        "path": "tests/test_session_review_runner.py",
-        "sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
-        "evidence_kind": "reviewed-source-and-test-definition",
-        "procedure": "Run evaluate with a different initial/prepared identity, a late identity mutation and a receipt/check belonging to another SHA or publisher.",
-        "observed": "Every tested identity drift rejects approval. The stable develop and main controls publish to the same frozen SHA and retain the verified receipt identity.",
-        "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
-      }
-    },
-    {
-      "source_kind": "finding",
-      "source_id": "A-003",
-      "remediation_mode": "targeted-remediation",
-      "status": "fixed",
-      "closure_kind": "behavioral-fix",
-      "changed_files": [
-        "scripts/verify_session_review.py",
-        "tests/test_session_review_runner.py"
-      ],
-      "evidence": [
-        "tests/test_session_review_runner.py"
-      ],
-      "validations": [
-        "python -m pytest -q tests/test_session_review_runner.py"
-      ],
-      "internal_review": {
-        "path": "tests/test_session_review_runner.py",
-        "sha256": "cd3f2890fb6e451e1822d192515334da691db3414c1652e9b6ecdbcbaeed25ef",
-        "evidence_kind": "reviewed-source-and-test-definition",
-        "procedure": "Run evaluate with 99,100,101,205 and 2500 existing records, repeat the same review, mutate/delete/reject the latest review and make the journal unreadable.",
-        "observed": "Complete history through 2500 records is read, the check is reused, the maximum watermark survives and an unreadable journal produces a terminal failure. 2501 records fail the declared collection budget.",
-        "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
-      }
-    },
-    {
-      "source_kind": "finding",
-      "source_id": "A-004",
-      "remediation_mode": "targeted-remediation",
-      "status": "implemented-unverified",
-      "closure_kind": "deterministic-gate-replay",
-      "changed_files": [
-        ".github/handoff-evidence/issue-127/manifest.json",
-        ".github/handoff-evidence/issue-127/reviewed-closure.json",
-        ".github/handoff-evidence/issue-127/codebase-grounding.json",
-        ".github/handoff-evidence/issue-127/requirement-attack-matrix.json",
-        ".github/handoff-evidence/issue-127/risk-saturation.json",
-        ".github/handoff-evidence/issue-127/inherited-controls.json",
-        "entregar-issue/scripts/bind_grounding_execution.py",
-        "entregar-issue/scripts/produce_actions_handoff_evidence.py",
-        "entregar-issue/scripts/prepare_actions_handoff.py",
-        "entregar-issue/scripts/publish_actions_handoff.py",
-        "entregar-issue/scripts/validate_terminal_handoff.py",
-        "entregar-issue/references/terminal-handoff.md",
-        "entregar-issue/references/github-actions-evidence.md",
-        "tests/test_session_review_dossier.py",
-        "entregar-issue/tests/test_bind_grounding_execution.py",
-        "entregar-issue/tests/test_produce_actions_handoff_evidence.py",
-        "entregar-issue/tests/test_prepare_actions_handoff.py",
-        "entregar-issue/tests/test_publish_actions_handoff.py",
-        "entregar-issue/tests/test_terminal_handoff_contract.py",
-        "entregar-issue/scripts/build_handoff_certificate.py",
-        "entregar-issue/scripts/certify_handoff_postcondition.py",
-        "entregar-issue/scripts/handoff_postcondition.py",
-        "entregar-issue/scripts/handoff_postcondition_records.py",
-        "entregar-issue/scripts/certificate_postcondition_replay.py",
-        "entregar-issue/scripts/certificate_replay_source.py",
-        "entregar-issue/scripts/certificate_replay_io.py",
-        "entregar-issue/scripts/certificate_replay_inputs.py",
-        "entregar-issue/tests/test_handoff_postcondition.py",
-        "entregar-issue/tests/test_handoff_postcondition_records.py",
-        "entregar-issue/tests/test_certificate_postcondition_replay.py",
-        "entregar-issue/scripts/require_actions_handoff_certificate.py",
-        "entregar-issue/scripts/validate_handoff_certificate.py",
-        "entregar-issue/scripts/validate_audit_remediation.py",
-        "entregar-issue/scripts/validate_handoff_readiness.py",
-        "entregar-issue/scripts/validate_audit_escape_lineage.py",
-        "entregar-issue/scripts/validate_independent_rejection_closure.py",
-        "auditar-issue/scripts/check_delivery_preflight.py",
-        "auditar-issue/scripts/check_connector_preflight.py",
-        "auditar-issue/tests/test_evidence_profile_preflight.py",
-        "auditar-issue/tests/test_connector_preflight.py",
-        "entregar-issue/references/certificate-postconditions.md"
-      ],
-      "evidence": [
-        "tests/test_session_review_dossier.py"
-      ],
-      "validations": [
-        "python -m pytest -q tests/test_session_review_dossier.py"
-      ],
-      "internal_review": {
-        "path": "tests/test_session_review_dossier.py",
-        "sha256": "fd776c01e0b8655bf7264bb53750c9bfabe6361b73d559784449f2e1d8db28f8",
-        "evidence_kind": "reviewed-source-and-test-definition",
-        "procedure": "Reconcile the current issue with the official parser and overlay, then run the original certificate gate against evidence for the new material SHA.",
-        "observed": "The static dossier reconciles all 16 current obligations, with M2 explicitly deferred. Risk saturation covers every family declared by the attack matrix and active inherited controls, including semantic-effect; the official auditor saturation consumer checks that composition. Source references use qualified paths and real numeric line ranges while preserving exact JUnit bindings. Execution proof is authenticated and materialized before grounding validation. First critical publication verifies real material-parent absence from Git and authenticates existing snapshots byte for byte. The official postcondition flow preserves a non-publishable preparation, executes the immutable historical gate literally and derives closure only from authenticated successful execution. This source template does not predeclare a replay result.",
-        "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
-      },
-      "original_failed_gate": {
-        "name": "Require certified semantic handoff (exact SHA)",
-        "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python /workspace/scratch/feec0c916f9c/pr128-audit/trusted/entregar-issue/scripts/require_actions_handoff_certificate.py --evidence-dir /workspace/scratch/feec0c916f9c/pr128-audit/evidence --event /workspace/scratch/feec0c916f9c/pr128-audit/trusted-event.json --base-ref develop",
-        "subject_sha": "f16a1362f081397c7f0e7f0167f2f45fd65819d0",
-        "exit_code": 2,
-        "evidence_sha256": "18fa0f55a69661bdcf815596026445a97ae7e270f0297f13547c66de7623dc8a"
-      },
-      "revalidation": {
-        "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python /workspace/scratch/feec0c916f9c/pr128-audit/trusted/entregar-issue/scripts/require_actions_handoff_certificate.py --evidence-dir /workspace/scratch/feec0c916f9c/pr128-audit/evidence --event /workspace/scratch/feec0c916f9c/pr128-audit/trusted-event.json --base-ref develop",
-        "subject_sha": "__MATERIAL_HEAD_SHA__",
-        "exit_code": null,
-        "evidence_sha256": null,
-        "equivalence": "exact-command-replay",
-        "status": "not-passed"
-      },
-      "execution_condition": "Close this item only after the official postcondition executor records a real successful literal replay on the material SHA and all final validators accept the resulting proof chain.",
-      "preparation_reason": "The historical gate consumes certification metadata. The source template therefore retains blocked status and null execution facts until CERTIFICATE-POSTCONDITION-001 produces and authenticates the actual replay; preparation alone has no release authority."
-    },
-    {
-      "source_kind": "finding",
-      "source_id": "A-005",
-      "remediation_mode": "targeted-remediation",
-      "status": "fixed",
-      "closure_kind": "behavioral-fix",
-      "changed_files": [
-        "docs/WEB_INDEPENDENT_AUDIT.md"
-      ],
-      "evidence": [
-        "docs/WEB_INDEPENDENT_AUDIT.md"
-      ],
-      "validations": [
-        "python scripts/validate_docs.py --root ."
-      ],
-      "internal_review": {
-        "path": "docs/WEB_INDEPENDENT_AUDIT.md",
-        "sha256": "d3ce5f710fafa496afe526e560bce2398955511002325952aa42b57febd92647",
-        "evidence_kind": "reviewed-source-and-test-definition",
-        "procedure": "Inspect the guide against the current phase decision and trace rollback with protection available, prior evidence missing and a legacy reviewer/check unavailable; run documentation-link validation.",
-        "observed": "The guide restores and verifies the previous protections before removing the session requirement, keeps the parent issue open for M2 and preserves human/Ed25519 routes. This is internal semantic review of the procedure, not execution of M2.",
-        "execution_binding": "manifest.test_bindings and independently collected exact-SHA JUnit; the source digest is not a test-log digest."
-      }
+      "reason": "Read-back now inventories all repository/inherited rulesets, requires bypass visibility for every inventoried ruleset, rejects any additional active ruleset applicable to the branch, validates compatible classic branch protection, and routes --readback through the complete effective-state verifier. Follow-up tests reject second-page conflicting rulesets, missing classic bypass visibility and legacy checks hidden outside contexts. Missing human-review fields are rejected rather than inferred as zero/false. Trusted publisher CODE-GROWTH-001 is restored by an actual source extraction below 300 lines, without changing the base policy or gate."
     }
   ],
-  "status": "blocked",
+  "status": "closed",
   "approval": "No independent approval is asserted by this implementation context."
 }
