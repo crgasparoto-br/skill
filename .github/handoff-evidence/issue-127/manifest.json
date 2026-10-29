@@ -311,7 +311,11 @@
         "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_proof_rejects_substitution[boolean-exit]",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_log_is_bounded_during_actual_process_execution",
         "tests.test_session_review_dossier::test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]",
-        "auditar-issue.tests.test_delivery_saturation_preflight::test_preflight_rejects_unsaturated_material_family"
+        "auditar-issue.tests.test_delivery_saturation_preflight::test_preflight_rejects_unsaturated_material_family",
+        "tests.test_plan_session_ruleset_m2::test_second_page_competing_ruleset_blocks_effective_readback",
+        "tests.test_plan_session_ruleset_m2::test_classic_review_bypass_inventory_must_be_explicit[None]",
+        "tests.test_plan_session_ruleset_m2::test_classic_checks_cannot_hide_legacy_gate_outside_contexts",
+        "tests.test_plan_session_ruleset_m2::test_classic_review_fields_cannot_be_inferred[required_approving_review_count]"
       ],
       "regression": [
         "entregar-issue.tests.test_require_actions_handoff_certificate::test_stale_or_misleading_receipt_fails_closed",
