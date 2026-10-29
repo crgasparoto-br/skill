@@ -13,7 +13,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-from reviewed_phase_decision import MissingReviewedEvidenceError, _verify_deferred_phase, digest
+from reviewed_phase_decision import (
+    MissingReviewedEvidenceError,
+    _verify_deferred_phase,
+    digest,
+    with_deferred_completion,
+)
 from validate_handoff_certificate import scope_touches_code, scope_touches_tests
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -323,15 +328,6 @@ def canonical_issue_context(out: Path, repository: str, issue: int) -> tuple[str
     if not body or any(source.get(key) != value for key, value in expected.items()):
         raise MissingReviewedEvidenceError("canonical issue source binding is unavailable")
     return body, source.get("issue_state") == "open"
-
-
-def with_deferred_completion(inputs: dict, deferred_ids: list[str], issue: int) -> dict:
-    """Add provisional completion metadata without asserting final audit."""
-    if deferred_ids:
-        return {**inputs, "issue_completion": "partial",
-                "deferred_obligation_ids": deferred_ids,
-                "remaining_issue_ids": [issue], "parent_issue_must_remain_open": True}
-    return inputs
 
 
 def candidate_module_inventory(exact_index: dict) -> dict:

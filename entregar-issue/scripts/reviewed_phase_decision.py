@@ -75,3 +75,12 @@ def _verify_deferred_phase(closure: dict, deferred: list[dict],
             " lacks canonical phase decision, verified issue binding or open-parent requirement")
 
 
+def with_deferred_completion(inputs: dict, deferred_ids: list[str], issue: int) -> dict:
+    """Add provisional completion metadata without asserting final audit."""
+    if deferred_ids:
+        return {**inputs, "issue_completion": "partial",
+                "deferred_obligation_ids": deferred_ids,
+                "remaining_issue_ids": [issue], "parent_issue_must_remain_open": True}
+    return inputs
+
+
