@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "validate_terminal_handoff.py"
+EVIDENCE_SHA = hashlib.sha256(b"canonical negative").hexdigest()
 
 
 def _write_json(path: Path, value: dict) -> None:
@@ -74,6 +78,7 @@ def _run(
     previous_escape: Path | None = None, current: str | None = None,
     current_parent: str | None = None, current_paths: list[str] | None = None,
     post_handoff_paths: list[str] | None = None, proof_out: Path | None = None,
+    material_parent_repository: Path | None = None,
 ):
     cmd = [
         sys.executable, str(SCRIPT),
@@ -101,6 +106,8 @@ def _run(
         cmd += ["--material-parent-inherited-controls", str(material_parent_inherited)]
     if material_parent_escape is not None:
         cmd += ["--material-parent-audit-escape-closure", str(material_parent_escape)]
+    if material_parent_repository is not None:
+        cmd += ["--material-parent-repository", str(material_parent_repository)]
     if previous_inherited is not None:
         cmd += ["--previous-inherited-controls", str(previous_inherited)]
     if previous_escape is not None:
@@ -302,6 +309,157 @@ def test_terminal_targeted_reaudit_does_not_require_previous_inherited_controls(
         assert "previous inherited-controls snapshot" not in proc.stdout
 
 
+def test_terminal_guard_forwards_target_binding_for_previous_rejection_success() -> None:
+    """Regression: the readiness subprocess needs --target-repository/--issue-number/--pull-request-number
+    whenever the certificate carries previous_independent_rejection, or a legitimately
+    target-bound audit-escape-closure is rejected as unbound and the terminal handoff
+    for a post-rejection re-audit is always blocked."""
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        material = "a" * 40
+        published = "d" * 40
+        cert, artifacts, _allowed = _fixture(base, material)
+
+        _write_json(artifacts / "requirement-closure.json", {
+            "obligations": [{
+                "id": "OBL-001",
+                "disposition": "covered",
+                "flags": ["structural", "canonical-path"],
+            }],
+            "structural_invariant_closures": {
+                "status": "passed",
+                "applicability_reason": "A specialized parser competes with a canonical parser.",
+                "entries": [{
+                    "id": "SIC-001",
+                    "obligation_ids": ["OBL-001"],
+                    "plausible_wrong_implementation": "The specialized parser drops semantic_field and a later handler masks it.",
+                    "negative_control_evidence": ["EV-CANON-DIVERGENCE-001"],
+                }],
+                "unresolved_invariants": [],
+            },
+            "read_model_closures": {"status": "not-applicable", "applicability_reason": "No read model contract is exercised by this synthetic fixture."},
+            "canonical_source_consistency": {"status": "not-applicable", "applicability_reason": "No competing data source is part of this synthetic fixture."},
+            "documentation_consistency": {"status": "not-applicable", "applicability_reason": "No documentation contract transition is part of this synthetic fixture."},
+            "scope_reduction_review": {"status": "passed", "matches": []},
+            "pass_c": {"status": "passed"},
+        })
+        _write_json(artifacts / "requirement-attack-matrix.json", {
+            "schema_version": 1,
+            "head_sha": material,
+            "requirements": [{
+                "requirement_id": "REQ-001",
+                "obligation_ids": ["OBL-001"],
+                "risk_families": ["structural-contract"],
+                "risk_surfaces": [{"risk_family": "structural-contract", "surface": "canonical-parser-path", "reason": "A specialized parser competes with the canonical parser path."}],
+                "plausible_wrong_implementation": "The specialized parser bypasses the canonical parser and silently drops one semantic field.",
+                "positive_control": {"id": "POS-001", "status": "passed", "head_sha": material, "evidence": "positive.log"},
+                "negative_controls": [{
+                    "id": "CANON-DIVERGENCE-001", "status": "passed", "head_sha": material,
+                    "evidence_path": "negative.log", "evidence_sha256": EVIDENCE_SHA,
+                    "risk_family": "structural-contract", "surface": "canonical-parser-path", "dimension": "canonical-precedence",
+                    "failure_mode": "The specialized parser intercepts before the canonical parser and drops semantics.",
+                    "plausible_wrong_implementation": "Keep a specialized parser that bypasses the canonical path while happy-path fixtures remain equivalent.",
+                    "control_type": "scenario", "procedure": "Feed divergent semantic fields through specialized and canonical parser paths.",
+                    "expected": "The canonical parser remains authoritative for every semantic field.",
+                    "observed": "The divergence control preserved the canonical parser as authoritative.",
+                    "sibling_cases": [{"id": "S1", "surface": "canonical-parser-path", "dimension": "semantic-field-parity", "status": "passed"}],
+                }],
+                "regression_controls": [{"id": "REG-001", "status": "passed", "head_sha": material, "evidence": "regression.log"}],
+            }],
+            "uncovered_requirements": [],
+        })
+        canonical_families = ["authorization", "tenant-isolation", "public-boundary", "reference-liveness", "temporal-consistency", "temporal-destination", "concurrency-atomicity", "idempotency", "rollback", "historical-immutability", "structural-contract", "documentation"]
+        _write_json(artifacts / "risk-saturation.json", {
+            "schema_version": 1, "head_sha": material,
+            "families": [{
+                "family": name,
+                "applicable": name == "structural-contract",
+                "reason": "Structural canonical path requirement." if name == "structural-contract" else "Not applicable to this fixture.",
+                "control_ids": ["CANON-DIVERGENCE-001"] if name == "structural-contract" else [],
+                "dimensions": [{"surface": "canonical-parser-path", "reason": "A specialized parser competes with the canonical parser path.", "control_ids": ["CANON-DIVERGENCE-001"], "status": "passed"}] if name == "structural-contract" else [],
+                "status": "passed" if name == "structural-contract" else "not-applicable",
+            } for name in canonical_families],
+            "material_families_missing_controls": [],
+        })
+        _write_json(artifacts / "inherited-controls.json", {
+            "schema_version": 1, "head_sha": material,
+            "source_audits": ["audit-prior"],
+            "controls": [{"id": "CANON-DIVERGENCE-001", "status": "passed", "head_sha": material, "subject_sha": material, "control_type": "scenario", "procedure": "Feed divergent semantic fields through specialized and canonical parser paths on the frozen candidate.", "expected": "The canonical parser remains authoritative for every semantic field.", "observed": "The divergent fixture preserved canonical precedence and semantic field parity.", "evidence": "negative.log", "evidence_sha256": EVIDENCE_SHA, "attack_control_id": "CANON-DIVERGENCE-001", "risk_family": "structural-contract", "surface": "canonical-parser-path", "dimension": "canonical-precedence"}],
+            "unresolved_controls": [],
+        })
+        escape_payload = {
+            "subject": {"repository": "owner/repo", "issue_number": 42, "pull_request_number": 99, "material_head_sha": material},
+            "escape_id": "A-GENERIC-001",
+            "escape_class": "canonical-path-divergence",
+            "source_audit": {"rejection_id": "audit-rejection:synthetic-case", "finding_id": "A-GENERIC-001"},
+            "plausible_wrong_implementation": "The specialized parser intercepts before the canonical path and drops semantics.",
+            "status": "passed",
+            "required_risk_families": ["structural-contract"],
+            "required_attack_dimensions": [
+                {"risk_family": "structural-contract", "surface": "canonical-parser-path", "dimension": "canonical-precedence"},
+                {"risk_family": "structural-contract", "surface": "canonical-parser-path", "dimension": "semantic-field-parity"},
+            ],
+            "sibling_cases": [
+                {"id": "S1", "surface": "canonical-parser-path", "dimension": "canonical-precedence", "status": "passed"},
+                {"id": "S2", "surface": "canonical-parser-path", "dimension": "semantic-field-parity", "status": "passed"},
+            ],
+            "prevention_change": {"evidence": "structural gate"},
+            "detection_change": {"evidence": "CANON-DIVERGENCE-001"},
+            "revalidated_head_sha": material,
+        }
+        _write_json(artifacts / "audit-escape-closure.json", escape_payload)
+        _write_json(artifacts / "learning-closure.json", {
+            "schema_version": 1,
+            "classification": "implementation-only",
+            "source_event": {"kind": "independent-audit-rejection", "rejection_id": "audit-rejection:synthetic-case", "finding_ids": ["A-GENERIC-001"]},
+            "generalized_learning": {"promotion_status": "not-required", "reason": "Targeted remediation only; no generic control change required."},
+        })
+        previous_escape = base / "previous-audit-escape-closure.json"
+        _write_json(previous_escape, escape_payload)
+
+        _write_json(artifacts / "audit-source-result.json", {"findings": [], "recommendations": []})
+        source_sha256 = hashlib.sha256((artifacts / "audit-source-result.json").read_bytes()).hexdigest()
+        _write_json(artifacts / "audit-remediation.json", {
+            "schema_version": 1,
+            "contract_version": "2026-08-20.3",
+            "resolution_policy": "all-actionable-items",
+            "source": {
+                "rejection_id": "audit-rejection:synthetic-case",
+                "audit_report_sha256": source_sha256,
+                "audited_head_sha": material,
+            },
+            "candidate_head_sha": material,
+            "remediation_mode": "targeted-remediation",
+            "items": [],
+            "status": "closed",
+        })
+
+        new_artifacts = {
+            "requirement_attack_matrix": "requirement-attack-matrix.json",
+            "risk_saturation": "risk-saturation.json",
+            "inherited_controls": "inherited-controls.json",
+            "audit_escape_closure": "audit-escape-closure.json",
+            "learning_closure": "learning-closure.json",
+            "audit_remediation": "audit-remediation.json",
+            "audit_source_result": "audit-source-result.json",
+        }
+        payload = json.loads(cert.read_text(encoding="utf-8"))
+        for key, name in new_artifacts.items():
+            payload["artifacts"][key] = {"name": name, "sha256": hashlib.sha256((artifacts / name).read_bytes()).hexdigest()}
+        payload["artifacts"]["requirement_closure"]["sha256"] = hashlib.sha256((artifacts / "requirement-closure.json").read_bytes()).hexdigest()
+        payload["certificate_commit_policy"]["allowed_paths"] = sorted(set(payload["certificate_commit_policy"]["allowed_paths"]) | {f".audit/entregar-issue/{name}" for name in new_artifacts.values()})
+        payload["previous_independent_rejection"] = True
+        _write_json(cert, payload)
+
+        proc = _run(
+            cert, artifacts, material, published, material,
+            [".audit/entregar-issue/handoff-ready.json"],
+            previous_escape=previous_escape,
+        )
+        assert proc.returncode == 0, proc.stdout
+        assert "READY: terminal handoff published" in proc.stdout
+
+
 def _escape(escape_id: str) -> dict:
     return {
         "escape_id": escape_id,
@@ -369,3 +527,93 @@ def test_terminal_guard_rejects_escape_removed_between_material_parent_and_resul
         )
         assert proc.returncode == 2
         assert "previous escape ids disappeared: A-003" in proc.stdout
+
+
+@pytest.mark.parametrize("mutation,reason", [
+    ("snapshot-missing", "without material-parent snapshot"),
+    ("snapshot-tampered", "snapshot bytes differ"),
+    ("snapshot-symlink", "snapshot bytes differ"),
+    ("snapshot-parent-symlink", "snapshot bytes differ"),
+    ("false-absence", "without material-parent snapshot"),
+    ("absent-snapshot", "snapshot supplied for an absent"),
+    ("missing-commit", "cannot verify material-parent"),
+    ("missing-repository", "cannot verify material-parent"),
+    ("parent-symlink", "unsafe Git type or symlink"),
+    ("ancestor-symlink", "unsafe Git type or symlink"),
+    ("parent-directory", "unsafe Git type or symlink"),
+], ids=["snapshot-missing", "snapshot-tampered", "snapshot-symlink", "snapshot-parent-symlink", "false-absence", "absent-snapshot",
+        "missing-commit", "missing-repository", "parent-symlink", "ancestor-symlink", "parent-directory"])
+def test_terminal_parent_git_proof_rejects_untrusted_snapshots(tmp_path, mutation, reason):
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q")
+    (repo / "README.md").write_text("synthetic parent fixture\n", encoding="utf-8")
+    relative = ".audit/entregar-issue/inherited-controls.json"
+    parent = repo / relative
+    parent.parent.mkdir(parents=True)
+    raw = b'{"schema_version":1,"controls":[{"id":"historical-control"}]}\n'
+    if mutation == "parent-directory":
+        parent.mkdir()
+        (parent / "entry.json").write_bytes(raw)
+    elif mutation == "parent-symlink":
+        parent.symlink_to("../../../README.md")
+    elif mutation != "absent-snapshot":
+        parent.write_bytes(raw)
+    if mutation == "ancestor-symlink":
+        (repo / ".audit").rename(repo / "elsewhere")
+        (repo / ".audit").symlink_to("elsewhere", target_is_directory=True)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "material lineage")
+    material = git(repo, "rev-parse", "HEAD")
+    snapshot = tmp_path / "parent-inherited.json"
+    snapshot.write_bytes(raw)
+    if mutation in {"snapshot-missing", "false-absence"}:
+        snapshot = None
+    elif mutation == "snapshot-tampered":
+        snapshot.write_text('{"controls":[]}', encoding="utf-8")
+    elif mutation == "snapshot-symlink":
+        snapshot.unlink()
+        snapshot.symlink_to(parent)
+    elif mutation == "snapshot-parent-symlink":
+        (tmp_path / "snapshot-alias").symlink_to(repo, target_is_directory=True)
+        snapshot = tmp_path / "snapshot-alias" / relative
+    if mutation == "false-absence":
+        git(repo, "rm", "-q", relative)
+        git(repo, "commit", "-q", "-m", "later child removes lineage")
+    if mutation == "missing-commit":
+        material = "f" * 40
+    cert, artifacts, _ = _fixture(tmp_path, material)
+    result = _run(cert, artifacts, material, "d" * 40, material,
+                  [".audit/entregar-issue/handoff-ready.json", relative],
+                  material_parent_inherited=snapshot,
+                  material_parent_repository=tmp_path / "unavailable" if mutation == "missing-repository" else repo)
+    assert result.returncode == 2, result.stdout
+    assert reason in result.stdout
+
+
+def test_terminal_parent_git_proof_accepts_exact_snapshot(tmp_path):
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    repo = tmp_path / "repo"
+    relative = ".audit/entregar-issue/inherited-controls.json"
+    parent = repo / relative
+    parent.parent.mkdir(parents=True)
+    ledger = {"schema_version": 1, "head_sha": "a" * 40,
+              "controls": [], "source_audits": [], "unresolved_controls": []}
+    _write_json(parent, ledger)
+    git(repo, "init", "-q")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "material controls")
+    material = git(repo, "rev-parse", "HEAD")
+    snapshot = tmp_path / "material-inherited.json"
+    snapshot.write_bytes(parent.read_bytes())
+    cert, artifacts, _ = _fixture(tmp_path, material)
+    current = artifacts / "inherited-controls.json"
+    _write_json(current, dict(ledger, head_sha=material))
+    certificate = json.loads(cert.read_text(encoding="utf-8"))
+    certificate["artifacts"]["inherited_controls"]["sha256"] = hashlib.sha256(current.read_bytes()).hexdigest()
+    _write_json(cert, certificate)
+    result = _run(cert, artifacts, material, "d" * 40, material,
+                  [".audit/entregar-issue/handoff-ready.json", relative],
+                  material_parent_inherited=snapshot, material_parent_repository=repo)
+    assert result.returncode == 0, result.stdout

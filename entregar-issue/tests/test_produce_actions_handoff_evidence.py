@@ -460,11 +460,95 @@ def test_immutable_obligation_identity_cannot_be_rewritten():
 
 def test_identity_substitution_is_scoped_to_identity_fields():
     assert producer.bind_identity({"head_sha": "__MATERIAL_HEAD_SHA__",
+                                   "candidate_head_sha": "__MATERIAL_HEAD_SHA__",
+                                   "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
+                                   "historical_head_sha": "c" * 40,
                                    "nested": [{"base_sha": "__WORK_ITEM_START_SHA__"}]},
                                   "a" * 40, "b" * 40) == {
-        "head_sha": "a" * 40, "nested": [{"base_sha": "b" * 40}]}
-    with pytest.raises(ValueError, match="outside a declared identity"):
-        producer.bind_identity({"control_evidence": "__MATERIAL_HEAD_SHA__"}, "a" * 40, "b" * 40)
+        "head_sha": "a" * 40, "candidate_head_sha": "a" * 40,
+        "revalidated_head_sha": "a" * 40, "historical_head_sha": "c" * 40,
+        "nested": [{"base_sha": "b" * 40}]}
+    for field in ("control_evidence", "historical_head_sha", "audited_head_sha", "evidence_sha256"):
+        with pytest.raises(ValueError, match="outside a declared identity"):
+            producer.bind_identity({field: "__MATERIAL_HEAD_SHA__"}, "a" * 40, "b" * 40)
+
+
+@pytest.mark.parametrize("reviewed_binding", [True, False], ids=["reviewed", "missing-binding"])
+def test_producer_binds_grounding_from_committed_review_and_real_run(tmp_path, monkeypatch, reviewed_binding):
+    monkeypatch.syspath_prepend(str(SCRIPTS))
+    from types import SimpleNamespace
+
+    from build_test_candidate_index import collect
+    from prepare_actions_handoff import record_tests
+
+    root, out, event, source, _ = fixture(tmp_path)
+    path = "tests/test_controls.py"
+    (root / "tests").mkdir()
+    (root / path).write_text(
+        "def test_positive():\n    assert 2 + 2 == 4\n"
+        "def test_negative():\n    assert 2 + 2 != 5\n"
+        "def test_regression():\n    assert 1 + 1 == 2\n")
+    grounding = {"head_sha": "__MATERIAL_HEAD_SHA__", "test_decisions": [
+        {"path": path, "operation": "added", "decision": "create",
+         "verification": {"status": "unknown", "reason": "awaiting-exact-SHA-JUnit"}}]}
+    put(source / "codebase-grounding.json", grounding)
+    manifest = json.loads((source / "manifest.json").read_text())
+    manifest["artifact_sha256"]["codebase-grounding.json"] = producer.digest((source / "codebase-grounding.json").read_bytes())
+    manifest["test_bindings"]["REQ-1"] = {
+        kind: [f"tests.test_controls::test_{kind}"] for kind in ("positive", "negative", "regression")}
+    if reviewed_binding:
+        manifest["grounding_test_bindings"] = {path: [
+            {"case": path + "::test_positive", "test_case_id": "tests.test_controls::test_positive"}]}
+    put(source / "manifest.json", manifest)
+    git(root, "add", ".")
+    git(root, "commit", "-m", "reviewed pending execution binding")
+    head = git(root, "rev-parse", "HEAD")
+    payload = json.loads(event.read_text())
+    payload["pull_request"]["head"]["sha"] = head
+    put(event, payload)
+    preflight = json.loads((out / "handoff-preflight.json").read_text())
+    preflight["identity"]["material_head_sha"] = head
+    put(out / "handoff-preflight.json", preflight)
+    junit = out / "pytest-exact-head.xml"
+    result = subprocess.run([sys.executable, "-m", "pytest", "-vv", "--color=no", f"--junitxml={junit}"],
+                            cwd=root, capture_output=True, check=False, timeout=20)
+    assert result.returncode == 0, result.stdout.decode()
+    (out / "pytest-exact-head.log").write_bytes(result.stdout + result.stderr)
+    record_tests(SimpleNamespace(root=root, out=out, exit_code=result.returncode,
+                                 test_command=f"python -m pytest -vv --color=no --junitxml={junit}"))
+    put(out / "test-candidate-index.json", collect(junit, head))
+    if not reviewed_binding:
+        with pytest.raises(ValueError, match="exactly the pending"):
+            producer.produce(root, out, event, "develop")
+        assert not (out / "certification-inputs.json").exists()
+        return
+    producer.produce(root, out, event, "develop")
+    staged = json.loads((out / ".audit/entregar-issue/codebase-grounding.json").read_text())
+    proof = staged["test_decisions"][0]["verification"]
+    assert proof["status"] == "passed" and proof["subject_sha"] == head
+    assert (root / proof["evidence_path"]).read_bytes() == (out / proof["evidence_path"]).read_bytes()
+    assert json.loads((source / "codebase-grounding.json").read_text()) == grounding
+    assert not (out / ".audit/entregar-issue/handoff-ready.json").exists()
+
+
+@pytest.mark.parametrize("comparison_precedes_start", [True, False], ids=["remediation-start", "descendant-pr-base"])
+def test_code_growth_comparison_preserves_recorded_start_and_real_ancestry(tmp_path, comparison_precedes_start):
+    root, out, _, source, previous_head = fixture(tmp_path)
+    pr_base = json.loads((source / "manifest.json").read_text())["work_item_start_sha"]
+    (root / "service.py").write_text("def answer():\n    return 42\n")
+    git(root, "add", "service.py")
+    git(root, "commit", "-m", "remediation material")
+    head = git(root, "rev-parse", "HEAD")
+    start, comparison = (previous_head, pr_base) if comparison_precedes_start else (pr_base, previous_head)
+    report_path = out / "code-growth.json"
+    command = producer.code_growth_command(root, start, head, comparison, report_path, source)
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = json.loads(report_path.read_text())
+    assert report["base_sha"] == start  # The trusted policy anchor never moves.
+    assert report["comparison_base_sha"] == previous_head
+    assert report["subject_sha"] == head
+    assert report["files"] == [{"path": "service.py", "lines_before": None, "lines_after": 2}]
 
 
 def test_approved_review_cannot_stage_pending_obligations():

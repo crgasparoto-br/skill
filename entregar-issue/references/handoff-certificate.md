@@ -41,6 +41,12 @@ O certificado deve ser produzido por `scripts/build_handoff_certificate.py` some
 - `codebase-grounding.json` com `validate_codebase_grounding.py` em `READY` quando o escopo local da issue tocar codigo; passar `--codebase-grounding` ao builder, que bloqueia a ausencia ou o SHA stale e registra `controls.codebase_grounding.applicable`;
 - relatorio `CODE-GROWTH-001` em `passed` no mesmo caso, passado ao builder com `--code-growth`.
 
+Quando o replay de um gate oficial de certificacao depender do proprio certificado,
+aplicar [CERTIFICATE-POSTCONDITION-001](certificate-postconditions.md). A preparacao
+oficial nao e handoff: preserva pendencias explicitas, nao possui mapa certificador
+`artifacts` e sua allowlist fica vazia. Somente depois do replay real e de todos os
+validadores finais sem excecao o builder emite o certificado acima.
+
 ## Preflight contra pacote herdado
 
 Antes do builder, executar `scripts/delivery_target_binding.py` ou usar `artifact_reuse` do controller context. Se o pacote existente for de outro alvo, ele nao e entrada valida do builder nem candidato a `handoff-only`; reconstruir os artefatos atuais e emitir certificado novo. Esse preflight cobre explicitamente branches que herdam `.audit/entregar-issue` da base sem tocar nesses arquivos durante a implementacao material. Quando `base_sha` estiver disponivel, provar a heranca por igualdade de bytes contra o commit base exato; em connector-only, materializar os mesmos paths da base e usar `--base-audit-dir`. Um artefato estrangeiro alterado no head continua `foreign-target`.

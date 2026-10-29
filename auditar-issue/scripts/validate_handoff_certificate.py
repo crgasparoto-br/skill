@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, load_json_artifact
+from handoff_postcondition import require_final_phase
 from validate_evidence_source_locations import candidate_locations
 from validate_evidence_source_locations import validate as validate_source_locations
 
@@ -175,6 +176,11 @@ def main() -> int:
         return 2
 
     schema_version = cert.get("schema_version")
+    try:
+        require_final_phase(cert)
+    except ValueError as exc:
+        print(f"BLOCK: {exc}")
+        return 2
     if schema_version not in {1, 2} or cert.get("status") != "ready":
         errors.append("handoff certificate is not ready schema v1/v2")
 
@@ -420,6 +426,15 @@ def main() -> int:
 
     if target_mismatch:
         recovery = "fresh-handoff-required"
+
+    if not errors and (cert.get("previous_independent_rejection") or "postcondition_proof" in cert):
+        try:
+            from handoff_postcondition import verify_finalization
+            verify_finalization(cert, artifacts_dir, Path(args.source_repository_root)
+                                if args.source_repository_root else None, expected_base=args.base_sha,
+                                require_repository=True)
+        except Exception as exc:
+            errors.append(f"certificate postcondition proof: {exc}")
 
     if errors:
         for error in errors:

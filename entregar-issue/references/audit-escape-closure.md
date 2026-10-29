@@ -32,10 +32,13 @@ Nao considerar fechado quando somente o fixture ou branch literal do finding foi
 
 Produzir `.audit/entregar-issue/audit-escape-closure.json` como ledger cumulativo do work item, com uma entrada por escape. Antes de novo freeze, carregar o fechamento do handoff anterior e preservar todos os `escape_id` anteriores; novos escapes sao anexados, nunca substituem entradas antigas. Para a rejeicao independente mais recente, exigir correspondencia deterministica entre `learning-closure.json/source_event.rejection_id` e ao menos uma entrada `source_audit.rejection_id`; se `finding_ids` forem declarados, todos devem estar representados. Executar `scripts/validate_audit_escape_lineage.py --closure ... --previous-closure ... --require-previous` e `scripts/validate_independent_rejection_closure.py --learning-closure ... --closure ...` em reauditorias.
 
+O objeto raiz deve declarar `subject.repository`, `subject.issue_number`, `subject.pull_request_number` (ou `null` em entregas sem PR) e `subject.material_head_sha`, sempre vinculados ao alvo atual. Todos os campos devem existir e ter o tipo exato: strings para repositorio/SHA, inteiros (nunca booleanos ou strings numericas) para issue/PR, e `null` explicito sem PR. Um `source_audit` historico ou a localizacao do arquivo nao provam pertencimento.
+
 Formato de cada entrada:
 
 ```json
 {
+  "subject": {"repository": "example/consumer", "issue_number": 123, "pull_request_number": 124, "material_head_sha": "<SHA material atual>"},
   "escape_id": "A-001",
   "escape_class": "role-secret-boundary-leak",
   "source_audit": {"head_sha": "...", "rejection_id": "audit-rejection:synthetic-001", "finding_id": "A-001"},

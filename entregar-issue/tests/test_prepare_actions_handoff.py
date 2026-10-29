@@ -1,6 +1,7 @@
 """Fail-closed checks for GitHub-hosted handoff evidence preparation."""
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -19,12 +20,13 @@ mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 HEAD = "a" * 40
 BASE = "b" * 40
+MERGE = "c" * 40
 
 
 def event(*, title="Issue #112: test policy", body="Related to Issue #112",
           head=HEAD, fork=False, base="develop"):
     return {"repository": {"full_name": "team/skill"}, "pull_request": {
-        "number": 113, "title": title, "body": body,
+        "number": 113, "title": title, "body": body, "merge_commit_sha": MERGE,
         "head": {"sha": head, "repo": {"full_name": "other/fork" if fork else "team/skill"}},
         "base": {"sha": BASE, "ref": base}}}
 
@@ -99,6 +101,11 @@ def test_prepare_preserves_pending_and_never_builds_certificate(tmp_path, monkey
     closure = json.loads((out / ".audit/entregar-issue/requirement-closure.json").read_text())
     assert status["status"] == "blocked"
     assert status["identity"]["material_head_sha"] == HEAD
+    assert status["identity"]["merge_preview_sha"] == MERGE
+    recorded = json.loads((out / "certification-event.json").read_text())
+    assert recorded["pull_request"]["merge_commit_sha"] == MERGE
+    assert recorded["pull_request"]["head"]["sha"] == HEAD
+    assert recorded["pull_request"]["base"]["sha"] == BASE
     assert "handoff-certificate" in status["unverified"]
     assert closure["status"] == "pending"
     assert not (out / ".audit/entregar-issue/handoff-ready.json").exists()
@@ -184,6 +191,14 @@ def test_certification_requires_real_closure_and_calls_official_gates(tmp_path, 
                  "codebase-grounding.json", "code-growth.json"]
     for filename in filenames:
         (audit / filename).write_text(json.dumps({"subject_sha": HEAD}))
+    proof_path = ".audit/entregar-issue/execution/ground-tests-proof.log"
+    raw = f"HEAD: {HEAD}\nCOMMAND: python -m pytest\nEXIT_CODE: 0\nREACHED: tests/test_example.py::test_control\n".encode()
+    for location in (args.root / proof_path, args.out / proof_path):
+        location.parent.mkdir(parents=True, exist_ok=True)
+        location.write_bytes(raw)
+    (audit / "codebase-grounding.json").write_text(json.dumps({
+        "subject_sha": HEAD, "test_decisions": [{"verification": {
+            "status": "passed", "evidence_path": proof_path, "evidence_sha256": hashlib.sha256(raw).hexdigest()}}]}))
 
     def fake_git(cmd, **_kwargs):
         if cmd[1] == "merge-base":
@@ -213,6 +228,10 @@ def test_certification_requires_real_closure_and_calls_official_gates(tmp_path, 
     assert "--codebase-grounding" in calls[2][1]
     assert "--code-growth" in calls[2][1]
     assert "--issue-changed-path" in calls[2][1]
+    for args_list in (calls[2][1], calls[3][1]):
+        assert args_list[args_list.index("--merge-preview-sha") + 1] == MERGE
+    assert calls[2][1][calls[2][1].index("--allow-result-path") + 1] == proof_path
+    assert calls[1][1][calls[1][1].index("--comparison-base-sha") + 1] == BASE
     result = json.loads((args.out / "handoff-certification-status.json").read_text())
     assert result["status"] == "certificate-generated"
     assert result["terminal_ready"] is False
@@ -265,3 +284,13 @@ def test_reusable_handoff_isolates_tooling_from_consumer_tests(tmp_path):
                    cwd=consumer, env=env, capture_output=True, text=True, check=True)
     assert (checkout / "test_duplicate.py").is_file()
     assert not target.exists()
+
+@pytest.mark.parametrize("preview", [None, "short", "f" * 39, 123])
+def test_certification_refuses_missing_or_invalid_authenticated_merge_preview(
+        tmp_path, monkeypatch, preview):
+    args, _audit = _certification_fixture(tmp_path, monkeypatch)
+    event_value = json.loads(args.event.read_text())
+    event_value["pull_request"]["merge_commit_sha"] = preview
+    args.event.write_text(json.dumps(event_value))
+    with pytest.raises(ValueError, match="merge preview SHA"):
+        mod.require_event_merge_preview(args.event, "team/skill", 113, HEAD, BASE)

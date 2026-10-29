@@ -10,6 +10,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HEAD = "a" * 40
 EVIDENCE_SHA = hashlib.sha256(b"evidence").hexdigest()
+ESCAPE_SUBJECT = {
+    "repository": "example/consumer",
+    "issue_number": 125,
+    "pull_request_number": 126,
+    "material_head_sha": HEAD,
+}
+ESCAPE_TARGET_ARGS = (
+    "--target-repository", ESCAPE_SUBJECT["repository"],
+    "--target-issue-number", str(ESCAPE_SUBJECT["issue_number"]),
+    "--target-pull-request-number", str(ESCAPE_SUBJECT["pull_request_number"]),
+    "--target-head-sha", HEAD,
+)
 
 
 def run(script: str, *args: str):
@@ -140,7 +152,7 @@ def test_risk_saturation_rejects_escape_closed_without_cross_surface_dimensions(
         base = Path(tmp)
         m = base / "requirement-attack-matrix.json"; m.write_text(json.dumps(matrix_data()), encoding="utf-8")
         escape = base / "audit-escape-closure.json"
-        escape.write_text(json.dumps({"schema_version": 1, "escapes": [{
+        escape.write_text(json.dumps({"schema_version": 1, "subject": ESCAPE_SUBJECT, "escapes": [{
             "escape_id": "A-1",
             "escape_class": "role-secret-boundary-leak",
             "required_risk_families": ["authorization"],
@@ -158,7 +170,8 @@ def test_risk_saturation_rejects_escape_closed_without_cross_surface_dimensions(
         for dimension in auth["dimensions"]:
             dimension["status"] = "passed"
         r.write_text(json.dumps(data), encoding="utf-8")
-        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m), "--risk-saturation", str(r))
+        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m),
+                   "--risk-saturation", str(r), "--audit-escape-closure", str(escape), *ESCAPE_TARGET_ARGS)
         assert proc.returncode == 2
         assert "audit escape required attack dimensions are not covered" in proc.stdout
         assert "authorization:filesystem:missing-dimension" in proc.stdout
@@ -169,7 +182,7 @@ def test_risk_saturation_accepts_escape_when_required_dimensions_are_covered():
         base = Path(tmp)
         m = base / "requirement-attack-matrix.json"; m.write_text(json.dumps(matrix_data()), encoding="utf-8")
         escape = base / "audit-escape-closure.json"
-        escape.write_text(json.dumps({"schema_version": 1, "escapes": [{
+        escape.write_text(json.dumps({"schema_version": 1, "subject": ESCAPE_SUBJECT, "escapes": [{
             "escape_id": "A-1",
             "escape_class": "role-secret-boundary-leak",
             "required_risk_families": ["authorization"],
@@ -187,5 +200,170 @@ def test_risk_saturation_accepts_escape_when_required_dimensions_are_covered():
         for dimension in auth["dimensions"]:
             dimension["status"] = "passed"
         r.write_text(json.dumps(data), encoding="utf-8")
-        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m), "--risk-saturation", str(r))
+        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m),
+                   "--risk-saturation", str(r), "--audit-escape-closure", str(escape), *ESCAPE_TARGET_ARGS)
         assert proc.returncode == 0, proc.stdout
+
+
+def test_risk_saturation_fails_closed_for_explicit_missing_escape_file():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        m = base / "matrix.json"
+        m.write_text(json.dumps(matrix_data()), encoding="utf-8")
+        r = base / "risk.json"
+        assert run("init_risk_saturation.py", "--attack-matrix", str(m), "--out", str(r)).returncode == 0
+        data = json.loads(r.read_text(encoding="utf-8"))
+        auth = next(item for item in data["families"] if item["family"] == "authorization")
+        auth["status"] = "passed"
+        for dimension in auth["dimensions"]:
+            dimension["status"] = "passed"
+        r.write_text(json.dumps(data), encoding="utf-8")
+        missing = base / "missing" / "audit-escape-closure.json"
+        proc = run("validate_risk_saturation.py", "--attack-matrix", str(m),
+                   "--risk-saturation", str(r), "--audit-escape-closure", str(missing))
+        assert proc.returncode == 2
+        assert "explicit audit escape closure is missing" in proc.stdout
+
+
+def test_previous_rejection_cannot_infer_foreign_escape_from_neighboring_file():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        closure_path = base / "requirement-closure.json"
+        closure_path.write_text(json.dumps({"obligations": []}), encoding="utf-8")
+        (base / "audit-escape-closure.json").write_text(json.dumps({
+            "escapes": [{"escape_id": "previous-issue", "status": "passed"}]
+        }), encoding="utf-8")
+        proc = run("validate_handoff_readiness.py", "--requirement-closure",
+                   str(closure_path), "--evidence-profile", "light",
+                   "--previous-independent-rejection")
+        assert proc.returncode == 2
+        assert "requires explicit --audit-escape-closure for the current target" in proc.stdout
+
+
+def test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions():
+    # Mirrors the relevant cardinalities in SolverFin #742/#743 without copying
+    # any consumer business data into the generic Skill tests.
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        source = matrix_data()
+        requirement = source["requirements"][0]
+        source["requirements"] = [
+            {**requirement, "requirement_id": f"REQ-{number}",
+             "obligation_ids": [f"OBL-{number}"]}
+            for number in range(1, 20)
+        ]
+        matrix = base / "requirement-attack-matrix.json"
+        matrix.write_text(json.dumps(source), encoding="utf-8")
+        risk = base / "risk-saturation.json"
+        assert run("init_risk_saturation.py", "--attack-matrix", str(matrix),
+                   "--out", str(risk)).returncode == 0
+        data = json.loads(risk.read_text(encoding="utf-8"))
+        family = next(item for item in data["families"] if item["family"] == "authorization")
+        family["status"] = "passed"
+        for dimension in family["dimensions"]:
+            dimension["status"] = "passed"
+        risk.write_text(json.dumps(data), encoding="utf-8")
+        foreign = base / "audit-escape-closure.json"
+        foreign.write_text(json.dumps({"escapes": [{
+            "escape_id": "unrelated-delivery", "status": "passed",
+            "required_risk_families": ["authorization"],
+            "required_attack_dimensions": [
+                {"risk_family": "authorization", "surface": "old-surface",
+                 "dimension": f"historical-{i}"}
+                for i in range(16)
+            ]
+        }]}), encoding="utf-8")
+        arguments = ("--attack-matrix", str(matrix), "--risk-saturation", str(risk))
+        baseline = run("validate_risk_saturation.py", *arguments)
+        assert baseline.returncode == 0, baseline.stdout
+        activated = run("validate_risk_saturation.py", *arguments,
+                        "--audit-escape-closure", str(foreign), *ESCAPE_TARGET_ARGS)
+        assert activated.returncode == 2
+        assert "audit escape required attack dimensions are not covered" in activated.stdout
+        assert "authorization:old-surface:historical-15" in activated.stdout
+
+
+def test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        matrix = base / "requirement-attack-matrix.json"
+        matrix.write_text(json.dumps(matrix_data()), encoding="utf-8")
+        risk = base / "risk-saturation.json"
+        assert run("init_risk_saturation.py", "--attack-matrix", str(matrix),
+                   "--out", str(risk)).returncode == 0
+        data = json.loads(risk.read_text(encoding="utf-8"))
+        family = next(item for item in data["families"] if item["family"] == "authorization")
+        family["status"] = "passed"
+        for dimension in family["dimensions"]:
+            dimension["status"] = "passed"
+        risk.write_text(json.dumps(data), encoding="utf-8")
+        foreign = base / "audit-escape-closure.json"
+        controls = matrix_data()["requirements"][0]["negative_controls"]
+        payload = {
+            "subject": {**ESCAPE_SUBJECT, "issue_number": 999},
+            "escapes": [{
+                "escape_id": "foreign", "status": "passed",
+                "required_risk_families": ["authorization"],
+                "required_attack_dimensions": [
+                    {"risk_family": "authorization", "surface": control["surface"],
+                     "dimension": control["dimension"]}
+                    for control in controls[:2]
+                ],
+            }],
+        }
+        foreign.write_text(json.dumps(payload), encoding="utf-8")
+        args = ("--attack-matrix", str(matrix), "--risk-saturation", str(risk),
+                "--audit-escape-closure", str(foreign), *ESCAPE_TARGET_ARGS)
+        proc = run("validate_risk_saturation.py", *args)
+        assert proc.returncode == 2
+        assert "subject.issue_number differs from current target" in proc.stdout
+        payload["subject"] = ESCAPE_SUBJECT
+        foreign.write_text(json.dumps(payload), encoding="utf-8")
+        proc = run("validate_risk_saturation.py", *args)
+        assert proc.returncode == 0, proc.stdout
+
+def test_issue_only_escape_rejects_omitted_pr_binding_at_cli():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        matrix = base / "matrix.json"
+        matrix.write_text(json.dumps(matrix_data()), encoding="utf-8")
+        risk = base / "risk.json"
+        assert run("init_risk_saturation.py", "--attack-matrix", str(matrix),
+                   "--out", str(risk)).returncode == 0
+        risk_data = json.loads(risk.read_text(encoding="utf-8"))
+        family = next(item for item in risk_data["families"] if item["family"] == "authorization")
+        family["status"] = "passed"
+        for dimension in family["dimensions"]:
+            dimension["status"] = "passed"
+        risk.write_text(json.dumps(risk_data), encoding="utf-8")
+        escape = base / "audit-escape-closure.json"
+        payload = {"subject": {
+            "repository": "example/consumer", "issue_number": 125,
+            "material_head_sha": HEAD,
+        }, "escapes": [{
+            "escape_id": "current-issue", "status": "passed",
+            "required_risk_families": ["authorization"],
+            "required_attack_dimensions": [
+                {"risk_family": "authorization", "surface": "environment",
+                 "dimension": "env-secret-filtering"},
+                {"risk_family": "authorization", "surface": "filesystem",
+                 "dimension": "cross-role-file-readability"},
+            ],
+        }]}
+        args = ("--attack-matrix", str(matrix), "--risk-saturation", str(risk),
+                "--audit-escape-closure", str(escape),
+                "--target-repository", "example/consumer",
+                "--target-issue-number", "125", "--target-head-sha", HEAD)
+        escape.write_text(json.dumps(payload), encoding="utf-8")
+        missing = run("validate_risk_saturation.py", *args)
+        assert missing.returncode == 2
+        assert "subject.pull_request_number is missing" in missing.stdout
+        payload["subject"]["pull_request_number"] = None
+        escape.write_text(json.dumps(payload), encoding="utf-8")
+        explicit = run("validate_risk_saturation.py", *args)
+        assert explicit.returncode == 0, explicit.stdout
+        payload["subject"]["pull_request_number"] = False
+        escape.write_text(json.dumps(payload), encoding="utf-8")
+        malformed = run("validate_risk_saturation.py", *args)
+        assert malformed.returncode == 2
+        assert "subject.pull_request_number differs from current target" in malformed.stdout

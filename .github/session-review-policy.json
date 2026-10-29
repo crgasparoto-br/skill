@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "mode": "enabled",
+  "assurance": "operator-attested-session-review",
+  "acknowledgement": "separate-context-declared-not-cryptographically-proven",
+  "operators": [
+    {
+      "id": 255721831,
+      "login": "crgasparoto-br"
+    }
+  ]
+}

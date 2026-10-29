@@ -6,6 +6,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_connector_preflight.py"
 MATERIAL = "a" * 40
@@ -31,6 +33,102 @@ def run(cert: Path, manifest: Path):
          "--contract-version", "2026-08-20.3"],
         check=False, text=True, stdout=subprocess.PIPE,
     )
+
+
+@pytest.mark.parametrize("phase,inventory", [("preparation", False), (None, True), ("final", True), ({}, False)])
+def test_connector_preflight_rejects_preparation_even_with_legacy_ready_fields(tmp_path, phase, inventory):
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["phase"] = phase
+    if inventory:
+        data["prepared_artifacts"] = data["artifacts"]
+    cert.write_text(json.dumps(data))
+    result = run(cert, manifest)
+    assert result.returncode == 2, result.stdout
+    assert "preparation is not a final handoff" in result.stdout
+
+
+@pytest.mark.parametrize("marker,value", [
+    ("release_authority", False),
+    ("prepared_files", []),
+    ("postcondition_plan", {"name": "plan.json", "sha256": "f" * 64}),
+    ("preparation_sha256", "f" * 64),
+])
+def test_connector_preflight_rejects_all_nonterminal_preparation_markers(tmp_path, marker, value):
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["phase"] = "final"
+    data[marker] = value
+    cert.write_text(json.dumps(data))
+    result = run(cert, manifest)
+    assert result.returncode == 2, result.stdout
+    assert "does not authorize final handoff" in result.stdout
+
+
+def test_connector_preflight_requires_postcondition_after_independent_rejection(tmp_path):
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["previous_independent_rejection"] = True
+    data["remediation_mode"] = "targeted-remediation"
+    data["artifacts"]["audit_remediation"] = {"name": "audit-remediation.json", "sha256": "8" * 64}
+    data["artifacts"]["audit_source_result"] = {"name": "audit-source-result.json", "sha256": "9" * 64}
+    for name in ("audit-remediation.json", "audit-source-result.json"):
+        data["certificate_commit_policy"]["allowed_paths"].append(f".audit/entregar-issue/{name}")
+    cert.write_text(json.dumps(data))
+
+    claims = json.loads(manifest.read_text())
+    claims["candidate_changed_paths"] = data["certificate_commit_policy"]["allowed_paths"]
+    claims["artifacts"]["audit_remediation"] = artifact(
+        ".audit/entregar-issue/audit-remediation.json",
+        {"candidate_head_sha": MATERIAL, "resolution_policy": "all-actionable-items",
+         "all_actionable_items_closed": True},
+    )
+    claims["artifacts"]["audit_source_result"] = artifact(
+        ".audit/entregar-issue/audit-source-result.json",
+        {"rejection_id": "audit-rejection:required-proof"},
+    )
+    manifest.write_text(json.dumps(claims))
+    result = run(cert, manifest)
+    assert result.returncode == 2, result.stdout
+    assert "postcondition proof is required after an independent rejection" in result.stdout
+
+
+def test_connector_postcondition_requires_materialized_proof_not_semantic_booleans(tmp_path):
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["postcondition_proof"] = {"name": "postcondition/proof.json", "sha256": "f" * 64}
+    cert.write_text(json.dumps(data))
+    claims = json.loads(manifest.read_text())
+    claims["postcondition"] = {"passed": True, "replay_exit_code": 0}
+    manifest.write_text(json.dumps(claims))
+    result = run(cert, manifest)
+    assert result.returncode == 3, result.stdout
+    assert "requires materialized artifacts and trusted Git source" in result.stdout
+
+
+def test_connector_rejects_foreign_base_before_executing_postcondition_verifier(tmp_path, monkeypatch):
+    import importlib.util
+    from types import SimpleNamespace
+
+    cert, manifest = make(tmp_path)
+    data = json.loads(cert.read_text())
+    data["identity"]["base_sha"] = "9" * 40
+    data["postcondition_proof"] = {"name": "postcondition/proof.json", "sha256": "f" * 64}
+    cert.write_text(json.dumps(data))
+    called = []
+    monkeypatch.syspath_prepend(str(ROOT / "scripts"))
+    monkeypatch.setitem(sys.modules, "handoff_postcondition", SimpleNamespace(
+        require_final_phase=lambda _cert: None,
+        verify_finalization=lambda *args: called.append(args),
+    ))
+    spec = importlib.util.spec_from_file_location("connector_preflight_boundary", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--certificate", str(cert),
+        "--connector-manifest", str(manifest), "--contract-version", "2026-08-20.3",
+        "--artifacts-dir", str(tmp_path), "--source-repository-root", str(tmp_path)])
+    assert module.main() == 2
+    assert not called
 
 
 def artifact(path: str, semantic: dict):
@@ -210,12 +308,13 @@ def enable_previous_rejection(cert: Path, manifest: Path, *, rejection_id: str, 
     manifest.write_text(json.dumps(manifest_data), encoding="utf-8")
 
 
-def test_connector_preflight_cross_checks_latest_independent_rejection_semantics():
+def test_connector_preflight_cross_checks_latest_independent_rejection_semantics_then_requires_proof():
     with tempfile.TemporaryDirectory() as d:
         cert, manifest = make(Path(d))
         enable_previous_rejection(cert, manifest, rejection_id="audit-rejection:synthetic-001")
         proc = run(cert, manifest)
-        assert proc.returncode == 0, proc.stdout
+        assert proc.returncode == 2, proc.stdout
+        assert "postcondition proof is required after an independent rejection" in proc.stdout
 
 
 def test_connector_preflight_rejects_learning_rejection_missing_from_escape_semantics():

@@ -8,7 +8,9 @@ import sys
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
+from handoff_postcondition_records import validated_preparation_plan
 from handoff_semantic_guards import validate_terminal_requirement_closure
+from validate_risk_saturation import validate_escape_target
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,6 +43,9 @@ def main() -> int:
     parser.add_argument("--inherited-controls")
     parser.add_argument("--evidence-provenance")
     parser.add_argument("--audit-escape-closure")
+    parser.add_argument("--target-repository")
+    parser.add_argument("--issue-number", type=int)
+    parser.add_argument("--pull-request-number", type=int)
     parser.add_argument("--learning-closure")
     parser.add_argument("--previous-inherited-controls")
     parser.add_argument("--historical-inherited-controls", action="append", default=[])
@@ -49,12 +54,48 @@ def main() -> int:
     parser.add_argument("--remediation-mode", choices=("targeted-remediation", "systemic-remediation", "mixed-remediation"), default="targeted-remediation")
     parser.add_argument("--head-sha")
     parser.add_argument("--contract-version", default="2026-08-20.3")
+    parser.add_argument("--phase", choices=("final", "preparation"), default="final")
+    parser.add_argument("--postcondition-plan", type=Path)
+    parser.add_argument("--repository", type=Path)
+    parser.add_argument("--audit-result", type=Path)
+    parser.add_argument("--audit-remediation", type=Path)
+    parser.add_argument("--base-sha")
     args = parser.parse_args()
 
     errors: list[str] = []
+    try:
+        plan = validated_preparation_plan(
+            phase=args.phase, plan_path=args.postcondition_plan, audit_result=args.audit_result,
+            ledger_path=args.audit_remediation, repository=args.repository, head_sha=args.head_sha,
+            base_sha=args.base_sha,
+        )
+    except Exception as exc:
+        print(f"BLOCK: invalid handoff preparation: {exc}")
+        return 2
+    phase_arguments: list[str] = []
+    if plan is not None:
+        if not args.previous_independent_rejection:
+            errors.append("certificate preparation requires the original independent rejection")
+        phase_arguments = [
+            "--phase", "preparation", "--postcondition-plan", str(args.postcondition_plan),
+            "--repository", str(args.repository), "--audit-result", str(args.audit_result),
+            "--audit-remediation", str(args.audit_remediation),
+            "--base-sha", str(args.base_sha),
+        ]
     closure_path = Path(args.requirement_closure)
     closure = load(closure_path)
     validate_terminal_requirement_closure(closure, errors)
+    if args.audit_escape_closure:
+        explicit_escape = Path(args.audit_escape_closure)
+        if explicit_escape.is_file():
+            validate_escape_target(
+                load(explicit_escape), repository=args.target_repository,
+                issue_number=args.issue_number,
+                pull_request_number=args.pull_request_number,
+                head_sha=args.head_sha, errors=errors,
+            )
+        else:
+            errors.append("explicit audit escape closure file is missing")
 
     structural = closure.get("structural_invariant_closures") or {}
     structural_flags = {"structural", "forbidden-implementation", "canonical-path", "dependency-independence", "precedence"}
@@ -163,6 +204,15 @@ def main() -> int:
             ]
             if inherited_path.is_file():
                 risk_args.extend(["--inherited-controls", str(inherited_path)])
+            if args.audit_escape_closure:
+                risk_args.extend([
+                    "--audit-escape-closure", args.audit_escape_closure,
+                    "--target-repository", args.target_repository or "",
+                    "--target-issue-number", str(args.issue_number) if args.issue_number is not None else "",
+                    "--target-head-sha", args.head_sha or "",
+                ])
+                if args.pull_request_number is not None:
+                    risk_args.extend(["--target-pull-request-number", str(args.pull_request_number)])
             run_validator(risk_args, errors)
 
         if not inherited_path.is_file():
@@ -188,14 +238,11 @@ def main() -> int:
     learning_path = Path(args.learning_closure) if args.learning_closure else None
     if systemic_reaudit and args.evidence_profile != "critical":
         errors.append("systemic audit remediation requires critical evidence profile")
-    if args.previous_independent_rejection and not escape_path:
-        default_escape = closure_path.parent / "audit-escape-closure.json"
-        escape_path = default_escape if default_escape.is_file() else None
     if args.previous_independent_rejection and not learning_path:
         default_learning = closure_path.parent / "learning-closure.json"
         learning_path = default_learning if default_learning.is_file() else None
     if args.previous_independent_rejection and not escape_path:
-        errors.append("previous independent rejection requires audit-escape-closure.json")
+        errors.append("previous independent rejection requires explicit --audit-escape-closure for the current target")
     if args.previous_independent_rejection and not learning_path:
         errors.append("previous independent rejection requires learning-closure.json")
     if args.previous_independent_rejection and not args.previous_audit_escape_closure:
@@ -218,18 +265,23 @@ def main() -> int:
                     "--require-previous",
                     "--previous-closure", args.previous_audit_escape_closure,
                 ])
+            escape_args.extend(phase_arguments)
             run_validator(escape_args, errors)
     if args.previous_independent_rejection and learning_path and escape_path and learning_path.is_file() and escape_path.is_file():
         run_validator([
             sys.executable, str(ROOT / "scripts" / "validate_independent_rejection_closure.py"),
             "--learning-closure", str(learning_path), "--closure", str(escape_path),
+            "--head-sha", head_sha, *phase_arguments,
         ], errors)
 
     if errors:
         for error in errors:
             print(error if error.startswith("BLOCK:") else f"BLOCK: {error}")
         return 2
-    print(f"READY: {args.evidence_profile} handoff readiness is closed")
+    if plan is not None:
+        print(f"PREPARED: {args.evidence_profile} semantic evidence validated; certificate postconditions remain blocked")
+    else:
+        print(f"READY: {args.evidence_profile} handoff readiness is closed")
     return 0
 
 

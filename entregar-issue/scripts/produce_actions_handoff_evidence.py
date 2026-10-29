@@ -28,6 +28,8 @@ ALLOWED_REPORTS = frozenset({
 IDENTITY_TOKENS = {
     "head_sha": "__MATERIAL_HEAD_SHA__",
     "subject_sha": "__MATERIAL_HEAD_SHA__",
+    "candidate_head_sha": "__MATERIAL_HEAD_SHA__",
+    "revalidated_head_sha": "__MATERIAL_HEAD_SHA__",
     "base_sha": "__WORK_ITEM_START_SHA__",
 }
 OBLIGATION_FIELDS = frozenset({
@@ -73,7 +75,7 @@ def bind_identity(value: object, head: str, start: str) -> object:
     if isinstance(value, list):
         return [bind_identity(item, head, start) for item in value]
     if isinstance(value, dict):
-        return {key: (head if key in {"head_sha", "subject_sha"} and item == "__MATERIAL_HEAD_SHA__"
+        return {key: (head if IDENTITY_TOKENS.get(key) == "__MATERIAL_HEAD_SHA__" and item == "__MATERIAL_HEAD_SHA__"
                       else start if key == "base_sha" and item == "__WORK_ITEM_START_SHA__"
                       else bind_identity(item, head, start))
                 for key, item in value.items()}
@@ -178,9 +180,10 @@ def validate_incomplete_review(source: Path, starter: dict,
 def code_growth_command(
     root: Path, start: str, head: str, comparison: str, out: Path, source: Path,
 ) -> list[str]:
+    from prepare_actions_handoff import code_growth_comparison_base
     command = [sys.executable, str(Path(__file__).with_name("check_code_growth.py")),
                "--repo", str(root), "--base-sha", start, "--head-sha", head,
-               "--comparison-base-sha", comparison, "--out", str(out)]
+               "--comparison-base-sha", code_growth_comparison_base(root, start, comparison), "--out", str(out)]
     justifications = source / "code-growth-justifications.json"
     if justifications.is_file() and not justifications.is_symlink():
         command.extend(["--justifications", str(justifications)])
@@ -444,6 +447,11 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     validate_test_bindings(manifest.get("test_bindings"), closure, tests)
     staged = {name: bind_identity(verified_source(root, source, name, hashes), head, start)
               for name in sorted(set(hashes) - {"reviewed-closure.json"})}
+    if "codebase-grounding.json" in staged:
+        from bind_grounding_execution import bind_grounding_execution
+        staged["codebase-grounding.json"] = bind_grounding_execution(
+            root, out, staged["codebase-grounding.json"],
+            manifest.get("grounding_test_bindings"), head, exact_index)
     write_json(audit / "requirement-closure.json", closure)
     for name, report in staged.items():
         write_json(audit / name, report)

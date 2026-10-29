@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
+from handoff_postcondition_records import escape_key, validated_preparation_plan
 from handoff_semantic_guards import conflicting_current_sha_claims
 
 
@@ -30,11 +31,11 @@ def by_id(data: dict) -> dict[str, dict]:
     return result
 
 
-def validate_entry(item: dict, index: int, errors: list[str], head_sha: str | None = None) -> None:
+def validate_entry(item: dict, index: int, errors: list[str], head_sha: str | None = None, *, preparation: bool = False) -> None:
     eid = str(item.get("escape_id") or index)
     if not str(item.get("escape_id") or "").strip():
         errors.append(f"audit escape entry {index} lacks escape_id")
-    if item.get("status") != "passed":
+    if not preparation and item.get("status") != "passed":
         errors.append(f"audit escape {eid} is not passed")
     if not str(item.get("escape_class") or "").strip():
         errors.append(f"audit escape {eid} lacks escape_class")
@@ -66,6 +67,12 @@ def main() -> int:
     parser.add_argument("--previous-closure")
     parser.add_argument("--head-sha")
     parser.add_argument("--require-previous", action="store_true")
+    parser.add_argument("--phase", choices=("final", "preparation"), default="final")
+    parser.add_argument("--postcondition-plan", type=Path)
+    parser.add_argument("--repository", type=Path)
+    parser.add_argument("--audit-result", type=Path)
+    parser.add_argument("--audit-remediation", type=Path)
+    parser.add_argument("--base-sha")
     args = parser.parse_args()
 
     current_path = Path(args.closure)
@@ -74,6 +81,12 @@ def main() -> int:
         return 2
     try:
         current = load(current_path)
+        plan = validated_preparation_plan(
+            phase=args.phase, plan_path=args.postcondition_plan, audit_result=args.audit_result,
+            ledger_path=args.audit_remediation, repository=args.repository, head_sha=args.head_sha,
+            base_sha=args.base_sha,
+            escape_closure=current,
+        )
     except Exception as exc:
         print(f"BLOCK: invalid audit escape closure: {exc}")
         return 2
@@ -84,7 +97,7 @@ def main() -> int:
         errors.append("audit escape closure has no entries")
     current_ids: set[str] = set()
     for index, item in enumerate(current_entries):
-        validate_entry(item, index, errors, args.head_sha)
+        validate_entry(item, index, errors, args.head_sha, preparation=plan is not None and escape_key(item, plan) is not None)
         eid = str(item.get("escape_id") or "").strip()
         if eid:
             if eid in current_ids:
@@ -112,7 +125,10 @@ def main() -> int:
         for error in errors:
             print(f"BLOCK: {error}")
         return 2
-    print("READY: audit escape closure is complete and monotonic")
+    if plan is not None:
+        print("PREPARED: audit escape lineage is monotonic; recognized certificate postconditions remain blocked")
+    else:
+        print("READY: audit escape closure is complete and monotonic")
     return 0
 
 
