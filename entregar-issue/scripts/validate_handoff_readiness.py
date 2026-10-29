@@ -43,7 +43,7 @@ def main() -> int:
     parser.add_argument("--inherited-controls")
     parser.add_argument("--evidence-provenance")
     parser.add_argument("--audit-escape-closure")
-    parser.add_argument("--repository")
+    parser.add_argument("--target-repository")
     parser.add_argument("--issue-number", type=int)
     parser.add_argument("--pull-request-number", type=int)
     parser.add_argument("--learning-closure")
@@ -89,7 +89,7 @@ def main() -> int:
         explicit_escape = Path(args.audit_escape_closure)
         if explicit_escape.is_file():
             validate_escape_target(
-                load(explicit_escape), repository=args.repository,
+                load(explicit_escape), repository=args.target_repository,
                 issue_number=args.issue_number,
                 pull_request_number=args.pull_request_number,
                 head_sha=args.head_sha, errors=errors,
@@ -207,7 +207,7 @@ def main() -> int:
             if args.audit_escape_closure:
                 risk_args.extend([
                     "--audit-escape-closure", args.audit_escape_closure,
-                    "--target-repository", args.repository or "",
+                    "--target-repository", args.target_repository or "",
                     "--target-issue-number", str(args.issue_number) if args.issue_number is not None else "",
                     "--target-head-sha", args.head_sha or "",
                 ])

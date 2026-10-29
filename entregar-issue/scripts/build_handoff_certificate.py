@@ -270,7 +270,7 @@ def main() -> int:
             sys.executable, str(ROOT / "scripts" / "validate_handoff_readiness.py"),
             "--requirement-closure", str(files["requirement_closure"]),
             "--evidence-profile", profile,
-            "--repository", args.repository,
+            "--target-repository", args.repository,
             "--issue-number", str(issue_number),
             "--head-sha", args.head_sha,
             "--contract-version", args.contract_version,

@@ -330,7 +330,7 @@ def main() -> int:
             "--head-sha", str(args.material_head_sha),
             "--contract-version", str(cert.get("contract_version") or args.contract_version or "2026-08-20.3"),
             "--audit-escape-closure", str(artifact_path("audit_escape_closure")),
-            "--repository", args.repository,
+            "--target-repository", args.repository,
             "--learning-closure", str(artifact_path("learning_closure")),
             "--previous-independent-rejection",
             "--remediation-mode", remediation_mode,
