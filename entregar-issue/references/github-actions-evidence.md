@@ -64,6 +64,8 @@ e independente do resultado dos testes.
 
 ## Certificacao fail-closed
 
+Quando a especificacao exigir auditoria **depois** do handoff, o dossie pode manter itens `deferred` apenas com decisao canonica comprovada, issue pai aberta e rastreabilidade completa. `certification-inputs.json` deve declarar `issue_completion=partial`, IDs diferidos e `parent_issue_must_remain_open=true`; o certificado inclui os mesmos campos em `completion`. Os validadores do produtor, do builder e da copia auditora conferem essa correspondencia, e o check confiavel consulta novamente a issue no GitHub com permissao somente leitura. Nenhum desses estados substitui review independente autenticado ou permite encerrar a issue pai. `pending`, `UNKNOWN`, hashes ausentes, controles criticos incompletos e reports obrigatorios ausentes continuam bloqueantes. A verificacao autenticada do pai so recebe `GITHUB_TOKEN` no step confiavel de certificacao, nunca no comando de evidencia do PR.
+
 O modo `--phase certify` de `scripts/prepare_actions_handoff.py` valida identidade,
 log e digest e exige, no mesmo diretorio efemero de evidencias,
 `certification-inputs.json` mais todos os relatorios autenticos aplicaveis
@@ -147,40 +149,9 @@ Um dossie completo consiste em:
   material HEAD. Isso valida apenas existencia/execucao: oraculo,
   falha discriminante e abrangencia exigem inspecao e validadores oficiais.
 
-Para `GROUND-TEST-001`, uma decisao semanticamente revisada pode aguardar
-apenas execucao com `verification: {"status": "unknown",
-"reason": "awaiting-exact-SHA-JUnit"}`. Nesse caso, o manifesto inclui
-`grounding_test_bindings`, indexado pelo `path` de cada decisao pendente,
-com entradas explicitas `{"case": "tests/test_example.py::test_case",
-"test_case_id": "tests.test_example::test_case"}`. Exclusoes precisam
-atingir cada `replacement_tests`; renomeacoes apontam para o caminho novo.
-Esse mapa e revisado junto ao dossie; nao se deriva cobertura de nomes.
-
-O helper [bind_grounding_execution.py](../scripts/bind_grounding_execution.py)
-confere o HEAD, exit code, hashes do log/JUnit e o resultado `PASSED` do
-mesmo caso nos dois formatos. Somente a identidade padrao do pytest e
-suportada automaticamente; caso ausente, ignorado, falho, ambiguo ou
-customizado permanece bloqueante. O produtor preenche apenas `verification`,
-preservando cenarios, oraculos, buscas, decisoes, disposicoes e o dossie
-versionado. Provas ja atestadas e outros motivos `unknown` nao sao reescritos.
-
-A prova factual e criada apos os testes sob
-`.audit/entregar-issue/execution/`, no checkout e no artefato, com o HEAD,
-comando, exit code, casos alcancados e hashes das fontes. O certificado
-autoriza individualmente apenas caminhos seguros cujas copias tenham o
-mesmo digest, pela opcao existente `--allow-result-path`; nenhum prefixo
-inteiro ganha permissao. Assim a prova acompanha o filho de resultados sem
-exigir que o dossie contenha uma prova autorreferente do proprio commit.
-Os validadores oficiais continuam obrigatorios e o binding nao emite
-certificado nem aprovacao semantica.
-
-O publicador confiavel autentica primeiro o certificado, o relatorio de
-grounding e cada prova de execucao autorizada. Confere caminhos canonicos,
-ausencia de symlinks, hashes, identidade e marcadores da execucao, com limites
-de tamanho; entao materializa somente essas provas no checkout material,
-antes de reexecutar o validador oficial de grounding. Nenhum codigo do
-candidato e executado nessa etapa. Conflitos com arquivos existentes ou
-provas ausentes, alteradas ou fora da allowlist bloqueiam a publicacao.
+A vinculacao de execucao de `GROUND-TEST-001`, inclusive prova JUnit exact-SHA,
+transportes autorizados e verificacoes do publicador, e especificada em
+[codebase-grounding-gate.md](codebase-grounding-gate.md).
 
 Na medicao de crescimento, `work_item_start_sha` continua sendo o inicio
 registrado da entrega e a ancora da politica. Quando a base da PR antecede
@@ -213,7 +184,20 @@ evidencias nem certificado):
 O exemplo e incompleto intencionalmente. O produtor rejeita
 `test_bindings` faltantes, hash adulterado, caso JUnit ignorado,
 perfil/historico ausente, branch/issue distintos e relatorios requeridos
-ausentes. O `certification-inputs.json` so e emitido apos todas
+ausentes. Um manifesto `review_state=approved` nao autoriza sequer o staging quando
+alguma obrigacao permanecer `pending` ou `blocked`; o produtor informa IDs
+pendentes e preserva a coleta tecnica como fonte factual. `not-applicable`
+so e valido com justificativa e validacao da closure oficial. Este preflight
+verifica completude formal, nao oraculos semanticos.
+
+Durante `review_state=incomplete`, o artifact `reviewed-dossier-inventory.json`
+relaciona `required_reports`, `missing_reports`, `unhashed_reports` e
+`pending_review_controls` conforme o perfil, o historico e o diff
+`work_item_start_sha..material_head_sha`. Essa lista e diagnostica:
+nao transforma um relatorio presente em prova validada, nem altera o
+bloqueio da certificacao ou a necessidade de revisar os oraculos.
+
+O `certification-inputs.json` so e emitido apos todas
 as checagens formais do produtor; ainda nao e uma certificacao.
 O veredito final permanece de `prepare_actions_handoff.py --phase certify`,
 dos validadores semanticos existentes e do publicador confiavel.

@@ -32,9 +32,44 @@ def iter_surfaces(item: dict):
                 yield family, surface
 
 
-def required_escape_dimensions(directory: Path, errors: list[str]) -> set[tuple[str, str, str]]:
-    path = directory / "audit-escape-closure.json"
+def validate_escape_target(
+    closure: dict,
+    *,
+    repository: str | None,
+    issue_number: int | None,
+    pull_request_number: int | None,
+    head_sha: str | None,
+    errors: list[str],
+) -> None:
+    """Prove that an explicitly supplied escape ledger belongs to this delivery."""
+    if not repository or issue_number is None or not head_sha:
+        errors.append("explicit audit escape closure requires repository, issue number and head SHA")
+        return
+    subject = closure.get("subject")
+    if not isinstance(subject, dict):
+        errors.append("explicit audit escape closure lacks current-target subject binding")
+        return
+    expected = {
+        "repository": repository,
+        "issue_number": issue_number,
+        "pull_request_number": pull_request_number,
+        "material_head_sha": head_sha,
+    }
+    for key, value in expected.items():
+        if key not in subject:
+            errors.append(f"audit escape closure subject.{key} is missing")
+        elif type(subject[key]) is not type(value) or subject[key] != value:
+            # JSON booleans must never compare equal to integer issue/PR IDs.
+            errors.append(f"audit escape closure subject.{key} differs from current target")
+
+
+def required_escape_dimensions(path: Path | None, errors: list[str]) -> set[tuple[str, str, str]]:
+    # The parent directory can contain a foreign/legacy closure from the base
+    # branch. Never activate it merely because a file exists at that path.
+    if path is None:
+        return set()
     if not path.is_file():
+        errors.append(f"explicit audit escape closure is missing: {path}")
         return set()
     closure = load(path)
     entries = closure.get("escapes") if isinstance(closure.get("escapes"), list) else [closure]
@@ -91,6 +126,11 @@ def main() -> int:
     p.add_argument("--risk-saturation", required=True)
     p.add_argument("--requirement-closure")
     p.add_argument("--inherited-controls")
+    p.add_argument("--audit-escape-closure", help="Current-target escape closure explicitly selected by the caller")
+    p.add_argument("--target-repository")
+    p.add_argument("--target-issue-number", type=int)
+    p.add_argument("--target-pull-request-number", type=int)
+    p.add_argument("--target-head-sha")
     a=p.parse_args()
     attack_path=Path(a.attack_matrix)
     matrix=load(attack_path); saturation=load(Path(a.risk_saturation)); errors=[]
@@ -212,7 +252,17 @@ def main() -> int:
         elif item.get("status") not in {"not-applicable", "passed"}: errors.append(f"family {family} non-applicable status is invalid")
         if len(str(item.get("reason") or "").strip()) < 8: errors.append(f"family {family} lacks applicability reason")
 
-    required_escape = required_escape_dimensions(attack_path.parent, errors)
+    escape_path = Path(a.audit_escape_closure) if a.audit_escape_closure else None
+    if escape_path is not None and escape_path.is_file():
+        validate_escape_target(
+            load(escape_path), repository=a.target_repository,
+            issue_number=a.target_issue_number,
+            pull_request_number=a.target_pull_request_number,
+            head_sha=a.target_head_sha, errors=errors,
+        )
+        if a.target_head_sha != matrix.get("head_sha"):
+            errors.append("audit escape target head SHA differs from attack matrix")
+    required_escape = required_escape_dimensions(escape_path, errors)
     missing_escape = sorted(required_escape - control_dimensions)
     if missing_escape:
         rendered = [f"{family}:{surface}:{dimension}" for family, surface, dimension in missing_escape]

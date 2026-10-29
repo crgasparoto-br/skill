@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "contract_version": "2026-08-20.3",
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "requirements": [
+    {
+      "requirement_id": "REQ-001",
+      "positive_evidence": [
+        "Exact material JUnit positive: entregar-issue/tests/test_cross_surface_saturation.py:243 (test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions) (assertions inspected for corresponding CLI path)"
+      ],
+      "primary_negative_control": {
+        "id": "NEG-001",
+        "status": "passed",
+        "procedure": "Run entregar-issue/tests/test_cross_surface_saturation.py:150 (test_risk_saturation_rejects_escape_closed_without_cross_surface_dimensions) against the frozen checkout with the JUnit runner.",
+        "expected": "Foreign audit escapes must not be inferred from their directory.",
+        "observed": "Regression assertion in entregar-issue/tests/test_cross_surface_saturation.py:150 (test_risk_saturation_rejects_escape_closed_without_cross_surface_dimensions) checks rejection or absence of foreign contamination; execution must be confirmed by exact-SHA JUnit."
+      },
+      "regression_evidence": [
+        "Exact material JUnit regression: tests/test_risk_saturation_target_binding.py:16 (test_foreign_closure_is_not_inferred_from_neighboring_file) (must be terminal passed)"
+      ]
+    },
+    {
+      "requirement_id": "REQ-002",
+      "positive_evidence": [
+        "Exact material JUnit positive: entregar-issue/tests/test_cross_surface_saturation.py:180 (test_risk_saturation_accepts_escape_when_required_dimensions_are_covered) (assertions inspected for corresponding CLI path)"
+      ],
+      "primary_negative_control": {
+        "id": "NEG-002",
+        "status": "passed",
+        "procedure": "Run tests/test_risk_saturation_target_binding.py:66 (test_current_target_requires_all_subject_fields_with_exact_types) on the frozen checkout with exact-SHA JUnit.",
+        "expected": "All four subject keys must be present, numeric identifiers have exact JSON integer types, and missing PR requires explicit null.",
+        "observed": "The discriminant assertions at tests/test_risk_saturation_target_binding.py:66 (test_current_target_requires_all_subject_fields_with_exact_types) reject omitted fields and Python bool/int confusion; verify passed in exact-SHA JUnit."
+      },
+      "regression_evidence": [
+        "Exact material JUnit regression: tests/test_risk_saturation_target_binding.py:32 (test_risk_validator_requires_explicit_escape_binding) (must be terminal passed)",
+        "Exact material JUnit regression: entregar-issue/tests/test_cross_surface_saturation.py:325 (test_issue_only_escape_rejects_omitted_pr_binding_at_cli) (must be terminal passed)"
+      ]
+    },
+    {
+      "requirement_id": "REQ-003",
+      "positive_evidence": [
+        "Exact material JUnit positive: entregar-issue/tests/test_canonical_path_escape.py:55 (test_handoff_accepts_canon_divergence_control_and_closed_escape) (assertions inspected for corresponding CLI path)"
+      ],
+      "primary_negative_control": {
+        "id": "NEG-003",
+        "status": "passed",
+        "procedure": "Run entregar-issue/tests/test_cross_surface_saturation.py:228 (test_previous_rejection_cannot_infer_foreign_escape_from_neighboring_file) against the frozen checkout with the JUnit runner.",
+        "expected": "Missing explicit escape on a previous rejection remains blocked.",
+        "observed": "Regression assertion in entregar-issue/tests/test_cross_surface_saturation.py:228 (test_previous_rejection_cannot_infer_foreign_escape_from_neighboring_file) checks rejection or absence of foreign contamination; execution must be confirmed by exact-SHA JUnit."
+      },
+      "regression_evidence": [
+        "Exact material JUnit regression: entregar-issue/tests/test_independent_rejection_handoff_contract.py:6 (test_handoff_readiness_cross_checks_learning_and_escape_ledgers) (must be terminal passed)"
+      ]
+    },
+    {
+      "requirement_id": "REQ-004",
+      "positive_evidence": [
+        "Exact material JUnit positive: entregar-issue/tests/test_cross_surface_saturation.py:110 (test_cross_surface_matrix_and_saturation_pass_when_every_surface_is_covered) (assertions inspected for corresponding CLI path)"
+      ],
+      "primary_negative_control": {
+        "id": "NEG-004",
+        "status": "passed",
+        "procedure": "Run entregar-issue/tests/test_cross_surface_saturation.py:131 (test_risk_saturation_rejects_missing_surface_dimension) against the frozen checkout with the JUnit runner.",
+        "expected": "Missing material attack surfaces or inherited controls remain blocked.",
+        "observed": "Regression assertion in entregar-issue/tests/test_cross_surface_saturation.py:131 (test_risk_saturation_rejects_missing_surface_dimension) checks rejection or absence of foreign contamination; execution must be confirmed by exact-SHA JUnit."
+      },
+      "regression_evidence": [
+        "Exact material JUnit regression: entregar-issue/tests/test_audit_escape_prevention_contract.py:252 (test_risk_saturation_rederives_idempotency_from_requirement_closure) (must be terminal passed)"
+      ]
+    },
+    {
+      "requirement_id": "REQ-005",
+      "positive_evidence": [
+        "Exact material JUnit positive: entregar-issue/tests/test_cross_surface_saturation.py:180 (test_risk_saturation_accepts_escape_when_required_dimensions_are_covered) (assertions inspected for corresponding CLI path)"
+      ],
+      "primary_negative_control": {
+        "id": "NEG-005",
+        "status": "passed",
+        "procedure": "Run entregar-issue/tests/test_cross_surface_saturation.py:208 (test_risk_saturation_fails_closed_for_explicit_missing_escape_file) against the frozen checkout with the JUnit runner.",
+        "expected": "A missing explicitly selected file must fail closed.",
+        "observed": "Regression assertion in entregar-issue/tests/test_cross_surface_saturation.py:208 (test_risk_saturation_fails_closed_for_explicit_missing_escape_file) checks rejection or absence of foreign contamination; execution must be confirmed by exact-SHA JUnit."
+      },
+      "regression_evidence": [
+        "Exact material JUnit regression: entregar-issue/tests/test_cross_surface_saturation.py:286 (test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered) (must be terminal passed)",
+        "Exact material JUnit regression: entregar-issue/tests/test_cross_surface_saturation.py:325 (test_issue_only_escape_rejects_omitted_pr_binding_at_cli) (must be terminal passed)"
+      ]
+    },
+    {
+      "requirement_id": "REQ-006",
+      "positive_evidence": [
+        "Exact material JUnit positive: entregar-issue/tests/test_cross_surface_saturation.py:243 (test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions) (assertions inspected for corresponding CLI path)"
+      ],
+      "primary_negative_control": {
+        "id": "NEG-006",
+        "status": "passed",
+        "procedure": "Run entregar-issue/tests/test_cross_surface_saturation.py:286 (test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered) against the frozen checkout with the JUnit runner.",
+        "expected": "16 dimensions from another issue may never be required implicitly.",
+        "observed": "Regression assertion in entregar-issue/tests/test_cross_surface_saturation.py:286 (test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered) checks rejection or absence of foreign contamination; execution must be confirmed by exact-SHA JUnit."
+      },
+      "regression_evidence": [
+        "Exact material JUnit regression: entregar-issue/tests/test_cross_surface_saturation.py:228 (test_previous_rejection_cannot_infer_foreign_escape_from_neighboring_file) (must be terminal passed)"
+      ]
+    }
+  ]
+}

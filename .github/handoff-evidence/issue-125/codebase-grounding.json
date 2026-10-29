@@ -1,0 +1,254 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [
+    {
+      "path": "tests/test_risk_saturation_target_binding.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "test_risk_saturation",
+          "audit escape explicit binding"
+        ],
+        "scope": "entregar-issue/tests and top-level tests",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_cross_surface_saturation.py",
+            "reason_not_reused": "Specialized risk saturation tests did not cover top-level test discovery and direct unbound-source regression."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "Independent root test surface guards omission through repository pytest discovery."
+    }
+  ],
+  "references": [
+    {
+      "symbol": "validate_escape_target",
+      "kind": "local",
+      "used_in": "entregar-issue/scripts/validate_handoff_readiness.py",
+      "defined_at": {
+        "path": "entregar-issue/scripts/validate_risk_saturation.py",
+        "line": 35
+      },
+      "verified_by": {
+        "command": "python -m pytest -vv --junitxml=pytest-exact-head.xml",
+        "exit_code": 0
+      }
+    }
+  ],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "entregar-issue/tests/test_canonical_path_escape.py",
+      "operation": "modified",
+      "scenario": "Handoff current-subject acceptance with rejection replay and fail-closed canonical path",
+      "requirement": "Issue 125: semantic binding and regression prevention",
+      "search": {
+        "queries": [
+          "audit escape target binding",
+          "foreign audit escape risk saturation",
+          "handoff semantic JUnit provenance"
+        ],
+        "scope": "entregar-issue/tests, tests and GitHub Actions test runner",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_cross_surface_saturation.py",
+            "case": "Handoff current-subject acceptance with rejection replay and fail-closed canonical path",
+            "oracle": "Negative controls distinguish a foreign target from current-target binding at the caller boundary.",
+            "comparison": "Cross-surface scenarios exist, but the canonical handoff acceptance path needs its own regression test."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_cross_surface_saturation.py",
+      "operation": "modified",
+      "scenario": "Material risk dimensions, explicit foreign subjects, missing files, and 19/16 regression fixture",
+      "requirement": "Issue 125: semantic binding and regression prevention",
+      "search": {
+        "queries": [
+          "audit escape target binding",
+          "foreign audit escape risk saturation",
+          "handoff semantic JUnit provenance"
+        ],
+        "scope": "entregar-issue/tests, tests and GitHub Actions test runner",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_canonical_path_escape.py",
+            "case": "Material risk dimensions, explicit foreign subjects, missing files, and 19/16 regression fixture",
+            "oracle": "Negative controls distinguish a foreign target from current-target binding at the caller boundary.",
+            "comparison": "The direct handoff case does not exercise all risk-saturation surfaces and issue cardinalities."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "tests/test_risk_saturation_target_binding.py",
+      "operation": "added",
+      "scenario": "Top-level runner check for foreign closure co-location and explicit binding without false exemptions",
+      "requirement": "Issue 125: semantic binding and regression prevention",
+      "search": {
+        "queries": [
+          "audit escape target binding",
+          "foreign audit escape risk saturation",
+          "handoff semantic JUnit provenance"
+        ],
+        "scope": "entregar-issue/tests, tests and GitHub Actions test runner",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_cross_surface_saturation.py",
+            "case": "Top-level runner check for foreign closure co-location and explicit binding without false exemptions",
+            "oracle": "Negative controls distinguish a foreign target from current-target binding at the caller boundary.",
+            "comparison": "Specialized tests cover risk saturation; a top-level runner discovery regression is additionally required."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "Keep pre-existing controls and add discriminating checks for the issue and exact-SHA producer.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+      "operation": "modified",
+      "scenario": "Terminal handoff forwards exact current-target identity through previous-independent-rejection readiness",
+      "requirement": "Issue 125: target-bound audit escape closure on terminal handoff",
+      "search": {
+        "queries": [
+          "terminal handoff previous rejection",
+          "readiness target binding",
+          "audit escape closure"
+        ],
+        "scope": "entregar-issue/tests and terminal handoff validators",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_canonical_path_escape.py",
+            "case": "terminal target-bound previous rejection",
+            "oracle": "Terminal caller must forward repository, issue and pull request identity when reauditing",
+            "comparison": "Canonical readiness test does not cover terminal handoff caller forwarding"
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the existing terminal handoff suite rather than duplicating its synthetic certificate fixture.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_handoff_postcondition.py",
+      "operation": "modified",
+      "scenario": "Bind the current issue/PR/material SHA on the critical-targeted postcondition escape; preserve historical base lineage",
+      "requirement": "Issue 125: explicit escape target binding, postcondition lineage and unchanged security controls",
+      "search": {
+        "queries": [
+          "audit escape closure subject",
+          "critical targeted handoff",
+          "postcondition readiness identity"
+        ],
+        "scope": "entregar-issue/tests: official postcondition, authenticated preparation and publisher",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+            "case": "Bind the current issue/PR/material SHA on the critical-targeted postcondition escape; preserve historical base lineage",
+            "oracle": "A legacy fixture cannot be treated as current-target evidence without explicit repository, issue, PR and SHA linkage.",
+            "comparison": "Postcondition records test exercises direct readiness but not the official certificate builder's critical replay"
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the historical positive, negative and critical replay fixtures to the tightened target contract; no production exemption.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+      "operation": "modified",
+      "scenario": "Separate trusted checkout repository path from explicit current-target identity during authenticated preparation",
+      "requirement": "Issue 125: explicit escape target binding, postcondition lineage and unchanged security controls",
+      "search": {
+        "queries": [
+          "audit escape closure subject",
+          "critical targeted handoff",
+          "postcondition readiness identity"
+        ],
+        "scope": "entregar-issue/tests: official postcondition, authenticated preparation and publisher",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_handoff_postcondition.py",
+            "case": "Separate trusted checkout repository path from explicit current-target identity during authenticated preparation",
+            "oracle": "A legacy fixture cannot be treated as current-target evidence without explicit repository, issue, PR and SHA linkage.",
+            "comparison": "The official certificate test covers builder forwarding, not the direct preparation-phase readiness CLI"
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the historical positive, negative and critical replay fixtures to the tightened target contract; no production exemption.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+      "operation": "modified",
+      "scenario": "Preserve exact-target binding in critical-targeted publisher fixture without waiving material-parent checks",
+      "requirement": "Issue 125: explicit escape target binding, postcondition lineage and unchanged security controls",
+      "search": {
+        "queries": [
+          "audit escape closure subject",
+          "critical targeted handoff",
+          "postcondition readiness identity"
+        ],
+        "scope": "entregar-issue/tests: official postcondition, authenticated preparation and publisher",
+        "runner": "python -m pytest -vv with exact-SHA JUnit",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_handoff_certificate_contract.py",
+            "case": "Preserve exact-target binding in critical-targeted publisher fixture without waiving material-parent checks",
+            "oracle": "A legacy fixture cannot be treated as current-target evidence without explicit repository, issue, PR and SHA linkage.",
+            "comparison": "The certificate contract suite does not exercise the publisher's material-parent absence proof"
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the historical positive, negative and critical replay fixtures to the tightened target contract; no production exemption.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}

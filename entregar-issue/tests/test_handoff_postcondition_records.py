@@ -214,7 +214,13 @@ def authenticated_records(tmp_path):
     escape.update({"status": "blocked", "revalidated_head_sha": case["head"]})
     escape["literal_case"]["status"] = "not-passed"
     escape["source_audit"].update({"head_sha": case["base"], "audit_report_sha256": ledger["source"]["audit_report_sha256"]})
-    closure = {"schema_version": 1, "status": "blocked", "escapes": [escape]}
+    target = json.loads(case["preparation"].read_bytes())["subject"]
+    case["escape_subject"] = target
+    closure = {"schema_version": 1, "status": "blocked",
+               "subject": {"repository": target["repository"], "issue_number": target["issue_number"],
+                           "pull_request_number": target["pull_request_number"],
+                           "material_head_sha": case["head"]},
+               "escapes": [escape]}
     learning = escape_fixture.learning(rejection_id=source["rejection_id"])
     learning["source_event"].update({"finding_ids": [case["source_id"]], "audit_report_sha256": ledger["source"]["audit_report_sha256"]})
     for name, value in (("ledger", ledger), ("escape", closure), ("learning", learning), ("previous", {"schema_version": 1, "escapes": []})):
@@ -247,7 +253,12 @@ def preparation_command(case, role):
         return [*command, "--ledger", str(case["ledger"])]
     command += ["--audit-remediation", str(case["ledger"])]
     if role == "readiness":
-        return [*command, "--requirement-closure", str(case["delivery"]["closure"]), "--previous-independent-rejection",
+        target = case["escape_subject"]
+        return [*command, "--requirement-closure", str(case["delivery"]["closure"]),
+                          "--target-repository", target["repository"],
+                          "--issue-number", str(target["issue_number"]),
+                          "--pull-request-number", str(target["pull_request_number"]),
+                          "--previous-independent-rejection",
                           "--audit-escape-closure", str(case["escape"]), "--learning-closure", str(case["learning"]),
                           "--previous-audit-escape-closure", str(case["previous"])]
     command += ["--closure", str(case["escape"])]

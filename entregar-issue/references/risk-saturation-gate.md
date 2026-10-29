@@ -1,5 +1,19 @@
 # Gate de saturacao de risco antes do handoff
 
+## Quando ler este arquivo
+
+Consultar antes do freeze, ao validar familias materiais, superficies adversariais e o vinculo de escapes explicitamente selecionados.
+
+## Indice
+
+- [Objetivo](#objetivo)
+- [Familias canonicas](#familias-canonicas)
+- [Precisao da inferencia](#precisao-da-inferencia)
+- [Varredura de saturacao](#varredura-de-saturacao)
+- [Audit escapes](#audit-escapes)
+- [Portao](#portao)
+- [Fontes nao circulares de materialidade](#fontes-nao-circulares-de-materialidade)
+
 ## Objetivo
 
 Impedir que uma familia **ou uma superficie material da mesma familia** seja descoberta pela primeira vez na auditoria independente.
@@ -62,13 +76,21 @@ Antes do freeze:
 
 ## Audit escapes
 
-Quando existir `audit-escape-closure.json` com `status=passed`, cada escape deve declarar `required_attack_dimensions`. Cada item possui `risk_family`, `surface` e `dimension`. O gate de saturacao confirma que essas dimensoes existem de fato na matriz atual, inclusive quando aparecem como casos irmaos.
+Quando o controlador vincular explicitamente ao alvo atual `audit-escape-closure.json` com `status=passed`, cada escape deve declarar `required_attack_dimensions`. Cada item possui `risk_family`, `surface` e `dimension`. O gate de saturacao confirma que essas dimensoes existem de fato na matriz atual, inclusive quando aparecem como casos irmaos.
 
 Para uma classe que escapou por um canal e reapareceu por outro, as dimensoes obrigatorias devem atravessar superficies. Nao aceitar fechamento de `role-secret-boundary-leak`, por exemplo, apenas com duas variacoes de `environment` quando filesystem ou credential store persistente estiverem presentes.
 
 ## Portao
 
-Executar `scripts/validate_risk_saturation.py --attack-matrix ... --risk-saturation ... --requirement-closure ... --inherited-controls ...`. O gate rederiva as familias canonicas diretamente das obrigacoes cobertas e bloqueia quando a especificacao exige uma familia omitida pela matriz ou marcada `not-applicable`. `material_families_missing_controls` deve estar vazio, toda superficie requerida deve possuir dimensao `passed` com controle correspondente, e todas as `required_attack_dimensions` de escapes fechados devem estar cobertas. Qualquer lacuna impede handoff.
+Executar `scripts/validate_risk_saturation.py --attack-matrix ... --risk-saturation ... --requirement-closure ... --inherited-controls ...`.
+
+O gate rederiva as familias canonicas diretamente das obrigacoes cobertas e bloqueia quando a especificacao exige uma familia omitida pela matriz ou marcada `not-applicable`. `material_families_missing_controls` deve estar vazio, toda superficie requerida deve possuir dimensao `passed` com controle correspondente, e todas as `required_attack_dimensions` de escapes fechados devem estar cobertas.
+
+Passar `--audit-escape-closure <caminho>` **somente** para um artefato de escape comprovadamente associado ao alvo atual (tambem em `validate_handoff_readiness.py`). Nao inferir aplicabilidade pela simples presenca de arquivo herdado no diretorio `.audit/entregar-issue`, mesmo que esteja com `status=passed`: esse arquivo pode pertencer a outra issue.
+
+O ledger selecionado deve conter `subject.repository`, `subject.issue_number`, `subject.pull_request_number` (ou `null` para issue sem PR) e `subject.material_head_sha`. O validador exige identidade externa do alvo por `--target-repository`, `--target-issue-number`, `--target-pull-request-number` (quando houver) e `--target-head-sha`, recusando valor ausente, divergente ou SHA diferente da matriz. `validate_handoff_readiness.py` confere o mesmo vinculo via `--target-repository`, `--issue-number`, `--pull-request-number` e `--head-sha` em todos os perfis, inclusive sem matriz critica. `--repository` e apenas o caminho de checkout usado para pos-condicao, nao a identidade do alvo. Campos ausentes e tipos divergentes sao bloqueados, inclusive PR omitida em vez de `null`. O builder entrega os parametros a partir da identidade canonica da entrega.
+
+Se houver rejeicao independente anterior, o caller deve passar `--audit-escape-closure` explicitamente, inclusive quando existir um arquivo com esse nome ao lado da matriz. Ausencia da opcao ou caminho inexistente devem bloquear em vez de ativar silenciosamente o arquivo herdado ou dispensar suas dimensoes. Para remediacao sistemica, o perfil `critical` e os controles cumulativos continuam obrigatorios. Qualquer lacuna impede handoff.
 
 
 ## Fontes nao circulares de materialidade

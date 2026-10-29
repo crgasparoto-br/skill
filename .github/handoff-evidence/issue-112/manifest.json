@@ -3,9 +3,9 @@
   "review_state": "incomplete",
   "repository": "crgasparoto-br/skill",
   "issue_number": 112,
-  "pull_request_number": 113,
+  "pull_request_number": 118,
   "base_ref": "develop",
-  "head_ref": "feat/112-test-lifecycle-governance",
+  "head_ref": "fix/112-post-merge-certification-evidence",
   "work_item_start_sha": "8cf01341030de7762b98b73c6a19efde5ad71461",
   "evidence_profile": "critical",
   "risk_justification": "Governance changes executable validation of test deletion, dynamic discovery and independent audit; false semantic approval could permit loss of negative/regression controls.",
@@ -36,6 +36,13 @@
       "kind": "review-and-remediation-history",
       "uri": "https://github.com/crgasparoto-br/skill/pull/113#issuecomment-6352025888",
       "limitations": "Comments alone are not an immutable independent audit report"
+    },
+    {
+      "kind": "post-merge-remediation",
+      "uri": "https://github.com/crgasparoto-br/skill/pull/118",
+      "original_pull_request": 113,
+      "material_origin_sha": "418e5fcc312d90911fd8ec66e2e036b7bebdee43",
+      "limitations": "Original PR and release were merged without semantic certificate; this PR must produce a new exact-SHA certified package"
     }
   ],
   "pending_review": [
@@ -46,5 +53,593 @@
     "A separate read-only auditor must approve only after certified handoff."
   ],
   "artifact_sha256": {},
-  "test_bindings": {}
+  "test_bindings": {
+    "REQ-112-038": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_test_only_feature_diff_triggers_gate_without_global_hygiene"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_missing_test_decision_blocks_even_for_test_only_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate"
+      ]
+    },
+    "REQ-112-009": {
+      "positive": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ],
+      "negative": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_dead_module_test_exclusion_follows_policy"
+      ],
+      "regression": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt"
+      ]
+    },
+    "REQ-112-016": {
+      "positive": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ],
+      "negative": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_dead_module_test_exclusion_follows_policy"
+      ],
+      "regression": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt"
+      ]
+    },
+    "REQ-112-017": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base"
+      ]
+    },
+    "REQ-112-018": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_rehashed_log_with_stale_head"
+      ]
+    },
+    "REQ-112-020": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready",
+        "entregar-issue.tests.test_codebase_grounding::test_head_only_runner_configuration_cannot_prove_existing_test_coverage"
+      ]
+    },
+    "REQ-112-021": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_test_only_feature_diff_triggers_gate_without_global_hygiene"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_missing_test_decision_blocks_even_for_test_only_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_deterministic_planning::test_planner_classifies_test_only_and_preserves_gate_contract"
+      ]
+    },
+    "REQ-112-023": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base",
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls",
+        "entregar-issue.tests.test_codebase_grounding::test_head_only_runner_configuration_cannot_prove_existing_test_coverage"
+      ]
+    },
+    "REQ-112-025": {
+      "positive": [
+        "entregar-issue.tests.test_deterministic_planning::test_historical_v2_plan_schema_and_runtime_compatible"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_legacy_v1_is_explicitly_rejected_for_test_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_stale_subject_sha_blocks"
+      ]
+    },
+    "REQ-112-026": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_gate_is_registered_and_loaded_progressively"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_missing_test_decision_blocks_even_for_test_only_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_deterministic_planning::test_planner_classifies_test_only_and_preserves_gate_contract"
+      ]
+    },
+    "REQ-112-027": {
+      "positive": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_stages_reviewed_light_bundle_without_declaring_certificate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_approved_review_cannot_stage_pending_obligations"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_missing_review_is_factual_collection_success_not_certification"
+      ]
+    },
+    "REQ-112-028": {
+      "positive": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_stages_reviewed_light_bundle_without_declaring_certificate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_approved_review_cannot_stage_pending_obligations"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_tampered_runner_provenance_is_rejected",
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_skipped_test_is_not_a_control"
+      ]
+    },
+    "REQ-112-030": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ]
+    },
+    "REQ-112-032": {
+      "positive": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready"
+      ],
+      "regression": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_dead_module_test_exclusion_follows_policy"
+      ]
+    },
+    "REQ-112-033": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_rehashed_log_with_stale_head"
+      ]
+    },
+    "REQ-112-034": {
+      "positive": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_missing_review_is_factual_collection_success_not_certification"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_approved_review_cannot_stage_pending_obligations"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_produce_actions_handoff_evidence::test_skipped_test_is_not_a_control"
+      ]
+    },
+    "REQ-112-035": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready"
+      ]
+    },
+    "REQ-112-037": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ]
+    },
+    "REQ-112-042": {
+      "positive": [
+        "corrigir-ci.tests.test_ci_ownership_contract::test_ci_remediation_mode_returns_to_existing_controller"
+      ],
+      "negative": [
+        "corrigir-ci.tests.test_ci_terminal_state_guard::test_rejects_stale_certificate_after_later_material_ci_fix"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_ci_autopilot_contract::test_ci_fix_returns_to_refreeze_before_final_handoff"
+      ]
+    },
+    "REQ-112-046": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ]
+    },
+    "REQ-112-047": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_renamed_test_requires_source_at_base",
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls",
+        "entregar-issue.tests.test_codebase_grounding::test_head_only_runner_configuration_cannot_prove_existing_test_coverage"
+      ]
+    },
+    "REQ-112-049": {
+      "positive": [
+        "entregar-issue.tests.test_deterministic_planning::test_historical_v2_plan_schema_and_runtime_compatible"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_legacy_v1_is_explicitly_rejected_for_test_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_stale_subject_sha_blocks"
+      ]
+    },
+    "REQ-112-001": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ]
+    },
+    "REQ-112-005": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_gate_is_registered_and_loaded_progressively"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_missing_test_decision_blocks_even_for_test_only_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_deterministic_planning::test_historical_v2_plan_schema_and_runtime_compatible"
+      ]
+    },
+    "REQ-112-011": {
+      "positive": [
+        "entregar-issue.tests.test_deterministic_planning::test_historical_v2_plan_schema_and_runtime_compatible"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_legacy_v1_is_explicitly_rejected_for_test_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_stale_subject_sha_blocks"
+      ]
+    },
+    "REQ-112-013": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate",
+        "entregar-issue.tests.test_codebase_grounding::test_blocked_scenario_cannot_report_passed"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ]
+    },
+    "REQ-112-014": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ]
+    },
+    "REQ-112-019": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_stale_head_even_with_valid_log_hash"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_rehashed_log_with_stale_head"
+      ]
+    },
+    "REQ-112-024": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_gate_is_registered_and_loaded_progressively"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_missing_test_decision_blocks_even_for_test_only_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ]
+    },
+    "REQ-112-031": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ]
+    },
+    "REQ-112-039": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ]
+    },
+    "REQ-112-041": {
+      "positive": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ],
+      "negative": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_dead_module_test_exclusion_follows_policy"
+      ],
+      "regression": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt"
+      ]
+    },
+    "REQ-112-043": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_go_test_only_and_runner_manifests_activate_gate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_head_only_runner_configuration_cannot_prove_existing_test_coverage",
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity",
+        "entregar-issue.tests.test_codebase_grounding::test_runner_pattern_is_scoped_to_config_directory"
+      ]
+    },
+    "REQ-112-048": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_gate_is_registered_and_loaded_progressively"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_missing_test_decision_blocks_even_for_test_only_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ]
+    },
+    "REQ-112-051": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_gate_is_registered_and_loaded_progressively"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_legacy_v1_is_explicitly_rejected_for_test_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_deterministic_planning::test_planner_classifies_test_only_and_preserves_gate_contract"
+      ]
+    },
+    "REQ-112-052": {
+      "positive": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_test_only_feature_diff_triggers_gate_without_global_hygiene"
+      ]
+    },
+    "REQ-112-002": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_gate_is_registered_and_loaded_progressively"
+      ]
+    },
+    "REQ-112-003": {
+      "positive": [
+        "auditar-issue.tests.test_controller_mode_contract.ControllerModeContractTests::test_controller_mode_never_claims_independence"
+      ],
+      "negative": [
+        "auditar-issue.tests.test_controller_mode_contract.ControllerModeContractTests::test_controller_result_schema_rejects_operational_approval"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ]
+    },
+    "REQ-112-004": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_gate_is_registered_and_loaded_progressively"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ]
+    },
+    "REQ-112-007": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_gate_is_registered_and_loaded_progressively"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_missing_test_decision_blocks_even_for_test_only_diff"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls",
+        "entregar-issue.tests.test_deterministic_planning::test_planner_classifies_test_only_and_preserves_gate_contract"
+      ]
+    },
+    "REQ-112-008": {
+      "positive": [
+        "auditar-issue.tests.test_controller_mode_contract.ControllerModeContractTests::test_controller_mode_never_claims_independence"
+      ],
+      "negative": [
+        "auditar-issue.tests.test_controller_mode_contract.ControllerModeContractTests::test_controller_result_schema_rejects_operational_approval"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ]
+    },
+    "REQ-112-010": {
+      "positive": [
+        "corrigir-ci.tests.test_ci_ownership_contract::test_ci_remediation_mode_returns_to_existing_controller"
+      ],
+      "negative": [
+        "corrigir-ci.tests.test_ci_terminal_state_guard::test_rejects_stale_certificate_after_later_material_ci_fix"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_ci_autopilot_contract::test_ci_fix_returns_to_refreeze_before_final_handoff"
+      ]
+    },
+    "REQ-112-012": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_invented_candidate_blocks",
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ]
+    },
+    "REQ-112-015": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate",
+        "entregar-issue.tests.test_codebase_grounding::test_blocked_scenario_cannot_report_passed"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ]
+    },
+    "REQ-112-029": {
+      "positive": [
+        "auditar-issue.tests.test_controller_mode_contract.ControllerModeContractTests::test_controller_mode_never_claims_independence"
+      ],
+      "negative": [
+        "auditar-issue.tests.test_controller_mode_contract.ControllerModeContractTests::test_controller_result_schema_rejects_operational_approval"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_gate_is_registered_and_loaded_progressively"
+      ]
+    },
+    "REQ-112-050": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready",
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_added_test_cannot_claim_covered_by_existing_with_real_candidate",
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity",
+        "entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready"
+      ]
+    },
+    "REQ-112-006": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_grounded_candidate_is_ready"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_unparseable_pytest_discovery_is_unknown"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_modified_test_coverage_requires_existing_test_candidate"
+      ]
+    },
+    "REQ-112-022": {
+      "positive": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ],
+      "regression": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_work_item_generator_describes_open_debt"
+      ]
+    },
+    "REQ-112-036": {
+      "positive": [
+        "entregar-issue.tests.test_codebase_grounding::test_distinct_oracle_is_not_rejected_by_nominal_similarity"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_dynamic_runner_unavailable_is_unknown_not_ready"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_test_only_feature_diff_triggers_gate_without_global_hygiene"
+      ]
+    },
+    "REQ-112-045": {
+      "positive": [
+        "higienizar-repositorio.tests.test_hygiene_profile::test_test_lifecycle_hygiene_requires_runner_oracle_review"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_codebase_grounding::test_deleted_test_requires_preserved_controls"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_codebase_grounding::test_non_deleted_test_rejects_unreached_case"
+      ]
+    },
+    "REQ-112-040": {
+      "positive": [
+        "tests.test_audit_completeness_gate::test_test_only_removal_requires_independent_lifecycle_review"
+      ],
+      "negative": [
+        "tests.test_audit_completeness_gate::test_changed_path_is_not_silently_skipped"
+      ],
+      "regression": [
+        "tests.test_audit_completeness_gate::test_existing_but_forged_git_base_rejected_by_remote_anchor"
+      ]
+    },
+    "REQ-112-044": {
+      "positive": [
+        "tests.test_catalog_governance::test_shared_files_are_byte_identical_to_canonical"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_contract_validator_detects_generated_copy_drift"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_documentation_references_are_current"
+      ]
+    }
+  }
 }

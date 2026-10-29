@@ -7,12 +7,19 @@ pending obligation to covered or a control to passed without a reviewed input.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 import subprocess
 import sys
 from pathlib import Path
+
+from reviewed_phase_decision import (
+    MissingReviewedEvidenceError,
+    _verify_deferred_phase,
+    digest,
+    with_deferred_completion,
+)
+from validate_handoff_certificate import scope_touches_code, scope_touches_tests
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 ALLOWED_REPORTS = frozenset({
@@ -34,14 +41,6 @@ OBLIGATION_FIELDS = frozenset({
     "disposition", "requirement_ids", "inventory_ids", "assertion_ids",
     "scope_decision", "rationale",
 })
-
-
-class MissingReviewedEvidenceError(ValueError):
-    """No reviewed dossier exists; factual collection may still finish."""
-
-
-def digest(raw: bytes) -> str:
-    return hashlib.sha256(raw).hexdigest()
 
 
 def read_json(path: Path) -> dict:
@@ -115,8 +114,41 @@ def merge_closure(starter: dict, reviewed: dict) -> dict:
     return starter
 
 
-def validate_incomplete_review(source: Path, starter: dict) -> dict:
-    """A draft may be inventoried, but cannot supply semantic approval."""
+def require_complete_semantic_review(
+    closure: dict, *, issue_number: int | None = None,
+    canonical_issue_body: str | None = None, parent_issue_open: bool = False,
+) -> list[str]:
+    """Prove pre-handoff closure; track independent review as unsatisfied."""
+    deferred = [item for item in closure["obligations"]
+                if item.get("disposition") == "deferred"]
+    _verify_deferred_phase(closure, deferred, issue_number, canonical_issue_body,
+                           parent_issue_open)
+    unresolved = [item.get("id", "unknown") for item in closure["obligations"]
+                  if item.get("disposition") not in {"covered", "not-applicable", "deferred"}]
+    if unresolved:
+        raise MissingReviewedEvidenceError(
+            f"reviewed semantic closure incomplete: {len(unresolved)} unresolved "
+            f"obligations ({', '.join(unresolved[:5])}); no certificate can be staged")
+    unjustified = [item.get("id", "unknown") for item in closure["obligations"]
+                   if item.get("disposition") == "not-applicable"
+                   and not str(item.get("rationale") or "").strip()]
+    if unjustified:
+        raise MissingReviewedEvidenceError(
+            "reviewed semantic closure has unjustified not-applicable "
+            f"obligations ({', '.join(unjustified[:5])}); no certificate can be staged")
+    return sorted(str(item["id"]) for item in deferred)
+
+
+def validate_incomplete_review(source: Path, starter: dict,
+                               tests: dict | None = None) -> dict:
+    """Record progressive draft decisions, never issue a certification claim.
+
+    Draft 'covered' decisions are mechanically cross-checked against actually
+    passed JUnit IDs.  This does *not* establish semantic equivalence; the
+    approved-dossier path and independent audit remain mandatory.
+    """
+    import copy
+
     manifest = read_json(source / "manifest.json")
     if manifest.get("review_state") != "incomplete":
         return {}
@@ -126,13 +158,28 @@ def validate_incomplete_review(source: Path, starter: dict) -> dict:
     if (draft.get("schema_version") != 1 or not isinstance(provided, dict)
             or set(provided) != canonical):
         raise ValueError("incomplete reviewed closure differs from canonical candidate inventory")
-    if any(not isinstance(item, dict) or item.get("disposition") != "pending"
-           for item in provided.values()):
-        raise ValueError("incomplete reviewed closure must not claim semantic coverage")
-    if manifest.get("artifact_sha256") or manifest.get("test_bindings"):
-        raise ValueError("incomplete dossier must not present reviewed hashes or test bindings")
-    return {"review_state": "incomplete", "pending_obligations": len(provided),
-            "canonical_candidate_keys_verified": True}
+    if manifest.get("artifact_sha256"):
+        raise ValueError("incomplete dossier must not present reviewed artifact hashes")
+    merged = merge_closure(copy.deepcopy(starter), draft)
+    obligations = merged["obligations"]
+    permitted = {"pending", "covered", "deferred", "not-applicable"}
+    if any(item.get("disposition") not in permitted for item in obligations):
+        raise ValueError("incomplete reviewed closure has invalid disposition")
+    provisional = [item for item in obligations if item["disposition"] == "covered"]
+    if any(not item.get("requirement_ids") or len(str(item.get("rationale") or "").strip()) < 20
+           for item in provisional):
+        raise ValueError("draft covered obligation lacks requirement IDs or reviewed rationale")
+    bindings = manifest.get("test_bindings")
+    if tests is None and (provisional or bindings):
+        raise ValueError("draft test bindings require exact-head JUnit facts")
+    validate_test_bindings(bindings, merged, tests or {})
+    return {"review_state": "incomplete", "pending_obligations": sum(
+                item["disposition"] == "pending" for item in obligations),
+            "deferred_obligations": sum(
+                item["disposition"] == "deferred" for item in obligations),
+            "provisional_obligations": len(provisional),
+            "canonical_candidate_keys_verified": True,
+            "semantic_certification": "NOT_ASSERTED"}
 
 
 def code_growth_command(
@@ -237,8 +284,10 @@ def required_reviewed_reports(manifest: dict, changed: list[str]) -> tuple[set[s
                        "audit-escape-closure.json", "previous-audit-escape-closure.json"})
     if manifest.get("remediation_mode") in {"systemic-remediation", "mixed-remediation"}:
         needed.add("previous-inherited-controls.json")
-    touched_code = any(path.endswith((".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".sh")) for path in changed)
-    touched_tests = any("test" in path.lower() or path.endswith((".cy.ts", ".spec.ts")) for path in changed)
+    # Reuse the certificate's canonical scope classifier. Filename substring
+    # checks miss test-only diffs such as features/*.feature and *.robot.
+    touched_code = scope_touches_code(changed)
+    touched_tests = scope_touches_tests(changed)
     if touched_code or touched_tests:
         needed.add("codebase-grounding.json")
     return needed, touched_code
@@ -247,7 +296,12 @@ def required_reviewed_reports(manifest: dict, changed: list[str]) -> tuple[set[s
 def validate_test_bindings(binding: object, closure: dict, tests: dict) -> None:
     if not isinstance(binding, dict):
         raise ValueError("reviewed test bindings are required")
-    covered = {rid for item in closure["obligations"] if item["disposition"] == "covered"
+    # A partially deferred requirement still needs executed controls for its
+    # implementable pre-handoff clause; the post-handoff approval stays open.
+    covered = {rid for item in closure["obligations"]
+               if item["disposition"] == "covered" or
+               (item["disposition"] == "deferred" and isinstance(
+                   (item.get("scope_decision") or {}).get("pre_handoff_coverage"), dict))
                for rid in item["requirement_ids"]}
     if set(binding) != covered:
         raise ValueError("test bindings must account for every covered requirement")
@@ -263,6 +317,58 @@ def validate_test_bindings(binding: object, closure: dict, tests: dict) -> None:
             raise ValueError(f"positive and negative controls are not distinct for {requirement}")
 
 
+def canonical_issue_context(out: Path, repository: str, issue: int) -> tuple[str, bool]:
+    """Validate authenticated preflight source before making phase decisions."""
+    preflight = read_json(out / "handoff-preflight.json")
+    body_path = out / "issue-body.md"
+    body = body_path.read_text(encoding="utf-8") if body_path.is_file() else ""
+    source = preflight.get("source") or {}
+    expected = {"issue_body_sha256": digest(body.encode("utf-8")),
+                "uri": f"https://github.com/{repository}/issues/{issue}"}
+    if not body or any(source.get(key) != value for key, value in expected.items()):
+        raise MissingReviewedEvidenceError("canonical issue source binding is unavailable")
+    return body, source.get("issue_state") == "open"
+
+
+def candidate_module_inventory(exact_index: dict) -> dict:
+    """Group executed JUnit facts for navigation, never semantic approval."""
+    modules: dict = {}
+    for case in exact_index["tests"]:
+        module = case["id"].split("::", 1)[0]
+        entry = modules.setdefault(module, {"passed": 0, "other": 0, "examples": []})
+        entry["passed" if case["status"] == "passed" else "other"] += 1
+        if len(entry["examples"]) < 3:
+            entry["examples"].append(case["id"])
+    return modules
+
+
+def stage_draft_review(root: Path, out: Path, source: Path, starter: dict,
+                       tests: dict, head: str, base: str) -> None:
+    if not source.is_dir() or not (source / "manifest.json").is_file():
+        return
+    draft_check = validate_incomplete_review(source, starter, tests)
+    if draft_check:
+        manifest = read_json(source / "manifest.json")
+        start = manifest["work_item_start_sha"]
+        changed = git(root, "diff", "--name-only", "--no-renames", start, head).splitlines()
+        required, _ = required_reviewed_reports(manifest, changed)
+        hashes = manifest.get("artifact_sha256") or {}
+        reviewed = read_json(source / "reviewed-closure.json")
+        controls = reviewed.get("controls") or {}
+        draft_check["required_reports"] = sorted(required)
+        draft_check["missing_reports"] = sorted(
+            name for name in required if not (source / name).is_file())
+        draft_check["unhashed_reports"] = sorted(
+            name for name in required if name not in hashes)
+        draft_check["pending_review_controls"] = sorted(
+            name for name, value in controls.items()
+            if (isinstance(value, dict) and value.get("status") in {"pending", "blocked"})
+            or (isinstance(value, list) and not value))
+        draft_check["subject_sha"] = head
+        draft_check["code_growth"] = stage_draft_code_growth(root, out, source, head, base)
+        write_json(out / "reviewed-dossier-inventory.json", draft_check)
+
+
 def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     from prepare_actions_handoff import check_checkout, read_event
 
@@ -275,13 +381,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         raise ValueError("preflight identity differs from the exact PR material")
     tests, exact_index = collect_exact_tests(out, head)
     # Factual candidate grouping does not assert an oracle or semantic coverage.
-    modules = {}
-    for case in exact_index["tests"]:
-        module = case["id"].split("::", 1)[0]
-        entry = modules.setdefault(module, {"passed": 0, "other": 0, "examples": []})
-        entry["passed" if case["status"] == "passed" else "other"] += 1
-        if len(entry["examples"]) < 3:
-            entry["examples"].append(case["id"])
+    modules = candidate_module_inventory(exact_index)
     write_json(out / "semantic-test-review-candidates.json", {
         "schema_version": 1, "subject_sha": head, "issue_number": issue,
         "pull_request_number": pr, "source": "verified exact-SHA JUnit index",
@@ -325,12 +425,7 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         "certification": "NOT_ASSERTED",
     })
     source = root / ".github" / "handoff-evidence" / f"issue-{issue}"
-    if source.is_dir() and (source / "manifest.json").is_file():
-        draft_check = validate_incomplete_review(source, starter)
-        if draft_check:
-            draft_check["subject_sha"] = head
-            draft_check["code_growth"] = stage_draft_code_growth(root, out, source, head, base)
-            write_json(out / "reviewed-dossier-inventory.json", draft_check)
+    stage_draft_review(root, out, source, starter, tests, head, base)
     target = {"repository": repository, "issue_number": issue, "pull_request_number": pr,
               "base_ref": base_ref, "head_sha": head}
     manifest, start, changed = load_reviewed_manifest(root, source, event, target)
@@ -341,6 +436,10 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     if not needed.issubset(hashes):
         raise ValueError(f"missing required reviewed reports: {sorted(needed - set(hashes))}")
     closure = merge_closure(starter, verified_source(root, source, "reviewed-closure.json", hashes))
+    canonical_body, parent_open = canonical_issue_context(out, repository, issue)
+    deferred_ids = require_complete_semantic_review(
+        closure, issue_number=issue, canonical_issue_body=canonical_body,
+        parent_issue_open=parent_open)
     validate_test_bindings(manifest.get("test_bindings"), closure, tests)
     staged = {name: bind_identity(verified_source(root, source, name, hashes), head, start)
               for name in sorted(set(hashes) - {"reviewed-closure.json"})}
@@ -360,7 +459,8 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
               "audit_history": manifest["audit_history"]}
     if "remediation_mode" in manifest:
         inputs["remediation_mode"] = manifest["remediation_mode"]
-    write_json(out / "certification-inputs.json", inputs)
+    write_json(out / "certification-inputs.json",
+               with_deferred_completion(inputs, deferred_ids, issue))
     write_json(out / "handoff-producer-status.json", {
         "status": "staged-for-independent-validation", "subject_sha": head,
         "source": f".github/handoff-evidence/issue-{issue}", "reports": sorted(staged),

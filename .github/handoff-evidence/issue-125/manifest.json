@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 125,
+  "pull_request_number": 126,
+  "base_ref": "develop",
+  "head_ref": "fix/125-risk-escape-target-binding",
+  "work_item_start_sha": "3b311f646619d7fa9b62c6212772d8327dccb9df",
+  "review_state": "approved",
+  "evidence_profile": "standard",
+  "risk_justification": "Six obligation-specific CLI contracts with positive, negative and regression controls; canonical issue flags contain no isolation, atomicity or reference-liveness requirement demanding critical profile. Document and test impacts are explicitly included.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "Authenticated GitHub pull-request review history for #126 contains no independent APPROVED or REJECTED review; chat pre-audit findings A-001 to A-003 were not independent Github rejection identities.",
+  "artifact_sha256": {
+    "reviewed-closure.json": "7953c5a61d821af250bc61e6153c7fb3e80d4056ba35da3fd885981fb6a8555f",
+    "standard-evidence.json": "4bcc89d01abcf20c07ea55e17445726e6c5da1d2cb9caab58a6da98b3083895e",
+    "codebase-grounding.json": "c7670491465253eced31a437fa1a1918550e1f42b83136c2130718802b5f4050"
+  },
+  "test_bindings": {
+    "REQ-001": {
+      "positive": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_risk_saturation_rejects_escape_closed_without_cross_surface_dimensions"
+      ],
+      "regression": [
+        "tests.test_risk_saturation_target_binding::test_foreign_closure_is_not_inferred_from_neighboring_file"
+      ]
+    },
+    "REQ-002": {
+      "positive": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_risk_saturation_accepts_escape_when_required_dimensions_are_covered"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered",
+        "tests.test_risk_saturation_target_binding::test_current_target_requires_all_subject_fields_with_exact_types"
+      ],
+      "regression": [
+        "tests.test_risk_saturation_target_binding::test_risk_validator_requires_explicit_escape_binding",
+        "entregar-issue.tests.test_cross_surface_saturation::test_issue_only_escape_rejects_omitted_pr_binding_at_cli"
+      ]
+    },
+    "REQ-003": {
+      "positive": [
+        "entregar-issue.tests.test_canonical_path_escape::test_handoff_accepts_canon_divergence_control_and_closed_escape"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_previous_rejection_cannot_infer_foreign_escape_from_neighboring_file"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_independent_rejection_handoff_contract::test_handoff_readiness_cross_checks_learning_and_escape_ledgers"
+      ]
+    },
+    "REQ-004": {
+      "positive": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_cross_surface_matrix_and_saturation_pass_when_every_surface_is_covered"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_risk_saturation_rejects_missing_surface_dimension"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_audit_escape_prevention_contract::test_risk_saturation_rederives_idempotency_from_requirement_closure"
+      ]
+    },
+    "REQ-005": {
+      "positive": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_risk_saturation_accepts_escape_when_required_dimensions_are_covered"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_risk_saturation_fails_closed_for_explicit_missing_escape_file"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered",
+        "entregar-issue.tests.test_cross_surface_saturation::test_issue_only_escape_rejects_omitted_pr_binding_at_cli"
+      ]
+    },
+    "REQ-006": {
+      "positive": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_cross_surface_saturation::test_previous_rejection_cannot_infer_foreign_escape_from_neighboring_file"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "entregar-issue/tests/test_canonical_path_escape.py": [
+      {
+        "case": "entregar-issue/tests/test_canonical_path_escape.py::test_handoff_accepts_canon_divergence_control_and_closed_escape",
+        "test_case_id": "entregar-issue.tests.test_canonical_path_escape::test_handoff_accepts_canon_divergence_control_and_closed_escape"
+      }
+    ],
+    "entregar-issue/tests/test_cross_surface_saturation.py": [
+      {
+        "case": "entregar-issue/tests/test_cross_surface_saturation.py::test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions",
+        "test_case_id": "entregar-issue.tests.test_cross_surface_saturation::test_solverfin_like_nineteen_requirements_ignore_sixteen_foreign_dimensions"
+      },
+      {
+        "case": "entregar-issue/tests/test_cross_surface_saturation.py::test_issue_only_escape_rejects_omitted_pr_binding_at_cli",
+        "test_case_id": "entregar-issue.tests.test_cross_surface_saturation::test_issue_only_escape_rejects_omitted_pr_binding_at_cli"
+      }
+    ],
+    "tests/test_risk_saturation_target_binding.py": [
+      {
+        "case": "tests/test_risk_saturation_target_binding.py::test_foreign_closure_is_not_inferred_from_neighboring_file",
+        "test_case_id": "tests.test_risk_saturation_target_binding::test_foreign_closure_is_not_inferred_from_neighboring_file"
+      },
+      {
+        "case": "tests/test_risk_saturation_target_binding.py::test_current_target_requires_all_subject_fields_with_exact_types",
+        "test_case_id": "tests.test_risk_saturation_target_binding::test_current_target_requires_all_subject_fields_with_exact_types"
+      }
+    ],
+    "entregar-issue/tests/test_terminal_handoff_contract.py": [
+      {
+        "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_terminal_guard_forwards_target_binding_for_previous_rejection_success",
+        "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_terminal_guard_forwards_target_binding_for_previous_rejection_success"
+      }
+    ],
+    "entregar-issue/tests/test_handoff_postcondition.py": [
+      {
+        "case": "entregar-issue/tests/test_handoff_postcondition.py::test_official_critical_postcondition_replays_historical_gate_before_final_handoff",
+        "test_case_id": "entregar-issue.tests.test_handoff_postcondition::test_official_critical_postcondition_replays_historical_gate_before_final_handoff"
+      }
+    ],
+    "entregar-issue/tests/test_handoff_postcondition_records.py": [
+      {
+        "case": "entregar-issue/tests/test_handoff_postcondition_records.py::test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]",
+        "test_case_id": "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]"
+      }
+    ],
+    "entregar-issue/tests/test_publish_actions_handoff.py": [
+      {
+        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]",
+        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
+      }
+    ]
+  }
+}

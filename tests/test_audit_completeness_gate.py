@@ -270,3 +270,53 @@ def test_existing_but_forged_git_base_rejected_by_remote_anchor(tmp_path: Path) 
     result = run(tmp_path, inventory, report)
     assert result.returncode == 2
     assert "independent GitHub anchor" in result.stdout
+
+
+def test_test_only_removal_requires_independent_lifecycle_review(tmp_path: Path) -> None:
+    """A deleted test cannot be waived or linked only to unrelated code controls."""
+    inventory, report = fixture(tmp_path)
+    checkout = tmp_path / "gitrepo"
+    git(checkout, "reset", "--hard", "HEAD~1")
+    removed = checkout / "tests/test_removed_contract.py"
+    removed.parent.mkdir(parents=True)
+    removed.write_text("def test_legacy_contract():\n    assert True\n", encoding="utf-8")
+    git(checkout, "add", "-A")
+    git(checkout, "commit", "-qm", "existing test baseline")
+    removed.unlink()
+    git(checkout, "add", "-A")
+    git(checkout, "commit", "-qm", "remove test")
+    base = git(checkout, "rev-parse", "HEAD~1")
+    head = git(checkout, "rev-parse", "HEAD")
+    identity = {"repository": "org/test", "base_sha": base, "head_sha": head}
+    inventory["identity"] = identity
+    report["identity"] = identity
+    path = "tests/test_removed_contract.py"
+    inventory["discovery"]["changed_paths"] = [path]
+    diff_path = tmp_path / "proofs/diff.txt"
+    diff_path.write_text(json.dumps({
+        "base_sha": base, "head_sha": head, "changed_paths": [path],
+    }), encoding="utf-8")
+    inventory["sources"][1]["evidence_sha256"] = hashlib.sha256(
+        diff_path.read_bytes()).hexdigest()
+    review = report["changed_path_reviews"][0]
+    review["id"] = path
+    review["status"] = "not-applicable"
+    review["reason"] = "This file is allegedly not relevant to the implementation"
+    review.pop("surface_ids", None)
+    first = run(tmp_path, inventory, report)
+    assert first.returncode == 2, first.stdout
+    assert "changed test/runner path cannot be not-applicable" in first.stdout
+
+    review["status"] = "covered"
+    review["surface_ids"] = ["S1"]
+    second = run(tmp_path, inventory, report)
+    assert second.returncode == 2, second.stdout
+    assert "lacks test-lifecycle surface" in second.stdout
+
+    inventory["surfaces"][0]["risk_family"] = "test-lifecycle"
+    assert run(tmp_path, inventory, report).returncode == 0
+
+    review["reason"] = ""
+    last = run(tmp_path, inventory, report)
+    assert last.returncode == 2, last.stdout
+    assert "substantive reason required" in last.stdout
