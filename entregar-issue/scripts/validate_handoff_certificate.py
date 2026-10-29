@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import posixpath
+import re
 from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, load_json_artifact
@@ -54,6 +55,58 @@ def load(path: Path) -> dict:
     if not isinstance(value, dict):
         raise ValueError("expected object")
     return value
+
+
+def _uncovered_deferred_clause(item: dict, locator: str) -> str:
+    """Identify pre-handoff text that cannot be waived by a later approval."""
+    source = str(item.get("source_text") or "").strip()
+    source = re.sub(r"^[-*]\s*(?:\[[ xX]\]\s*)?", "", source).strip()
+    return source.replace(locator, "", 1).strip(" \t\r\n;,.") if locator in source else source
+
+
+def _deferred_pre_handoff_is_covered(item: dict, locator: str) -> bool:
+    remaining = _uncovered_deferred_clause(item, locator)
+    coverage = (item.get("scope_decision") or {}).get("pre_handoff_coverage")
+    if not remaining:
+        return coverage is None
+    return (isinstance(coverage, dict)
+            and coverage.get("covered_text") == remaining
+            and len(str(coverage.get("rationale") or "").strip()) >= 30)
+
+
+def _valid_deferred_decision(item: dict, source_id: str, source_sha: str,
+                             issue_number: int) -> bool:
+    decision = item.get("scope_decision")
+    expected = {"decision_source_id": source_id, "decision_source_sha256": source_sha,
+                "target_issue": issue_number, "parent_issue_must_remain_open": True}
+    return (isinstance(decision, dict)
+            and all(decision.get(key) == value for key, value in expected.items())
+            and len(str(decision.get("decision_locator") or "").strip()) >= 8
+            and str(decision.get("decision_locator") or "") in str(item.get("source_text") or "")
+            and len(str(item.get("rationale") or "").strip()) >= 20
+            and _deferred_pre_handoff_is_covered(item, str(decision.get("decision_locator") or "")))
+
+
+def completion_fields(closure: dict, issue_number: int) -> dict:
+    """Bind post-handoff obligations to the parent issue without approving them."""
+    deferred = [item for item in closure.get("obligations") or []
+                if isinstance(item, dict) and item.get("disposition") == "deferred"]
+    if not deferred:
+        return {"issue_completion": "complete", "deferred_obligation_ids": [],
+                "remaining_issue_ids": [], "parent_issue_must_remain_open": False}
+    primary = closure.get("primary_issue_source_id")
+    sources = {item.get("source_id"): item.get("source_sha256")
+               for item in closure.get("source_coverage") or [] if isinstance(item, dict)}
+    if not isinstance(issue_number, int) or issue_number <= 0 or primary not in sources:
+        raise ValueError("partial handoff lacks canonical parent issue source")
+    for item in deferred:
+        if not _valid_deferred_decision(item, primary, sources[primary], issue_number):
+            raise ValueError(f"deferred obligation {item.get('id', 'unknown')} lacks verified parent-issue decision")
+    ids = [str(item["id"]) for item in deferred]
+    if len(ids) != len(set(ids)):
+        raise ValueError("duplicate deferred obligation IDs")
+    return {"issue_completion": "partial", "deferred_obligation_ids": sorted(ids),
+            "remaining_issue_ids": [issue_number], "parent_issue_must_remain_open": True}
 
 
 def issue_scope_digest(work_item_start_sha: str, material_head_sha: str, paths: list[str]) -> str:
@@ -284,6 +337,19 @@ def main() -> int:
                 target_mismatch |= compare_target("specification snapshot repository", snapshot.get("repository"), args.repository, errors)
                 if expected_issue_number is not None:
                     target_mismatch |= compare_target("specification snapshot issue", snapshot.get("issue"), expected_issue_number, errors)
+
+    if "requirement_closure" in artifact_paths and artifact_paths["requirement_closure"].is_file():
+        try:
+            derived_completion = completion_fields(
+                load(artifact_paths["requirement_closure"]),
+                (cert.get("subject") or {}).get("issue_number"))
+        except (ValueError, TypeError, KeyError) as exc:
+            errors.append(f"invalid deferred completion evidence: {exc}")
+        else:
+            declared_completion = cert.get("completion")
+            if (derived_completion["issue_completion"] == "partial"
+                    or declared_completion is not None) and declared_completion != derived_completion:
+                errors.append("certificate partial completion disagrees with certified requirement closure")
 
     source_control = (cert.get("controls") or {}).get("source_locations")
     certified_source_gate = "validate_evidence_source_locations.py" in (cert.get("validators") or {})

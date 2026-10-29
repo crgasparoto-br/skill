@@ -49,6 +49,9 @@ def fixture(tmp_path: Path, *, state: str = "blocked") -> tuple[Path, Path]:
                         "pull_request_number": 113, "base_ref": "develop"},
             "certificate_commit_policy": {"mode": "result-only-child"},
         })
+    if state == "certificate-generated":
+        put(evidence / ".audit/entregar-issue/requirement-closure.json",
+            {"obligations": []})
     return evidence, event
 
 
@@ -82,6 +85,41 @@ def test_stale_or_misleading_receipt_fails_closed(tmp_path):
     put(receipt, value)
     with pytest.raises(ValueError, match="falsely claims"):
         gate.verify(evidence, event, "develop")
+
+
+def test_partial_handoff_requires_exact_deferred_ledger_and_live_parent(tmp_path, monkeypatch):
+    evidence, event = fixture(tmp_path, state="certificate-generated")
+    certificate = evidence / ".audit/entregar-issue/handoff-ready.json"
+    closure_path = evidence / ".audit/entregar-issue/requirement-closure.json"
+    cert = json.loads(certificate.read_text())
+    cert["completion"] = {
+        "issue_completion": "partial",
+        "deferred_obligation_ids": ["OBL-040"],
+        "remaining_issue_ids": [112],
+        "parent_issue_must_remain_open": True,
+    }
+    put(certificate, cert)
+    put(closure_path, {"obligations": [{"id": "OBL-040", "disposition": "deferred"}]})
+    observed = []
+    monkeypatch.setattr(gate, "verify_open_parent_issue",
+                        lambda repo, issue: observed.append((repo, issue)))
+    gate.verify(evidence, event, "develop")
+    assert observed == [("team/repo", 112)]
+    cert["completion"]["deferred_obligation_ids"] = ["OBL-044"]
+    put(certificate, cert)
+    with pytest.raises(ValueError, match="every deferred obligation"):
+        gate.verify(evidence, event, "develop")
+    cert["completion"]["deferred_obligation_ids"] = ["OBL-040"]
+    cert["completion"]["remaining_issue_ids"] = []
+    put(certificate, cert)
+    with pytest.raises(ValueError, match="every deferred obligation"):
+        gate.verify(evidence, event, "develop")
+
+
+def test_partial_handoff_parent_state_requires_authenticated_read(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    with pytest.raises(ValueError, match="authenticated parent issue read"):
+        gate.verify_open_parent_issue("team/repo", 112)
 
 
 def test_workflow_separates_collecting_and_certifying_without_publish_bypass():

@@ -11,6 +11,7 @@ import json
 import os
 import re
 import sys
+import urllib.request
 from pathlib import Path
 
 from handoff_merge_preview import require_event_merge_preview
@@ -27,6 +28,44 @@ def load(directory: Path, name: str) -> dict:
     if not isinstance(result, dict):
         raise ValueError(f"certified artifact must be a JSON object: {name}")
     return result
+
+
+def verify_open_parent_issue(repository: str, issue: int) -> None:
+    """Confirm current parent state using the trusted GitHub token, never PR data."""
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if not token:
+        raise ValueError("partial handoff requires authenticated parent issue read")
+    api_url = os.environ.get("GITHUB_API_URL", "")
+    if not api_url.startswith("https://") or api_url.rstrip("/") != api_url:
+        raise ValueError("partial handoff requires the trusted GitHub Actions HTTPS API endpoint")
+    request = urllib.request.Request(
+        f"{api_url}/repos/{repository}/issues/{issue}",
+        headers={"Accept": "application/vnd.github+json",
+                 "Authorization": f"Bearer {token}",
+                 "X-GitHub-Api-Version": "2022-11-28"})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        parent = json.load(response)
+    if parent.get("state") != "open" or parent.get("pull_request"):
+        raise ValueError("partial handoff parent issue is not verifiably open")
+
+
+def verify_partial_completion(evidence: Path, cert: dict, identity: dict) -> None:
+    """Validate the deferred ledger and current open parent at the trusted gate."""
+    closure = load(evidence, ".audit/entregar-issue/requirement-closure.json")
+    deferred = sorted(str(item.get("id")) for item in closure.get("obligations", [])
+                      if isinstance(item, dict) and item.get("disposition") == "deferred")
+    completion = cert.get("completion")
+    if deferred:
+        expected = {"issue_completion": "partial", "deferred_obligation_ids": deferred,
+                    "remaining_issue_ids": [identity["issue_number"]],
+                    "parent_issue_must_remain_open": True}
+        if completion != expected:
+            raise ValueError("partial handoff does not bind every deferred obligation and parent")
+        verify_open_parent_issue(identity["repository"], identity["issue_number"])
+    elif completion is not None and completion != {
+            "issue_completion": "complete", "deferred_obligation_ids": [],
+            "remaining_issue_ids": [], "parent_issue_must_remain_open": False}:
+        raise ValueError("certificate claims unsupported partial completion")
 
 
 def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
@@ -90,6 +129,8 @@ def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
     if cert.get("previous_independent_rejection") or "postcondition_proof" in cert:
         from handoff_postcondition import verify_finalization
         verify_finalization(cert, evidence / ".audit/entregar-issue", expected_base=identity.get("base_sha"))
+    verify_partial_completion(evidence, cert, identity)
+
 
 
 def main() -> int:

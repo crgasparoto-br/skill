@@ -44,10 +44,19 @@ def read_event(path: Path, base_ref: str = "develop") -> tuple[str, int, int, st
     if (pr.get("head") or {}).get("repo", {}).get("full_name") != repo:
         fail("forked PR head requires a separate, read-only evidence policy")
     title = pr.get("title") or ""
-    references = set(ISSUE_REF.findall("\n".join((title, pr.get("body") or ""))))
+    description = pr.get("body") or ""
+    combined = f"{title}\n{description}"
+    references = set(ISSUE_REF.findall(combined))
     trailing = re.search(r"\(#(\d+)\)\s*$", title)
     if trailing:
-        references.add(trailing.group(1))
+        # A canonical issue in the title outranks incidental mentions in a PR
+        # description (e.g. a related branch-ruleset issue). Explicit closing
+        # references to other issues are still contradictory and must fail.
+        closed = set(re.findall(r"\b(?:fixes|closes|resolves)\s*#(\d+)\b",
+                                combined, re.IGNORECASE))
+        if closed - {trailing.group(1)}:
+            fail("closing reference conflicts with primary issue in PR title")
+        references = {trailing.group(1)}
     if len(references) != 1:
         fail("expected exactly one unambiguous Issue #N reference in PR title/body")
     issue = int(references.pop())
@@ -86,6 +95,8 @@ def issue_body(repository: str, issue: int, token: str) -> str:
         payload = json.load(response)
     if payload.get("pull_request") or not isinstance(payload.get("body"), str) or not payload["body"].strip():
         fail("source Issue #N is not a nonempty issue body")
+    if payload.get("state") != "open":
+        fail("canonical parent issue must be open to prepare post-handoff evidence")
     return payload["body"]
 
 
@@ -132,7 +143,8 @@ def prepare(args: argparse.Namespace) -> None:
                      "material_head_sha": head, "base_sha": base,
                      "merge_preview_sha": preview},
         "source": {"issue_body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
-                   "uri": f"https://github.com/{repo}/issues/{issue}"},
+                   "uri": f"https://github.com/{repo}/issues/{issue}",
+                   "issue_state": "open"},
         "unverified": ["requirement-closure", "test-decision-evidence", "codebase-grounding",
                        "code-growth", "risk-profile-evidence", "audit-remediation-lineage",
                        "handoff-certificate", "terminal-handoff"],
@@ -312,6 +324,28 @@ def result_path_arguments(root: Path, out: Path, inputs: dict, resolved: dict) -
     return arguments
 
 
+def verify_certificate_completion(audit: Path, inputs: dict) -> None:
+    """Do not confuse partial handoff preparation with final issue approval."""
+    certificate = audit / "handoff-ready.json"
+    receipt = _load_record(certificate)
+    completion = receipt.get("completion") or {}
+    partial = completion.get("issue_completion") == "partial"
+    declared_partial = inputs.get("issue_completion") == "partial"
+    if partial != declared_partial:
+        certificate.unlink(missing_ok=True)
+        fail("certified deferred phase does not match declared certification inputs")
+    if partial:
+        for field in ("deferred_obligation_ids", "remaining_issue_ids",
+                      "parent_issue_must_remain_open"):
+            if completion.get(field) != inputs.get(field):
+                certificate.unlink(missing_ok=True)
+                fail(f"partial certification inputs disagree on {field}")
+    elif any(key in inputs for key in ("deferred_obligation_ids", "remaining_issue_ids",
+                                        "parent_issue_must_remain_open")):
+        certificate.unlink(missing_ok=True)
+        fail("complete certification cannot declare deferred obligations")
+
+
 def certify(args: argparse.Namespace) -> None:
     """Certify only authenticated, complete evidence; NEVER perform a repository write."""
     if args.event is None:
@@ -400,6 +434,7 @@ def certify(args: argparse.Namespace) -> None:
     except (ValueError, OSError, subprocess.CalledProcessError):
         (audit / "handoff-ready.json").unlink(missing_ok=True)
         raise
+    verify_certificate_completion(audit, inputs)
     _record_status(out, "certificate-generated", "publication-and-terminal-guard-still-required", head)
     print("CERTIFICATE GENERATED: publication is NOT authorized until prepublication and terminal guards pass")
 

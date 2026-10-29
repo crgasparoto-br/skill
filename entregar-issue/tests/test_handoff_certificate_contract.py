@@ -7,6 +7,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 CANONICAL = [
     "authorization", "tenant-isolation", "public-boundary", "reference-liveness",
@@ -602,3 +604,70 @@ def test_source_location_gate_blocks_stale_evidence_and_certifies_valid_range() 
         )
         assert forged.returncode == 2
         assert "source location control is not passed" in forged.stdout
+
+
+
+def test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "scripts"))
+    from validate_handoff_certificate import completion_fields
+
+    source_sha = hashlib.sha256(b"Canonical issue permits an independent post-handoff audit.").hexdigest()
+    decision = {
+        "decision_source_id": "SRC-ISSUE-112",
+        "decision_source_sha256": source_sha,
+        "decision_locator": "Canonical issue permits an independent post-handoff audit.",
+        "target_issue": 112,
+        "parent_issue_must_remain_open": True,
+    }
+    closure = {
+        "primary_issue_source_id": "SRC-ISSUE-112",
+        "source_coverage": [{"source_id": "SRC-ISSUE-112", "source_sha256": source_sha}],
+        "obligations": [{"id": "OBL-040", "disposition": "deferred",
+                         "source_text": "Canonical issue permits an independent post-handoff audit.",
+                         "scope_decision": decision,
+                         "rationale": "An independent auditor must approve the material exact SHA later."}],
+    }
+    assert completion_fields(closure, 112) == {
+        "issue_completion": "partial", "deferred_obligation_ids": ["OBL-040"],
+        "remaining_issue_ids": [112], "parent_issue_must_remain_open": True,
+    }
+    assert completion_fields({**closure, "obligations": []}, 112)["issue_completion"] == "complete"
+    for field, bad in (("target_issue", 113), ("decision_source_sha256", "a" * 64),
+                       ("parent_issue_must_remain_open", False)):
+        closure["obligations"][0]["scope_decision"] = {**decision, field: bad}
+        try:
+            completion_fields(closure, 112)
+        except ValueError as exc:
+            assert "verified parent-issue decision" in str(exc)
+        else:
+            raise AssertionError(f"invalid deferred {field} was accepted")
+
+def test_deferred_mixed_clause_requires_exact_pre_handoff_coverage(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "scripts"))
+    from validate_handoff_certificate import completion_fields
+
+    source_text = "- [ ] Documentation and CI are correct; final independent approval follows implementation."
+    locator = "final independent approval follows implementation."
+    sha = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
+    decision = {
+        "decision_source_id": "SRC-ISSUE-112", "decision_source_sha256": sha,
+        "decision_locator": locator, "target_issue": 112,
+        "parent_issue_must_remain_open": True,
+    }
+    item = {"id": "OBL-044", "disposition": "deferred", "source_text": source_text,
+            "scope_decision": decision,
+            "rationale": "Approval remains a separate obligation after implementation."}
+    closure = {"primary_issue_source_id": "SRC-ISSUE-112",
+               "source_coverage": [{"source_id": "SRC-ISSUE-112", "source_sha256": sha}],
+               "obligations": [item]}
+    with pytest.raises(ValueError, match="verified parent-issue decision"):
+        completion_fields(closure, 112)
+    decision["pre_handoff_coverage"] = {
+        "covered_text": "Documentation and CI are correct",
+        "rationale": "Pre-handoff implementation requirements are evidenced before approval.",
+    }
+    assert completion_fields(closure, 112)["issue_completion"] == "partial"
+    decision["pre_handoff_coverage"]["covered_text"] = "Documentation alone is correct"
+    with pytest.raises(ValueError, match="verified parent-issue decision"):
+        completion_fields(closure, 112)
+

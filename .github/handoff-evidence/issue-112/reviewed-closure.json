@@ -2,420 +2,534 @@
   "schema_version": 1,
   "obligations": {
     "387507ab35d29d27f65f8670396eea231582e7eed7e2ccc49d197569d0aed575": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-001"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-001 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-001: Contratos entregar-issue/references/codebase-grounding-gate.md:25-59 e implementation-workflow.md, mais higienizar-repositorio/references/test-lifecycle-hygiene.md:3-15, cobrem busca, decisao, runner e conservacao. test_codebase_grounding.py:119-124 aceita caso fundamentado; 279-290 refuta falsa cobertura e hygiene_profile.py:1050-1078 preserva testes diante de sinal estrutural ambiguo. O perfil de risco integral depende de matriz critica futura. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "4e52debdfd23907278b938bd87737592cad821d5d4fbb94faf4ad393ebcb7598": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-002"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-002 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-002: Lacuna historica descrita na issue foi eliminada: entregar-issue/references/implementation-workflow.md exige inventario antes de editar teste e compara caso, parametrizacao, fixture e risco; tests/test_codebase_grounding.py:214-239 verifica ativacao do gate para testes, 279-290 rejeita falso reuso, 292-329 exige candidato existente na BASE. A assertiva 'nao determina' descrevia a linha de base, nao o estado corrente da entrega. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "bd3b1ccad7ed21dbc3a4daaf9a5cc29b9703d136c418ba0ef288bf35192b537b": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-003"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-003 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-003: Lacuna historica do checklist corrigida em auditar-issue/references/audit-checklist.md:150-165: refazer inventario A/M/R/D, comparar oraculos, exigir prova de conservacao de cobertura e investigar obsolescencia. auditar-issue/tests/test_controller_mode_contract.py:26-58 impede alegar independência na modalidade interna; entregar-issue/tests/test_codebase_grounding.py:386-417 refuta apagamento de controle negativo. Auditoria externa posterior permanece separada. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "2801d6258672b8018baf3acb05d107c77b8db2854ea17343e5519106abe37deb": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-004"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-004 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-004: AGENTS.md:82-92 complementa regra antiga e exige inventario/test runner antes de criar, estender e excluir; entregar-issue/references/codebase-grounding-gate.md:35-59 detalha decisao e igualdade de oraculos. tests/test_codebase_grounding.py:214-225 ancora norma no registry, 256-290 refuta similaridade nominal e falsa cobertura. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "012c3052d5c9591765aa8107da42aabb909525b9a5a1471254cecaac1e407769": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-005"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-005 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-005: entregar-issue/contracts/gate-registry.json ativa gate existente codebase-grounding; schema v2 amplia test_decisions sem controlador paralelo; test_codebase_grounding.py:214-244 comprova reuso do gate e reprova omissao. test_deterministic_planning.py:360-381 garante contrato historico. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "342199765de735c3959da58f05f0af850d7c224312b29bfb5ce48413521d18d7": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-006"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-006 before any coverage claim."
+      "rationale": "REVISAO PROVISORIA DOCUMENTADA — OBL-006: revisar-issue/references/specification-standard.md:108-125 exige diagnostico de testes/runner, alternativa extend/reuse/new ou UNKNOWN e limite de acesso. A revisao concreta registrada no review-register abaixo confronta a issue #112 e testes existentes por riscos. test_codebase_grounding.py:119-124 prova candidato fundamentado, 648-665 runner indisponivel resulta UNKNOWN e 292-329 preserva candidato na BASE. Os IDs dos testes positivos/negativos/regressao sao vinculados no manifesto e sua execucao deve ser confirmada no novo SHA. O registro descreve comportamento de governanca e nao autoriza excluir testes reais, nem faz auditoria externa/Passagem C."
     },
     "faa2ac950da36e2179df73f09b01b9bb2af246af03abeb37a6f1c8171de1c40a": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-007"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-007 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-007: entregar-issue/references/codebase-grounding-gate.md:35-59 exige preflight antes da alteracao e GROUND-TEST-001 em diffs de testes, corrigir-ci incluso; scripts/validate_codebase_grounding.py:257-312 inspeciona criacao/modificacao/remocao/rename. tests/test_codebase_grounding.py:214-244 e 386-417 recusam diff sem decisao e exclusao sem prova; planner test_deterministic_planning.py:342-358 ativa gate. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "94f70cae96f99f502f27580c2f3f990ad48ebc29d0027820e0c490e6851bd5a8": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-008"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-008 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-008: auditar-issue/references/codebase-grounding-audit.md:5-24 exige redescoberta independente dos casos/fixtures, runner e refutacao real de oraculos, nao aceita log ou declaracao da implementacao como conclusao; audit-checklist.md:150-165 e tests/test_controller_mode_contract.py:26-58 protegem a fronteira independent/internal. A execucao externa de #112 ainda nao ocorreu e e verificada separadamente em OBL-040/044. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "1493523ee3ff2bbaaf4b5690ac104b5cc959752c513eaf5816b03bf73e22b706": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-009"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-009 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-009; contrato e oraculos inspecionados: higienizar-repositorio/references/test-lifecycle-hygiene.md:3-15 define investigacao sob demanda, work items e proibe apagar; tests/test_hygiene_profile.py:1034-1078 coleta dynamic_case via pytest, distingue removed_contract nao coletado, inventaria ambos, gera work item e compara bytes inalterados. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "39f9e69fe4bddf938cb36bf71f04eb2364f4c14329f4ffa99cb544e2176c9470": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-010"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-010 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-010: corrigir-ci/SKILL.md:93 manda repetir preflight GROUND-TEST-001 para mudanca de teste/runner, sem controlador novo, e nao permite relaxar cobertura. tests/test_ci_ownership_contract.py:6-16 confirma ownership, tests/test_ci_terminal_state_guard.py:69-81 rejeita certificado stale e entregar-issue/tests/test_ci_autopilot_contract.py:25-31 refreeze apos ajuste material. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "7e1c0df5dfeda24a7392b6c20d7cc062114e64a2b7a6bb122490c94e2b7accb6": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-011"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-011 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-011: entregar-issue/schemas/codebase-grounding.schema.json e scripts/validate_codebase_grounding.py:257-312 estendem schema/validator existente; tests/test_deterministic_planning.py:360-381 comprova compatibilidade do plano antigo e test_codebase_grounding.py:247-254 rejeita formato legado apenas onde change de testes torna v1 insuficiente. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "d6d37be23ebaa63728f176b09a9db5dbd7ae48f2bacf7611c6fca7eba0087b58": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-012"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-012 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-012: entregar-issue/references/codebase-grounding-gate.md:35-59 define inventario por requisito/risco, casos, fixtures, parametrizacoes, runner e lacunas; schema/codebase-grounding.schema.json obriga search. tests/test_codebase_grounding.py:119-139 recusa candidato inexistente, 279-290 rejeita falsa cobertura, 292-329 verifica candidato no SHA da BASE. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "1cf68df6ad422a739d67eb13237c57c23df35262b22463db8c014b6cfc98ac4f": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-013"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-013 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-013: entregar-issue/schemas/codebase-grounding.schema.json:260-451 enumera covered-by-existing, extend-existing, new-test-required e not-testable/blocked, exigindo cenario, requisito, busca e verificacao. test_codebase_grounding.py:256-329 aceita risco independente e refuta categoria covered falsa; linhas 483-491 recusam bloqueado declarado como passed. Oraculo semantico exige auditoria separada. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "c24e81097b947d46836eccf234a9190b888df2965c246d8b049b6111523600aa": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-014"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-014 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-014: entregar-issue/references/implementation-workflow.md: preflight antes de editar teste exige ampliar/parametrizar quando possivel; tests/test_codebase_grounding.py:292-329 testa reuso de teste BASE existente, 279-290 bloqueia reaproveitamento falso e 256-265 admite novo oraculo de integracao independente. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "1ea87aba560d21cdc23b18cc2edf0a08b3a10b0b2411d1840a1e4b95fae5b9c7": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-015"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-015 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-015: entregar-issue/references/implementation-workflow.md e codebase-grounding-gate.md:35-59 exigem risco e oraculo de novo teste, busca, recusa de reuso inadequado e preservacao de independencia. tests/test_codebase_grounding.py:256-329 aceita novo oraculo quando independente, rejeita falso existing, e linhas 483-491 bloqueiam cenário nao testavel falsamente marcado passed. Julgamento real de equivalencia continua de auditoria separada. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "e111b61ee8b5bdfa70a02f3b85e1e3572b6355c7e79080f4bf55d2e0bfdd146f": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-016"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-016 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-016; contrato e oraculos inspecionados: higienizar-repositorio/tests/test_hygiene_profile.py:1050-1078 exerce caso adversarial: dynamic_case e removed_contract geram mesmo sinal estrutural, mas so dynamic_case e coletado; nenhuma exclusao e efetuada. Norma test-lifecycle-hygiene.md:7-15 obriga investigacao de runner e oraculo. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "8922083570fd4f0e66dbd6a6f77f599bb4eb67395822f7365cb85fd614baee76": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-017"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-017 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-017; contrato e oraculos inspecionados: entregar-issue/tests/test_codebase_grounding.py:386-431 executa git rm e git mv reais; exclusao demanda coverage_before/after, replacement_tests, log que alcanca teste e SHA correto, recusando perda de controle. validate_codebase_grounding.py:161-225 executa verificacao mecanica. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "bc85912b59c17535385c582d70490985da9745d19e703dcc045df4478769a89b": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-018"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-018 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-018; contrato e oraculos inspecionados: entregar-issue/tests/test_codebase_grounding.py:386-417 confirma que remover cobertura negativa reprova, prova rehasheada com SHA antigo reprova e execucao que nao alcanca o teste reprova (linhas 507-525). Mantidos controles antes/depois e oraculo distinto; equivalencia semantica alem do fixture exige auditoria independente. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "102185f1599844fb071f57080701250bb66b5b2a7d07b5b977e39a19afad9b9e": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-019"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-019 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-019: entregar-issue/schemas/codebase-grounding.schema.json:260-451 registra caminho, decisao, busca, controles e verificacao; scripts/validate_codebase_grounding.py:187-225 exige SHA, comando, teste alcancado e log hasheado; tests/test_codebase_grounding.py:499-525 refuta evidencia stale ate quando log tem hash recomputado. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "c6047ea659ddb7fd9ea19256c18989725b39fe9c89e57d922f926298b31f7562": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-020"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-020 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-020; contrato e oraculos inspecionados: entregar-issue/scripts/validate_codebase_grounding.py:100-107 e 228-255 preserva UNKNOWN sem descoberta de runner em BASE; tests/test_codebase_grounding.py:330-384, 466-480, 648-665 refutam associacao a runner introduzido em HEAD, runner dinamico indisponivel e arquivo pytest invalido. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "e0afbace8e2cc3a0c6e5e0c300db6aaf36e4823d63b14418b9961566015036fe": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-021"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-021 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-021; contrato e oraculos inspecionados: entregar-issue/tests/test_codebase_grounding.py:434-439 prova test_only=true e hygiene_applicable=false para .feature; lines 241-244 rejeitam ausencia de decisao. tests/test_deterministic_planning.py:342-358 confirma o gate e ausencia de higiene global. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "197dc790f0d17e7a64879cd0a82ea087d34fc401bfab550c46c287b9ffb28389": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-022"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-022 before any coverage claim."
+      "rationale": "REVISAO PROVISORIA DOCUMENTADA — OBL-022: higienizar-repositorio/references/test-lifecycle-hygiene.md:7-15 obriga preservar arquivo sem autorizacao/aviso, e separa diagnostico read-only de escrita; auditar-issue/references/codebase-grounding-audit.md:20-24 veda apagar em auditoria. Teste hygiene_profile.py:1050-1078 compara bytes antes/depois e prova ausencia de exclusao; teste de entrega test_codebase_grounding.py:386-417 so permite disposicao quando controles sobrevivem. Diff desta PR nao inclui exclusao de teste real; operacao destrutiva nao foi executada nem implicitamente autorizada. Os IDs dos testes positivos/negativos/regressao sao vinculados no manifesto e sua execucao deve ser confirmada no novo SHA. O registro descreve comportamento de governanca e nao autoriza excluir testes reais, nem faz auditoria externa/Passagem C."
     },
     "40fa0840722bbfdbf54af6c2ae7675ec4af82e6ea83debaf8076cdbfe628cd28": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-023"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-023 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-023; contrato e oraculos inspecionados: entregar-issue/scripts/validate_codebase_grounding.py:128-157 computa git diff --name-status --find-renames com operacoes A/M/D/R; tests/test_codebase_grounding.py:330-374, 386-431, 466-480, 545-596 e 648-665 provam rename/delecao, Go/Cypress/pytest configurado e UNKNOWN do runner; ids e configuracoes reais rechecados no CI. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "0b47fa9c9dbedad74d955b44b6cb201715c950766710ae0fca93db20e76d68ac": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-024"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-024 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-024: entregar-issue/scripts/validate_codebase_grounding.py:257-312 confere apenas diff+metadata, nao inferencia por titulo. tests/test_codebase_grounding.py:214-244 confirma gate formal e refuta campo ausente; 256-265 aceita oraculo independente sem nome diferente. auditar-issue/references/codebase-grounding-audit.md:5-24 obriga rederivar equivalencia semanticamente. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "99e25804db66e95f30566cd30172c81d61d4d87feb855b1bc56925ca64789a4a": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-025"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-025 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-025; contrato e oraculos inspecionados: entregar-issue/tests/test_deterministic_planning.py:360-381 reusa plano historico sem tests_touched, valida schema+runtime e recalcula planejamento; tests/test_codebase_grounding.py:247-254 documenta rejeicao explicita de v1 com diff de testes e linhas 194-199 rejeitam SHA obsoleto. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "44b407f6481b07305b61004ab48a3ab23a1e05a39a2b92371a3f69093c17e296": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-026"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-026 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-026; contrato e oraculos inspecionados: entregar-issue/tests/test_codebase_grounding.py:214-239 verifica gate-registry.json usa o mesmo codebase-grounding com GROUND-TEST-001 e que classifica teste sem codigo. tests/test_deterministic_planning.py:342-358 confirma schema do plano, sem segundo controlador. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "650e4aa42e6d93ff8bf1d2c4e7200aaa1bf11c007d2f9cc505288f8d158a1c30": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-027"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-027 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-027; contrato e oraculos inspecionados: GitHub PR #118 base develop sha 2366dd6da7ac9d8c5defe9b40f53dd3c4a0c650f, material revisado no SHA de PR; .github/workflows/handoff-evidence.yml:1-21 usa branch develop e reusable-handoff.yml checkout de pull_request.head.sha; tests/test_produce_actions_handoff_evidence.py:123-164,348-356 rejeitam evidencia ausente e pendente. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "8ab0782dd30e1e28b77debe6d8918a066de4f796a73860d4873ac34fa6137d8d": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-028"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-028 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-028; contrato e oraculos inspecionados: entregar-issue/tests/test_produce_actions_handoff_evidence.py:123-134 prepara sem certificado, 283-313 recusa skipped e proveniencia adulterada, 348-356 impede fechamento pendente. GitHub rulesets develop #24821474 / main #24821457 agora ativos e com checks obrigatorios; vermelho continua bloqueante. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "50eedb89821c9c6af699c4c477a53fe51be4939f0556260d81b74c2b05fc342a": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-029"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-029 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-029: auditar-issue/references/audit-checklist.md:33-37, 206-234 separa auditoria independente de controller-adversarial; tests/test_controller_mode_contract.py:26-58 proibe resultado operational approval no controlador; scripts/verify_independent_pr_audit.py:210-265 exige review APPROVED de identidade nao implementadora, autorizado, exact-SHA. Ruleset develop exige esse check e 1 review; nao ha merge automatico. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "d23a733f94232bd1682e470b6712b96da43ff9476c3ffb9b75924800449b007d": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-030"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-030 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-030; contrato e oraculos inspecionados: entregar-issue/tests/test_codebase_grounding.py:256-265 admite novo teste com oraculo de integracao independente apesar de similaridade; lines 279-290 rejeitam falso covered-by-existing num teste adicionado e 292-329 confirmam candidato preexistente para teste modificado. Regras em references/codebase-grounding-gate.md:55-95. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "642733975af8ee9400dd2b83e0e121ba5f36f8634c4ffbdaf6699f26944b37c3": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-031"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-031 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-031: entregar-issue/tests/test_codebase_grounding.py:256-265 compara um caso de formatacao unitaria com oraculo de integracao de agregados e aceita novo risco; 279-329 impede alegar cobertura antiga para teste adicionado e exige prova do candidato BASE para modificacao. Duas suites parecidas nao sao consideradas duplicatas por nome. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "cccd6b179762196f866843681541c857979106f3bc6457066faceec7909954fc": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-032"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-032 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-032; contrato e oraculos inspecionados: higienizar-repositorio/tests/test_hygiene_profile.py:1050-1078 comprova teste coletado dinamicamente apesar do scanner estrutural marcar ambos como mortos; teste legado nao coletado tambem nao foi apagado. entregar-issue/tests/test_codebase_grounding.py:376-384 preserva UNKNOWN em runner dinamico ausente. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "d7430bd917031835ef90254f1772562f5fc05a118fd6844bd7934dacde67b6b7": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-033"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-033 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-033; contrato e oraculos inspecionados: entregar-issue/tests/test_codebase_grounding.py:386-417 prova controles antes/depois e rejeita retirar controle negativo; 507-525 exige teste alcancado e log com HEAD real. Implementacao de validate_codebase_grounding.py:161-225 impediu queda de cobertura documentada. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "e8844ae4615f9c22a69e7d23befbd19be56bba7ecc608c928741b3f4806d830c": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-034"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-034 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-034; contrato e oraculos inspecionados: entregar-issue/tests/test_produce_actions_handoff_evidence.py:148-166 separa coleta factual da certificacao; 283-289 recusa skipped; 348-356 recusa pendencia. Workflow exige evidence + certification e independent audit; CI verde isolado nao aprova obrigacao. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "bc119020f5df627d95c8f940b0d84dadbc9033e09542c481465b581dc0daeb7b": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-035"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-035 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-035; contrato e oraculos inspecionados: entregar-issue/scripts/validate_codebase_grounding.py:100-107 mantem runner discovery UNKNOWN por configuracao corrompida; tests/test_codebase_grounding.py:376-384 e 648-665 exigem returncode 3, nunca READY; deteccao de Go/Cypress/manifestos limitada ao que pode ser observado. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "b10f92e6414f30296040b038b0510c9be0710b92a4c9e3fe02ac04429b7ca1f9": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-036"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-036 before any coverage claim."
+      "rationale": "REVISAO PROVISORIA DOCUMENTADA — OBL-036: Orientacao real de revisao da issue #112 documentada em review-register abaixo: reusar/estender testes existentes de diff test-only, obsolescencia e compatibilidade, e declarar UNKNOWN para runner/plugin nao observado. revisar-issue/references/specification-standard.md:108-125 e o contrato. Tests test_codebase_grounding.py:256-265 impede falsa rejeicao por titulo, 376-384 documenta UNKNOWN e 434-439 confirma gate sem sweep global. Os IDs dos testes positivos/negativos/regressao sao vinculados no manifesto e sua execucao deve ser confirmada no novo SHA. O registro descreve comportamento de governanca e nao autoriza excluir testes reais, nem faz auditoria externa/Passagem C."
     },
     "cb4bb57003804cadaaff66870950c69236fa20e0497ac483d495e6638716c8dd": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-037"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-037 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-037; contrato e oraculos inspecionados: entregar-issue/tests/test_codebase_grounding.py:256-329: oraculo independente pode exigir teste novo e retornar READY, mas um teste adicionado nao pode mentir que ja era coberto; teste modificado so pode citar candidato presente/discoverable na base. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "17c02744d4fc9b47386849ac09acc25ce74bcc4431a051eb21ec5e27595ad8bb": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-038"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-038 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA (manifest.review_state=incomplete): OBL-038 exige que diff apenas de testes acione GROUND-TEST-001 sem mudança em produção. Oráculo positivo: entregar-issue/tests/test_codebase_grounding.py:434-439 exige classify_changes(['features/checkout.feature']) => tests_touched=True, code_touched=False e hygiene_applicable=False. Negativo: linhas 241-244 retiram test_decisions e exigem exit code 2 e mensagem 'test diff lacks decision'. Regressão: linhas 466-480 exigem detecção e gate para Go, Python, Cypress e manifestos, sem disparar higiene global. IDs JUnit vinculados no manifest e observados como passed no índice material 17363f207e6109aa286ee5a54633131583b3c14f; precisam ser revalidados no novo HEAD. A revisão é provisória, não autoriza certificado nem substitui auditoria independente."
     },
     "50745b9d5815f8d21fca2f1178f06ccc01d8b8c695ba575ad792fe3b34e12a61": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-039"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-039 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-039: entregar-issue/tests/test_codebase_grounding.py:256-265 constroi setup/oraculo diferente para integracao e retorna READY sem deduplicacao; 279-329 impede rotular test novo como cobertura antiga e preserva teste existente no caso de extensao justificada. Autonomia do novo oraculo continua sujeita a revisao independente. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "658bd6a65d14bffaef0a197ce87452d066f6e1e0de0fa82bfc6d6958e38fb468": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-040"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-040 before any coverage claim."
+      "rationale": "IMPLEMENTACAO PROVISORIA, NAO AUDITORIA INDEPENDENTE: auditar-issue/scripts/validate_audit_completeness.py rederiva o diff a partir de objetos Git e agora recusa que remocao/alteracao de teste reconhecido seja rotulada not-applicable ou coberta por superficie sem risk_family=test-lifecycle. O teste adversarial tests/test_audit_completeness_gate.py::test_test_only_removal_requires_independent_lifecycle_review cria uma remocao real de teste no repositorio temporario, refuta not-applicable e risco de codigo nao relacionado, aceita somente uma superficie de ciclo de testes documentada e rejeita justificativa vazia. test_changed_path_is_not_silently_skipped e test_existing_but_forged_git_base_rejected_by_remote_anchor cobrem omissao e refutacao de identidade. A referencia auditar-issue/references/codebase-grounding-audit.md exige inspecionar a qualidade do oraculo e preservacao antes/depois; o validador formal nao pode atestar equivalencia semantica. Os vinculos devem ser verificados contra JUnit do novo SHA pelo produtor; aprovacao independente e Passagem C continuam pendentes."
     },
     "959c6dc1837804d9a35b750f457f548c0b0ef0fc634f8787c6ef05a784937452": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-041"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-041 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-041: higienizar-repositorio/references/test-lifecycle-hygiene.md:3-15 manda gerar work item investigativo e nao apagar; tests/test_hygiene_profile.py:1034-1078 executa coleta pytest para diferenciar arquivo dinamico do contrato legado, inventaria ambos e prova bytes inalterados apos scan e build_work_items. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "a11aa405f25f61c2b96c72127ba1e5de51827e388eff3953415bea6b6497e8fa": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-042"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-042 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-042; contrato e oraculos inspecionados: corrigir-ci/SKILL.md:93 exige preflight GROUND-TEST-001 ao alterar testes, sem controlador paralelo; tests/test_ci_ownership_contract.py:6-16, tests/test_ci_terminal_state_guard.py:69-81 e entregar-issue/tests/test_ci_autopilot_contract.py:25-31 recusam certificado stale e devolvem para re-freeze. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "d41ec970d8b472ea56b05f3718b80a2b703b336099aaa07dbb3bedcbbbc51210": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-043"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-043 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-043: entregar-issue/tests/test_codebase_grounding.py:330-374 recusa descoberta presente somente no HEAD; 466-480 cobre Go/Cypress/manifestos; 545-596 exercita pytest.ini/pyproject.toml/tox.ini/setup.cfg parametrizados com coleta; 637-665 isola escopo do runner e retorna UNKNOWN para config invalida. Lines 256-265 preservam oraculo independente. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "3d46fc17c90890cece6ad6f89c85fe89a5bad834fa69b8fe309bdebcf6bc7a82": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "deferred",
+      "requirement_ids": [
+        "REQ-112-044"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-044 before any coverage claim."
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-112",
+        "decision_source_sha256": "9a1bc299fc5514ffebc31dbc43a4e9f83963d4a093c786f686c7fa5e56007b1a",
+        "decision_locator": "auditoria independente aprova após a implementação.",
+        "target_issue": 112,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "[ ] Documentação, contratos, schemas/validadores, testes e CI aplicáveis ficam consistentes no SHA final",
+          "rationale": "A fase implementavel exige consistencia normativa, sincronizacao das copias canonicas, validacao de documentacao e CI do SHA final. As suites reutilizadas verificam igualdade das copias, rejeicao de drift e referencias documentais; o job Structure and tests executa os validadores reais e deve ser conferido no SHA definitivo. O review independente posterior permanece exclusivamente deferred e a issue pai deve continuar aberta."
+        }
+      },
+      "rationale": "Revisao individual OBL-044 no candidato material: fonte .github/workflows/handoff-evidence.yml; auditar-issue/SKILL.md; limite de controle: teste tecnico nao substitui certificado semantico. Pendente: bloqueio terminal ate certificacao e auditoria independente. A execucao tecnica nao constitui oraculo semantico nem aprovacao independente.\n\nETAPA POSTERIOR AO HANDOFF (NÃO SATISFEITA): OBL-044 exige auditoria independente em contexto separado, validação dos oráculos e review GitHub no SHA exato. Não usar esta obrigação como aprovação de entrega, nem excluir do critério terminal da issue. Evidência primária pendente.\n\nDISPOSIÇÃO PRÉ-HANDOFF: deferred com vínculo à exigência canônica de aprovação independente posterior. A issue pai #112 deve continuar aberta até review autenticado e verificação final. Este registro não afirma que a obrigação foi aprovada.\n\nFECHAMENTO PROVISORIO DA PARTE PRE-HANDOFF: pre_handoff_coverage conserva literalmente a exigencia de consistencia. Testes normativos existentes reutilizados e vinculados no manifesto, sujeitos a verificacao pelo JUnit do SHA final; nao afirmar certificacao, Passagem C ou aprovacao da parte posterior."
     },
     "aa96d6edb9c7c6fac6f99d7f7d8f1ab4d28ecb04157d10412d426bf1486f4bc9": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-045"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-045 before any coverage claim."
+      "rationale": "REVISAO PROVISORIA DOCUMENTADA — OBL-045: higienizar-repositorio/tests/test_hygiene_profile.py:1050-1078 modela testes/removed_contract.py nao coletado e dynamic_case coletado: ambos geram sinais estruturais, scanner nao distingue contrato legado e nenhum arquivo e apagado. Policy test-lifecycle-hygiene.md:7-15 exige confirmar consumidores e runner antes de remover. entregar-issue/tests/test_codebase_grounding.py:386-417 e 507-513 bloqueiam apagamento sem controles substitutos executados. Ausencia de consumidor legado nao foi presumida, portanto o teste foi preservado: comportamento seguro pedido pelo cenario. Os IDs dos testes positivos/negativos/regressao sao vinculados no manifesto e sua execucao deve ser confirmada no novo SHA. O registro descreve comportamento de governanca e nao autoriza excluir testes reais, nem faz auditoria externa/Passagem C."
     },
     "019f114602ab8f2bedca873a037526f2d643794d84d2ba9731404ba0fb0be76d": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-046"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-046 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-046; contrato e oraculos inspecionados: entregar-issue/tests/test_codebase_grounding.py:256-265 distingue oracle unit format_money decimais versus oracle agregacao independente; nao rejeita novo caso por similaridade. Tests:279-290 recusam reclassificar adicao como covered e 292-329 retestam base historica; sem deduplicacao por titulo. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "d2ce945d4ee067e76c27e18fca669291bf5ed1e4fa61d8c68409cb2af1f8d7be": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-047"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-047 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-047; contrato e oraculos inspecionados: entregar-issue/scripts/validate_codebase_grounding.py:128-157 enumera A/M/D/R no diff; tests/test_codebase_grounding.py:386-431 exige antes/depois e origem de rename; 330-374 recusa runner introduzido em HEAD; 648-665 devolve UNKNOWN a config invalida; 466-480 classifica suites fora de pastas. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "28377bf39dfb6bc7f9481cb9b0e59292be08e5d0f99df327a5c9670d58bd5532": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-048"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-048 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-048: entregar-issue/scripts/validate_codebase_grounding.py:257-312 verifica formalidade em SHA e diff sem alegar equivalencia; tests/test_codebase_grounding.py:214-265 refutam omissao formal e falso positivo nominal. auditar-issue/references/codebase-grounding-audit.md:9-24 exige auditoria read-only dos oraculos, sem confiar no relato do implementador. Esta obrigacao cobre separacao de responsabilidades, nao aprovacao externa. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "9d22964ea3a8da0baeb8c05c62c09534c5f9117571948af4b4809d83edf1abe9": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-049"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-049 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DA IMPLEMENTAÇÃO — OBL-049; contrato e oraculos inspecionados: entregar-issue/tests/test_deterministic_planning.py:360-381 valida schema/runtime ao reusar plano v2 historico sem tests_touched; tests/test_codebase_grounding.py:247-254 rejeita v1 para diff teste de forma explicita; lines 194-199 impede status historico stale. O formato v1 permanece aceito somente se nao ha mudanca de teste. Controles positivo/negativo/regressao vinculados pelo manifesto aos IDs JUnit exatos e validados no SHA do GitHub Actions pelo produtor. Este fechamento e apenas semantico preliminar do comportamento implementado; review_state=incomplete, Passagem C e auditoria independente permanecem bloqueantes."
     },
     "9533a8e5b134a08a0dcc1df5910fd2cf36030c04f58b0240880d3f1ea3446feb": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-050"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-050 before any coverage claim."
+      "rationale": "REVISAO SEMANTICA PROVISORIA — OBL-050: entregar-issue/tests/test_codebase_grounding.py:119-124, 256-329, 376-417 usa fixtures compartilhadas do arquivo existente para cobrir reuse/extend/create, remocao segura, false positives e runner indisponivel; testes parametrizados para configuracoes pytest em 545-596. Sem criar outra suite global paralela; negativos sao controle distinto e comparavel ao positivo. Vinculos positivos, negativos e de regressao do manifesto sao inspecionados por JUnit do SHA exato pelo produtor; isto nao substitui a Passagem C, relatorios criticos ou a auditoria independente. O manifesto permanece incomplete e certificado proibido."
     },
     "fe3aac63378b0a4a3c9b97e6ad4aacee79e77e758e0669f101bffa088e93837f": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-051"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-051 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-051: Revisadas referencias canonicas: revisar-issue/references/specification-standard.md:108,124, entregar-issue/references/codebase-grounding-gate.md:35-59, implementation-workflow.md, auditar-issue/references/audit-checklist.md:150-165, higienizar-repositorio/references/test-lifecycle-hygiene.md:3-15 e corrigir-ci/SKILL.md:93. Testes test_codebase_grounding.py:214-254 e test_deterministic_planning.py:342-358 confrontam registry, schema e gate. Persistem validacao global de documentacao e Passagem C. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     },
     "342cc6d1231a1d95456f7a3f74513eedb934e8c7939be5e2c8a6f9eaa947c91d": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-112-052"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Review open: confirm implementation and positive/negative/regression oracles for canonical OBL-052 before any coverage claim."
+      "rationale": "REVISÃO PROVISÓRIA DE COMPORTAMENTO — OBL-052: higienizar-repositorio/tests/test_hygiene_profile.py:1050-1078 evita apagar teste por heuristica; entregar-issue/tests/test_codebase_grounding.py:256-265 evita falso positivo de duplicacao, e 434-439 impede sweep global desnecessario em diff so de testes. Normas em test-lifecycle-hygiene.md:3-15 e codebase-grounding-gate.md:35-59 explicitam escopo/limites. O dossiê vincula controles concretos a IDs JUnit de casos executados e deve confrontar esses IDs novamente no novo SHA. Este registro nao e certificado, parecer de auditoria independente, nem atesta Passagem C ou matrizes criticas antes de executa-las."
     }
   },
   "controls": {

@@ -265,6 +265,114 @@ def test_distinct_oracle_is_not_rejected_by_nominal_similarity(candidate):
     assert result.returncode == 0, result.stdout
 
 
+def test_added_test_cannot_claim_covered_by_existing_without_any_candidate(candidate):
+    def change(report):
+        record = report["test_decisions"][0]
+        record["decision"] = "covered-by-existing"
+        record["search"]["candidates"] = []
+    result = run(candidate, mutated(candidate, change))
+    assert result.returncode == 2
+    assert "covered-by-existing lacks an identified existing test" in result.stdout
+    assert "added test cannot be classified covered-by-existing" in result.stdout
+
+
+def test_added_test_cannot_claim_covered_by_existing_with_real_candidate(candidate):
+    def change(report):
+        record = report["test_decisions"][0]
+        record["decision"] = "covered-by-existing"
+        record["search"]["candidates"] = [{
+            "path": "src/money.py", "case": "unit formatting",
+            "oracle": "format_money decimals", "comparison": "unit does not cover aggregate"
+        }]
+    result = run(candidate, mutated(candidate, change))
+    assert result.returncode == 2
+    assert "added test cannot be classified covered-by-existing" in result.stdout
+
+
+def test_modified_test_coverage_requires_existing_test_candidate(candidate):
+    repo = candidate["repo"]
+    old_head = candidate["head"]
+    path = "tests/test_report.py"
+    write(repo, path, (repo / path).read_text(encoding="utf-8")
+          + "\n\ndef test_empty_total():\n    assert total([]) == '0.00'\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "extend existing test")
+    head = git(repo, "rev-parse", "HEAD")
+    report = copy.deepcopy(candidate["report"])
+    report.update(subject_sha=head, base_sha=old_head,
+                  creations=[], references=[], replacements=[])
+    decision = report["test_decisions"][0]
+    decision.update(operation="modified", decision="covered-by-existing",
+                    justification="reuse existing pytest scenario",
+                    verification=passed_verification(repo, head, path))
+    decision["search"]["candidates"] = [{
+        "path": path, "case": "test_formatted_total",
+        "oracle": "total formats the aggregate",
+        "comparison": "existing test extended with empty aggregate"
+    }]
+    scenario = {**candidate, "base": old_head, "head": head}
+    valid = run(scenario, report)
+    assert valid.returncode == 0, valid.stdout
+
+    # A production module exists, but is not a verified existing test.
+    decision["search"]["candidates"][0]["path"] = "src/money.py"
+    unknown = run(scenario, report)
+    assert unknown.returncode == 3, unknown.stdout
+    assert "candidate test discovery UNKNOWN at base for src/money.py" in unknown.stdout
+
+    # A test added only at HEAD cannot be evidence of pre-existing coverage.
+    decision["search"]["candidates"][0]["path"] = "tests/test_new.py"
+    missing = run(scenario, report)
+    assert missing.returncode == 2, missing.stdout
+    assert "covered-by-existing candidate absent at base" in missing.stdout
+
+
+def test_head_only_runner_configuration_cannot_prove_existing_test_coverage(tmp_path):
+    """Runner discovery introduced at HEAD does not prove BASE test coverage."""
+    from plan_execution import is_test_path
+    from validate_codebase_grounding import (
+        check_existing_test_decision,
+        load_pytest_configs,
+    )
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q")
+    write(repo, "src/smoke.py", "def smoke():\n    assert True\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "baseline with undiscovered file")
+    base = git(repo, "rev-parse", "HEAD")
+    write(repo, "pytest.ini", "[pytest]\npython_files = smoke.py\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "enable test discovery only at head")
+    head = git(repo, "rev-parse", "HEAD")
+    paths = ["pytest.ini", "src/smoke.py"]
+    base_configs = load_pytest_configs(repo, base, paths, [])
+    head_configs = load_pytest_configs(repo, head, paths, [])
+    assert not is_test_path("src/smoke.py", pytest_configs=base_configs)
+    assert is_test_path("src/smoke.py", pytest_configs=head_configs)
+
+    item = {"decision": "covered-by-existing",
+            "search": {"candidates": [{"path": "src/smoke.py"}]}}
+    errors, unknown = [], []
+    check_existing_test_decision(
+        item, repo, base, "modified", "tests/test_report.py", errors, unknown,
+        base_configs,
+    )
+    assert not errors
+    assert len(unknown) == 1
+    assert "discovery UNKNOWN at base" in unknown[0]
+
+    # When BASE itself discovers the test, the mechanical check can accept
+    # provenance; semantic oracle equivalence remains independent.
+    errors, unknown = [], []
+    check_existing_test_decision(
+        item, repo, base, "modified", "tests/test_report.py", errors, unknown,
+        head_configs,
+    )
+    assert errors == [] and unknown == []
+
+
 def test_dynamic_runner_unavailable_is_unknown_not_ready(candidate):
     def change(report):
         record = report["test_decisions"][0]

@@ -21,7 +21,7 @@ from pathlib import Path
 from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_json_artifact
 from validate_evidence_source_locations import candidate_locations
 from validate_evidence_source_locations import validate as validate_source_locations
-from validate_handoff_certificate import scope_touches_code, scope_touches_tests
+from validate_handoff_certificate import completion_fields, scope_touches_code, scope_touches_tests
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REPO_DIR = ".audit/entregar-issue"
@@ -383,10 +383,18 @@ def main() -> int:
         ROOT / "scripts" / "validate_audit_remediation.py",
         ROOT / "scripts" / "validate_evidence_source_locations.py",
     ]
+    try:
+        completion = completion_fields(
+            load_json_artifact(files["requirement_closure"], require_object=True),
+            issue_number)
+    except (ValueError, KeyError, TypeError) as exc:
+        print(f"BLOCK: cannot certify deferred completion: {exc}")
+        return 2
     payload = {
         "schema_version": 2,
         "status": "ready",
         "phase": "final",
+        "completion": completion,
         "created_at": datetime.now(UTC).isoformat(),
         "identity": {
             # head_sha is retained as a compatibility alias for material_head_sha.

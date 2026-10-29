@@ -11,6 +11,8 @@ from pathlib import Path
 import pytest
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 spec = importlib.util.spec_from_file_location("produce_actions_handoff_evidence",
                                                SCRIPTS / "produce_actions_handoff_evidence.py")
 assert spec and spec.loader
@@ -98,6 +100,15 @@ def fixture(tmp_path: Path, *, dossier=True, skipped=False):
         "repository": "team/skill", "issue_number": 112, "pull_request_number": 113,
         "material_head_sha": head, "base_sha": start,
     }})
+    canonical_issue_body = "After technical handoff, an independent auditor must approve the exact SHA.\n"
+    (out / "issue-body.md").write_text(canonical_issue_body, encoding="utf-8")
+    preflight = json.loads((out / "handoff-preflight.json").read_text(encoding="utf-8"))
+    preflight["source"] = {
+        "issue_body_sha256": hashlib.sha256(canonical_issue_body.encode("utf-8")).hexdigest(),
+        "uri": "https://github.com/team/skill/issues/112",
+        "issue_state": "open",
+    }
+    put(out / "handoff-preflight.json", preflight)
     log = b"3 passed\n"
     junit = (b"<testsuite><testcase classname='suite' name='positive'>"
              + (b"<skipped/>" if skipped else b"")
@@ -211,12 +222,164 @@ def test_incomplete_review_validates_keys_without_claiming_approval(tmp_path):
     assert result["canonical_candidate_keys_verified"] is True
     record["obligations"]["c" * 64]["disposition"] = "covered"
     put(source / "reviewed-closure.json", record)
-    with pytest.raises(ValueError, match="must not claim semantic coverage"):
+    with pytest.raises(ValueError, match="draft test bindings require exact-head"):
         producer.validate_incomplete_review(source, starter)
     record["obligations"] = {"d" * 64: record["obligations"].pop("c" * 64)}
     put(source / "reviewed-closure.json", record)
     with pytest.raises(ValueError, match="differs from canonical"):
         producer.validate_incomplete_review(source, starter)
+
+
+
+def test_progressive_review_requires_passing_exact_head_controls(tmp_path):
+    _, out, _, source, _ = fixture(tmp_path)
+    starter = json.loads((out / ".audit/entregar-issue/requirement-closure.json").read_text())
+    manifest = json.loads((source / "manifest.json").read_text())
+    manifest.update(review_state="incomplete", artifact_sha256={})
+    put(source / "manifest.json", manifest)
+    tests = {"suite::positive": "passed", "suite::negative": "passed",
+             "suite::regression": "passed"}
+    result = producer.validate_incomplete_review(source, starter, tests)
+    assert result["provisional_obligations"] == 1
+    assert result["pending_obligations"] == 0
+    assert result["semantic_certification"] == "NOT_ASSERTED"
+    with pytest.raises(ValueError, match="nonpassing negative"):
+        producer.validate_incomplete_review(source, starter, {
+            **tests, "suite::negative": "skipped"})
+    with pytest.raises(ValueError, match="reviewed artifact hashes"):
+        manifest["artifact_sha256"] = {"reviewed-closure.json": "f" * 64}
+        put(source / "manifest.json", manifest)
+        producer.validate_incomplete_review(source, starter, tests)
+
+
+
+def test_draft_inventory_identifies_exact_missing_reports_and_controls(tmp_path):
+    root, out, _, source, head = fixture(tmp_path)
+    manifest = json.loads((source / "manifest.json").read_text())
+    manifest.update(review_state="incomplete", artifact_sha256={},
+                    evidence_profile="critical", audit_history="previous-rejection")
+    put(source / "manifest.json", manifest)
+    draft = json.loads((source / "reviewed-closure.json").read_text())
+    draft["controls"]["pass_c"] = {"status": "pending"}
+    put(source / "reviewed-closure.json", draft)
+    starter = json.loads((out / ".audit/entregar-issue/requirement-closure.json").read_text())
+    tests = {"suite::positive": "passed", "suite::negative": "passed",
+             "suite::regression": "passed"}
+
+    producer.stage_draft_review(root, out, source, starter, tests, head, head)
+
+    inventory = json.loads((out / "reviewed-dossier-inventory.json").read_text())
+    required = {"reviewed-closure.json", "requirement-attack-matrix.json",
+                "risk-saturation.json", "inherited-controls.json",
+                "audit-remediation.json", "audit-source-result.json",
+                "learning-closure.json", "audit-escape-closure.json",
+                "previous-audit-escape-closure.json"}
+    assert set(inventory["required_reports"]) == required
+    assert set(inventory["missing_reports"]) == required - {"reviewed-closure.json"}
+    assert set(inventory["unhashed_reports"]) == required
+    assert inventory["pending_review_controls"] == ["pass_c"]
+    assert inventory["semantic_certification"] == "NOT_ASSERTED"
+    assert inventory["subject_sha"] == head
+    assert not (out / "certification-inputs.json").exists()
+
+
+
+def test_deferred_obligation_cannot_claim_certification_without_partial_handoff():
+    obligation = {"id": "OBL-044", "disposition": "deferred",
+                  "rationale": "Independent review occurs after certified handoff.",
+                  "scope_decision": {"decision_source_id": "SRC-ISSUE-112",
+                                     "decision_source_sha256": "a" * 64,
+                                     "decision_locator": "OBL-044 canonical contract",
+                                     "target_issue": 120,
+                                     "parent_issue_must_remain_open": True}}
+    closure = {"obligations": [obligation], "source_coverage": [{
+        "source_id": "SRC-ISSUE-112", "source_sha256": "a" * 64}]}
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match="deferred obligations need verified partial handoff"):
+        producer.require_complete_semantic_review(closure)
+    obligation["disposition"] = "pending"
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match="closure incomplete"):
+        producer.require_complete_semantic_review(closure)
+
+
+def test_phase_deferred_requires_canonical_open_parent_and_locator():
+    body = "After technical handoff, an independent auditor approves the exact SHA."
+    phase_decision = {
+        "decision_source_id": "SRC-ISSUE-112",
+        "decision_source_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        "decision_locator": body,
+        "target_issue": 112,
+        "parent_issue_must_remain_open": True,
+    }
+    obligation = {
+        "id": "OBL-040", "disposition": "deferred",
+        "source_text": body,
+        "scope_decision": phase_decision,
+        "rationale": "Independent read-only audit must occur after certified preparation.",
+    }
+    closure = {"primary_issue_source_id": "SRC-ISSUE-112",
+               "obligations": [{"id": "OBL-001", "disposition": "covered"},
+                               obligation]}
+    kwargs = {"issue_number": 112, "canonical_issue_body": body,
+              "parent_issue_open": True}
+    assert producer.require_complete_semantic_review(closure, **kwargs) == ["OBL-040"]
+    for name, wrong in (
+        ("target_issue", 113), ("decision_source_sha256", "a" * 64),
+        ("decision_locator", "not in canonical source"),
+        ("parent_issue_must_remain_open", False),
+    ):
+        invalid = dict(phase_decision)
+        invalid[name] = wrong
+        obligation["scope_decision"] = invalid
+        with pytest.raises(producer.MissingReviewedEvidenceError, match="canonical phase decision"):
+            producer.require_complete_semantic_review(closure, **kwargs)
+    obligation["scope_decision"] = phase_decision
+    with pytest.raises(producer.MissingReviewedEvidenceError, match="open parent"):
+        producer.require_complete_semantic_review(closure, **{**kwargs, "parent_issue_open": False})
+    obligation["disposition"] = "pending"
+    with pytest.raises(producer.MissingReviewedEvidenceError, match="closure incomplete"):
+        producer.require_complete_semantic_review(closure, **kwargs)
+
+
+
+def test_mixed_deferred_requires_pre_handoff_evidence_and_exact_junit():
+    body = "Documentation and CI are consistent at final SHA; independent approval follows handoff."
+    locator = "independent approval follows handoff."
+    decision = {
+        "decision_source_id": "SRC-ISSUE-112",
+        "decision_source_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        "decision_locator": locator, "target_issue": 112,
+        "parent_issue_must_remain_open": True,
+    }
+    obligation = {
+        "id": "OBL-044", "disposition": "deferred", "source_text": "- [ ] " + body,
+        "requirement_ids": ["REQ-112-044"],
+        "rationale": "Independent approval must occur after the certified handoff.",
+        "scope_decision": decision,
+    }
+    closure = {"primary_issue_source_id": "SRC-ISSUE-112", "obligations": [obligation]}
+    kwargs = {"issue_number": 112, "canonical_issue_body": body, "parent_issue_open": True}
+    with pytest.raises(producer.MissingReviewedEvidenceError, match="canonical phase decision"):
+        producer.require_complete_semantic_review(closure, **kwargs)
+    decision["pre_handoff_coverage"] = {
+        "covered_text": "Documentation and CI are consistent at final SHA",
+        "rationale": "The full pre-handoff clause must be evidenced on the final material SHA.",
+    }
+    assert producer.require_complete_semantic_review(closure, **kwargs) == ["OBL-044"]
+    bindings = {"REQ-112-044": {
+        "positive": ["suite::positive"], "negative": ["suite::negative"],
+        "regression": ["suite::regression"],
+    }}
+    tests = dict.fromkeys(["suite::positive", "suite::negative", "suite::regression"], "passed")
+    producer.validate_test_bindings(bindings, closure, tests)
+    with pytest.raises(ValueError, match="account for every covered"):
+        producer.validate_test_bindings({}, closure, tests)
+    with pytest.raises(ValueError, match="nonpassing negative"):
+        producer.validate_test_bindings(bindings, closure, {**tests, "suite::negative": "skipped"})
+    decision["pre_handoff_coverage"]["covered_text"] = "Only documentation is consistent"
+    with pytest.raises(producer.MissingReviewedEvidenceError, match="canonical phase decision"):
+        producer.require_complete_semantic_review(closure, **kwargs)
 
 
 def test_incomplete_review_manifest_is_not_mistaken_for_certified_evidence(tmp_path, monkeypatch):
@@ -386,3 +549,54 @@ def test_code_growth_comparison_preserves_recorded_start_and_real_ancestry(tmp_p
     assert report["comparison_base_sha"] == previous_head
     assert report["subject_sha"] == head
     assert report["files"] == [{"path": "service.py", "lines_before": None, "lines_after": 2}]
+
+
+def test_approved_review_cannot_stage_pending_obligations():
+    closure = {"obligations": [
+        {"id": "OBL-001", "disposition": "covered"},
+        {"id": "OBL-002", "disposition": "pending"},
+        {"id": "OBL-003", "disposition": "blocked"},
+    ]}
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match=r"2 unresolved obligations .*OBL-002, OBL-003"):
+        producer.require_complete_semantic_review(closure)
+
+
+def test_approved_review_can_explicitly_exclude_nonapplicable_obligation():
+    producer.require_complete_semantic_review({"obligations": [
+        {"id": "OBL-001", "disposition": "covered"},
+        {"id": "OBL-002", "disposition": "not-applicable",
+         "rationale": "The archived behavior has no active consumer or required contract."},
+    ]})
+
+
+@pytest.mark.parametrize("rationale", ["", "   ", None])
+def test_approved_review_rejects_unjustified_nonapplicable_obligation(rationale):
+    closure = {"obligations": [
+        {"id": "OBL-001", "disposition": "covered"},
+        {"id": "OBL-002", "disposition": "not-applicable", "rationale": rationale},
+    ]}
+    with pytest.raises(producer.MissingReviewedEvidenceError,
+                       match=r"unjustified not-applicable.*OBL-002"):
+        producer.require_complete_semantic_review(closure)
+
+
+@pytest.mark.parametrize(
+    ("changed", "requires_grounding", "touches_code"),
+    [
+        (["features/checkout.feature"], True, False),
+        (["acceptance/payment.robot"], True, False),
+        (["spec/dynamic_case"], True, False),
+        (["configuration/pytest.ini"], True, False),
+        (["src/checkout.ts"], True, True),
+        (["docs/usage.md"], False, False),
+    ],
+)
+def test_required_reviewed_reports_reuses_canonical_test_scope_classifier(
+    changed, requires_grounding, touches_code
+):
+    """A test-only diff cannot bypass GROUND-TEST-001 via file naming."""
+    manifest = {"evidence_profile": "light", "audit_history": "verified-no-rejection"}
+    reports, code = producer.required_reviewed_reports(manifest, changed)
+    assert ("codebase-grounding.json" in reports) is requires_grounding
+    assert code is touches_code
