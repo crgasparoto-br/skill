@@ -2,26 +2,20 @@
   "schema_version": 1,
   "repository": "crgasparoto-br/skill",
   "issue_number": 127,
-  "pull_request_number": 141,
+  "pull_request_number": 140,
   "base_ref": "develop",
-  "head_ref": "fix/127-session-m2-ruleset-planner",
-  "work_item_start_sha": "404efb60fdc369a2387e398bf82da0c54079e9b6",
+  "head_ref": "chore/127-session-review-live-acceptance-v2",
+  "work_item_start_sha": "b64dbcf4a685e5f5bb73ea81c2b36d510ac1ef7b",
   "evidence_profile": "critical",
-  "risk_justification": "Critical administrative trust-boundary preparation: plan future M2 migration from legacy independent review to operator-attested session review without altering live rulesets, bypass visibility, exact-SHA certification, technical checks, or default branch. No M2 operational approval is asserted.",
-  "audit_history": "previous-rejection",
-  "audit_history_evidence": "Independent audit of PR #141 at HEAD fd5ff5ab21ea7778413b5d4b4a113ffdd4a07457 rejected A-001 under rejection audit-rejection:a54099d0-2148-4f4b-bceb-dcc9aa7f7a4c because --readback verified only one ruleset by ID. The cumulative escape ledger now preserves the pre-remediation snapshot and records exact-head targeted controls for complete effective-state verification; this is remediation evidence, not independent approval. Historical A-004 is hydrated from certified PR #128 artifact 12708916486/run 40446268572, whose official postcondition replay recorded exit 0 and raw-log SHA-256 1126436ff0bb0a5922d12f4f09021fb89778e283250b8d19670683a7c862c0ad; the replay remains historical evidence and is not a new independent approval. Aggregate audit-escape-closure status is now passed because every current escape entry and literal case is evidence-backed passed; the immutable previous-audit-escape-closure remains blocked at the rejected SHA.",
-  "review_scope": "PR #141 remediates independent finding A-001 by upgrading the read-only M2 read-back from target-ruleset-only verification to complete effective-state verification across applicable/inherited rulesets and classic branch protection. R127-12/R127-13 remain operationally deferred until separate session review, real positive/negative M2 runs, protected installation and final read-back. Follow-up readback tests cover pagination and hidden classic metadata without claiming M2 completion. The M2 pure policy was extracted into a separate module to satisfy the trusted publisher CODE-GROWTH-001 independently without changing limits.\nRecertification baseline: trusted develop at 404efb60fdc369a2387e398bf82da0c54079e9b6 (PR #145/#147 merge-preview repairs; PR #148/#149 session packet verifier bootstrap). The earlier certificate merge preview mismatch A-002 is not re-used as approval; the renewed review must confirm exact Git parents and new material HEAD. Historical rejection artifacts remain bound to their original audited SHAs.",
+  "risk_justification": "Critical operational acceptance of the source-authenticated M2 session-review trust boundary. The only changed material file is the review-process documentation; the technical controls already installed in trusted develop/main must still prove exact-SHA packet and independent operator attestation.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "PR #140 is a new document-only acceptance pilot. It has no prior independent audit rejection for its own material SHA; historical PR #134 head race and PR #138 implementation results remain factual inputs, not approvals transferred to this PR.",
+  "review_scope": "PR #140 changes only docs/WEB_INDEPENDENT_AUDIT.md and its PR-specific evidence identity. There are no modified test files relative to base, so no pending grounding test decisions may be inherited from PR #138. The 16 canonical issue obligations and passed technical JUnit controls remain required. R127-12 and R127-13 remain deferred pending separate review and rulesets read-back.",
   "artifact_sha256": {
     "reviewed-closure.json": "7ba506ec3efe353d3d0928d78e404f344f2e5c8f70fbe93534f633abcb4bcfe2",
-    "requirement-attack-matrix.json": "e0d8318bc67f3ac3eec4c63ab7ef7ee08f38cd3a0471d1e30f5598a5cad81b57",
-    "risk-saturation.json": "23e076fb89c729cb7fd3392d48817d92dc136ffc8877869314de6fdc786e9408",
-    "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a",
-    "codebase-grounding.json": "8b9b8846aa6828055ccea92fe22737d09a7472b8be36220a9df18945e161929b",
-    "audit-remediation.json": "af37518b46d5f7c89aa860c401bbe3a53caa2ca48d5b42df6b9f70ba6b6bba7a",
-    "audit-source-result.json": "e7b92a30146ecfd80cefa115c290fc03a2240b984805421b8a6f7dcf0b4d4f26",
-    "learning-closure.json": "c9723ce7cbf0692e34ecc56d998b78dda246aa90b3d2c0c45b8d35de31b82e51",
-    "audit-escape-closure.json": "f8f6db62bd217e5fe98fc810cc017e174a8df4189a69388bb775464fd3cfb57d",
-    "previous-audit-escape-closure.json": "c944870e0171180319e4a6dbe5f091d77f5993b485b0002a158cc55f3fe12e02"
+    "requirement-attack-matrix.json": "ec9dc42a10ff40c65897569d03a91250813ac0640bbb0e185a734f5c19b41ea9",
+    "risk-saturation.json": "87ff9c3380bd39534d6afbf4146e5e90642296ae720adcf8445d65d8f730ffb2",
+    "inherited-controls.json": "ee69f6154fed392cd1079caea6462b1e51b9f474f32c8a604af0093cecbb7e8a"
   },
   "test_bindings": {
     "SPEC-L3": {
@@ -261,10 +255,7 @@
         "auditar-issue.tests.test_evidence_profile_preflight::test_preflight_revalidates_anchors_in_supplied_source_checkout",
         "tests.test_session_review_dossier::test_complete_dossier_passes_official_auditor_saturation",
         "tests.test_versioning::test_release_line_still_rejects_missing_git_when_ci_explicitly_requests_main",
-        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides",
-        "tests.test_plan_session_ruleset_m2::test_exact_branch_plan_preserves_all_protections_and_upgrades_to_session[main]",
-        "tests.test_plan_session_ruleset_m2::test_live_readback_accepts_only_fully_active_session_ruleset[develop]",
-        "tests.test_plan_session_ruleset_m2::test_read_all_rulesets_slurps_every_page"
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
       ],
       "negative": [
         "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[missing]",
@@ -320,15 +311,7 @@
         "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_proof_rejects_substitution[boolean-exit]",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_replay_log_is_bounded_during_actual_process_execution",
         "tests.test_session_review_dossier::test_dossier_rejects_unsaturated_active_inherited_family[not-applicable]",
-        "auditar-issue.tests.test_delivery_saturation_preflight::test_preflight_rejects_unsaturated_material_family",
-        "tests.test_plan_session_ruleset_m2::test_rejects_migration_when_legacy_gate_is_missing_or_untrusted",
-        "tests.test_plan_session_ruleset_m2::test_effective_readback_rejects_second_active_applicable_ruleset",
-        "tests.test_plan_session_ruleset_m2::test_effective_readback_rejects_classic_human_review_or_legacy_gate",
-        "tests.test_plan_session_ruleset_m2::test_second_page_competing_ruleset_blocks_effective_readback",
-        "tests.test_plan_session_ruleset_m2::test_classic_review_bypass_inventory_must_be_explicit[None]",
-        "tests.test_plan_session_ruleset_m2::test_classic_checks_cannot_hide_legacy_gate_outside_contexts",
-        "tests.test_plan_session_ruleset_m2::test_classic_review_fields_cannot_be_inferred[required_approving_review_count]",
-        "tests.test_plan_session_ruleset_m2::test_m2_plan_requires_visible_required_team_reviewer_inventory"
+        "auditar-issue.tests.test_delivery_saturation_preflight::test_preflight_rejects_unsaturated_material_family"
       ],
       "regression": [
         "entregar-issue.tests.test_require_actions_handoff_certificate::test_stale_or_misleading_receipt_fails_closed",
@@ -347,11 +330,7 @@
         "entregar-issue.tests.test_handoff_postcondition_records::test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]",
         "entregar-issue.tests.test_certificate_postcondition_replay::test_literal_replay_uses_only_trusted_runtime_and_clean_environment",
         "auditar-issue.tests.test_connector_preflight::test_connector_preflight_accepts_immutable_snapshot",
-        "auditar-issue.tests.test_evidence_profile_preflight::test_audit_preflight_is_profile_aware",
-        "tests.test_plan_session_ruleset_m2::test_plan_does_not_perform_remote_mutation",
-        "tests.test_plan_session_ruleset_m2::test_readback_cli_uses_complete_effective_state",
-        "tests.test_plan_session_ruleset_m2::test_effective_readback_rejects_duplicate_ruleset_ids",
-        "tests.test_plan_session_ruleset_m2::test_classic_404_without_verified_admin_rights_is_not_absence"
+        "auditar-issue.tests.test_evidence_profile_preflight::test_audit_preflight_is_profile_aware"
       ]
     },
     "SPEC-L33": {
@@ -367,26 +346,5 @@
         "tests.test_session_review_dossier::test_m2_is_excluded_from_implementation_bindings_and_retains_parent"
       ]
     }
-  },
-  "grounding_test_bindings": {
-    "tests/test_plan_session_ruleset_m2.py": [
-      {
-        "case": "tests/test_plan_session_ruleset_m2.py::test_live_readback_accepts_only_fully_active_session_ruleset[develop]",
-        "test_case_id": "tests.test_plan_session_ruleset_m2::test_live_readback_accepts_only_fully_active_session_ruleset[develop]"
-      },
-      {
-        "case": "tests/test_plan_session_ruleset_m2.py::test_effective_readback_rejects_second_active_applicable_ruleset",
-        "test_case_id": "tests.test_plan_session_ruleset_m2::test_effective_readback_rejects_second_active_applicable_ruleset"
-      },
-      {
-        "case": "tests/test_plan_session_ruleset_m2.py::test_effective_readback_rejects_classic_human_review_or_legacy_gate",
-        "test_case_id": "tests.test_plan_session_ruleset_m2::test_effective_readback_rejects_classic_human_review_or_legacy_gate"
-      },
-      {
-        "case": "tests/test_plan_session_ruleset_m2.py::test_readback_cli_uses_complete_effective_state",
-        "test_case_id": "tests.test_plan_session_ruleset_m2::test_readback_cli_uses_complete_effective_state"
-      }
-    ]
-  },
-  "remediation_mode": "targeted-remediation"
+  }
 }
