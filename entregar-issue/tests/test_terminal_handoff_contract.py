@@ -310,7 +310,7 @@ def test_terminal_targeted_reaudit_does_not_require_previous_inherited_controls(
 
 
 def test_terminal_guard_forwards_target_binding_for_previous_rejection_success() -> None:
-    """Regression: the readiness subprocess needs --repository/--issue-number/--pull-request-number
+    """Regression: the readiness subprocess needs --target-repository/--issue-number/--pull-request-number
     whenever the certificate carries previous_independent_rejection, or a legitimately
     target-bound audit-escape-closure is rejected as unbound and the terminal handoff
     for a post-rejection re-audit is always blocked."""
