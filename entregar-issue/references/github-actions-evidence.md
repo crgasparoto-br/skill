@@ -149,40 +149,9 @@ Um dossie completo consiste em:
   material HEAD. Isso valida apenas existencia/execucao: oraculo,
   falha discriminante e abrangencia exigem inspecao e validadores oficiais.
 
-Para `GROUND-TEST-001`, uma decisao semanticamente revisada pode aguardar
-apenas execucao com `verification: {"status": "unknown",
-"reason": "awaiting-exact-SHA-JUnit"}`. Nesse caso, o manifesto inclui
-`grounding_test_bindings`, indexado pelo `path` de cada decisao pendente,
-com entradas explicitas `{"case": "tests/test_example.py::test_case",
-"test_case_id": "tests.test_example::test_case"}`. Exclusoes precisam
-atingir cada `replacement_tests`; renomeacoes apontam para o caminho novo.
-Esse mapa e revisado junto ao dossie; nao se deriva cobertura de nomes.
-
-O helper [bind_grounding_execution.py](../scripts/bind_grounding_execution.py)
-confere o HEAD, exit code, hashes do log/JUnit e o resultado `PASSED` do
-mesmo caso nos dois formatos. Somente a identidade padrao do pytest e
-suportada automaticamente; caso ausente, ignorado, falho, ambiguo ou
-customizado permanece bloqueante. O produtor preenche apenas `verification`,
-preservando cenarios, oraculos, buscas, decisoes, disposicoes e o dossie
-versionado. Provas ja atestadas e outros motivos `unknown` nao sao reescritos.
-
-A prova factual e criada apos os testes sob
-`.audit/entregar-issue/execution/`, no checkout e no artefato, com o HEAD,
-comando, exit code, casos alcancados e hashes das fontes. O certificado
-autoriza individualmente apenas caminhos seguros cujas copias tenham o
-mesmo digest, pela opcao existente `--allow-result-path`; nenhum prefixo
-inteiro ganha permissao. Assim a prova acompanha o filho de resultados sem
-exigir que o dossie contenha uma prova autorreferente do proprio commit.
-Os validadores oficiais continuam obrigatorios e o binding nao emite
-certificado nem aprovacao semantica.
-
-O publicador confiavel autentica primeiro o certificado, o relatorio de
-grounding e cada prova de execucao autorizada. Confere caminhos canonicos,
-ausencia de symlinks, hashes, identidade e marcadores da execucao, com limites
-de tamanho; entao materializa somente essas provas no checkout material,
-antes de reexecutar o validador oficial de grounding. Nenhum codigo do
-candidato e executado nessa etapa. Conflitos com arquivos existentes ou
-provas ausentes, alteradas ou fora da allowlist bloqueiam a publicacao.
+A vinculacao de execucao de `GROUND-TEST-001`, inclusive prova JUnit exact-SHA,
+transportes autorizados e verificacoes do publicador, e especificada em
+[codebase-grounding-gate.md](codebase-grounding-gate.md).
 
 Na medicao de crescimento, `work_item_start_sha` continua sendo o inicio
 registrado da entrega e a ancora da politica. Quando a base da PR antecede
