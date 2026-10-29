@@ -100,7 +100,7 @@
         {
           "path": "entregar-issue/references/risk-saturation-gate.md",
           "line": 91,
-          "text": "O ledger selecionado deve conter `subject.repository`, `subject.issue_number`, `subject.pull_request_number` (ou `null` para issue sem PR) e `subject.material_head_sha`. O validador exige identidade externa do alvo por `--target-repository`, `--target-issue-number`, `--target-pull-request-number` (quando houver) e `--target-head-sha`, recusando valor ausente, divergente ou SHA diferente da matriz. `validate_handoff_readiness.py` confere o mesmo vinculo via `--repository`, `--issue-number`, `--pull-request-number` e `--head-sha` em todos os perfis, inclusive sem matriz critica. O builder entrega os parametros a partir da identidade canonica da entrega.",
+          "text": "O ledger selecionado deve conter `subject.repository`, `subject.issue_number`, `subject.pull_request_number` (ou `null` para issue sem PR) e `subject.material_head_sha`. O validador exige identidade externa do alvo por `--target-repository`, `--target-issue-number`, `--target-pull-request-number` (quando houver) e `--target-head-sha`, recusando valor ausente, divergente ou SHA diferente da matriz. `validate_handoff_readiness.py` confere o mesmo vinculo via `--target-repository`, `--issue-number`, `--pull-request-number` e `--head-sha` em todos os perfis, inclusive sem matriz critica. `--repository` e apenas o caminho de checkout usado para pos-condicao, nao a identidade do alvo. Campos ausentes e tipos divergentes sao bloqueados, inclusive PR omitida em vez de `null`. O builder entrega os parametros a partir da identidade canonica da entrega.",
           "term": "subject.material_head_sha",
           "classification": "current-contract",
           "evidence_ids": [
@@ -110,7 +110,7 @@
         {
           "path": "entregar-issue/references/audit-escape-closure.md",
           "line": 35,
-          "text": "O objeto raiz deve declarar `subject.repository`, `subject.issue_number`, `subject.pull_request_number` (ou `null` em entregas sem PR) e `subject.material_head_sha`, sempre vinculados ao alvo atual. Um `source_audit` historico ou a localizacao do arquivo nao provam pertencimento.",
+          "text": "O objeto raiz deve declarar `subject.repository`, `subject.issue_number`, `subject.pull_request_number` (ou `null` em entregas sem PR) e `subject.material_head_sha`, sempre vinculados ao alvo atual. Todos os campos devem existir e ter o tipo exato: strings para repositorio/SHA, inteiros (nunca booleanos ou strings numericas) para issue/PR, e `null` explicito sem PR. Um `source_audit` historico ou a localizacao do arquivo nao provam pertencimento.",
           "term": "subject.material_head_sha",
           "classification": "current-contract",
           "evidence_ids": [
@@ -156,7 +156,9 @@
         "entregar-issue/scripts/validate_handoff_readiness.py: caller-bound current subject and prior rejection",
         "entregar-issue/tests/test_cross_surface_saturation.py: positive, negative, cross-surface and 19/16 fixture",
         "tests/test_risk_saturation_target_binding.py: missing subject and foreign ledger",
-        "GitHub Actions exact-material-head JUnit, material SHA provided at runtime"
+        "GitHub Actions exact-material-head JUnit, material SHA provided at runtime",
+        "tests/test_risk_saturation_target_binding.py: required subject keys and strict type controls",
+        "entregar-issue/tests/test_cross_surface_saturation.py: issue-only CLI requires explicit null PR"
       ],
       "rederived_without_pr_description": true,
       "reviewed_user_visible_semantics": true,

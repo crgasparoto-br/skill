@@ -27,12 +27,13 @@
       "primary_negative_control": {
         "id": "NEG-002",
         "status": "passed",
-        "procedure": "Run entregar-issue/tests/test_cross_surface_saturation.py:286 (test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered) against the frozen checkout with the JUnit runner.",
-        "expected": "A foreign or mismatched subject is blocked before saturating risk.",
-        "observed": "Regression assertion in entregar-issue/tests/test_cross_surface_saturation.py:286 (test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered) checks rejection or absence of foreign contamination; execution must be confirmed by exact-SHA JUnit."
+        "procedure": "Run tests/test_risk_saturation_target_binding.py:66 (test_current_target_requires_all_subject_fields_with_exact_types) on the frozen checkout with exact-SHA JUnit.",
+        "expected": "All four subject keys must be present, numeric identifiers have exact JSON integer types, and missing PR requires explicit null.",
+        "observed": "The discriminant assertions at tests/test_risk_saturation_target_binding.py:66 (test_current_target_requires_all_subject_fields_with_exact_types) reject omitted fields and Python bool/int confusion; verify passed in exact-SHA JUnit."
       },
       "regression_evidence": [
-        "Exact material JUnit regression: tests/test_risk_saturation_target_binding.py:32 (test_risk_validator_requires_explicit_escape_binding) (must be terminal passed)"
+        "Exact material JUnit regression: tests/test_risk_saturation_target_binding.py:32 (test_risk_validator_requires_explicit_escape_binding) (must be terminal passed)",
+        "Exact material JUnit regression: entregar-issue/tests/test_cross_surface_saturation.py:325 (test_issue_only_escape_rejects_omitted_pr_binding_at_cli) (must be terminal passed)"
       ]
     },
     {
@@ -80,7 +81,8 @@
         "observed": "Regression assertion in entregar-issue/tests/test_cross_surface_saturation.py:208 (test_risk_saturation_fails_closed_for_explicit_missing_escape_file) checks rejection or absence of foreign contamination; execution must be confirmed by exact-SHA JUnit."
       },
       "regression_evidence": [
-        "Exact material JUnit regression: entregar-issue/tests/test_cross_surface_saturation.py:286 (test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered) (must be terminal passed)"
+        "Exact material JUnit regression: entregar-issue/tests/test_cross_surface_saturation.py:286 (test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered) (must be terminal passed)",
+        "Exact material JUnit regression: entregar-issue/tests/test_cross_surface_saturation.py:325 (test_issue_only_escape_rejects_omitted_pr_binding_at_cli) (must be terminal passed)"
       ]
     },
     {

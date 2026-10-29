@@ -56,7 +56,10 @@ def validate_escape_target(
         "material_head_sha": head_sha,
     }
     for key, value in expected.items():
-        if subject.get(key) != value:
+        if key not in subject:
+            errors.append(f"audit escape closure subject.{key} is missing")
+        elif type(subject[key]) is not type(value) or subject[key] != value:
+            # JSON booleans must never compare equal to integer issue/PR IDs.
             errors.append(f"audit escape closure subject.{key} differs from current target")
 
 

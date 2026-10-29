@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "entregar-issue/scripts/validate_risk_saturation.py"
 sys.path.insert(0, str(SCRIPT.parent))
 from risk_inference import CANONICAL_RISK_FAMILIES  # noqa: E402 - script module path added above
-from validate_risk_saturation import required_escape_dimensions  # noqa: E402 - script module path added above
+from validate_risk_saturation import required_escape_dimensions, validate_escape_target  # noqa: E402 - script module path added above
 
 
 def test_foreign_closure_is_not_inferred_from_neighboring_file(tmp_path):
@@ -62,3 +62,45 @@ def test_risk_validator_requires_explicit_escape_binding(tmp_path):
     assert relevant.returncode == 2
     assert "audit escape required attack dimensions are not covered" in relevant.stdout
     assert "explicit audit escape closure lacks current-target subject binding" in relevant.stdout
+
+def test_current_target_requires_all_subject_fields_with_exact_types():
+    subject = {
+        "repository": "example/consumer", "issue_number": 1,
+        "pull_request_number": 1, "material_head_sha": "a" * 40,
+    }
+    target = {"repository": "example/consumer", "issue_number": 1,
+              "pull_request_number": 1, "head_sha": "a" * 40}
+    for missing in subject:
+        errors = []
+        validate_escape_target({"subject": {key: value for key, value in subject.items()
+                                           if key != missing}}, errors=errors, **target)
+        assert errors == [f"audit escape closure subject.{missing} is missing"]
+    invalid_values = (
+        ("repository", 1),
+        ("issue_number", True),  # True == 1 in Python.
+        ("issue_number", "1"),
+        ("pull_request_number", True),  # True == 1 in Python.
+        ("pull_request_number", "1"),
+        ("material_head_sha", None),
+    )
+    for field, value in invalid_values:
+        errors = []
+        validate_escape_target({"subject": {**subject, field: value}}, errors=errors, **target)
+        assert errors == [f"audit escape closure subject.{field} differs from current target"]
+
+
+def test_issue_only_subject_requires_explicit_null_pr_binding():
+    subject = {"repository": "example/consumer", "issue_number": 1,
+               "pull_request_number": None, "material_head_sha": "a" * 40}
+    target = {"repository": "example/consumer", "issue_number": 1,
+              "pull_request_number": None, "head_sha": "a" * 40}
+    errors = []
+    validate_escape_target({"subject": subject}, errors=errors, **target)
+    assert errors == []
+    del subject["pull_request_number"]
+    validate_escape_target({"subject": subject}, errors=errors, **target)
+    assert errors == ["audit escape closure subject.pull_request_number is missing"]
+    subject["pull_request_number"] = False
+    errors = []
+    validate_escape_target({"subject": subject}, errors=errors, **target)
+    assert errors == ["audit escape closure subject.pull_request_number differs from current target"]

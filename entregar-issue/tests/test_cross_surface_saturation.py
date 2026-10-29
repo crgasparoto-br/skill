@@ -321,3 +321,49 @@ def test_explicit_foreign_target_blocked_even_when_its_dimensions_are_covered():
         foreign.write_text(json.dumps(payload), encoding="utf-8")
         proc = run("validate_risk_saturation.py", *args)
         assert proc.returncode == 0, proc.stdout
+
+def test_issue_only_escape_rejects_omitted_pr_binding_at_cli():
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        matrix = base / "matrix.json"
+        matrix.write_text(json.dumps(matrix_data()), encoding="utf-8")
+        risk = base / "risk.json"
+        assert run("init_risk_saturation.py", "--attack-matrix", str(matrix),
+                   "--out", str(risk)).returncode == 0
+        risk_data = json.loads(risk.read_text(encoding="utf-8"))
+        family = next(item for item in risk_data["families"] if item["family"] == "authorization")
+        family["status"] = "passed"
+        for dimension in family["dimensions"]:
+            dimension["status"] = "passed"
+        risk.write_text(json.dumps(risk_data), encoding="utf-8")
+        escape = base / "audit-escape-closure.json"
+        payload = {"subject": {
+            "repository": "example/consumer", "issue_number": 125,
+            "material_head_sha": HEAD,
+        }, "escapes": [{
+            "escape_id": "current-issue", "status": "passed",
+            "required_risk_families": ["authorization"],
+            "required_attack_dimensions": [
+                {"risk_family": "authorization", "surface": "environment",
+                 "dimension": "env-secret-filtering"},
+                {"risk_family": "authorization", "surface": "filesystem",
+                 "dimension": "cross-role-file-readability"},
+            ],
+        }]}
+        args = ("--attack-matrix", str(matrix), "--risk-saturation", str(risk),
+                "--audit-escape-closure", str(escape),
+                "--target-repository", "example/consumer",
+                "--target-issue-number", "125", "--target-head-sha", HEAD)
+        escape.write_text(json.dumps(payload), encoding="utf-8")
+        missing = run("validate_risk_saturation.py", *args)
+        assert missing.returncode == 2
+        assert "subject.pull_request_number is missing" in missing.stdout
+        payload["subject"]["pull_request_number"] = None
+        escape.write_text(json.dumps(payload), encoding="utf-8")
+        explicit = run("validate_risk_saturation.py", *args)
+        assert explicit.returncode == 0, explicit.stdout
+        payload["subject"]["pull_request_number"] = False
+        escape.write_text(json.dumps(payload), encoding="utf-8")
+        malformed = run("validate_risk_saturation.py", *args)
+        assert malformed.returncode == 2
+        assert "subject.pull_request_number differs from current target" in malformed.stdout
