@@ -270,9 +270,13 @@ def main() -> int:
             sys.executable, str(ROOT / "scripts" / "validate_handoff_readiness.py"),
             "--requirement-closure", str(files["requirement_closure"]),
             "--evidence-profile", profile,
+            "--target-repository", args.repository,
+            "--issue-number", str(issue_number),
             "--head-sha", args.head_sha,
             "--contract-version", args.contract_version,
         ]
+        if pull_request_number is not None:
+            handoff_args.extend(["--pull-request-number", str(pull_request_number)])
         if profile == "standard":
             handoff_args.extend(["--standard-evidence", str(files["standard_evidence"])])
         elif profile == "critical":

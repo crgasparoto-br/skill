@@ -66,6 +66,8 @@ def critical_case(tmp_path):
     item["revalidation"].update({"status": "not-passed", "exit_code": None, "evidence_sha256": None})
     write(audit / "audit-remediation.json", ledger)
     closure = json.loads((audit / "audit-escape-closure.json").read_bytes())
+    closure["subject"] = {"repository": "owner/repo", "issue_number": 42,
+                          "pull_request_number": 99, "material_head_sha": case["head"]}
     closure["status"] = "blocked"
     escape = closure["escapes"][0]
     escape["status"] = "blocked"
@@ -73,6 +75,7 @@ def critical_case(tmp_path):
     escape["source_audit"].update({"head_sha": case["base"], "audit_report_sha256": digest(source_path.read_bytes())})
     write(audit / "audit-escape-closure.json", closure)
     previous = copy.deepcopy(closure)
+    previous["subject"]["material_head_sha"] = case["base"]
     previous["escapes"][0]["revalidated_head_sha"] = case["base"]
     write(audit / "previous-audit-escape-closure.json", previous)
     learning_path = audit / "learning-closure.json"
