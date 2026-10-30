@@ -11,6 +11,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import PurePosixPath
+from urllib.parse import urlsplit
 
 PREFIX = "SOLVERIT_SESSION_REVIEW_V1\n"
 ASSURANCE = "operator-attested-session-review"
@@ -102,13 +103,21 @@ def review_snapshot(comment: dict, repo: str, pull_request: int) -> dict:
     require(type(user.get("id")) is int and user["id"] > 0
             and isinstance(user.get("login"), str) and bool(user["login"])
             and user.get("type") == "User", "review author identity missing")
-    require(comment.get("issue_url") == f"https://api.github.com/repos/{repo}/issues/{pull_request}",
+    require(isinstance(comment.get("url"), str) and isinstance(comment.get("issue_url"), str),
+            "review REST links are missing")
+    comment_url, issue_url = urlsplit(comment["url"]), urlsplit(comment["issue_url"])
+    require(comment_url.scheme == issue_url.scheme == "https"
+            and bool(comment_url.netloc) and comment_url.netloc == issue_url.netloc
+            and not any((comment_url.query, comment_url.fragment, issue_url.query, issue_url.fragment))
+            and comment_url.path == f"/repos/{repo}/issues/comments/{comment['id']}"
+            and issue_url.path == f"/repos/{repo}/issues/{pull_request}",
             "review is not linked to the authenticated PR")
     require(all(isinstance(comment.get(k), str) and bool(comment[k])
                 for k in ("created_at", "updated_at")), "review timestamps missing")
     return {"id": comment["id"], "body": comment["body"], "user_id": user["id"],
             "user_login": user["login"], "user_type": user["type"],
-            "issue_url": comment["issue_url"], "created_at": comment["created_at"],
+            "url": comment["url"], "issue_url": comment["issue_url"],
+            "created_at": comment["created_at"],
             "updated_at": comment["updated_at"]}
 
 

@@ -220,7 +220,8 @@ class ReviewBackend:
                                      policy_sha256=runner.digest(self.policy_path.read_bytes()))
         self.report["identity"] = copy.deepcopy(self.packet["identity"])
         comment["body"] = runner.PREFIX + json.dumps(self.report)
-        comment["issue_url"] = "https://api.github.com/repos/owner/repo/issues/10"
+        comment["url"] = "https://example.org/repos/owner/repo/issues/comments/20"
+        comment["issue_url"] = "https://example.org/repos/owner/repo/issues/10"
         self.comments = [comment]
         self.pr = {"number": 10, "state": "open", "draft": False, "body": "Refs #9",
                    "head": {"sha": "a" * 40, "repo": {"full_name": "owner/repo"}},
@@ -359,6 +360,7 @@ def test_evaluate_preserves_revocation_across_pages_and_reuse(review_backend):
     backend.checks.pop(0)  # The reused receipt retains the oldest revocation.
     assert backend.run() == 2
     backend.comments[0]["id"] = 22
+    backend.comments[0]["url"] = "https://example.org/repos/owner/repo/issues/comments/22"
     assert backend.run() == 0
     assert backend.checks[-1]["id"] == 205
     assert len(backend.checks) == 204
@@ -404,6 +406,7 @@ def test_evaluate_revocation_survives_reuse_and_old_approval_fallback(review_bac
     original = copy.deepcopy(backend.comments[0])
     latest = copy.deepcopy(original)
     latest["id"] = 21
+    latest["url"] = "https://example.org/repos/owner/repo/issues/comments/21"
     if action == "rejected":
         report = copy.deepcopy(backend.report)
         report["conclusion"] = "rejected"
@@ -423,6 +426,7 @@ def test_evaluate_revocation_survives_reuse_and_old_approval_fallback(review_bac
     assert len(backend.checks) == 1
     assert backend.checks[-1]["conclusion"] == "failure"
     backend.comments[0]["id"] = 23
+    backend.comments[0]["url"] = "https://example.org/repos/owner/repo/issues/comments/23"
     assert backend.run() == 0
     assert len(backend.checks) == 1
 
@@ -501,12 +505,12 @@ def test_review_journal_rejects_inconsistent_pages(review_backend, monkeypatch, 
 def test_review_accepts_only_presentation_differences_across_rest_forms(review_backend):
     backend = review_backend
     comment = backend.comments[0]
-    comment["user"]["avatar_url"] = "https://avatars.githubusercontent.com/u/123?v=4"
+    comment["user"]["avatar_url"] = "https://avatars.example/u/123?v=4"
     comment["performed_via_github_app"] = {"id": 123, "name": "listed-app"}
 
     def single_form(value):
         value["pin"] = None  # Absent in the listing, null in the individual GET.
-        value["user"]["avatar_url"] = "https://avatars.githubusercontent.com/u/123?cache=one&v=4"
+        value["user"]["avatar_url"] = "https://avatars.example/u/123?cache=one&v=4"
         value["performed_via_github_app"] = {"id": 456, "name": "individual-app"}
         return value
 
@@ -514,7 +518,7 @@ def test_review_accepts_only_presentation_differences_across_rest_forms(review_b
 
     def change_presentation_only():
         comment["pin"] = {"ignored": True}
-        comment["user"]["avatar_url"] = "https://avatars.githubusercontent.com/u/123?cache=two&v=4"
+        comment["user"]["avatar_url"] = "https://avatars.example/u/123?cache=two&v=4"
         comment["performed_via_github_app"] = None
 
     backend.on_recheck = change_presentation_only
@@ -529,7 +533,8 @@ def test_review_accepts_only_presentation_differences_across_rest_forms(review_b
     ("user.id", 456), ("user.type", "Bot"),
     ("created_at", "2026-10-26T11:00:01Z"),
     ("updated_at", "2026-10-26T11:00:01Z"),
-    ("issue_url", "https://api.github.com/repos/owner/repo/issues/11"),
+    ("issue_url", "https://example.org/repos/owner/repo/issues/11"),
+    ("url", "https://other.example/repos/owner/repo/issues/comments/20"),
 ])
 def test_review_rejects_security_drift_between_rest_forms(review_backend, field, value):
     backend = review_backend
@@ -541,6 +546,8 @@ def test_review_rejects_security_drift_between_rest_forms(review_backend, field,
             comment["user"][field.split(".")[1]] = value
         else:
             comment[field] = value
+            if field == "id":
+                comment["url"] = f"https://example.org/repos/owner/repo/issues/comments/{value}"
         return comment
 
     backend.get_comment_form = mutated_individual
@@ -549,16 +556,18 @@ def test_review_rejects_security_drift_between_rest_forms(review_backend, field,
     assert not any(body.get("conclusion") == "success" for _, body in backend.writes)
 
 
-@pytest.mark.parametrize("mutation", ["missing-issue", "foreign-issue", "boolean-id", "missing-timestamp"])
+@pytest.mark.parametrize("mutation", ["missing-issue", "foreign-issue", "boolean-id", "missing-timestamp", "missing-comment-url"])
 def test_review_rejects_invalid_binding_in_list_form(review_backend, mutation):
     backend = review_backend
     comment = backend.comments[0]
     if mutation == "missing-issue":
         del comment["issue_url"]
     elif mutation == "foreign-issue":
-        comment["issue_url"] = "https://api.github.com/repos/owner/repo/issues/11"
+        comment["issue_url"] = "https://example.org/repos/owner/repo/issues/11"
     elif mutation == "boolean-id":
         comment["id"] = True
+    elif mutation == "missing-comment-url":
+        del comment["url"]
     else:
         del comment["created_at"]
         del comment["updated_at"]
@@ -589,6 +598,7 @@ def test_review_rejects_later_invalid_report_during_final_revalidation(review_ba
     new_report["conclusion"] = "rejected"
     latest = copy.deepcopy(backend.comments[0])
     latest["id"] += 1
+    latest["url"] = "https://example.org/repos/owner/repo/issues/comments/21"
     latest["body"] = runner.PREFIX + json.dumps(new_report)
     backend.on_recheck = lambda: backend.comments.append(latest)
     assert backend.run() == 2
