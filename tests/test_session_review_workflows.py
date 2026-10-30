@@ -41,6 +41,21 @@ def test_candidate_selected_refs_cannot_start_review_workflows(name):
     assert config["permissions"]["checks"] == ("write" if name == "session-review.yml" else "read")
 
 
+@pytest.mark.parametrize("name", WORKFLOWS)
+def test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader(name):
+    config = workflow(name)
+    job = next(iter(config["jobs"].values()))
+    step = next(item for item in job["steps"] if "run" in item)
+    # The trusted packet and session-review readers both call the partial
+    # handoff validator, which requires GITHUB_TOKEN for a live parent read.
+    # This is an alias of the existing job-scoped Actions token, not a new
+    # credential, an untrusted PR value or an authorization bypass.
+    assert step["env"]["GH_TOKEN"] == "${{ github.token }}"
+    assert step["env"]["GITHUB_TOKEN"] == step["env"]["GH_TOKEN"]
+    assert "GITHUB_API_URL" not in step["env"]  # Runner-owned endpoint.
+    assert "GITHUB_TOKEN" not in job.get("env", {})  # Scoped to trusted step.
+
+
 def test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment():
     config = workflow("prepare-neutral-audit-packet.yml")
     assert config["on"]["workflow_run"] == {

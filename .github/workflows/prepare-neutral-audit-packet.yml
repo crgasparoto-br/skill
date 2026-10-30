@@ -40,6 +40,7 @@ jobs:
       - name: Collect certified exact-SHA source without candidate execution
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           PACKET_ROOT: ${{ runner.temp }}/audit-packet
         run: |
