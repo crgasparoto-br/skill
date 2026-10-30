@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "b3786bbb1283836dbd040985e150f08ad24da189c4325a9100ca8f2cc6a9638a": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-001"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The base schema rejected pre_handoff_coverage while the validator required it. The schema extension now permits the strict evidence shape without changing certification logic."
+    },
+    "58e569efa35f23bfb9333f1b893908145ee9aef134f3aaae10f87cd20360df2c": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-002"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The schema adds optional pre_handoff_coverage with nonempty covered_text, rationale length at least 30, and no unknown properties. The exact regression test verifies acceptance and three explicit rejections."
+    },
+    "a32497de8f6186146cdabf78f2e94c387be1ea4c00831e919057f1713ef6cbd9": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-003"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The specification coverage pipeline invokes the same strict requirement closure schema. The tested mixed-deferred decision now satisfies schema validation and completion_fields without weakening either predicate."
+    },
+    "b191fe71d60176bcc3410e453966d93d53e35bc3fb4269585a0a1ef231d12cbe": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-004"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The unchanged completion_fields checks exact source text, issue identity and parent-open binding; the exact mixed-clause regression rejects a substituted pre-handoff text."
+    },
+    "999a4c0c4b3111df819d059cfdbc554f6895c51b2cf0ddd416da316e10617e27": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-005"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The executed mixed-clause test rejects missing evidence, mismatched text, short rationale, extra properties, and absent rationale; no arbitrary evidence object is accepted."
+    },
+    "8443df88e8748fe846ec887055d4800cd143897a4443cc9bd660741ff4391f73": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "REQ-006"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-154",
+        "decision_source_sha256": "258c7541c04c24cbbef12e4028e7ea49c632beccfba5a634c6dd4e0de780c71b",
+        "decision_locator": "CI e auditoria independente antes de merge.",
+        "target_issue": 154,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "Validar estrutura, testes",
+          "rationale": "Structural validation and the repository test suite executed in Actions; the final exact-SHA CI and independent review remain required before any merge."
+        }
+      },
+      "rationale": "The structural checks and tests were executed. Full certification CI and separate independent review remain required before merge and are explicitly deferred, not claimed by the producer."
+    }
+  },
+  "controls": {
+    "domain_inventories": [],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "passed",
+      "applicability_reason": "Issue 154 requires that structure and tests be satisfied before a distinct exact-SHA independent approval authorizes integration. The schema must not promote a deferred approval to a completed requirement.",
+      "entries": [
+        {
+          "id": "SIC-154",
+          "kind": "precedence",
+          "requirement_ids": [
+            "REQ-006"
+          ],
+          "obligation_ids": [
+            "OBL-006"
+          ],
+          "plausible_wrong_implementation": "Treating successful structural CI as already equivalent to an independent review and merging the candidate without verified approval.",
+          "canonical_path": "certified-handoff -> exact-SHA independent audit -> merge",
+          "competing_paths": [
+            "structural-ci -> merge"
+          ],
+          "evidence_ids": [
+            "NC-154-REVIEW"
+          ],
+          "scenario_ids": [
+            "test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+          ],
+          "negative_control_evidence": [
+            "Executed JUnit proves a deferred canonical parent must remain open and a foreign issue/invalid decision is rejected; final independent approval is not asserted."
+          ]
+        }
+      ],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "not-applicable",
+      "applicability_reason": "Only an audit schema and its regression tests change; no read-side business model, pagination, or consumer query contract is modified.",
+      "entries": [],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "not-applicable",
+      "applicability_reason": "The feature extends the strict JSON schema, not a business source precedence or an external canonical data provider.",
+      "entries": [],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "The unchanged semantic validator contract already requires exact pre-handoff text; the schema now admits exactly that shape. References to deferred completion and separate review remain correct.",
+      "old_contract_terms": [
+        "scope_decision excludes pre_handoff_coverage"
+      ],
+      "new_contract_terms": [
+        "scope_decision.pre_handoff_coverage covered_text and rationale",
+        "completion_fields exact text and parent-open binding"
+      ],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "entregar-issue/scripts/validate_handoff_certificate.py:67-109 exact remaining text and deferred parent requirements",
+        "entregar-issue/scripts/reviewed_phase_decision.py:18-66 deferred evidence check",
+        "entregar-issue/references/github-actions-evidence.md: deferred parent and independent audit remain open",
+        "docs/WEB_INDEPENDENT_AUDIT.md: exact SHA review rules"
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": [
+        {
+          "path": "issue #154",
+          "line": 14,
+          "text": "Validar estrutura, testes, CI e auditoria independente antes de merge.",
+          "disposition": "not-a-reduction",
+          "decision_source_id": "SRC-ISSUE-154",
+          "rationale": "Structural checks and tests are pre-handoff; CI certification and independent approval are intentionally deferred and remain blockers for merge. The canonical issue stays open."
+        }
+      ]
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "REQ-001",
+        "REQ-002",
+        "REQ-003",
+        "REQ-004",
+        "REQ-005",
+        "REQ-006"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-002",
+        "OBL-003",
+        "OBL-004",
+        "OBL-005",
+        "OBL-006"
+      ],
+      "evidence": [
+        "Six immutable requirement candidates from authenticated issue #154, artifact handoff-evidence-155-1233f6f... under Actions run 40963550424.",
+        "Exact implementation changes only strict requirement-closure schema and regression test; the semantic validator was not relaxed.",
+        "Actions run 40963550423 Validate skills success, with 2866 passed pytest cases indexed in the authenticated collection job.",
+        "Mixed-clause positive and three negative cases execute within test_deferred_mixed_clause_requires_exact_pre_handoff_coverage; separate JUnit tests prove parent binding and canonical snapshot rejection.",
+        "CI certification and independent review are not falsely marked complete; OBL-006 explicitly remains deferred."
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}

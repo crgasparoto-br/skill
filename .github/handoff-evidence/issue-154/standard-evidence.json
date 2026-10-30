@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "contract_version": "2026-08-20.3",
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "requirements": [
+    {
+      "requirement_id": "REQ-001",
+      "positive_evidence": [
+        "Test source inspection: test_deferred_mixed_clause_requires_exact_pre_handoff_coverage validates schema acceptance and strict terminal completion.",
+        "Authenticated run 40963550424 collected exact-SHA JUnit with all referenced tests reported passed; the new material SHA is rechecked by the official caller."
+      ],
+      "primary_negative_control": {
+        "id": "NC-154-BASE",
+        "status": "passed",
+        "procedure": "Run the exact mixed-clause schema/validator test with a missing pre_handoff_coverage decision; it must reject prior to the introduced schema property.",
+        "expected": "Missing covered pre-handoff evidence is rejected.",
+        "observed": "The executed mixed-clause test first asserts a ValueError for the absent coverage before supplying exact evidence."
+      },
+      "regression_evidence": [
+        "Existing test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review passed in exact-SHA JUnit and preserves deferred approval without implying actual review.",
+        "Existing test_specification_coverage_detects_dropped_canonical_candidate passed; candidate coverage fails closed."
+      ]
+    },
+    {
+      "requirement_id": "REQ-002",
+      "positive_evidence": [
+        "Test source inspection: test_deferred_mixed_clause_requires_exact_pre_handoff_coverage validates schema acceptance and strict terminal completion.",
+        "Authenticated run 40963550424 collected exact-SHA JUnit with all referenced tests reported passed; the new material SHA is rechecked by the official caller."
+      ],
+      "primary_negative_control": {
+        "id": "NC-154-SCHEMA",
+        "status": "passed",
+        "procedure": "Run test_deferred_mixed_clause_requires_exact_pre_handoff_coverage with unknown properties, short rationale and missing rationale in the nested evidence.",
+        "expected": "Additional properties, short rationale and missing field must each be rejected.",
+        "observed": "All three malformed evidence objects raise jsonschema.ValidationError in the executed JUnit case."
+      },
+      "regression_evidence": [
+        "Existing test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review passed in exact-SHA JUnit and preserves deferred approval without implying actual review.",
+        "Existing test_specification_coverage_detects_dropped_canonical_candidate passed; candidate coverage fails closed."
+      ]
+    },
+    {
+      "requirement_id": "REQ-003",
+      "positive_evidence": [
+        "Test source inspection: test_deferred_mixed_clause_requires_exact_pre_handoff_coverage validates schema acceptance and strict terminal completion.",
+        "Authenticated run 40963550424 collected exact-SHA JUnit with all referenced tests reported passed; the new material SHA is rechecked by the official caller."
+      ],
+      "primary_negative_control": {
+        "id": "NC-154-SPEC",
+        "status": "passed",
+        "procedure": "Run the official specification coverage missing-candidate regression and the mixed-clause schema test.",
+        "expected": "A missing canonical obligation or malformed scope decision must not validate.",
+        "observed": "The independent passed JUnit case test_specification_coverage_detects_dropped_canonical_candidate rejects missing candidates."
+      },
+      "regression_evidence": [
+        "Existing test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review passed in exact-SHA JUnit and preserves deferred approval without implying actual review.",
+        "Existing test_specification_coverage_detects_dropped_canonical_candidate passed; candidate coverage fails closed."
+      ]
+    },
+    {
+      "requirement_id": "REQ-004",
+      "positive_evidence": [
+        "Test source inspection: test_deferred_mixed_clause_requires_exact_pre_handoff_coverage validates schema acceptance and strict terminal completion.",
+        "Authenticated run 40963550424 collected exact-SHA JUnit with all referenced tests reported passed; the new material SHA is rechecked by the official caller."
+      ],
+      "primary_negative_control": {
+        "id": "NC-154-TEXT",
+        "status": "passed",
+        "procedure": "Execute the mixed-clause test with covered_text deliberately changed to a different sentence.",
+        "expected": "Terminal completion_fields must reject a claim that does not cover exact remaining canonical text.",
+        "observed": "The executed test changes covered_text to Documentation alone is correct and expects ValueError."
+      },
+      "regression_evidence": [
+        "Existing test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review passed in exact-SHA JUnit and preserves deferred approval without implying actual review.",
+        "Existing test_specification_coverage_detects_dropped_canonical_candidate passed; candidate coverage fails closed."
+      ]
+    },
+    {
+      "requirement_id": "REQ-005",
+      "positive_evidence": [
+        "Test source inspection: test_deferred_mixed_clause_requires_exact_pre_handoff_coverage validates schema acceptance and strict terminal completion.",
+        "Authenticated run 40963550424 collected exact-SHA JUnit with all referenced tests reported passed; the new material SHA is rechecked by the official caller."
+      ],
+      "primary_negative_control": {
+        "id": "NC-154-STRICT",
+        "status": "passed",
+        "procedure": "Execute the mixed-clause test with three malformed object alternatives.",
+        "expected": "Missing rationale, short rationale and unexpected key must each fail closed.",
+        "observed": "The executed test expects ValidationError for all three classes in a loop."
+      },
+      "regression_evidence": [
+        "Existing test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review passed in exact-SHA JUnit and preserves deferred approval without implying actual review.",
+        "Existing test_specification_coverage_detects_dropped_canonical_candidate passed; candidate coverage fails closed."
+      ]
+    },
+    {
+      "requirement_id": "REQ-006",
+      "positive_evidence": [
+        "Pre-handoff part only: Validate skills run 40963550423 succeeds; separate semantic handoff and independent review remain pending.",
+        "Authenticated run 40963550424 collected exact-SHA JUnit with all referenced tests reported passed; the new material SHA is rechecked by the official caller."
+      ],
+      "primary_negative_control": {
+        "id": "NC-154-REVIEW",
+        "status": "passed",
+        "procedure": "Execute certified_partial_completion_binds_canonical_parent_and_preserves_final_review and inspect unchanged exact-SHA audit gate.",
+        "expected": "Different source SHA, target issue or closed parent cannot complete certification; an independent review remains separate.",
+        "observed": "The passed test rejects foreign issue/source SHA/closed parent and keeps issue_completion partial; run 40963550432 separately fails without a review."
+      },
+      "regression_evidence": [
+        "Existing test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review passed in exact-SHA JUnit and preserves deferred approval without implying actual review.",
+        "Existing test_specification_coverage_detects_dropped_canonical_candidate passed; candidate coverage fails closed."
+      ]
+    }
+  ]
+}

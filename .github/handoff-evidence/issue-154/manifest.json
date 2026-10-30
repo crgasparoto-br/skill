@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 154,
+  "pull_request_number": 155,
+  "base_ref": "develop",
+  "head_ref": "fix/154-deferred-prehandoff-schema",
+  "work_item_start_sha": "83b18db74716bc7f0c822af4c43c1d68a6fa3b6d",
+  "review_state": "approved",
+  "evidence_profile": "standard",
+  "risk_justification": "This candidate adds an optional strictly validated JSON schema shape and extends one existing regression test, without altering certificate semantic validation, privileges, foreign identity acceptance or stateful operations; no isolation, atomicity or reference-liveness flags apply. Separate independent review remains mandatory.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "GitHub PR #155 review history queried in the current separate audit context: zero submitted reviews or prior independent rejection for this candidate as of the inspected state; failing check run 40963550432 is missing review rather than a submitted rejection.",
+  "artifact_sha256": {
+    "reviewed-closure.json": "dce9ec8070138c3e270f6381b8e0137291bf69fe9646afe1c337bce7690ccfed",
+    "standard-evidence.json": "0990f71fe84f0e2d641392f9146d0f779fce9720690ee083933a40074177edfa",
+    "codebase-grounding.json": "8fd1b6d0f21c504e6fc79ff2c927ecfd6b2a898ef654c9a6dac6a1aed77ba496"
+  },
+  "test_bindings": {
+    "REQ-001": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_build_and_validate_handoff_certificate"
+      ]
+    },
+    "REQ-002": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_build_and_validate_handoff_certificate"
+      ]
+    },
+    "REQ-003": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_specification_coverage_detects_dropped_canonical_candidate"
+      ]
+    },
+    "REQ-004": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_build_and_validate_handoff_certificate"
+      ]
+    },
+    "REQ-005": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_specification_coverage_detects_dropped_canonical_candidate"
+      ]
+    },
+    "REQ-006": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_build_and_validate_handoff_certificate"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "entregar-issue/tests/test_handoff_certificate_contract.py": [
+      {
+        "case": "entregar-issue/tests/test_handoff_certificate_contract.py::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage",
+        "test_case_id": "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      }
+    ]
+  }
+}
