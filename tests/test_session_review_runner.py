@@ -220,6 +220,7 @@ class ReviewBackend:
                                      policy_sha256=runner.digest(self.policy_path.read_bytes()))
         self.report["identity"] = copy.deepcopy(self.packet["identity"])
         comment["body"] = runner.PREFIX + json.dumps(self.report)
+        comment["issue_url"] = "https://api.github.com/repos/owner/repo/issues/10"
         self.comments = [comment]
         self.pr = {"number": 10, "state": "open", "draft": False, "body": "Refs #9",
                    "head": {"sha": "a" * 40, "repo": {"full_name": "owner/repo"}},
@@ -227,12 +228,15 @@ class ReviewBackend:
                    "merge_commit_sha": "c" * 40}
         self.checks, self.writes, self.journal_reads = [], [], []
         self.on_prepare = self.on_recheck = lambda: None
+        self.get_comment_form = lambda comment: comment
+        self.operator_authorized = True
+        self.review_get_reads = self.review_list_reads = 0
         self.rechecks = 0
         monkeypatch.setattr(runner, "ROOT", tmp_path)
         monkeypatch.setattr(runner, "api", self.api)
         monkeypatch.setattr(runner, "prepare", self.prepare)
         monkeypatch.setattr(runner, "recheck_inputs", self.recheck)
-        monkeypatch.setattr(runner, "authorized_operator", lambda *_: True)
+        monkeypatch.setattr(runner, "authorized_operator", lambda *_: self.operator_authorized)
         monkeypatch.setenv("GITHUB_RUN_ID", "123")
         monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
 
@@ -294,13 +298,15 @@ class ReviewBackend:
         if path.endswith("/issues/9"):
             return copy.deepcopy(self.issue)
         if path.endswith("/issues/10/comments"):
+            self.review_list_reads += 1
             return copy.deepcopy(self.comments[(page - 1) * 100:page * 100])
         if "/issues/comments/" in path:
+            self.review_get_reads += 1
             comment_id = int(path.rsplit("/", 1)[1])
             matches = [c for c in self.comments if c["id"] == comment_id]
             if not matches:
                 raise OSError("comment not found")
-            return copy.deepcopy(matches[0])
+            return self.get_comment_form(copy.deepcopy(matches[0]))
         if "/check-runs/" in path:
             return copy.deepcopy(next(c for c in self.checks if c["id"] == int(path.rsplit("/", 1)[1])))
         raise AssertionError(endpoint)
@@ -490,3 +496,109 @@ def test_review_journal_rejects_inconsistent_pages(review_backend, monkeypatch, 
     monkeypatch.setattr(runner, "api", api)
     with pytest.raises(ValueError, match=r"inventory|duplicated"):
         runner.review_journal("owner/repo", "a" * 40)
+
+
+def test_review_accepts_only_presentation_differences_across_rest_forms(review_backend):
+    backend = review_backend
+    comment = backend.comments[0]
+    comment["user"]["avatar_url"] = "https://avatars.githubusercontent.com/u/123?v=4"
+    comment["performed_via_github_app"] = {"id": 123, "name": "listed-app"}
+
+    def single_form(value):
+        value["pin"] = None  # Absent in the listing, null in the individual GET.
+        value["user"]["avatar_url"] = "https://avatars.githubusercontent.com/u/123?cache=one&v=4"
+        value["performed_via_github_app"] = {"id": 456, "name": "individual-app"}
+        return value
+
+    backend.get_comment_form = single_form
+
+    def change_presentation_only():
+        comment["pin"] = {"ignored": True}
+        comment["user"]["avatar_url"] = "https://avatars.githubusercontent.com/u/123?cache=two&v=4"
+        comment["performed_via_github_app"] = None
+
+    backend.on_recheck = change_presentation_only
+    assert backend.run() == 0
+    assert backend.review_list_reads == backend.review_get_reads == 2
+    assert backend.rechecks == 1
+    assert backend.checks[-1]["conclusion"] == "success"
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("body", "append"), ("id", 21), ("user.login", "intruder"),
+    ("user.id", 456), ("user.type", "Bot"),
+    ("created_at", "2026-10-26T11:00:01Z"),
+    ("updated_at", "2026-10-26T11:00:01Z"),
+    ("issue_url", "https://api.github.com/repos/owner/repo/issues/11"),
+])
+def test_review_rejects_security_drift_between_rest_forms(review_backend, field, value):
+    backend = review_backend
+
+    def mutated_individual(comment):
+        if field == "body":
+            comment["body"] += " "  # Same ID and timestamps, different bytes.
+        elif field.startswith("user."):
+            comment["user"][field.split(".")[1]] = value
+        else:
+            comment[field] = value
+        return comment
+
+    backend.get_comment_form = mutated_individual
+    assert backend.run() == 2
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert not any(body.get("conclusion") == "success" for _, body in backend.writes)
+
+
+@pytest.mark.parametrize("mutation", ["missing-issue", "foreign-issue", "boolean-id", "missing-timestamp"])
+def test_review_rejects_invalid_binding_in_list_form(review_backend, mutation):
+    backend = review_backend
+    comment = backend.comments[0]
+    if mutation == "missing-issue":
+        del comment["issue_url"]
+    elif mutation == "foreign-issue":
+        comment["issue_url"] = "https://api.github.com/repos/owner/repo/issues/11"
+    elif mutation == "boolean-id":
+        comment["id"] = True
+    else:
+        del comment["created_at"]
+        del comment["updated_at"]
+    assert backend.run() == 2
+    assert backend.checks[-1]["conclusion"] == "failure"
+
+
+def test_review_rejects_second_individual_read_mutation_before_publication(review_backend):
+    backend = review_backend
+    reads = []
+
+    def second_read_changes_body(comment):
+        reads.append(comment["id"])
+        if len(reads) == 2:
+            comment["body"] += " "
+        return comment
+
+    backend.get_comment_form = second_read_changes_body
+    assert backend.run() == 2
+    assert len(reads) == 2
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert not any(body.get("conclusion") == "success" for _, body in backend.writes)
+
+
+def test_review_rejects_later_invalid_report_during_final_revalidation(review_backend):
+    backend = review_backend
+    new_report = copy.deepcopy(backend.report)
+    new_report["conclusion"] = "rejected"
+    latest = copy.deepcopy(backend.comments[0])
+    latest["id"] += 1
+    latest["body"] = runner.PREFIX + json.dumps(new_report)
+    backend.on_recheck = lambda: backend.comments.append(latest)
+    assert backend.run() == 2
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert not any(body.get("conclusion") == "success" for _, body in backend.writes)
+
+
+def test_review_rechecks_operator_permission_before_publication(review_backend):
+    backend = review_backend
+    backend.on_recheck = lambda: setattr(backend, "operator_authorized", False)
+    assert backend.run() == 2
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert not any(body.get("conclusion") == "success" for _, body in backend.writes)

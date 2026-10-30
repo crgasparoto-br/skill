@@ -88,6 +88,30 @@ def latest_review(comments: list[dict], policy: dict, *, watermark: int = 0) -> 
     return selected
 
 
+def review_snapshot(comment: dict, repo: str, pull_request: int) -> dict:
+    """Compare only security-critical fields across GitHub REST response shapes.
+
+    Presentation metadata (pin, avatar caches, GitHub App details) is not
+    authoritative. The issue binding and immutable review fields are.
+    """
+    require(isinstance(comment, dict), "invalid review comment")
+    user = comment.get("user")
+    require(isinstance(user, dict), "review author missing")
+    require(type(comment.get("id")) is int and comment["id"] > 0, "review comment ID missing")
+    require(isinstance(comment.get("body"), str), "review body missing")
+    require(type(user.get("id")) is int and user["id"] > 0
+            and isinstance(user.get("login"), str) and bool(user["login"])
+            and user.get("type") == "User", "review author identity missing")
+    require(comment.get("issue_url") == f"https://api.github.com/repos/{repo}/issues/{pull_request}",
+            "review is not linked to the authenticated PR")
+    require(all(isinstance(comment.get(k), str) and bool(comment[k])
+                for k in ("created_at", "updated_at")), "review timestamps missing")
+    return {"id": comment["id"], "body": comment["body"], "user_id": user["id"],
+            "user_login": user["login"], "user_type": user["type"],
+            "issue_url": comment["issue_url"], "created_at": comment["created_at"],
+            "updated_at": comment["updated_at"]}
+
+
 def validate_identity(identity: dict) -> None:
     require(set(identity) == {"repository", "pull_request", "issue", "base_ref", "base_sha", "head_sha",
                               "merge_preview_sha", "issue_sha256", "policy_sha256"}, "identity fields differ")

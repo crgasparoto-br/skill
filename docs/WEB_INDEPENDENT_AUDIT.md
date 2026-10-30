@@ -72,6 +72,8 @@ O resultado aprovado exige `conclusion=approved`, `blocking_findings=[]` e `limi
 
 Esse limite de eventos pendentes nao limita o historico de pareceres no mesmo SHA a 100 registros. O verificador pagina o historico e preserva a ordem das revisoes ao revalidar e reutilizar o check. O orcamento existente de coleta e de 25 paginas, com ate 2.500 registros; inventario maior, truncado ou alterado durante a leitura e recusado explicitamente, sem deixar um novo check pendente nem aceitar historico parcial. A identidade capturada no inicio, o pacote preparado, a leitura final e o SHA de publicacao devem coincidir; qualquer mudanca interrompe a aprovacao.
 
+O comentario da PR e comparado por um snapshot semantico explicito entre a listagem e a consulta individual: ID, corpo integral, autor (ID, login, tipo), `issue_url` vinculado a PR autenticada e timestamps de criacao/atualizacao. Os campos de apresentacao `pin`, `user.avatar_url` e detalhes de `performed_via_github_app` nao alteram a autoridade do parecer e podem diferir entre endpoints. O mesmo snapshot e conferido novamente depois da revalidacao de identidade, permissao, evidencias e ordem dos pareceres, imediatamente antes da publicacao do check. Alteracao material, edicao, exclusao, perda de permissao ou parecer posterior invalido mantem o bloqueio.
+
 ## Marcos de entrega e responsabilidades
 
 | Marco | Evidencia de conclusao | Responsavel e limite |
