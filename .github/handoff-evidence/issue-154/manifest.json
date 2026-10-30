@@ -13,7 +13,7 @@
   "audit_history_evidence": "GitHub PR #155 review history queried in the current separate audit context: zero submitted reviews or prior independent rejection for this candidate as of the inspected state; failing check run 40963550432 is missing review rather than a submitted rejection.",
   "artifact_sha256": {
     "reviewed-closure.json": "ece4e12483c03c8bb3ef32300869e93333846fe8f99d5ec0a3fe18f40c9385e6",
-    "standard-evidence.json": "5a1d7b43221ac63598c4469fb030911a06447653ce9cad61ffbc6a058f9d77d4",
+    "standard-evidence.json": "5b528863dcb421a289fba9346c86518c8b6dfd2d12fdb134e80f0e4169b47f25",
     "codebase-grounding.json": "46e0421e77a1406c66b8ee2c50c3f7a352a7bbc9129a08446f23473ee9a5526f"
   },
   "test_bindings": {

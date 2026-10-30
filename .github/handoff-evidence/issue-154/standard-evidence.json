@@ -98,7 +98,7 @@
       "positive_evidence": [
         "Pre-handoff part only: Validate skills run 40963550423 succeeds; separate semantic handoff and independent review remain pending.",
         "Authenticated run 40963550424 collected exact-SHA JUnit with all referenced tests reported passed; the new material SHA is rechecked by the official caller.",
-        "The exact-SHA CI must reach tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader for both trusted workflows; this asserts both token aliases equal the same github.token."
+        "The exact-SHA CI must execute the trusted token-alias test for both session-review and neutral-packet workflows; this asserts both aliases equal the same github.token."
       ],
       "primary_negative_control": {
         "id": "NC-154-PARENT-TOKEN",
