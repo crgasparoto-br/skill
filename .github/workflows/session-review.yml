@@ -53,5 +53,6 @@ jobs:
       - name: Validate or revoke the exact-SHA session review
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
         run: python scripts/verify_session_review.py --repo "$REPOSITORY" --event "$GITHUB_EVENT_PATH"
