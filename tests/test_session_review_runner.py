@@ -523,7 +523,8 @@ def test_review_accepts_only_presentation_differences_across_rest_forms(review_b
 
     backend.on_recheck = change_presentation_only
     assert backend.run() == 0
-    assert backend.review_list_reads == backend.review_get_reads == 2
+    assert backend.review_list_reads == 3  # Initial selection and two rereads.
+    assert backend.review_get_reads == 2  # Each selected review is fetched twice.
     assert backend.rechecks == 1
     assert backend.checks[-1]["conclusion"] == "success"
 
