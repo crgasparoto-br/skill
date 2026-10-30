@@ -17,7 +17,7 @@ import zipfile
 from pathlib import Path
 from urllib.parse import quote
 
-from session_review import ASSURANCE, CHECK_NAME, POLICY_PATH, PREFIX, allowed, canonical, digest, latest_review, require, safe_path, strict_json, validate_policy, verify_review
+from session_review import ASSURANCE, CHECK_NAME, POLICY_PATH, PREFIX, allowed, canonical, digest, latest_review, require, review_snapshot, safe_path, strict_json, validate_policy, verify_review
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_BYTES = 32 * 1024 * 1024
@@ -402,6 +402,7 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         watermark = max(watermark, event_review_id(policy))
         receipt["minimum_comment_id"] = watermark
         selected = latest_review(comments, policy, watermark=watermark)
+        snapshot = review_snapshot(selected, repo, number)
         receipt["review_comment_id"] = selected["id"]
         # A write-capable, currently authorized operator is required in addition to
         # the numeric account allowlist. The PR author's account may be that operator.
@@ -409,9 +410,10 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         receipt = verify_review(selected, packet, policy, files, passed)
         # Re-read every mutable authority and input after verifying the review.
         latest = api(f"/repos/{repo}/issues/comments/{selected['id']}")
-        require(latest == selected, "review changed during verification")
+        require(review_snapshot(latest, repo, number) == snapshot, "review changed during verification")
         selected_now = latest_review(pages(repo, f"issues/{number}/comments"), policy, watermark=selected["id"])
-        require(selected_now == selected, "a newer review superseded this approval")
+        require(review_snapshot(selected_now, repo, number) == snapshot,
+                "a newer review superseded this approval")
         recheck_inputs(packet)
         refreshed, _ = target(repo, number, issue_number, (ROOT / POLICY_PATH).read_bytes())
         require(refreshed == initial == packet["identity"], "target changed before publication")
@@ -420,11 +422,12 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         # edited, deleted, rejected or superseded while the target/evidence checks
         # were running must never leave a stale success behind.
         final_review = api(f"/repos/{repo}/issues/comments/{selected['id']}")
-        require(final_review == selected, "review changed during final publication revalidation")
+        require(review_snapshot(final_review, repo, number) == snapshot,
+                "review changed during final publication revalidation")
         final_selected = latest_review(
             pages(repo, f"issues/{number}/comments"), policy, watermark=selected["id"]
         )
-        require(final_selected == selected,
+        require(review_snapshot(final_selected, repo, number) == snapshot,
                 "a newer review superseded this approval during final publication revalidation")
         summary = "Verified evidence-bound session review. Session separation is operator-attested, NOT third-party identity."
         publish(repo, head, "success", summary, receipt, os.environ.get("GITHUB_RUN_ID", ""), check_id)

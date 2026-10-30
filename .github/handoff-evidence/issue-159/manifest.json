@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "review_state": "incomplete",
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 159,
+  "pull_request_number": 160,
+  "base_ref": "develop",
+  "head_ref": "fix/159-session-review-semantic-snapshot",
+  "work_item_start_sha": "3cd4b81e41fa8f726e7b3567a18c0f96c1fca741",
+  "evidence_profile": "critical",
+  "risk_justification": "A mudanca atinge verificacao de autoridade do parecer de sessao, precedencia do historico, autorizacao e publicacao exact-SHA de checks; requer testes positivos, negativos, corrida e controles herdados.",
+  "audit_history": "previous-rejection",
+  "audit_history_evidence": "Auditoria independente em conversa separada em 2026-10-30 reprovou PR #160 por falta de certificacao semantica e do gate GitHub de revisao independente; ainda nao existe review autenticado desta nova identidade.",
+  "artifact_sha256": {},
+  "test_bindings": {
+    "R159-01": {
+      "positive": [
+        "tests.test_session_review_runner::test_review_accepts_only_presentation_differences_across_rest_forms"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_review_rejects_security_drift_between_rest_forms[body-append]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]"
+      ]
+    },
+    "R159-02": {
+      "positive": [
+        "tests.test_session_review_runner::test_review_accepts_only_presentation_differences_across_rest_forms"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_review_rejects_security_drift_between_rest_forms[user.id-456]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_review_rejects_second_individual_read_mutation_before_publication"
+      ]
+    },
+    "R159-03": {
+      "positive": [
+        "tests.test_session_review_runner::test_review_accepts_only_presentation_differences_across_rest_forms"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_review_rejects_invalid_binding_in_list_form[foreign-issue]",
+        "tests.test_session_review_runner::test_review_rejects_security_drift_between_rest_forms[updated_at-2026-10-26T11:00:01Z]",
+        "tests.test_session_review_runner::test_review_rechecks_operator_permission_before_publication"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]",
+        "tests.test_session_review_runner::test_review_rejects_later_invalid_report_during_final_revalidation"
+      ]
+    },
+    "R159-05": {
+      "positive": [
+        "tests.test_session_review_runner::test_review_accepts_only_presentation_differences_across_rest_forms"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_review_rejects_security_drift_between_rest_forms[user.id-456]",
+        "tests.test_session_review_runner::test_review_rejects_security_drift_between_rest_forms[body-append]",
+        "tests.test_session_review_runner::test_evaluate_rejects_target_change_before_publication[base_sha]",
+        "tests.test_session_review_runner::test_review_rechecks_operator_permission_before_publication"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]"
+      ]
+    },
+    "R159-06": {
+      "positive": [
+        "tests.test_session_review_runner::test_review_accepts_only_presentation_differences_across_rest_forms"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_review_rejects_second_individual_read_mutation_before_publication",
+        "tests.test_session_review_runner::test_review_rejects_later_invalid_report_during_final_revalidation"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]"
+      ]
+    }
+  }
+}
