@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 154,
+  "pull_request_number": 155,
+  "base_ref": "develop",
+  "head_ref": "fix/154-deferred-prehandoff-schema",
+  "work_item_start_sha": "83b18db74716bc7f0c822af4c43c1d68a6fa3b6d",
+  "review_state": "approved",
+  "evidence_profile": "standard",
+  "risk_justification": "The change extends the strict mixed-deferred schema and adds only a trusted workflow step environment alias for the SAME existing GitHub Actions token under the SAME permissions; no new credential, scope, privileges, untrusted PR execution, or bypass. Exact-token positive controls, absent-token negative controls and trusted workflow source regressions run on material SHA; terminal certification and separate independent audit remain mandatory.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "GitHub PR #155 review history queried in the current separate audit context: zero submitted reviews or prior independent rejection for this candidate as of the inspected state; failing check run 40963550432 is missing review rather than a submitted rejection.",
+  "artifact_sha256": {
+    "reviewed-closure.json": "ece4e12483c03c8bb3ef32300869e93333846fe8f99d5ec0a3fe18f40c9385e6",
+    "standard-evidence.json": "5b528863dcb421a289fba9346c86518c8b6dfd2d12fdb134e80f0e4169b47f25",
+    "codebase-grounding.json": "46e0421e77a1406c66b8ee2c50c3f7a352a7bbc9129a08446f23473ee9a5526f"
+  },
+  "test_bindings": {
+    "REQ-001": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_build_and_validate_handoff_certificate"
+      ]
+    },
+    "REQ-002": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_build_and_validate_handoff_certificate"
+      ]
+    },
+    "REQ-003": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_specification_coverage_detects_dropped_canonical_candidate"
+      ]
+    },
+    "REQ-004": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_build_and_validate_handoff_certificate"
+      ]
+    },
+    "REQ-005": {
+      "positive": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_specification_coverage_detects_dropped_canonical_candidate"
+      ]
+    },
+    "REQ-006": {
+      "positive": [
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]",
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_partial_handoff_parent_state_requires_authenticated_read"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]",
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "entregar-issue/tests/test_handoff_certificate_contract.py": [
+      {
+        "case": "entregar-issue/tests/test_handoff_certificate_contract.py::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage",
+        "test_case_id": "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      }
+    ],
+    "tests/test_session_review_workflows.py": [
+      {
+        "case": "tests/test_session_review_workflows.py::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]",
+        "test_case_id": "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]"
+      },
+      {
+        "case": "tests/test_session_review_workflows.py::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]",
+        "test_case_id": "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]"
+      }
+    ]
+  }
+}

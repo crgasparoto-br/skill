@@ -1,0 +1,85 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [],
+  "references": [
+    {
+      "symbol": "completion_fields",
+      "kind": "local",
+      "used_in": "entregar-issue/tests/test_handoff_certificate_contract.py",
+      "defined_at": {
+        "path": "entregar-issue/scripts/validate_handoff_certificate.py",
+        "line": 90
+      },
+      "verified_by": {
+        "command": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "exit_code": 0
+      }
+    }
+  ],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "entregar-issue/tests/test_handoff_certificate_contract.py",
+      "operation": "modified",
+      "scenario": "Strict schema acceptance and negative scenarios for an independently deferred approval in a mixed obligation.",
+      "requirement": "Issue #154 strict pre_handoff_coverage and exact text with no premature independent approval.",
+      "search": {
+        "queries": [
+          "pre_handoff_coverage",
+          "completion_fields exact text",
+          "requirement-closure schema"
+        ],
+        "scope": "Existing entregar-issue/tests and scripts, with archived schema and current validator behavior.",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_handoff_certificate_contract.py",
+            "case": "test_deferred_mixed_clause_requires_exact_pre_handoff_coverage",
+            "oracle": "Accept exact reviewed coverage and reject short, absent or extra properties plus wrong text.",
+            "comparison": "Existing test already exercises the actual completion_fields boundary, so it is extended in place rather than duplicated."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend the existing mixed-deferred certificate contract test with schema acceptance and strict negative variants, keeping the semantic validator unchanged.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "tests/test_session_review_workflows.py",
+      "operation": "modified",
+      "scenario": "Trusted packet/session workflow entrypoints supply the same action-scoped token under both GH_TOKEN and GITHUB_TOKEN for live parent issue validation.",
+      "requirement": "Issue #154 OBL-006: CI, parent issue verification and separate independent audit must be possible without bypass.",
+      "search": {
+        "queries": [
+          "GH_TOKEN",
+          "GITHUB_TOKEN",
+          "session review workflow",
+          "require_actions_handoff_certificate"
+        ],
+        "scope": "Existing tests/test_session_review_workflows.py and entregar-issue/tests/test_require_actions_handoff_certificate.py, trusted workflow entrypoints",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "tests/test_session_review_workflows.py",
+            "case": "test_candidate_selected_refs_cannot_start_review_workflows",
+            "oracle": "The workflow must execute only from trusted code with unchanged permissions and now forward identical tokens to both readers.",
+            "comparison": "Existing trust-source test did not verify GITHUB_TOKEN alias, so it was extended in the same test module."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend existing workflow security test module to detect missing GITHUB_TOKEN on both trusted steps; preserve the existing negative test that rejects absent authenticated token.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}

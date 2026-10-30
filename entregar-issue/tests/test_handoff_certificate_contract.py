@@ -667,6 +667,26 @@ def test_deferred_mixed_clause_requires_exact_pre_handoff_coverage(monkeypatch):
         "rationale": "Pre-handoff implementation requirements are evidenced before approval.",
     }
     assert completion_fields(closure, 112)["issue_completion"] == "partial"
+    # The schema must accept the same constrained evidence that the terminal validator requires.
+    from jsonschema import Draft202012Validator, ValidationError
+
+    schema = json.loads(
+        (ROOT / "schemas" / "requirement-closure.schema.json").read_text(encoding="utf-8")
+    )
+    decision_schema = schema["properties"]["obligations"]["items"]["properties"]["scope_decision"]
+    validator = Draft202012Validator(decision_schema)
+    validator.validate(decision)
+    for invalid_coverage in (
+        {"covered_text": "CI", "rationale": "too short"},
+        {
+            "covered_text": "CI",
+            "rationale": "Enough words to describe current evidence precisely.",
+            "shortcut": True,
+        },
+        {"covered_text": "CI"},
+    ):
+        with pytest.raises(ValidationError):
+            validator.validate({**decision, "pre_handoff_coverage": invalid_coverage})
     decision["pre_handoff_coverage"]["covered_text"] = "Documentation alone is correct"
     with pytest.raises(ValueError, match="verified parent-issue decision"):
         completion_fields(closure, 112)
