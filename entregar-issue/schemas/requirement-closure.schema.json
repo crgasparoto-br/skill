@@ -163,6 +163,24 @@
                   },
                   "parent_issue_must_remain_open": {
                     "type": "boolean"
+                  },
+                  "pre_handoff_coverage": {
+                    "type": "object",
+                    "required": [
+                      "covered_text",
+                      "rationale"
+                    ],
+                    "properties": {
+                      "covered_text": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "rationale": {
+                        "type": "string",
+                        "minLength": 30
+                      }
+                    },
+                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
