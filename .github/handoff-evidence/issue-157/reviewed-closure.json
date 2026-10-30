@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "87328647a9294f7806af0300e554b6f04653e29b4847398a5136e17605a42966": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-001"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The patch supplies both GH_TOKEN and GITHUB_TOKEN from the identical github.token value to the authenticated parent-issue reader in both trusted workflow entrypoints, without a new credential."
+    },
+    "092df115ba2cd0bd97df8420677fb9d69983b0a5e11f753721b60b01cf23b21a": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-002"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The changed workflow steps retain their original permissions and trusted-source checkout; ref-selection regression tests prohibit execution from candidate-controlled workflow code."
+    },
+    "d56515949d0a697a7a627c1dcf450b912f1bea79bf5fe72a6d7c37fc150ed86b": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-003"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The existing workflow tests cover both token aliases, the absent-token rejection and trusted-ref regression; the official CI must reconfirm each exact JUnit identifier for this material SHA."
+    },
+    "4ee59c78ea08592a9625058cd72594199f6169b2efde5e0ecff84e6bcf43e90c": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "REQ-004"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "The bootstrap is confined to two trusted workflow env aliases and one extended existing test module; the #154 schema change is explicitly excluded from this distinct material candidate."
+    },
+    "e629fd047146af9161853b2281b742c7cfed39b5ddff5b1b1a62f05b29ad444d": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "REQ-005"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-157",
+        "decision_source_sha256": "ddcc1400c2216431a7246fb1896ed7944cda785c582932bd9dcd1509a9683ebe",
+        "decision_locator": "Executar revisão independente exact-SHA, aprovar a decisão de bootstrap e validar leitura autenticada de um pacote neutro com controles adversariais antes de qualquer merge ou instalação na default, mantendo esta issue aberta até conclusão.",
+        "target_issue": 157,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "The independent code review, trusted installation and operational M2 controls remain unsatisfied until separately audited; issue #157 and parent #127 remain open."
+    }
+  },
+  "controls": {
+    "domain_inventories": [],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "passed",
+      "applicability_reason": "The issue requires trusted-only workflow token aliases, no candidate-controlled ref and a separate independent review gate.",
+      "entries": [
+        {
+          "id": "SIC-157",
+          "kind": "precedence",
+          "requirement_ids": [
+            "REQ-001",
+            "REQ-002"
+          ],
+          "obligation_ids": [
+            "OBL-001",
+            "OBL-002"
+          ],
+          "plausible_wrong_implementation": "Use GH_TOKEN alone or accept a candidate-controlled workflow checkout to assert parent issue verification without authenticated GITHUB_TOKEN.",
+          "canonical_path": "trusted main workflow -> identical GH_TOKEN/GITHUB_TOKEN aliases -> authenticated parent issue read -> independent review",
+          "competing_paths": [
+            "candidate-controlled checkout -> self-attested issue binding",
+            "GH_TOKEN-only reader -> unauthenticated parent issue"
+          ],
+          "evidence_ids": [
+            "NC-157-PARENT-TOKEN"
+          ],
+          "scenario_ids": [
+            "test_partial_handoff_parent_state_requires_authenticated_read"
+          ],
+          "negative_control_evidence": [
+            "The existing executed JUnit rejects an absent authenticated GITHUB_TOKEN; the workflow test checks identical aliases and trusted source."
+          ]
+        }
+      ],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "not-applicable",
+      "applicability_reason": "Only two trusted GitHub Actions workflow step environments and an existing workflow test change; no product read-side business model is modified.",
+      "entries": [],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "not-applicable",
+      "applicability_reason": "No business source-of-truth or cross-domain catalog is changed. The authenticated parent issue read is performed by the unchanged reader.",
+      "entries": [],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "Reviewed the existing web audit contract and both trusted workflow definitions; no reviewer guarantees, permission levels or policy defaults changed.",
+      "old_contract_terms": [
+        "Trusted reader received only GH_TOKEN while the parent issue validator requires GITHUB_TOKEN."
+      ],
+      "new_contract_terms": [
+        "Trusted reader receives both aliases from the same github.token; permissions and event sources unchanged."
+      ],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "docs/WEB_INDEPENDENT_AUDIT.md defines trusted source, neutral packet and operator-session limits.",
+        "entregar-issue/scripts/require_actions_handoff_certificate.py still refuses absent authenticated parent issue token.",
+        ".github/workflows/session-review.yml and .github/workflows/prepare-neutral-audit-packet.yml now expose both aliases from github.token."
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": [
+        {
+          "path": "issue #157",
+          "line": 10,
+          "text": "Executar revisão independente exact-SHA, aprovar a decisão de bootstrap e validar leitura autenticada de um pacote neutro com controles adversariais antes de qualquer merge ou instalação na default, mantendo esta issue aberta até conclusão.",
+          "disposition": "not-a-reduction",
+          "decision_source_id": "SRC-ISSUE-157",
+          "rationale": "The source assigns independent review and trusted installation after technical handoff. Neither is claimed as done by CI and both remain required prior to merge."
+        }
+      ]
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "REQ-001",
+        "REQ-002",
+        "REQ-003",
+        "REQ-004",
+        "REQ-005"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-002",
+        "OBL-003",
+        "OBL-004",
+        "OBL-005"
+      ],
+      "evidence": [
+        "Five canonical candidates from the authenticated issue #157, limited to the trusted bootstrap of the workflow token aliases and scoped independently from issue #154.",
+        "The material diff contains two trusted workflow environment aliases and one test extension; source Git objects are compared to PR #155 for semantic parity.",
+        "Previously executed structure test run 41048266949 succeeded on baseline SHA 2c3c05f; official exact-current-SHA runs and JUnit bindings must revalidate this revision.",
+        "Negative control: the unchanged live parent issue reader rejects absence of GITHUB_TOKEN; trusted refs regression prevents a candidate-controlled checkout.",
+        "Independent review, policy/ruleset adoption, and actual neutral packet read are not presented as completed and must remain gated."
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}

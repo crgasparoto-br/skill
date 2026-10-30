@@ -1,0 +1,41 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [],
+  "references": [],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "tests/test_session_review_workflows.py",
+      "operation": "modified",
+      "scenario": "Trusted session-review and neutral-packet steps expose the same GitHub Actions token as GH_TOKEN and GITHUB_TOKEN without altering permissions or allowing PR-provided refs.",
+      "requirement": "Issue #157: aliases both available in the trusted reader and negative/registered source regression tests.",
+      "search": {
+        "queries": [
+          "GH_TOKEN",
+          "GITHUB_TOKEN",
+          "test_candidate_selected_refs_cannot_start_review_workflows",
+          "test_partial_handoff_parent_state_requires_authenticated_read"
+        ],
+        "scope": "Existing GitHub Actions review/packet workflow tests and the parent issue reader contract.",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "tests/test_session_review_workflows.py",
+            "case": "test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader",
+            "oracle": "Require two equivalent aliases in both trusted workflow steps; absent token must remain a hard error and candidate refs must remain rejected.",
+            "comparison": "The workflow trust test already existed and was extended in place, rather than creating a new duplicate parser or lowering permissions."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Reuse existing trust-source test module and add precise same-token assertions; no other implementation tests are added.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}

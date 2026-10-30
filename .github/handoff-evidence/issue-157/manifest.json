@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 157,
+  "pull_request_number": 156,
+  "base_ref": "main",
+  "head_ref": "fix/154-bootstrap-trusted-review-main",
+  "work_item_start_sha": "94acf829721b9e1ace4acc708edb6313bb5510a9",
+  "review_state": "approved",
+  "evidence_profile": "standard",
+  "risk_justification": "The patch updates only two trusted workflow step environment aliases and one existing test. No new credential, scope, checked-out candidate code, permissions, bypass, schema or operational policy. Positive token parity, negative missing token and trusted source regression tests are required exact-SHA; independent approval and M2 rollout remain a separate blocked phase.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "Authenticated GitHub review history of PR #156 was empty when the scoped bootstrap dossier was prepared; failed CI gates on the initial draft are not a submitted independent rejection.",
+  "artifact_sha256": {
+    "reviewed-closure.json": "0806b4937b952b91ad2ed0716ffa6748602e559dc0f2e047ff3a2f15bbdf8df0",
+    "standard-evidence.json": "0f9d308c859946f879194599ee7e92e97507999d1b765903ef4a80e121ec71dc",
+    "codebase-grounding.json": "96d327f434b8b20bafd3b2aa9dc54513a441ce67b11ca46d9f65cab62a1ced79"
+  },
+  "test_bindings": {
+    "REQ-001": {
+      "positive": [
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]",
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_partial_handoff_parent_state_requires_authenticated_read"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]",
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]"
+      ]
+    },
+    "REQ-002": {
+      "positive": [
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]",
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_partial_handoff_parent_state_requires_authenticated_read"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]",
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]"
+      ]
+    },
+    "REQ-003": {
+      "positive": [
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]",
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_partial_handoff_parent_state_requires_authenticated_read"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]",
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]"
+      ]
+    },
+    "REQ-004": {
+      "positive": [
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]",
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_partial_handoff_parent_state_requires_authenticated_read"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]",
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "tests/test_session_review_workflows.py": [
+      {
+        "case": "tests/test_session_review_workflows.py::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]",
+        "test_case_id": "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]"
+      },
+      {
+        "case": "tests/test_session_review_workflows.py::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]",
+        "test_case_id": "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]"
+      }
+    ]
+  }
+}

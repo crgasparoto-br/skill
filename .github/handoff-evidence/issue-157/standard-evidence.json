@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "contract_version": "2026-08-20.3",
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "requirements": [
+    {
+      "requirement_id": "REQ-001",
+      "positive_evidence": [
+        "Read the diff for both trusted GitHub Actions workflows and verify the same github.token aliases with no extra permissions.",
+        "Existing exact-head suite 41048266949 passed on the initial candidate; the official producer must confirm that the bound JUnit test identities passed again on the final material SHA."
+      ],
+      "primary_negative_control": {
+        "id": "NC-157-PARENT-TOKEN",
+        "status": "passed",
+        "procedure": "Run the absent-GITHUB_TOKEN parent-issue test while both workflow alias tests are present.",
+        "expected": "Missing authenticated token is rejected instead of trusting a PR assertion.",
+        "observed": "The existing JUnit asserts ValueError on missing authenticated token; the workflow alias tests assert same token."
+      },
+      "regression_evidence": [
+        "The existing candidate_selected_refs_cannot_start_review_workflows test remains active for both trusted workflows.",
+        "An authorized check revalidates the exact new material SHA and the negative test set before certification."
+      ]
+    },
+    {
+      "requirement_id": "REQ-002",
+      "positive_evidence": [
+        "Read the diff for the authenticated bootstrap workflow and tests and verify the same github.token aliases with no extra permissions.",
+        "Existing exact-head suite 41048266949 passed on the initial candidate; the official producer must confirm that the bound JUnit test identities passed again on the final material SHA."
+      ],
+      "primary_negative_control": {
+        "id": "NC-157-TRUSTED-REF",
+        "status": "passed",
+        "procedure": "Run the candidate-selected workflow refs regression for session and packet workflows; any untrusted checkout must be rejected.",
+        "expected": "Untrusted selected refs may not control workflow code.",
+        "observed": "The preexisting trusted source test cases assert rejection of candidate-selected refs for both workflows."
+      },
+      "regression_evidence": [
+        "The existing candidate_selected_refs_cannot_start_review_workflows test remains active for both trusted workflows.",
+        "An authorized check revalidates the exact new material SHA and the negative test set before certification."
+      ]
+    },
+    {
+      "requirement_id": "REQ-003",
+      "positive_evidence": [
+        "Read the diff for the authenticated bootstrap workflow and tests and verify the same github.token aliases with no extra permissions.",
+        "Existing exact-head suite 41048266949 passed on the initial candidate; the official producer must confirm that the bound JUnit test identities passed again on the final material SHA."
+      ],
+      "primary_negative_control": {
+        "id": "NC-157-JUNIT",
+        "status": "passed",
+        "procedure": "Execute the parent reader with no GITHUB_TOKEN and verify its rejection; compare with both positive token alias checks.",
+        "expected": "Absent token produces a validation failure rather than false approval.",
+        "observed": "The exact JUnit test verifies a blocked unauthenticated parent issue read, independent of the alias patch."
+      },
+      "regression_evidence": [
+        "The existing candidate_selected_refs_cannot_start_review_workflows test remains active for both trusted workflows.",
+        "An authorized check revalidates the exact new material SHA and the negative test set before certification."
+      ]
+    },
+    {
+      "requirement_id": "REQ-004",
+      "positive_evidence": [
+        "Read the diff for the authenticated bootstrap workflow and tests and verify the same github.token aliases with no extra permissions.",
+        "Existing exact-head suite 41048266949 passed on the initial candidate; the official producer must confirm that the bound JUnit test identities passed again on the final material SHA."
+      ],
+      "primary_negative_control": {
+        "id": "NC-157-SCOPE",
+        "status": "passed",
+        "procedure": "Check the candidate diff against main for new secrets, permissions or schema edits; test the trusted source restrictions.",
+        "expected": "Only two workflow env aliases and existing test extension are in candidate scope.",
+        "observed": "Changed filenames in the frozen candidate contain only the two workflows and tests plus reviewed semantic evidence."
+      },
+      "regression_evidence": [
+        "The existing candidate_selected_refs_cannot_start_review_workflows test remains active for both trusted workflows.",
+        "An authorized check revalidates the exact new material SHA and the negative test set before certification."
+      ]
+    }
+  ]
+}
