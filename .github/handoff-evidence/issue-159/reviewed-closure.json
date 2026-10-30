@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "681465989c5eb255f82d324d52e5f121d18fb5566e2d808ee97fc2e8edb34d24": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R159-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Fatos autenticados do comentario 6525197234: lista e GET mantem ID, autor, corpo e timestamps, diferindo em pin e avatar. Teste REST simulado cobre a representacao e CI exact-SHA anterior passou. Isto nao equivale a aceite operacional real."
+    },
+    "52634ba8024344ae52acc6166cb4d0c266de61d5db7582e7596db232843cec24": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R159-02"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O diff da PR #160 substitui igualdade de objeto REST bruto por comparacao de review_snapshot nas quatro releituras. O teste positivo discrimina essa causa raiz; o codigo legado no SHA confiavel ainda usa igualdade estrutural."
+    },
+    "a0de9d289e656c184f597fae08b17fe9287d4e0b678e1ec347dfe9c76326394e": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R159-03"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "review_snapshot exige ID, corpo integral, autor por login/ID/tipo, URLs vinculadas ao numero da PR e timestamps; evaluate conserva watermark, latest_review, permissoes e revalidacoes antes da publicacao."
+    },
+    "4b0635d791e81d35a6b6bd892542f309de4145b127aa6a4ee40d62b20c8065ac": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "PENDENTE: teste simulado passou no SHA 7892..., mas nenhuma execucao de Verify session review (exact SHA)=success com parecer real apos instalar a mudanca nas bases foi observada. Nao promover prova simulada a aceite real."
+    },
+    "36d667abe65000c1c8f4551c0c8cf87745551949f8a7a3c83b52d34b1c358ab8": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R159-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Os testes adversariais do SHA material exercitam mudanca de corpo, autor, vinculo, timestamp, exclusao e parecer rejeitado posterior, permissao revogada e drift de identidade, e devem continuar em fail-closed."
+    },
+    "733ca058c87434be8c186969bb568951e9818e879e7840f6cfee4462a84f9729": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R159-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "evaluate rele os comentarios duas vezes apos a selecao e compara o snapshot novamente depois de revalidar os inputs; testes distinguem alteracao no segundo GET, parecer posterior invalido e impossibilidade de retroceder para uma aprovacao antiga."
+    },
+    "03e7e07ccf88867a93d33f1ae6d2d122da7fc6fa04a7853da8b51d61697d6f32": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "PENDENTE: Structure and tests passou com 2886 casos, mas o job de certificacao semantica 41075751763 falhou por certification-inputs.json ausente e o check independente exact-SHA 41075751533 esta vermelho. Nao atribuir sucesso a gates faltantes."
+    },
+    "ee50e39f1cab00619fbfd1dce2c30e5e316f5c1bc93e7c5a0c034f5728f8db9d": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "PENDENTE POR FASE: a instalacao em develop e main pressupoe auditoria independente real, certificado e autorizacao expressa de merge. Nenhum ruleset deve ser alterado para liberar a integracao."
+    },
+    "042521af15a0cad8bd320037646000fee268a841cf28ab9f4cf5e828967462a9": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "PENDENTE: esta conversa implementadora nao pode emitir revisao independente da nova identidade. Review posterior deve ser feita em outro contexto com pacote autenticado, sem reutilizar conclusao de implementacao."
+    }
+  },
+  "controls": {
+    "domain_inventories": [],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "pending",
+      "applicability_reason": "Verificacao estrutural de paths canonicos, comparacoes REST e documentacao ainda requer fecho semantico formal.",
+      "entries": [],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "pending",
+      "applicability_reason": "Precedencia do parecer mais recente e releituras do comentario exigem controle adversarial formal.",
+      "entries": [],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "pending",
+      "applicability_reason": "Reconciliacao completa do verificador com a fonte REST autentica e com os consumidores ainda nao foi certificada.",
+      "entries": [],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "pending",
+      "applicability_reason": "Comparar todas as alegacoes de contrato com os checks reais e as fontes confiaveis nas duas bases.",
+      "old_contract_terms": [],
+      "new_contract_terms": [],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": false,
+      "search_evidence": []
+    },
+    "scope_reduction_review": {
+      "status": "pending",
+      "matches": []
+    },
+    "pass_c": {
+      "status": "pending",
+      "requirement_ids": [],
+      "obligation_ids": [],
+      "evidence": [],
+      "rederived_without_pr_description": false,
+      "reviewed_user_visible_semantics": false,
+      "reviewed_producer_consumer_parity": false,
+      "reviewed_all_specification_sources": false
+    }
+  }
+}
