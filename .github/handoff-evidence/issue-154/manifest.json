@@ -8,13 +8,13 @@
   "work_item_start_sha": "83b18db74716bc7f0c822af4c43c1d68a6fa3b6d",
   "review_state": "approved",
   "evidence_profile": "standard",
-  "risk_justification": "This candidate adds an optional strictly validated JSON schema shape and extends one existing regression test, without altering certificate semantic validation, privileges, foreign identity acceptance or stateful operations; no isolation, atomicity or reference-liveness flags apply. Separate independent review remains mandatory.",
+  "risk_justification": "The change extends the strict mixed-deferred schema and adds only a trusted workflow step environment alias for the SAME existing GitHub Actions token under the SAME permissions; no new credential, scope, privileges, untrusted PR execution, or bypass. Exact-token positive controls, absent-token negative controls and trusted workflow source regressions run on material SHA; terminal certification and separate independent audit remain mandatory.",
   "audit_history": "verified-no-rejection",
   "audit_history_evidence": "GitHub PR #155 review history queried in the current separate audit context: zero submitted reviews or prior independent rejection for this candidate as of the inspected state; failing check run 40963550432 is missing review rather than a submitted rejection.",
   "artifact_sha256": {
-    "reviewed-closure.json": "dce9ec8070138c3e270f6381b8e0137291bf69fe9646afe1c337bce7690ccfed",
-    "standard-evidence.json": "0990f71fe84f0e2d641392f9146d0f779fce9720690ee083933a40074177edfa",
-    "codebase-grounding.json": "8fd1b6d0f21c504e6fc79ff2c927ecfd6b2a898ef654c9a6dac6a1aed77ba496"
+    "reviewed-closure.json": "ece4e12483c03c8bb3ef32300869e93333846fe8f99d5ec0a3fe18f40c9385e6",
+    "standard-evidence.json": "5a1d7b43221ac63598c4469fb030911a06447653ce9cad61ffbc6a058f9d77d4",
+    "codebase-grounding.json": "46e0421e77a1406c66b8ee2c50c3f7a352a7bbc9129a08446f23473ee9a5526f"
   },
   "test_bindings": {
     "REQ-001": {
@@ -74,13 +74,15 @@
     },
     "REQ-006": {
       "positive": [
-        "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]",
+        "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]"
       ],
       "negative": [
-        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_partial_handoff_parent_state_requires_authenticated_read"
       ],
       "regression": [
-        "entregar-issue.tests.test_handoff_certificate_contract::test_build_and_validate_handoff_certificate"
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[session-review.yml]",
+        "tests.test_session_review_workflows::test_candidate_selected_refs_cannot_start_review_workflows[prepare-neutral-audit-packet.yml]"
       ]
     }
   },
@@ -89,6 +91,16 @@
       {
         "case": "entregar-issue/tests/test_handoff_certificate_contract.py::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage",
         "test_case_id": "entregar-issue.tests.test_handoff_certificate_contract::test_deferred_mixed_clause_requires_exact_pre_handoff_coverage"
+      }
+    ],
+    "tests/test_session_review_workflows.py": [
+      {
+        "case": "tests/test_session_review_workflows.py::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]",
+        "test_case_id": "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[session-review.yml]"
+      },
+      {
+        "case": "tests/test_session_review_workflows.py::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]",
+        "test_case_id": "tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader[prepare-neutral-audit-packet.yml]"
       }
     ]
   }

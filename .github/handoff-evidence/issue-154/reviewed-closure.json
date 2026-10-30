@@ -69,7 +69,7 @@
           "rationale": "Structural validation and the repository test suite executed in Actions; the final exact-SHA CI and independent review remain required before any merge."
         }
       },
-      "rationale": "The structural checks and tests were executed. Full certification CI and separate independent review remain required before merge and are explicitly deferred, not claimed by the producer."
+      "rationale": "Structural and regression tests run in Actions, and the trusted packet/session entrypoints now forward the same existing Actions token to the live parent-issue validator. The final exact-SHA certificate and independent review before merge remain separate, unsatisfied until their official gates pass."
     }
   },
   "controls": {
@@ -137,7 +137,8 @@
         "entregar-issue/scripts/validate_handoff_certificate.py:67-109 exact remaining text and deferred parent requirements",
         "entregar-issue/scripts/reviewed_phase_decision.py:18-66 deferred evidence check",
         "entregar-issue/references/github-actions-evidence.md: deferred parent and independent audit remain open",
-        "docs/WEB_INDEPENDENT_AUDIT.md: exact SHA review rules"
+        "docs/WEB_INDEPENDENT_AUDIT.md: exact SHA review rules",
+        ".github/workflows/session-review.yml and .github/workflows/prepare-neutral-audit-packet.yml pass the same runner-scoped github.token as GH_TOKEN and GITHUB_TOKEN to the unmodified parent reader."
       ]
     },
     "scope_reduction_review": {
@@ -176,7 +177,8 @@
         "Exact implementation changes only strict requirement-closure schema and regression test; the semantic validator was not relaxed.",
         "Actions run 40963550423 Validate skills success, with 2866 passed pytest cases indexed in the authenticated collection job.",
         "Mixed-clause positive and three negative cases execute within test_deferred_mixed_clause_requires_exact_pre_handoff_coverage; separate JUnit tests prove parent binding and canonical snapshot rejection.",
-        "CI certification and independent review are not falsely marked complete; OBL-006 explicitly remains deferred."
+        "CI certification and independent review are not falsely marked complete; OBL-006 explicitly remains deferred.",
+        "Authenticated neutral packet run 40988277042 failed at verified partial handoff parent read because GH_TOKEN was set but GITHUB_TOKEN was not. The trusted workflow steps now supply both names from the same github.token, with unchanged permissions and source."
       ],
       "rederived_without_pr_description": true,
       "reviewed_user_visible_semantics": true,

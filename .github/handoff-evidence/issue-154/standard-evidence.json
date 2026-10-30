@@ -97,18 +97,20 @@
       "requirement_id": "REQ-006",
       "positive_evidence": [
         "Pre-handoff part only: Validate skills run 40963550423 succeeds; separate semantic handoff and independent review remain pending.",
-        "Authenticated run 40963550424 collected exact-SHA JUnit with all referenced tests reported passed; the new material SHA is rechecked by the official caller."
+        "Authenticated run 40963550424 collected exact-SHA JUnit with all referenced tests reported passed; the new material SHA is rechecked by the official caller.",
+        "The exact-SHA CI must reach tests.test_session_review_workflows::test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader for both trusted workflows; this asserts both token aliases equal the same github.token."
       ],
       "primary_negative_control": {
-        "id": "NC-154-REVIEW",
+        "id": "NC-154-PARENT-TOKEN",
         "status": "passed",
-        "procedure": "Execute certified_partial_completion_binds_canonical_parent_and_preserves_final_review and inspect unchanged exact-SHA audit gate.",
-        "expected": "Different source SHA, target issue or closed parent cannot complete certification; an independent review remains separate.",
-        "observed": "The passed test rejects foreign issue/source SHA/closed parent and keeps issue_completion partial; run 40963550432 separately fails without a review."
+        "procedure": "Execute test_partial_handoff_parent_state_requires_authenticated_read with GITHUB_TOKEN absent. The trusted live-parent reader rejects the call instead of accepting a claim from PR data.",
+        "expected": "An absent authenticated GITHUB_TOKEN blocks deferred handoff parent verification; adding the alias must not remove that negative check.",
+        "observed": "The test checks ValueError for absent GITHUB_TOKEN; the prior packet workflow 40988277042 actually failed with partial handoff requires authenticated parent issue read."
       },
       "regression_evidence": [
         "Existing test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review passed in exact-SHA JUnit and preserves deferred approval without implying actual review.",
-        "Existing test_specification_coverage_detects_dropped_canonical_candidate passed; candidate coverage fails closed."
+        "Existing test_specification_coverage_detects_dropped_canonical_candidate passed; candidate coverage fails closed.",
+        "Execute test_candidate_selected_refs_cannot_start_review_workflows for both workflows. It asserts trusted workflow_sha checkout, permitted trigger sources and unchanged read permissions on packet collection."
       ]
     }
   ]

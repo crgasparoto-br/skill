@@ -49,6 +49,37 @@
         "status": "unknown",
         "reason": "awaiting-exact-SHA-JUnit"
       }
+    },
+    {
+      "path": "tests/test_session_review_workflows.py",
+      "operation": "modified",
+      "scenario": "Trusted packet/session workflow entrypoints supply the same action-scoped token under both GH_TOKEN and GITHUB_TOKEN for live parent issue validation.",
+      "requirement": "Issue #154 OBL-006: CI, parent issue verification and separate independent audit must be possible without bypass.",
+      "search": {
+        "queries": [
+          "GH_TOKEN",
+          "GITHUB_TOKEN",
+          "session review workflow",
+          "require_actions_handoff_certificate"
+        ],
+        "scope": "Existing tests/test_session_review_workflows.py and entregar-issue/tests/test_require_actions_handoff_certificate.py, trusted workflow entrypoints",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "tests/test_session_review_workflows.py",
+            "case": "test_candidate_selected_refs_cannot_start_review_workflows",
+            "oracle": "The workflow must execute only from trusted code with unchanged permissions and now forward identical tokens to both readers.",
+            "comparison": "Existing trust-source test did not verify GITHUB_TOKEN alias, so it was extended in the same test module."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Extend existing workflow security test module to detect missing GITHUB_TOKEN on both trusted steps; preserve the existing negative test that rejects absent authenticated token.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
     }
   ]
 }
