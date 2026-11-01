@@ -25,11 +25,11 @@ from scripts.validate_workflow_classification import (
     VALIDATION_SCRIPTS,
     WORKFLOW,
     classification_problems,
-    step_problems,
     command_problems,
     is_validation,
     markdown_commands,
     normalize,
+    step_problems,
     validate_workflow_classification,
     workflow_commands,
 )
