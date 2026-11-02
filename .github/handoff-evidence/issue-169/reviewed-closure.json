@@ -215,7 +215,7 @@
   "controls": {
     "domain_inventories": [
       {
-        "id": "INV-169-01",
+        "id": "INV-16901",
         "name": "Conjunto fechado: policy da base, workflow protegido e dois consumidores",
         "closed_world": true,
         "producer_sources": [
@@ -272,7 +272,7 @@
     ],
     "observable_assertions": [
       {
-        "id": "OBS-169-01",
+        "id": "OBS-16901",
         "description": "Apenas os bytes do workflow equivalentes à substituição literal autorizada por policy do base SHA são aceitos pelo check independente e consumidor de sessão.",
         "requirement_ids": [
           "R169-02",
@@ -306,7 +306,7 @@
       "applicability_reason": "Policy de revisão base-owned e único verificador canônico, com ausência de alteração em workflows/rulesets e preservação de provenance.",
       "entries": [
         {
-          "id": "SIC-169-01",
+          "id": "SIC-16901",
           "kind": "structural",
           "requirement_ids": [
             "R169-01",
@@ -334,7 +334,7 @@
           ]
         },
         {
-          "id": "SIC-169-02",
+          "id": "SIC-16902",
           "kind": "dependency-independence",
           "requirement_ids": [
             "R169-04",
@@ -371,7 +371,7 @@
       "applicability_reason": "A política e os workflows são registros Git de configuração lidos por um verificador canônico, sem banco de dados ou projeção persistida.",
       "entries": [
         {
-          "id": "RMC-169-01",
+          "id": "RMC-16901",
           "contract_kind": "versioning",
           "requirement_ids": [
             "R169-01",
@@ -416,7 +416,7 @@
       "applicability_reason": "O HEAD candidato não define a própria autoridade; a policy na base é fonte normativa e o conteúdo Git autenticado governa os bytes aceitos.",
       "entries": [
         {
-          "id": "CSC-169-01",
+          "id": "CSC-16901",
           "semantic_field": "trusted migration authorization",
           "canonical_source": "config/trusted-workflow-pin-migrations.json no base SHA autenticado, comparado byte a byte com o checkout confiável",
           "alternative_sources": [
