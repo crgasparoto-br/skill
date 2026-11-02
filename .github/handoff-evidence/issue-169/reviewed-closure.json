@@ -1,0 +1,522 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "c1181a42af05a853e8a71d639f2f75abb3894f46ac64c9b36af2895c1ff69e3b": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A PR #168 apresenta erro verificável em dois runs; a issue #169 registra o contrato do bootstrap e o diff da PR #170 atua no verificador confiável, sem atribuir aprovação à implementação."
+    },
+    "20a6188bdc2c534557d6e4475895c54a528e93f7e081b006df88864379acd044": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A autorização é declarada em config/trusted-workflow-pin-migrations.json e lida exclusivamente do checkout do verificador confiável; o candidato não controla esse arquivo durante o check."
+    },
+    "61b0b4f5da192a87f317388ca6ed4c659d2571a03119c5a49fe857d48d468a7d": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-04"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O fluxo usa scripts/verify_independent_pr_audit.py existente; o teste de proveniência de Actions e o consumidor verify_session_review.py continuam reutilizando a mesma checagem."
+    },
+    "e299fec277528d7cb6fc4c4b5b905c43025a40705de47b49555519ab9cc70adf": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O manifesto permite exclusivamente a linha antiga v7.0.0 -> nova v7.1.0 de .github/workflows/validate.yml, preservando as demais linhas e bytes, inclusive o comentário da versão."
+    },
+    "ab20362ffdfde15b330ad50da590514c14d56f75b5ebb203c89ff175c3e897d4": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Os controles positivos, negativos e de regressão ampliaram tests/test_verify_independent_pr_audit.py; o JUnit do run 41380629027 contém os cenários focados aprovados."
+    },
+    "988ba97389a3cb3cf16e7f029c7d83ab402ee66766f503630b681f7281ea164f": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A documentação docs/WEB_INDEPENDENT_AUDIT.md registra o bootstrap pela develop e a promoção posterior para main somente após autorização/revisão, sem comando de merge automático."
+    },
+    "fa9e28840e349ea5ebde641d538550f9b03647998e0c657291bd79b873883831": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-02"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Para blobs iguais, verify_trusted_workflow_source não exige policy de migração; a regressão test_workflow_contents_must_match_trusted_base mantém a comparação anterior."
+    },
+    "4a20a302a6c1f5a65471b84e34ee2eda259cc7ad654a2f239bb300e0a371f6d3": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-02"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Para blobs diferentes, _approved_pin_only_migration reconstrói bytes do HEAD alterando apenas uma ocorrência da linha literal aprovada, com comparação binária integral e SHA de action."
+    },
+    "fbcb090aa2e6eb123acde552242b20f4fc22c329d491d9588a339afc7831d164": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-03"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A política é lida localmente no tooling confiável, comparada com a API do base_sha autenticado, rejeitando chaves extras, duplicadas, schema inválido e inconsistência de bytes."
+    },
+    "4a26ad75537c8459659d94502c1f0ac6117944915e03e32e553aed97df2adbd8": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-03"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A extração _authenticated_blob_bytes usa base64 validado e compara o Git blob SHA recomputado; o JUnit demonstra bloqueio com hashes de base, HEAD e policy falsificados."
+    },
+    "ca1e56111baadc42630fc1933323a29865b64378af40fb9364913983ed446921": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-02"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Os nove subcasos parametrizados variam eventos, permissões, versão Python, steps, action, SHA, tag móvel, comentário e indentação; as diferenças extras são recusadas."
+    },
+    "a692313c98813b21869adc010731758de67a34fa9b2ae0c6c022d03fcfff8759": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-04"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O consumidor de revisão por sessão importa o verificador de workflows confiáveis, e o controle de proveniência de checks executa o mesmo helper; integração operacional em main só ocorre após release autorizado."
+    },
+    "666da910ee575916ce653dd085b7320f2a37f3c188e596cda2802f65ae957cfb": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A PR #168 permanece aberta sem merge; a PR #170 não modifica rulesets nem aprova o trabalho que depende dela."
+    },
+    "55215f7b05461f36ff92d9d7ba1bda47c3ee35b522b9dec8ff7e5ead9f73c13e": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O teste positivo test_preapproved_pin_only_migration_keeps_workflow_check_trusted usa os bytes e a linha literal autorizada e comprova aceitação de uma única substituição."
+    },
+    "189a1e7e39c6b6002b234d09712439be58e2eefcaf6200a7eccb5ca5a686c61e": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Os testes rejeitam ausência de policy, drift de base, hashes Git inválidos, schema malformado e modificações adversariais; cada caso aparece como passed no JUnit do HEAD original."
+    },
+    "d04c53805d94ba679e6e044149a6e3e6a2aaf8dba8b66014a6386869c03f4c8e": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Os gates Structure and tests e MCP estão verdes no material consultado; o certificado semântico permanece gate separado que deve ser reavaliado no SHA após este dossiê, sem alegar revisão independente."
+    },
+    "38a540416266bd15df483aa1e38b2f9a9cd9814b597ae057094be74d31f2de70": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R169-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-169",
+        "decision_source_sha256": "96c702897161722554604a105565e1501b3b30e6f8bcef479ce1f0297113f06f",
+        "decision_locator": "instalação em `main` depende de revisão e release autorizado",
+        "target_issue": 169,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "A mudança é apresentada em PR separada contra `develop`",
+          "rationale": "A PR #170 está efetivamente aberta contra develop, enquanto a promoção de código para main permanece condicionada à revisão independente e release protegido."
+        }
+      },
+      "rationale": "A PR #170 é separada da #168, aberta contra develop; a instalação na main não aconteceu e permanece dependente de revisão e release autorizado."
+    },
+    "3f6f21388a00502adb779a957817ee532513a93fb119adc9b04be7ce6f7cfe5c": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O diff de quatro arquivos não altera rulesets, workflows de publicação nem permissões; o gate independente continua exigindo review e identidade exact-SHA."
+    },
+    "96fc5fa19537f018c2ab9cdbbc4222d71f9a6f1275e8de78473def9df39d1894": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-03"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A autorização usa política no base_sha autenticado com blobs verificados e identidade de bytes; nem uma policy nova apresentada só pelo HEAD candidato nem payload sem hash podem autorizar migração."
+    },
+    "0c7a7b361aa105bbc7f155dbd60cce4c1e95eaa94d2e72604b54d3bde6f2a161": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R169-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Nenhum merge, force-push, release ou revisão de aprovação independente foi executado pela implementação; os critérios administrativos são preservados."
+    }
+  },
+  "controls": {
+    "domain_inventories": [
+      {
+        "id": "INV-169-01",
+        "name": "Conjunto fechado: policy da base, workflow protegido e dois consumidores",
+        "closed_world": true,
+        "producer_sources": [
+          "config/trusted-workflow-pin-migrations.json",
+          ".github/workflows/validate.yml"
+        ],
+        "consumer_sources": [
+          "scripts/verify_independent_pr_audit.py",
+          "scripts/verify_session_review.py",
+          "tests/test_verify_independent_pr_audit.py"
+        ],
+        "values": [
+          {
+            "value": "config/trusted-workflow-pin-migrations.json",
+            "producer_evidence": [
+              "Policy com schema_version=1, única migration literal para .github/workflows/validate.yml"
+            ],
+            "consumer_evidence": [
+              "scripts/verify_independent_pr_audit.py: parse_pin_migrations e _approved_pin_only_migration"
+            ],
+            "scenario_ids": [
+              "test_pin_upgrade_policy_names_only_verified_setup_python_transition"
+            ]
+          },
+          {
+            "value": ".github/workflows/validate.yml",
+            "producer_evidence": [
+              "SHA da versão anterior mantido como âncora na develop e substituição restrita pelo manifest"
+            ],
+            "consumer_evidence": [
+              "verify_trusted_workflow_source rejeita qualquer divergência adicional de blob"
+            ],
+            "scenario_ids": [
+              "test_preapproved_pin_migration_rejects_sibling_mutations"
+            ]
+          },
+          {
+            "value": "scripts/verify_session_review.py",
+            "producer_evidence": [
+              "O consumidor de sessão usa required_checks_green e trusted_workflow_check do verificador único"
+            ],
+            "consumer_evidence": [
+              "tests/test_session_review.py: paridade de requisitos entre develop e main"
+            ],
+            "scenario_ids": [
+              "test_main_is_bound_to_same_exact_evidence_requirements"
+            ]
+          }
+        ],
+        "unmapped_values": [],
+        "fallback_policy": "none",
+        "rationale": "O contrato tem policy base-owned única e apenas uma atualização de workflow requerida; qualquer extensão ou fallback não documentado deve bloquear."
+      }
+    ],
+    "observable_assertions": [
+      {
+        "id": "OBS-169-01",
+        "description": "Apenas os bytes do workflow equivalentes à substituição literal autorizada por policy do base SHA são aceitos pelo check independente e consumidor de sessão.",
+        "requirement_ids": [
+          "R169-02",
+          "R169-03",
+          "R169-04"
+        ],
+        "obligation_ids": [
+          "OBL-008",
+          "OBL-009",
+          "OBL-010",
+          "OBL-011",
+          "OBL-012"
+        ],
+        "evidence_ids": [
+          "PIN-MIGRATION-LITERAL",
+          "AUTHENTICATED-GIT-BLOBS",
+          "SIBLING-MUTANTS"
+        ],
+        "scenario_ids": [
+          "test_preapproved_pin_only_migration_keeps_workflow_check_trusted",
+          "test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]",
+          "test_official_actions_check_provenance_accepts_only_preapproved_pin"
+        ],
+        "negative_control_evidence": [
+          "Alteração da policy/sha Git ou linha não contemplada retorna ValueError e nenhum check é aprovado por equivalência superficial."
+        ]
+      }
+    ],
+    "structural_invariant_closures": {
+      "status": "passed",
+      "applicability_reason": "Policy de revisão base-owned e único verificador canônico, com ausência de alteração em workflows/rulesets e preservação de provenance.",
+      "entries": [
+        {
+          "id": "SIC-169-01",
+          "kind": "structural",
+          "requirement_ids": [
+            "R169-01",
+            "R169-03"
+          ],
+          "obligation_ids": [
+            "OBL-002",
+            "OBL-009",
+            "OBL-019"
+          ],
+          "plausible_wrong_implementation": "Aceitar policy enviada apenas pelo HEAD candidato ou apenas o campo sha remoto sem autenticar os bytes.",
+          "canonical_path": "base SHA autenticado -> policy local idêntica à policy REST -> bytes Git base/HEAD -> migração literal",
+          "competing_paths": [
+            "candidate HEAD policy -> autorização irrestrita"
+          ],
+          "evidence_ids": [
+            "POLICY-BASE-BOUND",
+            "BLOB-SHA-VERIFIED"
+          ],
+          "scenario_ids": [
+            "test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[policy-drift]"
+          ],
+          "negative_control_evidence": [
+            "Teste altera policy da base simulada; _approved_pin_only_migration impede autorização sem byte-identidade confiável."
+          ]
+        },
+        {
+          "id": "SIC-169-02",
+          "kind": "dependency-independence",
+          "requirement_ids": [
+            "R169-04",
+            "R169-06"
+          ],
+          "obligation_ids": [
+            "OBL-003",
+            "OBL-012",
+            "OBL-013",
+            "OBL-018",
+            "OBL-020"
+          ],
+          "plausible_wrong_implementation": "Criar verificador alternativo ou desabilitar o required check para liberar a migração.",
+          "canonical_path": "verify_independent_pr_audit.py -> trusted_workflow_check -> verify_session_review.py consumidor; rulesets inalterados",
+          "competing_paths": [
+            "bypass do verificador/required check por alteração de workflow ou ruleset"
+          ],
+          "evidence_ids": [
+            "DIFF-PR170-FOUR-FILES",
+            "REQUIRED-CHECKS-DEVELOP"
+          ],
+          "scenario_ids": [
+            "test_official_actions_check_provenance_accepts_only_preapproved_pin"
+          ],
+          "negative_control_evidence": [
+            "Regressões obrigam identidade do workflow, job e permissões, e o diff não altera proteções nem o pipeline de certificação."
+          ]
+        }
+      ],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "passed",
+      "applicability_reason": "A política e os workflows são registros Git de configuração lidos por um verificador canônico, sem banco de dados ou projeção persistida.",
+      "entries": [
+        {
+          "id": "RMC-169-01",
+          "contract_kind": "versioning",
+          "requirement_ids": [
+            "R169-01",
+            "R169-02",
+            "R169-03",
+            "R169-04"
+          ],
+          "required_fields": [
+            "workflow_path",
+            ".github/workflows/validate.yml",
+            "before_line",
+            "after_line",
+            "schema_version",
+            "remote Git blob SHA"
+          ],
+          "producer_evidence": [
+            "config/trusted-workflow-pin-migrations.json vinculado ao base SHA e usado por _approved_pin_only_migration."
+          ],
+          "public_projection_evidence": [
+            "O verificador compara os blobs do workflow exigido pelo check e o JUnit executa o caminho de proveniência."
+          ],
+          "consumer_evidence": [
+            "scripts/verify_independent_pr_audit.py usa o conteúdo do GitHub e a policy da base, compartilhado com verify_session_review.py"
+          ],
+          "visible_surface_evidence": [
+            "PR #170 diff de quatro arquivos; run 41380628945 Structure and tests success; run 41380629027 coleta técnica success"
+          ],
+          "scenario_ids": [
+            "test_official_actions_check_provenance_accepts_only_preapproved_pin",
+            "test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[head-blob-sha]"
+          ],
+          "negative_control_evidence": [
+            "Hashes base/head/policy inválidos são rejeitados antes da avaliação da atualização."
+          ]
+        }
+      ],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "passed",
+      "applicability_reason": "O HEAD candidato não define a própria autoridade; a policy na base é fonte normativa e o conteúdo Git autenticado governa os bytes aceitos.",
+      "entries": [
+        {
+          "id": "CSC-169-01",
+          "semantic_field": "trusted migration authorization",
+          "canonical_source": "config/trusted-workflow-pin-migrations.json no base SHA autenticado, comparado byte a byte com o checkout confiável",
+          "alternative_sources": [
+            "policy alterada no HEAD da PR",
+            "payload REST com hash inválido",
+            "tag móvel fora do manifesto"
+          ],
+          "surfaces": [
+            "config/trusted-workflow-pin-migrations.json",
+            "scripts/verify_independent_pr_audit.py",
+            ".github/workflows/validate.yml"
+          ],
+          "evidence_ids": [
+            "PIN-MIGRATION-LITERAL",
+            "AUTHENTICATED-GIT-BLOBS"
+          ],
+          "scenario_ids": [
+            "test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[policy-drift]",
+            "test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>5]"
+          ],
+          "negative_control_evidence": [
+            "O programa rejeita divergência com policy da base e rejeita tag móvel, mantendo o SHA imóvel exigido."
+          ],
+          "divergent_fixture": {
+            "canonical_value": "policy base-owned e blob idêntico ao verificado",
+            "alternative_values": [
+              "policy-candidate-drift",
+              "sha-invalid",
+              "uses: actions/setup-python@v7"
+            ]
+          }
+        }
+      ],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "A documentação descreve o bootstrap e a necessidade de release posterior à main; os termos normativos atuais de verificação permanecem sem redução.",
+      "old_contract_terms": [
+        "required workflow blob must match trusted base"
+      ],
+      "new_contract_terms": [
+        "pin-only migration explicitly authorized in trusted base with exact-byte matching"
+      ],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "docs/WEB_INDEPENDENT_AUDIT.md: novo contrato de bootstrap antes de usar a PR #168.",
+        "scripts/verify_session_review.py: consumidor do validador compartilhado permanece sem alterações.",
+        "Issue #169: main apenas por release revisado, sem bypass de rulesets."
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": []
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "R169-01",
+        "R169-02",
+        "R169-03",
+        "R169-04",
+        "R169-05",
+        "R169-06"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-002",
+        "OBL-003",
+        "OBL-004",
+        "OBL-005",
+        "OBL-006",
+        "OBL-007",
+        "OBL-008",
+        "OBL-009",
+        "OBL-010",
+        "OBL-011",
+        "OBL-012",
+        "OBL-013",
+        "OBL-014",
+        "OBL-015",
+        "OBL-016",
+        "OBL-017",
+        "OBL-018",
+        "OBL-019",
+        "OBL-020"
+      ],
+      "evidence": [
+        "Issue #169 rederivada do snapshot canônico extraído pelo run 41380629027: 20 obrigações e candidato SHA da PR #170.",
+        "Diff da PR #170 limita-se à policy, verificador, testes e documentação; nenhum workflow/ruleset/permite-write foi alterado.",
+        "JUnit do run 41380629027 registra 2908 casos passados; os cenários focados de policy, blob hash e sibling mutations constam no índice authenticated.",
+        "O gate semântico e a revisão independente permanecem etapas separadas; a instalação na main depende de release e não foi alegada."
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}

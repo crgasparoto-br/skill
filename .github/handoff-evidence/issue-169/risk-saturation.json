@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "families": [
+    {
+      "family": "authorization",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz R169-03 contém o controle primário authenticated-trusted-base e testes adversariais executados no HEAD exact-SHA.",
+      "control_ids": [
+        "NEG-R169-03-OBL-009",
+        "NEG-R169-03-OBL-010",
+        "NEG-R169-03-OBL-019"
+      ],
+      "dimensions": [
+        {
+          "surface": "authenticated-trusted-base",
+          "reason": "A superfície authenticated-trusted-base deve rejeitar a implementação plausível incorreta de R169-03.",
+          "control_ids": [
+            "NEG-R169-03-OBL-009",
+            "NEG-R169-03-OBL-010",
+            "NEG-R169-03-OBL-019"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "concurrency-atomicity",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz R169-02 contém o controle primário single-line-atomic-migration e testes adversariais executados no HEAD exact-SHA.",
+      "control_ids": [
+        "NEG-R169-02-OBL-007",
+        "NEG-R169-02-OBL-008",
+        "NEG-R169-02-OBL-011"
+      ],
+      "dimensions": [
+        {
+          "surface": "single-line-atomic-migration",
+          "reason": "A superfície single-line-atomic-migration deve rejeitar a implementação plausível incorreta de R169-02.",
+          "control_ids": [
+            "NEG-R169-02-OBL-007",
+            "NEG-R169-02-OBL-008",
+            "NEG-R169-02-OBL-011"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "documentation",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz R169-06 contém o controle primário protected-bootstrap-and-release e testes adversariais executados no HEAD exact-SHA.",
+      "control_ids": [
+        "NEG-R169-06-OBL-013",
+        "NEG-R169-06-OBL-016",
+        "NEG-R169-06-OBL-017",
+        "NEG-R169-06-OBL-018",
+        "NEG-R169-06-OBL-020"
+      ],
+      "dimensions": [
+        {
+          "surface": "protected-bootstrap-and-release",
+          "reason": "A superfície protected-bootstrap-and-release deve rejeitar a implementação plausível incorreta de R169-06.",
+          "control_ids": [
+            "NEG-R169-06-OBL-013",
+            "NEG-R169-06-OBL-016",
+            "NEG-R169-06-OBL-017",
+            "NEG-R169-06-OBL-018",
+            "NEG-R169-06-OBL-020"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "historical-immutability",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz R169-03 contém o controle primário authenticated-trusted-base e testes adversariais executados no HEAD exact-SHA.",
+      "control_ids": [
+        "NEG-R169-03-OBL-009",
+        "NEG-R169-03-OBL-010",
+        "NEG-R169-03-OBL-019"
+      ],
+      "dimensions": [
+        {
+          "surface": "authenticated-trusted-base",
+          "reason": "A superfície authenticated-trusted-base deve rejeitar a implementação plausível incorreta de R169-03.",
+          "control_ids": [
+            "NEG-R169-03-OBL-009",
+            "NEG-R169-03-OBL-010",
+            "NEG-R169-03-OBL-019"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "idempotency",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+    },
+    {
+      "family": "public-boundary",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+    },
+    {
+      "family": "reference-liveness",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz R169-05 contém o controle primário adversarial-regression-coverage e testes adversariais executados no HEAD exact-SHA.",
+      "control_ids": [
+        "NEG-R169-05-OBL-005",
+        "NEG-R169-05-OBL-014",
+        "NEG-R169-05-OBL-015"
+      ],
+      "dimensions": [
+        {
+          "surface": "adversarial-regression-coverage",
+          "reason": "A superfície adversarial-regression-coverage deve rejeitar a implementação plausível incorreta de R169-05.",
+          "control_ids": [
+            "NEG-R169-05-OBL-005",
+            "NEG-R169-05-OBL-014",
+            "NEG-R169-05-OBL-015"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "rollback",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+    },
+    {
+      "family": "structural-contract",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz R169-01 contém o controle primário trusted-migration-policy e testes adversariais executados no HEAD exact-SHA.",
+      "control_ids": [
+        "NEG-R169-01-OBL-001",
+        "NEG-R169-01-OBL-002",
+        "NEG-R169-01-OBL-004",
+        "NEG-R169-01-OBL-006"
+      ],
+      "dimensions": [
+        {
+          "surface": "trusted-migration-policy",
+          "reason": "A superfície trusted-migration-policy deve rejeitar a implementação plausível incorreta de R169-01.",
+          "control_ids": [
+            "NEG-R169-01-OBL-001",
+            "NEG-R169-01-OBL-002",
+            "NEG-R169-01-OBL-004",
+            "NEG-R169-01-OBL-006"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-consistency",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz R169-03 contém o controle primário authenticated-trusted-base e testes adversariais executados no HEAD exact-SHA.",
+      "control_ids": [
+        "NEG-R169-03-OBL-009",
+        "NEG-R169-03-OBL-010",
+        "NEG-R169-03-OBL-019"
+      ],
+      "dimensions": [
+        {
+          "surface": "authenticated-trusted-base",
+          "reason": "A superfície authenticated-trusted-base deve rejeitar a implementação plausível incorreta de R169-03.",
+          "control_ids": [
+            "NEG-R169-03-OBL-009",
+            "NEG-R169-03-OBL-010",
+            "NEG-R169-03-OBL-019"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-destination",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+    },
+    {
+      "family": "tenant-isolation",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+    }
+  ],
+  "material_families_missing_controls": []
+}
