@@ -1,0 +1,551 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "814fc0ca6bc694d3f1f8d21fe1893276928e01e2004e2d0a793e71a3c697e71a": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O diff dos nove YAMLs, do validador e do Dependabot cumpre o upgrade. Os tests.test_validation_parity verificam o comportamento de classificação e destinos, sem afirmar a conclusão dos gates independentes."
+    },
+    "60ccafae9056c9d8fbf880c4c1bdb8e2a6759f0cfc6418648992ff0f47ff63dc": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O alvo desta entrega é a PR #168, criada da develop e vinculada à issue #167; a PR #166 permaneceu fechada sem merge. A comparação develop..HEAD mostra somente dois commits da entrega, sem recuperar o histórico exclusivo da main."
+    },
+    "724a89fd5cdc8bf1aeed64cb2ff4e441d91863daf80c3094a9c831d3cecd0474": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Nove arquivos em .github/workflows foram atualizados para o mesmo SHA do setup-python v7.1.0; todos preservam o Python 3.12 ou a expressão python-version do workflow reutilizável."
+    },
+    "2cb3f24a07a1dbddcc72aa441bc7dd52f735ba5d006962a289716940a8148002": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-02"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "scripts/validate_workflow_classification.py declara explicitamente a referência 6d4fd22..., rejeitando referências fora de ALLOWED_USES; a suíte de classificação e casos YAML adversariais exercem a regra."
+    },
+    "2b3ab9df3107dc05ccd1319a4847c6f108710c6f766367c708d94a33cf6df4b4": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-03"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "As três entradas pip e github-actions de .github/dependabot.yml declaram target-branch: develop; o teste test_dependabot_updates_all_target_develop valida toda a coleção."
+    },
+    "bcf30e8010c127d9a02e81b158f5eca454e5a636f34bd0c34ae0352791554fd3": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-04"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Os testes focados adicionados no módulo existente cobrem classificação de SHA e branch de Dependabot. O JUnit autentica execução no material HEAD e preserva a suíte anterior."
+    },
+    "86d520e01107791dff3140ef3f5e789029d1a79f8c36bc7d98f1cb4bf8b3edfa": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O teste de pinagem percorre todos os workflows e exige o SHA do setup-python idêntico ao pin verificado; o workflow dependency-audit.yml deixou de usar a tag móvel."
+    },
+    "c518bf37ac2f9a36df03d4e10f7d961db616d4184c11724f578462dc34e2ab1d": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-02"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "step_problems aprova o novo SHA e reprova tags v7, SHA de versão antiga e SHA desconhecido. A classificação real do workflow validate.yml passou no run oficial."
+    },
+    "f8c8910f74dade2eb13f12f4ad7fdca259e8a2cf65fcdadbde18ff31db755d43": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R167-03"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-167",
+        "decision_source_sha256": "c82a54e3c651de1cabf9889471db59bd71085a83db5b18411dc5d3454e7ff1c6",
+        "decision_locator": "O Dependabot precisa criar futuras atualizações de `pip` e `github-actions` contra `develop` após a instalação da configuração pela via regular do repositório.",
+        "target_issue": 167,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "A criação de PRs futuras do Dependabot depende da instalação efetiva da configuração na branch padrão por release autorizado. Antes disso, a alteração YAML é comprovada pelo teste, mas a operação futura não pode ser atestada."
+    },
+    "5d47211d9c2cab31172c31a9ba8d5b73f70a06865afe5acc1f086f00c10c6830": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A PR #168 usa base develop, branch fix/167-setup-python-v7-dependabot-develop e título com Issue #167. O metadata pré-testes é autenticado no coletor de Actions."
+    },
+    "fe9d617b905b2e2741e906c3c176d624821f98fe88057fc3eb7bb93e436c7b07": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O diff não altera permissões, regras, scripts de certificação ou required checks; validação fail-closed mantém a allowlist e os testes de entrada não autorizada. Os checks independentes vermelhos não foram dispensados."
+    },
+    "72698d21f966629b4294061231cbf05ba9f4c6584dbc2de7825a46093fb7a67d": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Nenhum comentário ou relatório declara aprovação independente; os dois jobs de certificação e revisão continuam bloqueados por ausência das respectivas provas e nenhum merge ocorreu."
+    },
+    "0d332ea795c3c31ff9e6efdac7a31e611ab3ef2b3eafd2692dea0a50a5e4fa78": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A PR original #166 não foi modificada, reaberta ou forçada. A branch de correção é derivada de develop e os arquivos alterados são os exigidos na issue #167."
+    },
+    "f6e51e04dac9db64eeece330f35e19a61d9cbd28bd7d39ff9bb06f0c10cdf769": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Nenhum merge, release ou aprovação foi executado; GitHub demonstra que PR #168 está aberta e a issue #167 aberta enquanto os checks de certificação/revisão permanecem vermelhos."
+    },
+    "7d10c91e5f55d1be809e0826dabfe0b1ea7bd956e79f2303c3bcc96f2006cf88": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-01"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O diff da PR #168 contém nove workflows, um dependabot.yml, o validador canônico e tests/test_validation_parity.py; não modifica regras de branch, scripts de certificado ou arquivos não relacionados."
+    },
+    "49f9fb25b88ecee8581de3da365e35457ce8b92f9ddae3794ffb019208bee931": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-04"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "JUnit exato registra os testes test_setup_python_v7_pin_is_classified_in_every_workflow e test_dependabot_updates_all_target_develop como passed, incluindo rejeição de tags/SHA desconhecidos e verificação de todos os destinos."
+    },
+    "6f37e6facae2a25a0021c2fb35bc8114b574a9630bc40b0624e71988d605ac01": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R167-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-167",
+        "decision_source_sha256": "c82a54e3c651de1cabf9889471db59bd71085a83db5b18411dc5d3454e7ff1c6",
+        "decision_locator": "`Structure and tests`, os checks técnicos aplicáveis e a certificação exact-SHA atingem estado terminal satisfatório para o HEAD da PR corretiva.",
+        "target_issue": 167,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "Os checks técnicos estão aprovados no HEAD de implementação; o certificado semântico só pode ser emitido após validação independente de todas as provas de handoff do material corrente. O estado final deste requisito permanece pendente."
+    },
+    "0f7e0a59296b2fa20919546011e3ecc6559303437ecb9fa40b355555936bd708": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R167-06"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-167",
+        "decision_source_sha256": "c82a54e3c651de1cabf9889471db59bd71085a83db5b18411dc5d3454e7ff1c6",
+        "decision_locator": "A aprovação independente, quando exigida pelas regras da branch, continua sendo registrada por auditor separado e somente depois da evidência correta.",
+        "target_issue": 167,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "A revisão independente exige outra sessão com base em evidências certificadas e um parecer autenticado no SHA corrente. A implementação não tem autoridade para produzir a aprovação de sua própria entrega."
+    },
+    "d6cb67c4a1a6972841815bd126da1ebc7c300d21b9c2c5befd07720cc0de0244": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-02"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O loop adversarial de test_setup_python_v7_pin_is_classified_in_every_workflow passa v7, SHA v7.0.0, SHA v5 e hash desconhecido ao validador e exige step_problems não vazio."
+    },
+    "22316c5ff84d390efce29816082b17465d0848e66d64da4e677d6e7fdd782214": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-03"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O teste de configuração usa update.get(\"target-branch\") == \"develop\" para cada entrada; assim a ausência de chave retorna None e main diverge. A suíte CI observada executou o oráculo no material HEAD."
+    },
+    "c05896fd1dc73879dfa26cd22bff5228e85a4fc2719e747f59fcb7d686a9d923": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-05"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O coletor de Actions autentica issue, base e HEAD e rejeita um título sem issue inequívoca ou base diferente. Este candidato é descendente exclusivo de develop e não incorpora os commits da PR original #166."
+    },
+    "837261b86094d233e0b161f790de16799c10eaf81fc803d78fd8d9ee4e43b7f6": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-04"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A alteração usa tests/test_validation_parity.py existente, sem criar arquivo de teste duplicado, mantendo os casos prévios de paridade, YAML adversarial e sequência documentada."
+    },
+    "056234abb65ca38731814c88078fea67fb8a00120f3c79ab85b59301e38fa14c": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-04"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Foi adicionado test_dependabot_updates_all_target_develop ao módulo existente, com verificação exaustiva dos três ecossistemas; nenhum teste ou gate anterior foi removido."
+    },
+    "0db3fbfb6649ea5b3b75ec8a7ebf21a290adc6fe4b94f86edccad8614f9b0813": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R167-03"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "AGENTS.md e README.md já estabelecem develop como base e main apenas no release; a PR não altera estes documentos. O YAML do Dependabot passa a obedecer esse contrato."
+    }
+  },
+  "controls": {
+    "domain_inventories": [
+      {
+        "id": "INV-001",
+        "name": "Nove consumers de actions/setup-python",
+        "closed_world": true,
+        "producer_sources": [
+          ".github/workflows/dependency-audit.yml",
+          ".github/workflows/github-audit-mcp-lock.yml",
+          ".github/workflows/independent-audit-gate.yml",
+          ".github/workflows/prepare-neutral-audit-packet.yml",
+          ".github/workflows/publish-handoff.yml",
+          ".github/workflows/reusable-handoff.yml",
+          ".github/workflows/reusable-publish-handoff.yml",
+          ".github/workflows/session-review.yml",
+          ".github/workflows/validate.yml"
+        ],
+        "consumer_sources": [
+          "tests/test_validation_parity.py",
+          "scripts/validate_workflow_classification.py"
+        ],
+        "values": [
+          {
+            "value": "dependency-audit.yml",
+            "producer_evidence": [
+              ".github/workflows/dependency-audit.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
+            ],
+            "consumer_evidence": [
+              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ],
+            "scenario_ids": [
+              "test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ]
+          },
+          {
+            "value": "github-audit-mcp-lock.yml",
+            "producer_evidence": [
+              ".github/workflows/github-audit-mcp-lock.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
+            ],
+            "consumer_evidence": [
+              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ],
+            "scenario_ids": [
+              "test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ]
+          },
+          {
+            "value": "independent-audit-gate.yml",
+            "producer_evidence": [
+              ".github/workflows/independent-audit-gate.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
+            ],
+            "consumer_evidence": [
+              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ],
+            "scenario_ids": [
+              "test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ]
+          },
+          {
+            "value": "prepare-neutral-audit-packet.yml",
+            "producer_evidence": [
+              ".github/workflows/prepare-neutral-audit-packet.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
+            ],
+            "consumer_evidence": [
+              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ],
+            "scenario_ids": [
+              "test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ]
+          },
+          {
+            "value": "publish-handoff.yml",
+            "producer_evidence": [
+              ".github/workflows/publish-handoff.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
+            ],
+            "consumer_evidence": [
+              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ],
+            "scenario_ids": [
+              "test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ]
+          },
+          {
+            "value": "reusable-handoff.yml",
+            "producer_evidence": [
+              ".github/workflows/reusable-handoff.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
+            ],
+            "consumer_evidence": [
+              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ],
+            "scenario_ids": [
+              "test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ]
+          },
+          {
+            "value": "reusable-publish-handoff.yml",
+            "producer_evidence": [
+              ".github/workflows/reusable-publish-handoff.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
+            ],
+            "consumer_evidence": [
+              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ],
+            "scenario_ids": [
+              "test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ]
+          },
+          {
+            "value": "session-review.yml",
+            "producer_evidence": [
+              ".github/workflows/session-review.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
+            ],
+            "consumer_evidence": [
+              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ],
+            "scenario_ids": [
+              "test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ]
+          },
+          {
+            "value": "validate.yml",
+            "producer_evidence": [
+              ".github/workflows/validate.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
+            ],
+            "consumer_evidence": [
+              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ],
+            "scenario_ids": [
+              "test_setup_python_v7_pin_is_classified_in_every_workflow"
+            ]
+          }
+        ],
+        "unmapped_values": [],
+        "fallback_policy": "none",
+        "rationale": "Comparação do diff da PR #168 com listagem completa de actions/setup-python e teste que percorre todos os workflows; o destino do Dependabot tem inventário de três entradas no teste específico."
+      }
+    ],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "passed",
+      "applicability_reason": "O contrato exige branch develop, separação de implantação em main e proibição de bypass de checks/certificação; o diff contém apenas configuração e testes autorizados.",
+      "entries": [
+        {
+          "id": "SIC-16701",
+          "kind": "structural",
+          "requirement_ids": [
+            "R167-05"
+          ],
+          "obligation_ids": [
+            "OBL-002",
+            "OBL-010",
+            "OBL-013"
+          ],
+          "plausible_wrong_implementation": "Abrir a substituta a partir da main ou transportar os commits exclusivos da main através do histórico da PR #166.",
+          "canonical_path": "develop -> fix/167-setup-python-v7-dependabot-develop -> PR #168 (base develop)",
+          "competing_paths": [
+            "main -> dependabot/github_actions/actions/setup-python-7 -> PR #166 (base main)"
+          ],
+          "evidence_ids": [
+            "PR168-HEAD-AND-BASE",
+            "COMPARE-DEVELOP-PR168"
+          ],
+          "scenario_ids": [
+            "test_untrusted_or_ambiguous_metadata_fails_closed[change2-base ref]"
+          ],
+          "negative_control_evidence": [
+            "O preflight oficial exige base correta e issue inequívoca; CI rejeita base ref adulterada. A comparação remota develop..HEAD mostra apenas commits próprios desta entrega."
+          ]
+        },
+        {
+          "id": "SIC-16702",
+          "kind": "precedence",
+          "requirement_ids": [
+            "R167-06"
+          ],
+          "obligation_ids": [
+            "OBL-012",
+            "OBL-014",
+            "OBL-017",
+            "OBL-018"
+          ],
+          "plausible_wrong_implementation": "Considerar o sucesso dos testes como autorização de merge ou registrar parecer de auditoria independente no mesmo contexto implementador.",
+          "canonical_path": "CI técnico exact-SHA -> certificação semântica -> auditoria independente separada -> eventual merge autorizado",
+          "competing_paths": [
+            "CI técnico verde -> aprovação simulada -> merge"
+          ],
+          "evidence_ids": [
+            "CI-REVIEW-SEPARATION",
+            "CI-HANDOFF-CERTIFICATION-FAILURE"
+          ],
+          "scenario_ids": [
+            "test_workflow_separates_collecting_and_certifying_without_publish_bypass"
+          ],
+          "negative_control_evidence": [
+            "A coleta exata foi aprovada mas o job de certificação permaneceu failure por falta do dossiê; o teste oficial proíbe publicar no caminho apenas técnico. A revisão independente continua ausente."
+          ]
+        }
+      ],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "not-applicable",
+      "applicability_reason": "A issue altera workflows e configuração do Dependabot, sem modificar read models, projeções públicas, histórico ou paginação.",
+      "entries": [],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "not-applicable",
+      "applicability_reason": "Não há múltiplas fontes concorrentes de dados do negócio; o único destino canônico de PR é develop conforme AGENTS.md e README.md.",
+      "entries": [],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "O contrato de branches é pré-existente em AGENTS.md/README.md e a PR corrige a configuração que dele divergira, sem mudar regra normativa; os nove workflows alteram apenas SHA de ação externa.",
+      "old_contract_terms": [
+        "Dependabot sem target-branch explicito",
+        "actions/setup-python@v5",
+        "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97"
+      ],
+      "new_contract_terms": [
+        "target-branch: develop",
+        "actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
+      ],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "AGENTS.md: fluxo obrigatório branch a partir de develop, PR contra develop e release develop para main.",
+        "README.md: develop é a base de desenvolvimento e promovida para main somente em release.",
+        "tests/test_validation_parity.py: paridade documental e validação de todos os workflows.",
+        ".github/workflows/dependency-audit.yml: substituição da tag móvel por pin SHA."
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": []
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "R167-01",
+        "R167-02",
+        "R167-03",
+        "R167-04",
+        "R167-05",
+        "R167-06"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-002",
+        "OBL-003",
+        "OBL-004",
+        "OBL-005",
+        "OBL-006",
+        "OBL-007",
+        "OBL-008",
+        "OBL-009",
+        "OBL-010",
+        "OBL-011",
+        "OBL-012",
+        "OBL-013",
+        "OBL-014",
+        "OBL-015",
+        "OBL-016",
+        "OBL-017",
+        "OBL-018",
+        "OBL-019",
+        "OBL-020",
+        "OBL-021",
+        "OBL-022",
+        "OBL-023",
+        "OBL-024"
+      ],
+      "evidence": [
+        "Issue #167 recuperada pela API autenticada, 24 candidate_keys reconciliadas com o snapshot de CI da PR #168.",
+        "PR #168 baseada em develop, HEAD material original aeb4923e9eff3b2236c5b4e627565c11afc5626f: doze arquivos do escopo e validação técnica aprovada.",
+        "Run 41361061673: JUnit exato registra test_setup_python_v7_pin_is_classified_in_every_workflow e test_dependabot_updates_all_target_develop aprovados, e exige certificado separado.",
+        "Suite de regressões cobre rejeição do SHA antigo/tag/hash não autorizado, YAML não classificado, título sem issue e base ref divergente.",
+        "OBL-009, OBL-017 e OBL-018 são prospectivas por decisão canônica da issue; nenhuma é declarada concluída no pre-handoff e a issue pai permanece aberta."
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}
