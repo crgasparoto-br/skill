@@ -288,7 +288,7 @@
               ".github/workflows/dependency-audit.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
             ],
             "consumer_evidence": [
-              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+              "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow)"
             ],
             "scenario_ids": [
               "test_setup_python_v7_pin_is_classified_in_every_workflow"
@@ -300,7 +300,7 @@
               ".github/workflows/github-audit-mcp-lock.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
             ],
             "consumer_evidence": [
-              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+              "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow)"
             ],
             "scenario_ids": [
               "test_setup_python_v7_pin_is_classified_in_every_workflow"
@@ -312,7 +312,7 @@
               ".github/workflows/independent-audit-gate.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
             ],
             "consumer_evidence": [
-              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+              "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow)"
             ],
             "scenario_ids": [
               "test_setup_python_v7_pin_is_classified_in_every_workflow"
@@ -324,7 +324,7 @@
               ".github/workflows/prepare-neutral-audit-packet.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
             ],
             "consumer_evidence": [
-              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+              "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow)"
             ],
             "scenario_ids": [
               "test_setup_python_v7_pin_is_classified_in_every_workflow"
@@ -336,7 +336,7 @@
               ".github/workflows/publish-handoff.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
             ],
             "consumer_evidence": [
-              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+              "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow)"
             ],
             "scenario_ids": [
               "test_setup_python_v7_pin_is_classified_in_every_workflow"
@@ -348,7 +348,7 @@
               ".github/workflows/reusable-handoff.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
             ],
             "consumer_evidence": [
-              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+              "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow)"
             ],
             "scenario_ids": [
               "test_setup_python_v7_pin_is_classified_in_every_workflow"
@@ -360,7 +360,7 @@
               ".github/workflows/reusable-publish-handoff.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
             ],
             "consumer_evidence": [
-              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+              "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow)"
             ],
             "scenario_ids": [
               "test_setup_python_v7_pin_is_classified_in_every_workflow"
@@ -372,7 +372,7 @@
               ".github/workflows/session-review.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
             ],
             "consumer_evidence": [
-              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+              "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow)"
             ],
             "scenario_ids": [
               "test_setup_python_v7_pin_is_classified_in_every_workflow"
@@ -384,7 +384,7 @@
               ".github/workflows/validate.yml usa SHA fixo do setup-python e conserva versão 3.12 (reusable-handoff preserva input parametrizado)"
             ],
             "consumer_evidence": [
-              "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow"
+              "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow)"
             ],
             "scenario_ids": [
               "test_setup_python_v7_pin_is_classified_in_every_workflow"

@@ -12,7 +12,7 @@
   "audit_history": "verified-no-rejection",
   "audit_history_evidence": "Lista de reviews da PR #168 consultada via GitHub em 01/11/2026: nenhuma revisão independente submetida; PR #166 já encerrada era outro target, e seus resultados não são transferidos como revisão independente do HEAD da PR #168.",
   "artifact_sha256": {
-    "reviewed-closure.json": "b36fadc5eba08c75cf749267178542e5ea2bb45704468c48e06d331a15e5487f",
+    "reviewed-closure.json": "bddde85a62bf9466805cc17d8596d2431993be45c6b8d66e3711e33d542cea6a",
     "requirement-attack-matrix.json": "1a7658463f81eddb8b7fe348b6f1e86e367ab4ffffd6d244bae6ee1c2351b78b",
     "risk-saturation.json": "8b00717b4a926697cabe05ede2893cd875bf258f139fde3fcf58cdc6d8a940bd",
     "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
