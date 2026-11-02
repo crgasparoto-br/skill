@@ -400,6 +400,31 @@ def _approved_upgrade_fixture(monkeypatch) -> tuple[bytes, bytes, dict]:
     return original, updated, response
 
 
+
+def test_pin_upgrade_policy_names_only_verified_setup_python_transition():
+    policy = json.loads(gate.PIN_MIGRATION_FILE.read_bytes())
+    assert gate.parse_pin_migrations(gate.PIN_MIGRATION_FILE.read_bytes()) == (
+        policy["migrations"])
+    assert policy["migrations"] == [{
+        "workflow_path": ".github/workflows/validate.yml",
+        "before_line": (
+            "        uses: actions/setup-python@"
+            "5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0"),
+        "after_line": (
+            "        uses: actions/setup-python@"
+            "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0"),
+    }]
+
+
+def test_official_actions_check_provenance_accepts_only_preapproved_pin(monkeypatch):
+    check, _, _, response = workflow_source_fixture()
+    _, _, workflow_sources = _approved_upgrade_fixture(monkeypatch)
+    response.update(workflow_sources)
+    monkeypatch.setattr(gate, "github", lambda path, token: response[path])
+    assert gate.trusted_workflow_check(
+        "org/repo", 3, "Structure and tests", check, HEAD, BASE_SHA, "token")
+
+
 def test_preapproved_pin_only_migration_keeps_workflow_check_trusted(monkeypatch):
     original, updated, response = _approved_upgrade_fixture(monkeypatch)
     assert original != updated
@@ -419,6 +444,8 @@ def test_preapproved_pin_only_migration_keeps_workflow_check_trusted(monkeypatch
                               b"actions/setup-python@v7"),
     lambda data: data.replace(b"        uses:", b"       uses:"),
     lambda data: data.replace(b"jobs:\n", b"jobs:\npermissions: write-all\n"),
+    lambda data: data.replace(b"name: Validate skills\n",
+                              b"name: Validate skills\non: pull_request_target\n"),
 ])
 def test_preapproved_pin_migration_rejects_sibling_mutations(monkeypatch, mutation):
     _, candidate, response = _approved_upgrade_fixture(monkeypatch)
