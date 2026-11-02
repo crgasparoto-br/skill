@@ -13,7 +13,7 @@
   "audit_history_evidence": "Histórico remoto da PR #170 consultado em 02/11/2026: nenhuma review independente submetida; a rejeição anterior A-001 refere-se à PR #168 e não é aprovação/reprovação independente do SHA desta PR.",
   "artifact_sha256": {
     "reviewed-closure.json": "298ba5de2ffc85a118530210468c87afcb7d23f80266c241995a53d5f4135c76",
-    "requirement-attack-matrix.json": "0839896b8619394439a524ea74f4fa106ac64ddb09e4a100f02e4bad9dbf80ce",
+    "requirement-attack-matrix.json": "2cad811c9ef698b98248093d9fa4651c6ec843ea24ccc180a90c8a03806a9ed0",
     "risk-saturation.json": "550e3b1767daa80d38a272bb84cb425b29c0a2925937b560850c815b404bab46",
     "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
     "codebase-grounding.json": "e0baedb7106d29c25fa10363bb8f317cad4b2915914a3e021f694f0fee337b52"

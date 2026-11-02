@@ -48,9 +48,9 @@
           "dimension": "obl-001-unauthorized-variant",
           "failure_mode": "Aceitar migração que não esteja descrita na policy da base confiável.",
           "plausible_wrong_implementation": "Aceitar migração que não esteja descrita na policy da base confiável.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-001 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-001 e não altera os bytes autorizados.",
           "expected": "Somente a transição exata v7.0.0 -> v7.1.0 pode ser autorizada pela política do base SHA.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-01-OBL-001-S1",
@@ -94,9 +94,9 @@
           "dimension": "obl-002-unauthorized-variant",
           "failure_mode": "Aceitar migração que não esteja descrita na policy da base confiável.",
           "plausible_wrong_implementation": "Aceitar migração que não esteja descrita na policy da base confiável.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-002 e não altera os bytes autorizados. Execute o harness real de proveniencia dos checks ate o production entrypoint de autorizacao do workflow, com policy e Git blobs divergentes; nenhum wrapper produtivo pode ser omitido.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-002 e não altera os bytes autorizados. Execute o harness real de proveniencia dos checks ate o production entrypoint de autorizacao do workflow, com policy e Git blobs divergentes; nenhum wrapper produtivo pode ser omitido.",
           "expected": "Somente a transição exata v7.0.0 -> v7.1.0 pode ser autorizada pela política do base SHA.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida. O caso executa a mesma funcao de entrada verificadora que a checagem produtiva, sem atalhos no caminho.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida. O caso executa a mesma funcao de entrada verificadora que a checagem produtiva, sem atalhos no caminho.",
           "sibling_cases": [
             {
               "id": "NEG-R169-01-OBL-002-S1",
@@ -140,9 +140,9 @@
           "dimension": "obl-004-unauthorized-variant",
           "failure_mode": "Aceitar migração que não esteja descrita na policy da base confiável.",
           "plausible_wrong_implementation": "Aceitar migração que não esteja descrita na policy da base confiável.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-004 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-004 e não altera os bytes autorizados.",
           "expected": "Somente a transição exata v7.0.0 -> v7.1.0 pode ser autorizada pela política do base SHA.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-01-OBL-004-S1",
@@ -186,9 +186,9 @@
           "dimension": "obl-006-unauthorized-variant",
           "failure_mode": "Aceitar migração que não esteja descrita na policy da base confiável.",
           "plausible_wrong_implementation": "Aceitar migração que não esteja descrita na policy da base confiável.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-006 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-006 e não altera os bytes autorizados.",
           "expected": "Somente a transição exata v7.0.0 -> v7.1.0 pode ser autorizada pela política do base SHA.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-01-OBL-006-S1",
@@ -267,7 +267,7 @@
       ],
       "quantitative_evidence_required": false,
       "performance_contract": {
-        "production_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+        "production_entrypoint": "scripts/verify_independent_pr_audit.py#verify_trusted_workflow_source",
         "terminal_boundary": "trusted_workflow_check: verifies producer workflow source before accepting CI outcome",
         "inventory_evidence": {
           "status": "passed",
@@ -298,8 +298,8 @@
         ],
         "benchmark": {
           "mode": "production-direct",
-          "production_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
-          "harness_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+          "production_entrypoint": "scripts/verify_independent_pr_audit.py#verify_trusted_workflow_source",
+          "harness_entrypoint": "scripts/verify_independent_pr_audit.py#verify_trusted_workflow_source",
           "covered_operation_ids": [
             "auth-baseline-source",
             "policy-revalidate"
@@ -355,9 +355,9 @@
           "dimension": "obl-007-unauthorized-variant",
           "failure_mode": "Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade.",
           "plausible_wrong_implementation": "Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_duplicate_old_line no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-007 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_duplicate_old_line no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-007 e não altera os bytes autorizados.",
           "expected": "Um único uses: é trocado, e todos os outros bytes permanecem idênticos.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_duplicate_old_line; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_duplicate_old_line; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-02-OBL-007-S1",
@@ -401,9 +401,9 @@
           "dimension": "obl-008-unauthorized-variant",
           "failure_mode": "Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade.",
           "plausible_wrong_implementation": "Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_duplicate_old_line no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-008 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_duplicate_old_line no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-008 e não altera os bytes autorizados.",
           "expected": "Um único uses: é trocado, e todos os outros bytes permanecem idênticos.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_duplicate_old_line; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_duplicate_old_line; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-02-OBL-008-S1",
@@ -447,9 +447,9 @@
           "dimension": "obl-011-unauthorized-variant",
           "failure_mode": "Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade.",
           "plausible_wrong_implementation": "Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_duplicate_old_line no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-011 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_duplicate_old_line no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-011 e não altera os bytes autorizados.",
           "expected": "Um único uses: é trocado, e todos os outros bytes permanecem idênticos.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_duplicate_old_line; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_duplicate_old_line; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-02-OBL-011-S1",
@@ -564,9 +564,9 @@
           "dimension": "obl-009-unauthorized-variant",
           "failure_mode": "Aceitar policy do HEAD ou confiar em Git blob sha incompatível com os bytes.",
           "plausible_wrong_implementation": "Aceitar policy do HEAD ou confiar em Git blob sha incompatível com os bytes.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-009 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-009 e não altera os bytes autorizados.",
           "expected": "Policy do base SHA e blobs Git revalidados antes de autorizar o workflow.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-03-OBL-009-S1",
@@ -621,9 +621,9 @@
           "dimension": "obl-010-unauthorized-variant",
           "failure_mode": "Aceitar policy do HEAD ou confiar em Git blob sha incompatível com os bytes.",
           "plausible_wrong_implementation": "Aceitar policy do HEAD ou confiar em Git blob sha incompatível com os bytes.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-010 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-010 e não altera os bytes autorizados.",
           "expected": "Policy do base SHA e blobs Git revalidados antes de autorizar o workflow.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-03-OBL-010-S1",
@@ -667,9 +667,9 @@
           "dimension": "obl-019-unauthorized-variant",
           "failure_mode": "Aceitar policy do HEAD ou confiar em Git blob sha incompatível com os bytes.",
           "plausible_wrong_implementation": "Aceitar policy do HEAD ou confiar em Git blob sha incompatível com os bytes.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-019 e não altera os bytes autorizados. Execute o harness real de proveniencia dos checks ate o production entrypoint de autorizacao do workflow, com policy e Git blobs divergentes; nenhum wrapper produtivo pode ser omitido.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-019 e não altera os bytes autorizados. Execute o harness real de proveniencia dos checks ate o production entrypoint de autorizacao do workflow, com policy e Git blobs divergentes; nenhum wrapper produtivo pode ser omitido.",
           "expected": "Policy do base SHA e blobs Git revalidados antes de autorizar o workflow.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]; o teste espera a rejeição ValueError da variante proibida. O caso executa a mesma funcao de entrada verificadora que a checagem produtiva, sem atalhos no caminho.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]; o teste espera a rejeição ValueError da variante proibida. O caso executa a mesma funcao de entrada verificadora que a checagem produtiva, sem atalhos no caminho.",
           "sibling_cases": [
             {
               "id": "NEG-R169-03-OBL-019-S1",
@@ -739,7 +739,7 @@
       ],
       "quantitative_evidence_required": false,
       "performance_contract": {
-        "production_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+        "production_entrypoint": "scripts/verify_independent_pr_audit.py#verify_trusted_workflow_source",
         "terminal_boundary": "trusted_workflow_check: verifies producer workflow source before accepting CI outcome",
         "inventory_evidence": {
           "status": "passed",
@@ -770,8 +770,8 @@
         ],
         "benchmark": {
           "mode": "production-direct",
-          "production_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
-          "harness_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+          "production_entrypoint": "scripts/verify_independent_pr_audit.py#verify_trusted_workflow_source",
+          "harness_entrypoint": "scripts/verify_independent_pr_audit.py#verify_trusted_workflow_source",
           "covered_operation_ids": [
             "auth-baseline-source",
             "policy-revalidate"
@@ -824,9 +824,9 @@
           "dimension": "obl-003-unauthorized-variant",
           "failure_mode": "Tratar check alternativo ou condição do candidato como fonte de confiança.",
           "plausible_wrong_implementation": "Tratar check alternativo ou condição do candidato como fonte de confiança.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>7] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-003 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>7] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-003 e não altera os bytes autorizados.",
           "expected": "Os consumidores exigem o verificador canônico e a proveniência oficial.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>7]; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>7]; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-04-OBL-003-S1",
@@ -870,9 +870,9 @@
           "dimension": "obl-012-unauthorized-variant",
           "failure_mode": "Tratar check alternativo ou condição do candidato como fonte de confiança.",
           "plausible_wrong_implementation": "Tratar check alternativo ou condição do candidato como fonte de confiança.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>7] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-012 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>7] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-012 e não altera os bytes autorizados.",
           "expected": "Os consumidores exigem o verificador canônico e a proveniência oficial.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>7]; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>7]; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-04-OBL-012-S1",
@@ -978,9 +978,9 @@
           "dimension": "obl-005-unauthorized-variant",
           "failure_mode": "Testar só o caso feliz e aceitar mutantes de SHA, permissões, eventos ou policy.",
           "plausible_wrong_implementation": "Testar só o caso feliz e aceitar mutantes de SHA, permissões, eventos ou policy.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_trusted_pin_policy_rejects_malformed_schemas[invalid0] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-005 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_trusted_pin_policy_rejects_malformed_schemas[invalid0] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-005 e não altera os bytes autorizados.",
           "expected": "Casos adversariais variados são reprovados e os testes de regressão permanecem executados.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_trusted_pin_policy_rejects_malformed_schemas[invalid0]; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_trusted_pin_policy_rejects_malformed_schemas[invalid0]; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-05-OBL-005-S1",
@@ -1024,9 +1024,9 @@
           "dimension": "obl-014-unauthorized-variant",
           "failure_mode": "Testar só o caso feliz e aceitar mutantes de SHA, permissões, eventos ou policy.",
           "plausible_wrong_implementation": "Testar só o caso feliz e aceitar mutantes de SHA, permissões, eventos ou policy.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_trusted_pin_policy_rejects_malformed_schemas[invalid0] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-014 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_trusted_pin_policy_rejects_malformed_schemas[invalid0] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-014 e não altera os bytes autorizados.",
           "expected": "Casos adversariais variados são reprovados e os testes de regressão permanecem executados.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_trusted_pin_policy_rejects_malformed_schemas[invalid0]; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_trusted_pin_policy_rejects_malformed_schemas[invalid0]; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-05-OBL-014-S1",
@@ -1070,9 +1070,9 @@
           "dimension": "obl-015-unauthorized-variant",
           "failure_mode": "Testar só o caso feliz e aceitar mutantes de SHA, permissões, eventos ou policy.",
           "plausible_wrong_implementation": "Testar só o caso feliz e aceitar mutantes de SHA, permissões, eventos ou policy.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_trusted_pin_policy_rejects_malformed_schemas[invalid0] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-015 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_trusted_pin_policy_rejects_malformed_schemas[invalid0] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-015 e não altera os bytes autorizados.",
           "expected": "Casos adversariais variados são reprovados e os testes de regressão permanecem executados.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_trusted_pin_policy_rejects_malformed_schemas[invalid0]; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_trusted_pin_policy_rejects_malformed_schemas[invalid0]; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-05-OBL-015-S1",
@@ -1184,9 +1184,9 @@
           "dimension": "obl-013-unauthorized-variant",
           "failure_mode": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
           "plausible_wrong_implementation": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-013 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-013 e não altera os bytes autorizados.",
           "expected": "O bootstrap é registrado em PR separada, sem modificar rulesets nem autoaprovar.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-06-OBL-013-S1",
@@ -1230,9 +1230,9 @@
           "dimension": "obl-016-unauthorized-variant",
           "failure_mode": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
           "plausible_wrong_implementation": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-016 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-016 e não altera os bytes autorizados.",
           "expected": "O bootstrap é registrado em PR separada, sem modificar rulesets nem autoaprovar.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-06-OBL-016-S1",
@@ -1276,9 +1276,9 @@
           "dimension": "obl-018-unauthorized-variant",
           "failure_mode": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
           "plausible_wrong_implementation": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-018 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-018 e não altera os bytes autorizados.",
           "expected": "O bootstrap é registrado em PR separada, sem modificar rulesets nem autoaprovar.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-06-OBL-018-S1",
@@ -1322,9 +1322,9 @@
           "dimension": "obl-020-unauthorized-variant",
           "failure_mode": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
           "plausible_wrong_implementation": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-020 e não altera os bytes autorizados.",
+          "procedure": "Executar tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-020 e não altera os bytes autorizados.",
           "expected": "O bootstrap é registrado em PR separada, sem modificar rulesets nem autoaprovar.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests/test_verify_independent_pr_audit.py#test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
           "sibling_cases": [
             {
               "id": "NEG-R169-06-OBL-020-S1",
