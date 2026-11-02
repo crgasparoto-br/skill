@@ -102,5 +102,6 @@
         "test_case_id": "tests.test_validation_parity::test_dependabot_rejects_missing_or_main_target"
       }
     ]
-  }
+  },
+  "review_scope": "A PR #168, baseada em develop e vinculada por linha canonica 'Refs #167', substitui a PR #166 encerrada sem merge. O escopo material e o SHA oficial v7.1.0 nos nove workflows, ALLOWED_USES, target-branch develop nas tres entradas Dependabot, testes adversariais reutilizados e evidencias semanticas desta issue. A atualizacao de metadata de rastreabilidade precede esta revisao exact-SHA; nenhuma aprovacao independente e alegada, e as obrigacoes prospectivas permanecem deferred ate verificacao separada e release autorizado."
 }
