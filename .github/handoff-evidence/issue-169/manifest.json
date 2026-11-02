@@ -13,10 +13,10 @@
   "audit_history_evidence": "Histórico remoto da PR #170 consultado em 02/11/2026: nenhuma review independente submetida; a rejeição anterior A-001 refere-se à PR #168 e não é aprovação/reprovação independente do SHA desta PR.",
   "artifact_sha256": {
     "reviewed-closure.json": "55013488ac6100e94db61a00217e09fde16b76ab19da1d36ad3709c23cdd1ec1",
-    "requirement-attack-matrix.json": "48f7120ad208a6776cecac7aeaaf3c5c3ee0a5731c86a78f3661fc39788d948d",
+    "requirement-attack-matrix.json": "040dadb256608aaef9bd7536fee64f877c357c2eae31af2a7e8e867e87534e7d",
     "risk-saturation.json": "25f63950fa20c316e5101ec0a74871cea2997c0b72bc20eca453a9b678855103",
     "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
-    "codebase-grounding.json": "6f26bab91ced24b71bbf0c7dd3038b3f112bbaa9c16e0ce86d918e0e7727cf7e"
+    "codebase-grounding.json": "e0baedb7106d29c25fa10363bb8f317cad4b2915914a3e021f694f0fee337b52"
   },
   "test_bindings": {
     "R169-01": {
@@ -98,5 +98,5 @@
       }
     ]
   },
-  "review_scope": "PR #170 issue #169, originada da develop; apenas policy base-owned de uma migração literal em validate.yml, verificador canônico, testes adversariais e docs. A instalação à main, revisão independente e merge são etapas futuras separadas, não auto-aprovadas."
+  "review_scope": "PR #170 issue #169, originada da develop; apenas policy base-owned de uma migração literal em validate.yml, verificador canônico, testes adversariais e docs. A instalação à main, revisão independente e merge são etapas futuras separadas, não auto-aprovadas. Regressão adicional: SHA igual deve autenticar o conteúdo de ambos os blobs Git, rejeitando bytes falsos, omitidos ou corrompidos."
 }

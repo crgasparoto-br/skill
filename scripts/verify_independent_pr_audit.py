@@ -178,16 +178,27 @@ def verify_trusted_workflow_source(
         for item in source
     ):
         raise ValueError("trusted workflow source unavailable")
-    if source[0]["sha"] != source[1]["sha"]:
-        try:
-            allowed = _approved_pin_only_migration(
-                repo, workflow, base_sha, token, source[0], source[1])
-        except (OSError, ValueError, TypeError, KeyError) as exc:
-            raise ValueError(
-                f"required workflow differs from trusted base: {workflow} ({exc})"
-            ) from exc
-        if not allowed:
+    # Matching REST SHA values cannot prove that the returned bytes are authentic.
+    try:
+        base_bytes = _authenticated_blob_bytes(source[0])
+        head_bytes = _authenticated_blob_bytes(source[1])
+    except (ValueError, TypeError, KeyError) as exc:
+        raise ValueError(
+            f"required workflow differs from trusted base: {workflow} ({exc})"
+        ) from exc
+    if source[0]["sha"] == source[1]["sha"]:
+        if base_bytes != head_bytes:
             raise ValueError(f"required workflow differs from trusted base: {workflow}")
+        return
+    try:
+        allowed = _approved_pin_only_migration(
+            repo, workflow, base_sha, token, source[0], source[1])
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        raise ValueError(
+            f"required workflow differs from trusted base: {workflow} ({exc})"
+        ) from exc
+    if not allowed:
+        raise ValueError(f"required workflow differs from trusted base: {workflow}")
 
 
 def official_job_matches(

@@ -59,8 +59,10 @@ Somente uma alteracao material ou uma evidencia realmente diferente exige nova r
 ## Bootstrap seguro de atualizacoes de actions em workflow obrigatorio
 
 O verificador da base confiavel compara o Git blob de cada workflow que produz um
-check requerido. Caso os blobs sejam identicos, a verificacao anterior continua
-inalterada. Para mudanca de versao, o unico caso permitido e um **pin-only
+check requerido. Mesmo quando os dois blobs declaram a mesma SHA Git, o verificador exige
+bytes base64 presentes e validos e recalcula o Git blob SHA de **ambas** as
+respostas antes de aceitar sua identidade. Igualdade de metadados, isoladamente,
+nao autoriza o workflow; bytes adulterados ou ausentes bloqueiam. Para mudanca de versao, o unico caso permitido e um **pin-only
 migration** preautorizado em
 [config/trusted-workflow-pin-migrations.json](../config/trusted-workflow-pin-migrations.json).
 A politica deve estar instalada por PR revisada na `develop` e, para a coleta

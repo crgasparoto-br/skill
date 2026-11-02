@@ -266,7 +266,7 @@ def workflow_source_fixture():
         "status": "completed", "conclusion": "success",
         "check_run_url": f"{API_ROOT}/repos/org/repo/check-runs/42",
     }
-    source = {"type": "file", "sha": "c" * 40}
+    source = _contents_blob(b"name: Validate skills\njobs:\n  validate:\n    steps: []\n")
     response = {
         "/repos/org/repo/actions/runs/23": run,
         "/repos/org/repo/actions/jobs/44": job,
@@ -527,6 +527,40 @@ def test_trusted_pin_policy_rejects_malformed_schemas(invalid):
     with pytest.raises(ValueError, match="duplicate"):
         gate.parse_pin_migrations(
             b'{"schema_version":1,"schema_version":1,"migrations":[]}')
+
+
+@pytest.mark.parametrize("target", ["base", "head"])
+@pytest.mark.parametrize("mutation", ["missing-content", "forged-content", "forged-sha"])
+def test_equal_sha_workflow_rejects_unauthenticated_bytes(monkeypatch, target, mutation):
+    """Equal declared SHAs cannot bypass authentication of either workflow blob."""
+    _, _, _, response = workflow_source_fixture()
+    path = (
+        f"/repos/org/repo/contents/.github/workflows/validate.yml?ref="
+        f"{BASE_SHA if target == 'base' else HEAD}"
+    )
+    other = (
+        f"/repos/org/repo/contents/.github/workflows/validate.yml?ref="
+        f"{HEAD if target == 'base' else BASE_SHA}"
+    )
+    if mutation == "missing-content":
+        response[path].pop("content")
+    elif mutation == "forged-content":
+        response[path]["content"] = base64.b64encode(b"modified workflow").decode("ascii")
+    else:
+        response[path]["sha"] = "0" * 40
+        response[other]["sha"] = "0" * 40
+    monkeypatch.setattr(gate, "github", lambda requested, token: response[requested])
+    with pytest.raises(ValueError, match="required workflow differs from trusted base"):
+        gate.verify_trusted_workflow_source(
+            "org/repo", ".github/workflows/validate.yml", BASE_SHA, HEAD, "token")
+
+
+def test_equal_sha_workflow_accepts_only_verified_identical_bytes(monkeypatch):
+    """The unchanged workflow remains accepted when both full Git blobs are verified."""
+    _, _, _, response = workflow_source_fixture()
+    monkeypatch.setattr(gate, "github", lambda requested, token: response[requested])
+    assert gate.verify_trusted_workflow_source(
+        "org/repo", ".github/workflows/validate.yml", BASE_SHA, HEAD, "token") is None
 
 
 def test_workflow_contents_must_match_trusted_base(monkeypatch):

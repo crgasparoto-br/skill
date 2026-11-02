@@ -9,13 +9,14 @@
     {
       "path": "tests/test_verify_independent_pr_audit.py",
       "operation": "modified",
-      "scenario": "Permitir somente pin-only da linha preautorizada pela base confiável; rejeitar policy candidato, blob SHA falso, múltiplas linhas, tags móveis, alterações de eventos/permissões e preservar verificador compartilhado.",
+      "scenario": "Permitir somente pin-only da linha preautorizada pela base confiável; rejeitar policy candidato, blob SHA falso, múltiplas linhas, tags móveis, alterações de eventos/permissões e preservar verificador compartilhado. Também exercita o caso de igualdade de SHAs com conteúdo ausente ou corrupto, negando o bypass por metadados iguais.",
       "requirement": "Issue #169 R169-01 a R169-05; controles discriminantes positivos, negativos, regressões e identidade base-owned.",
       "search": {
         "queries": [
           "tests/test_verify_independent_pr_audit.py na develop contém test_workflow_contents_must_match_trusted_base",
           "scripts/verify_independent_pr_audit.py verificação de provenance e base",
-          "tests/test_verify_independent_pr_audit.py no HEAD inclui policy, hash e mutações"
+          "tests/test_verify_independent_pr_audit.py no HEAD inclui policy, hash e mutações",
+          "tests/test_verify_independent_pr_audit.py novos controles de autenticidade de blob com SHA iguais"
         ],
         "scope": "Reuso do módulo existente e runner pytest que já exercita verified trust, revisão e regressões; nenhum arquivo novo de testes criado.",
         "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
