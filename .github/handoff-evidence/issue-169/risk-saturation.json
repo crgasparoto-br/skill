@@ -77,26 +77,9 @@
     },
     {
       "family": "historical-immutability",
-      "applicable": true,
-      "status": "passed",
-      "reason": "A matriz R169-03 contém o controle primário authenticated-trusted-base e testes adversariais executados no HEAD exact-SHA.",
-      "control_ids": [
-        "NEG-R169-03-OBL-009",
-        "NEG-R169-03-OBL-010",
-        "NEG-R169-03-OBL-019"
-      ],
-      "dimensions": [
-        {
-          "surface": "authenticated-trusted-base",
-          "reason": "A superfície authenticated-trusted-base deve rejeitar a implementação plausível incorreta de R169-03.",
-          "control_ids": [
-            "NEG-R169-03-OBL-009",
-            "NEG-R169-03-OBL-010",
-            "NEG-R169-03-OBL-019"
-          ],
-          "status": "passed"
-        }
-      ]
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Não há edição, exclusão ou reatribuição de registros históricos; a imutabilidade de conteúdo Git da policy é coberta pela família authorization e pelos testes de SHA autenticado."
     },
     {
       "family": "idempotency",
@@ -166,26 +149,9 @@
     },
     {
       "family": "temporal-consistency",
-      "applicable": true,
-      "status": "passed",
-      "reason": "A matriz R169-03 contém o controle primário authenticated-trusted-base e testes adversariais executados no HEAD exact-SHA.",
-      "control_ids": [
-        "NEG-R169-03-OBL-009",
-        "NEG-R169-03-OBL-010",
-        "NEG-R169-03-OBL-019"
-      ],
-      "dimensions": [
-        {
-          "surface": "authenticated-trusted-base",
-          "reason": "A superfície authenticated-trusted-base deve rejeitar a implementação plausível incorreta de R169-03.",
-          "control_ids": [
-            "NEG-R169-03-OBL-009",
-            "NEG-R169-03-OBL-010",
-            "NEG-R169-03-OBL-019"
-          ],
-          "status": "passed"
-        }
-      ]
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Não há tratamento de datas, períodos ou precedência temporal; a revalidação do base_sha é tratada como authorization/reference-liveness."
     },
     {
       "family": "temporal-destination",

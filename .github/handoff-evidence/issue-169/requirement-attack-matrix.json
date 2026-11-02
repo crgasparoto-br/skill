@@ -731,7 +731,7 @@
                 "classname": "tests.test_session_review",
                 "name": "test_main_is_bound_to_same_exact_evidence_requirements"
               },
-              "evidence": "tests/test_verify_independent_pr_audit.py: regressão exata e integridade/revisão exigida."
+              "evidence": "tests/test_session_review.py contém a regressão de paridade de evidências exact-SHA consumida pelo fluxo de sessão."
             }
           ]
         },
@@ -777,7 +777,7 @@
                 "classname": "tests.test_session_review",
                 "name": "test_main_is_bound_to_same_exact_evidence_requirements"
               },
-              "evidence": "tests/test_verify_independent_pr_audit.py: regressão exata e integridade/revisão exigida."
+              "evidence": "tests/test_session_review.py contém a regressão de paridade de evidências exact-SHA consumida pelo fluxo de sessão."
             }
           ]
         }
@@ -792,9 +792,9 @@
             "classname": "tests.test_session_review",
             "name": "test_main_is_bound_to_same_exact_evidence_requirements"
           },
-          "evidence": "tests/test_verify_independent_pr_audit.py: teste test_main_is_bound_to_same_exact_evidence_requirements implementa regressão do contrato e identidade autenticada. Execução atestada no JUnit exact-SHA do run 41380629027; não é aprovação independente.",
-          "evidence_path": "tests/test_verify_independent_pr_audit.py",
-          "evidence_sha256": "6ebe59978c5c0d45c01d6b196e2ebc1877b4cf8dc99652eab1d25cc36ea73d09"
+          "evidence": "tests/test_session_review.py: test_main_is_bound_to_same_exact_evidence_requirements demonstra que o fluxo de sessão continua exigindo evidência exact-SHA equivalente em develop e main; JUnit do HEAD inicial 41380629027 registra o caso como passed. Isto não atesta a revisão independente.",
+          "evidence_path": "tests/test_session_review.py",
+          "evidence_sha256": "5db2433608557ff2acbf344b7261fa2b06247a49659cd020d599cb031f683424"
         }
       ],
       "risk_surfaces": [
