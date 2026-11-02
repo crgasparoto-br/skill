@@ -1,0 +1,1448 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "requirements": [
+    {
+      "requirement_id": "R167-01",
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-003",
+        "OBL-007",
+        "OBL-015"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract",
+        "reference-liveness"
+      ],
+      "plausible_wrong_implementation": "Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_validation_parity",
+          "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+        },
+        "evidence": "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. O validador rejeita tags móveis, SHAs antigos e desconhecidos; todos os nove workflows precisam declarar o SHA verificado v7.1.0.",
+        "evidence_path": "tests/test_validation_parity.py",
+        "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+          },
+          "evidence": "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. O teste varre os YAMLs reais e percorre as entradas mutantes @v7, SHA v5 e SHA desconhecido; a nova CI deve comprovar execução exact-SHA.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-01-OBL-001",
+          "risk_family": "structural-contract",
+          "surface": "action-pin-coverage",
+          "dimension": "obl-001-contract-break",
+          "failure_mode": "Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação.",
+          "plausible_wrong_implementation": "Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_setup_python_v7_pin_is_classified_in_every_workflow; inspecione a variante de entrada e compare a restrição de OBL-001 com o código e o diff real. O diff dos nove YAMLs, do validador e do Dependabot cumpre o upgrade. Os tests.test_validation_parity verificam o comportamento de classificação e destinos, sem afirmar a conclusão dos gates independentes.",
+          "expected": "O validador rejeita tags móveis, SHAs antigos e desconhecidos; todos os nove workflows precisam declarar o SHA verificado v7.1.0.",
+          "observed": "O teste varre os YAMLs reais e percorre as entradas mutantes @v7, SHA v5 e SHA desconhecido; a nova CI deve comprovar execução exact-SHA.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-01-OBL-001-S1",
+              "surface": "action-pin-coverage",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-01-OBL-001-S2",
+              "surface": "action-pin-coverage",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+          },
+          "evidence": "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. O teste varre os YAMLs reais e percorre as entradas mutantes @v7, SHA v5 e SHA desconhecido; a nova CI deve comprovar execução exact-SHA.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-01-OBL-003",
+          "risk_family": "structural-contract",
+          "surface": "action-pin-coverage",
+          "dimension": "obl-003-contract-break",
+          "failure_mode": "Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação.",
+          "plausible_wrong_implementation": "Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_setup_python_v7_pin_is_classified_in_every_workflow; inspecione a variante de entrada e compare a restrição de OBL-003 com o código e o diff real. Nove arquivos em .github/workflows foram atualizados para o mesmo SHA do setup-python v7.1.0; todos preservam o Python 3.12 ou a expressão python-version do workflow reutilizável.",
+          "expected": "O validador rejeita tags móveis, SHAs antigos e desconhecidos; todos os nove workflows precisam declarar o SHA verificado v7.1.0.",
+          "observed": "O teste varre os YAMLs reais e percorre as entradas mutantes @v7, SHA v5 e SHA desconhecido; a nova CI deve comprovar execução exact-SHA.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-01-OBL-003-S1",
+              "surface": "action-pin-coverage",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-01-OBL-003-S2",
+              "surface": "action-pin-coverage",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+          },
+          "evidence": "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. O teste varre os YAMLs reais e percorre as entradas mutantes @v7, SHA v5 e SHA desconhecido; a nova CI deve comprovar execução exact-SHA.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-01-OBL-007",
+          "risk_family": "structural-contract",
+          "surface": "action-pin-coverage",
+          "dimension": "obl-007-contract-break",
+          "failure_mode": "Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação.",
+          "plausible_wrong_implementation": "Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_setup_python_v7_pin_is_classified_in_every_workflow; inspecione a variante de entrada e compare a restrição de OBL-007 com o código e o diff real. O teste de pinagem percorre todos os workflows e exige o SHA do setup-python idêntico ao pin verificado; o workflow dependency-audit.yml deixou de usar a tag móvel.",
+          "expected": "O validador rejeita tags móveis, SHAs antigos e desconhecidos; todos os nove workflows precisam declarar o SHA verificado v7.1.0.",
+          "observed": "O teste varre os YAMLs reais e percorre as entradas mutantes @v7, SHA v5 e SHA desconhecido; a nova CI deve comprovar execução exact-SHA.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-01-OBL-007-S1",
+              "surface": "action-pin-coverage",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-01-OBL-007-S2",
+              "surface": "action-pin-coverage",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+          },
+          "evidence": "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. O teste varre os YAMLs reais e percorre as entradas mutantes @v7, SHA v5 e SHA desconhecido; a nova CI deve comprovar execução exact-SHA.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-01-OBL-015",
+          "risk_family": "reference-liveness",
+          "surface": "action-ref-freshness",
+          "dimension": "obl-015-contract-break",
+          "failure_mode": "Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação.",
+          "plausible_wrong_implementation": "Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_setup_python_v7_pin_is_classified_in_every_workflow; inspecione a variante de entrada e compare a restrição de OBL-015 com o código e o diff real. O diff da PR #168 contém nove workflows, um dependabot.yml, o validador canônico e tests/test_validation_parity.py; não modifica regras de branch, scripts de certificado ou arquivos não relacionados.",
+          "expected": "O validador rejeita tags móveis, SHAs antigos e desconhecidos; todos os nove workflows precisam declarar o SHA verificado v7.1.0.",
+          "observed": "O teste varre os YAMLs reais e percorre as entradas mutantes @v7, SHA v5 e SHA desconhecido; a nova CI deve comprovar execução exact-SHA.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-01-OBL-015-S1",
+              "surface": "action-ref-freshness",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-01-OBL-015-S2",
+              "surface": "action-ref-freshness",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_every_workflow_step_is_classified"
+          },
+          "evidence": "tests/test_validation_parity.py:83 (caso test_every_workflow_step_is_classified); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. O teste varre os YAMLs reais e percorre as entradas mutantes @v7, SHA v5 e SHA desconhecido; a nova CI deve comprovar execução exact-SHA.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "action-pin-coverage",
+          "reason": "A mudança do contrato R167-01 deve reprovar a variante proibida Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação."
+        },
+        {
+          "risk_family": "reference-liveness",
+          "surface": "action-ref-freshness",
+          "reason": "A mudança do contrato R167-01 deve reprovar a variante proibida Atualizar somente oito dos nove consumidores ou aceitar a tag móvel v7 deixaria pipelines executando versões diferentes da ação."
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-001",
+          "primary_negative_control_id": "NEG-R167-01-OBL-001"
+        },
+        {
+          "obligation_id": "OBL-003",
+          "primary_negative_control_id": "NEG-R167-01-OBL-003"
+        },
+        {
+          "obligation_id": "OBL-007",
+          "primary_negative_control_id": "NEG-R167-01-OBL-007"
+        },
+        {
+          "obligation_id": "OBL-015",
+          "primary_negative_control_id": "NEG-R167-01-OBL-015"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R167-02",
+      "obligation_ids": [
+        "OBL-004",
+        "OBL-008",
+        "OBL-019"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Manter a pinagem anterior em ALLOWED_USES ou introduzir uma permissão genérica aceitaria uma ação desconhecida.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_validation_parity",
+          "name": "test_every_workflow_step_is_classified"
+        },
+        "evidence": "tests/test_validation_parity.py:83 (caso test_every_workflow_step_is_classified); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Somente o SHA fixo autorizado passa; tag, versão anterior e hash não listado resultam em problemas de classificação.",
+        "evidence_path": "tests/test_validation_parity.py",
+        "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+          },
+          "evidence": "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. step_problems verifica ALLOWED_USES exata e o teste mutante percorre tags e hashes recusados, inclusive grafias YAML adversariais.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-02-OBL-004",
+          "risk_family": "structural-contract",
+          "surface": "action-allowlist",
+          "dimension": "obl-004-contract-break",
+          "failure_mode": "Manter a pinagem anterior em ALLOWED_USES ou introduzir uma permissão genérica aceitaria uma ação desconhecida.",
+          "plausible_wrong_implementation": "Manter a pinagem anterior em ALLOWED_USES ou introduzir uma permissão genérica aceitaria uma ação desconhecida.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_setup_python_v7_pin_is_classified_in_every_workflow; inspecione a variante de entrada e compare a restrição de OBL-004 com o código e o diff real. scripts/validate_workflow_classification.py declara explicitamente a referência 6d4fd22..., rejeitando referências fora de ALLOWED_USES; a suíte de classificação e casos YAML adversariais exercem a regra.",
+          "expected": "Somente o SHA fixo autorizado passa; tag, versão anterior e hash não listado resultam em problemas de classificação.",
+          "observed": "step_problems verifica ALLOWED_USES exata e o teste mutante percorre tags e hashes recusados, inclusive grafias YAML adversariais.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-02-OBL-004-S1",
+              "surface": "action-allowlist",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-02-OBL-004-S2",
+              "surface": "action-allowlist",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+          },
+          "evidence": "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. step_problems verifica ALLOWED_USES exata e o teste mutante percorre tags e hashes recusados, inclusive grafias YAML adversariais.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-02-OBL-008",
+          "risk_family": "structural-contract",
+          "surface": "action-allowlist",
+          "dimension": "obl-008-contract-break",
+          "failure_mode": "Manter a pinagem anterior em ALLOWED_USES ou introduzir uma permissão genérica aceitaria uma ação desconhecida.",
+          "plausible_wrong_implementation": "Manter a pinagem anterior em ALLOWED_USES ou introduzir uma permissão genérica aceitaria uma ação desconhecida.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_setup_python_v7_pin_is_classified_in_every_workflow; inspecione a variante de entrada e compare a restrição de OBL-008 com o código e o diff real. step_problems aprova o novo SHA e reprova tags v7, SHA de versão antiga e SHA desconhecido. A classificação real do workflow validate.yml passou no run oficial.",
+          "expected": "Somente o SHA fixo autorizado passa; tag, versão anterior e hash não listado resultam em problemas de classificação.",
+          "observed": "step_problems verifica ALLOWED_USES exata e o teste mutante percorre tags e hashes recusados, inclusive grafias YAML adversariais.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-02-OBL-008-S1",
+              "surface": "action-allowlist",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-02-OBL-008-S2",
+              "surface": "action-allowlist",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+          },
+          "evidence": "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. step_problems verifica ALLOWED_USES exata e o teste mutante percorre tags e hashes recusados, inclusive grafias YAML adversariais.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-02-OBL-019",
+          "risk_family": "structural-contract",
+          "surface": "action-allowlist",
+          "dimension": "obl-019-contract-break",
+          "failure_mode": "Manter a pinagem anterior em ALLOWED_USES ou introduzir uma permissão genérica aceitaria uma ação desconhecida.",
+          "plausible_wrong_implementation": "Manter a pinagem anterior em ALLOWED_USES ou introduzir uma permissão genérica aceitaria uma ação desconhecida.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_setup_python_v7_pin_is_classified_in_every_workflow; inspecione a variante de entrada e compare a restrição de OBL-019 com o código e o diff real. O loop adversarial de test_setup_python_v7_pin_is_classified_in_every_workflow passa v7, SHA v7.0.0, SHA v5 e hash desconhecido ao validador e exige step_problems não vazio.",
+          "expected": "Somente o SHA fixo autorizado passa; tag, versão anterior e hash não listado resultam em problemas de classificação.",
+          "observed": "step_problems verifica ALLOWED_USES exata e o teste mutante percorre tags e hashes recusados, inclusive grafias YAML adversariais.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-02-OBL-019-S1",
+              "surface": "action-allowlist",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-02-OBL-019-S2",
+              "surface": "action-allowlist",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+              },
+              "evidence": "tests/test_validation_parity.py:88; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+          },
+          "evidence": "tests/test_validation_parity.py:262 (caso test_yaml_forms_cannot_hide_an_unclassified_step); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. step_problems verifica ALLOWED_USES exata e o teste mutante percorre tags e hashes recusados, inclusive grafias YAML adversariais.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "action-allowlist",
+          "reason": "A mudança do contrato R167-02 deve reprovar a variante proibida Manter a pinagem anterior em ALLOWED_USES ou introduzir uma permissão genérica aceitaria uma ação desconhecida."
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-004",
+          "primary_negative_control_id": "NEG-R167-02-OBL-004"
+        },
+        {
+          "obligation_id": "OBL-008",
+          "primary_negative_control_id": "NEG-R167-02-OBL-008"
+        },
+        {
+          "obligation_id": "OBL-019",
+          "primary_negative_control_id": "NEG-R167-02-OBL-019"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R167-03",
+      "obligation_ids": [
+        "OBL-005",
+        "OBL-020",
+        "OBL-024"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract",
+        "documentation",
+        "reference-liveness"
+      ],
+      "plausible_wrong_implementation": "Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_validation_parity",
+          "name": "test_dependabot_updates_all_target_develop"
+        },
+        "evidence": "tests/test_validation_parity.py:116 (caso test_dependabot_updates_all_target_develop); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Cada uma das três entradas pip/github-actions exige target-branch develop; versões sem chave ou com main reprovam.",
+        "evidence_path": "tests/test_validation_parity.py",
+        "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_dependabot_rejects_missing_or_main_target"
+          },
+          "evidence": "tests/test_validation_parity.py:130 (caso test_dependabot_rejects_missing_or_main_target); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Novo teste altera individualmente cada entrada para destino ausente ou main e verifica rejeição do predicado aplicado na configuração real. A publicação em main depende de release separado.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-03-OBL-005",
+          "risk_family": "structural-contract",
+          "surface": "dependabot-target-policy",
+          "dimension": "obl-005-contract-break",
+          "failure_mode": "Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto.",
+          "plausible_wrong_implementation": "Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_dependabot_rejects_missing_or_main_target; inspecione a variante de entrada e compare a restrição de OBL-005 com o código e o diff real. As três entradas pip e github-actions de .github/dependabot.yml declaram target-branch: develop; o teste test_dependabot_updates_all_target_develop valida toda a coleção.",
+          "expected": "Cada uma das três entradas pip/github-actions exige target-branch develop; versões sem chave ou com main reprovam.",
+          "observed": "Novo teste altera individualmente cada entrada para destino ausente ou main e verifica rejeição do predicado aplicado na configuração real. A publicação em main depende de release separado.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-03-OBL-005-S1",
+              "surface": "dependabot-target-policy",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_dependabot_rejects_missing_or_main_target"
+              },
+              "evidence": "tests/test_validation_parity.py:130; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-03-OBL-005-S2",
+              "surface": "dependabot-target-policy",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_dependabot_rejects_missing_or_main_target"
+              },
+              "evidence": "tests/test_validation_parity.py:130; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_dependabot_rejects_missing_or_main_target"
+          },
+          "evidence": "tests/test_validation_parity.py:130 (caso test_dependabot_rejects_missing_or_main_target); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Novo teste altera individualmente cada entrada para destino ausente ou main e verifica rejeição do predicado aplicado na configuração real. A publicação em main depende de release separado.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-03-OBL-020",
+          "risk_family": "structural-contract",
+          "surface": "dependabot-target-policy",
+          "dimension": "obl-020-contract-break",
+          "failure_mode": "Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto.",
+          "plausible_wrong_implementation": "Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_dependabot_rejects_missing_or_main_target; inspecione a variante de entrada e compare a restrição de OBL-020 com o código e o diff real. O teste de configuração usa update.get(\"target-branch\") == \"develop\" para cada entrada; assim a ausência de chave retorna None e main diverge. A suíte CI observada executou o oráculo no material HEAD.",
+          "expected": "Cada uma das três entradas pip/github-actions exige target-branch develop; versões sem chave ou com main reprovam.",
+          "observed": "Novo teste altera individualmente cada entrada para destino ausente ou main e verifica rejeição do predicado aplicado na configuração real. A publicação em main depende de release separado.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-03-OBL-020-S1",
+              "surface": "dependabot-target-policy",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_dependabot_rejects_missing_or_main_target"
+              },
+              "evidence": "tests/test_validation_parity.py:130; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-03-OBL-020-S2",
+              "surface": "dependabot-target-policy",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_dependabot_rejects_missing_or_main_target"
+              },
+              "evidence": "tests/test_validation_parity.py:130; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_dependabot_rejects_missing_or_main_target"
+          },
+          "evidence": "tests/test_validation_parity.py:130 (caso test_dependabot_rejects_missing_or_main_target); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Novo teste altera individualmente cada entrada para destino ausente ou main e verifica rejeição do predicado aplicado na configuração real. A publicação em main depende de release separado.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-03-OBL-024",
+          "risk_family": "documentation",
+          "surface": "branch-contract-drift",
+          "dimension": "obl-024-contract-break",
+          "failure_mode": "Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto.",
+          "plausible_wrong_implementation": "Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_dependabot_rejects_missing_or_main_target; inspecione a variante de entrada e compare a restrição de OBL-024 com o código e o diff real. AGENTS.md e README.md já estabelecem develop como base e main apenas no release; a PR não altera estes documentos. O YAML do Dependabot passa a obedecer esse contrato.",
+          "expected": "Cada uma das três entradas pip/github-actions exige target-branch develop; versões sem chave ou com main reprovam.",
+          "observed": "Novo teste altera individualmente cada entrada para destino ausente ou main e verifica rejeição do predicado aplicado na configuração real. A publicação em main depende de release separado.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-03-OBL-024-S1",
+              "surface": "branch-contract-drift",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_dependabot_rejects_missing_or_main_target"
+              },
+              "evidence": "tests/test_validation_parity.py:130; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-03-OBL-024-S2",
+              "surface": "branch-contract-drift",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_dependabot_rejects_missing_or_main_target"
+              },
+              "evidence": "tests/test_validation_parity.py:130; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_dependabot_rejects_missing_or_main_target"
+          },
+          "evidence": "tests/test_validation_parity.py:130 (caso test_dependabot_rejects_missing_or_main_target); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Novo teste altera individualmente cada entrada para destino ausente ou main e verifica rejeição do predicado aplicado na configuração real. A publicação em main depende de release separado.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-03-reference-liveness-branch-target-freshness",
+          "risk_family": "reference-liveness",
+          "surface": "branch-target-freshness",
+          "dimension": "independent-surface-mutation",
+          "failure_mode": "Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto.",
+          "plausible_wrong_implementation": "Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto.",
+          "procedure": "Conferir a fronteira branch-target-freshness usando a falha mutante test_dependabot_rejects_missing_or_main_target e confrontar o consumo de evidência no HEAD certificado.",
+          "expected": "Cada uma das três entradas pip/github-actions exige target-branch develop; versões sem chave ou com main reprovam.",
+          "observed": "Novo teste altera individualmente cada entrada para destino ausente ou main e verifica rejeição do predicado aplicado na configuração real. A publicação em main depende de release separado.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-03-reference-liveness-branch-target-freshness-S1",
+              "surface": "branch-target-freshness",
+              "dimension": "wrong-reference",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_dependabot_rejects_missing_or_main_target"
+              },
+              "evidence": "tests/test_validation_parity.py:130; variante de referência indevida"
+            },
+            {
+              "id": "NEG-R167-03-reference-liveness-branch-target-freshness-S2",
+              "surface": "branch-target-freshness",
+              "dimension": "missing-evidence",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_dependabot_rejects_missing_or_main_target"
+              },
+              "evidence": "tests/test_validation_parity.py:130; variante de dado ausente"
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_local_validation_sequence_matches_the_ci_workflow"
+          },
+          "evidence": "tests/test_validation_parity.py:59 (caso test_local_validation_sequence_matches_the_ci_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Novo teste altera individualmente cada entrada para destino ausente ou main e verifica rejeição do predicado aplicado na configuração real. A publicação em main depende de release separado.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "dependabot-target-policy",
+          "reason": "A mudança do contrato R167-03 deve reprovar a variante proibida Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto."
+        },
+        {
+          "risk_family": "documentation",
+          "surface": "branch-contract-drift",
+          "reason": "A mudança do contrato R167-03 deve reprovar a variante proibida Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto."
+        },
+        {
+          "risk_family": "reference-liveness",
+          "surface": "branch-target-freshness",
+          "reason": "A mudança do contrato R167-03 deve reprovar a variante proibida Omitir target-branch ou definir main em uma entrada do Dependabot gera PRs fora da develop, mesmo com o restante correto."
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-005",
+          "primary_negative_control_id": "NEG-R167-03-OBL-005"
+        },
+        {
+          "obligation_id": "OBL-020",
+          "primary_negative_control_id": "NEG-R167-03-OBL-020"
+        },
+        {
+          "obligation_id": "OBL-024",
+          "primary_negative_control_id": "NEG-R167-03-OBL-024"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R167-04",
+      "obligation_ids": [
+        "OBL-006",
+        "OBL-016",
+        "OBL-022",
+        "OBL-023"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_validation_parity",
+          "name": "test_setup_python_v7_pin_is_classified_in_every_workflow"
+        },
+        "evidence": "tests/test_validation_parity.py:88 (caso test_setup_python_v7_pin_is_classified_in_every_workflow); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Suite existente preservada e ampliada com testes positivos, mutantes de ação e destinos incorretos.",
+        "evidence_path": "tests/test_validation_parity.py",
+        "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+          },
+          "evidence": "tests/test_validation_parity.py:262 (caso test_yaml_forms_cannot_hide_an_unclassified_step); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Os casos de YAML malformado, comando externo, SHA/tag desconhecido e destino ausente/main estão no mesmo módulo de paridade e seguem para execução da suite.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-04-OBL-006",
+          "risk_family": "structural-contract",
+          "surface": "regression-suite-continuity",
+          "dimension": "obl-006-contract-break",
+          "failure_mode": "Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch.",
+          "plausible_wrong_implementation": "Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_yaml_forms_cannot_hide_an_unclassified_step; inspecione a variante de entrada e compare a restrição de OBL-006 com o código e o diff real. Os testes focados adicionados no módulo existente cobrem classificação de SHA e branch de Dependabot. O JUnit autentica execução no material HEAD e preserva a suíte anterior.",
+          "expected": "Suite existente preservada e ampliada com testes positivos, mutantes de ação e destinos incorretos.",
+          "observed": "Os casos de YAML malformado, comando externo, SHA/tag desconhecido e destino ausente/main estão no mesmo módulo de paridade e seguem para execução da suite.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-04-OBL-006-S1",
+              "surface": "regression-suite-continuity",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+              },
+              "evidence": "tests/test_validation_parity.py:262; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-04-OBL-006-S2",
+              "surface": "regression-suite-continuity",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+              },
+              "evidence": "tests/test_validation_parity.py:262; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+          },
+          "evidence": "tests/test_validation_parity.py:262 (caso test_yaml_forms_cannot_hide_an_unclassified_step); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Os casos de YAML malformado, comando externo, SHA/tag desconhecido e destino ausente/main estão no mesmo módulo de paridade e seguem para execução da suite.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-04-OBL-016",
+          "risk_family": "structural-contract",
+          "surface": "regression-suite-continuity",
+          "dimension": "obl-016-contract-break",
+          "failure_mode": "Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch.",
+          "plausible_wrong_implementation": "Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_yaml_forms_cannot_hide_an_unclassified_step; inspecione a variante de entrada e compare a restrição de OBL-016 com o código e o diff real. JUnit exato registra os testes test_setup_python_v7_pin_is_classified_in_every_workflow e test_dependabot_updates_all_target_develop como passed, incluindo rejeição de tags/SHA desconhecidos e verificação de todos os destinos.",
+          "expected": "Suite existente preservada e ampliada com testes positivos, mutantes de ação e destinos incorretos.",
+          "observed": "Os casos de YAML malformado, comando externo, SHA/tag desconhecido e destino ausente/main estão no mesmo módulo de paridade e seguem para execução da suite.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-04-OBL-016-S1",
+              "surface": "regression-suite-continuity",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+              },
+              "evidence": "tests/test_validation_parity.py:262; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-04-OBL-016-S2",
+              "surface": "regression-suite-continuity",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+              },
+              "evidence": "tests/test_validation_parity.py:262; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+          },
+          "evidence": "tests/test_validation_parity.py:262 (caso test_yaml_forms_cannot_hide_an_unclassified_step); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Os casos de YAML malformado, comando externo, SHA/tag desconhecido e destino ausente/main estão no mesmo módulo de paridade e seguem para execução da suite.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-04-OBL-022",
+          "risk_family": "structural-contract",
+          "surface": "regression-suite-continuity",
+          "dimension": "obl-022-contract-break",
+          "failure_mode": "Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch.",
+          "plausible_wrong_implementation": "Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_yaml_forms_cannot_hide_an_unclassified_step; inspecione a variante de entrada e compare a restrição de OBL-022 com o código e o diff real. A alteração usa tests/test_validation_parity.py existente, sem criar arquivo de teste duplicado, mantendo os casos prévios de paridade, YAML adversarial e sequência documentada.",
+          "expected": "Suite existente preservada e ampliada com testes positivos, mutantes de ação e destinos incorretos.",
+          "observed": "Os casos de YAML malformado, comando externo, SHA/tag desconhecido e destino ausente/main estão no mesmo módulo de paridade e seguem para execução da suite.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-04-OBL-022-S1",
+              "surface": "regression-suite-continuity",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+              },
+              "evidence": "tests/test_validation_parity.py:262; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-04-OBL-022-S2",
+              "surface": "regression-suite-continuity",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+              },
+              "evidence": "tests/test_validation_parity.py:262; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+          },
+          "evidence": "tests/test_validation_parity.py:262 (caso test_yaml_forms_cannot_hide_an_unclassified_step); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Os casos de YAML malformado, comando externo, SHA/tag desconhecido e destino ausente/main estão no mesmo módulo de paridade e seguem para execução da suite.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83",
+          "id": "NEG-R167-04-OBL-023",
+          "risk_family": "structural-contract",
+          "surface": "regression-suite-continuity",
+          "dimension": "obl-023-contract-break",
+          "failure_mode": "Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch.",
+          "plausible_wrong_implementation": "Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_yaml_forms_cannot_hide_an_unclassified_step; inspecione a variante de entrada e compare a restrição de OBL-023 com o código e o diff real. Foi adicionado test_dependabot_updates_all_target_develop ao módulo existente, com verificação exaustiva dos três ecossistemas; nenhum teste ou gate anterior foi removido.",
+          "expected": "Suite existente preservada e ampliada com testes positivos, mutantes de ação e destinos incorretos.",
+          "observed": "Os casos de YAML malformado, comando externo, SHA/tag desconhecido e destino ausente/main estão no mesmo módulo de paridade e seguem para execução da suite.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-04-OBL-023-S1",
+              "surface": "regression-suite-continuity",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+              },
+              "evidence": "tests/test_validation_parity.py:262; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-04-OBL-023-S2",
+              "surface": "regression-suite-continuity",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_validation_parity",
+                "name": "test_yaml_forms_cannot_hide_an_unclassified_step"
+              },
+              "evidence": "tests/test_validation_parity.py:262; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_validation_parity",
+            "name": "test_every_workflow_step_is_classified"
+          },
+          "evidence": "tests/test_validation_parity.py:83 (caso test_every_workflow_step_is_classified); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Os casos de YAML malformado, comando externo, SHA/tag desconhecido e destino ausente/main estão no mesmo módulo de paridade e seguem para execução da suite.",
+          "evidence_path": "tests/test_validation_parity.py",
+          "evidence_sha256": "b0e6693b832d5fe5883146af82c0d95cac93235dfc51668aeac9b642cfc3eb83"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "regression-suite-continuity",
+          "reason": "A mudança do contrato R167-04 deve reprovar a variante proibida Criar apenas teste feliz de pinagem e retirar as regressões existentes deixa escapes na classificação e na política de branch."
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-006",
+          "primary_negative_control_id": "NEG-R167-04-OBL-006"
+        },
+        {
+          "obligation_id": "OBL-016",
+          "primary_negative_control_id": "NEG-R167-04-OBL-016"
+        },
+        {
+          "obligation_id": "OBL-022",
+          "primary_negative_control_id": "NEG-R167-04-OBL-022"
+        },
+        {
+          "obligation_id": "OBL-023",
+          "primary_negative_control_id": "NEG-R167-04-OBL-023"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R167-05",
+      "obligation_ids": [
+        "OBL-002",
+        "OBL-010",
+        "OBL-011",
+        "OBL-013",
+        "OBL-014",
+        "OBL-021"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract",
+        "temporal-consistency"
+      ],
+      "plausible_wrong_implementation": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+          "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change2-base ref]"
+        },
+        "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70 (caso test_untrusted_or_ambiguous_metadata_fails_closed[change2-base ref]); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Base develop e issue #167 inequívoca; certificação revalida o SHA atual e impede liberação com CI apenas técnica.",
+        "evidence_path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+        "evidence_sha256": "bee22a38267553ec6f9d84adac37e4b4180fcb7f56760a86ba764f1e80c98d18"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+            "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+          },
+          "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70 (caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "evidence_path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+          "evidence_sha256": "bee22a38267553ec6f9d84adac37e4b4180fcb7f56760a86ba764f1e80c98d18",
+          "id": "NEG-R167-05-OBL-002",
+          "risk_family": "structural-contract",
+          "surface": "pr-base-identity",
+          "dimension": "obl-002-contract-break",
+          "failure_mode": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "plausible_wrong_implementation": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]; inspecione a variante de entrada e compare a restrição de OBL-002 com o código e o diff real. O alvo desta entrega é a PR #168, criada da develop e vinculada à issue #167; a PR #166 permaneceu fechada sem merge. A comparação develop..HEAD mostra somente dois commits da entrega, sem recuperar o histórico exclusivo da main.",
+          "expected": "Base develop e issue #167 inequívoca; certificação revalida o SHA atual e impede liberação com CI apenas técnica.",
+          "observed": "GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-05-OBL-002-S1",
+              "surface": "pr-base-identity",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-05-OBL-002-S2",
+              "surface": "pr-base-identity",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+            "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+          },
+          "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70 (caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "evidence_path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+          "evidence_sha256": "bee22a38267553ec6f9d84adac37e4b4180fcb7f56760a86ba764f1e80c98d18",
+          "id": "NEG-R167-05-OBL-010",
+          "risk_family": "structural-contract",
+          "surface": "pr-base-identity",
+          "dimension": "obl-010-contract-break",
+          "failure_mode": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "plausible_wrong_implementation": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]; inspecione a variante de entrada e compare a restrição de OBL-010 com o código e o diff real. A PR #168 usa base develop, branch fix/167-setup-python-v7-dependabot-develop e título com Issue #167. O metadata pré-testes é autenticado no coletor de Actions.",
+          "expected": "Base develop e issue #167 inequívoca; certificação revalida o SHA atual e impede liberação com CI apenas técnica.",
+          "observed": "GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-05-OBL-010-S1",
+              "surface": "pr-base-identity",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-05-OBL-010-S2",
+              "surface": "pr-base-identity",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+            "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+          },
+          "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70 (caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "evidence_path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+          "evidence_sha256": "bee22a38267553ec6f9d84adac37e4b4180fcb7f56760a86ba764f1e80c98d18",
+          "id": "NEG-R167-05-OBL-011",
+          "risk_family": "temporal-consistency",
+          "surface": "reporting-availability-window",
+          "dimension": "obl-011-contract-break",
+          "failure_mode": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "plausible_wrong_implementation": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]; inspecione a variante de entrada e compare a restrição de OBL-011 com o código e o diff real. O diff não altera permissões, regras, scripts de certificação ou required checks; validação fail-closed mantém a allowlist e os testes de entrada não autorizada. Os checks independentes vermelhos não foram dispensados.",
+          "expected": "Base develop e issue #167 inequívoca; certificação revalida o SHA atual e impede liberação com CI apenas técnica.",
+          "observed": "GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-05-OBL-011-S1",
+              "surface": "reporting-availability-window",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-05-OBL-011-S2",
+              "surface": "reporting-availability-window",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+            "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+          },
+          "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70 (caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "evidence_path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+          "evidence_sha256": "bee22a38267553ec6f9d84adac37e4b4180fcb7f56760a86ba764f1e80c98d18",
+          "id": "NEG-R167-05-OBL-013",
+          "risk_family": "structural-contract",
+          "surface": "pr-base-identity",
+          "dimension": "obl-013-contract-break",
+          "failure_mode": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "plausible_wrong_implementation": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]; inspecione a variante de entrada e compare a restrição de OBL-013 com o código e o diff real. A PR original #166 não foi modificada, reaberta ou forçada. A branch de correção é derivada de develop e os arquivos alterados são os exigidos na issue #167.",
+          "expected": "Base develop e issue #167 inequívoca; certificação revalida o SHA atual e impede liberação com CI apenas técnica.",
+          "observed": "GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-05-OBL-013-S1",
+              "surface": "pr-base-identity",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-05-OBL-013-S2",
+              "surface": "pr-base-identity",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+            "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+          },
+          "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70 (caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "evidence_path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+          "evidence_sha256": "bee22a38267553ec6f9d84adac37e4b4180fcb7f56760a86ba764f1e80c98d18",
+          "id": "NEG-R167-05-OBL-014",
+          "risk_family": "structural-contract",
+          "surface": "pr-base-identity",
+          "dimension": "obl-014-contract-break",
+          "failure_mode": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "plausible_wrong_implementation": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]; inspecione a variante de entrada e compare a restrição de OBL-014 com o código e o diff real. Nenhum merge, release ou aprovação foi executado; GitHub demonstra que PR #168 está aberta e a issue #167 aberta enquanto os checks de certificação/revisão permanecem vermelhos.",
+          "expected": "Base develop e issue #167 inequívoca; certificação revalida o SHA atual e impede liberação com CI apenas técnica.",
+          "observed": "GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-05-OBL-014-S1",
+              "surface": "pr-base-identity",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-05-OBL-014-S2",
+              "surface": "pr-base-identity",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+            "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+          },
+          "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70 (caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "evidence_path": "entregar-issue/tests/test_prepare_actions_handoff.py",
+          "evidence_sha256": "bee22a38267553ec6f9d84adac37e4b4180fcb7f56760a86ba764f1e80c98d18",
+          "id": "NEG-R167-05-OBL-021",
+          "risk_family": "structural-contract",
+          "surface": "pr-base-identity",
+          "dimension": "obl-021-contract-break",
+          "failure_mode": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "plausible_wrong_implementation": "Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]; inspecione a variante de entrada e compare a restrição de OBL-021 com o código e o diff real. O coletor de Actions autentica issue, base e HEAD e rejeita um título sem issue inequívoca ou base diferente. Este candidato é descendente exclusivo de develop e não incorpora os commits da PR original #166.",
+          "expected": "Base develop e issue #167 inequívoca; certificação revalida o SHA atual e impede liberação com CI apenas técnica.",
+          "observed": "GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-05-OBL-021-S1",
+              "surface": "pr-base-identity",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-05-OBL-021-S2",
+              "surface": "pr-base-identity",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_prepare_actions_handoff",
+                "name": "test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+              },
+              "evidence": "entregar-issue/tests/test_prepare_actions_handoff.py:70; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_require_actions_handoff_certificate",
+            "name": "test_workflow_separates_collecting_and_certifying_without_publish_bypass"
+          },
+          "evidence": "entregar-issue/tests/test_require_actions_handoff_certificate.py:125 (caso test_workflow_separates_collecting_and_certifying_without_publish_bypass); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. GitHub confirma PR #168 base develop e issue #167; os testes do preflight rejeitam base divergente e referência ambígua; o gate de certificação permanece separado da coleta.",
+          "evidence_path": "entregar-issue/tests/test_require_actions_handoff_certificate.py",
+          "evidence_sha256": "aa1e727e2b22fa20c53ee12008e08f21d037a5c84c5a34089e6c90c2c47b3582"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "pr-base-identity",
+          "reason": "A mudança do contrato R167-05 deve reprovar a variante proibida Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados."
+        },
+        {
+          "risk_family": "temporal-consistency",
+          "surface": "reporting-availability-window",
+          "reason": "A mudança do contrato R167-05 deve reprovar a variante proibida Reabrir a PR #166 contra main ou aceitar evidência da base anterior como prova do HEAD e da issue atuais permitiria certificar histórico e alvo errados."
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-002",
+          "primary_negative_control_id": "NEG-R167-05-OBL-002"
+        },
+        {
+          "obligation_id": "OBL-010",
+          "primary_negative_control_id": "NEG-R167-05-OBL-010"
+        },
+        {
+          "obligation_id": "OBL-011",
+          "primary_negative_control_id": "NEG-R167-05-OBL-011"
+        },
+        {
+          "obligation_id": "OBL-013",
+          "primary_negative_control_id": "NEG-R167-05-OBL-013"
+        },
+        {
+          "obligation_id": "OBL-014",
+          "primary_negative_control_id": "NEG-R167-05-OBL-014"
+        },
+        {
+          "obligation_id": "OBL-021",
+          "primary_negative_control_id": "NEG-R167-05-OBL-021"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R167-06",
+      "obligation_ids": [
+        "OBL-012"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "Considerar somente os testes verdes suficientes para declarar auditoria independente aprovadora ou efetuar merge antes de prova autenticada.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_require_actions_handoff_certificate",
+          "name": "test_workflow_separates_collecting_and_certifying_without_publish_bypass"
+        },
+        "evidence": "entregar-issue/tests/test_require_actions_handoff_certificate.py:125 (caso test_workflow_separates_collecting_and_certifying_without_publish_bypass); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. Coleta e certificado são distintos, review independente deve ocorrer em sessão separada e manter bloqueio até autenticado.",
+        "evidence_path": "entregar-issue/tests/test_require_actions_handoff_certificate.py",
+        "evidence_sha256": "aa1e727e2b22fa20c53ee12008e08f21d037a5c84c5a34089e6c90c2c47b3582"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_handoff_certificate_contract",
+            "name": "test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+          },
+          "evidence": "entregar-issue/tests/test_handoff_certificate_contract.py:610 (caso test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. A execução técnica existente chegou ao gate de certificação, que falhou por ausência do dossiê; nenhum review independente nem merge foi efetuado.",
+          "evidence_path": "entregar-issue/tests/test_handoff_certificate_contract.py",
+          "evidence_sha256": "e4219cbc0894e83f2b3fe92df4d6c9fb0603a138bc55e23bf41fbb6bb0208734",
+          "id": "NEG-R167-06-OBL-012",
+          "risk_family": "authorization",
+          "surface": "independent-review-gate",
+          "dimension": "obl-012-contract-break",
+          "failure_mode": "Considerar somente os testes verdes suficientes para declarar auditoria independente aprovadora ou efetuar merge antes de prova autenticada.",
+          "plausible_wrong_implementation": "Considerar somente os testes verdes suficientes para declarar auditoria independente aprovadora ou efetuar merge antes de prova autenticada.",
+          "procedure": "Execute no JUnit da PR #168 o caso test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review; inspecione a variante de entrada e compare a restrição de OBL-012 com o código e o diff real. Nenhum comentário ou relatório declara aprovação independente; os dois jobs de certificação e revisão continuam bloqueados por ausência das respectivas provas e nenhum merge ocorreu.",
+          "expected": "Coleta e certificado são distintos, review independente deve ocorrer em sessão separada e manter bloqueio até autenticado.",
+          "observed": "A execução técnica existente chegou ao gate de certificação, que falhou por ausência do dossiê; nenhum review independente nem merge foi efetuado.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R167-06-OBL-012-S1",
+              "surface": "independent-review-gate",
+              "dimension": "alternate-target-or-tag",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_certificate_contract",
+                "name": "test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_certificate_contract.py:610; verificar mutação alternativa no mesmo oráculo."
+            },
+            {
+              "id": "NEG-R167-06-OBL-012-S2",
+              "surface": "independent-review-gate",
+              "dimension": "unknown-or-missing-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_handoff_certificate_contract",
+                "name": "test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+              },
+              "evidence": "entregar-issue/tests/test_handoff_certificate_contract.py:610; verificar ausência/valor inválido e falha fechada."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_verify_independent_pr_audit",
+            "name": "test_reviewer_must_have_repository_write_access"
+          },
+          "evidence": "tests/test_verify_independent_pr_audit.py:131 (caso test_reviewer_must_have_repository_write_access); a asserção no código-fonte é um oráculo revisável, enquanto a execução deve ser confirmada pelo JUnit autenticado do próprio HEAD. A execução técnica existente chegou ao gate de certificação, que falhou por ausência do dossiê; nenhum review independente nem merge foi efetuado.",
+          "evidence_path": "tests/test_verify_independent_pr_audit.py",
+          "evidence_sha256": "cfccec1d80843f4062e368d6e9cda3992c7710d7849ce328ac019b8c18899c3b"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "independent-review-gate",
+          "reason": "A mudança do contrato R167-06 deve reprovar a variante proibida Considerar somente os testes verdes suficientes para declarar auditoria independente aprovadora ou efetuar merge antes de prova autenticada."
+        }
+      ],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-012",
+          "primary_negative_control_id": "NEG-R167-06-OBL-012"
+        }
+      ],
+      "quantitative_evidence_required": false
+    }
+  ],
+  "uncovered_requirements": []
+}

@@ -396,7 +396,31 @@
         "rationale": "Comparação do diff da PR #168 com listagem completa de actions/setup-python e teste que percorre todos os workflows; o destino do Dependabot tem inventário de três entradas no teste específico."
       }
     ],
-    "observable_assertions": [],
+    "observable_assertions": [
+      {
+        "id": "OBS-167",
+        "description": "A configuração de destino só atende o contrato quando todos os três ecossistemas do Dependabot permanecem na develop, inclusive após mutações adversariais.",
+        "requirement_ids": [
+          "R167-03"
+        ],
+        "obligation_ids": [
+          "OBL-005",
+          "OBL-020",
+          "OBL-024"
+        ],
+        "evidence_ids": [
+          "DEPENDABOT-CONFIG-ALL-DEVELOP",
+          "DEPENDABOT-MISSING-OR-MAIN-NEGATIVE"
+        ],
+        "scenario_ids": [
+          "test_dependabot_updates_all_target_develop",
+          "test_dependabot_rejects_missing_or_main_target"
+        ],
+        "negative_control_evidence": [
+          "O teste negativo altera cada entrada separadamente: elimina target-branch ou coloca main; o predicado do contrato deixa de aceitar a configuração. A execução deve ser vinculada ao JUnit do novo HEAD."
+        ]
+      }
+    ],
     "structural_invariant_closures": {
       "status": "passed",
       "applicability_reason": "O contrato exige branch develop, separação de implantação em main e proibição de bypass de checks/certificação; o diff contém apenas configuração e testes autorizados.",
@@ -537,7 +561,7 @@
       ],
       "evidence": [
         "Issue #167 recuperada pela API autenticada, 24 candidate_keys reconciliadas com o snapshot de CI da PR #168.",
-        "PR #168 baseada em develop, HEAD material original aeb4923e9eff3b2236c5b4e627565c11afc5626f: doze arquivos do escopo e validação técnica aprovada.",
+        "PR #168 baseada em develop, HEAD material da implementação (revalidado pelo executor no SHA da PR): doze arquivos do escopo e validação técnica aprovada.",
         "Run 41361061673: JUnit exato registra test_setup_python_v7_pin_is_classified_in_every_workflow e test_dependabot_updates_all_target_develop aprovados, e exige certificado separado.",
         "Suite de regressões cobre rejeição do SHA antigo/tag/hash não autorizado, YAML não classificado, título sem issue e base ref divergente.",
         "OBL-009, OBL-017 e OBL-018 são prospectivas por decisão canônica da issue; nenhuma é declarada concluída no pre-handoff e a issue pai permanece aberta."

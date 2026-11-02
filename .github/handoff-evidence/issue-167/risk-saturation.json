@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "families": [
+    {
+      "family": "authorization",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz da issue #167 contém superfícies materiais da família authorization; os controles têm asserções observáveis e exigem JUnit autenticado do HEAD.",
+      "control_ids": [
+        "NEG-R167-06-OBL-012"
+      ],
+      "dimensions": [
+        {
+          "surface": "independent-review-gate",
+          "reason": "O desvio em independent-review-gate precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-06-OBL-012"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "concurrency-atomicity",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Os requisitos da issue #167 e o diff não introduzem nem alteram a superfície operacional de concurrency-atomicity."
+    },
+    {
+      "family": "documentation",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz da issue #167 contém superfícies materiais da família documentation; os controles têm asserções observáveis e exigem JUnit autenticado do HEAD.",
+      "control_ids": [
+        "NEG-R167-03-OBL-024"
+      ],
+      "dimensions": [
+        {
+          "surface": "branch-contract-drift",
+          "reason": "O desvio em branch-contract-drift precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-03-OBL-024"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "historical-immutability",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Os requisitos da issue #167 e o diff não introduzem nem alteram a superfície operacional de historical-immutability."
+    },
+    {
+      "family": "idempotency",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Os requisitos da issue #167 e o diff não introduzem nem alteram a superfície operacional de idempotency."
+    },
+    {
+      "family": "public-boundary",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Os requisitos da issue #167 e o diff não introduzem nem alteram a superfície operacional de public-boundary."
+    },
+    {
+      "family": "reference-liveness",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz da issue #167 contém superfícies materiais da família reference-liveness; os controles têm asserções observáveis e exigem JUnit autenticado do HEAD.",
+      "control_ids": [
+        "NEG-R167-01-OBL-015",
+        "NEG-R167-03-reference-liveness-branch-target-freshness"
+      ],
+      "dimensions": [
+        {
+          "surface": "action-ref-freshness",
+          "reason": "O desvio em action-ref-freshness precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-01-OBL-015"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "branch-target-freshness",
+          "reason": "O desvio em branch-target-freshness precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-03-reference-liveness-branch-target-freshness"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "rollback",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Os requisitos da issue #167 e o diff não introduzem nem alteram a superfície operacional de rollback."
+    },
+    {
+      "family": "structural-contract",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz da issue #167 contém superfícies materiais da família structural-contract; os controles têm asserções observáveis e exigem JUnit autenticado do HEAD.",
+      "control_ids": [
+        "NEG-R167-01-OBL-001",
+        "NEG-R167-01-OBL-003",
+        "NEG-R167-01-OBL-007",
+        "NEG-R167-02-OBL-004",
+        "NEG-R167-02-OBL-008",
+        "NEG-R167-02-OBL-019",
+        "NEG-R167-03-OBL-005",
+        "NEG-R167-03-OBL-020",
+        "NEG-R167-04-OBL-006",
+        "NEG-R167-04-OBL-016",
+        "NEG-R167-04-OBL-022",
+        "NEG-R167-04-OBL-023",
+        "NEG-R167-05-OBL-002",
+        "NEG-R167-05-OBL-010",
+        "NEG-R167-05-OBL-013",
+        "NEG-R167-05-OBL-014",
+        "NEG-R167-05-OBL-021"
+      ],
+      "dimensions": [
+        {
+          "surface": "action-pin-coverage",
+          "reason": "O desvio em action-pin-coverage precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-01-OBL-001",
+            "NEG-R167-01-OBL-003",
+            "NEG-R167-01-OBL-007"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "action-allowlist",
+          "reason": "O desvio em action-allowlist precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-02-OBL-004",
+            "NEG-R167-02-OBL-008",
+            "NEG-R167-02-OBL-019"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "dependabot-target-policy",
+          "reason": "O desvio em dependabot-target-policy precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-03-OBL-005",
+            "NEG-R167-03-OBL-020"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "regression-suite-continuity",
+          "reason": "O desvio em regression-suite-continuity precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-04-OBL-006",
+            "NEG-R167-04-OBL-016",
+            "NEG-R167-04-OBL-022",
+            "NEG-R167-04-OBL-023"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "pr-base-identity",
+          "reason": "O desvio em pr-base-identity precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-05-OBL-002",
+            "NEG-R167-05-OBL-010",
+            "NEG-R167-05-OBL-013",
+            "NEG-R167-05-OBL-014",
+            "NEG-R167-05-OBL-021"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-consistency",
+      "applicable": true,
+      "status": "passed",
+      "reason": "A matriz da issue #167 contém superfícies materiais da família temporal-consistency; os controles têm asserções observáveis e exigem JUnit autenticado do HEAD.",
+      "control_ids": [
+        "NEG-R167-05-OBL-011"
+      ],
+      "dimensions": [
+        {
+          "surface": "reporting-availability-window",
+          "reason": "O desvio em reporting-availability-window precisa ser distinguido pela entrada negativa e rejeitado pelo validador/fonte autenticada.",
+          "control_ids": [
+            "NEG-R167-05-OBL-011"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-destination",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Os requisitos da issue #167 e o diff não introduzem nem alteram a superfície operacional de temporal-destination."
+    },
+    {
+      "family": "tenant-isolation",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Os requisitos da issue #167 e o diff não introduzem nem alteram a superfície operacional de tenant-isolation."
+    }
+  ],
+  "material_families_missing_controls": []
+}

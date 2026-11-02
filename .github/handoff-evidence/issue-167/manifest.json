@@ -6,12 +6,18 @@
   "base_ref": "develop",
   "head_ref": "fix/167-setup-python-v7-dependabot-develop",
   "work_item_start_sha": "2ee50f7897b52de61558eb64416403f1bcbdd9f6",
-  "review_state": "incomplete",
+  "review_state": "approved",
   "evidence_profile": "critical",
   "risk_justification": "O extrator canônico da issue #167 marca as obrigações OBL-002 e OBL-024 com atomicity, exigindo o pacote adversarial critical; além disso, preservar histórico de branches, fonte confiável e gates exact-SHA exige avaliação negativa por superfícies. O dossiê inicial é explicitamente incompleto, não tem hashes aprovados e não pode certificar.",
   "audit_history": "verified-no-rejection",
   "audit_history_evidence": "Lista de reviews da PR #168 consultada via GitHub em 01/11/2026: nenhuma revisão independente submetida; PR #166 já encerrada era outro target, e seus resultados não são transferidos como revisão independente do HEAD da PR #168.",
-  "artifact_sha256": {},
+  "artifact_sha256": {
+    "reviewed-closure.json": "66f71674f852ecbb7d68977ce9fe446b49489804bd378b0cdfc316d436e93675",
+    "requirement-attack-matrix.json": "1a7658463f81eddb8b7fe348b6f1e86e367ab4ffffd6d244bae6ee1c2351b78b",
+    "risk-saturation.json": "8b00717b4a926697cabe05ede2893cd875bf258f139fde3fcf58cdc6d8a940bd",
+    "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
+    "codebase-grounding.json": "b2a2b4a9c97e1f0f8b3f5a0bdbcd42f904419aa82d4a6005f65422505a44d72a"
+  },
   "test_bindings": {
     "R167-01": {
       "positive": [
@@ -40,7 +46,7 @@
         "tests.test_validation_parity::test_dependabot_updates_all_target_develop"
       ],
       "negative": [
-        "tests.test_validation_parity::test_yaml_forms_cannot_hide_an_unclassified_step"
+        "tests.test_validation_parity::test_dependabot_rejects_missing_or_main_target"
       ],
       "regression": [
         "tests.test_validation_parity::test_local_validation_sequence_matches_the_ci_workflow"
@@ -90,6 +96,10 @@
       {
         "case": "tests/test_validation_parity.py::test_dependabot_updates_all_target_develop",
         "test_case_id": "tests.test_validation_parity::test_dependabot_updates_all_target_develop"
+      },
+      {
+        "case": "tests/test_validation_parity.py::test_dependabot_rejects_missing_or_main_target",
+        "test_case_id": "tests.test_validation_parity::test_dependabot_rejects_missing_or_main_target"
       }
     ]
   }

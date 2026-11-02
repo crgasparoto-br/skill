@@ -126,6 +126,23 @@ def test_dependabot_updates_all_target_develop() -> None:
     assert all(update.get("target-branch") == "develop" for update in updates)
 
 
+
+def test_dependabot_rejects_missing_or_main_target() -> None:
+    """Controles negativos: cada ecossistema deve falhar se o destino divergir de develop."""
+    config = yaml.safe_load((ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8"))
+    updates = config["updates"]
+    assert updates
+    for index in range(len(updates)):
+        for wrong_target in (None, "main"):
+            altered = [dict(update) for update in updates]
+            if wrong_target is None:
+                altered[index].pop("target-branch", None)
+            else:
+                altered[index]["target-branch"] = wrong_target
+            assert not all(update.get("target-branch") == "develop" for update in altered)
+
+
+
 def test_validator_accepts_the_repository_and_rejects_a_divergent_sequence(tmp_path: Path) -> None:
     """O validador aprova a árvore real e reprova uma sequência documentada divergente."""
     assert validate_workflow_classification(ROOT) == []
