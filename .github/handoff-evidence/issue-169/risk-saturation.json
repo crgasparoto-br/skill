@@ -6,20 +6,36 @@
       "family": "authorization",
       "applicable": true,
       "status": "passed",
-      "reason": "A matriz R169-03 contém o controle primário authenticated-trusted-base e testes adversariais executados no HEAD exact-SHA.",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
       "control_ids": [
+        "NEG-R169-01-OBL-006",
         "NEG-R169-03-OBL-009",
         "NEG-R169-03-OBL-010",
-        "NEG-R169-03-OBL-019"
+        "NEG-R169-06-OBL-013"
       ],
       "dimensions": [
         {
           "surface": "authenticated-trusted-base",
-          "reason": "A superfície authenticated-trusted-base deve rejeitar a implementação plausível incorreta de R169-03.",
+          "reason": "Inspect and execute negative tests against authenticated-trusted-base for authorized versus altered workflow bytes.",
           "control_ids": [
             "NEG-R169-03-OBL-009",
-            "NEG-R169-03-OBL-010",
-            "NEG-R169-03-OBL-019"
+            "NEG-R169-03-OBL-010"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "review-gate-authorization",
+          "reason": "Inspect and execute negative tests against review-gate-authorization for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-06-OBL-013"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "trusted-migration-policy",
+          "reason": "Inspect and execute negative tests against trusted-migration-policy for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-01-OBL-006"
           ],
           "status": "passed"
         }
@@ -29,19 +45,17 @@
       "family": "concurrency-atomicity",
       "applicable": true,
       "status": "passed",
-      "reason": "A matriz R169-02 contém o controle primário single-line-atomic-migration e testes adversariais executados no HEAD exact-SHA.",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
       "control_ids": [
         "NEG-R169-02-OBL-007",
-        "NEG-R169-02-OBL-008",
         "NEG-R169-02-OBL-011"
       ],
       "dimensions": [
         {
           "surface": "single-line-atomic-migration",
-          "reason": "A superfície single-line-atomic-migration deve rejeitar a implementação plausível incorreta de R169-02.",
+          "reason": "Inspect and execute negative tests against single-line-atomic-migration for authorized versus altered workflow bytes.",
           "control_ids": [
             "NEG-R169-02-OBL-007",
-            "NEG-R169-02-OBL-008",
             "NEG-R169-02-OBL-011"
           ],
           "status": "passed"
@@ -52,22 +66,18 @@
       "family": "documentation",
       "applicable": true,
       "status": "passed",
-      "reason": "A matriz R169-06 contém o controle primário protected-bootstrap-and-release e testes adversariais executados no HEAD exact-SHA.",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
       "control_ids": [
-        "NEG-R169-06-OBL-013",
         "NEG-R169-06-OBL-016",
-        "NEG-R169-06-OBL-017",
         "NEG-R169-06-OBL-018",
         "NEG-R169-06-OBL-020"
       ],
       "dimensions": [
         {
           "surface": "protected-bootstrap-and-release",
-          "reason": "A superfície protected-bootstrap-and-release deve rejeitar a implementação plausível incorreta de R169-06.",
+          "reason": "Inspect and execute negative tests against protected-bootstrap-and-release for authorized versus altered workflow bytes.",
           "control_ids": [
-            "NEG-R169-06-OBL-013",
             "NEG-R169-06-OBL-016",
-            "NEG-R169-06-OBL-017",
             "NEG-R169-06-OBL-018",
             "NEG-R169-06-OBL-020"
           ],
@@ -77,27 +87,40 @@
     },
     {
       "family": "historical-immutability",
-      "applicable": false,
-      "status": "not-applicable",
-      "reason": "Não há edição, exclusão ou reatribuição de registros históricos; a imutabilidade de conteúdo Git da policy é coberta pela família authorization e pelos testes de SHA autenticado."
+      "applicable": true,
+      "status": "passed",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
+      "control_ids": [
+        "NEG-R169-02-OBL-008"
+      ],
+      "dimensions": [
+        {
+          "surface": "historical-pin-immutability",
+          "reason": "Inspect and execute negative tests against historical-pin-immutability for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-02-OBL-008"
+          ],
+          "status": "passed"
+        }
+      ]
     },
     {
       "family": "idempotency",
       "applicable": false,
       "status": "not-applicable",
-      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
     },
     {
       "family": "public-boundary",
       "applicable": false,
       "status": "not-applicable",
-      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
     },
     {
       "family": "reference-liveness",
       "applicable": true,
       "status": "passed",
-      "reason": "A matriz R169-05 contém o controle primário adversarial-regression-coverage e testes adversariais executados no HEAD exact-SHA.",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
       "control_ids": [
         "NEG-R169-05-OBL-005",
         "NEG-R169-05-OBL-014",
@@ -106,7 +129,7 @@
       "dimensions": [
         {
           "surface": "adversarial-regression-coverage",
-          "reason": "A superfície adversarial-regression-coverage deve rejeitar a implementação plausível incorreta de R169-05.",
+          "reason": "Inspect and execute negative tests against adversarial-regression-coverage for authorized versus altered workflow bytes.",
           "control_ids": [
             "NEG-R169-05-OBL-005",
             "NEG-R169-05-OBL-014",
@@ -120,28 +143,46 @@
       "family": "rollback",
       "applicable": false,
       "status": "not-applicable",
-      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
     },
     {
       "family": "structural-contract",
       "applicable": true,
       "status": "passed",
-      "reason": "A matriz R169-01 contém o controle primário trusted-migration-policy e testes adversariais executados no HEAD exact-SHA.",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
       "control_ids": [
         "NEG-R169-01-OBL-001",
         "NEG-R169-01-OBL-002",
         "NEG-R169-01-OBL-004",
-        "NEG-R169-01-OBL-006"
+        "NEG-R169-03-OBL-019",
+        "NEG-R169-04-OBL-003",
+        "NEG-R169-04-OBL-012"
       ],
       "dimensions": [
         {
+          "surface": "benchmark-path-fidelity",
+          "reason": "Inspect and execute negative tests against benchmark-path-fidelity for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-01-OBL-002",
+            "NEG-R169-03-OBL-019"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "shared-review-checker",
+          "reason": "Inspect and execute negative tests against shared-review-checker for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-04-OBL-003",
+            "NEG-R169-04-OBL-012"
+          ],
+          "status": "passed"
+        },
+        {
           "surface": "trusted-migration-policy",
-          "reason": "A superfície trusted-migration-policy deve rejeitar a implementação plausível incorreta de R169-01.",
+          "reason": "Inspect and execute negative tests against trusted-migration-policy for authorized versus altered workflow bytes.",
           "control_ids": [
             "NEG-R169-01-OBL-001",
-            "NEG-R169-01-OBL-002",
-            "NEG-R169-01-OBL-004",
-            "NEG-R169-01-OBL-006"
+            "NEG-R169-01-OBL-004"
           ],
           "status": "passed"
         }
@@ -151,19 +192,19 @@
       "family": "temporal-consistency",
       "applicable": false,
       "status": "not-applicable",
-      "reason": "Não há tratamento de datas, períodos ou precedência temporal; a revalidação do base_sha é tratada como authorization/reference-liveness."
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
     },
     {
       "family": "temporal-destination",
       "applicable": false,
       "status": "not-applicable",
-      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
     },
     {
       "family": "tenant-isolation",
       "applicable": false,
       "status": "not-applicable",
-      "reason": "O contrato da issue #169 e o diff de policy/verificador/testes não introduzem operações pertinentes a esta família."
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
     }
   ],
   "material_families_missing_controls": []

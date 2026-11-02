@@ -12,6 +12,7 @@
       ],
       "source_texts": [],
       "risk_families": [
+        "authorization",
         "structural-contract"
       ],
       "plausible_wrong_implementation": "Aceitar migração que não esteja descrita na policy da base confiável.",
@@ -89,17 +90,17 @@
           "evidence_sha256": "6b64ea5fcde735bc5a33c4582c797c94d5013fb668855d45e32603dbe9d633bf",
           "id": "NEG-R169-01-OBL-002",
           "risk_family": "structural-contract",
-          "surface": "trusted-migration-policy",
+          "surface": "benchmark-path-fidelity",
           "dimension": "obl-002-unauthorized-variant",
           "failure_mode": "Aceitar migração que não esteja descrita na policy da base confiável.",
           "plausible_wrong_implementation": "Aceitar migração que não esteja descrita na policy da base confiável.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-002 e não altera os bytes autorizados.",
+          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-002 e não altera os bytes autorizados. Execute o harness real de proveniencia dos checks ate o production entrypoint de autorizacao do workflow, com policy e Git blobs divergentes; nenhum wrapper produtivo pode ser omitido.",
           "expected": "Somente a transição exata v7.0.0 -> v7.1.0 pode ser autorizada pela política do base SHA.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida. O caso executa a mesma funcao de entrada verificadora que a checagem produtiva, sem atalhos no caminho.",
           "sibling_cases": [
             {
               "id": "NEG-R169-01-OBL-002-S1",
-              "surface": "trusted-migration-policy",
+              "surface": "benchmark-path-fidelity",
               "dimension": "alternative-blob-or-policy",
               "status": "passed",
               "junit_case": {
@@ -110,7 +111,7 @@
             },
             {
               "id": "NEG-R169-01-OBL-002-S2",
-              "surface": "trusted-migration-policy",
+              "surface": "benchmark-path-fidelity",
               "dimension": "integrity-or-revision",
               "status": "passed",
               "junit_case": {
@@ -180,7 +181,7 @@
           "evidence_path": "tests/test_verify_independent_pr_audit.py",
           "evidence_sha256": "6b64ea5fcde735bc5a33c4582c797c94d5013fb668855d45e32603dbe9d633bf",
           "id": "NEG-R169-01-OBL-006",
-          "risk_family": "structural-contract",
+          "risk_family": "authorization",
           "surface": "trusted-migration-policy",
           "dimension": "obl-006-unauthorized-variant",
           "failure_mode": "Aceitar migração que não esteja descrita na policy da base confiável.",
@@ -231,9 +232,19 @@
       ],
       "risk_surfaces": [
         {
+          "risk_family": "authorization",
+          "surface": "trusted-migration-policy",
+          "reason": "The R169-01 change must reject unauthorized behavior on trusted-migration-policy; source-derived trust and provenance are preserved."
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "benchmark-path-fidelity",
+          "reason": "The R169-01 change must reject unauthorized behavior on benchmark-path-fidelity; source-derived trust and provenance are preserved."
+        },
+        {
           "risk_family": "structural-contract",
           "surface": "trusted-migration-policy",
-          "reason": "O requisito R169-01 deve rejeitar Aceitar migração que não esteja descrita na policy da base confiável."
+          "reason": "The R169-01 change must reject unauthorized behavior on trusted-migration-policy; source-derived trust and provenance are preserved."
         }
       ],
       "obligation_control_map": [
@@ -254,7 +265,49 @@
           "primary_negative_control_id": "NEG-R169-01-OBL-006"
         }
       ],
-      "quantitative_evidence_required": false
+      "quantitative_evidence_required": false,
+      "performance_contract": {
+        "production_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+        "terminal_boundary": "trusted_workflow_check: verifies producer workflow source before accepting CI outcome",
+        "inventory_evidence": {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "evidence_path": "tests/test_verify_independent_pr_audit.py",
+          "evidence_sha256": "6b64ea5fcde735bc5a33c4582c797c94d5013fb668855d45e32603dbe9d633bf",
+          "evidence": "The exact-SHA JUnit exercises the production checker and rejection of policy, commit and content mismatches; no timing benchmark is claimed.",
+          "procedure": "Inspect and run verified workflow provenance checker with trusted policy and divergent source blobs.",
+          "observed": "The JUnit covers the real workflow provenance checker and its negative branches."
+        },
+        "operations": [
+          {
+            "id": "auth-baseline-source",
+            "source": "verify_trusted_workflow_source: authenticated base and head Contents API",
+            "stage": "other",
+            "metric": null,
+            "before_terminal": true,
+            "required_for_contract": true
+          },
+          {
+            "id": "policy-revalidate",
+            "source": "_approved_pin_only_migration: remote policy base SHA plus authentic Git object bytes",
+            "stage": "other",
+            "metric": null,
+            "before_terminal": true,
+            "required_for_contract": true
+          }
+        ],
+        "benchmark": {
+          "mode": "production-direct",
+          "production_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+          "harness_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+          "covered_operation_ids": [
+            "auth-baseline-source",
+            "policy-revalidate"
+          ],
+          "bridged_operation_ids": [],
+          "omitted_operation_ids": []
+        }
+      }
     },
     {
       "requirement_id": "R169-02",
@@ -266,6 +319,7 @@
       "source_texts": [],
       "risk_families": [
         "concurrency-atomicity",
+        "historical-immutability",
         "structural-contract"
       ],
       "plausible_wrong_implementation": "Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade.",
@@ -342,8 +396,8 @@
           "evidence_path": "tests/test_verify_independent_pr_audit.py",
           "evidence_sha256": "6b64ea5fcde735bc5a33c4582c797c94d5013fb668855d45e32603dbe9d633bf",
           "id": "NEG-R169-02-OBL-008",
-          "risk_family": "concurrency-atomicity",
-          "surface": "single-line-atomic-migration",
+          "risk_family": "historical-immutability",
+          "surface": "historical-pin-immutability",
           "dimension": "obl-008-unauthorized-variant",
           "failure_mode": "Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade.",
           "plausible_wrong_implementation": "Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade.",
@@ -353,7 +407,7 @@
           "sibling_cases": [
             {
               "id": "NEG-R169-02-OBL-008-S1",
-              "surface": "single-line-atomic-migration",
+              "surface": "historical-pin-immutability",
               "dimension": "alternative-blob-or-policy",
               "status": "passed",
               "junit_case": {
@@ -364,7 +418,7 @@
             },
             {
               "id": "NEG-R169-02-OBL-008-S2",
-              "surface": "single-line-atomic-migration",
+              "surface": "historical-pin-immutability",
               "dimension": "integrity-or-revision",
               "status": "passed",
               "junit_case": {
@@ -441,7 +495,12 @@
         {
           "risk_family": "concurrency-atomicity",
           "surface": "single-line-atomic-migration",
-          "reason": "O requisito R169-02 deve rejeitar Aceitar duas substituições ou um segundo byte alterado durante o pin-only upgrade."
+          "reason": "The R169-02 change must reject unauthorized behavior on single-line-atomic-migration; source-derived trust and provenance are preserved."
+        },
+        {
+          "risk_family": "historical-immutability",
+          "surface": "historical-pin-immutability",
+          "reason": "The R169-02 change must reject unauthorized behavior on historical-pin-immutability; source-derived trust and provenance are preserved."
         }
       ],
       "obligation_control_map": [
@@ -603,18 +662,18 @@
           "evidence_path": "tests/test_verify_independent_pr_audit.py",
           "evidence_sha256": "6b64ea5fcde735bc5a33c4582c797c94d5013fb668855d45e32603dbe9d633bf",
           "id": "NEG-R169-03-OBL-019",
-          "risk_family": "authorization",
-          "surface": "authenticated-trusted-base",
+          "risk_family": "structural-contract",
+          "surface": "benchmark-path-fidelity",
           "dimension": "obl-019-unauthorized-variant",
           "failure_mode": "Aceitar policy do HEAD ou confiar em Git blob sha incompatível com os bytes.",
           "plausible_wrong_implementation": "Aceitar policy do HEAD ou confiar em Git blob sha incompatível com os bytes.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-019 e não altera os bytes autorizados.",
+          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha] no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-019 e não altera os bytes autorizados. Execute o harness real de proveniencia dos checks ate o production entrypoint de autorizacao do workflow, com policy e Git blobs divergentes; nenhum wrapper produtivo pode ser omitido.",
           "expected": "Policy do base SHA e blobs Git revalidados antes de autorizar o workflow.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]; o teste espera a rejeição ValueError da variante proibida.",
+          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]; o teste espera a rejeição ValueError da variante proibida. O caso executa a mesma funcao de entrada verificadora que a checagem produtiva, sem atalhos no caminho.",
           "sibling_cases": [
             {
               "id": "NEG-R169-03-OBL-019-S1",
-              "surface": "authenticated-trusted-base",
+              "surface": "benchmark-path-fidelity",
               "dimension": "alternative-blob-or-policy",
               "status": "passed",
               "junit_case": {
@@ -625,7 +684,7 @@
             },
             {
               "id": "NEG-R169-03-OBL-019-S2",
-              "surface": "authenticated-trusted-base",
+              "surface": "benchmark-path-fidelity",
               "dimension": "integrity-or-revision",
               "status": "passed",
               "junit_case": {
@@ -656,7 +715,12 @@
         {
           "risk_family": "authorization",
           "surface": "authenticated-trusted-base",
-          "reason": "O requisito R169-03 deve rejeitar Aceitar policy do HEAD ou confiar em Git blob sha incompatível com os bytes."
+          "reason": "The R169-03 change must reject unauthorized behavior on authenticated-trusted-base; source-derived trust and provenance are preserved."
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "benchmark-path-fidelity",
+          "reason": "The R169-03 change must reject unauthorized behavior on benchmark-path-fidelity; source-derived trust and provenance are preserved."
         }
       ],
       "obligation_control_map": [
@@ -673,7 +737,49 @@
           "primary_negative_control_id": "NEG-R169-03-OBL-019"
         }
       ],
-      "quantitative_evidence_required": false
+      "quantitative_evidence_required": false,
+      "performance_contract": {
+        "production_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+        "terminal_boundary": "trusted_workflow_check: verifies producer workflow source before accepting CI outcome",
+        "inventory_evidence": {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "evidence_path": "tests/test_verify_independent_pr_audit.py",
+          "evidence_sha256": "6b64ea5fcde735bc5a33c4582c797c94d5013fb668855d45e32603dbe9d633bf",
+          "evidence": "The exact-SHA JUnit exercises the production checker and rejection of policy, commit and content mismatches; no timing benchmark is claimed.",
+          "procedure": "Inspect and run verified workflow provenance checker with trusted policy and divergent source blobs.",
+          "observed": "The JUnit covers the real workflow provenance checker and its negative branches."
+        },
+        "operations": [
+          {
+            "id": "auth-baseline-source",
+            "source": "verify_trusted_workflow_source: authenticated base and head Contents API",
+            "stage": "other",
+            "metric": null,
+            "before_terminal": true,
+            "required_for_contract": true
+          },
+          {
+            "id": "policy-revalidate",
+            "source": "_approved_pin_only_migration: remote policy base SHA plus authentic Git object bytes",
+            "stage": "other",
+            "metric": null,
+            "before_terminal": true,
+            "required_for_contract": true
+          }
+        ],
+        "benchmark": {
+          "mode": "production-direct",
+          "production_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+          "harness_entrypoint": "scripts/verify_independent_pr_audit.py::verify_trusted_workflow_source",
+          "covered_operation_ids": [
+            "auth-baseline-source",
+            "policy-revalidate"
+          ],
+          "bridged_operation_ids": [],
+          "omitted_operation_ids": []
+        }
+      }
     },
     {
       "requirement_id": "R169-04",
@@ -812,7 +918,7 @@
         {
           "risk_family": "structural-contract",
           "surface": "shared-review-checker",
-          "reason": "O requisito R169-04 deve rejeitar Tratar check alternativo ou condição do candidato como fonte de confiança."
+          "reason": "The R169-04 change must reject unauthorized behavior on shared-review-checker; source-derived trust and provenance are preserved."
         }
       ],
       "obligation_control_map": [
@@ -1012,7 +1118,7 @@
         {
           "risk_family": "reference-liveness",
           "surface": "adversarial-regression-coverage",
-          "reason": "O requisito R169-05 deve rejeitar Testar só o caso feliz e aceitar mutantes de SHA, permissões, eventos ou policy."
+          "reason": "The R169-05 change must reject unauthorized behavior on adversarial-regression-coverage; source-derived trust and provenance are preserved."
         }
       ],
       "obligation_control_map": [
@@ -1036,12 +1142,12 @@
       "obligation_ids": [
         "OBL-013",
         "OBL-016",
-        "OBL-017",
         "OBL-018",
         "OBL-020"
       ],
       "source_texts": [],
       "risk_families": [
+        "authorization",
         "documentation",
         "structural-contract"
       ],
@@ -1073,8 +1179,8 @@
           "evidence_path": "tests/test_verify_independent_pr_audit.py",
           "evidence_sha256": "6b64ea5fcde735bc5a33c4582c797c94d5013fb668855d45e32603dbe9d633bf",
           "id": "NEG-R169-06-OBL-013",
-          "risk_family": "documentation",
-          "surface": "protected-bootstrap-and-release",
+          "risk_family": "authorization",
+          "surface": "review-gate-authorization",
           "dimension": "obl-013-unauthorized-variant",
           "failure_mode": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
           "plausible_wrong_implementation": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
@@ -1084,7 +1190,7 @@
           "sibling_cases": [
             {
               "id": "NEG-R169-06-OBL-013-S1",
-              "surface": "protected-bootstrap-and-release",
+              "surface": "review-gate-authorization",
               "dimension": "alternative-blob-or-policy",
               "status": "passed",
               "junit_case": {
@@ -1095,7 +1201,7 @@
             },
             {
               "id": "NEG-R169-06-OBL-013-S2",
-              "surface": "protected-bootstrap-and-release",
+              "surface": "review-gate-authorization",
               "dimension": "integrity-or-revision",
               "status": "passed",
               "junit_case": {
@@ -1141,52 +1247,6 @@
             },
             {
               "id": "NEG-R169-06-OBL-016-S2",
-              "surface": "protected-bootstrap-and-release",
-              "dimension": "integrity-or-revision",
-              "status": "passed",
-              "junit_case": {
-                "classname": "tests.test_verify_independent_pr_audit",
-                "name": "test_reviewer_must_have_repository_write_access"
-              },
-              "evidence": "tests/test_verify_independent_pr_audit.py: regressão exata e integridade/revisão exigida."
-            }
-          ]
-        },
-        {
-          "status": "passed",
-          "head_sha": "__MATERIAL_HEAD_SHA__",
-          "control_type": "test",
-          "evidence_kind": "behavioral",
-          "junit_case": {
-            "classname": "tests.test_verify_independent_pr_audit",
-            "name": "test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow"
-          },
-          "evidence": "tests/test_verify_independent_pr_audit.py: teste test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow implementa rejeição discriminante do cenário OBL-017 (Tratar CI técnica como aprovação independente ou instalar main sem release revisado.). Execução atestada no JUnit exact-SHA do run 41380629027; não é aprovação independente.",
-          "evidence_path": "tests/test_verify_independent_pr_audit.py",
-          "evidence_sha256": "6b64ea5fcde735bc5a33c4582c797c94d5013fb668855d45e32603dbe9d633bf",
-          "id": "NEG-R169-06-OBL-017",
-          "risk_family": "documentation",
-          "surface": "protected-bootstrap-and-release",
-          "dimension": "obl-017-unauthorized-variant",
-          "failure_mode": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
-          "plausible_wrong_implementation": "Tratar CI técnica como aprovação independente ou instalar main sem release revisado.",
-          "procedure": "Executar tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow no JUnit do SHA material e revisar o código de scripts/verify_independent_pr_audit.py; verificar que o mutante contradiz OBL-017 e não altera os bytes autorizados.",
-          "expected": "O bootstrap é registrado em PR separada, sem modificar rulesets nem autoaprovar.",
-          "observed": "O JUnit autenticado do run 41380629027 registra passed para tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow; o teste espera a rejeição ValueError da variante proibida.",
-          "sibling_cases": [
-            {
-              "id": "NEG-R169-06-OBL-017-S1",
-              "surface": "protected-bootstrap-and-release",
-              "dimension": "alternative-blob-or-policy",
-              "status": "passed",
-              "junit_case": {
-                "classname": "tests.test_verify_independent_pr_audit",
-                "name": "test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow"
-              },
-              "evidence": "tests/test_verify_independent_pr_audit.py: o mutante alternativo é reprovado no JUnit."
-            },
-            {
-              "id": "NEG-R169-06-OBL-017-S2",
               "surface": "protected-bootstrap-and-release",
               "dimension": "integrity-or-revision",
               "status": "passed",
@@ -1308,9 +1368,14 @@
       ],
       "risk_surfaces": [
         {
+          "risk_family": "authorization",
+          "surface": "review-gate-authorization",
+          "reason": "The R169-06 change must reject unauthorized behavior on review-gate-authorization; source-derived trust and provenance are preserved."
+        },
+        {
           "risk_family": "documentation",
           "surface": "protected-bootstrap-and-release",
-          "reason": "O requisito R169-06 deve rejeitar Tratar CI técnica como aprovação independente ou instalar main sem release revisado."
+          "reason": "The R169-06 change must reject unauthorized behavior on protected-bootstrap-and-release; source-derived trust and provenance are preserved."
         }
       ],
       "obligation_control_map": [
@@ -1321,10 +1386,6 @@
         {
           "obligation_id": "OBL-016",
           "primary_negative_control_id": "NEG-R169-06-OBL-016"
-        },
-        {
-          "obligation_id": "OBL-017",
-          "primary_negative_control_id": "NEG-R169-06-OBL-017"
         },
         {
           "obligation_id": "OBL-018",
