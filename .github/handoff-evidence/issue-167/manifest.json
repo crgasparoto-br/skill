@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 167,
+  "pull_request_number": 168,
+  "base_ref": "develop",
+  "head_ref": "fix/167-setup-python-v7-dependabot-develop",
+  "work_item_start_sha": "2ee50f7897b52de61558eb64416403f1bcbdd9f6",
+  "review_state": "incomplete",
+  "evidence_profile": "critical",
+  "risk_justification": "O extrator canônico da issue #167 marca as obrigações OBL-002 e OBL-024 com atomicity, exigindo o pacote adversarial critical; além disso, preservar histórico de branches, fonte confiável e gates exact-SHA exige avaliação negativa por superfícies. O dossiê inicial é explicitamente incompleto, não tem hashes aprovados e não pode certificar.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "Lista de reviews da PR #168 consultada via GitHub em 01/11/2026: nenhuma revisão independente submetida; PR #166 já encerrada era outro target, e seus resultados não são transferidos como revisão independente do HEAD da PR #168.",
+  "artifact_sha256": {},
+  "test_bindings": {
+    "R167-01": {
+      "positive": [
+        "tests.test_validation_parity::test_setup_python_v7_pin_is_classified_in_every_workflow"
+      ],
+      "negative": [
+        "tests.test_validation_parity::test_yaml_forms_cannot_hide_an_unclassified_step"
+      ],
+      "regression": [
+        "tests.test_validation_parity::test_every_workflow_step_is_classified"
+      ]
+    },
+    "R167-02": {
+      "positive": [
+        "tests.test_validation_parity::test_every_workflow_step_is_classified"
+      ],
+      "negative": [
+        "tests.test_validation_parity::test_setup_python_v7_pin_is_classified_in_every_workflow"
+      ],
+      "regression": [
+        "tests.test_validation_parity::test_validator_accepts_the_repository_and_rejects_a_divergent_sequence"
+      ]
+    },
+    "R167-03": {
+      "positive": [
+        "tests.test_validation_parity::test_dependabot_updates_all_target_develop"
+      ],
+      "negative": [
+        "tests.test_validation_parity::test_yaml_forms_cannot_hide_an_unclassified_step"
+      ],
+      "regression": [
+        "tests.test_validation_parity::test_local_validation_sequence_matches_the_ci_workflow"
+      ]
+    },
+    "R167-04": {
+      "positive": [
+        "tests.test_validation_parity::test_setup_python_v7_pin_is_classified_in_every_workflow",
+        "tests.test_validation_parity::test_dependabot_updates_all_target_develop"
+      ],
+      "negative": [
+        "tests.test_validation_parity::test_yaml_forms_cannot_hide_an_unclassified_step"
+      ],
+      "regression": [
+        "tests.test_validation_parity::test_every_workflow_step_is_classified"
+      ]
+    },
+    "R167-05": {
+      "positive": [
+        "entregar-issue.tests.test_prepare_actions_handoff::test_untrusted_or_ambiguous_metadata_fails_closed[change2-base ref]"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_prepare_actions_handoff::test_untrusted_or_ambiguous_metadata_fails_closed[change3-exactly one]"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_workflow_separates_collecting_and_certifying_without_publish_bypass"
+      ]
+    },
+    "R167-06": {
+      "positive": [
+        "entregar-issue.tests.test_require_actions_handoff_certificate::test_workflow_separates_collecting_and_certifying_without_publish_bypass"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_handoff_certificate_contract::test_certified_partial_completion_binds_canonical_parent_and_preserves_final_review"
+      ],
+      "regression": [
+        "tests.test_verify_independent_pr_audit::test_reviewer_must_have_repository_write_access"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "tests/test_validation_parity.py": [
+      {
+        "case": "tests/test_validation_parity.py::test_setup_python_v7_pin_is_classified_in_every_workflow",
+        "test_case_id": "tests.test_validation_parity::test_setup_python_v7_pin_is_classified_in_every_workflow"
+      },
+      {
+        "case": "tests/test_validation_parity.py::test_dependabot_updates_all_target_develop",
+        "test_case_id": "tests.test_validation_parity::test_dependabot_updates_all_target_develop"
+      }
+    ]
+  }
+}
