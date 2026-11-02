@@ -479,21 +479,148 @@
           "negative_control_evidence": [
             "A coleta exata foi aprovada mas o job de certificação permaneceu failure por falta do dossiê; o teste oficial proíbe publicar no caminho apenas técnico. A revisão independente continua ausente."
           ]
+        },
+        {
+          "id": "SIC-16703",
+          "kind": "structural",
+          "requirement_ids": [
+            "R167-04"
+          ],
+          "obligation_ids": [
+            "OBL-022"
+          ],
+          "plausible_wrong_implementation": "Criar suite paralela de Dependabot e remover as verificacoes existentes perderia paridade de YAML, testes de regressao e reuso exigido pela issue.",
+          "canonical_path": "tests/test_validation_parity.py e seus testes atuais reutilizados para SHA e Dependabot",
+          "competing_paths": [
+            "criacao de tests/test_dependabot_parallel.py isolado, sem reaproveitamento da suite"
+          ],
+          "evidence_ids": [
+            "DIFF-REUSE-TEST-VALUE",
+            "JUNIT-2889-EXACT-SHA"
+          ],
+          "scenario_ids": [
+            "test_every_workflow_step_is_classified",
+            "test_dependabot_rejects_missing_or_main_target"
+          ],
+          "negative_control_evidence": [
+            "O diff versionado altera somente tests/test_validation_parity.py sem criar suite nova; os controles adversariais anteriores permanecem e o JUnit do SHA material executou todos os testes."
+          ]
         }
       ],
       "unresolved_invariants": []
     },
     "read_model_closures": {
-      "status": "not-applicable",
-      "applicability_reason": "A issue altera workflows e configuração do Dependabot, sem modificar read models, projeções públicas, histórico ou paginação.",
-      "entries": [],
+      "status": "passed",
+      "applicability_reason": "A issue especifica versoes de actions/setup-python e destinos de atualizacoes, que sao registros de configuracao consumidos pelo validador, Actions e Dependabot. O fechamento e de leitura de configuracao versionada, nao de historico de banco.",
+      "entries": [
+        {
+          "id": "RMC-16701",
+          "contract_kind": "versioning",
+          "requirement_ids": [
+            "R167-01",
+            "R167-02",
+            "R167-03"
+          ],
+          "required_fields": [
+            "uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+            "python-version: 3.12 ou input no workflow reutilizavel",
+            "target-branch: develop"
+          ],
+          "producer_evidence": [
+            "Nove arquivos .github/workflows/*.yml declaram a referencia oficial v7.1.0; .github/dependabot.yml contem 3 entradas com target-branch develop."
+          ],
+          "public_projection_evidence": [
+            "As definicoes YAML alimentam os steps uses/python-version dos jobs GitHub Actions, observados no material da PR #168."
+          ],
+          "consumer_evidence": [
+            "scripts/validate_workflow_classification.py verifica ALLOWED_USES; tests/test_validation_parity.py consome os YAMLs reais."
+          ],
+          "visible_surface_evidence": [
+            "Validate skills run 41366307582 concluiu success no SHA 106b988376c15f195a75ea802f58a5db63ec3703.",
+            "Collect exact-SHA technical evidence run 41366307718 executou 2889 testes no SHA material e registrou JUnit."
+          ],
+          "scenario_ids": [
+            "test_setup_python_v7_pin_is_classified_in_every_workflow",
+            "test_dependabot_updates_all_target_develop",
+            "test_dependabot_rejects_missing_or_main_target"
+          ],
+          "negative_control_evidence": [
+            "A matriz recusa versao anterior, tag movel e SHA desconhecido; o teste do Dependabot altera cada uma das tres entradas para main ou elimina target-branch e exige rejeicao."
+          ]
+        }
+      ],
       "unconsumed_outputs": [],
       "unmapped_required_fields": []
     },
     "canonical_source_consistency": {
-      "status": "not-applicable",
-      "applicability_reason": "Não há múltiplas fontes concorrentes de dados do negócio; o único destino canônico de PR é develop conforme AGENTS.md e README.md.",
-      "entries": [],
+      "status": "passed",
+      "applicability_reason": "AGENTS.md e README.md definem develop como destino canonico de PR; o SHA v7.1.0 oficial define a identidade da action. A implementacao compara fontes alternativas e rejeita valores divergentes nos testes.",
+      "entries": [
+        {
+          "id": "CSC-16701",
+          "semantic_field": "target-branch do Dependabot",
+          "canonical_source": "AGENTS.md (PR contra develop); README.md (main somente por release)",
+          "alternative_sources": [
+            "main utilizado como destino padrao anterior do Dependabot",
+            "target-branch omitido no YAML original"
+          ],
+          "surfaces": [
+            "AGENTS.md: contrato de branches",
+            "README.md: politica de release",
+            ".github/dependabot.yml: 3 ecossistemas"
+          ],
+          "evidence_ids": [
+            "DEPENDABOT-CONFIG-ALL-DEVELOP",
+            "DEPENDABOT-MISSING-OR-MAIN-NEGATIVE"
+          ],
+          "scenario_ids": [
+            "test_dependabot_updates_all_target_develop",
+            "test_dependabot_rejects_missing_or_main_target"
+          ],
+          "negative_control_evidence": [
+            "O teste percorre cada ecossistema pip/github-actions e demonstra que a ausencia da chave ou main reprova o predicado exigido pelo contrato."
+          ],
+          "divergent_fixture": {
+            "canonical_value": "develop",
+            "alternative_values": [
+              "main",
+              "target-branch ausente"
+            ]
+          }
+        },
+        {
+          "id": "CSC-16702",
+          "semantic_field": "actions/setup-python commit v7.1.0",
+          "canonical_source": "actions/setup-python refs/tags/v7.1.0 => commit 6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+          "alternative_sources": [
+            "actions/setup-python@v7 tag movel",
+            "SHA antigo de actions/setup-python v5 ou v7.0.0"
+          ],
+          "surfaces": [
+            ".github/workflows/*.yml",
+            "scripts/validate_workflow_classification.py",
+            "tests/test_validation_parity.py"
+          ],
+          "evidence_ids": [
+            "PIN-ALL-NINE-WORKFLOWS",
+            "ALLOWED-USES-EXACT-SHA"
+          ],
+          "scenario_ids": [
+            "test_setup_python_v7_pin_is_classified_in_every_workflow",
+            "test_every_workflow_step_is_classified"
+          ],
+          "negative_control_evidence": [
+            "Os steps nos nove YAMLs usam o SHA oficial; step_problems rejeita a tag movel, o SHA v5 e o hash desconhecido nos testes adversariais."
+          ],
+          "divergent_fixture": {
+            "canonical_value": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+            "alternative_values": [
+              "actions/setup-python@v7",
+              "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97"
+            ]
+          }
+        }
+      ],
       "unverified_surfaces": [],
       "missing_divergent_tests": []
     },
