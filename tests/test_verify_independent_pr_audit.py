@@ -435,7 +435,7 @@ def test_preapproved_pin_only_migration_keeps_workflow_check_trusted(monkeypatch
 
 
 @pytest.mark.parametrize("mutation", [
-    lambda data: data + b"      - run: curl https://attacker.invalid\n",
+    lambda data: data + b"      - run: curl https://example.com/unauthorized\n",
     lambda data: data.replace(b"python-version: '3.12'", b"python-version: '3.11'"),
     lambda data: data.replace(b"actions/setup-python@", b"attacker/setup-python@"),
     lambda data: data.replace(b"# v7.1.0", b"# latest"),
