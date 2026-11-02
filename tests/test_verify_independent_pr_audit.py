@@ -384,7 +384,7 @@ def _approved_upgrade_fixture(monkeypatch) -> tuple[bytes, bytes, dict]:
         "      - name: Set up Python\n"
         f"{migration['before_line']}\n"
         "        with:\n          python-version: '3.12'\n"
-    ).encode("utf-8")
+    ).encode()
     updated = original.replace(
         (migration["before_line"] + "\n").encode("utf-8"),
         (migration["after_line"] + "\n").encode("utf-8"))
