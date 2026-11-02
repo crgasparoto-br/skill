@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
+import hashlib
+import json
 import os
 import re
 import sys
@@ -69,6 +73,97 @@ def reviewed_contract(review: dict, head: str) -> bool:
     return not (verified & excluded) and findings == (verified | excluded)
 
 
+PIN_MIGRATION_PATH = "config/trusted-workflow-pin-migrations.json"
+PIN_MIGRATION_FILE = Path(__file__).resolve().parents[1] / PIN_MIGRATION_PATH
+PIN_LINE = re.compile(
+    r"(?P<indent> +)uses: actions/setup-python@[0-9a-f]{40} # v[0-9]+\.[0-9]+\.[0-9]+\Z"
+)
+
+
+def _authenticated_blob_bytes(blob: object) -> bytes:
+    """Require complete GitHub contents bytes and verify their Git blob identity."""
+    if (not isinstance(blob, dict) or blob.get("type") != "file"
+            or not isinstance(blob.get("sha"), str)
+            or not SHA.fullmatch(blob["sha"])
+            or blob.get("encoding") != "base64"
+            or not isinstance(blob.get("content"), str)):
+        raise ValueError("authenticated Git blob bytes unavailable")
+    try:
+        encoded = blob["content"].replace("\n", "").replace("\r", "")
+        data = base64.b64decode(encoded, validate=True)
+    except (ValueError, binascii.Error) as exc:
+        raise ValueError("invalid Git blob encoding") from exc
+    git_blob = b"blob " + str(len(data)).encode("ascii") + b"\0" + data
+    if hashlib.sha1(git_blob, usedforsecurity=False).hexdigest() != blob["sha"]:
+        raise ValueError("Git blob SHA does not match content")
+    return data
+
+
+def _unique_json_fields(pairs: list[tuple[str, object]]) -> dict:
+    result: dict = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate trusted migration policy key")
+        result[key] = value
+    return result
+
+
+def _parse_pin_migrations(source: bytes) -> list[dict[str, str]]:
+    """Reject policy extensions, ambiguous paths and non-immutable action pins."""
+    policy = json.loads(source, object_pairs_hook=_unique_json_fields)
+    if (not isinstance(policy, dict)
+            or set(policy) != {"schema_version", "migrations"}
+            or type(policy["schema_version"]) is not int
+            or policy["schema_version"] != 1
+            or not isinstance(policy["migrations"], list)
+            or not policy["migrations"]):
+        raise ValueError("invalid trusted migration policy schema")
+    paths: set[str] = set()
+    for item in policy["migrations"]:
+        if (not isinstance(item, dict)
+                or set(item) != {"workflow_path", "before_line", "after_line"}
+                or type(item["workflow_path"]) is not str
+                or item["workflow_path"] not in EXPECTED_WORKFLOWS.values()
+                or item["workflow_path"] in paths):
+            raise ValueError("invalid or duplicate trusted workflow migration")
+        before, after = item["before_line"], item["after_line"]
+        if type(before) is not str or type(after) is not str:
+            raise ValueError("invalid migration line type")
+        old_match, new_match = PIN_LINE.fullmatch(before), PIN_LINE.fullmatch(after)
+        if (old_match is None or new_match is None or before == after
+                or old_match.group("indent") != new_match.group("indent")):
+            raise ValueError("migration must change only an immutable setup-python pin")
+        paths.add(item["workflow_path"])
+    return policy["migrations"]
+
+
+def _approved_pin_only_migration(
+        repo: str, workflow: str, base_sha: str, token: str,
+        base_source: object, head_source: object) -> bool:
+    """The trusted baseline, never the candidate, authorizes an exact one-line change."""
+    old_bytes = _authenticated_blob_bytes(base_source)
+    new_bytes = _authenticated_blob_bytes(head_source)
+    if PIN_MIGRATION_FILE.is_symlink():
+        raise ValueError("trusted migration policy cannot be a symlink")
+    local_policy = PIN_MIGRATION_FILE.read_bytes()
+    remote_policy = github(
+        f"/repos/{repo}/contents/{PIN_MIGRATION_PATH}?ref={base_sha}", token)
+    if _authenticated_blob_bytes(remote_policy) != local_policy:
+        raise ValueError("trusted migration policy differs from authenticated base")
+    entries = _parse_pin_migrations(local_policy)
+    for entry in entries:
+        if entry["workflow_path"] != workflow:
+            continue
+        old_line = (entry["before_line"] + "\n").encode("utf-8")
+        new_line = (entry["after_line"] + "\n").encode("utf-8")
+        lines = old_bytes.splitlines(keepends=True)
+        if lines.count(old_line) != 1:
+            return False
+        expected = b"".join(new_line if line == old_line else line for line in lines)
+        return expected == new_bytes
+    return False
+
+
 def verify_trusted_workflow_source(
         repo: str, workflow: str, base_sha: str, head: str, token: str) -> None:
     """Reject a PR-altered workflow even when Actions reports the official path."""
@@ -84,7 +179,15 @@ def verify_trusted_workflow_source(
     ):
         raise ValueError("trusted workflow source unavailable")
     if source[0]["sha"] != source[1]["sha"]:
-        raise ValueError(f"required workflow differs from trusted base: {workflow}")
+        try:
+            allowed = _approved_pin_only_migration(
+                repo, workflow, base_sha, token, source[0], source[1])
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            raise ValueError(
+                f"required workflow differs from trusted base: {workflow} ({exc})"
+            ) from exc
+        if not allowed:
+            raise ValueError(f"required workflow differs from trusted base: {workflow}")
 
 
 def official_job_matches(

