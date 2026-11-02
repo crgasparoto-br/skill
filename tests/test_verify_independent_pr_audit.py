@@ -379,10 +379,12 @@ def _contents_blob(data: bytes) -> dict:
 def _approved_upgrade_fixture(monkeypatch) -> tuple[bytes, bytes, dict]:
     policy_bytes = gate.PIN_MIGRATION_FILE.read_bytes()
     migration = json.loads(policy_bytes)["migrations"][0]
-    original = ("name: Validate skills\njobs:\n  validate:\n    steps:\n"
-                + "      - name: Set up Python\n"
-                + migration["before_line"] + "\n"
-                + "        with:\n          python-version: '3.12'\n").encode("utf-8")
+    original = (
+        "name: Validate skills\njobs:\n  validate:\n    steps:\n"
+        "      - name: Set up Python\n"
+        f"{migration['before_line']}\n"
+        "        with:\n          python-version: '3.12'\n"
+    ).encode("utf-8")
     updated = original.replace(
         (migration["before_line"] + "\n").encode("utf-8"),
         (migration["after_line"] + "\n").encode("utf-8"))
@@ -494,9 +496,9 @@ def test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow(monkeypatch,
 ])
 def test_trusted_pin_policy_rejects_malformed_schemas(invalid):
     with pytest.raises(ValueError):
-        gate._parse_pin_migrations(json.dumps(invalid).encode("utf-8"))
+        gate.parse_pin_migrations(json.dumps(invalid).encode("utf-8"))
     with pytest.raises(ValueError, match="duplicate"):
-        gate._parse_pin_migrations(
+        gate.parse_pin_migrations(
             b'{"schema_version":1,"schema_version":1,"migrations":[]}')
 
 

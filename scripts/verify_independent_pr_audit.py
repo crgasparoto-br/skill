@@ -108,7 +108,7 @@ def _unique_json_fields(pairs: list[tuple[str, object]]) -> dict:
     return result
 
 
-def _parse_pin_migrations(source: bytes) -> list[dict[str, str]]:
+def parse_pin_migrations(source: bytes) -> list[dict[str, str]]:
     """Reject policy extensions, ambiguous paths and non-immutable action pins."""
     policy = json.loads(source, object_pairs_hook=_unique_json_fields)
     if (not isinstance(policy, dict)
@@ -150,7 +150,7 @@ def _approved_pin_only_migration(
         f"/repos/{repo}/contents/{PIN_MIGRATION_PATH}?ref={base_sha}", token)
     if _authenticated_blob_bytes(remote_policy) != local_policy:
         raise ValueError("trusted migration policy differs from authenticated base")
-    entries = _parse_pin_migrations(local_policy)
+    entries = parse_pin_migrations(local_policy)
     for entry in entries:
         if entry["workflow_path"] != workflow:
             continue
