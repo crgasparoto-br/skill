@@ -255,9 +255,11 @@ def verify_review(comment: dict, packet: dict, policy: dict, files: dict[str, st
         # A GitHub object is not an audit conversation. The auditor's distinct
         # ChatGPT reference remains operator-supplied and cannot be authenticated here.
         parsed = urlsplit(audit)
-        require(parsed.scheme == "https" and parsed.netloc in {"chatgpt.com", "chat.openai.com"}
-                and bool(parsed.path.strip("/")) and not parsed.username and not parsed.password,
-                "recovered implementation requires a distinct ChatGPT audit context reference")
+        require(parsed.scheme == "https" and bool(parsed.netloc)
+                and parsed.netloc.casefold() not in {"github.com", "api.github.com"}
+                and bool(parsed.path.strip("/")) and not parsed.username and not parsed.password
+                and not parsed.query and not parsed.fragment,
+                "recovered implementation requires a distinct HTTPS audit context reference")
     require(sessions["separate_context_attested"] is True,
             "separate review context must be explicitly attested")
     require(report["conclusion"] == "approved", "review does not approve the candidate")

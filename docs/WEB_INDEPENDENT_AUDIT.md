@@ -97,7 +97,7 @@ comentario do implementador, e informar em `sessions`:
     "original_session_unavailable": true,
     "github": "<copiar o objeto implementation_provenance do pacote neutro>"
   },
-  "audit": "https://chatgpt.com/c/<referencia-real-da-conversa-auditora>",
+  "audit": "https://example.com/REFERENCIA-REAL-DA-CONVERSA-AUDITORA",
   "separate_context_attested": true
 }
 ```

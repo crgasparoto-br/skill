@@ -150,7 +150,7 @@ def recovered_fixture():
     report["sessions"]["implementation"] = {
         "type": gate.PROVENANCE_TYPE, "original_session_unavailable": True,
         "github": copy.deepcopy(source)}
-    report["sessions"]["audit"] = "https://chatgpt.com/c/separate-review-operator-declared"
+    report["sessions"]["audit"] = "https://example.com/c/separate-review-operator-declared"
     active = policy()
     active["implementation_provenance"] = {"mode": "enabled", "type": gate.PROVENANCE_TYPE}
     return packet, report, comment, files, tests, active
@@ -215,7 +215,7 @@ def test_recovered_provenance_adversarial_mutations_block(mutation):
         elif mutation == "wrong-handoff-id":
             github["handoff"]["artifact_id"] = 4
         elif mutation == "extra-field":
-            declaration["claimed_original_chat_url"] = "https://chatgpt.com/c/fabricated"
+            declaration["claimed_original_chat_url"] = "https://example.com/c/fabricated"
         elif mutation == "missing-audit":
             report["sessions"]["audit"] = ""
         elif mutation == "github-audit":
