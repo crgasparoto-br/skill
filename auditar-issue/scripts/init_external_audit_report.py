@@ -8,7 +8,6 @@ import re
 from pathlib import Path
 from uuid import uuid4
 
-
 SOLO_ASSURANCE_MODE = "single-operator-separate-context"
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 
