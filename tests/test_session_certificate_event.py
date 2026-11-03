@@ -290,19 +290,23 @@ def test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff
     # exact-head certificate. Old provenance cannot be relabeled.
     rows[0] = new_rows
     identity["head_sha"] = new_head
-    refreshed = runner.authenticated_implementation_provenance(identity, metadata)
+    new_metadata = {"artifact_id": 43, "artifact_digest": "sha256:" + "e" * 64}
+    refreshed = runner.authenticated_implementation_provenance(identity, new_metadata)
     assert refreshed["commits"] == [new_first, new_head]
     assert refreshed["base_sha"] == new_base
     assert refreshed["head_sha"] == new_head
+    assert refreshed["handoff"]["artifact_id"] == 43
     assert refreshed != old_proof
 
-    packet = {"identity": identity, "artifact_id": 43, "artifact_digest": "sha256:" + "e" * 64}
+    packet = {"identity": identity, "artifact_id": 43,
+              "artifact_digest": new_metadata["artifact_digest"],
+              "implementation_provenance": refreshed}
     declaration = {"type": runner.PROVENANCE_TYPE, "original_session_unavailable": True,
                    "github": old_proof}
     from session_review import verify_implementation_provenance
     policy = {"implementation_provenance": {
         "mode": "enabled", "type": runner.PROVENANCE_TYPE}}
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="forged, truncated or altered"):
         verify_implementation_provenance(declaration, packet, policy)
 
 
