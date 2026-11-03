@@ -28,7 +28,7 @@ def _parse_time(value: object, label: str, errors: list[str]) -> datetime | None
         return None
 
 
-def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -> list[str]:
+def _assurance_mode_errors(report: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     assurance_mode = report.get("assurance_mode")
     if "assurance_mode" in report and assurance_mode != SOLO_ASSURANCE_MODE:
@@ -52,6 +52,11 @@ def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -
                 errors.append(f"solo assurance mode requires empty {field}")
     elif any(field in report for field in SOLO_FIELDS):
         errors.append("solo fields require assurance_mode=single-operator-separate-context")
+    return errors
+
+
+def _context_errors(report: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
+    errors: list[str] = []
     if report.get("audit_context_id") == report.get("implementation_context_id"):
         errors.append("audit context must differ from implementation context")
     proof = report.get("source_context_proof")
@@ -60,9 +65,19 @@ def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -
         proof = {}
     if proof.get("value") != report.get("audit_context_id"):
         errors.append("source context proof must equal audit_context_id")
+    return errors, proof
+
+
+def _sha_lineage_errors(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
     for field in ("head_sha", "base_sha", "merge_preview_sha"):
         if report.get(field) != report.get(f"{field}_after"):
             errors.append(f"{field}_after must equal {field}")
+    return errors
+
+
+def _verdict_errors(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
     if report.get("verdict") == "approved" and (report.get("findings") or report.get("limitations")):
         errors.append("approved report cannot contain findings or limitations")
     rejection_id = report.get("rejection_id")
@@ -71,6 +86,12 @@ def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -
             errors.append("rejected independent audit requires stable rejection_id")
     elif rejection_id is not None:
         errors.append("non-rejected audit must not carry rejection_id")
+    return errors
+
+
+def _rejection_lineage_errors(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    rejection_id = report.get("rejection_id")
     lineage = report.get("rejection_lineage")
     if isinstance(lineage, dict):
         mode = lineage.get("mode")
@@ -82,26 +103,43 @@ def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -
                 errors.append("continued rejection requires continued_finding_ids")
         elif mode == "new" and previous == rejection_id and previous is not None:
             errors.append("new rejection must not silently reuse previous_rejection_id")
+    return errors
+
+
+def _neutral_packet_errors(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
     packet = report.get("neutral_packet")
     if not isinstance(packet, dict):
         errors.append("neutral_packet is required")
-    else:
-        if packet.get("implementation_conclusions_included") is not False:
-            errors.append("neutral packet must exclude implementation conclusions")
-        if packet.get("implementation_narrative_included") is not False:
-            errors.append("neutral packet must exclude implementation narrative")
-    prior = report.get("prior_internal_approval")
+        return errors
+    if packet.get("implementation_conclusions_included") is not False:
+        errors.append("neutral packet must exclude implementation conclusions")
+    if packet.get("implementation_narrative_included") is not False:
+        errors.append("neutral packet must exclude implementation narrative")
+    return errors
+
+
+def _item_ids(items: object) -> list[Any]:
+    return [item.get("id") for item in items if isinstance(item, dict)]
+
+
+def _evidence_errors(report: dict[str, Any]) -> list[str]:
     evidence = report.get("evidence") or []
-    evidence_ids = [item.get("id") for item in evidence if isinstance(item, dict)]
+    evidence_ids = _item_ids(evidence)
     if len(evidence_ids) != len(set(evidence_ids)):
-        errors.append("external audit evidence IDs must be unique")
-    findings = report.get("findings") or []
+        return ["external audit evidence IDs must be unique"]
+    return []
+
+
+def _approval_finding_errors(report: dict[str, Any], findings: object) -> list[str]:
+    errors: list[str] = []
+    prior = report.get("prior_internal_approval")
     if isinstance(prior, dict) and prior.get("head_sha") == report.get("head_sha") and findings:
         for finding in findings:
             if not isinstance(finding, dict) or finding.get("audit_escape") is not True:
                 errors.append("findings against a previously internally approved SHA must be audit escapes")
                 break
-            mode=str(finding.get("remediation_mode") or "")
+            mode = str(finding.get("remediation_mode") or "")
             if mode not in {"targeted-remediation", "systemic-remediation"}:
                 errors.append("audit finding requires remediation_mode")
                 break
@@ -114,41 +152,68 @@ def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -
                     break
     elif any(isinstance(finding, dict) and finding.get("audit_escape") is True for finding in findings):
         errors.append("audit_escape requires prior_internal_approval for the same head SHA")
+    return errors
+
+
+def _failed_gate_errors(findings: object) -> list[str]:
+    errors: list[str] = []
     for finding in findings:
         if not isinstance(finding, dict):
             continue
         gate = finding.get("failed_gate")
-        if gate is not None:
-            if not isinstance(gate, dict) or gate.get("deterministic") is not True:
-                errors.append("failed_gate must describe a deterministic gate")
-                break
-            if not str(gate.get("command") or "").strip():
-                errors.append("failed_gate requires the exact failing command")
-                break
-            if gate.get("observed_exit_code") == 0:
-                errors.append("failed_gate observed_exit_code must be non-zero")
-                break
-            if not re.fullmatch(r"[0-9a-f]{64}", str(gate.get("evidence_sha256") or ""), re.IGNORECASE):
-                errors.append("failed_gate requires evidence_sha256")
-                break
-    finding_ids = [item.get("id") for item in findings if isinstance(item, dict)]
+        if gate is None:
+            continue
+        if not isinstance(gate, dict) or gate.get("deterministic") is not True:
+            errors.append("failed_gate must describe a deterministic gate")
+            break
+        if not str(gate.get("command") or "").strip():
+            errors.append("failed_gate requires the exact failing command")
+            break
+        if gate.get("observed_exit_code") == 0:
+            errors.append("failed_gate observed_exit_code must be non-zero")
+            break
+        if not re.fullmatch(r"[0-9a-f]{64}", str(gate.get("evidence_sha256") or ""), re.IGNORECASE):
+            errors.append("failed_gate requires evidence_sha256")
+            break
+    return errors
+
+
+def _finding_recommendation_errors(findings: object, recommendations: object) -> list[str]:
+    errors: list[str] = []
+    finding_ids = _item_ids(findings)
     if len(finding_ids) != len(set(finding_ids)):
         errors.append("external audit finding IDs must be unique")
-    recommendations=report.get("recommendations") or []
-    recommendation_ids=[item.get("id") for item in recommendations if isinstance(item,dict)]
+    recommendation_ids = _item_ids(recommendations)
     if len(recommendation_ids) != len(set(recommendation_ids)):
         errors.append("external audit recommendation IDs must be unique")
-    overlap=set(finding_ids) & set(recommendation_ids)
-    if overlap: errors.append("finding/recommendation IDs must be globally unique")
+    overlap = set(finding_ids) & set(recommendation_ids)
+    if overlap:
+        errors.append("finding/recommendation IDs must be globally unique")
     for item in recommendations:
-        if not isinstance(item,dict) or not isinstance(item.get("actionable"),bool):
-            errors.append("audit recommendation requires actionable boolean"); break
-        if item.get("remediation_mode") not in {"targeted-remediation","systemic-remediation"}:
-            errors.append("audit recommendation requires remediation_mode"); break
+        if not isinstance(item, dict) or not isinstance(item.get("actionable"), bool):
+            errors.append("audit recommendation requires actionable boolean")
+            break
+        if item.get("remediation_mode") not in {"targeted-remediation", "systemic-remediation"}:
+            errors.append("audit recommendation requires remediation_mode")
+            break
+    return errors
+
+
+def _timestamp_errors(
+    report: dict[str, Any], proof: dict[str, Any]
+) -> tuple[list[str], datetime | None]:
+    errors: list[str] = []
     issued_at = _parse_time(report.get("issued_at"), "issued_at", errors)
     proof_issued_at = _parse_time(proof.get("issued_at"), "source_context_proof.issued_at", errors)
     if issued_at and proof_issued_at and proof_issued_at > issued_at:
         errors.append("source context proof cannot be issued after the audit report")
+    return errors, issued_at
+
+
+def _signature_semantic_errors(
+    report: dict[str, Any], issued_at: datetime | None, *, require_signature: bool
+) -> list[str]:
+    errors: list[str] = []
     signature = report.get("signature")
     if require_signature and not isinstance(signature, dict):
         errors.append("signature is required")
@@ -156,6 +221,27 @@ def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -
         signed_at = _parse_time(signature.get("signed_at"), "signature.signed_at", errors)
         if issued_at and signed_at and signed_at < issued_at:
             errors.append("signature cannot predate the audit report")
+    return errors
+
+
+def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -> list[str]:
+    errors: list[str] = []
+    errors.extend(_assurance_mode_errors(report))
+    context_errors, proof = _context_errors(report)
+    errors.extend(context_errors)
+    errors.extend(_sha_lineage_errors(report))
+    errors.extend(_verdict_errors(report))
+    errors.extend(_rejection_lineage_errors(report))
+    errors.extend(_neutral_packet_errors(report))
+    errors.extend(_evidence_errors(report))
+    findings = report.get("findings") or []
+    errors.extend(_approval_finding_errors(report, findings))
+    errors.extend(_failed_gate_errors(findings))
+    recommendations = report.get("recommendations") or []
+    errors.extend(_finding_recommendation_errors(findings, recommendations))
+    timestamp_errors, issued_at = _timestamp_errors(report, proof)
+    errors.extend(timestamp_errors)
+    errors.extend(_signature_semantic_errors(report, issued_at, require_signature=require_signature))
     return errors
 
 
@@ -184,6 +270,92 @@ def sign_report(report: dict[str, Any], private_key_pem: bytes, password: bytes 
     }
 
 
+def _registry_key_id_errors(registry: dict[str, Any]) -> list[str]:
+    key_ids = [
+        item.get("key_id")
+        for item in registry.get("auditors", [])
+        if isinstance(item, dict) and isinstance(item.get("key_id"), str)
+    ]
+    if len(key_ids) != len(set(key_ids)):
+        return ["trusted auditor key IDs must be unique"]
+    return []
+
+
+def _enabled_auditor(registry: dict[str, Any], key_id: object) -> dict[str, Any] | None:
+    return next(
+        (
+            item
+            for item in registry.get("auditors", [])
+            if isinstance(item, dict)
+            and item.get("key_id") == key_id
+            and item.get("enabled") is True
+        ),
+        None,
+    )
+
+
+def _exact_repository_errors(repository: str, repositories: object) -> list[str]:
+    errors: list[str] = []
+    if EXACT_REPOSITORY_RE.fullmatch(repository) is None:
+        errors.append("exact repository authorization requires valid owner/repo syntax")
+    if not isinstance(repositories, list) or not all(isinstance(pattern, str) for pattern in repositories):
+        errors.append("trusted auditor repository scope is malformed")
+    elif any(any(char in pattern for char in "*?[]") for pattern in repositories):
+        errors.append("exact repository authorization forbids wildcard or glob entries")
+    elif any(EXACT_REPOSITORY_RE.fullmatch(pattern) is None for pattern in repositories):
+        errors.append("exact repository authorization requires literal owner/repo entries")
+    elif len(repositories) != len(set(repositories)):
+        errors.append("exact repository authorization has duplicate owner/repo entries")
+    elif repository not in repositories:
+        errors.append(f"auditor key is not authorized for repository {repository}")
+    return errors
+
+
+def _repository_authorization_errors(
+    repository: str, repositories: object, *, exact_repository_only: bool
+) -> list[str]:
+    if exact_repository_only:
+        return _exact_repository_errors(repository, repositories)
+    if not any(pattern == "*" or fnmatch.fnmatchcase(repository, str(pattern)) for pattern in repositories):
+        return [f"auditor key is not authorized for repository {repository}"]
+    return []
+
+
+def _payload_hash_errors(report: dict[str, Any], signature: dict[str, Any]) -> tuple[list[str], bytes]:
+    canonical = canonical_report_bytes(report)
+    if signature.get("signed_payload_sha256") != sha256_bytes(canonical):
+        return ["signed_payload_sha256 mismatch"], canonical
+    return [], canonical
+
+
+def _cryptographic_signature_errors(
+    signature: dict[str, Any], auditor: dict[str, Any], canonical: bytes
+) -> list[str]:
+    errors: list[str] = []
+    if signature.get("algorithm") != "ed25519":
+        errors.append("signature algorithm must be ed25519")
+    try:
+        raw = base64.b64decode(str(signature.get("value_base64") or ""), validate=True)
+        public_key = serialization.load_pem_public_key(str(auditor.get("public_key_pem") or "").encode("utf-8"))
+        if not isinstance(public_key, Ed25519PublicKey):
+            errors.append("trusted public key must be Ed25519")
+        else:
+            public_key.verify(raw, canonical)
+    except InvalidSignature:
+        errors.append("signature verification failed")
+    except Exception as exc:
+        errors.append(f"invalid signature or public key: {exc}")
+    return errors
+
+
+def _fingerprint_errors(auditor: dict[str, Any]) -> list[str]:
+    expected_fingerprint = auditor.get("public_key_sha256")
+    actual_fingerprint = sha256_bytes(str(auditor.get("public_key_pem") or "").encode("utf-8"))
+    if expected_fingerprint != actual_fingerprint:
+        return ["public key fingerprint mismatch"]
+    return []
+
+
 def verify_report(
     report: dict[str, Any],
     registry: dict[str, Any],
@@ -196,53 +368,23 @@ def verify_report(
     explicit exact mode is used by the solo adapter and rejects every
     non-exact or glob authorization entry for the selected key.
     """
-    errors: list[str] = []
-    key_ids = [
-        item.get("key_id")
-        for item in registry.get("auditors", [])
-        if isinstance(item, dict) and isinstance(item.get("key_id"), str)
-    ]
-    if len(key_ids) != len(set(key_ids)):
-        errors.append("trusted auditor key IDs must be unique")
+    errors = _registry_key_id_errors(registry)
     signature = report.get("signature")
     if not isinstance(signature, dict):
         return ["signature is required"]
     key_id = signature.get("key_id")
-    auditor = next((item for item in registry.get("auditors", []) if isinstance(item, dict) and item.get("key_id") == key_id and item.get("enabled") is True), None)
+    auditor = _enabled_auditor(registry, key_id)
     if not isinstance(auditor, dict):
         return [f"untrusted auditor key: {key_id}"]
     repository = str(report.get("repository") or "")
     repositories = auditor.get("repositories", [])
-    if exact_repository_only:
-        if EXACT_REPOSITORY_RE.fullmatch(repository) is None:
-            errors.append("exact repository authorization requires valid owner/repo syntax")
-        if not isinstance(repositories, list) or not all(isinstance(pattern, str) for pattern in repositories):
-            errors.append("trusted auditor repository scope is malformed")
-        elif any(any(char in pattern for char in "*?[]") for pattern in repositories):
-            errors.append("exact repository authorization forbids wildcard or glob entries")
-        elif any(EXACT_REPOSITORY_RE.fullmatch(pattern) is None for pattern in repositories):
-            errors.append("exact repository authorization requires literal owner/repo entries")
-        elif len(repositories) != len(set(repositories)):
-            errors.append("exact repository authorization has duplicate owner/repo entries")
-        elif repository not in repositories:
-            errors.append(f"auditor key is not authorized for repository {repository}")
-    elif not any(pattern == "*" or fnmatch.fnmatchcase(repository, str(pattern)) for pattern in repositories):
-        errors.append(f"auditor key is not authorized for repository {repository}")
-    canonical = canonical_report_bytes(report)
-    if signature.get("signed_payload_sha256") != sha256_bytes(canonical):
-        errors.append("signed_payload_sha256 mismatch")
-    try:
-        raw = base64.b64decode(str(signature.get("value_base64") or ""), validate=True)
-        public_key = serialization.load_pem_public_key(str(auditor.get("public_key_pem") or "").encode("utf-8"))
-        if not isinstance(public_key, Ed25519PublicKey):
-            errors.append("trusted public key must be Ed25519")
-        else:
-            public_key.verify(raw, canonical)
-    except InvalidSignature:
-        errors.append("signature verification failed")
-    except Exception as exc:
-        errors.append(f"invalid signature or public key: {exc}")
-    expected_fingerprint = auditor.get("public_key_sha256")
-    if expected_fingerprint != sha256_bytes(str(auditor.get("public_key_pem") or "").encode("utf-8")):
-        errors.append("public key fingerprint mismatch")
+    errors.extend(
+        _repository_authorization_errors(
+            repository, repositories, exact_repository_only=exact_repository_only
+        )
+    )
+    payload_hash_errors, canonical = _payload_hash_errors(report, signature)
+    errors.extend(payload_hash_errors)
+    errors.extend(_cryptographic_signature_errors(signature, auditor, canonical))
+    errors.extend(_fingerprint_errors(auditor))
     return errors

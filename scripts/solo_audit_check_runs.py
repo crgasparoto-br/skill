@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import verify_session_review as session_runner
 from solo_audit_contract import ACCEPTED_TEXT, CHECK_NAME, require
@@ -17,6 +16,9 @@ from verify_independent_pr_audit import (
     required_checks_green,
     trusted_workflow_check,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def provisional_external_id(pr_number: int, head: str, run_id: str) -> str:

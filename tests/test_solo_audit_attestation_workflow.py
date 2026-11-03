@@ -91,7 +91,6 @@ def test_only_same_repo_workflow_runs_and_pr_comments_are_routed():
 
 
 def test_new_check_is_not_conflated_with_native_or_session_checks():
-    config = workflow()
     assert "independent-audit-gate.yml" not in (ROOT / WORKFLOW_PATH).read_text(encoding="utf-8")
     assert "session-review.yml" not in (ROOT / WORKFLOW_PATH).read_text(encoding="utf-8")
     script = (ROOT / "scripts/verify_solo_audit_attestation.py").read_text(encoding="utf-8")

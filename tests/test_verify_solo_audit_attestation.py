@@ -13,15 +13,17 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
+sys.path.insert(0, str(ROOT / "entregar-issue" / "scripts"))
 
-import solo_audit_check_runs as checks
-import solo_audit_contract as contract
-import solo_audit_events as events
-import solo_audit_github as ghgate
-import solo_audit_source as source
-import verify_solo_audit_attestation as gate
-import verify_independent_pr_audit as native
-import handoff_merge_preview as preview
+import handoff_merge_preview as preview  # noqa: E402 - sys.path ajustado acima antes do import local
+import solo_audit_check_runs as checks  # noqa: E402 - sys.path ajustado acima antes do import local
+import solo_audit_contract as contract  # noqa: E402 - sys.path ajustado acima antes do import local
+import solo_audit_events as events  # noqa: E402 - sys.path ajustado acima antes do import local
+import solo_audit_github as ghgate  # noqa: E402 - sys.path ajustado acima antes do import local
+import solo_audit_source as source  # noqa: E402 - sys.path ajustado acima antes do import local
+import verify_independent_pr_audit as native  # noqa: E402 - sys.path ajustado acima antes do import local
+import verify_session_review as session_runner  # noqa: E402 - sys.path ajustado acima antes do import local
+import verify_solo_audit_attestation as gate  # noqa: E402 - sys.path ajustado acima antes do import local
 
 REPO = "crgasparoto-br/skill"
 BASE = "b" * 40
@@ -93,7 +95,7 @@ def live_pr(number=PR, *, head=HEAD, base=BASE, body=None):
         "body": body or f"Closes #{ISSUE}",
         "merge_commit_sha": PREVIEW,
         "base": {"ref": "develop", "sha": base, "repo": {"full_name": REPO}},
-        "head": {"sha": head, "repo": {"full_name": REPO}},
+        "head": {"sha": head, "ref": "feature/test", "repo": {"full_name": REPO}},
     }
 
 
@@ -195,7 +197,7 @@ def test_configuration_is_never_silently_downgraded(mutation):
 
 @pytest.mark.parametrize("pattern", ["*", "owner/*", "crgasparoto-br/sk?ll", "crgasparoto-br/[s]kill"])
 def test_solo_registry_rejects_wildcard_repository_authorization(pattern):
-    with pytest.raises(ValueError, match="wildcards|exact repository"):
+    with pytest.raises(ValueError, match=r"wildcards|exact repository"):
         config(repositories=[pattern])
 
 
@@ -497,6 +499,326 @@ def test_deleted_comment_event_routes_to_live_pr_for_revalidation(monkeypatch):
     assert events.resolve_targets(REPO, event, "issue_comment") == [(PR, None)]
 
 
+@pytest.mark.parametrize(
+    "event",
+    [
+        {"repository": {"full_name": REPO}},
+        {"repository": {"full_name": REPO}, "issue": None},
+        {"repository": {"full_name": REPO}, "issue": []},
+        {"repository": {"full_name": REPO}, "issue": {}},
+        {"repository": {"full_name": REPO}, "issue": {"number": True}},
+        {"repository": {"full_name": REPO}, "issue": {"number": PR, "pull_request": None}},
+        {"repository": {"full_name": REPO}, "issue": {"number": PR, "pull_request": []}},
+    ],
+)
+def test_issue_comment_rejects_missing_or_malformed_issue_payload(event):
+    with pytest.raises(ValueError, match="issue-comment"):
+        events.resolve_targets(REPO, event, "issue_comment")
+
+
+def test_issue_comment_on_valid_non_pr_issue_is_no_target():
+    event = {"repository": {"full_name": REPO}, "issue": {"number": ISSUE}}
+    assert events.resolve_targets(REPO, event, "issue_comment") == []
+
+
+def _run_main_with_event(tmp_path, monkeypatch, event_name, event):
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps(event), encoding="utf-8")
+    monkeypatch.setenv("GITHUB_EVENT_NAME", event_name)
+    monkeypatch.setattr(gate, "verify_runtime_context", lambda *args: None)
+    args = ["--repo", REPO, "--event", str(event_path), "--workflow-sha", HEAD, "--run-id", "12345"]
+    return gate.main(args)
+
+
+def test_main_blocks_malformed_issue_comment(tmp_path, monkeypatch, capsys):
+    event = {"repository": {"full_name": REPO}}
+    assert _run_main_with_event(tmp_path, monkeypatch, "issue_comment", event) == 2
+    assert "BLOCK: trusted solo gate could not validate event" in capsys.readouterr().err
+
+
+def test_main_blocks_malformed_issues_pr_marker(tmp_path, monkeypatch, capsys):
+    event = {
+        "repository": {"full_name": REPO},
+        "issue": {"number": PR, "pull_request": {}},
+    }
+    assert _run_main_with_event(tmp_path, monkeypatch, "issues", event) == 2
+    assert "BLOCK: trusted solo gate could not validate event" in capsys.readouterr().err
+
+
+def test_main_allows_valid_issues_pr_marker_no_target(tmp_path, monkeypatch, capsys):
+    pull_url = f"https://api.github.com/repos/{REPO}/pulls/{PR}"
+    event = {
+        "repository": {"full_name": REPO},
+        "issue": {"number": PR, "pull_request": {"url": pull_url}},
+    }
+    assert _run_main_with_event(tmp_path, monkeypatch, "issues", event) == 0
+    assert "No eligible open PR targets" in capsys.readouterr().out
+
+
+def test_main_allows_valid_non_pr_issue_comment_no_target(tmp_path, monkeypatch, capsys):
+    event = {"repository": {"full_name": REPO}, "issue": {"number": ISSUE}}
+    assert _run_main_with_event(tmp_path, monkeypatch, "issue_comment", event) == 0
+    assert "No eligible open PR targets" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "issue",
+    [None, [], {}, {"number": True}, {"number": ISSUE, "pull_request": None},
+     {"number": ISSUE, "pull_request": []}],
+)
+def test_issues_event_rejects_missing_or_malformed_issue(issue):
+    event = {"repository": {"full_name": REPO}, "issue": issue}
+    with pytest.raises(ValueError, match="issue event"):
+        events.resolve_targets(REPO, event, "issues")
+
+
+def test_issues_event_for_valid_pr_issue_is_no_target():
+    pull_url = f"https://api.github.com/repos/{REPO}/pulls/{PR}"
+    event = {
+        "repository": {"full_name": REPO},
+        "issue": {"number": PR, "pull_request": {"url": pull_url}},
+    }
+    assert events.resolve_targets(REPO, event, "issues") == []
+
+
+@pytest.mark.parametrize(
+    "pull_request",
+    [
+        {},
+        {"url": None},
+        {"url": "https://api.github.com/repos/other/repo/pulls/174"},
+        {"url": f"https://api.github.com/repos/{REPO}/pulls/{PR + 1}"},
+    ],
+)
+def test_issues_event_rejects_malformed_pr_marker(pull_request):
+    event = {
+        "repository": {"full_name": REPO},
+        "issue": {"number": PR, "pull_request": pull_request},
+    }
+    with pytest.raises(ValueError, match="issue event pull-request URL is malformed"):
+        events.resolve_targets(REPO, event, "issues")
+
+
+def test_issues_event_with_no_open_prs_is_a_valid_no_target(monkeypatch):
+    event = {"repository": {"full_name": REPO}, "issue": {"number": ISSUE}}
+    monkeypatch.setattr(events.session_runner, "pages", lambda *args: [])
+    assert events.resolve_targets(REPO, event, "issues") == []
+
+
+@pytest.mark.parametrize("inventory", [None, {}, [None], [{}], [{"number": "bad"}]])
+def test_issue_and_push_events_reject_malformed_open_pr_inventory(monkeypatch, inventory):
+    monkeypatch.setattr(events.session_runner, "pages", lambda *args: inventory)
+    issue_event = {"repository": {"full_name": REPO}, "issue": {"number": ISSUE}}
+    push_event = {"repository": {"full_name": REPO}, "ref": "refs/heads/develop"}
+    with pytest.raises(ValueError, match="open pull-request"):
+        events.resolve_targets(REPO, issue_event, "issues")
+    with pytest.raises(ValueError, match="open pull-request"):
+        events.resolve_targets(REPO, push_event, "push")
+
+
+@pytest.mark.parametrize("body", [None, "No canonical issue reference", f"Closes #{ISSUE}\nRefs #{ISSUE + 1}"])
+def test_issues_event_rejects_missing_or_ambiguous_pr_issue_reference(monkeypatch, body):
+    bad_pr = live_pr()
+    bad_pr["body"] = body
+    monkeypatch.setattr(events.session_runner, "pages", lambda *args: [bad_pr])
+    event = {"repository": {"full_name": REPO}, "issue": {"number": ISSUE}}
+    with pytest.raises(ValueError, match="PR body|canonical PR-to-issue reference"):
+        events.resolve_targets(REPO, event, "issues")
+
+
+def test_issues_event_routes_only_canonical_matching_pr(monkeypatch):
+    matching_pr = live_pr(body=f"Refs #{ISSUE}")
+    monkeypatch.setattr(events.session_runner, "pages", lambda *args: [matching_pr])
+    monkeypatch.setattr(events.session_runner, "api", lambda path: live_pr(body=f"Refs #{ISSUE}"))
+    event = {"repository": {"full_name": REPO}, "issue": {"number": ISSUE}}
+    assert events.resolve_targets(REPO, event, "issues") == [(PR, ISSUE)]
+
+
+def test_issues_event_does_not_route_canonical_link_to_another_issue(monkeypatch):
+    unrelated_pr = live_pr(body=f"Closes #{ISSUE + 1}")
+    monkeypatch.setattr(events.session_runner, "pages", lambda *args: [unrelated_pr])
+    event = {"repository": {"full_name": REPO}, "issue": {"number": ISSUE}}
+    assert events.resolve_targets(REPO, event, "issues") == []
+
+
+def test_push_event_with_empty_open_pr_inventory_is_a_valid_no_target(monkeypatch):
+    monkeypatch.setattr(events.session_runner, "pages", lambda *args: [])
+    event = {"repository": {"full_name": REPO}, "ref": "refs/heads/develop"}
+    assert events.resolve_targets(REPO, event, "push") == []
+
+
+@pytest.mark.parametrize("ref", [None, "refs/heads/feature", [], {}])
+def test_push_event_rejects_unprotected_or_malformed_ref(ref):
+    event = {"repository": {"full_name": REPO}, "ref": ref}
+    with pytest.raises(ValueError, match="push is outside protected branches"):
+        events.resolve_targets(REPO, event, "push")
+
+
+def _workflow_event(head_repository, pull_requests=None, head_sha=HEAD):
+    return {
+        "repository": {"full_name": REPO},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_repository": head_repository,
+            "pull_requests": pull_requests,
+            "head_sha": head_sha,
+        },
+    }
+
+
+@pytest.mark.parametrize("head_repository", [None, [], {}, {"full_name": None}, {"full_name": "invalid"}])
+def test_workflow_run_rejects_malformed_head_repository(head_repository):
+    event = _workflow_event(head_repository, [])
+    with pytest.raises(ValueError, match="workflow completion head repository"):
+        events.resolve_targets(REPO, event, "workflow_run")
+
+
+def test_workflow_run_ignores_valid_foreign_repository_without_targets():
+    event = _workflow_event({"full_name": "fork-owner/skill"}, [])
+    assert events.resolve_targets(REPO, event, "workflow_run") == []
+
+
+def test_workflow_run_revalidates_linked_target_via_api(monkeypatch):
+    event = _workflow_event({"full_name": REPO}, [{"number": PR}])
+    monkeypatch.setattr(events.session_runner, "api", lambda path: live_pr())
+    assert events.resolve_targets(REPO, event, "workflow_run") == [(PR, None)]
+
+
+@pytest.mark.parametrize("repository_name", [REPO, "fork-owner/skill"])
+@pytest.mark.parametrize("head_sha", [None, "not-a-sha", "A" * 40, "0" * 39])
+def test_workflow_run_rejects_malformed_head_sha_before_routing(repository_name, head_sha):
+    event = _workflow_event({"full_name": repository_name}, [{"number": PR}], head_sha)
+    with pytest.raises(ValueError, match="workflow completion HEAD is malformed"):
+        events.resolve_targets(REPO, event, "workflow_run")
+
+
+@pytest.mark.parametrize("run", [None, [], "malformed", {"event": "push"}])
+def test_workflow_run_rejects_missing_or_non_pull_request_run(run):
+    event = {"repository": {"full_name": REPO}, "workflow_run": run}
+    with pytest.raises(ValueError, match="workflow completion"):
+        events.resolve_targets(REPO, event, "workflow_run")
+
+
+@pytest.mark.parametrize("head_repository", [{"full_name": REPO}, {"full_name": "fork-owner/skill"}])
+@pytest.mark.parametrize("links", [None, "unexpected", [{}], [{"number": True}]])
+def test_workflow_run_rejects_malformed_pull_request_links(head_repository, links):
+    event = _workflow_event(head_repository, links)
+    with pytest.raises(ValueError, match="workflow completion"):
+        events.resolve_targets(REPO, event, "workflow_run")
+
+
+@pytest.mark.parametrize(
+    "associated",
+    [
+        None,
+        {},
+        [None],
+        [{"number": PR}],
+        [{"number": True, "head": {"repo": {"full_name": REPO}}}],
+        [{"number": PR, "head": None}],
+        [{"number": PR, "head": {"repo": None}}],
+        [{"number": PR, "head": {"repo": {"full_name": None}}}],
+    ],
+)
+def test_workflow_run_rejects_malformed_associated_pull_request_rows(monkeypatch, associated):
+    event = _workflow_event({"full_name": REPO}, [])
+    monkeypatch.setattr(events.session_runner, "pages", lambda *args: associated)
+    with pytest.raises(ValueError, match="workflow-associated PR"):
+        events.resolve_targets(REPO, event, "workflow_run")
+
+
+def test_workflow_run_ignores_valid_foreign_associated_pull_request(monkeypatch):
+    event = _workflow_event({"full_name": REPO}, [])
+    foreign = {"number": PR, "head": {"repo": {"full_name": "fork-owner/skill"}}}
+    monkeypatch.setattr(events.session_runner, "pages", lambda *args: [foreign])
+    assert events.resolve_targets(REPO, event, "workflow_run") == []
+
+
+def test_workflow_run_returns_no_targets_for_valid_empty_association(monkeypatch):
+    event = _workflow_event({"full_name": REPO}, [])
+    monkeypatch.setattr(events.session_runner, "pages", lambda *args: [])
+    assert events.resolve_targets(REPO, event, "workflow_run") == []
+
+
+@pytest.mark.parametrize(
+    "mutation,expected",
+    [
+        ("not-object", "live PR response"),
+        ("missing-number", "live PR number"),
+        ("invalid-number", "live PR number"),
+        ("wrong-number", "response identity"),
+        ("state", "live PR state"),
+        ("base", "live PR base"),
+        ("base-repo", "live PR base repository"),
+        ("foreign-base", "base repository differs"),
+        ("base-ref", "live PR base ref"),
+        ("base-sha", "live PR base SHA"),
+        ("draft", "draft/merged flags"),
+        ("merged", "draft/merged flags"),
+        ("body", "live PR body"),
+        ("head", "live PR head"),
+        ("head-sha", "live PR head SHA"),
+        ("head-ref", "live PR head ref"),
+        ("head-repo", "live PR head repository is malformed"),
+        ("head-name", "live PR head repository identity"),
+    ],
+)
+def test_authoritative_router_rejects_malformed_live_pr_response(monkeypatch, mutation, expected):
+    response = live_pr()
+    if mutation == "not-object":
+        response = None
+    elif mutation == "missing-number":
+        del response["number"]
+    elif mutation == "invalid-number":
+        response["number"] = True
+    elif mutation == "wrong-number":
+        response["number"] = PR + 1
+    elif mutation == "state":
+        response["state"] = []
+    elif mutation == "base":
+        response["base"] = None
+    elif mutation == "base-repo":
+        response["base"]["repo"] = None
+    elif mutation == "foreign-base":
+        response["base"]["repo"]["full_name"] = "other-owner/skill"
+    elif mutation == "base-ref":
+        response["base"]["ref"] = None
+    elif mutation == "base-sha":
+        response["base"]["sha"] = "not-a-sha"
+    elif mutation == "draft":
+        response["draft"] = "false"
+    elif mutation == "merged":
+        response["merged"] = 0
+    elif mutation == "body":
+        response["body"] = None
+    elif mutation == "head":
+        response["head"] = None
+    elif mutation == "head-sha":
+        response["head"]["sha"] = "not-a-sha"
+    elif mutation == "head-ref":
+        response["head"]["ref"] = None
+    elif mutation == "head-repo":
+        response["head"]["repo"] = None
+    elif mutation == "head-name":
+        response["head"]["repo"]["full_name"] = None
+    monkeypatch.setattr(events.session_runner, "api", lambda path: response)
+    event = {"repository": {"full_name": REPO}, "pull_request": {"number": PR}}
+    with pytest.raises(ValueError, match=expected):
+        events.resolve_targets(REPO, event, "pull_request_target")
+
+
+def test_authoritative_router_preserves_closed_and_out_of_scope_no_targets(monkeypatch):
+    event = {"repository": {"full_name": REPO}, "pull_request": {"number": PR}}
+    closed_pr = live_pr()
+    closed_pr["state"] = "closed"
+    monkeypatch.setattr(events.session_runner, "api", lambda path: closed_pr)
+    assert events.resolve_targets(REPO, event, "pull_request_target") == []
+    out_of_scope = live_pr()
+    out_of_scope["base"]["ref"] = "release"
+    monkeypatch.setattr(events.session_runner, "api", lambda path: out_of_scope)
+    assert events.resolve_targets(REPO, event, "pull_request_target") == []
+
+
 @pytest.mark.parametrize("status", ["queued", "in_progress"])
 def test_begin_check_creates_only_the_separate_custom_check(monkeypatch, status):
     writes = []
@@ -749,7 +1071,7 @@ def test_complete_target_evaluation_publishes_only_new_exact_head_check(monkeypa
 
 @pytest.mark.parametrize("mutation", ["target", "config", "comment", "permission", "checks", "source", "shared-head"])
 def test_drift_during_final_evidence_collection_prevents_success_patch(monkeypatch, mutation, capsys):
-    publications, trusted, selected, _ = _success_fixture(monkeypatch)
+    publications, _, selected, _ = _success_fixture(monkeypatch)
     original_current = lambda *args, **kwargs: (identity(), live_pr())
     monkeypatch.setattr(gate, "current_target", original_current)
     evidence_calls = 0
@@ -828,7 +1150,7 @@ def test_execution_source_requires_exact_local_workflow_sha_and_base_files(monke
     monkeypatch.setenv("GITHUB_REF_PROTECTED", "true")
     monkeypatch.setattr(source.subprocess, "run", lambda *args, **kwargs: subprocess.CompletedProcess(
         args[0], 0, stdout=(workflow_sha + "\n").encode(), stderr=b""))
-    monkeypatch.setattr(source._session_runner(), "content", lambda repo, path, sha: ((source.ROOT / path).read_bytes(), "a" * 40))
+    monkeypatch.setattr(session_runner, "content", lambda repo, path, sha: ((source.ROOT / path).read_bytes(), "a" * 40))
     monkeypatch.setattr(source, "default_branch_head", lambda repo: "f" * 40)
     state = source.verify_execution_source(REPO, BASE, workflow_sha)
     assert state["workflow_sha"] == workflow_sha and len(state["local_files_sha256"]) == 64
@@ -844,7 +1166,7 @@ def test_execution_source_rejects_dependency_drift_or_unprotected_workflow(monke
     monkeypatch.setenv("GITHUB_REF_PROTECTED", "true")
     monkeypatch.setattr(source.subprocess, "run", lambda *args, **kwargs: subprocess.CompletedProcess(
         args[0], 0, stdout=(workflow_sha + "\n").encode(), stderr=b""))
-    monkeypatch.setattr(source._session_runner(), "content", lambda *_: (b"different trusted base file", "a" * 40))
+    monkeypatch.setattr(session_runner, "content", lambda *_: (b"different trusted base file", "a" * 40))
     with pytest.raises(ValueError, match="differs from protected PR base"):
         source.verify_execution_source(REPO, BASE, workflow_sha)
     monkeypatch.setenv("GITHUB_REF_PROTECTED", "false")

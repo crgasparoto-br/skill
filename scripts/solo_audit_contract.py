@@ -130,7 +130,8 @@ def parse_trusted_config(values: dict[str, object], repository: str) -> TrustedC
     require(all(isinstance(values[name], str) for name in VARIABLE_NAMES),
             "solo audit configuration values must be strings")
     require(REPOSITORY_RE.fullmatch(repository) is not None, "invalid configured repository")
-    require(values["SOLVERIT_SOLO_AUDIT_ENABLED"] == "true", "solo audit mode is disabled")
+    enabled = values["SOLVERIT_SOLO_AUDIT_ENABLED"]
+    require(enabled == "true", "solo audit mode is disabled")
 
     operator_text = values["SOLVERIT_SOLO_AUDIT_OPERATOR_ID"]
     key_id = values["SOLVERIT_SOLO_AUDIT_KEY_ID"]

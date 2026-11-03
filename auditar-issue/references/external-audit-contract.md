@@ -1,5 +1,23 @@
 # Relatorio externo assinado para o Entregar Issue
 
+## Quando ler este arquivo
+
+Consultar ao inicializar, assinar, validar ou transportar um parecer Ed25519, inclusive no modo solo de operador único.
+
+## Índice
+
+- [Quando produzir](#quando-produzir)
+- [Modo Ed25519 de operador único — check distinto](#modo-ed25519-de-operador-unico--check-distinto)
+- [Preparacao da chave](#preparacao-da-chave)
+- [Montar o registro de auditores](#montar-o-registro-de-auditores)
+- [Inicializar o relatorio](#inicializar-o-relatorio)
+- [Completar](#completar)
+- [Metadados de aprendizado por achado](#metadados-de-aprendizado-por-achado)
+- [Assinar e validar](#assinar-e-validar)
+- [Entrega](#entrega)
+- [Pacote neutro obrigatorio](#pacote-neutro-obrigatorio)
+- [Escape de aprovacao interna](#escape-de-aprovacao-interna)
+
 ## Quando produzir
 
 Para a modalidade independente de terceiro, produzir `external-audit.json` importavel somente quando:

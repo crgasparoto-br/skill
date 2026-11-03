@@ -12,9 +12,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "entregar-issue" / "scripts"))
 
-import verify_session_review as session_runner
-from handoff_merge_preview import require_event_merge_preview
-from solo_audit_contract import (
+import verify_session_review as session_runner  # noqa: E402 - sys.path ajustado acima antes do import local
+from handoff_merge_preview import require_event_merge_preview  # noqa: E402 - sys.path ajustado acima antes do import local
+from solo_audit_contract import (  # noqa: E402 - sys.path ajustado acima antes do import local
     VARIABLE_NAMES,
     TrustedConfig,
     canonical_issue_reference,
@@ -22,8 +22,8 @@ from solo_audit_contract import (
     parse_trusted_config,
     select_report_comment,
 )
-from solo_audit_source import ALLOWED_BRANCHES, SHA_RE, require, sha256
-from verify_independent_pr_audit import is_authorized_reviewer
+from solo_audit_source import ALLOWED_BRANCHES, SHA_RE, require, sha256  # noqa: E402 - sys.path ajustado acima antes do import local
+from verify_independent_pr_audit import is_authorized_reviewer  # noqa: E402 - sys.path ajustado acima antes do import local
 
 
 def github_token() -> str:

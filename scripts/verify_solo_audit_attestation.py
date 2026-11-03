@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -19,11 +20,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "entregar-issue" / "scripts"))
 
-import verify_session_review as session_runner
-from solo_audit_check_runs import begin_check, publish_check, required_evidence
-from solo_audit_contract import ACCEPTED_TEXT, ASSURANCE_MODE, require
-from solo_audit_events import resolve_targets
-from solo_audit_github import (
+import verify_session_review as session_runner  # noqa: E402 - sys.path ajustado acima antes do import local
+from solo_audit_check_runs import begin_check, publish_check, required_evidence  # noqa: E402 - sys.path ajustado acima antes do import local
+from solo_audit_contract import ACCEPTED_TEXT, ASSURANCE_MODE, require  # noqa: E402 - sys.path ajustado acima antes do import local
+from solo_audit_events import resolve_targets  # noqa: E402 - sys.path ajustado acima antes do import local
+from solo_audit_github import (  # noqa: E402 - sys.path ajustado acima antes do import local
     current_target,
     github_token,
     is_authorized_reviewer,
@@ -32,7 +33,7 @@ from solo_audit_github import (
     require_unique_open_pr_head,
     validate_signed_report,
 )
-from solo_audit_source import (
+from solo_audit_source import (  # noqa: E402 - sys.path ajustado acima antes do import local
     REPOSITORY_RE,
     SHA_RE,
     revalidate_execution_source,
@@ -126,11 +127,9 @@ def evaluate_target(repo: str, number: int, expected_issue: int | None,
     except Exception as exc:
         receipt["blocker"] = type(exc).__name__
         if head and SHA_RE.fullmatch(head):
-            try:
+            # Do not mask the original failure or print response bodies/tokens.
+            with suppress(Exception):
                 publish_check(repo, head, number, check_id, run_id, "failure", receipt, identity=identity)
-            except Exception:
-                # Do not mask the original failure or print response bodies/tokens.
-                pass
         print(f"BLOCK: solo audit attestation validation failed ({type(exc).__name__})", file=sys.stderr)
         return 2
 
