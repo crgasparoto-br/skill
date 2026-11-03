@@ -99,6 +99,7 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
     import verify_independent_pr_audit
 
     identity, pr, merge = sample()
+    merge["tree"] = {"sha": "1" * 40}
     recorded = {"repository": {"full_name": REPO}, "pull_request": {
         "number": 10, "title": pr["title"], "body": pr["body"],
         "merge_commit_sha": PREVIEW, "base": {"ref": "develop", "sha": BASE},
@@ -136,6 +137,9 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
             return pr
         if path.endswith(f"/git/commits/{PREVIEW}"):
             return merge
+        if path.endswith("/git/commits/" + "d" * 40):
+            return {"sha": "d" * 40, "parents": [{"sha": BASE}, {"sha": HEAD}],
+                    "tree": {"sha": "f" * 40}}
         if path.endswith("/actions/runs/19/artifacts?per_page=100"):
             return runs
         if path.endswith("/actions/artifacts/42/zip") and binary:
@@ -160,7 +164,8 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         "details_url": f"https://github.com/{REPO}/actions/runs/19/job/21",
         "completed_at": "2026-10-28T00:00:00Z"}]}
     if tamper:
-        with pytest.raises(ValueError, match="certification event altered or stale"):
+        with pytest.raises(ValueError, match="merge preview" if tamper == "preview"
+                                   else "certification event altered or stale"):
             runner.certified_evidence(identity, checks, tmp_path)
         assert checked == []
     else:
@@ -168,3 +173,94 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         assert checked == [(recorded, "develop")]
         assert metadata["artifact_id"] == 42
         assert passed == {"passed-case"}
+
+
+@pytest.mark.parametrize("case", ["equivalent", "different-tree", "reversed-parents",
+                                 "foreign-parent", "missing-object", "corrupt-sha", "missing-tree"])
+def test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents(monkeypatch, case):
+    identity, pr, merge = sample()
+    fresh = "f" * 40
+    original = {"sha": PREVIEW, "parents": [{"sha": BASE}, {"sha": HEAD}],
+                "tree": {"sha": "1" * 40}}
+    current = {"sha": fresh, "parents": [{"sha": BASE}, {"sha": HEAD}],
+               "tree": {"sha": "1" * 40}}
+    if case == "different-tree":
+        current["tree"]["sha"] = "2" * 40
+    if case == "reversed-parents":
+        current["parents"].reverse()
+    if case == "foreign-parent":
+        original["parents"][0]["sha"] = "0" * 40
+    if case == "corrupt-sha":
+        current["sha"] = "0" * 40
+    if case == "missing-tree":
+        del original["tree"]
+
+    def read(endpoint, *, binary=False):
+        if endpoint.endswith(f"/git/commits/{PREVIEW}"):
+            if case == "missing-object":
+                raise ValueError("authenticated GitHub GET failed")
+            return original
+        if endpoint.endswith(f"/git/commits/{fresh}"):
+            return current
+        raise AssertionError(endpoint)
+
+    monkeypatch.setattr(runner, "api", read)
+    identity["merge_preview_sha"] = fresh
+    if case == "equivalent":
+        assert runner.authenticated_preview_reconciliation(identity, PREVIEW) == {
+            "certified_sha": PREVIEW, "current_sha": fresh,
+            "mode": "equivalent-ordered-parents-and-tree",
+            "tree_sha": "1" * 40, "ordered_parents": [BASE, HEAD]}
+    else:
+        with pytest.raises(ValueError):
+            runner.authenticated_preview_reconciliation(identity, PREVIEW)
+
+
+@pytest.mark.parametrize("mutation", ["valid", "missing-commit", "foreign-commit",
+                                       "wrong-parent", "wrong-base", "wrong-head", "duplicate"])
+def test_implementation_chain_requires_git_authenticated_linear_material_history(monkeypatch, mutation):
+    first, last = "1" * 40, HEAD
+    identity, _, _ = sample()
+    rows = [{"sha": first}, {"sha": last}]
+    objects = {
+        first: {"sha": first, "parents": [{"sha": BASE}]},
+        last: {"sha": last, "parents": [{"sha": first}]},
+    }
+    if mutation == "missing-commit":
+        rows.pop(0)
+    elif mutation == "foreign-commit":
+        objects[last]["sha"] = "f" * 40
+    elif mutation == "wrong-parent":
+        objects[last]["parents"][0]["sha"] = "f" * 40
+    elif mutation == "wrong-base":
+        objects[first]["parents"][0]["sha"] = "f" * 40
+    elif mutation == "wrong-head":
+        rows[-1]["sha"] = "f" * 40
+    elif mutation == "duplicate":
+        rows.append({"sha": last})
+    monkeypatch.setattr(runner, "pages", lambda repo, endpoint: copy.deepcopy(rows))
+
+    def read(endpoint, *, binary=False):
+        sha = endpoint.rsplit("/", 1)[-1]
+        return copy.deepcopy(objects.get(sha, {"sha": sha, "parents": [{"sha": BASE}]}))
+    monkeypatch.setattr(runner, "api", read)
+    metadata = {"artifact_id": 42, "artifact_digest": "sha256:" + "d" * 64}
+    if mutation == "valid":
+        result = runner.authenticated_implementation_provenance(identity, metadata)
+        assert result["commits"] == [first, last]
+        assert result["head_sha"] == HEAD
+        assert result["handoff"]["artifact_id"] == 42
+    else:
+        with pytest.raises(ValueError):
+            runner.authenticated_implementation_provenance(identity, metadata)
+
+
+def test_preview_reconciliation_requires_exact_base_and_head_before_api(monkeypatch):
+    identity, _, _ = sample()
+    packet = {"identity": identity, "merge_preview_reconciliation": {
+        "certified_sha": PREVIEW, "current_sha": PREVIEW, "mode": "exact"}}
+    live = copy.deepcopy(identity)
+    live["base_sha"] = "f" * 40
+    monkeypatch.setattr(runner, "api", lambda *_, **__: pytest.fail("no GitHub call on changed base"))
+    with pytest.raises(ValueError, match="base/HEAD"):
+        runner.reconcile_target(packet, live)

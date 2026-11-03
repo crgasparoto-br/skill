@@ -21,6 +21,7 @@ POLICY_PATH = ".github/session-review-policy.json"
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 MAX_BODY = 60000
+PROVENANCE_TYPE = "github-implementation-provenance"
 
 
 def digest(raw: bytes) -> str:
@@ -53,8 +54,15 @@ def require(condition: bool, reason: str) -> None:
 
 
 def validate_policy(policy: dict) -> None:
-    require(set(policy) == {"schema_version", "mode", "assurance", "acknowledgement", "operators"},
+    baseline = {"schema_version", "mode", "assurance", "acknowledgement", "operators"}
+    require(set(policy) in (baseline, baseline | {"implementation_provenance"}),
             "unexpected policy fields")
+    if "implementation_provenance" in policy:
+        provenance = policy["implementation_provenance"]
+        require(isinstance(provenance, dict) and set(provenance) == {"mode", "type"}
+                and provenance["mode"] in {"enabled", "disabled"}
+                and provenance["type"] == PROVENANCE_TYPE,
+                "invalid trusted implementation-provenance policy")
     require(type(policy["schema_version"]) is int and policy["schema_version"] == 1, "unsupported policy version")
     require(policy["mode"] == "enabled", "session-review policy is disabled or absent in trusted base")
     require(policy["assurance"] == ASSURANCE and policy["acknowledgement"] == ACKNOWLEDGEMENT,
@@ -169,6 +177,43 @@ def verify_requirements(rows: list, requirements: list, files: dict[str, str], p
                     "test relevance rationale missing")
 
 
+def verify_implementation_provenance(implementation: dict, packet: dict, policy: dict) -> None:
+    """Bind an operator declaration to immutable facts read by the trusted GitHub runner.
+
+    GitHub proves the code history and signed-off handoff *objects*, not a lost
+    ChatGPT conversation, the human reviewer's identity or actual separation.
+    """
+    require(policy.get("implementation_provenance") == {
+        "mode": "enabled", "type": PROVENANCE_TYPE},
+        "implementation provenance is not enabled by the trusted base")
+    require(set(implementation) == {"type", "original_session_unavailable", "github"}
+            and implementation.get("type") == PROVENANCE_TYPE
+            and implementation.get("original_session_unavailable") is True,
+            "explicit lost-session provenance declaration required")
+    trusted = packet.get("implementation_provenance")
+    require(isinstance(trusted, dict) and
+            set(trusted) == {"type", "repository", "pull_request", "issue", "base_sha",
+                             "head_sha", "commits", "handoff"},
+            "authenticated GitHub provenance is missing")
+    identity = packet["identity"]
+    require(trusted["type"] == PROVENANCE_TYPE
+            and all(trusted[k] == identity[k] for k in
+                    ("repository", "pull_request", "issue", "base_sha", "head_sha")),
+            "GitHub provenance belongs to another delivery")
+    commits = trusted["commits"]
+    require(isinstance(commits, list) and len(commits) > 0
+            and all(isinstance(sha, str) and SHA.fullmatch(sha) for sha in commits)
+            and len(set(commits)) == len(commits) and commits[-1] == identity["head_sha"],
+            "unverified material commit inventory")
+    handoff = trusted["handoff"]
+    require(isinstance(handoff, dict) and set(handoff) == {"artifact_id", "digest"}
+            and type(handoff["artifact_id"]) is int and handoff["artifact_id"] > 0
+            and handoff["digest"] == packet["artifact_digest"]
+            and handoff["artifact_id"] == packet["artifact_id"],
+            "GitHub provenance handoff authentication mismatch")
+    require(implementation["github"] == trusted, "GitHub provenance was forged, truncated or altered")
+
+
 def verify_review(comment: dict, packet: dict, policy: dict, files: dict[str, str],
                   passed_tests: set[str]) -> dict:
     """All factual inputs are collected independently by the trusted runner.
@@ -195,10 +240,25 @@ def verify_review(comment: dict, packet: dict, policy: dict, files: dict[str, st
     sessions = report["sessions"]
     require(isinstance(sessions, dict) and set(sessions) == {"implementation", "audit", "separate_context_attested"},
             "session declarations missing")
-    require(all(isinstance(sessions[k], str) and 8 <= len(sessions[k]) <= 300
-                and sessions[k].strip() == sessions[k] for k in ("implementation", "audit")),
-            "session references must be supplied by the operator, not invented")
-    require(sessions["separate_context_attested"] is True and sessions["implementation"] != sessions["audit"],
+    implementation, audit = sessions["implementation"], sessions["audit"]
+    require(isinstance(audit, str) and 8 <= len(audit) <= 300
+            and audit.strip() == audit, "real audit-session reference must be supplied by the operator")
+    if isinstance(implementation, str):
+        # v1 is untouched. A missing conversation does not authorize an invented
+        # legacy reference; the operator must explicitly select the opt-in type.
+        require(8 <= len(implementation) <= 300 and implementation.strip() == implementation,
+                "session references must be supplied by the operator, not invented")
+        require(implementation != audit, "separate review context must be explicitly attested")
+    else:
+        require(isinstance(implementation, dict), "invalid implementation session/provenance type")
+        verify_implementation_provenance(implementation, packet, policy)
+        # A GitHub object is not an audit conversation. The auditor's distinct
+        # ChatGPT reference remains operator-supplied and cannot be authenticated here.
+        parsed = urlsplit(audit)
+        require(parsed.scheme == "https" and parsed.netloc in {"chatgpt.com", "chat.openai.com"}
+                and bool(parsed.path.strip("/")) and not parsed.username and not parsed.password,
+                "recovered implementation requires a distinct ChatGPT audit context reference")
+    require(sessions["separate_context_attested"] is True,
             "separate review context must be explicitly attested")
     require(report["conclusion"] == "approved", "review does not approve the candidate")
     require(report["blocking_findings"] == [] and report["limitations"] == [],
@@ -212,6 +272,11 @@ def verify_review(comment: dict, packet: dict, policy: dict, files: dict[str, st
                "review_comment_id": comment["id"], "review_body_sha256": digest(body.encode()),
                "artifact_digest": packet["artifact_digest"], "technical_check_ids": packet["technical_check_ids"],
                "third_party_identity_proven": False, "session_separation": "operator-declared"}
+    if isinstance(implementation, dict):
+        receipt["implementation_provenance_type"] = PROVENANCE_TYPE
+        receipt["implementation_provenance_sha256"] = digest(canonical(implementation))
+    if "merge_preview_reconciliation" in packet:
+        receipt["merge_preview_reconciliation"] = packet["merge_preview_reconciliation"]
     receipt["fingerprint"] = digest(canonical(receipt))
     return receipt
 

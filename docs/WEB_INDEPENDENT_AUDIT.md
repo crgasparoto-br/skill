@@ -48,11 +48,18 @@ reivindicam autoridade para publicar checks.
 Se a base ou HEAD mudar, produzir novo certificado e parecer para a
 identidade atual; nenhum preview antigo e prova transferivel.
 
-O leitor confiavel do pacote neutro e da revisao por sessao recompõe o evento
-normalizado consultando a PR e o commit de merge autenticados no GitHub,
-exigindo base SHA, HEAD, preview e pais Git ordenados exatos. Compara o evento
-reconstruido ao snapshot pre-testes do artifact antes de validar o certificado;
-dados alterados, ausentes ou obsoletos bloqueiam, sem criar parecer.
+O leitor confiavel recompõe o evento consultando a PR e os objetos Git autenticados.
+O preview original do artifact continua sendo validado pelo certificador oficial.
+Se o GitHub recriar o merge sintetico, a reconciliacao e admitida SOMENTE quando
+os dois commits Git autenticados possuirem os mesmos dois pais ordenados
+(base, HEAD) e exatamente a mesma tree. O SHA original permanece na
+identidade do parecer; o pacote registra SHA original, SHA atual, tree,
+pais ordenados, digest do evento original e digest ZIP do artifact. Outros
+campos do evento normalizado devem coincidir sem substituicao. Base, HEAD,
+issue, autor, certificado e testes permanecem exact-SHA, e o leitor reconsulta
+o preview imediatamente antes de emitir sucesso. Um commit Git nao encontrado,
+parentes invertidos, tree alterada ou base/HEAD movidos bloqueiam. A mudanca
+exclusiva de timestamp do commit sintetico nao provoca recertificacao circular.
 
 Somente uma alteracao material ou uma evidencia realmente diferente exige nova revisao. Findings sao consolidados na mesma rodada. Credencial, dossie ou permissao ausente gera BLOCK com causa concreta, nao um ciclo automatico de tentativa.
 
@@ -64,7 +71,59 @@ O JSON usa `schema_version=1`, `identity`, `assurance`, `acknowledgement`, `sess
 
 Copiar `identity` do pacote autenticado: repositorio, PR, issue, base ref/SHA, HEAD, merge preview e digests de issue/politica. `assurance` e `operator-attested-session-review`; `acknowledgement` e `separate-context-declared-not-cryptographically-proven`.
 
-Em `sessions`, informar referencias reais fornecidas pelo operador para `implementation` e `audit`, diferentes entre si, e `separate_context_attested=true`. O programa **nao autentica uma sessao ChatGPT**; esses campos sao uma declaracao de processo. Nao inventar IDs ou assinar essa declaracao como terceiro.
+No contrato v1 original, `sessions.implementation` e `sessions.audit` sao
+referencias reais de conversas fornecidas pelo operador, diferentes entre si,
+com `separate_context_attested=true`. O programa **nao autentica sessoes
+ChatGPT**; sao declaracoes de processo. Nao inventar IDs de conversas.
+
+### Recuperacao honesta da implementacao quando a conversa foi perdida
+
+A alternativa opcional **nao recria a conversa original**. A politica
+`.github/session-review-policy.json`, identica na default `main` e na base
+confiavel da PR, precisa declarar explicitamente
+`"implementation_provenance":{"mode":"enabled","type":"github-implementation-provenance"}`.
+Campo ausente, `disabled` ou forma invalida recusam o novo tipo. A politica
+editada na propria branch da PR nao autoriza sua revisao. O contrato de duas
+referencias reais v1 permanece aceito, mesmo com a alternativa ativada.
+
+Na revisao da PR cujo material original ainda esteja certificado, obter
+`implementation_provenance` do **pacote neutro autenticado**, nao de um
+comentario do implementador, e informar em `sessions`:
+
+```json
+{
+  "implementation": {
+    "type": "github-implementation-provenance",
+    "original_session_unavailable": true,
+    "github": "<copiar o objeto implementation_provenance do pacote neutro>"
+  },
+  "audit": "https://chatgpt.com/c/<referencia-real-da-conversa-auditora>",
+  "separate_context_attested": true
+}
+```
+
+O valor de `github` no exemplo e um marcador documental, nao um objeto valido;
+na publicacao deve ser substituido pelo objeto JSON completo autenticado.
+O operador afirma honestamente que o chat original nao esta disponivel e
+indica uma conversa auditora real, efetivamente separada, com referencia
+fornecida por ele. A implementacao jamais emite a propria aprovacao.
+
+O leitor reconsulta a PR/issue, a lista integral de commits materiais e cada
+objeto Git de commit da base ao HEAD, exigindo cadeia linear ordenada,
+sem lacunas ou pais divergentes, mais o artifact de handoff autenticado,
+digest ZIP, certificados e checks tecnicos no SHA material. Merge commits ou
+historico nao linear nao sao automaticamente aceitos por essa via restrita;
+exigem uma evolucao explicitamente revisada da regra, nao inferencia.
+Compara todos os campos do registro recuperado ao fato autenticado e repete
+a leitura antes de emitir sucesso. Nao confundir a identidade GitHub do autor
+com identidade de outro auditor, nem deduzir a existencia de sessao ChatGPT.
+A garantia permanece `separate-context-declared-not-cryptographically-proven`.
+
+A auditoria continua cobrindo **cada** obrigacao canonica com analise propria,
+fontes `path/start_line/end_line/sha256` no HEAD/base e tres casos JUnit
+distintos, aprovados no SHA material: positivo, negativo e regressao.
+Ausencia de referencia auditora, falsa atestacao, comentário alterado/excluido,
+issue/PR/HEAD incorretos ou handoff sem comprovacao deixam o check bloqueado.
 
 Cada item de `requirements` deve ter o `candidate_key` canonico, uma `analysis` propria, `sources` e `controls`. Cada fonte aponta `path`, `start_line`, `end_line` e SHA-256 do trecho unido por `\n` sem quebra final. Cada controle informa `kind`, `test_case_id` e `rationale`. Exigem-se tres casos distintos: `positive`, `negative` e `regression`, presentes como passed no JUnit do SHA material. Isso verifica vinculos, nao substitui a avaliacao semantica do revisor.
 
@@ -92,6 +151,40 @@ Ativar requer alterar `mode` para `enabled` e cadastrar a conta **na base confia
 O novo check nao substitui sozinho a regra nativa `required_approving_review_count=1`. A migracao administrativa, depois de aceitar este modelo de garantia, consiste em manter PR obrigatoria, remover a exigencia de outra conta (contagem 0), trocar o check de identidade independente pelo check de sessao e preservar os checks tecnicos, certificacao, atualizacao estrita, bloqueio de force-push e exclusao. Isso altera o modelo de confianca; nao e equivalente a uma aprovacao de terceiro.
 
 O bootstrap e uma decisao administrativa unica: a politica antiga, que exige outra conta, nao pode aprovar sua propria substituicao por uma unica conta. Registrar essa decisao, o SHA revisado e as evidencias; nao fabricar check verde nem desativar indiscriminadamente todas as protecoes. A automacao nao altera rulesets e nao faz merge. Enquanto nao houver autorizacao e instalacao protegida, permanece o gate antigo.
+
+### Instalacao sequencial da recuperacao de proveniencia (issue #171)
+
+1. Validar a PR de correcao sobre `develop` com suite focada, suite canonica,
+   testes adversariais, handoff e auditoria **realmente separada**. Congelar o
+   SHA revisado. Se o gate antigo nao puder validar sua propria substituicao,
+   a unica via e bootstrap administrativo **explicito e registrado** pelo
+   proprietario com inventario anterior de rulesets, checks e SHAs; jamais
+   um check artificial, bypass silencioso ou merge automatico.
+2. Instalar os bytes revisados de `scripts/session_review.py`,
+   `scripts/verify_session_review.py` e politica na base confiavel
+   `develop`, preservando workflows/required checks/branch protection;
+   conferir os SHAs e o comportamento negativo enquanto `main` ainda
+   nao estiver sincronizada. Nessa janela, o leitor deve permanecer bloqueado.
+3. Promover os mesmos bytes para `main` por release autorizada e
+   conferir igualdade byte a byte entre runner/default/base; ler de volta
+   regras efetivas em ambas as branches. O opt-in nao entra em vigor por
+   existir somente numa branch candidata.
+4. Coletar novamente o pacote neutro para a PR #170 no HEAD material atual.
+   Em uma **nova conversa auditora separada**, confrontar os 20 requisitos,
+   commits e controles reais; somente um parecer completo do operador pode
+   autorizar o check. Testar casos positivos e negativos reais de preview
+   refeito, adulteracao/revogacao, issue/PR/HEAD, politica, historico Git
+   e permissao antes de aceitar M2. Nao fazer merge automatico da #170
+   nem fechar a #169 apenas por CI verde.
+
+**Rollback:** conservar snapshot de codigo, politica, rulesets e certificados.
+Se a recuperacao falhar, desabilitar o opt-in **nas duas bases** ou reinstalar
+os bytes confiaveis anteriores por procedimento autorizado, mantendo os
+checks obrigatorios atuais; nao desligar o check de sessao antes de restabelecer
+a via anterior. Ler de volta `develop` e `main`, confirmar que a ausencia de
+auditoria continua bloqueante e registrar os testes, SHAs e a autorizacao.
+Uma reversao ainda bloqueada por falta de parecer e mais segura que aprovar
+um resultado sem prova.
 
 Antes da migracao M2, guardar o inventario anterior e o plano de retorno: JSON de rulesets e branch protection aplicaveis, regras efetivas, bypasses, nomes e apps dos required checks, contagem de reviews, revisoes de workflows e bytes/hash da politica em cada base. Registrar tambem o proprietario responsavel e os links da decisao, do certificado e dos runs. Esse snapshot e a referencia do rollback; exemplos de checks neste guia nao substituem as regras reais do repositorio.
 
