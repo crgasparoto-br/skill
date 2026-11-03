@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "families": [
+    {
+      "family": "authorization",
+      "applicable": true,
+      "reason": "Derived from the current reviewed obligation source and pending discriminating controls.",
+      "control_ids": [],
+      "dimensions": [
+        {
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-001 must be checked against authenticated source, distinct negative oracle and regression.",
+          "control_ids": [],
+          "status": "pending"
+        }
+      ],
+      "status": "pending"
+    },
+    {
+      "family": "tenant-isolation",
+      "applicable": false,
+      "reason": "No currently inventoried source signal requires this family.",
+      "control_ids": [],
+      "dimensions": [],
+      "status": "not-applicable"
+    },
+    {
+      "family": "public-boundary",
+      "applicable": false,
+      "reason": "No currently inventoried source signal requires this family.",
+      "control_ids": [],
+      "dimensions": [],
+      "status": "not-applicable"
+    },
+    {
+      "family": "reference-liveness",
+      "applicable": true,
+      "reason": "Derived from the current reviewed obligation source and pending discriminating controls.",
+      "control_ids": [],
+      "dimensions": [
+        {
+          "surface": "exact-sha-reference-revalidation",
+          "reason": "Potential reference-liveness failure in R171-027 must be checked against authenticated source, distinct negative oracle and regression.",
+          "control_ids": [],
+          "status": "pending"
+        }
+      ],
+      "status": "pending"
+    },
+    {
+      "family": "temporal-consistency",
+      "applicable": true,
+      "reason": "Derived from the current reviewed obligation source and pending discriminating controls.",
+      "control_ids": [],
+      "dimensions": [
+        {
+          "surface": "source-evidence-freshness",
+          "reason": "Potential temporal-consistency failure in R171-027 must be checked against authenticated source, distinct negative oracle and regression.",
+          "control_ids": [],
+          "status": "pending"
+        }
+      ],
+      "status": "pending"
+    },
+    {
+      "family": "temporal-destination",
+      "applicable": false,
+      "reason": "No currently inventoried source signal requires this family.",
+      "control_ids": [],
+      "dimensions": [],
+      "status": "not-applicable"
+    },
+    {
+      "family": "concurrency-atomicity",
+      "applicable": false,
+      "reason": "No currently inventoried source signal requires this family.",
+      "control_ids": [],
+      "dimensions": [],
+      "status": "not-applicable"
+    },
+    {
+      "family": "idempotency",
+      "applicable": false,
+      "reason": "No currently inventoried source signal requires this family.",
+      "control_ids": [],
+      "dimensions": [],
+      "status": "not-applicable"
+    },
+    {
+      "family": "rollback",
+      "applicable": true,
+      "reason": "Derived from the current reviewed obligation source and pending discriminating controls.",
+      "control_ids": [],
+      "dimensions": [
+        {
+          "surface": "rollout-rollback-safety",
+          "reason": "Potential rollback failure in R171-033 must be checked against authenticated source, distinct negative oracle and regression.",
+          "control_ids": [],
+          "status": "pending"
+        }
+      ],
+      "status": "pending"
+    },
+    {
+      "family": "historical-immutability",
+      "applicable": false,
+      "reason": "No currently inventoried source signal requires this family.",
+      "control_ids": [],
+      "dimensions": [],
+      "status": "not-applicable"
+    },
+    {
+      "family": "structural-contract",
+      "applicable": true,
+      "reason": "Derived from the current reviewed obligation source and pending discriminating controls.",
+      "control_ids": [],
+      "dimensions": [
+        {
+          "surface": "trusted-code-identity",
+          "reason": "Potential structural-contract failure in R171-035 must be checked against authenticated source, distinct negative oracle and regression.",
+          "control_ids": [],
+          "status": "pending"
+        }
+      ],
+      "status": "pending"
+    },
+    {
+      "family": "documentation",
+      "applicable": true,
+      "reason": "Derived from the current reviewed obligation source and pending discriminating controls.",
+      "control_ids": [],
+      "dimensions": [
+        {
+          "surface": "normative-rollout-consistency",
+          "reason": "Potential documentation failure in R171-010 must be checked against authenticated source, distinct negative oracle and regression.",
+          "control_ids": [],
+          "status": "pending"
+        }
+      ],
+      "status": "pending"
+    },
+    {
+      "family": "semantic-effect",
+      "applicable": true,
+      "reason": "Derived from the current reviewed obligation source and pending discriminating controls.",
+      "control_ids": [],
+      "dimensions": [
+        {
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-001 must be checked against authenticated source, distinct negative oracle and regression.",
+          "control_ids": [],
+          "status": "pending"
+        }
+      ],
+      "status": "pending"
+    }
+  ],
+  "material_families_missing_controls": [
+    "authorization",
+    "documentation",
+    "reference-liveness",
+    "rollback",
+    "semantic-effect",
+    "structural-contract",
+    "temporal-consistency"
+  ],
+  "review_state": "incomplete",
+  "note": "Not a passed saturation report; empty controls are intentionally blocking."
+}
