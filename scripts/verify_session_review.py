@@ -25,7 +25,6 @@ from session_review import (
     POLICY_PATH,
     PREFIX,
     PROVENANCE_TYPE,
-    SHA,
     allowed,
     canonical,
     digest,
