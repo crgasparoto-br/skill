@@ -160,8 +160,28 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
     expected["pull_request"]["merge_commit_sha"] = certified_sha
     require(recorded == expected, "certification event altered or stale against authenticated PR")
     proof = authenticated_preview_reconciliation(identity, certified_sha)
+    # The original pre-test preview and the preview written into the handoff
+    # may differ from GitHub's current synthetic merge without changing code.
+    # Authenticate the third commit before giving the strict legacy verifier
+    # a temporary event; never rewrite the ZIP or its original-event digest.
+    preflight_snapshot = strict_json((directory / "handoff-preflight.json").read_text(encoding="utf-8"))
+    original_preview = recorded_pr.get("merge_commit_sha")
+    require(isinstance(preflight_snapshot, dict)
+            and isinstance(preflight_snapshot.get("identity"), dict)
+            and preflight_snapshot["identity"].get("merge_preview_sha") == original_preview,
+            "pre-test merge preview differs from authenticated snapshot")
+    certificate = strict_json((directory / ".audit/entregar-issue/handoff-ready.json").read_text(encoding="utf-8"))
+    certificate_identity = certificate.get("identity") if isinstance(certificate, dict) else None
+    require(isinstance(certificate_identity, dict), "certified handoff identity is missing")
+    certificate_preview = certificate_identity.get("material_merge_preview_sha")
+    require(isinstance(certificate_preview, str) and SHA.fullmatch(certificate_preview)
+            and certificate_identity.get("merge_preview_sha") == certificate_preview,
+            "certified handoff merge preview is missing or inconsistent")
+    certificate_reconciliation = authenticated_preview_reconciliation(identity, certificate_preview)
+    verified_event = copy.deepcopy(recorded)
+    verified_event["pull_request"]["merge_commit_sha"] = certificate_preview
     event_path = directory / "trusted-event.json"
-    event_path.write_bytes(canonical(recorded))
+    event_path.write_bytes(canonical(verified_event))
     verify(directory, event_path, identity["base_ref"])
     preflight = json.loads((directory / "handoff-preflight.json").read_bytes())
     require(preflight["identity"]["issue_number"] == identity["issue"]
@@ -179,5 +199,6 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
                 "technical_check_ids": sorted(c["id"] for c in checks["check_runs"] if c.get("name") in
                                              {"Structure and tests", "Offline authorization tests", HANDOFF})}
     metadata["merge_preview_reconciliation"] = proof
+    metadata["certified_handoff_preview_reconciliation"] = certificate_reconciliation
     metadata["certification_event_sha256"] = digest(recorded_raw)
     return metadata, {t["id"] for t in index["tests"] if t["status"] == "passed"}

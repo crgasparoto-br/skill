@@ -90,7 +90,9 @@ def test_merge_preview_requires_exactly_two_ordered_git_parents(monkeypatch, par
         runner.authenticated_certificate_event(identity)
 
 
-@pytest.mark.parametrize("tamper", [None, "equivalent-preview", "base", "head", "preview", "title", "body"])
+@pytest.mark.parametrize("tamper", [None, "equivalent-preview", "base", "head", "preview", "title", "body",
+                                    "certificate-preview-equivalent", "certificate-preview-different-tree",
+                                    "certificate-preview-reversed-parent", "pretest-preview-tampered"])
 def test_certified_evidence_checks_pretest_event_before_verifier(
         monkeypatch, tmp_path, tamper):
     """The artifact cannot choose an event after the test runner altered it."""
@@ -104,6 +106,7 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         "number": 10, "title": pr["title"], "body": pr["body"],
         "merge_commit_sha": PREVIEW, "base": {"ref": "develop", "sha": BASE},
         "head": {"sha": HEAD, "repo": {"full_name": REPO}}}}
+    certificate_preview = "d" * 40 if tamper.startswith("certificate-preview-") else PREVIEW
     if tamper == "base":
         recorded["pull_request"]["base"]["sha"] = "d" * 40
     elif tamper == "head":
@@ -116,12 +119,18 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
     log = b"HEAD: exact\nCOMMAND: pytest\nEXIT_CODE: 0\n"
     facts = {"subject_sha": HEAD, "verification": "passed",
              "execution": {"exit_code": 0, "log_sha256": runner.digest(log)}}
-    preflight = {"identity": {"issue_number": 9, "base_sha": BASE},
+    preflight = {"identity": {"issue_number": 9, "base_sha": BASE,
+                              "merge_preview_sha": recorded["pull_request"]["merge_commit_sha"]},
                  "source": {"issue_body_sha256": identity["issue_sha256"]}}
+    if tamper == "pretest-preview-tampered":
+        preflight["identity"]["merge_preview_sha"] = "e" * 40
     archive = io.BytesIO()
     with zipfile.ZipFile(archive, "w") as out:
         for name, data in [
             ("certification-event.json", json.dumps(recorded)),
+            (".audit/entregar-issue/handoff-ready.json", json.dumps({
+                "identity": {"merge_preview_sha": certificate_preview,
+                             "material_merge_preview_sha": certificate_preview}})),
             ("handoff-preflight.json", json.dumps(preflight)),
             ("test-execution-facts.json", json.dumps(facts)),
             ("pytest-exact-head.xml", "<testsuite/>"),
@@ -138,8 +147,13 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         if path.endswith(f"/git/commits/{PREVIEW}"):
             return merge
         if path.endswith("/git/commits/" + "d" * 40):
-            return {"sha": "d" * 40, "parents": [{"sha": BASE}, {"sha": HEAD}],
-                    "tree": {"sha": ("1" if tamper == "equivalent-preview" else "f") * 40}}
+            parents = [{"sha": BASE}, {"sha": HEAD}]
+            if tamper == "certificate-preview-reversed-parent":
+                parents.reverse()
+            accepted = tamper in {"equivalent-preview", "certificate-preview-equivalent",
+                                  "certificate-preview-reversed-parent"}
+            return {"sha": "d" * 40, "parents": parents,
+                    "tree": {"sha": ("1" if accepted else "f") * 40}}
         if path.endswith("/actions/runs/19/artifacts?per_page=100"):
             return runs
         if path.endswith("/actions/artifacts/42/zip") and binary:
@@ -163,15 +177,21 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         "id": 17, "name": verify_independent_pr_audit.HANDOFF, "head_sha": HEAD,
         "details_url": f"https://github.com/{REPO}/actions/runs/19/job/21",
         "completed_at": "2026-10-28T00:00:00Z"}]}
-    if tamper and tamper != "equivalent-preview":
-        with pytest.raises(ValueError, match="merge preview" if tamper == "preview"
-                                   else "certification event altered or stale"):
+    success_cases = {None, "equivalent-preview", "certificate-preview-equivalent"}
+    if tamper not in success_cases:
+        with pytest.raises(ValueError, match="merge preview" if tamper in {
+                "preview", "certificate-preview-different-tree", "certificate-preview-reversed-parent",
+                "pretest-preview-tampered"} else "certification event altered or stale"):
             runner.certified_evidence(identity, checks, tmp_path)
         assert checked == []
     else:
         metadata, passed = runner.certified_evidence(identity, checks, tmp_path)
-        assert checked == [(recorded, "develop")]
+        expected = copy.deepcopy(recorded)
+        expected["pull_request"]["merge_commit_sha"] = certificate_preview
+        assert checked == [(expected, "develop")]
         assert metadata["artifact_id"] == 42
+        assert metadata["certified_handoff_preview_reconciliation"]["mode"] == (
+            "equivalent-ordered-parents-and-tree" if tamper == "certificate-preview-equivalent" else "exact")
         assert metadata["certification_event_sha256"] == runner.digest(json.dumps(recorded).encode())
         assert metadata["merge_preview_reconciliation"]["mode"] == (
             "equivalent-ordered-parents-and-tree" if tamper == "equivalent-preview" else "exact")

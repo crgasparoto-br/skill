@@ -50,6 +50,10 @@ identidade atual; nenhum preview antigo e prova transferivel.
 
 O leitor confiavel recompõe o evento consultando a PR e os objetos Git autenticados.
 O preview original do artifact continua sendo validado pelo certificador oficial.
+Se o certificado tiver sido construido com um terceiro SHA de preview, o leitor
+verifica tambem esse objeto Git contra base, HEAD e tree autenticados, sem
+alterar o evento original do artifact: usa apenas uma copia temporaria para
+o validador legado e registra as tres identidades no recibo.
 Se o GitHub recriar o merge sintetico, a reconciliacao e admitida SOMENTE quando
 os dois commits Git autenticados possuirem os mesmos dois pais ordenados
 (base, HEAD) e exatamente a mesma tree. O SHA original permanece na
