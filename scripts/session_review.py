@@ -53,9 +53,10 @@ def require(condition: bool, reason: str) -> None:
         raise ValueError(reason)
 
 
-def validate_policy(policy: dict) -> None:
+def validate_provenance_policy_option(policy: dict) -> None:
+    """Check opt-in shape in enabled and disabled trusted session modes."""
     baseline = {"schema_version", "mode", "assurance", "acknowledgement", "operators"}
-    require(set(policy) in (baseline, baseline | {"implementation_provenance"}),
+    require(isinstance(policy, dict) and set(policy) in (baseline, baseline | {"implementation_provenance"}),
             "unexpected policy fields")
     if "implementation_provenance" in policy:
         provenance = policy["implementation_provenance"]
@@ -63,6 +64,10 @@ def validate_policy(policy: dict) -> None:
                 and provenance["mode"] in {"enabled", "disabled"}
                 and provenance["type"] == PROVENANCE_TYPE,
                 "invalid trusted implementation-provenance policy")
+
+
+def validate_policy(policy: dict) -> None:
+    validate_provenance_policy_option(policy)
     require(type(policy["schema_version"]) is int and policy["schema_version"] == 1, "unsupported policy version")
     require(policy["mode"] == "enabled", "session-review policy is disabled or absent in trusted base")
     require(policy["assurance"] == ASSURANCE and policy["acknowledgement"] == ACKNOWLEDGEMENT,
