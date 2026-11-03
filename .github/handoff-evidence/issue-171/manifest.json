@@ -353,6 +353,39 @@
       "regression": [
         "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
       ]
+    },
+    "R171-027": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-033": {
+      "positive": [
+        "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+      ],
+      "negative": [
+        "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[different-base]"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+      ]
+    },
+    "R171-038": {
+      "positive": [
+        "tests.test_session_review_workflows::test_begin_check_accepts_only_non_authorizing_github_states[in_progress-None]"
+      ],
+      "negative": [
+        "tests.test_session_review_workflows::test_begin_check_rejects_states_that_could_bypass_review[completed-success]"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
+      ]
     }
   }
 }

@@ -254,12 +254,24 @@
       "rationale": "O recibo declara limitação do contexto separado; a validação interna não libera aprovação formal em sessão implementadora. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "38d91d2c1940f46e72570da53cf94f200643d777107fe65ddb0cf38f7ea81443": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R171-027"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": null,
-      "rationale": "ACEITE OPERACIONAL M2: aprovação real exige instalação prévia em ambas as bases, certificado e conversa separada com 20 requisitos da PR #170; não é demonstrável por unitários."
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-171",
+        "decision_source_sha256": "3eaf919d8cb3fc8f90c443707380b0c08e41676edb9b3241ac84f9d37b88e91b",
+        "decision_locator": "parecer completo por 20 obrigacoes e testes validos produzem revisao de sessao aprovada no SHA alvo, apos instalacao em bases confiaveis.",
+        "target_issue": 171,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "[ ] Positivo: proveniencia GitHub genuina e autenticada, atestacao verdadeira de separacao",
+          "rationale": "Os mecanismos de proveniência GitHub e declaração explícita já foram exercitados por testes adversariais do leitor; somente aprovação efetiva em bases instaladas permanece fase M2."
+        }
+      },
+      "rationale": "M2: aprovação real da PR #170 exige instalação protegida e auditoria em contexto independente; a decisão desta entrega não cria parecer nem autoriza merge."
     },
     "0f3d854b5d02e27b580adec187311068ee94a2d2b116e9e2ca921f4c96816809": {
       "disposition": "covered",
@@ -310,12 +322,14 @@
       "rationale": "M1 BLOQUEADO: a suíte exata está verde, mas o handoff semântico não foi certificado; não marcar a obrigação completa até closure, controles e certificado reais."
     },
     "69b5d963fd1f9fb0fd2ad5052315a2ee43b8cdb861852063bad7145b10799bf1": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-033"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "M1 parcialmente documentado; M2 ainda exige promoção autorizada develop/main e leitura de regras reais; não inferir que documentação significa instalação."
+      "rationale": "M1: docs/WEB_INDEPENDENT_AUDIT.md descreve promoção develop→main, rollback, opt-in e auditoria separada, proíbe merge automático e explica o rebase linear da PR #170. A documentação foi lida no SHA da branch; a instalação M2 não é alegada como concluída."
     },
     "4e12f35559ebdc8acf8791ec372b71a053f997a321fbb21d95633e0ac3ebdfc6": {
       "disposition": "covered",
@@ -358,20 +372,28 @@
       "rationale": "A origem GitHub só atesta fatos técnicos; a evidência de sessão humana independente não é provada criptograficamente. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "e872903243c6217ba582459ce9ddf980af40f86ed84a3c3a82cf248e51be375d": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-038"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "M2 pendente: a PR #170 continua bloqueada até instalação da política e parecer autenticado real; nenhum merge automático permitido."
+      "rationale": "Consulta autenticada à PR #170 confirma status open, HEAD original e exigência de revisão ainda pendente; registro #6603879363 é explicitamente não aprovativo. Os testes do leitor preservam o bloqueio antes de um parecer autenticado."
     },
     "d53d325e2b123b730bb5aaee6b904a0b1e4d3800110c363b92cff746a638fb1b": {
-      "disposition": "pending",
+      "disposition": "deferred",
       "requirement_ids": [],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": null,
-      "rationale": "M2 pendente: a instalação em bases confiáveis e auditoria separada são ações de rollout, não executadas pela PR candidata."
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-171",
+        "decision_source_sha256": "3eaf919d8cb3fc8f90c443707380b0c08e41676edb9b3241ac84f9d37b88e91b",
+        "decision_locator": "Mudanca no verificador confiavel exige auditoria separada e sequencia de rollout antes de sua aplicacao a #170.",
+        "target_issue": 171,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "M2: revisão externa em conversa realmente separada, instalação develop→main e uso na PR #170 só ocorrem após certificado M1 e autorização; sua ausência não autoriza liberação."
     },
     "f34b8bdd368dd84fb3d74d222593916ec82b8085275a6d3bdca45496c5561e78": {
       "disposition": "covered",
