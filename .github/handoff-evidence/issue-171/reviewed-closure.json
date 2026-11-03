@@ -2,212 +2,256 @@
   "schema_version": 1,
   "obligations": {
     "6ec79eef9cc752b1327f103cb8b7311a5767836be064bec3ac98d2b1ec08c9f3": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-001"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "A recuperação só admite proveniência factual GitHub e mantém exigência de auditoria separada, sem criar sessão fictícia. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "0403ffcd9c93e8a624fee8f4da27b53599ef816272ce720c0fe535776e9d0b56": {
-      "disposition": "pending",
+      "disposition": "not-applicable",
       "requirement_ids": [],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Contexto histórico: PR #170 permanece aberta no GitHub com HEAD cddadea4..., base 2ee50f7..., 11 commits. Não cria obrigação implementável da #171; a política aplicada é R171-013."
     },
     "1d5f5d71c7617d640a6c2da57323ea4172dc205cd8b7ae04d196063bba575953": {
-      "disposition": "pending",
+      "disposition": "not-applicable",
       "requirement_ids": [],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Contexto histórico: a ausência da conversa original é declaração do operador registrada na issue #171; não há ID recuperável. Não é uma tarefa de fabricar/restaurar sessão."
     },
     "1c2599b372392f9a86cda7f1aba0b6bc836f1b78cceb01d795c9a3b86118f0b7": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-004"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Contrato v1 de duas sessões reais continua validado sem migração implícita no modo de proveniência opt-in. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "26f6f0712e23ebed8864a3e599fad53189b2b198b2595bddc76dbd60824d3824": {
-      "disposition": "pending",
+      "disposition": "not-applicable",
       "requirement_ids": [],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Contexto histórico: comentário GitHub #6603879363 de PR #170 é registro factual e expressamente não aprovativo; não é implementação nova."
     },
     "45fd5f1c6dac0fa4e4a4f238069a6caac9de7a56347808c314dc0ab3c9a0385f": {
-      "disposition": "pending",
+      "disposition": "not-applicable",
       "requirement_ids": [],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Contexto histórico: a mudança dos SHAs do merge preview e a igualdade de tree/pais estão registradas na issue; o comportamento implementável é exigido nas R171-009 e R171-016."
     },
     "ed7c7a9bc78b4cc5e9c9f153014517914ceadf2b8e8c1260a9d6537ba72fa106": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-007"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Tipo de implementação recuperada é explícito e diferente de uma conversa original ChatGPT. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "4bdc24e95e2a156544936f0566c733671f80131d09045a5e7786d5da6037b130": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-008"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Identidade GitHub autenticada é reconstruída por issue/PR/base/HEAD/commits/handoff e comparada à declaração. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "7b219fc2b5506782ba15497b9f5c646b45309948650fbdb7d29e84d8fb98fd8d": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-009"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Reconciliação consulta commits Git de ambos os previews e compara pais ordenados e SHA da tree, preservando SHA certificado. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "f946e0633fb12959da470a8bed0ec830afb5146e57b679078470136f84dbf30d": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-010"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Há controles positivos, negativos e de regressão exercitando o leitor oficial e o contrato v1. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "df25d35cd704839807fa63f5ae00c4f6196734cd79d00305481d5fbca1af5787": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-011"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Política de base confiável controla habilitação; ausência e modo disabled são recusados. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "374814ceea06f2ca42d38651842769608bbe5b032d53f1d648d53d7d5fe3bec8": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-012"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "O relatório exige github-implementation-provenance, sessão original indisponível e atestação de contexto distinto. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "adb8527e56d36b4719f5fbd99981baf836a9cc0b4f5710ca8b53a47700327437": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-013"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "A cadeia GitHub é verificada pelo parent SHA de cada commit e pelo último HEAD, recusando base trocada. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "0afef927b291622bd5fd63d12a09330f6094ed6ce95956204b502f564d865004": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-014"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Referência auditora verdadeira é exigida e não pode ser substituída por URL GitHub nem omitida. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "07049dd93a38d0bcb7a0a75c383826704685f8bf37f8a42d7d397e6fe97e5582": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-015"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "verify_requirements checa todas as chaves canônicas, fontes com linhas/digest e JUnit passed, sem declarar oráculo semântico. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "0164abb7f13125d32989353847a9222e49ece57aa9b29cc108e0d176d27e12e0": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-016"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Pais sintéticos originais e atuais devem ser [base, HEAD] com tree SHA idêntica; reversão é rejeitada. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "55429357f0caf28aa2d07caf7de50e1aa27642b358f51d5bd9fd6eed4f10a8c1": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-017"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Releitura de comentários/permissions/HEAD e invalidação de revisão removida continuam exigidas na publicação. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "1e5087f01424994b3f3a7a3c75e70e6e585a8d6cb321bc76751e998c24cf7e40": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-018"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "As sessões reais v1 permanecem válidas sem precisar do novo registro de proveniência GitHub. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "d1467fd929be38d3198b7e53584f9bfb04bc5bacc002e4dd4cd574c20dbb8fed": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-019"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "O caminho usa GitHub/Actions sem credenciais independentes nem serviços de IA, preservando autorização por operador. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "31195d2de324198858fc552e8c104deb1968360e3c55f4becbd61840ac449bf5": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-020"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Os arquivos executados pelo verificador e sua política são autenticados contra a base antes de aceitar candidato. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "d727d0171afd2b19c279c875cf5e120d0c8eb93592e30711736ef0a5fac33fa0": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-021"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "A garantia permanece operator-attested, com declaração explícita de que identidade humana independente não foi provada. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "c32c43c727350e0d9973d52d40bf055e62153b060816a80adcb607466e8d5251": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-022"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "O check aprovado requer parecer completo e é recusado se a evidência falta ou se há tentativa de reuso verde. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "bf894013d97200134ce6ea32bd79def42d2f12008fdc922660d24b426e5c7204": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-023"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Declaração de chat original indisponível não permite anexar campos fictícios a um relato técnico GitHub. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "311572420e12174b9fd63a8d4baa3f1c2149419f2bae295c10db8e791f5edf50": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-024"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "session_review_github.py foi adicionado a TRUSTED_PATHS para proibir autoconcessão de regras pela PR candidata. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "7cfde34b8ce067aa1f50eb8a10a3e3ce78a6799f6150f885a0fab323c208242e": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-025"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "O diff material não muda required checks nem regras; os testes de fluxo impedem estados já aprovados sem parecer novo. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "2626baeb6e7dd0495a7c295a2a4dd48ce478eaa31058c611da027e7a8b2c6d25": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-026"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "O recibo declara limitação do contexto separado; a validação interna não libera aprovação formal em sessão implementadora. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "38d91d2c1940f46e72570da53cf94f200643d777107fe65ddb0cf38f7ea81443": {
       "disposition": "pending",
@@ -215,39 +259,47 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "ACEITE OPERACIONAL M2: aprovação real exige instalação prévia em ambas as bases, certificado e conversa separada com 20 requisitos da PR #170; não é demonstrável por unitários."
     },
     "0f3d854b5d02e27b580adec187311068ee94a2d2b116e9e2ca921f4c96816809": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-028"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "As mutações de política, campos, sessão auditora, commit e identidade são rejeitadas por testes discriminantes. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "01cc7c2a60b278397920211d457fa9ea07ab6effd41cdb70ef0b24969ab990b9": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-029"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Os previews com tree/pais iguais são aceitos; o registro preserva as identidades e digest originais. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "1a84684bdb8f494374c76b754563ca5be6535036f5e97a6893ed61d4214d3048": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-030"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Objetos inexistentes, tree alterada, pais invertidos ou base/HEAD concorrentes são bloqueados antes da aprovação. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "95bb2041752dd29cc992fc1992dd2fa34b2b8998ac0a85a0c35b3c52c9fb0528": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-031"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Regressões do v1, watermark/revogação, provas de fonte e indexação JUnit permanecem em execução. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "2f9e0c36724f07795e3dd6271a5b4a46edb5c4daa1dfee035accd8e4e90b8d52": {
       "disposition": "pending",
@@ -255,7 +307,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "M1 BLOQUEADO: a suíte exata está verde, mas o handoff semântico não foi certificado; não marcar a obrigação completa até closure, controles e certificado reais."
     },
     "69b5d963fd1f9fb0fd2ad5052315a2ee43b8cdb861852063bad7145b10799bf1": {
       "disposition": "pending",
@@ -263,39 +315,47 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "M1 parcialmente documentado; M2 ainda exige promoção autorizada develop/main e leitura de regras reais; não inferir que documentação significa instalação."
     },
     "4e12f35559ebdc8acf8791ec372b71a053f997a321fbb21d95633e0ac3ebdfc6": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-034"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Sem uma sessão auditora real, a via recuperada permanece bloqueada, mesmo com commits autenticados. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "5298728b65f17337e96e3dbcb05d90d407d38a11180753795a828f1d2cbf5d36": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-035"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "A atestação de separação falsa/ausente é rejeitada, impedindo que o próprio contexto de implementação libere a sessão. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "0b2a43d9979c44bf6ffd62d7a3e8fdea73f7a9983d5735b72d9d9805f8c67513": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-036"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "Docs, AGENTS e validador original mantêm distinção entre origem GitHub e revisão humana com política de base. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "866d7b89c056b37c15fe698edd979d12a09ff0641276125d7320649e34c52037": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-037"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "A origem GitHub só atesta fatos técnicos; a evidência de sessão humana independente não é provada criptograficamente. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     },
     "e872903243c6217ba582459ce9ddf980af40f86ed84a3c3a82cf248e51be375d": {
       "disposition": "pending",
@@ -303,7 +363,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "M2 pendente: a PR #170 continua bloqueada até instalação da política e parecer autenticado real; nenhum merge automático permitido."
     },
     "d53d325e2b123b730bb5aaee6b904a0b1e4d3800110c363b92cff746a638fb1b": {
       "disposition": "pending",
@@ -311,15 +371,17 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "M2 pendente: a instalação em bases confiáveis e auditoria separada são ações de rollout, não executadas pela PR candidata."
     },
     "f34b8bdd368dd84fb3d74d222593916ec82b8085275a6d3bdca45496c5561e78": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R171-040"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+      "rationale": "A política de bootstrap continua exclusivamente administrativa e documentada, sem ativação automática pelo candidato. Referências: GitHub Actions 41649563638/41649563404, SHA 01d0c518; a conclusão é provisória até o dossiê crítico e o validador oficial."
     }
   },
   "controls": {

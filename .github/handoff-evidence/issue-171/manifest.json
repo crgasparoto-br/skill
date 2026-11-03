@@ -10,7 +10,349 @@
   "evidence_profile": "critical",
   "risk_justification": "Recovered implementation provenance authenticates GitHub sources, authorization, session attestation, synthetic merge parents/trees and mutable review revocation. This is a critical trust boundary; an index of passing tests cannot replace per-requirement negative oracles and same-SHA attestation.",
   "audit_history": "previous-rejection",
-  "audit_history_evidence": "The separate 2026-11-03 review of issue #171 recorded blockers A-171-01 (absent semantic certification) and A-171-02 (old PR #170 ancestry after trusted base promotion). No authenticated review approval or external rejection identifier is asserted by this draft.",
+  "audit_history_evidence": "The separate 2026-11-03 review of issue #171 recorded blockers A-171-01 (absent semantic certification) and A-171-02 (old PR #170 ancestry after trusted base promotion). No authenticated review approval or external rejection identifier is asserted by this draft. O inventario atual discrimina fatos históricos e M2; não constitui certificação independente.",
   "artifact_sha256": {},
-  "test_bindings": {}
+  "test_bindings": {
+    "R171-001": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-004": {
+      "positive": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ]
+    },
+    "R171-007": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[missing-source]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-008": {
+      "positive": [
+        "tests.test_session_certificate_event::test_implementation_chain_requires_git_authenticated_linear_material_history[valid]"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[wrong-handoff-digest]"
+      ],
+      "regression": [
+        "tests.test_session_certificate_event::test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff"
+      ]
+    },
+    "R171-009": {
+      "positive": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[equivalent]"
+      ],
+      "negative": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[different-tree]"
+      ],
+      "regression": [
+        "tests.test_session_certificate_event::test_certified_evidence_checks_pretest_event_before_verifier[equivalent-preview]"
+      ]
+    },
+    "R171-010": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[reversed-parents]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-011": {
+      "positive": [
+        "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[absent-policy]"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+      ]
+    },
+    "R171-012": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[extra-field]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-013": {
+      "positive": [
+        "tests.test_session_certificate_event::test_implementation_chain_requires_git_authenticated_linear_material_history[valid]"
+      ],
+      "negative": [
+        "tests.test_session_certificate_event::test_implementation_chain_requires_git_authenticated_linear_material_history[wrong-base]"
+      ],
+      "regression": [
+        "tests.test_session_certificate_event::test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff"
+      ]
+    },
+    "R171-014": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[missing-audit]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-015": {
+      "positive": [
+        "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates"
+      ],
+      "negative": [
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+      ],
+      "regression": [
+        "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]"
+      ]
+    },
+    "R171-016": {
+      "positive": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[equivalent]"
+      ],
+      "negative": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[reversed-parents]"
+      ],
+      "regression": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_requires_exact_base_and_head_before_api"
+      ]
+    },
+    "R171-017": {
+      "positive": [
+        "tests.test_session_review_runner::test_review_accepts_only_presentation_differences_across_rest_forms"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_evaluate_rejects_review_revoked_during_final_revalidation[deleted]"
+      ]
+    },
+    "R171-018": {
+      "positive": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ]
+    },
+    "R171-019": {
+      "positive": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[unauthorized-author]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_review_rechecks_operator_permission_before_publication"
+      ]
+    },
+    "R171-020": {
+      "positive": [
+        "tests.test_session_certificate_event::test_trusted_runner_binds_extracted_github_facts_to_protected_base"
+      ],
+      "negative": [
+        "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[different-base]"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+      ]
+    },
+    "R171-021": {
+      "positive": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-022": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review_workflows::test_begin_check_rejects_states_that_could_bypass_review[completed-success]"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
+      ]
+    },
+    "R171-023": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[extra-field]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-024": {
+      "positive": [
+        "tests.test_session_certificate_event::test_trusted_runner_binds_extracted_github_facts_to_protected_base"
+      ],
+      "negative": [
+        "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[different-base]"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+      ]
+    },
+    "R171-025": {
+      "positive": [
+        "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+      ],
+      "negative": [
+        "tests.test_session_review_workflows::test_begin_check_rejects_states_that_could_bypass_review[completed-success]"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+      ]
+    },
+    "R171-026": {
+      "positive": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_evaluate_rejects_review_revoked_during_final_revalidation[deleted]"
+      ]
+    },
+    "R171-028": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[wrong-issue]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-029": {
+      "positive": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[equivalent]"
+      ],
+      "negative": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[different-tree]"
+      ],
+      "regression": [
+        "tests.test_session_certificate_event::test_certified_evidence_checks_pretest_event_before_verifier[equivalent-preview]"
+      ]
+    },
+    "R171-030": {
+      "positive": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[equivalent]"
+      ],
+      "negative": [
+        "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[missing-object]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_final_pr_identity_recheck_blocks_concurrent_tree_change"
+      ]
+    },
+    "R171-031": {
+      "positive": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]"
+      ],
+      "regression": [
+        "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]"
+      ]
+    },
+    "R171-034": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[missing-audit]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+      ]
+    },
+    "R171-035": {
+      "positive": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ]
+    },
+    "R171-036": {
+      "positive": [
+        "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+      ],
+      "negative": [
+        "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+      ]
+    },
+    "R171-037": {
+      "positive": [
+        "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+      ],
+      "negative": [
+        "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[github-audit]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      ]
+    },
+    "R171-040": {
+      "positive": [
+        "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+      ],
+      "negative": [
+        "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[different-base]"
+      ],
+      "regression": [
+        "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+      ]
+    }
+  }
 }
