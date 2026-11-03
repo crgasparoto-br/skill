@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import re
-from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -60,7 +60,7 @@ def main() -> int:
         parser.error("audit-context-id must differ from implementation-context-id")
     if args.context_proof_value != args.audit_context_id:
         parser.error("context-proof-value must equal audit-context-id")
-    timestamp = datetime.now(UTC).isoformat()
+    timestamp = datetime.datetime.now(datetime.UTC).isoformat()
     prior_values = [
         args.prior_internal_head_sha, args.prior_internal_report_sha256,
         args.prior_internal_assurance_level, args.prior_internal_approved_at,
