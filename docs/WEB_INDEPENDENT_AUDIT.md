@@ -169,13 +169,28 @@ O bootstrap e uma decisao administrativa unica: a politica antiga, que exige out
    conferir igualdade byte a byte entre runner/default/base; ler de volta
    regras efetivas em ambas as branches. O opt-in nao entra em vigor por
    existir somente numa branch candidata.
-4. Coletar novamente o pacote neutro para a PR #170 no HEAD material atual.
-   Em uma **nova conversa auditora separada**, confrontar os 20 requisitos,
-   commits e controles reais; somente um parecer completo do operador pode
-   autorizar o check. Testar casos positivos e negativos reais de preview
-   refeito, adulteracao/revogacao, issue/PR/HEAD, politica, historico Git
-   e permissao antes de aceitar M2. Nao fazer merge automatico da #170
-   nem fechar a #169 apenas por CI verde.
+4. Depois da promocao para `develop`, a PR #170 **nao pode reutilizar**
+   o HEAD `cddadea4...` ou a cadeia que comecava no parent `2ee50f7...`:
+   o primeiro commit material continua apontando para a antiga base e
+   `authenticated_implementation_provenance` exige que seu unico parent
+   seja a **nova** base autenticada da PR. A equivalencia de merge preview
+   nunca autoriza equivalencia de base/HEAD ou reutilizacao de certificados.
+   Conferir a nova base de `develop`; atualizar a branch da PR #170 por
+   **rebase linear sobre essa base** (com anuencia explicita para reescrever
+   a branch material), preservando o diff e as regras de negocio. Se houver
+   conflitos, resolve-los sem bypass; nao usar merge commit nao linear,
+   force-push silencioso ou commit vazio. Publicar o novo HEAD apenas pelo
+   procedimento autorizado, com CAS/lease e comprovacao dos novos pais Git.
+5. No novo HEAD da PR #170, reexecutar testes, emitir **novo** handoff
+   semantico e pacote neutro vinculados ao novo base/HEAD, invalidando os
+   digests, evidencias e referencias exact-SHA anteriores. Em uma **nova
+   conversa auditora separada**, confrontar as 20 obrigacoes canonicas,
+   commits reescritos e controles reais; somente parecer completo do
+   operador pode autorizar o check. Executar controles positivos e negativos
+   reais de preview refeito, adulteracao/revogacao, issue/PR/HEAD, politica,
+   historico Git e permissao antes de aceitar M2. Quando `develop` avancar
+   novamente, repetir a certificacao em vez de reutilizar prova obsoleta.
+   Nao fazer merge automatico da #170 nem fechar a #169 apenas por CI verde.
 
 **Rollback:** conservar snapshot de codigo, politica, rulesets e certificados.
 Se a recuperacao falhar, desabilitar o opt-in **nas duas bases** ou reinstalar

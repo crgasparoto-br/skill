@@ -258,6 +258,54 @@ def test_implementation_chain_requires_git_authenticated_linear_material_history
             runner.authenticated_implementation_provenance(identity, metadata)
 
 
+def test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff(monkeypatch):
+    """An old PR history cannot be rebound to a newly installed trusted base."""
+    identity, _, _ = sample()
+    old_base, old_head = identity["base_sha"], identity["head_sha"]
+    new_base, new_first, new_head = "2" * 40, "3" * 40, "4" * 40
+    old_first = "1" * 40
+    old_rows = [{"sha": old_first}, {"sha": old_head}]
+    new_rows = [{"sha": new_first}, {"sha": new_head}]
+    objects = {
+        old_first: {"sha": old_first, "parents": [{"sha": old_base}]},
+        old_head: {"sha": old_head, "parents": [{"sha": old_first}]},
+        new_first: {"sha": new_first, "parents": [{"sha": new_base}]},
+        new_head: {"sha": new_head, "parents": [{"sha": new_first}]},
+    }
+    rows = [old_rows]
+    monkeypatch.setattr(runner, "pages", lambda *_: copy.deepcopy(rows[0]))
+    monkeypatch.setattr(
+        runner, "api", lambda path, **_: copy.deepcopy(objects[path.rsplit("/", 1)[-1]])
+    )
+    metadata = {"artifact_id": 42, "artifact_digest": "sha256:" + "d" * 64}
+    old_proof = runner.authenticated_implementation_provenance(identity, metadata)
+
+    # Promotion changes the protected base, but old material objects stay
+    # immutable; a timestamp-equivalent merge cannot repair their ancestry.
+    identity["base_sha"] = new_base
+    with pytest.raises(ValueError, match="linear material chain"):
+        runner.authenticated_implementation_provenance(identity, metadata)
+
+    # Explicit linear rebase produces different commits and requires a new
+    # exact-head certificate. Old provenance cannot be relabeled.
+    rows[0] = new_rows
+    identity["head_sha"] = new_head
+    refreshed = runner.authenticated_implementation_provenance(identity, metadata)
+    assert refreshed["commits"] == [new_first, new_head]
+    assert refreshed["base_sha"] == new_base
+    assert refreshed["head_sha"] == new_head
+    assert refreshed != old_proof
+
+    packet = {"identity": identity, "artifact_id": 43, "artifact_digest": "sha256:" + "e" * 64}
+    declaration = {"type": runner.PROVENANCE_TYPE, "original_session_unavailable": True,
+                   "github": old_proof}
+    from session_review import verify_implementation_provenance
+    policy = {"implementation_provenance": {
+        "mode": "enabled", "type": runner.PROVENANCE_TYPE}}
+    with pytest.raises(ValueError):
+        verify_implementation_provenance(declaration, packet, policy)
+
+
 def test_preview_reconciliation_requires_exact_base_and_head_before_api(monkeypatch):
     identity, _, _ = sample()
     packet = {"identity": identity, "merge_preview_reconciliation": {
