@@ -387,5 +387,25 @@
         "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
       ]
     }
+  },
+  "grounding_test_bindings": {
+    "tests/test_session_review.py": [
+      {
+        "case": "tests/test_session_review.py::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls",
+        "test_case_id": "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+      }
+    ],
+    "tests/test_session_review_runner.py": [
+      {
+        "case": "tests/test_session_review_runner.py::test_evaluate_stable_certified_preview_during_github_recreation[same-tree]",
+        "test_case_id": "tests.test_session_review_runner::test_evaluate_stable_certified_preview_during_github_recreation[same-tree]"
+      }
+    ],
+    "tests/test_session_certificate_event.py": [
+      {
+        "case": "tests/test_session_certificate_event.py::test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff",
+        "test_case_id": "tests.test_session_certificate_event::test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff"
+      }
+    ]
   }
 }
