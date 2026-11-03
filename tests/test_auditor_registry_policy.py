@@ -58,37 +58,42 @@ MIN_CANONICAL_LINES = 20
 
 CANONICAL_SECTION = """## Registro de auditores confiáveis
 
-A independência de auditoria é arquitetural: contexto separado, leitura somente e rederivação com parser próprio. O controle que fecha o ciclo é externo: `validate_external_audit_report.py --trusted-auditors <registro>` aceita apenas parecer assinado por chave presente em um registro que o candidato não pode alterar.
+A auditoria independente de terceiros é arquitetural: identidade distinta, contexto separado, leitura somente e rederivação com parser próprio. O controle que fecha o ciclo é externo: `validate_external_audit_report.py --trusted-auditors <registro>` aceita apenas parecer assinado por chave presente em um registro que o candidato não pode alterar. A modalidade nativa `Verify independent audit (exact SHA)` continua exigindo review GitHub aprovado por pessoa autorizada distinta de quem implementou.
 
 ### Custódia e separação de funções
 
 - o **custodiante** mantém o registro: autoriza, adiciona e revoga chaves;
 - o **produtor do candidato** implementa a entrega e não pode manter, editar nem aprovar o próprio registro;
 - o **detentor da chave privada de auditoria** assina pareceres em contexto separado e não pode ter participado da implementação auditada;
-- para o mesmo candidato, nenhuma dessas funções pode estar na mesma pessoa.
+- na modalidade de auditoria independente, essas funções pertencem a pessoas distintas para o mesmo candidato.
 
-### Procedimento
+### Procedimento de auditoria independente
 
 1. gerar o par Ed25519 com `generate_auditor_keypair.py`, com a chave privada cifrada por senha, fora do repositório e fora do contexto de implementação;
 2. montar a entrada do registro com `build_trusted_auditor_entry.py`, que deriva `public_key_sha256` dos bytes de `public_key_pem` em vez de aceitar valor informado;
 3. o custodiante revisa a entrada, confirma `repositories` e publica o registro no ambiente do operador, nunca no repositório do candidato;
 4. a validação do parecer referencia o registro apenas por caminho local.
 
+### Modalidade separada de operador único
+
+`Verify solo audit attestation (exact SHA)` é um terceiro contrato, distinto da aprovação humana independente e de `operator-attested-session-review`. Seu resultado significa apenas que uma atestação Ed25519 vinculada a contexto separado declarado foi aceita; nunca significa auditoria independente de outra pessoa.
+
+- o relatório assinado usa `assurance_mode=single-operator-separate-context`, `independent=false`, `same_conversation=false`, identidade numérica do operador, PR, issue e hash do corpo atual da issue;
+- o gate lê chave, registro exato do repositório, operador e opt-in somente de GitHub Actions Variables administradas fora da branch candidata; cada escopo deve ser um literal válido `owner/repo` e wildcard não autoriza esta modalidade;
+- o comentário é público e contém somente `SOLVERIT_EXTERNAL_AUDIT_JSON:` seguido do JSON assinado. Não incluir chave privada, segredo, transcrição nem dado pessoal desnecessário;
+- o workflow e suas dependências vêm de `github.workflow_sha`/base protegida, não executam código candidato e publicam um check separado com o texto `solo-context audit accepted — no third-party human approval claimed`;
+- variáveis de GitHub alteradas fora da branch não disparam automaticamente um workflow. Ao revogar chave/configuração, o administrador exclui o comentário ativo para disparar bloqueio e exige nova avaliação antes de qualquer merge; não alegar revogação automática sem esse evento;
+- o controlador exige que o GitHub reporte o ref de execução como protegido, vincula `external_id` ao PR/issue/base/HEAD/preview e ao run ID do Actions, bloqueia se PRs abertas compartilham o mesmo HEAD e cria um Check Run novo por run confiável, sem adotar ou reabrir um objeto anterior por nome/app/metadados; após o GET inicial do Check Run, reavalia evidence, fonte, PR/issue/preview, configuração, comentário, permissão e unicidade de HEAD e relê o mesmo objeto imediatamente antes do PATCH de sucesso;
+- Check Runs são commit-scoped, não uma prova de escopo de PR para branch protection. M2 só pode exigir esta via com um required workflow ou mecanismo equivalente comprovadamente vinculado a cada PR, proteção/read-back confiável de `develop` e `main`, e testes negativos de duas PRs com o mesmo HEAD. Se esse escopo não puder ser demonstrado, manter a revisão humana/native gate e não adotar o solo como substituto;
+- M1 não altera approval count, rulesets, checks nativos ou merge. Até bootstrap confiável e read-back administrativo M2, o modo permanece não adotado e a exigência humana existente continua vigente.
+
 ### Rotação e revogação
 
 - rotacionar no período declarado pelo custodiante e sempre que houver dúvida sobre a custódia da chave privada;
 - uma rotação adiciona a nova chave e mantém a anterior apenas durante a janela em que pareceres antigos ainda precisam ser validados;
 - revogar é remover a entrada; `enabled` é constante `true` no esquema atual, então não existe desabilitação parcial sem que o esquema mude;
-- parecer assinado por chave removida do registro não aprova, mesmo com assinatura válida.
-
-### Operador único
-
-Enquanto houver um único proprietário no `.github/CODEOWNERS`, a separação de funções acima é regra de contrato, não garantia estrutural. Nesse cenário:
-
-- declarar a limitação em vez de presumir independência;
-- manter a chave privada de auditoria fora do repositório e fora do contexto de implementação, com senha distinta das demais;
-- registrar no artefato de auditoria que a independência foi obtida por contexto separado e custódia declarada, não por separação de pessoas;
-- distribuir o `CODEOWNERS` assim que houver uma segunda pessoa, antes de depender da separação para uma aprovação material."""
+- parecer assinado por chave removida do registro não aprova, mesmo com assinatura válida;
+- para a modalidade solo, remover/desabilitar a variável ou a chave só será observado quando o gate for reavaliado; excluir o comentário ativo é o evento explícito de revogação imediata documentado."""
 
 
 def normalize(text: str) -> str:

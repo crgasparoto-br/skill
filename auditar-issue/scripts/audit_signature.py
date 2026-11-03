@@ -14,6 +14,10 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
 REJECTION_ID_RE = re.compile(r"^audit-rejection:[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
+SOLO_ASSURANCE_MODE = "single-operator-separate-context"
+SOLO_ISSUE_BODY_SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+EXACT_REPOSITORY_RE = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
+SOLO_FIELDS = frozenset({"operator_github_id", "pull_request", "issue_body_sha256"})
 
 
 def _parse_time(value: object, label: str, errors: list[str]) -> datetime | None:
@@ -26,6 +30,28 @@ def _parse_time(value: object, label: str, errors: list[str]) -> datetime | None
 
 def report_semantic_errors(report: dict[str, Any], *, require_signature: bool) -> list[str]:
     errors: list[str] = []
+    assurance_mode = report.get("assurance_mode")
+    if "assurance_mode" in report and assurance_mode != SOLO_ASSURANCE_MODE:
+        errors.append("unknown assurance_mode")
+    if assurance_mode == SOLO_ASSURANCE_MODE:
+        if report.get("independent") is not False:
+            errors.append("solo assurance mode must set independent=false")
+        if report.get("same_conversation") is not False:
+            errors.append("solo assurance mode must set same_conversation=false")
+        for field in ("operator_github_id", "pull_request"):
+            value = report.get(field)
+            if type(value) is not int or value < 1:
+                errors.append(f"solo {field} must be a positive integer")
+        issue_body_sha256 = report.get("issue_body_sha256")
+        if not isinstance(issue_body_sha256, str) or not SOLO_ISSUE_BODY_SHA256_RE.fullmatch(issue_body_sha256):
+            errors.append("solo issue_body_sha256 must be lowercase SHA-256")
+        if report.get("verdict") != "approved":
+            errors.append("solo assurance mode requires an approved verdict")
+        for field in ("findings", "recommendations", "limitations"):
+            if report.get(field) != []:
+                errors.append(f"solo assurance mode requires empty {field}")
+    elif any(field in report for field in SOLO_FIELDS):
+        errors.append("solo fields require assurance_mode=single-operator-separate-context")
     if report.get("audit_context_id") == report.get("implementation_context_id"):
         errors.append("audit context must differ from implementation context")
     proof = report.get("source_context_proof")
@@ -158,7 +184,18 @@ def sign_report(report: dict[str, Any], private_key_pem: bytes, password: bytes 
     }
 
 
-def verify_report(report: dict[str, Any], registry: dict[str, Any]) -> list[str]:
+def verify_report(
+    report: dict[str, Any],
+    registry: dict[str, Any],
+    *,
+    exact_repository_only: bool = False,
+) -> list[str]:
+    """Verify an Ed25519 report against a trusted registry.
+
+    Wildcard repository entries remain compatible for existing callers.  The
+    explicit exact mode is used by the solo adapter and rejects every
+    non-exact or glob authorization entry for the selected key.
+    """
     errors: list[str] = []
     key_ids = [
         item.get("key_id")
@@ -175,7 +212,21 @@ def verify_report(report: dict[str, Any], registry: dict[str, Any]) -> list[str]
     if not isinstance(auditor, dict):
         return [f"untrusted auditor key: {key_id}"]
     repository = str(report.get("repository") or "")
-    if not any(pattern == "*" or fnmatch.fnmatchcase(repository, str(pattern)) for pattern in auditor.get("repositories", [])):
+    repositories = auditor.get("repositories", [])
+    if exact_repository_only:
+        if EXACT_REPOSITORY_RE.fullmatch(repository) is None:
+            errors.append("exact repository authorization requires valid owner/repo syntax")
+        if not isinstance(repositories, list) or not all(isinstance(pattern, str) for pattern in repositories):
+            errors.append("trusted auditor repository scope is malformed")
+        elif any(any(char in pattern for char in "*?[]") for pattern in repositories):
+            errors.append("exact repository authorization forbids wildcard or glob entries")
+        elif any(EXACT_REPOSITORY_RE.fullmatch(pattern) is None for pattern in repositories):
+            errors.append("exact repository authorization requires literal owner/repo entries")
+        elif len(repositories) != len(set(repositories)):
+            errors.append("exact repository authorization has duplicate owner/repo entries")
+        elif repository not in repositories:
+            errors.append(f"auditor key is not authorized for repository {repository}")
+    elif not any(pattern == "*" or fnmatch.fnmatchcase(repository, str(pattern)) for pattern in repositories):
         errors.append(f"auditor key is not authorized for repository {repository}")
     canonical = canonical_report_bytes(report)
     if signature.get("signed_payload_sha256") != sha256_bytes(canonical):

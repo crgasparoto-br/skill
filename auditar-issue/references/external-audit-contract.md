@@ -2,7 +2,7 @@
 
 ## Quando produzir
 
-Produzir `external-audit.json` importavel somente quando:
+Para a modalidade independente de terceiro, produzir `external-audit.json` importavel somente quando:
 
 - esta execucao ocorreu em conversa, agente, sessao ou ferramenta realmente separada da implementacao;
 - existe identificador de contexto fornecido pela plataforma ou ferramenta, nao inventado pelo auditor;
@@ -11,6 +11,39 @@ Produzir `external-audit.json` importavel somente quando:
 - o registro publico de auditores foi estabelecido antes da PR ou fica fora do repositorio.
 
 Se qualquer condicao faltar, emitir somente pre-auditoria ou relatorio independente nao importavel. Nunca assinar uma autodeclaracao de independencia.
+
+## Modo Ed25519 de operador unico — check distinto
+
+O gate `Verify solo audit attestation (exact SHA)` aceita um contrato assinado diferente, `assurance_mode=single-operator-separate-context`. Esse modo declara honestamente `independent=false` e `same_conversation=false`: contextos de implementação/auditoria separados e custódia da chave podem ser declarados pelo mesmo proprietário, mas não provam identidade humana independente. Nunca usar este modo para satisfazer `Verify independent audit (exact SHA)` nem chamar seu resultado de auditoria de terceiro.
+
+Inicializar explicitamente o relatório v3 com os valores atuais autenticados da PR/issue:
+
+```bash
+python <skill>/scripts/init_external_audit_report.py \
+  --repository <owner/repo> --issue <issue> --pull-request <pr> \
+  --issue-body-sha256 <sha256-do-corpo-atual-da-issue> \
+  --assurance-mode single-operator-separate-context \
+  --operator-github-id <id-numerico-do-operador> \
+  --base-ref <develop|main> --head-sha <head> --base-sha <base-sha> \
+  --merge-preview-sha <preview> \
+  --orchestration-cycle <ciclo> \
+  --implementation-context-id <id-de-implementacao> \
+  --audit-context-id <id-real-do-contexto-separado> \
+  --context-proof-kind <chatgpt-conversation-id|agent-run-id|tool-attestation> \
+  --context-proof-value <id-real-do-contexto-separado> \
+  --context-proof-issuer <plataforma-ou-ferramenta> \
+  --origin <procedencia-verificavel> --out <external-audit.json>
+```
+
+Completar e assinar como no contrato comum. A assinatura cobre `assurance_mode`, `independent=false`, `operator_github_id`, número da PR, issue e hash do corpo da issue, além dos vínculos exact-SHA e do parecer inteiro. O modo solo continua exigindo veredito `approved`, pacote neutro, contextos distintos, listas vazias de findings/recommendations/limitations e chave confiável Ed25519.
+
+O repositório fornece o opt-in, o ID numérico do operador, o `key_id` e o JSON público `SOLVERIT_TRUSTED_AUDITORS_JSON` apenas por GitHub Actions Variables fora da branch candidata. `SOLVERIT_SOLO_AUDIT_ENABLED` deve ser exatamente `true`; o ID deve ser positivo; o key id precisa existir e autorizar o repositório exato por literal válido `owner/repo`, sem wildcard ou escopo malformado. O workflow valida comentário, ID autenticado do autor, permissão atual `write`/`maintain`/`admin`, PR, issue, hash do corpo, base, HEAD, preview vivo/pais ordenados e checks obrigatórios.
+
+Para transportar o relatório, publicar um único comentário público na PR cujo corpo inteiro seja `SOLVERIT_EXTERNAL_AUDIT_JSON:` seguido por uma quebra de linha e o objeto JSON, sem narrativa adicional. Corpo total máximo: 48 KiB; registry máximo: 32 KiB. O parser rejeita chaves JSON duplicadas, constantes não JSON, marcador duplicado, texto adicional, registro wild-card, assinatura desconhecida e inventário incompleto. Não incluir segredo, chave privada, transcrição ou PII desnecessária. Edição/exclusão do comentário revoga o transporte e bloqueia; postar comentário novo somente depois de nova assinatura e revalidação.
+
+Editar Actions Variables não produz automaticamente evento de workflow. A alteração de chave/configuração só será observada na avaliação seguinte; o procedimento explícito de revogação é excluir o comentário ativo para forçar reavaliação antes de qualquer merge. Nunca afirmar que uma mudança silenciosa de variável cancelou um check verde já publicado. O modo M1 permanece candidato até bootstrap confiável, read-back e decisão administrativa M2; não altere rulesets, approval count nem faça merge como parte da geração do relatório.
+
+O GitHub associa Check Runs ao commit, não a uma PR exclusiva. O controlador cria um Check Run novo por run confiável, vincula o `external_id` ao PR/issue/base/HEAD/preview/run ID e não adota runs prévios por metadados; bloqueia também quando duas PRs abertas compartilham o mesmo HEAD. Antes do PATCH de sucesso, repete a coleta de evidências e de autoridades após o GET inicial do Check Run e relê o mesmo objeto imediatamente antes da escrita. Essas leituras REST reduzem, mas não eliminam a janela concorrente e não são uma transação atômica. Isso sozinho não torna o status exigido pela branch protection per-PR. M2 só pode exigir esta via se um required workflow ou mecanismo equivalente vincular a execução confiável a cada PR, com read-back da proteção das bases e ensaios negativos de HEAD compartilhado. Sem essa prova, manter a exigência humana existente e não substituir o gate nativo.
 
 ## Preparacao da chave
 

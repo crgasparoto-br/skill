@@ -3,9 +3,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
+
+
+SOLO_ASSURANCE_MODE = "single-operator-separate-context"
+SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 
 
 def main() -> int:
@@ -31,8 +36,26 @@ def main() -> int:
     parser.add_argument("--prior-internal-report-sha256")
     parser.add_argument("--prior-internal-assurance-level", choices=["controller-adversarial", "isolated-within-run"])
     parser.add_argument("--prior-internal-approved-at")
+    parser.add_argument("--assurance-mode", choices=[SOLO_ASSURANCE_MODE])
+    parser.add_argument("--solo", action="store_true", help="initialize the explicit solo assurance mode")
+    parser.add_argument("--operator-github-id", type=int)
+    parser.add_argument("--pull-request", type=int)
+    parser.add_argument("--issue-body-sha256")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
+    if args.solo and args.assurance_mode:
+        parser.error("use either --solo or --assurance-mode, not both")
+    assurance_mode = SOLO_ASSURANCE_MODE if args.solo else args.assurance_mode
+    solo_values = [args.operator_github_id, args.pull_request, args.issue_body_sha256]
+    if assurance_mode == SOLO_ASSURANCE_MODE:
+        if any(value is None for value in solo_values):
+            parser.error("solo mode requires --operator-github-id, --pull-request, and --issue-body-sha256")
+        if args.operator_github_id < 1 or args.pull_request < 1:
+            parser.error("solo operator-github-id and pull-request must be positive integers")
+        if not SHA256_RE.fullmatch(args.issue_body_sha256):
+            parser.error("solo issue-body-sha256 must be 64 lowercase hexadecimal characters")
+    elif any(value is not None for value in solo_values):
+        parser.error("solo fields require --assurance-mode single-operator-separate-context")
     if args.audit_context_id == args.implementation_context_id:
         parser.error("audit-context-id must differ from implementation-context-id")
     if args.context_proof_value != args.audit_context_id:
@@ -56,7 +79,7 @@ def main() -> int:
     report = {
         "schema_version": 3,
         "report_id": report_id,
-        "rejection_id": f"audit-rejection:{report_id}",
+        "rejection_id": None if assurance_mode == SOLO_ASSURANCE_MODE else f"audit-rejection:{report_id}",
         "generated_by": "auditar-issue",
         "repository": args.repository,
         "issue": args.issue,
@@ -77,7 +100,7 @@ def main() -> int:
             "issued_at": timestamp,
         },
         "same_conversation": False,
-        "independent": True,
+        "independent": assurance_mode != SOLO_ASSURANCE_MODE,
         "neutral_packet": {
             "implementation_conclusions_included": False,
             "implementation_narrative_included": False,
@@ -85,13 +108,23 @@ def main() -> int:
         },
         "prior_internal_approval": prior_internal_approval,
         "issued_at": timestamp,
-        "verdict": "rejected",
+        "verdict": "approved" if assurance_mode == SOLO_ASSURANCE_MODE else "rejected",
         "findings": [],
         "recommendations": [],
         "evidence": [],
         "limitations": [],
         "origin": args.origin,
     }
+    if assurance_mode == SOLO_ASSURANCE_MODE:
+        report.update({
+            "assurance_mode": assurance_mode,
+            "operator_github_id": args.operator_github_id,
+            "pull_request": args.pull_request,
+            "issue_body_sha256": args.issue_body_sha256,
+            "head_sha_after": args.head_sha,
+            "base_sha_after": args.base_sha,
+            "merge_preview_sha_after": args.merge_preview_sha,
+        })
     out = Path(args.out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
