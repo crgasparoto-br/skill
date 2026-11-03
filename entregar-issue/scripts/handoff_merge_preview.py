@@ -113,6 +113,37 @@ def _live_preview(repository: str, number: int, head: str, base: str, base_ref: 
             time.sleep(2)
     raise ValueError("live GitHub merge preview is stale or not bound to exact base/HEAD")
 
+def require_equivalent_merge_previews(repository: str, base: str, head: str,
+                                      previews: tuple[str, ...]) -> None:
+    """Authenticate different synthetic Git merges against exact ordered parents/tree.
+
+    Exact SHA remains the fast path. A regenerated merge is equivalent only
+    when *each* Git object is available from the trusted GitHub API and has
+    exactly [base, HEAD] as its parents and exactly the same tree.
+    """
+    if not previews or any(not isinstance(sha, str) or SHA.fullmatch(sha) is None
+                           for sha in previews):
+        raise ValueError("invalid merge preview identities")
+    identities = sorted(set(previews))
+    if len(identities) == 1:
+        return
+    trees: set[str] = set()
+    for sha in identities:
+        obj = _read_json(f"repos/{repository}/git/commits/{sha}")
+        parents = obj.get("parents")
+        tree = obj.get("tree")
+        if (obj.get("sha") != sha or not isinstance(parents, list) or len(parents) != 2
+                or not all(isinstance(parent, dict) for parent in parents)
+                or [parent.get("sha") for parent in parents] != [base, head]):
+            raise ValueError("merge preview has incorrect authenticated ordered parents")
+        if (not isinstance(tree, dict) or not isinstance(tree.get("sha"), str)
+                or SHA.fullmatch(tree["sha"]) is None):
+            raise ValueError("merge preview has missing authenticated Git tree")
+        trees.add(tree["sha"])
+    if len(trees) != 1:
+        raise ValueError("merge previews have different authenticated Git trees")
+
+
 def require_event_merge_preview(event_path: Path, repository: str, number: int,
                                 head: str, base: str) -> str:
     """Use a verified live preview for trusted CI; keep historical replays deterministic."""

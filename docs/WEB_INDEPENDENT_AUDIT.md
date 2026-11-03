@@ -50,6 +50,10 @@ identidade atual; nenhum preview antigo e prova transferivel.
 
 O leitor confiavel recompõe o evento consultando a PR e os objetos Git autenticados.
 O preview original do artifact continua sendo validado pelo certificador oficial.
+No job de certificacao independente, o snapshot pre-testes conserva o preview
+inicial; se o preview utilizado no certificado ou o preview atual diferirem,
+o gate confiavel autentica os tres commits Git, os pais ordenados [base, HEAD]
+e a tree identica, sem modificar o artifact bruto nem liberar CI incompleta.
 Se o certificado tiver sido construido com um terceiro SHA de preview, o leitor
 verifica tambem esse objeto Git contra base, HEAD e tree autenticados, sem
 alterar o evento original do artifact: usa apenas uma copia temporaria para
