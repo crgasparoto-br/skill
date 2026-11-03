@@ -2,9 +2,11 @@
 """Fail-closed event routing to live PRs; webhook fields are locator hints only."""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "entregar-issue" / "scripts"))
@@ -51,6 +53,22 @@ def _validate_event(repo: str, event: dict[str, Any], event_name: str) -> None:
     require(event_name in _SUPPORTED_EVENTS, "unsupported event for solo audit gate")
 
 
+def _trusted_api_base() -> str:
+    base = os.environ.get("GITHUB_API_URL")
+    require(isinstance(base, str) and bool(base), "trusted GitHub API base is unavailable")
+    parsed = urlsplit(base)
+    require(
+        parsed.scheme == "https"
+        and parsed.hostname is not None
+        and parsed.username is None
+        and parsed.password is None
+        and not parsed.query
+        and not parsed.fragment,
+        "trusted GitHub API base is malformed",
+    )
+    return base.rstrip("/")
+
+
 def _pull_request_event_numbers(event: dict[str, Any]) -> list[int]:
     pull = event.get("pull_request")
     number = pull.get("number") if isinstance(pull, dict) else None
@@ -74,7 +92,7 @@ def _issue_event_numbers(repo: str, event: dict[str, Any]) -> tuple[list[int], i
     if "pull_request" in issue:
         pull_request = issue["pull_request"]
         require(isinstance(pull_request, dict), "issue event pull-request link is malformed")
-        expected_url = f"https://api.github.com/repos/{repo}/pulls/{target_issue}"
+        expected_url = f"{_trusted_api_base()}/repos/{repo}/pulls/{target_issue}"
         require(pull_request.get("url") == expected_url, "issue event pull-request URL is malformed")
         return [], None
     numbers: list[int] = []

@@ -125,7 +125,7 @@ def _registry_key(registry: dict[str, Any], key_id: str, repository: str) -> dic
 
 def parse_trusted_config(values: dict[str, object], repository: str) -> TrustedConfig:
     """Validate the four repository Actions variables; never fall back to candidate data."""
-    require(isinstance(values, dict) and VARIABLE_NAMES <= set(values),
+    require(isinstance(values, dict) and set(values) >= VARIABLE_NAMES,
             "solo audit configuration is absent")
     require(all(isinstance(values[name], str) for name in VARIABLE_NAMES),
             "solo audit configuration values must be strings")
@@ -164,11 +164,15 @@ def parse_report_comment_body(body: object) -> tuple[bytes, dict[str, Any]]:
 
 
 def select_report_comment(comments: list[dict[str, Any]]) -> dict[str, Any]:
-    """Require exactly one active marker-bearing comment; never fall back to history."""
+    """Require exactly one active exact-marker comment; never fall back to history."""
     require(isinstance(comments, list) and all(isinstance(item, dict) for item in comments),
             "comment inventory is incomplete or malformed")
-    marked = [item for item in comments
-              if isinstance(item.get("body"), str) and COMMENT_MARKER in item["body"]]
+    marked = [
+        item
+        for item in comments
+        if isinstance(item.get("body"), str)
+        and item["body"].startswith(COMMENT_MARKER + "\n")
+    ]
     require(len(marked) == 1, "exactly one active signed audit comment is required")
     return marked[0]
 

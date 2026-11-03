@@ -558,7 +558,7 @@ def test_indented_section_body_line_is_detected(prefix: str) -> None:
     """Recuo em linha interna também muda o que o Markdown renderiza."""
     text = declared_reference()
     section = registry_section(text)
-    target = "- declarar a limitação em vez de presumir independência;"
+    target = "- o **custodiante** mantém o registro: autoriza, adiciona e revoga chaves;"
     assert target in section
     mutated = replace_section(text, section.replace(target, prefix + target))
     assert policy_errors(mutated), repr(prefix)

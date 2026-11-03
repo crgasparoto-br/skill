@@ -26,6 +26,7 @@ import verify_session_review as session_runner  # noqa: E402 - sys.path ajustado
 import verify_solo_audit_attestation as gate  # noqa: E402 - sys.path ajustado acima antes do import local
 
 REPO = "crgasparoto-br/skill"
+API_BASE = "https://example.com"
 BASE = "b" * 40
 HEAD = "a" * 40
 PREVIEW = "c" * 40
@@ -33,6 +34,11 @@ ISSUE = 175
 PR = 174
 OPERATOR = 12345678
 KEY_ID = "solo-key-1"
+
+
+@pytest.fixture(autouse=True)
+def use_reserved_github_api_base(monkeypatch):
+    monkeypatch.setenv("GITHUB_API_URL", API_BASE)
 
 
 def values(*, enabled="true", operator=str(OPERATOR), key_id=KEY_ID, repositories=None, registry=None):
@@ -79,8 +85,8 @@ def comment(body=None, *, user_id=OPERATOR, login="gaspa", user_type="User", upd
         "id": 42,
         "body": body,
         "user": {"id": user_id, "login": login, "type": user_type},
-        "url": f"https://api.github.com/repos/{REPO}/issues/comments/42",
-        "issue_url": f"https://api.github.com/repos/{REPO}/issues/{PR}",
+        "url": f"{API_BASE}/repos/{REPO}/issues/comments/42",
+        "issue_url": f"{API_BASE}/repos/{REPO}/issues/{PR}",
         "created_at": "2026-11-03T17:00:00Z",
         "updated_at": updated or "2026-11-03T17:00:00Z",
     }
@@ -313,7 +319,7 @@ def test_current_target_rejects_foreign_pr_and_issue_mismatch(monkeypatch):
         ghgate.current_target(REPO, PR)
     pr = live_pr()
     monkeypatch.setattr(ghgate.session_runner, "api", lambda path, **_: pr)
-    with pytest.raises(ValueError, match="issue reference"):
+    with pytest.raises(ValueError, match="PR canonical issue changed"):
         ghgate.current_target(REPO, PR, ISSUE + 1)
 
 
@@ -337,7 +343,7 @@ def test_report_comment_binds_user_id_permission_and_immutable_body(monkeypatch)
 
 @pytest.mark.parametrize("entry,pattern", [
     (comment(user_id=OPERATOR + 1), "configured solo operator"),
-    (comment(user_type="Bot"), "configured solo operator"),
+    (comment(user_type="Bot"), "review author identity missing"),
     (comment(updated="2026-11-03T17:01:00Z"), "edited audit comment"),
 ])
 def test_report_comment_rejects_wrong_or_mutable_author(entry, pattern, monkeypatch):
@@ -369,7 +375,7 @@ def test_evaluate_target_integrates_real_signature_final_reads_and_exact_publica
     monkeypatch.setenv("GITHUB_REF_PROTECTED", "true")
     monkeypatch.setenv("GITHUB_TOKEN", "test-token")
     monkeypatch.setenv("GH_TOKEN", "test-token")
-    monkeypatch.setenv("GITHUB_API_URL", "https://api.github.com")
+    monkeypatch.setenv("GITHUB_API_URL", API_BASE)
 
     config_values = values(registry=trusted.registry)
     variable_rows = [{"name": name, "value": value} for name, value in config_values.items()]
@@ -395,7 +401,7 @@ def test_evaluate_target_integrates_real_signature_final_reads_and_exact_publica
         }
         jobs[job_id] = {
             "id": job_id, "run_id": run_number, "name": name,
-            "check_run_url": f"https://api.github.com/repos/{REPO}/check-runs/{check_id}",
+            "check_run_url": f"{API_BASE}/repos/{REPO}/check-runs/{check_id}",
             "status": "completed", "conclusion": "success",
         }
 
@@ -546,7 +552,7 @@ def test_main_blocks_malformed_issues_pr_marker(tmp_path, monkeypatch, capsys):
 
 
 def test_main_allows_valid_issues_pr_marker_no_target(tmp_path, monkeypatch, capsys):
-    pull_url = f"https://api.github.com/repos/{REPO}/pulls/{PR}"
+    pull_url = f"{API_BASE}/repos/{REPO}/pulls/{PR}"
     event = {
         "repository": {"full_name": REPO},
         "issue": {"number": PR, "pull_request": {"url": pull_url}},
@@ -573,7 +579,7 @@ def test_issues_event_rejects_missing_or_malformed_issue(issue):
 
 
 def test_issues_event_for_valid_pr_issue_is_no_target():
-    pull_url = f"https://api.github.com/repos/{REPO}/pulls/{PR}"
+    pull_url = f"{API_BASE}/repos/{REPO}/pulls/{PR}"
     event = {
         "repository": {"full_name": REPO},
         "issue": {"number": PR, "pull_request": {"url": pull_url}},
@@ -581,13 +587,24 @@ def test_issues_event_for_valid_pr_issue_is_no_target():
     assert events.resolve_targets(REPO, event, "issues") == []
 
 
+def test_issues_event_requires_trusted_api_base(monkeypatch):
+    monkeypatch.delenv("GITHUB_API_URL", raising=False)
+    event = {
+        "repository": {"full_name": REPO},
+        "issue": {"number": PR, "pull_request": {"url": f"{API_BASE}/repos/{REPO}/pulls/{PR}"}},
+    }
+    with pytest.raises(ValueError, match="trusted GitHub API base is unavailable"):
+        events.resolve_targets(REPO, event, "issues")
+
+
 @pytest.mark.parametrize(
     "pull_request",
     [
         {},
         {"url": None},
-        {"url": "https://api.github.com/repos/other/repo/pulls/174"},
-        {"url": f"https://api.github.com/repos/{REPO}/pulls/{PR + 1}"},
+        {"url": f"{API_BASE}/repos/other/repo/pulls/174"},
+        {"url": f"{API_BASE}/repos/{REPO}/pulls/{PR + 1}"},
+        {"url": f"https://example.net/repos/{REPO}/pulls/{PR}"},
     ],
 )
 def test_issues_event_rejects_malformed_pr_marker(pull_request):
@@ -622,7 +639,7 @@ def test_issues_event_rejects_missing_or_ambiguous_pr_issue_reference(monkeypatc
     bad_pr["body"] = body
     monkeypatch.setattr(events.session_runner, "pages", lambda *args: [bad_pr])
     event = {"repository": {"full_name": REPO}, "issue": {"number": ISSUE}}
-    with pytest.raises(ValueError, match="PR body|canonical PR-to-issue reference"):
+    with pytest.raises(ValueError, match=r"PR body|canonical PR-to-issue reference"):
         events.resolve_targets(REPO, event, "issues")
 
 
