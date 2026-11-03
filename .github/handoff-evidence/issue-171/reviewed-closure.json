@@ -407,8 +407,621 @@
     }
   },
   "controls": {
-    "domain_inventories": [],
-    "observable_assertions": [],
+    "domain_inventories": [
+      {
+        "id": "INV-171-ALL",
+        "name": "Canonical issue-171 requirement and contextual-source inventory",
+        "closed_world": true,
+        "producer_sources": [
+          "SRC-ISSUE-171 sha256:3eaf919d8cb3fc8f90c443707380b0c08e41676edb9b3241ac84f9d37b88e91b",
+          "entregar-issue/scripts/specification.py"
+        ],
+        "consumer_sources": [
+          "entregar-issue/scripts/produce_actions_handoff_evidence.py:64-90",
+          "scripts/verify_session_review.py:123-141"
+        ],
+        "values": [
+          {
+            "value": "6ec79eef9cc752b1327f103cb8b7311a5767836be064bec3ac98d2b1ec08c9f3",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L3"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[6ec79eef9cc752b1327f103cb8b7311a5767836be064bec3ac98d2b1ec08c9f3]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "0403ffcd9c93e8a624fee8f4da27b53599ef816272ce720c0fe535776e9d0b56",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L7"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[0403ffcd9c93e8a624fee8f4da27b53599ef816272ce720c0fe535776e9d0b56]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "1d5f5d71c7617d640a6c2da57323ea4172dc205cd8b7ae04d196063bba575953",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L8"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[1d5f5d71c7617d640a6c2da57323ea4172dc205cd8b7ae04d196063bba575953]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "1c2599b372392f9a86cda7f1aba0b6bc836f1b78cceb01d795c9a3b86118f0b7",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L9"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[1c2599b372392f9a86cda7f1aba0b6bc836f1b78cceb01d795c9a3b86118f0b7]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "26f6f0712e23ebed8864a3e599fad53189b2b198b2595bddc76dbd60824d3824",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L11"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[26f6f0712e23ebed8864a3e599fad53189b2b198b2595bddc76dbd60824d3824]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "45fd5f1c6dac0fa4e4a4f238069a6caac9de7a56347808c314dc0ab3c9a0385f",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L13"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[45fd5f1c6dac0fa4e4a4f238069a6caac9de7a56347808c314dc0ab3c9a0385f]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "ed7c7a9bc78b4cc5e9c9f153014517914ceadf2b8e8c1260a9d6537ba72fa106",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L18"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[ed7c7a9bc78b4cc5e9c9f153014517914ceadf2b8e8c1260a9d6537ba72fa106]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "4bdc24e95e2a156544936f0566c733671f80131d09045a5e7786d5da6037b130",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L19"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[4bdc24e95e2a156544936f0566c733671f80131d09045a5e7786d5da6037b130]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "7b219fc2b5506782ba15497b9f5c646b45309948650fbdb7d29e84d8fb98fd8d",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L20"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[7b219fc2b5506782ba15497b9f5c646b45309948650fbdb7d29e84d8fb98fd8d]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "f946e0633fb12959da470a8bed0ec830afb5146e57b679078470136f84dbf30d",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L21"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[f946e0633fb12959da470a8bed0ec830afb5146e57b679078470136f84dbf30d]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "df25d35cd704839807fa63f5ae00c4f6196734cd79d00305481d5fbca1af5787",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L31"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[df25d35cd704839807fa63f5ae00c4f6196734cd79d00305481d5fbca1af5787]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "374814ceea06f2ca42d38651842769608bbe5b032d53f1d648d53d7d5fe3bec8",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L32"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[374814ceea06f2ca42d38651842769608bbe5b032d53f1d648d53d7d5fe3bec8]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "adb8527e56d36b4719f5fbd99981baf836a9cc0b4f5710ca8b53a47700327437",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L33"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[adb8527e56d36b4719f5fbd99981baf836a9cc0b4f5710ca8b53a47700327437]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "0afef927b291622bd5fd63d12a09330f6094ed6ce95956204b502f564d865004",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L34"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[0afef927b291622bd5fd63d12a09330f6094ed6ce95956204b502f564d865004]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "07049dd93a38d0bcb7a0a75c383826704685f8bf37f8a42d7d397e6fe97e5582",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L35"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[07049dd93a38d0bcb7a0a75c383826704685f8bf37f8a42d7d397e6fe97e5582]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "0164abb7f13125d32989353847a9222e49ece57aa9b29cc108e0d176d27e12e0",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L36"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[0164abb7f13125d32989353847a9222e49ece57aa9b29cc108e0d176d27e12e0]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "55429357f0caf28aa2d07caf7de50e1aa27642b358f51d5bd9fd6eed4f10a8c1",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L37"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[55429357f0caf28aa2d07caf7de50e1aa27642b358f51d5bd9fd6eed4f10a8c1]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "1e5087f01424994b3f3a7a3c75e70e6e585a8d6cb321bc76751e998c24cf7e40",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L38"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[1e5087f01424994b3f3a7a3c75e70e6e585a8d6cb321bc76751e998c24cf7e40]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "d1467fd929be38d3198b7e53584f9bfb04bc5bacc002e4dd4cd574c20dbb8fed",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L42"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[d1467fd929be38d3198b7e53584f9bfb04bc5bacc002e4dd4cd574c20dbb8fed]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "31195d2de324198858fc552e8c104deb1968360e3c55f4becbd61840ac449bf5",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L43"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[31195d2de324198858fc552e8c104deb1968360e3c55f4becbd61840ac449bf5]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "d727d0171afd2b19c279c875cf5e120d0c8eb93592e30711736ef0a5fac33fa0",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L44"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[d727d0171afd2b19c279c875cf5e120d0c8eb93592e30711736ef0a5fac33fa0]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "c32c43c727350e0d9973d52d40bf055e62153b060816a80adcb607466e8d5251",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L48"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[c32c43c727350e0d9973d52d40bf055e62153b060816a80adcb607466e8d5251]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "bf894013d97200134ce6ea32bd79def42d2f12008fdc922660d24b426e5c7204",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L49"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[bf894013d97200134ce6ea32bd79def42d2f12008fdc922660d24b426e5c7204]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "311572420e12174b9fd63a8d4baa3f1c2149419f2bae295c10db8e791f5edf50",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L50"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[311572420e12174b9fd63a8d4baa3f1c2149419f2bae295c10db8e791f5edf50]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "7cfde34b8ce067aa1f50eb8a10a3e3ce78a6799f6150f885a0fab323c208242e",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L51"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[7cfde34b8ce067aa1f50eb8a10a3e3ce78a6799f6150f885a0fab323c208242e]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "2626baeb6e7dd0495a7c295a2a4dd48ce478eaa31058c611da027e7a8b2c6d25",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L52"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[2626baeb6e7dd0495a7c295a2a4dd48ce478eaa31058c611da027e7a8b2c6d25]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "38d91d2c1940f46e72570da53cf94f200643d777107fe65ddb0cf38f7ea81443",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L56"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[38d91d2c1940f46e72570da53cf94f200643d777107fe65ddb0cf38f7ea81443]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "0f3d854b5d02e27b580adec187311068ee94a2d2b116e9e2ca921f4c96816809",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L57"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[0f3d854b5d02e27b580adec187311068ee94a2d2b116e9e2ca921f4c96816809]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "01cc7c2a60b278397920211d457fa9ea07ab6effd41cdb70ef0b24969ab990b9",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L58"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[01cc7c2a60b278397920211d457fa9ea07ab6effd41cdb70ef0b24969ab990b9]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "1a84684bdb8f494374c76b754563ca5be6535036f5e97a6893ed61d4214d3048",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L59"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[1a84684bdb8f494374c76b754563ca5be6535036f5e97a6893ed61d4214d3048]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "95bb2041752dd29cc992fc1992dd2fa34b2b8998ac0a85a0c35b3c52c9fb0528",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L60"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[95bb2041752dd29cc992fc1992dd2fa34b2b8998ac0a85a0c35b3c52c9fb0528]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "2f9e0c36724f07795e3dd6271a5b4a46edb5c4daa1dfee035accd8e4e90b8d52",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L61"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[2f9e0c36724f07795e3dd6271a5b4a46edb5c4daa1dfee035accd8e4e90b8d52]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "69b5d963fd1f9fb0fd2ad5052315a2ee43b8cdb861852063bad7145b10799bf1",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L62"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[69b5d963fd1f9fb0fd2ad5052315a2ee43b8cdb861852063bad7145b10799bf1]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "4e12f35559ebdc8acf8791ec372b71a053f997a321fbb21d95633e0ac3ebdfc6",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L67"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[4e12f35559ebdc8acf8791ec372b71a053f997a321fbb21d95633e0ac3ebdfc6]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "5298728b65f17337e96e3dbcb05d90d407d38a11180753795a828f1d2cbf5d36",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L69"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[5298728b65f17337e96e3dbcb05d90d407d38a11180753795a828f1d2cbf5d36]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "0b2a43d9979c44bf6ffd62d7a3e8fdea73f7a9983d5735b72d9d9805f8c67513",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L78"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[0b2a43d9979c44bf6ffd62d7a3e8fdea73f7a9983d5735b72d9d9805f8c67513]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "866d7b89c056b37c15fe698edd979d12a09ff0641276125d7320649e34c52037",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L79"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[866d7b89c056b37c15fe698edd979d12a09ff0641276125d7320649e34c52037]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "e872903243c6217ba582459ce9ddf980af40f86ed84a3c3a82cf248e51be375d",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L83"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[e872903243c6217ba582459ce9ddf980af40f86ed84a3c3a82cf248e51be375d]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "d53d325e2b123b730bb5aaee6b904a0b1e4d3800110c363b92cff746a638fb1b",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L84"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[d53d325e2b123b730bb5aaee6b904a0b1e4d3800110c363b92cff746a638fb1b]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          },
+          {
+            "value": "f34b8bdd368dd84fb3d74d222593916ec82b8085275a6d3bdca45496c5561e78",
+            "producer_evidence": [
+              "SRC-ISSUE-171:L85"
+            ],
+            "consumer_evidence": [
+              "Review binding: .github/handoff-evidence/issue-171/reviewed-closure.json obligations[f34b8bdd368dd84fb3d74d222593916ec82b8085275a6d3bdca45496c5561e78]",
+              "Official producer merge_closure requires exactly all immutable candidate_key values"
+            ],
+            "scenario_ids": [
+              "tests/test_session_review_dossier.py::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+            ]
+          }
+        ],
+        "unmapped_values": [],
+        "fallback_policy": "none",
+        "rationale": "The exact canonical issue source produces 40 candidate keys. Context-only rows and explicit M2 decisions remain in the same closed-world inventory; this does not assert technical certificate or auditor approval."
+      }
+    ],
+    "observable_assertions": [
+      {
+        "id": "OBS-171-RECOVERY",
+        "description": "A genuine GitHub provenance requires separate audit reference and fails on missing audit while preserving the legacy v1 path.",
+        "requirement_ids": [
+          "R171-007",
+          "R171-012",
+          "R171-014"
+        ],
+        "obligation_ids": [
+          "OBL-007",
+          "OBL-012",
+          "OBL-014"
+        ],
+        "evidence_ids": [
+          "scripts/session_review.py:185-245",
+          "scripts/session_review_github.py:97-120"
+        ],
+        "scenario_ids": [
+          "tests/test_session_review.py::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative_control_evidence": [
+          "tests/test_session_review.py::test_recovered_provenance_adversarial_mutations_block[missing-audit]"
+        ]
+      },
+      {
+        "id": "OBS-171-TREE",
+        "description": "Only identical authenticated synthetic merge parents [base,HEAD] and tree permit a new preview SHA, not changed material identity.",
+        "requirement_ids": [
+          "R171-009",
+          "R171-016",
+          "R171-029",
+          "R171-030"
+        ],
+        "obligation_ids": [
+          "OBL-009",
+          "OBL-016",
+          "OBL-029",
+          "OBL-030"
+        ],
+        "evidence_ids": [
+          "scripts/session_review_github.py:49-79",
+          "scripts/session_review_github.py:80-96"
+        ],
+        "scenario_ids": [
+          "tests/test_session_certificate_event.py::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[equivalent]"
+        ],
+        "negative_control_evidence": [
+          "tests/test_session_certificate_event.py::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[different-tree]",
+          "tests/test_session_certificate_event.py::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[reversed-parents]"
+        ]
+      },
+      {
+        "id": "OBS-171-BASE",
+        "description": "A newly installed trusted base invalidates the old PR commit chain and its prior handoff artifact.",
+        "requirement_ids": [
+          "R171-008",
+          "R171-013"
+        ],
+        "obligation_ids": [
+          "OBL-008",
+          "OBL-013"
+        ],
+        "evidence_ids": [
+          "docs/WEB_INDEPENDENT_AUDIT.md",
+          "scripts/session_review_github.py:97-120"
+        ],
+        "scenario_ids": [
+          "tests/test_session_certificate_event.py::test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff"
+        ],
+        "negative_control_evidence": [
+          "tests/test_session_certificate_event.py::test_implementation_chain_requires_git_authenticated_linear_material_history[wrong-base]"
+        ]
+      }
+    ],
     "structural_invariant_closures": {
       "status": "pending",
       "applicability_reason": "The identity, signed source, and exact-SHA constraints require discriminating review.",
@@ -440,8 +1053,57 @@
       "search_evidence": []
     },
     "scope_reduction_review": {
-      "status": "pending",
-      "matches": []
+      "status": "passed",
+      "matches": [
+        {
+          "path": "issue-body:SRC-ISSUE-171",
+          "line": 7,
+          "text": "- A PR [#170](https://github.com/crgasparoto-br/skill/pull/170) implementa a issue #169 em `develop` com HEAD `cddadea4db2f4f07b2aff11758b0d92c64c55d82` e base `2ee50f7897b52de61558eb64416403f1bcbdd9f6`.",
+          "disposition": "historical-context",
+          "decision_source_id": "SRC-ISSUE-171",
+          "rationale": "Contexto histórico: PR #170 permanece aberta no GitHub com HEAD cddadea4..., base 2ee50f7..., 11 commits. Não cria obrigação implementável da #171; a política aplicada é R171-013."
+        },
+        {
+          "path": "issue-body:SRC-ISSUE-171",
+          "line": 8,
+          "text": "- O operador declarou que perdeu a conversa original de implementacao. Busca de contexto e comentarios das issues #169/#167 e PR #170 nao encontrou identificador verificavel da conversa original; a ausencia NAO autoriza inventar uma referencia.",
+          "disposition": "historical-context",
+          "decision_source_id": "SRC-ISSUE-171",
+          "rationale": "Contexto histórico: a ausência da conversa original é declaração do operador registrada na issue #171; não há ID recuperável. Não é uma tarefa de fabricar/restaurar sessão."
+        },
+        {
+          "path": "issue-body:SRC-ISSUE-171",
+          "line": 11,
+          "text": "- [Registro de reconstituicao factual da implementacao publicado na PR #170](https://github.com/crgasparoto-br/skill/pull/170#issuecomment-6603879363), com historico dos 11 commits e provas brutas, expressamente nao aprovativo e sem afirmar conversa original.",
+          "disposition": "historical-context",
+          "decision_source_id": "SRC-ISSUE-171",
+          "rationale": "Contexto histórico: comentário GitHub #6603879363 de PR #170 é registro factual e expressamente não aprovativo; não é implementação nova."
+        },
+        {
+          "path": "issue-body:SRC-ISSUE-171",
+          "line": 13,
+          "text": "- O preview do merge autenticado mudou de `e2167aec658735d5273e496ca73478499f7e868b` (certificado) para `69dba1f0e1725e697b01778517f881ec98014376` e `de400e0c8dcc32b130b415a2a900355dc5743fc4`, sem alteracao de pais ordenados `[2ee50f7..., cddadea4...]` nem tree `5011a7c4fe56d9e66a8df98ebddeff727e4577f5`. Somente timestamps do commit sintetico diferiram nos objetos consultados.",
+          "disposition": "historical-context",
+          "decision_source_id": "SRC-ISSUE-171",
+          "rationale": "Contexto histórico: a mudança dos SHAs do merge preview e a igualdade de tree/pais estão registradas na issue; o comportamento implementável é exigido nas R171-009 e R171-016."
+        },
+        {
+          "path": "issue-body:SRC-ISSUE-171",
+          "line": 56,
+          "text": "- [ ] Positivo: proveniencia GitHub genuina e autenticada, atestacao verdadeira de separacao, parecer completo por 20 obrigacoes e testes validos produzem revisao de sessao aprovada no SHA alvo, apos instalacao em bases confiaveis.",
+          "disposition": "canonical-decision",
+          "decision_source_id": "SRC-ISSUE-171",
+          "rationale": "M2: aprovação real da PR #170 exige instalação protegida e auditoria em contexto independente; a decisão desta entrega não cria parecer nem autoriza merge."
+        },
+        {
+          "path": "issue-body:SRC-ISSUE-171",
+          "line": 84,
+          "text": "- Mudanca no verificador confiavel exige auditoria separada e sequencia de rollout antes de sua aplicacao a #170.",
+          "disposition": "canonical-decision",
+          "decision_source_id": "SRC-ISSUE-171",
+          "rationale": "M2: revisão externa em conversa realmente separada, instalação develop→main e uso na PR #170 só ocorrem após certificado M1 e autorização; sua ausência não autoriza liberação."
+        }
+      ]
     },
     "pass_c": {
       "status": "pending",
