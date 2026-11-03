@@ -161,7 +161,8 @@ O bootstrap e uma decisao administrativa unica: a politica antiga, que exige out
    proprietario com inventario anterior de rulesets, checks e SHAs; jamais
    um check artificial, bypass silencioso ou merge automatico.
 2. Instalar os bytes revisados de `scripts/session_review.py`,
-   `scripts/verify_session_review.py` e politica na base confiavel
+   `scripts/session_review_github.py`, `scripts/verify_session_review.py`
+   e politica na base confiavel
    `develop`, preservando workflows/required checks/branch protection;
    conferir os SHAs e o comportamento negativo enquanto `main` ainda
    nao estiver sincronizada. Nessa janela, o leitor deve permanecer bloqueado.

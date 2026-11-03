@@ -319,3 +319,10 @@ def test_preview_reconciliation_requires_exact_base_and_head_before_api(monkeypa
     monkeypatch.setattr(runner, "api", lambda *_, **__: pytest.fail("no GitHub call on changed base"))
     with pytest.raises(ValueError, match="base/HEAD"):
         runner.reconcile_target(packet, live)
+
+
+def test_trusted_runner_binds_extracted_github_facts_to_protected_base():
+    """Extraction cannot let the candidate replace an unauthenticated helper."""
+    assert "scripts/session_review_github.py" in runner.TRUSTED_PATHS
+    assert "scripts/verify_session_review.py" in runner.TRUSTED_PATHS
+    assert "scripts/session_review.py" in runner.TRUSTED_PATHS

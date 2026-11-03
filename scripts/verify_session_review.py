@@ -41,7 +41,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MAX_BYTES = 32 * 1024 * 1024
 WORKFLOW = ".github/workflows/session-review.yml"
 # Both the emitter and its verification policy must already exist in trusted base.
-TRUSTED_PATHS = (WORKFLOW, POLICY_PATH, "scripts/session_review.py", "scripts/verify_session_review.py",
+TRUSTED_PATHS = (WORKFLOW, POLICY_PATH, "scripts/session_review.py", "scripts/session_review_github.py",
+                 "scripts/verify_session_review.py",
                  "scripts/verify_independent_pr_audit.py", "entregar-issue/scripts/specification.py",
                  "entregar-issue/scripts/require_actions_handoff_certificate.py",
                  "entregar-issue/scripts/handoff_postcondition.py", "entregar-issue/scripts/handoff_postcondition_records.py",
