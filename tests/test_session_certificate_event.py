@@ -90,7 +90,7 @@ def test_merge_preview_requires_exactly_two_ordered_git_parents(monkeypatch, par
         runner.authenticated_certificate_event(identity)
 
 
-@pytest.mark.parametrize("tamper", [None, "base", "head", "preview", "title", "body"])
+@pytest.mark.parametrize("tamper", [None, "equivalent-preview", "base", "head", "preview", "title", "body"])
 def test_certified_evidence_checks_pretest_event_before_verifier(
         monkeypatch, tmp_path, tamper):
     """The artifact cannot choose an event after the test runner altered it."""
@@ -108,7 +108,7 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         recorded["pull_request"]["base"]["sha"] = "d" * 40
     elif tamper == "head":
         recorded["pull_request"]["head"]["sha"] = "d" * 40
-    elif tamper == "preview":
+    elif tamper in {"preview", "equivalent-preview"}:
         recorded["pull_request"]["merge_commit_sha"] = "d" * 40
     elif tamper in {"title", "body"}:
         recorded["pull_request"][tamper] = "mutated-after-collection"
@@ -139,7 +139,7 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
             return merge
         if path.endswith("/git/commits/" + "d" * 40):
             return {"sha": "d" * 40, "parents": [{"sha": BASE}, {"sha": HEAD}],
-                    "tree": {"sha": "f" * 40}}
+                    "tree": {"sha": ("1" if tamper == "equivalent-preview" else "f") * 40}}
         if path.endswith("/actions/runs/19/artifacts?per_page=100"):
             return runs
         if path.endswith("/actions/artifacts/42/zip") and binary:
@@ -163,7 +163,7 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         "id": 17, "name": verify_independent_pr_audit.HANDOFF, "head_sha": HEAD,
         "details_url": f"https://github.com/{REPO}/actions/runs/19/job/21",
         "completed_at": "2026-10-28T00:00:00Z"}]}
-    if tamper:
+    if tamper and tamper != "equivalent-preview":
         with pytest.raises(ValueError, match="merge preview" if tamper == "preview"
                                    else "certification event altered or stale"):
             runner.certified_evidence(identity, checks, tmp_path)
@@ -173,7 +173,8 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         assert checked == [(recorded, "develop")]
         assert metadata["artifact_id"] == 42
         assert metadata["certification_event_sha256"] == runner.digest(json.dumps(recorded).encode())
-        assert metadata["merge_preview_reconciliation"]["mode"] == "exact"
+        assert metadata["merge_preview_reconciliation"]["mode"] == (
+            "equivalent-ordered-parents-and-tree" if tamper == "equivalent-preview" else "exact")
         assert passed == {"passed-case"}
 
 
