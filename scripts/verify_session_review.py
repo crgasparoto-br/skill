@@ -560,6 +560,14 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         )
         require(review_snapshot(final_selected, repo, number) == snapshot,
                 "a newer review superseded this approval during final publication revalidation")
+        # Last live authority check after the final comment read. GitHub may
+        # regenerate its test merge during the review, or concurrently mutate
+        # the base/HEAD; neither change may silently authorize publication.
+        terminal, _ = target(repo, number, issue_number, (ROOT / POLICY_PATH).read_bytes())
+        terminal_proof = reconcile_target(packet, terminal)
+        if terminal_proof is not None:
+            receipt["merge_preview_reconciliation"] = terminal_proof
+            receipt["fingerprint"] = digest(canonical({k: v for k, v in receipt.items() if k != "fingerprint"}))
         summary = "Verified evidence-bound session review. Session separation is operator-attested, NOT third-party identity."
         publish(repo, head, "success", summary, receipt, os.environ.get("GITHUB_RUN_ID", ""), check_id)
         print(summary)

@@ -172,6 +172,8 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         metadata, passed = runner.certified_evidence(identity, checks, tmp_path)
         assert checked == [(recorded, "develop")]
         assert metadata["artifact_id"] == 42
+        assert metadata["certification_event_sha256"] == runner.digest(json.dumps(recorded).encode())
+        assert metadata["merge_preview_reconciliation"]["mode"] == "exact"
         assert passed == {"passed-case"}
 
 

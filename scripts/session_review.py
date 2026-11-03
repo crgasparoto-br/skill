@@ -284,6 +284,10 @@ def verify_review(comment: dict, packet: dict, policy: dict, files: dict[str, st
         receipt["implementation_provenance_sha256"] = digest(canonical(implementation))
     if "merge_preview_reconciliation" in packet:
         receipt["merge_preview_reconciliation"] = packet["merge_preview_reconciliation"]
+        original_event_digest = packet.get("certification_event_sha256")
+        require(isinstance(original_event_digest, str) and DIGEST.fullmatch(original_event_digest),
+                "certified original event digest is missing or invalid")
+        receipt["certification_event_sha256"] = original_event_digest
     receipt["fingerprint"] = digest(canonical(receipt))
     return receipt
 

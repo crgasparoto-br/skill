@@ -619,6 +619,7 @@ def test_review_rechecks_operator_permission_before_publication(review_backend):
 def test_evaluate_stable_certified_preview_during_github_recreation(review_backend, monkeypatch, mutation):
     backend = review_backend
     certified, first_live, later_live = "c" * 40, "d" * 40, "e" * 40
+    backend.packet["certification_event_sha256"] = "f" * 64
     backend.packet["merge_preview_reconciliation"] = {
         "certified_sha": certified, "current_sha": first_live,
         "mode": "equivalent-ordered-parents-and-tree", "tree_sha": "1" * 40,
@@ -652,3 +653,40 @@ def test_evaluate_stable_certified_preview_during_github_recreation(review_backe
     else:
         assert status == 2
         assert backend.checks[-1]["conclusion"] == "failure"
+
+
+def test_final_pr_identity_recheck_blocks_concurrent_tree_change(review_backend, monkeypatch):
+    """A preview replaced while final comment is read cannot reuse an old proof."""
+    backend = review_backend
+    original = "c" * 40
+    current = "d" * 40
+    changed = "e" * 40
+    backend.packet["certification_event_sha256"] = "1" * 64
+    backend.packet["merge_preview_reconciliation"] = {
+        "certified_sha": original, "current_sha": current,
+        "mode": "equivalent-ordered-parents-and-tree", "tree_sha": "2" * 40,
+        "ordered_parents": ["b" * 40, "a" * 40]}
+    backend.pr["merge_commit_sha"] = current
+    original_api = backend.api
+    responses = [0]
+
+    def individual(comment):
+        responses[0] += 1
+        if responses[0] == 2:
+            backend.pr["merge_commit_sha"] = changed
+        return comment
+
+    backend.get_comment_form = individual
+
+    def reader(endpoint, *, method="GET", data=None):
+        if "/git/commits/" in endpoint and method == "GET":
+            sha = endpoint.rsplit("/", 1)[-1]
+            return {"sha": sha, "parents": [{"sha": "b" * 40}, {"sha": "a" * 40}],
+                    "tree": {"sha": ("f" if sha == changed else "2") * 40}}
+        return original_api(endpoint, method=method, data=data)
+
+    monkeypatch.setattr(runner, "api", reader)
+    assert backend.run() == 2
+    assert responses[0] >= 2
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert all(body.get("conclusion") != "success" for _, body in backend.writes)
