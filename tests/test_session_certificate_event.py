@@ -106,7 +106,7 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
         "number": 10, "title": pr["title"], "body": pr["body"],
         "merge_commit_sha": PREVIEW, "base": {"ref": "develop", "sha": BASE},
         "head": {"sha": HEAD, "repo": {"full_name": REPO}}}}
-    certificate_preview = "d" * 40 if tamper.startswith("certificate-preview-") else PREVIEW
+    certificate_preview = "d" * 40 if isinstance(tamper, str) and tamper.startswith("certificate-preview-") else PREVIEW
     if tamper == "base":
         recorded["pull_request"]["base"]["sha"] = "d" * 40
     elif tamper == "head":
