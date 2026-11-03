@@ -18,7 +18,6 @@ from pathlib import Path
 from urllib.parse import quote
 
 import session_review_github as github_facts
-
 from session_review import (
     ASSURANCE,
     CHECK_NAME,

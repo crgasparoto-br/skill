@@ -7,12 +7,17 @@ operator narratives cannot select the source of authority.
 from __future__ import annotations
 
 import copy
+import json
 import os
 import re
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from session_review import PROVENANCE_TYPE, SHA, canonical, digest, require, strict_json
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def authenticated_certificate_event(identity: dict, api) -> dict:
