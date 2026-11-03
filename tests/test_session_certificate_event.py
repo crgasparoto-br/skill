@@ -346,3 +346,5 @@ def test_trusted_runner_binds_extracted_github_facts_to_protected_base():
     assert "scripts/session_review_github.py" in runner.TRUSTED_PATHS
     assert "scripts/verify_session_review.py" in runner.TRUSTED_PATHS
     assert "scripts/session_review.py" in runner.TRUSTED_PATHS
+    assert "entregar-issue/scripts/require_actions_handoff_certificate.py" in runner.TRUSTED_PATHS
+    assert "entregar-issue/scripts/handoff_merge_preview.py" in runner.TRUSTED_PATHS

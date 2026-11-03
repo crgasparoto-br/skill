@@ -44,6 +44,7 @@ TRUSTED_PATHS = (WORKFLOW, POLICY_PATH, "scripts/session_review.py", "scripts/se
                  "scripts/verify_session_review.py",
                  "scripts/verify_independent_pr_audit.py", "entregar-issue/scripts/specification.py",
                  "entregar-issue/scripts/require_actions_handoff_certificate.py",
+                 "entregar-issue/scripts/handoff_merge_preview.py",
                  "entregar-issue/scripts/handoff_postcondition.py", "entregar-issue/scripts/handoff_postcondition_records.py",
                  "entregar-issue/scripts/certificate_postcondition_replay.py", "entregar-issue/scripts/certificate_replay_io.py",
                  "entregar-issue/scripts/certificate_replay_source.py", "entregar-issue/scripts/audit_artifact_io.py",
