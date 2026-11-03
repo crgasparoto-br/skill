@@ -456,13 +456,8 @@ def session_mode_active(repo: str, base: str) -> bool:
     if raw != local.read_bytes():
         block("session policy differs between trusted default and protected base")
     sys.path.insert(0, str(root))
-    from scripts.session_review import (
-        ACKNOWLEDGEMENT,
-        ASSURANCE,
-        strict_json,
-        validate_policy,
-        validate_provenance_policy_option,
-    )
+    from scripts.session_review import ACKNOWLEDGEMENT, ASSURANCE, strict_json
+    from scripts.session_review import validate_policy, validate_provenance_policy_option
     policy = strict_json(raw.decode("utf-8"))
     validate_provenance_policy_option(policy)
     if policy.get("mode") == "enabled":
