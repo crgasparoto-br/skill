@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 
 from session_review import PROVENANCE_TYPE, SHA, canonical, digest, require, strict_json
 
-
 if TYPE_CHECKING:
     from pathlib import Path
 
