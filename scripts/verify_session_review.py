@@ -18,7 +18,24 @@ import zipfile
 from pathlib import Path
 from urllib.parse import quote
 
-from session_review import ASSURANCE, CHECK_NAME, POLICY_PATH, PREFIX, PROVENANCE_TYPE, SHA, allowed, canonical, digest, latest_review, require, review_snapshot, safe_path, strict_json, validate_policy, verify_review
+from session_review import (
+    ASSURANCE,
+    CHECK_NAME,
+    POLICY_PATH,
+    PREFIX,
+    PROVENANCE_TYPE,
+    SHA,
+    allowed,
+    canonical,
+    digest,
+    latest_review,
+    require,
+    review_snapshot,
+    safe_path,
+    strict_json,
+    validate_policy,
+    verify_review,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_BYTES = 32 * 1024 * 1024

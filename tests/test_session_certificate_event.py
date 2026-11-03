@@ -178,7 +178,7 @@ def test_certified_evidence_checks_pretest_event_before_verifier(
 @pytest.mark.parametrize("case", ["equivalent", "different-tree", "reversed-parents",
                                  "foreign-parent", "missing-object", "corrupt-sha", "missing-tree"])
 def test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents(monkeypatch, case):
-    identity, pr, merge = sample()
+    identity, _, _ = sample()
     fresh = "f" * 40
     original = {"sha": PREVIEW, "parents": [{"sha": BASE}, {"sha": HEAD}],
                 "tree": {"sha": "1" * 40}}
