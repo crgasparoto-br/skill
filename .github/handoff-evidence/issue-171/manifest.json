@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "review_state": "incomplete",
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 171,
+  "pull_request_number": 172,
+  "base_ref": "develop",
+  "head_ref": "fix/171-implementation-provenance-preview",
+  "work_item_start_sha": "2ee50f7897b52de61558eb64416403f1bcbdd9f6",
+  "evidence_profile": "critical",
+  "risk_justification": "Recovered implementation provenance authenticates GitHub sources, authorization, session attestation, synthetic merge parents/trees and mutable review revocation. This is a critical trust boundary; an index of passing tests cannot replace per-requirement negative oracles and same-SHA attestation.",
+  "audit_history": "previous-rejection",
+  "audit_history_evidence": "The separate 2026-11-03 review of issue #171 recorded blockers A-171-01 (absent semantic certification) and A-171-02 (old PR #170 ancestry after trusted base promotion). No authenticated review approval or external rejection identifier is asserted by this draft.",
+  "artifact_sha256": {},
+  "test_bindings": {}
+}

@@ -1,0 +1,373 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "6ec79eef9cc752b1327f103cb8b7311a5767836be064bec3ac98d2b1ec08c9f3": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "0403ffcd9c93e8a624fee8f4da27b53599ef816272ce720c0fe535776e9d0b56": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "1d5f5d71c7617d640a6c2da57323ea4172dc205cd8b7ae04d196063bba575953": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "1c2599b372392f9a86cda7f1aba0b6bc836f1b78cceb01d795c9a3b86118f0b7": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "26f6f0712e23ebed8864a3e599fad53189b2b198b2595bddc76dbd60824d3824": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "45fd5f1c6dac0fa4e4a4f238069a6caac9de7a56347808c314dc0ab3c9a0385f": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "ed7c7a9bc78b4cc5e9c9f153014517914ceadf2b8e8c1260a9d6537ba72fa106": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "4bdc24e95e2a156544936f0566c733671f80131d09045a5e7786d5da6037b130": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "7b219fc2b5506782ba15497b9f5c646b45309948650fbdb7d29e84d8fb98fd8d": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "f946e0633fb12959da470a8bed0ec830afb5146e57b679078470136f84dbf30d": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "df25d35cd704839807fa63f5ae00c4f6196734cd79d00305481d5fbca1af5787": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "374814ceea06f2ca42d38651842769608bbe5b032d53f1d648d53d7d5fe3bec8": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "adb8527e56d36b4719f5fbd99981baf836a9cc0b4f5710ca8b53a47700327437": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "0afef927b291622bd5fd63d12a09330f6094ed6ce95956204b502f564d865004": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "07049dd93a38d0bcb7a0a75c383826704685f8bf37f8a42d7d397e6fe97e5582": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "0164abb7f13125d32989353847a9222e49ece57aa9b29cc108e0d176d27e12e0": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "55429357f0caf28aa2d07caf7de50e1aa27642b358f51d5bd9fd6eed4f10a8c1": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "1e5087f01424994b3f3a7a3c75e70e6e585a8d6cb321bc76751e998c24cf7e40": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "d1467fd929be38d3198b7e53584f9bfb04bc5bacc002e4dd4cd574c20dbb8fed": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "31195d2de324198858fc552e8c104deb1968360e3c55f4becbd61840ac449bf5": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "d727d0171afd2b19c279c875cf5e120d0c8eb93592e30711736ef0a5fac33fa0": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "c32c43c727350e0d9973d52d40bf055e62153b060816a80adcb607466e8d5251": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "bf894013d97200134ce6ea32bd79def42d2f12008fdc922660d24b426e5c7204": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "311572420e12174b9fd63a8d4baa3f1c2149419f2bae295c10db8e791f5edf50": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "7cfde34b8ce067aa1f50eb8a10a3e3ce78a6799f6150f885a0fab323c208242e": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "2626baeb6e7dd0495a7c295a2a4dd48ce478eaa31058c611da027e7a8b2c6d25": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "38d91d2c1940f46e72570da53cf94f200643d777107fe65ddb0cf38f7ea81443": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "0f3d854b5d02e27b580adec187311068ee94a2d2b116e9e2ca921f4c96816809": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "01cc7c2a60b278397920211d457fa9ea07ab6effd41cdb70ef0b24969ab990b9": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "1a84684bdb8f494374c76b754563ca5be6535036f5e97a6893ed61d4214d3048": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "95bb2041752dd29cc992fc1992dd2fa34b2b8998ac0a85a0c35b3c52c9fb0528": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "2f9e0c36724f07795e3dd6271a5b4a46edb5c4daa1dfee035accd8e4e90b8d52": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "69b5d963fd1f9fb0fd2ad5052315a2ee43b8cdb861852063bad7145b10799bf1": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "4e12f35559ebdc8acf8791ec372b71a053f997a321fbb21d95633e0ac3ebdfc6": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "5298728b65f17337e96e3dbcb05d90d407d38a11180753795a828f1d2cbf5d36": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "0b2a43d9979c44bf6ffd62d7a3e8fdea73f7a9983d5735b72d9d9805f8c67513": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "866d7b89c056b37c15fe698edd979d12a09ff0641276125d7320649e34c52037": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "e872903243c6217ba582459ce9ddf980af40f86ed84a3c3a82cf248e51be375d": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "d53d325e2b123b730bb5aaee6b904a0b1e4d3800110c363b92cff746a638fb1b": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    },
+    "f34b8bdd368dd84fb3d74d222593916ec82b8085275a6d3bdca45496c5561e78": {
+      "disposition": "pending",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Awaiting requirement-level semantic evaluation; factual CI and JUnit indexing do not prove coverage."
+    }
+  },
+  "controls": {
+    "domain_inventories": [],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "pending",
+      "applicability_reason": "The identity, signed source, and exact-SHA constraints require discriminating review.",
+      "entries": [],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "pending",
+      "applicability_reason": "Order and revocation of immutable review history require semantic review.",
+      "entries": [],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "pending",
+      "applicability_reason": "Trusted policy in develop/main and candidate source are not interchangeable.",
+      "entries": [],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "pending",
+      "applicability_reason": "Post-promotion rebasing and legacy policy need a repository-wide claim review.",
+      "old_contract_terms": [],
+      "new_contract_terms": [],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": false,
+      "search_evidence": []
+    },
+    "scope_reduction_review": {
+      "status": "pending",
+      "matches": []
+    },
+    "pass_c": {
+      "status": "pending",
+      "requirement_ids": [],
+      "obligation_ids": [],
+      "evidence": [],
+      "rederived_without_pr_description": false,
+      "reviewed_user_visible_semantics": false,
+      "reviewed_producer_consumer_parity": false,
+      "reviewed_all_specification_sources": false
+    }
+  }
+}
