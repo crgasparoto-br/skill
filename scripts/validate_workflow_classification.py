@@ -70,6 +70,7 @@ ALLOWED_USES = (
     "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
     "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
     "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+    "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
 )
 NON_VALIDATION_STEPS = (
     # Produz o artefato de release; não prova estado do repositório, então não entra na comparação.
