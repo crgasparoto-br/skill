@@ -14,7 +14,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-from handoff_merge_preview import require_event_merge_preview
+from handoff_merge_preview import require_equivalent_merge_previews, require_event_merge_preview
 from handoff_postcondition import require_final_phase
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -92,23 +92,32 @@ def verify(evidence: Path, event_path: Path, base_ref: str) -> None:
     require_final_phase(cert)
     expected_preview = require_event_merge_preview(
         event_path, identity["repository"], pr["number"], head, pr["base"]["sha"])
-    # The candidate's test runner can modify the evidence directory after
-    # the pre-test snapshot. The trusted job must compare that snapshot to
-    # the original event independently, allowing ONLY the refreshed preview.
+    # The candidate may not choose a preview after tests. First bind the
+    # immutable pre-test event to its original source snapshot; then admit a
+    # regenerated merge only after authenticating all three Git commit objects.
+    cert_identity = cert.get("identity") or {}
+    certified_preview = cert_identity.get("material_merge_preview_sha")
+    if (not isinstance(certified_preview, str) or SHA.fullmatch(certified_preview) is None
+            or cert_identity.get("merge_preview_sha") != certified_preview):
+        raise ValueError("certificate merge preview differs from authenticated PR event")
     if os.environ.get("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW") == "1":
+        original_preview = identity.get("merge_preview_sha")
+        if not isinstance(original_preview, str) or SHA.fullmatch(original_preview) is None:
+            raise ValueError("authenticated pre-test merge preview missing from source identity")
         recorded = load(evidence, "certification-event.json")
         original_pr = {
             "number": pr["number"], "title": pr.get("title") or "",
-            "body": pr.get("body") or "", "merge_commit_sha": expected_preview,
+            "body": pr.get("body") or "", "merge_commit_sha": original_preview,
             "head": {"sha": head, "repo": {"full_name": identity["repository"]}},
             "base": {"sha": pr["base"]["sha"], "ref": base_ref},
         }
         if recorded != {"repository": {"full_name": identity["repository"]},
                         "pull_request": original_pr}:
             raise ValueError("pre-test normalized event differs from authenticated PR event")
-    cert_identity = cert.get("identity") or {}
-    if (cert_identity.get("material_merge_preview_sha") != expected_preview
-            or cert_identity.get("merge_preview_sha") != expected_preview):
+        require_equivalent_merge_previews(
+            identity["repository"], pr["base"]["sha"], head,
+            (original_preview, certified_preview, expected_preview))
+    elif certified_preview != expected_preview:
         raise ValueError("certificate merge preview differs from authenticated PR event")
     subject = cert.get("subject") or {}
     if (cert.get("schema_version") != 2 or cert.get("status") != "ready"

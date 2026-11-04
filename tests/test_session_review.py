@@ -135,3 +135,110 @@ def test_ambiguous_or_oversized_json_rejected(text):
 def test_main_is_bound_to_same_exact_evidence_requirements():
     receipt = verify(lambda p, r, *_: (p["identity"].update(base_ref="main"), r["identity"].update(base_ref="main")))
     assert receipt["identity"]["base_ref"] == "main"
+
+
+def recovered_fixture():
+    """A GitHub history is factual provenance, never a fabricated ChatGPT session."""
+    packet, report, comment, files, tests = fixtures()
+    packet["artifact_id"] = 42
+    source = {"type": gate.PROVENANCE_TYPE, "repository": packet["identity"]["repository"],
+              "pull_request": packet["identity"]["pull_request"], "issue": packet["identity"]["issue"],
+              "base_sha": packet["identity"]["base_sha"], "head_sha": packet["identity"]["head_sha"],
+              "commits": ["b" * 40, packet["identity"]["head_sha"]],
+              "handoff": {"artifact_id": 42, "digest": packet["artifact_digest"]}}
+    packet["implementation_provenance"] = source
+    report["sessions"]["implementation"] = {
+        "type": gate.PROVENANCE_TYPE, "original_session_unavailable": True,
+        "github": copy.deepcopy(source)}
+    report["sessions"]["audit"] = "https://example.com/c/separate-review-operator-declared"
+    active = policy()
+    active["implementation_provenance"] = {"mode": "enabled", "type": gate.PROVENANCE_TYPE}
+    return packet, report, comment, files, tests, active
+
+
+def recovered_verify(change=None):
+    packet, report, comment, files, tests, active = recovered_fixture()
+    if change:
+        change(packet, report, comment, files, tests, active)
+    comment["body"] = gate.PREFIX + json.dumps(report)
+    return gate.verify_review(comment, packet, active, files, tests)
+
+
+def test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls():
+    receipt = recovered_verify()
+    assert receipt["implementation_provenance_type"] == gate.PROVENANCE_TYPE
+    assert len(receipt["implementation_provenance_sha256"]) == 64
+    assert receipt["session_separation"] == "operator-declared"
+    assert receipt["third_party_identity_proven"] is False
+
+
+@pytest.mark.parametrize("mutation", [
+    "absent-policy", "disabled-policy", "wrong-policy-type",
+    "missing-source", "original-not-unavailable", "wrong-type",
+    "wrong-issue", "wrong-pr", "wrong-head", "wrong-base",
+    "replaced-commit", "removed-commit", "reordered-commits",
+    "wrong-handoff-digest", "wrong-handoff-id", "extra-field",
+    "missing-audit", "github-audit", "same-context", "unauthorized-author",
+])
+def test_recovered_provenance_adversarial_mutations_block(mutation):
+    def change(packet, report, comment, files, tests, active):
+        declaration = report["sessions"]["implementation"]
+        github = declaration["github"]
+        if mutation == "absent-policy":
+            del active["implementation_provenance"]
+        elif mutation == "disabled-policy":
+            active["implementation_provenance"]["mode"] = "disabled"
+        elif mutation == "wrong-policy-type":
+            active["implementation_provenance"]["type"] = "chatgpt-session"
+        elif mutation == "missing-source":
+            del packet["implementation_provenance"]
+        elif mutation == "original-not-unavailable":
+            declaration["original_session_unavailable"] = False
+        elif mutation == "wrong-type":
+            declaration["type"] = "chatgpt-session"
+        elif mutation == "wrong-issue":
+            github["issue"] += 1
+        elif mutation == "wrong-pr":
+            github["pull_request"] += 1
+        elif mutation == "wrong-head":
+            github["head_sha"] = "f" * 40
+        elif mutation == "wrong-base":
+            github["base_sha"] = "f" * 40
+        elif mutation == "replaced-commit":
+            github["commits"][0] = "f" * 40
+        elif mutation == "removed-commit":
+            github["commits"].pop()
+        elif mutation == "reordered-commits":
+            github["commits"].reverse()
+        elif mutation == "wrong-handoff-digest":
+            github["handoff"]["digest"] = "sha256:" + "0" * 64
+        elif mutation == "wrong-handoff-id":
+            github["handoff"]["artifact_id"] = 4
+        elif mutation == "extra-field":
+            declaration["claimed_original_chat_url"] = "https://example.com/c/fabricated"
+        elif mutation == "missing-audit":
+            report["sessions"]["audit"] = ""
+        elif mutation == "github-audit":
+            report["sessions"]["audit"] = "https://github.com/owner/repo/pull/10"
+        elif mutation == "same-context":
+            report["sessions"]["separate_context_attested"] = False
+        elif mutation == "unauthorized-author":
+            comment["user"]["id"] = 999
+
+    with pytest.raises(ValueError):
+        recovered_verify(change)
+
+
+@pytest.mark.parametrize("value", [None, [], 123, {"mode": "enabled"},
+                                     {"mode": "enabled", "type": gate.PROVENANCE_TYPE, "bypass": True}])
+def test_malformed_opt_in_policy_is_not_accepted(value):
+    selected = policy()
+    selected["implementation_provenance"] = value
+    with pytest.raises(ValueError):
+        gate.validate_policy(selected)
+
+
+def test_legacy_real_sessions_still_work_with_provenance_feature_enabled():
+    active = policy()
+    active["implementation_provenance"] = {"mode": "enabled", "type": gate.PROVENANCE_TYPE}
+    assert verify(selected_policy=active)["identity"]["pull_request"] == 10

@@ -1,0 +1,149 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [
+    {
+      "path": "scripts/session_review_github.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "verify_session_review.py authenticated_certificate_event",
+          "verify_session_review.py authenticated_preview_reconciliation",
+          "verify_session_review.py certified_evidence",
+          "CODE-GROWTH-001 code-growth policy"
+        ],
+        "scope": "Existing scripts/verify_session_review.py had the complete authenticated GitHub adapter before extraction; the candidate added 139 lines to its original 503-line file, beyond the enforced +20 limit.",
+        "candidates": [
+          {
+            "path": "scripts/verify_session_review.py",
+            "reason_not_reused": "An expanded 642-line trusted runner exceeds original CODE-GROWTH-001 allowance; keeping all new GitHub-authenticated provenance logic there would fail the same official gate even though tests were green."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "Extract five unchanged authenticated GitHub fact operations into a focused 184-line, read-only module. Preserve runner wrapper names and test monkeypatch injection; include new path in TRUSTED_PATHS to prohibit candidate-selected execution."
+    }
+  ],
+  "references": [
+    {
+      "symbol": "authenticated_implementation_provenance",
+      "kind": "local",
+      "used_in": "scripts/verify_session_review.py",
+      "defined_at": {
+        "path": "scripts/session_review_github.py",
+        "line": 97
+      },
+      "verified_by": {
+        "command": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "exit_code": 0
+      }
+    },
+    {
+      "symbol": "authenticated_preview_reconciliation",
+      "kind": "local",
+      "used_in": "scripts/verify_session_review.py",
+      "defined_at": {
+        "path": "scripts/session_review_github.py",
+        "line": 49
+      },
+      "verified_by": {
+        "command": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "exit_code": 0
+      }
+    }
+  ],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "tests/test_session_review.py",
+      "operation": "modified",
+      "scenario": "Recover a genuine GitHub implementation provenance while retaining a real auditor reference and strict policy opt-in.",
+      "requirement": "Issue #171 F1/F2/F4 and v1 regression: no fabricated original ChatGPT conversation nor self-approval.",
+      "search": {
+        "queries": [
+          "verify_review recovered github provenance",
+          "validate_policy implementation_provenance",
+          "session_review fixtures policy"
+        ],
+        "scope": "Existing tests/test_session_review.py, scripts/session_review.py and its trust-model fixtures on develop and material HEAD.",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "tests/test_session_review.py",
+            "case": "test_single_account_can_submit_only_explicitly_limited_review",
+            "oracle": "The v1 operator may only assert declared separation, not cryptographic independence.",
+            "comparison": "Extended the existing core review contract tests instead of creating a competing approval reader."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Existing test module already owns the trust-policy surface; add positive recovery, negative field/identity/policy mutations, and v1 regression in-place.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "tests/test_session_review_runner.py",
+      "operation": "modified",
+      "scenario": "Recreated synthetic merge preview is equivalent only for identical authenticated ordered parents and tree with exact base/HEAD.",
+      "requirement": "Issue #171 F6/F7: authenticated tree equivalence and concurrent readback/revocation.",
+      "search": {
+        "queries": [
+          "merge preview drift during evaluate",
+          "authenticated_certificate_event",
+          "certified_evidence runner"
+        ],
+        "scope": "Existing runner tests and legacy revocation/check publication scenarios in tests/test_session_review_runner.py.",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "tests/test_session_review_runner.py",
+            "case": "test_evaluate_rejects_target_change_before_publication",
+            "oracle": "A moved target must be rejected before publishing success.",
+            "comparison": "Extended same runner suite to distinguish tree-equivalent synthetic commit rotations from a changed tree/ordered parents."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "The runner suite already exercises the publication boundary and mock GitHub reads; extend rather than duplicate handlers.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "tests/test_session_certificate_event.py",
+      "operation": "modified",
+      "scenario": "Authenticate GitHub commit chain and both merge objects; after promotion require linear rebase and fresh artifact rather than reuse old base.",
+      "requirement": "Issue #171 F3/F6 and A-171-02: no stale Git chain or certificate across a trusted-base transition.",
+      "search": {
+        "queries": [
+          "test_implementation_chain_requires_git_authenticated_linear_material_history",
+          "test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents",
+          "test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff"
+        ],
+        "scope": "Existing certificate-event entrypoint tests, trusted GitHub reader and test change established in branch HEAD.",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "tests/test_session_certificate_event.py",
+            "case": "test_certified_evidence_checks_pretest_event_before_verifier",
+            "oracle": "Tampered event fields are blocked before official certificate validation.",
+            "comparison": "Reuse existing authentication/event fixtures; add a linear-history + old-base rejection and trust-source extraction case."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "All changed cases reuse the original certificate-event test harness, not a second verifier; includes positive, negative and regression probes.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}

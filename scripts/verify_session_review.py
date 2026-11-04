@@ -17,15 +17,34 @@ import zipfile
 from pathlib import Path
 from urllib.parse import quote
 
-from session_review import ASSURANCE, CHECK_NAME, POLICY_PATH, PREFIX, allowed, canonical, digest, latest_review, require, review_snapshot, safe_path, strict_json, validate_policy, verify_review
+import session_review_github as github_facts
+from session_review import (
+    ASSURANCE,
+    CHECK_NAME,
+    POLICY_PATH,
+    PREFIX,
+    PROVENANCE_TYPE,
+    allowed,
+    canonical,
+    digest,
+    latest_review,
+    require,
+    review_snapshot,
+    safe_path,
+    strict_json,
+    validate_policy,
+    verify_review,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_BYTES = 32 * 1024 * 1024
 WORKFLOW = ".github/workflows/session-review.yml"
 # Both the emitter and its verification policy must already exist in trusted base.
-TRUSTED_PATHS = (WORKFLOW, POLICY_PATH, "scripts/session_review.py", "scripts/verify_session_review.py",
+TRUSTED_PATHS = (WORKFLOW, POLICY_PATH, "scripts/session_review.py", "scripts/session_review_github.py",
+                 "scripts/verify_session_review.py",
                  "scripts/verify_independent_pr_audit.py", "entregar-issue/scripts/specification.py",
                  "entregar-issue/scripts/require_actions_handoff_certificate.py",
+                 "entregar-issue/scripts/handoff_merge_preview.py",
                  "entregar-issue/scripts/handoff_postcondition.py", "entregar-issue/scripts/handoff_postcondition_records.py",
                  "entregar-issue/scripts/certificate_postcondition_replay.py", "entregar-issue/scripts/certificate_replay_io.py",
                  "entregar-issue/scripts/certificate_replay_source.py", "entregar-issue/scripts/audit_artifact_io.py",
@@ -136,79 +155,27 @@ def unpack(raw: bytes, directory: Path) -> None:
 
 
 def authenticated_certificate_event(identity: dict) -> dict:
-    """Rebuild the certificate event using live GitHub PR and ordered merge parents."""
-    repo, number = identity["repository"], identity["pull_request"]
-    pr = api(f"/repos/{repo}/pulls/{number}")
-    require(isinstance(pr, dict), "malformed authenticated PR response")
-    head, base = pr.get("head") or {}, pr.get("base") or {}
-    require(isinstance(head, dict) and isinstance(base, dict), "malformed PR base/head")
-    preview = pr.get("merge_commit_sha")
-    require(pr.get("number") == number and pr.get("state") == "open" and pr.get("draft") is False
-            and head.get("sha") == identity["head_sha"]
-            and base.get("sha") == identity["base_sha"] and base.get("ref") == identity["base_ref"]
-            and (head.get("repo") or {}).get("full_name") == repo
-            and (base.get("repo") or {}).get("full_name") == repo
-            and isinstance(preview, str) and re.fullmatch("[0-9a-f]{40}", preview)
-            and preview == identity["merge_preview_sha"], "PR identity/preview drift")
-    merge = api(f"/repos/{repo}/git/commits/{preview}")
-    parents = merge.get("parents") if isinstance(merge, dict) else None
-    require(isinstance(merge, dict) and merge.get("sha") == preview and isinstance(parents, list)
-            and len(parents) == 2 and all(isinstance(p, dict) for p in parents)
-            and [p.get("sha") for p in parents] == [identity["base_sha"], identity["head_sha"]],
-            "merge preview has incorrect ordered base/HEAD parents")
-    return {"repository": {"full_name": repo}, "pull_request": {
-        "number": number, "title": pr.get("title") or "", "body": pr.get("body") or "",
-        "merge_commit_sha": preview, "base": {"ref": identity["base_ref"], "sha": identity["base_sha"]},
-        "head": {"sha": identity["head_sha"], "repo": {"full_name": repo}}}}
+    return github_facts.authenticated_certificate_event(identity, api)
+
+
+def authenticated_preview_reconciliation(identity: dict, certified_sha: str) -> dict:
+    return github_facts.authenticated_preview_reconciliation(identity, certified_sha, api)
+
+
+def reconcile_target(packet: dict, live_identity: dict) -> dict | None:
+    return github_facts.reconcile_target(
+        packet, live_identity, authenticated_certificate_event, authenticated_preview_reconciliation)
+
+
+def authenticated_implementation_provenance(identity: dict, metadata: dict) -> dict:
+    return github_facts.authenticated_implementation_provenance(identity, metadata, pages, api)
 
 
 def certified_evidence(identity: dict, checks: dict, directory: Path) -> tuple[dict, set[str]]:
-    """Technical workflow authentication is reused, not replaced by check-name matching."""
-    from verify_independent_pr_audit import HANDOFF, required_checks_green, trusted_workflow_check
-    repo, number = identity["repository"], identity["pull_request"]
-    head, base = identity["head_sha"], identity["base_sha"]
-    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    require(bool(token), "GitHub credential missing")
-    trust = lambda name, check: trusted_workflow_check(repo, number, name, check, head, base, token)
-    # Session mode certifies all targets, including main. The legacy human route is unchanged.
-    required_checks_green(checks, head, "develop", trust)
-    candidates = [c for c in checks["check_runs"] if c.get("name") == HANDOFF and c.get("head_sha") == head and trust(HANDOFF, c)]
-    chosen = max(candidates, key=lambda c: c["id"])
-    run_id = int(re.search(r"/actions/runs/(\d+)/", chosen["details_url"])[1])
-    artifacts = api(f"/repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100")
-    require(artifacts.get("total_count") == len(artifacts.get("artifacts", [])), "artifact inventory truncated")
-    name = f"handoff-evidence-{number}-{head}"
-    matches = [a for a in artifacts["artifacts"] if a.get("name") == name and not a.get("expired")]
-    require(len(matches) == 1, "exact-SHA evidence artifact missing or ambiguous")
-    artifact = matches[0]
-    raw = api(f"/repos/{repo}/actions/artifacts/{artifact['id']}/zip", binary=True)
-    require(artifact.get("digest") == "sha256:" + digest(raw), "artifact transport digest mismatch")
-    unpack(raw, directory)
-    sys.path.insert(0, str(ROOT / "entregar-issue/scripts"))
-    from build_test_candidate_index import collect
-    from require_actions_handoff_certificate import verify
-    event = authenticated_certificate_event(identity)
-    recorded = json.loads((directory / "certification-event.json").read_bytes())
-    require(recorded == event, "certification event altered or stale against authenticated PR")
-    event_path = directory / "trusted-event.json"
-    event_path.write_bytes(canonical(event))
-    verify(directory, event_path, identity["base_ref"])
-    preflight = json.loads((directory / "handoff-preflight.json").read_bytes())
-    require(preflight["identity"]["issue_number"] == identity["issue"]
-            and preflight["identity"]["base_sha"] == base, "certificate issue/base mismatch")
-    require(preflight["source"]["issue_body_sha256"] == identity["issue_sha256"], "canonical issue changed since certification")
-    facts = json.loads((directory / "test-execution-facts.json").read_bytes())
-    require(facts.get("subject_sha") == head and facts.get("verification") == "passed"
-            and facts.get("execution", {}).get("exit_code") == 0, "test execution not proven")
-    require(digest((directory / "pytest-exact-head.log").read_bytes()) == facts["execution"]["log_sha256"], "test log digest mismatch")
-    junit = directory / "pytest-exact-head.xml"
-    require(not any(marker in junit.read_bytes().upper() for marker in (b"<!DOCTYPE", b"<!ENTITY")), "unsafe JUnit XML")
-    index = collect(junit, head)
-    require(index["counts"]["failure"] == 0 and index["counts"]["error"] == 0, "JUnit contains failing tests")
-    metadata = {"artifact_digest": artifact["digest"], "artifact_id": artifact["id"], "certified_at": chosen["completed_at"],
-                "technical_check_ids": sorted(c["id"] for c in checks["check_runs"] if c.get("name") in
-                                             {"Structure and tests", "Offline authorization tests", HANDOFF})}
-    return metadata, {t["id"] for t in index["tests"] if t["status"] == "passed"}
+    return github_facts.certified_evidence(
+        identity, checks, directory, api=api, unpack=unpack,
+        authenticated_certificate_event=authenticated_certificate_event,
+        authenticated_preview_reconciliation=authenticated_preview_reconciliation, root=ROOT)
 
 
 def freeze_files(repo: str, changed: list[dict], base: str, head: str) -> tuple[dict, dict]:
@@ -261,12 +228,15 @@ def prepare(repo: str, number: int, issue_number: int, *, require_enabled: bool)
     checks = api(f"/repos/{repo}/commits/{identity['head_sha']}/check-runs?per_page=100")
     with tempfile.TemporaryDirectory() as temporary:
         metadata, passed = certified_evidence(identity, checks, Path(temporary))
-    packet = {"schema_version": 1, "identity": identity, "requirements": requirements(repo, issue), **metadata,
+    # The material SHA and base are fixed. The certified synthetic merge
+    # remains the stable review identity even when GitHub recreates its commit.
+    stable = {**identity, "merge_preview_sha": metadata["merge_preview_reconciliation"]["certified_sha"]}
+    packet = {"schema_version": 1, "identity": stable, "requirements": requirements(repo, issue), **metadata,
               "allowed_assurance": ASSURANCE, "sources": files, "diffs": diffs, "passed_tests": sorted(passed),
               "canonical_issue": {k: issue[k] for k in ("number", "title", "body")},
               "disposition": "RAW_INPUT_ONLY_NOT_REVIEW_APPROVAL"}
     current, _ = target(repo, number, issue_number, policy_raw)
-    require(current == identity, "PR or issue changed during collection")
+    reconcile_target(packet, current)
     return packet, policy, files, passed
 
 
@@ -347,6 +317,12 @@ def recheck_inputs(packet: dict) -> None:
     artifact = api(f"/repos/{repo}/actions/artifacts/{packet['artifact_id']}")
     require(not artifact.get("expired") and artifact.get("digest") == packet["artifact_digest"],
             "certified artifact expired or changed")
+    observed, _ = target(repo, ident["pull_request"], ident["issue"], (ROOT / POLICY_PATH).read_bytes())
+    reconcile_target(packet, observed)
+    if "implementation_provenance" in packet:
+        verified = authenticated_implementation_provenance(ident, packet)
+        require(verified == packet["implementation_provenance"],
+                "GitHub implementation history changed during review")
 
 
 def publish(repo: str, sha: str, conclusion: str, summary: str, receipt: dict, run_id: str,
@@ -391,9 +367,14 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         require(type(issue_number) is int and issue_number > 0, "canonical issue reference missing or ambiguous")
         initial, _ = target(repo, number, issue_number, policy_raw, pr=pr)
         packet, policy, files, passed = prepare(repo, number, issue_number, require_enabled=not packet_out)
-        require(packet["identity"] == initial and initial["head_sha"] == head,
-                "target changed between initial observation and evidence collection")
+        try:
+            reconcile_target(packet, initial)
+        except ValueError as exc:
+            raise ValueError("target changed between initial observation and evidence collection") from exc
+        require(initial["head_sha"] == head, "target changed between initial observation and evidence collection")
         if packet_out:
+            if policy.get("implementation_provenance") == {"mode": "enabled", "type": PROVENANCE_TYPE}:
+                packet["implementation_provenance"] = authenticated_implementation_provenance(packet["identity"], packet)
             packet_out.parent.mkdir(parents=True, exist_ok=True)
             packet_out.write_bytes(canonical(packet) + b"\n")
             print("RAW PACKET: no reviewer identity or approval is asserted")
@@ -402,6 +383,14 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         watermark = max(watermark, event_review_id(policy))
         receipt["minimum_comment_id"] = watermark
         selected = latest_review(comments, policy, watermark=watermark)
+        # Historical v1 reviews do not depend on the optional GitHub recovery
+        # capability, even when the trusted policy has opted into that feature.
+        report_hint = strict_json(selected["body"][len(PREFIX):])
+        declared = report_hint.get("sessions")
+        wants_provenance = isinstance(declared, dict) and isinstance(declared.get("implementation"), dict)
+        if wants_provenance and policy.get("implementation_provenance") == {
+                "mode": "enabled", "type": PROVENANCE_TYPE}:
+            packet["implementation_provenance"] = authenticated_implementation_provenance(packet["identity"], packet)
         snapshot = review_snapshot(selected, repo, number)
         receipt["review_comment_id"] = selected["id"]
         # A write-capable, currently authorized operator is required in addition to
@@ -416,7 +405,13 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
                 "a newer review superseded this approval")
         recheck_inputs(packet)
         refreshed, _ = target(repo, number, issue_number, (ROOT / POLICY_PATH).read_bytes())
-        require(refreshed == initial == packet["identity"], "target changed before publication")
+        try:
+            proof = reconcile_target(packet, refreshed)
+        except ValueError as exc:
+            raise ValueError("target changed before publication") from exc
+        if proof is not None:
+            receipt["merge_preview_reconciliation"] = proof
+            receipt["fingerprint"] = digest(canonical({k: v for k, v in receipt.items() if k != "fingerprint"}))
         require(authorized_operator(repo, selected["user"]), "reviewer permission changed")
         # Repeat the mutable-review check after every other revalidation. A review
         # edited, deleted, rejected or superseded while the target/evidence checks
@@ -429,6 +424,14 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         )
         require(review_snapshot(final_selected, repo, number) == snapshot,
                 "a newer review superseded this approval during final publication revalidation")
+        # Last live authority check after the final comment read. GitHub may
+        # regenerate its test merge during the review, or concurrently mutate
+        # the base/HEAD; neither change may silently authorize publication.
+        terminal, _ = target(repo, number, issue_number, (ROOT / POLICY_PATH).read_bytes())
+        terminal_proof = reconcile_target(packet, terminal)
+        if terminal_proof is not None:
+            receipt["merge_preview_reconciliation"] = terminal_proof
+            receipt["fingerprint"] = digest(canonical({k: v for k, v in receipt.items() if k != "fingerprint"}))
         summary = "Verified evidence-bound session review. Session separation is operator-attested, NOT third-party identity."
         publish(repo, head, "success", summary, receipt, os.environ.get("GITHUB_RUN_ID", ""), check_id)
         print(summary)

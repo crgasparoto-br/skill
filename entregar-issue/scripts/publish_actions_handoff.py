@@ -445,8 +445,7 @@ def session_mode_active(repo: str, base: str) -> bool:
         if exc.code == 404 and not local.exists():
             return False  # Legacy repository without this optional policy.
         block("protected-base session policy unavailable")
-    if (not local.is_file() or response.get("type") != "file"
-            or response.get("encoding") != "base64"
+    if (not local.is_file() or response.get("type") != "file" or response.get("encoding") != "base64"
             or not isinstance(response.get("content"), str)):
         block("trusted session policy is missing or malformed")
     try:
@@ -456,18 +455,23 @@ def session_mode_active(repo: str, base: str) -> bool:
     if raw != local.read_bytes():
         block("session policy differs between trusted default and protected base")
     sys.path.insert(0, str(root))
-    from scripts.session_review import ACKNOWLEDGEMENT, ASSURANCE, strict_json, validate_policy
+    from scripts.session_review import (
+        ACKNOWLEDGEMENT,
+        ASSURANCE,
+        strict_json,
+        validate_policy,
+        validate_provenance_policy_option,
+    )
     policy = strict_json(raw.decode("utf-8"))
+    validate_provenance_policy_option(policy)
     if policy.get("mode") == "enabled":
         validate_policy(policy)
         return True
-    if (policy.get("mode") != "disabled"
-            or set(policy) != {"schema_version", "mode", "assurance", "acknowledgement", "operators"}
+    if (policy.get("mode") != "disabled" or type(policy["schema_version"]) is not int
             or policy["schema_version"] != 1 or policy["assurance"] != ASSURANCE
             or policy["acknowledgement"] != ACKNOWLEDGEMENT or policy["operators"] != []):
         block("unsupported disabled session policy")
     return False
-
 
 
 def main() -> int:

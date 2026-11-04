@@ -128,3 +128,65 @@ def test_context_proof_must_match_and_have_expected_issuer():
         context_proof_issuer="trusted-auditor")
     report["source_context_proof"]["value"] = "fabricated-context"
     assert check(report)
+
+
+def solo_report():
+    report = valid_report()
+    report.update({
+        "assurance_mode": "single-operator-separate-context",
+        "independent": False,
+        "merge_preview_sha": "c" * 40,
+        "merge_preview_sha_after": "c" * 40,
+        "pull_request": 176,
+        "operator_github_id": 12345,
+        "issue_body_sha256": "d" * 64,
+        "signature": {"key_id": "solo-key-1"},
+    })
+    return report
+
+
+def check_solo(report, **overrides):
+    values = {
+        "repository": "crgasparoto-br/skill",
+        "issue": 125,
+        "base_ref": "develop",
+        "base_sha": BASE,
+        "head_sha": HEAD,
+        "merge_preview_sha": "c" * 40,
+        "solo_only": True,
+        "expected_pull_request": 176,
+        "expected_issue_body_sha256": "d" * 64,
+        "configured_operator_id": 12345,
+        "configured_key_id": "solo-key-1",
+        "authenticated_comment_author_id": 12345,
+    }
+    values.update(overrides)
+    return gate.check_binding(report, **values)
+
+
+def test_solo_binding_accepts_exact_report_and_authenticated_identity():
+    assert check_solo(solo_report()) == []
+
+
+@pytest.mark.parametrize("change", [
+    lambda report: report.update(pull_request=177),
+    lambda report: report.update(issue_body_sha256="e" * 64),
+    lambda report: report.update(operator_github_id=54321),
+    lambda report: report.update(signature={"key_id": "other-key"}),
+])
+def test_solo_binding_rejects_report_identity_changes(change):
+    report = solo_report()
+    change(report)
+    assert check_solo(report)
+
+
+def test_solo_binding_rejects_authenticated_comment_author_mismatch():
+    assert check_solo(solo_report(), authenticated_comment_author_id=54321)
+
+
+def test_legacy_binding_does_not_activate_solo_checks_by_default():
+    report = valid_report()
+    report["pull_request"] = 176
+    report["operator_github_id"] = 12345
+    report["issue_body_sha256"] = "d" * 64
+    assert check(report) == []

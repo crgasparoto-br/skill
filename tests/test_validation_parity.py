@@ -143,6 +143,45 @@ def test_dependabot_rejects_missing_or_main_target() -> None:
 
 
 
+def test_upload_artifact_v7_0_2_exact_sha_is_classified(tmp_path: Path) -> None:
+    """O SHA oficial v7.0.2 é aceito sem transformar a classificação em regra ampla."""
+    path = workflow_with(
+        tmp_path,
+        "  publicar:\n"
+        "    runs-on: ubuntu-latest\n"
+        "    steps:\n"
+        "      - name: publicar artefato\n"
+        "        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9\n",
+    )
+    assert classification_problems(path, path.parent) == []
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "actions/upload-artifact@v7.0.2",
+        "actions/upload-artifact@0000000000000000000000000000000000000000",
+    ],
+)
+def test_upload_artifact_rejects_moving_or_unclassified_reference(
+    tmp_path: Path, reference: str
+) -> None:
+    """Tags móveis e SHAs não declarados permanecem bloqueados pelo validador."""
+    path = workflow_with(
+        tmp_path,
+        "  publicar:\n"
+        "    runs-on: ubuntu-latest\n"
+        "    steps:\n"
+        "      - name: publicar artefato\n"
+        f"        uses: {reference}\n",
+    )
+    problems = classification_problems(path, path.parent)
+    assert any(
+        "ação sem classificação declarada" in problem and reference in problem
+        for problem in problems
+    ), problems
+
+
 def test_validator_accepts_the_repository_and_rejects_a_divergent_sequence(tmp_path: Path) -> None:
     """O validador aprova a árvore real e reprova uma sequência documentada divergente."""
     assert validate_workflow_classification(ROOT) == []

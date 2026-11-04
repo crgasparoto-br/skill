@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 169,
+  "pull_request_number": 170,
+  "base_ref": "develop",
+  "head_ref": "fix/169-trusted-workflow-pin-upgrade",
+  "work_item_start_sha": "2ee50f7897b52de61558eb64416403f1bcbdd9f6",
+  "review_state": "approved",
+  "evidence_profile": "critical",
+  "risk_justification": "A issue #169 altera o verificador de origem confiável de workflows e contém obrigação com atomicity e integridade de blob, exigindo matriz critical com controles negativos de ataques sobre policy, SHA, bytes e proveniência.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "Histórico remoto da PR #170 consultado em 02/11/2026: nenhuma review independente submetida; a rejeição anterior A-001 refere-se à PR #168 e não é aprovação/reprovação independente do SHA desta PR.",
+  "artifact_sha256": {
+    "reviewed-closure.json": "298ba5de2ffc85a118530210468c87afcb7d23f80266c241995a53d5f4135c76",
+    "requirement-attack-matrix.json": "2cad811c9ef698b98248093d9fa4651c6ec843ea24ccc180a90c8a03806a9ed0",
+    "risk-saturation.json": "550e3b1767daa80d38a272bb84cb425b29c0a2925937b560850c815b404bab46",
+    "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
+    "codebase-grounding.json": "e0baedb7106d29c25fa10363bb8f317cad4b2915914a3e021f694f0fee337b52"
+  },
+  "test_bindings": {
+    "R169-01": {
+      "positive": [
+        "tests.test_verify_independent_pr_audit::test_pin_upgrade_policy_names_only_verified_setup_python_transition"
+      ],
+      "negative": [
+        "tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow"
+      ],
+      "regression": [
+        "tests.test_verify_independent_pr_audit::test_workflow_contents_must_match_trusted_base"
+      ]
+    },
+    "R169-02": {
+      "positive": [
+        "tests.test_verify_independent_pr_audit::test_preapproved_pin_only_migration_keeps_workflow_check_trusted"
+      ],
+      "negative": [
+        "tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_duplicate_old_line"
+      ],
+      "regression": [
+        "tests.test_verify_independent_pr_audit::test_workflow_contents_must_match_trusted_base"
+      ]
+    },
+    "R169-03": {
+      "positive": [
+        "tests.test_verify_independent_pr_audit::test_preapproved_pin_only_migration_keeps_workflow_check_trusted"
+      ],
+      "negative": [
+        "tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_untrusted_bytes_or_base_policy[base-blob-sha]"
+      ],
+      "regression": [
+        "tests.test_verify_independent_pr_audit::test_workflow_passes_trusted_base_sha_and_scoped_actions_permission"
+      ]
+    },
+    "R169-04": {
+      "positive": [
+        "tests.test_verify_independent_pr_audit::test_official_actions_check_provenance_accepts_only_preapproved_pin"
+      ],
+      "negative": [
+        "tests.test_verify_independent_pr_audit::test_preapproved_pin_migration_rejects_sibling_mutations[<lambda>7]"
+      ],
+      "regression": [
+        "tests.test_session_review::test_main_is_bound_to_same_exact_evidence_requirements"
+      ]
+    },
+    "R169-05": {
+      "positive": [
+        "tests.test_verify_independent_pr_audit::test_preapproved_pin_only_migration_keeps_workflow_check_trusted"
+      ],
+      "negative": [
+        "tests.test_verify_independent_pr_audit::test_trusted_pin_policy_rejects_malformed_schemas[invalid0]"
+      ],
+      "regression": [
+        "tests.test_verify_independent_pr_audit::test_workflow_passes_trusted_base_sha_and_scoped_actions_permission"
+      ]
+    },
+    "R169-06": {
+      "positive": [
+        "tests.test_verify_independent_pr_audit::test_official_actions_check_provenance_accepts_only_preapproved_pin"
+      ],
+      "negative": [
+        "tests.test_verify_independent_pr_audit::test_pin_upgrade_rejects_missing_policy_and_unapproved_workflow"
+      ],
+      "regression": [
+        "tests.test_verify_independent_pr_audit::test_reviewer_must_have_repository_write_access"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "tests/test_verify_independent_pr_audit.py": [
+      {
+        "case": "tests/test_verify_independent_pr_audit.py::test_preapproved_pin_only_migration_keeps_workflow_check_trusted",
+        "test_case_id": "tests.test_verify_independent_pr_audit::test_preapproved_pin_only_migration_keeps_workflow_check_trusted"
+      },
+      {
+        "case": "tests/test_verify_independent_pr_audit.py::test_pin_upgrade_policy_names_only_verified_setup_python_transition",
+        "test_case_id": "tests.test_verify_independent_pr_audit::test_pin_upgrade_policy_names_only_verified_setup_python_transition"
+      }
+    ]
+  },
+  "review_scope": "PR #170 issue #169, originada da develop; apenas policy base-owned de uma migração literal em validate.yml, verificador canônico, testes adversariais e docs. A instalação à main, revisão independente e merge são etapas futuras separadas, não auto-aprovadas. Regressão adicional: SHA igual deve autenticar o conteúdo de ambos os blobs Git, rejeitando bytes falsos, omitidos ou corrompidos."
+}
