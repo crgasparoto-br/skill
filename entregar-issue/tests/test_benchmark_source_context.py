@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from risk_inference import (
+from risk_inference import (  # noqa: E402 - local scripts dir is initialized above
     derive_families_from_text,
     derive_surfaces,
     requires_benchmark_path_fidelity,
@@ -71,7 +71,7 @@ def test_generator_and_validator_do_not_invent_performance_for_git_baseline() ->
             "--requirement-closure", str(closure),
             "--head-sha", "a" * 40,
             "--out", str(output),
-        ], capture_output=True, text=True)
+        ], check=False, capture_output=True, text=True)
         assert run.returncode == 0, run.stdout + run.stderr
         matrix = json.loads(output.read_text(encoding="utf-8"))
         assert all(
