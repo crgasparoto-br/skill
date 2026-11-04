@@ -43,7 +43,7 @@ def test_workflow_checks_out_workflow_sha_and_never_executes_candidate_code():
     assert steps.index(checkout) < next(i for i, step in enumerate(steps) if "run" in step)
     assert checkout["uses"] == "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
     setup = next(step for step in steps if step.get("uses", "").startswith("actions/setup-python@"))
-    assert setup["uses"] == "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97"
+    assert setup["uses"] == "actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
     commands = [step.get("run", "") for step in steps]
     assert any("--require-hashes" in command and "auditar-issue/requirements.lock.txt" in command
                for command in commands)
