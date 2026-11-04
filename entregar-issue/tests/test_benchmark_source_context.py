@@ -15,8 +15,7 @@ from risk_inference import (  # noqa: E402 - local scripts dir is initialized ab
     derive_surfaces,
     requires_benchmark_path_fidelity,
 )
-
-from validate_requirement_attack_matrix import required_performance_surfaces  # noqa: E402
+from validate_requirement_attack_matrix import required_performance_surfaces  # noqa: E402 - local scripts path prepared above
 
 NON_PERFORMANCE = [
     "As subissues podem referenciar o SHA integrado como baseline de codigo.",
