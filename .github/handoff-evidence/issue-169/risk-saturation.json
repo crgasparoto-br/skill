@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "families": [
+    {
+      "family": "authorization",
+      "applicable": true,
+      "status": "passed",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
+      "control_ids": [
+        "NEG-R169-01-OBL-006",
+        "NEG-R169-03-OBL-009",
+        "NEG-R169-03-OBL-010",
+        "NEG-R169-06-OBL-013"
+      ],
+      "dimensions": [
+        {
+          "surface": "authenticated-trusted-base",
+          "reason": "Inspect and execute negative tests against authenticated-trusted-base for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-03-OBL-009",
+            "NEG-R169-03-OBL-010"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "review-gate-authorization",
+          "reason": "Inspect and execute negative tests against review-gate-authorization for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-06-OBL-013"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "trusted-migration-policy",
+          "reason": "Inspect and execute negative tests against trusted-migration-policy for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-01-OBL-006"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "concurrency-atomicity",
+      "applicable": true,
+      "status": "passed",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
+      "control_ids": [
+        "NEG-R169-02-OBL-007",
+        "NEG-R169-02-OBL-011"
+      ],
+      "dimensions": [
+        {
+          "surface": "single-line-atomic-migration",
+          "reason": "Inspect and execute negative tests against single-line-atomic-migration for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-02-OBL-007",
+            "NEG-R169-02-OBL-011"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "documentation",
+      "applicable": true,
+      "status": "passed",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
+      "control_ids": [
+        "NEG-R169-06-OBL-016",
+        "NEG-R169-06-OBL-018",
+        "NEG-R169-06-OBL-020"
+      ],
+      "dimensions": [
+        {
+          "surface": "protected-bootstrap-and-release",
+          "reason": "Inspect and execute negative tests against protected-bootstrap-and-release for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-06-OBL-016",
+            "NEG-R169-06-OBL-018",
+            "NEG-R169-06-OBL-020"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "historical-immutability",
+      "applicable": true,
+      "status": "passed",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
+      "control_ids": [
+        "NEG-R169-02-OBL-008"
+      ],
+      "dimensions": [
+        {
+          "surface": "historical-pin-immutability",
+          "reason": "Inspect and execute negative tests against historical-pin-immutability for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-02-OBL-008"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "idempotency",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
+    },
+    {
+      "family": "public-boundary",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
+    },
+    {
+      "family": "reference-liveness",
+      "applicable": true,
+      "status": "passed",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
+      "control_ids": [
+        "NEG-R169-05-OBL-005",
+        "NEG-R169-05-OBL-014",
+        "NEG-R169-05-OBL-015"
+      ],
+      "dimensions": [
+        {
+          "surface": "adversarial-regression-coverage",
+          "reason": "Inspect and execute negative tests against adversarial-regression-coverage for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-05-OBL-005",
+            "NEG-R169-05-OBL-014",
+            "NEG-R169-05-OBL-015"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "rollback",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
+    },
+    {
+      "family": "structural-contract",
+      "applicable": true,
+      "status": "passed",
+      "reason": "The exact-SHA matrix covers source-derived trust and workflow provenance in this applicable family.",
+      "control_ids": [
+        "NEG-R169-01-OBL-001",
+        "NEG-R169-01-OBL-002",
+        "NEG-R169-01-OBL-004",
+        "NEG-R169-03-OBL-019",
+        "NEG-R169-04-OBL-003",
+        "NEG-R169-04-OBL-012"
+      ],
+      "dimensions": [
+        {
+          "surface": "benchmark-path-fidelity",
+          "reason": "Inspect and execute negative tests against benchmark-path-fidelity for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-01-OBL-002",
+            "NEG-R169-03-OBL-019"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "shared-review-checker",
+          "reason": "Inspect and execute negative tests against shared-review-checker for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-04-OBL-003",
+            "NEG-R169-04-OBL-012"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "trusted-migration-policy",
+          "reason": "Inspect and execute negative tests against trusted-migration-policy for authorized versus altered workflow bytes.",
+          "control_ids": [
+            "NEG-R169-01-OBL-001",
+            "NEG-R169-01-OBL-004"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-consistency",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
+    },
+    {
+      "family": "temporal-destination",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
+    },
+    {
+      "family": "tenant-isolation",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "The issue and trust-checker diff do not introduce this family beyond canonical source-derived risks."
+    }
+  ],
+  "material_families_missing_controls": []
+}

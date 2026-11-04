@@ -81,6 +81,37 @@ exclusiva de timestamp do commit sintetico nao provoca recertificacao circular.
 
 Somente uma alteracao material ou uma evidencia realmente diferente exige nova revisao. Findings sao consolidados na mesma rodada. Credencial, dossie ou permissao ausente gera BLOCK com causa concreta, nao um ciclo automatico de tentativa.
 
+## Bootstrap seguro de atualizacoes de actions em workflow obrigatorio
+
+O verificador da base confiavel compara o Git blob de cada workflow que produz um
+check requerido. Mesmo quando os dois blobs declaram a mesma SHA Git, o verificador exige
+bytes base64 presentes e validos e recalcula o Git blob SHA de **ambas** as
+respostas antes de aceitar sua identidade. Igualdade de metadados, isoladamente,
+nao autoriza o workflow; bytes adulterados ou ausentes bloqueiam. Para mudanca de versao, o unico caso permitido e um **pin-only
+migration** preautorizado em
+[config/trusted-workflow-pin-migrations.json](../config/trusted-workflow-pin-migrations.json).
+A politica deve estar instalada por PR revisada na `develop` e, para a coleta
+por `workflow_run`, por release autorizado tambem na `main`, **antes** de
+executar a PR que altera o workflow.
+
+O leitor autenticado exige que os bytes da politica no checkout confiavel
+coincidam com os bytes e SHA Git obtidos do `base_sha` da PR. Recupera os bytes
+base e HEAD de cada workflow requerido e confirma seus Git blob SHAs. Apenas uma
+substituicao de linha `uses: actions/setup-python@<40-hex> # vX.Y.Z` descrita
+literalmente no manifesto e aceita; todo o resto do arquivo deve permanecer
+**byte a byte** igual. Mudancas em eventos, permissao, `run`, comentario,
+indentacao, tag movel, outras actions ou ausencia/adulteracao da politica
+continuam bloqueadas. A politica do HEAD candidato nao autoriza nada.
+
+O mecanismo e compartilhado por `Verify independent audit (exact SHA)` e pelo
+coletor de pacote neutro / verificador de revisao por sessao. Esta excecao
+**nao** cria aprovacao, nao muda rulesets, nao elimina testes e nao substitui
+certificacao. O bootstrap usa PR propria sem alterar workflows requeridos,
+passa por revisao independente e so depois pode ser promovido por release
+autorizado para a branch default; enquanto uma dessas etapas faltar, o
+comportamento correto e fail-closed. Depois da promocao, a PR de upgrade deve
+ser recertificada para a nova base e aprovada em contexto independente.
+
 ## Contrato do parecer
 
 Depositar um comentario na PR cujo corpo comece com `SOLVERIT_SESSION_REVIEW_V1`, seguido de quebra de linha e um unico objeto JSON. Nao publicar esse marcador como parte de narrativas ou exemplos operacionais na propria PR.
