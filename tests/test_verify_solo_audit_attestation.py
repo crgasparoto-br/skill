@@ -1,6 +1,7 @@
 """Fail-closed controls for the separate solo Ed25519 exact-SHA gate."""
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import json
@@ -455,7 +456,15 @@ def test_evaluate_target_integrates_real_signature_final_reads_and_exact_publica
         if "/actions/jobs/" in path:
             return jobs[int(path.rsplit("/", 1)[1])]
         if "/contents/" in path:
-            return {"type": "file", "sha": "e" * 40}
+            relative_path = path.split("/contents/", 1)[1].split("?ref=", 1)[0]
+            source_bytes = ROOT.joinpath(relative_path).read_bytes()
+            git_blob = b"blob " + str(len(source_bytes)).encode("ascii") + b"\0" + source_bytes
+            return {
+                "type": "file",
+                "sha": hashlib.sha1(git_blob, usedforsecurity=False).hexdigest(),
+                "encoding": "base64",
+                "content": base64.b64encode(source_bytes).decode("ascii"),
+            }
         if path.endswith(f"/pulls/{PR}/reviews?per_page=100&page=1"):
             return []
         if "/collaborators/" in path:
