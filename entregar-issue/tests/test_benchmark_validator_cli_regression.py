@@ -76,3 +76,36 @@ def test_real_benchmark_requires_fidelity_in_generator_and_cli(tmp_path: Path, s
     assert validated.returncode == 2
     assert "benchmark-path-fidelity" in validated.stdout
     assert "performance_contract" in validated.stdout
+@pytest.mark.parametrize("source", [
+    "O gerador acrescenta incorretamente structural-contract:benchmark-path-fidelity e performance_contract a documentacao visual.",
+    "requires_benchmark_path_fidelity(...)=True, apesar de nao haver latencia, benchmark ou otimizacao.",
+    "Controle positivo: Benchmark the same productive path before/after optimizing p95 latency => True.",
+    "Causa: PERFORMANCE_BENCHMARK_RE inclui baseline como sinal suficiente de benchmark; validador rederiva a classificacao.",
+    "Restringir benchmark-path-fidelity a requisitos de otimizacao reais, nao a SHA baseline visual.",
+    "Preservar benchmark-path-fidelity para requisitos efetivos (benchmark, production entrypoint, before/after de performance).",
+    "Adicionar testes negativos de baseline visual e testes positivos de benchmark real.",
+    "Observacao: nao criar performance_contract artificial para texto documental.",
+])
+def test_classifier_policy_examples_never_require_live_performance_evidence(tmp_path: Path, source: str) -> None:
+    item, validated = generate_and_validate(tmp_path, source)
+    assert "performance_contract" not in item
+    assert not item["quantitative_evidence_required"]
+    assert not any(
+        s["surface"] in {"benchmark-path-fidelity", "critical-path-necessity"}
+        for s in item["risk_surfaces"]
+    )
+    assert "benchmark-path-fidelity" not in validated.stdout
+    assert validated.returncode == 2  # Unrelated missing controls still block.
+
+
+def test_runtime_p95_benchmark_with_named_report_still_requires_evidence(tmp_path: Path) -> None:
+    source = (
+        "Run a p95 latency benchmark on the production entrypoint and record "
+        "a performance_contract with the measured execution result."
+    )
+    item, validated = generate_and_validate(tmp_path, source)
+    assert item["quantitative_evidence_required"]
+    assert "performance_contract" in item
+    assert any(s["surface"] == "benchmark-path-fidelity" for s in item["risk_surfaces"])
+    assert validated.returncode == 2
+    assert "performance_contract" in validated.stdout

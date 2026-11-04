@@ -269,12 +269,46 @@ def requires_relational_semantic_integrity(source_texts: Iterable[str]) -> bool:
     )
 
 
+PERFORMANCE_POLICY_ID_RE = re.compile(
+    r"\b(?:requires_benchmark_path_fidelity|PERFORMANCE_BENCHMARK_RE|"
+    r"performance_contract|benchmark-path-fidelity)\b", re.IGNORECASE,
+)
+PERFORMANCE_POLICY_FRAME_RE = re.compile(
+    r"\b(?:classificador|classifier|classifica[cç][aã]o|inference|infer[eê]ncia|"
+    r"gerador|validador|validator|requisitos? efetiv[oa]s?|restringir|preservar|"
+    r"sinais?|impr[oó]prios?|artificial|n[aã]o criar|apesar de n[aã]o haver)\b",
+    re.IGNORECASE,
+)
+PERFORMANCE_POLICY_TEST_RE = re.compile(
+    r"^(?:controle positivo|positive control|(?:adicionar|add|escrever|write)\s+"
+    r"testes?\s+(?:positivos|negativos))\b", re.IGNORECASE,
+)
+
+
+def is_performance_policy_meta(source_texts: Iterable[str]) -> bool:
+    """Risk taxonomy examples are not a request to execute a product benchmark.
+
+    The exception requires an explicit self-referential classifier identifier
+    with policy framing, or a literal positive/negative *test* example. A real
+    performance mandate still triggers every quantitative and path-fidelity gate.
+    """
+    text = compact_source_texts(source_texts).strip()
+    return bool(
+        PERFORMANCE_POLICY_TEST_RE.search(text)
+        or (PERFORMANCE_POLICY_ID_RE.search(text)
+            and PERFORMANCE_POLICY_FRAME_RE.search(text))
+    )
+
+
 def requires_quantitative_evidence(source_texts: Iterable[str]) -> bool:
-    return bool(QUANTITATIVE_RE.search(compact_source_texts(source_texts)))
+    text = compact_source_texts(source_texts)
+    return not is_performance_policy_meta([text]) and bool(QUANTITATIVE_RE.search(text))
 
 
 def requires_benchmark_path_fidelity(source_texts: Iterable[str]) -> bool:
     text = compact_source_texts(source_texts)
+    if is_performance_policy_meta([text]):
+        return False
     return bool(
         PERFORMANCE_BENCHMARK_RE.search(text)
         or (PERFORMANCE_COMPARISON_RE.search(text) and PERFORMANCE_METRIC_RE.search(text))
@@ -422,7 +456,7 @@ def derive_surfaces(source_texts: list[str]) -> list[dict]:
             "surface": "stage-attribution-completeness",
             "reason": "Stage metrics can under-report transitive or parallel operations that execute outside the declared timing boundary.",
         })
-    if PERFORMANCE_NECESSITY_RE.search(text):
+    if PERFORMANCE_NECESSITY_RE.search(text) and not is_performance_policy_meta(source_texts):
         surfaces.append({
             "risk_family": "structural-contract",
             "surface": "critical-path-necessity",
