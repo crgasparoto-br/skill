@@ -4,6 +4,13 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
+from performance_policy import (
+    PERFORMANCE_BENCHMARK_RE,
+    PERFORMANCE_COMPARISON_RE,
+    PERFORMANCE_METRIC_RE,
+    is_performance_policy_meta,
+)
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -153,11 +160,6 @@ PERFORMANCE_NECESSITY_RE = re.compile(
     r"\b(lat[eê]ncia|p50|p90|p95|percentil|caminho cr[ií]tico|critical path|opera[cç][oõ]es? n[aã]o essenciais|trabalho desnecess[aá]rio|lazy loading|redu[cç][aã]o de i/o)\b",
     re.IGNORECASE,
 )
-PERFORMANCE_BENCHMARK_RE = re.compile(
-    r"\b(benchmark|before/after|antes/depois|baseline|candidate|candidato|mesmo caminho produtivo|same productive path|production path|caminho produtivo|entrypoint produtivo|production entrypoint)\b",
-    re.IGNORECASE,
-)
-
 IDENTITY_FIELD_PATTERNS = {
     "plan": re.compile(r"\b(plan(?:code)?|plano)\b", re.IGNORECASE),
     "product": re.compile(r"\b(product(?:code)?|produto)\b", re.IGNORECASE),
@@ -259,11 +261,18 @@ def requires_relational_semantic_integrity(source_texts: Iterable[str]) -> bool:
 
 
 def requires_quantitative_evidence(source_texts: Iterable[str]) -> bool:
-    return bool(QUANTITATIVE_RE.search(compact_source_texts(source_texts)))
+    text = compact_source_texts(source_texts)
+    return not is_performance_policy_meta(text) and bool(QUANTITATIVE_RE.search(text))
 
 
 def requires_benchmark_path_fidelity(source_texts: Iterable[str]) -> bool:
-    return bool(PERFORMANCE_BENCHMARK_RE.search(compact_source_texts(source_texts)))
+    text = compact_source_texts(source_texts)
+    if is_performance_policy_meta(text):
+        return False
+    return bool(
+        PERFORMANCE_BENCHMARK_RE.search(text)
+        or (PERFORMANCE_COMPARISON_RE.search(text) and PERFORMANCE_METRIC_RE.search(text))
+    )
 
 
 def requires_reporting_coverage(source_texts: Iterable[str]) -> bool:
@@ -342,7 +351,7 @@ def derive_families_from_text(text: str, flags: Iterable[object] = ()) -> set[st
     for pattern, family in TEXT_FAMILIES:
         if pattern.search(text):
             families.add(family)
-    if PERFORMANCE_BENCHMARK_RE.search(text):
+    if requires_benchmark_path_fidelity([text]):
         families.add("structural-contract")
     if AUTHENTICATED_SESSION_RE.search(text) and TARGET_BINDING_RE.search(text):
         families.add("authorization")
@@ -407,13 +416,13 @@ def derive_surfaces(source_texts: list[str]) -> list[dict]:
             "surface": "stage-attribution-completeness",
             "reason": "Stage metrics can under-report transitive or parallel operations that execute outside the declared timing boundary.",
         })
-    if PERFORMANCE_NECESSITY_RE.search(text):
+    if PERFORMANCE_NECESSITY_RE.search(text) and not is_performance_policy_meta(text):
         surfaces.append({
             "risk_family": "structural-contract",
             "surface": "critical-path-necessity",
             "reason": "Latency can improve while expensive operations remain on the productive path even when their outputs are not consumed by the selected branch.",
         })
-    if PERFORMANCE_BENCHMARK_RE.search(text):
+    if requires_benchmark_path_fidelity([text]):
         surfaces.append({
             "risk_family": "structural-contract",
             "surface": "benchmark-path-fidelity",

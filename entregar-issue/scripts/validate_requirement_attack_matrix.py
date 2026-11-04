@@ -8,6 +8,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from audit_artifact_io import load_json_artifact
+from performance_policy import is_performance_policy_meta
 from risk_inference import (
     CANONICAL_RISK_FAMILIES,
     SEMANTIC_IDENTITY_DIVERGENCE_RE,
@@ -303,7 +304,7 @@ def required_performance_surfaces(item: dict) -> set[tuple[str, str]]:
     required: set[tuple[str, str]] = set()
     if PERFORMANCE_STAGE_RE.search(source_text):
         required.add(("structural-contract", "stage-attribution-completeness"))
-    if PERFORMANCE_NECESSITY_RE.search(source_text):
+    if PERFORMANCE_NECESSITY_RE.search(source_text) and not is_performance_policy_meta(source_text):
         required.add(("structural-contract", "critical-path-necessity"))
     if requires_benchmark_path_fidelity(source_texts):
         required.add(("structural-contract", "benchmark-path-fidelity"))
