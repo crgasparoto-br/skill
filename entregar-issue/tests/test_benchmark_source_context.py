@@ -16,6 +16,8 @@ from risk_inference import (  # noqa: E402 - local scripts dir is initialized ab
     requires_benchmark_path_fidelity,
 )
 
+from validate_requirement_attack_matrix import required_performance_surfaces  # noqa: E402
+
 NON_PERFORMANCE = [
     "As subissues podem referenciar o SHA integrado como baseline de codigo.",
     "O documento mostra a Golden Screen aprovada, nao um candidato antigo.",
@@ -33,6 +35,7 @@ REAL_PERFORMANCE = [
 def test_git_baseline_and_visual_candidate_do_not_imply_benchmark() -> None:
     for source in NON_PERFORMANCE:
         assert not requires_benchmark_path_fidelity([source]), source
+        assert not required_performance_surfaces({"source_texts": [source]}), source
         assert not any(
             entry["surface"] == "benchmark-path-fidelity"
             for entry in derive_surfaces([source])
@@ -42,6 +45,9 @@ def test_git_baseline_and_visual_candidate_do_not_imply_benchmark() -> None:
 def test_real_benchmarks_still_require_productive_path_fidelity() -> None:
     for source in REAL_PERFORMANCE:
         assert requires_benchmark_path_fidelity([source]), source
+        assert ("structural-contract", "benchmark-path-fidelity") in required_performance_surfaces(
+            {"source_texts": [source]}
+        ), source
         assert "structural-contract" in derive_families_from_text(source), source
         assert any(
             entry["surface"] == "benchmark-path-fidelity"
@@ -79,4 +85,5 @@ def test_generator_and_validator_do_not_invent_performance_for_git_baseline() ->
             and all(surface["surface"] != "benchmark-path-fidelity" for surface in item["risk_surfaces"])
             for item in matrix["requirements"]
         )
+        assert all(not required_performance_surfaces(item) for item in matrix["requirements"])
 
