@@ -127,7 +127,23 @@
       "const": false
     },
     "independent": {
-      "const": true
+      "type": "boolean"
+    },
+    "assurance_mode": {
+      "enum": [
+        "single-operator-separate-context"
+      ]
+    },
+    "operator_github_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "pull_request": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "issue_body_sha256": {
+      "$ref": "#/$defs/sha256"
     },
     "issued_at": {
       "type": "string",
@@ -525,6 +541,69 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "required": [
+          "assurance_mode"
+        ]
+      },
+      "then": {
+        "required": [
+          "operator_github_id",
+          "pull_request",
+          "issue_body_sha256"
+        ],
+        "properties": {
+          "assurance_mode": {
+            "const": "single-operator-separate-context"
+          },
+          "independent": {
+            "const": false
+          },
+          "same_conversation": {
+            "const": false
+          },
+          "verdict": {
+            "const": "approved"
+          },
+          "findings": {
+            "const": []
+          },
+          "recommendations": {
+            "const": []
+          },
+          "limitations": {
+            "const": []
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "independent": {
+            "const": true
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "operator_github_id"
+              ]
+            },
+            {
+              "required": [
+                "pull_request"
+              ]
+            },
+            {
+              "required": [
+                "issue_body_sha256"
+              ]
+            }
+          ]
+        }
+      }
+    },
     {
       "if": {
         "properties": {

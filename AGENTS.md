@@ -24,6 +24,15 @@ O desenvolvimento é sequencial: uma issue por vez, sem divergência paralela.
 3. Abrir a PR contra `develop`.
 4. Promover `develop` para `main` somente em release. Nenhuma skill tem autoridade implícita de merge, e nenhuma automação deste repositório faz merge. Tags e releases apontam para commits já mergeados em `main`.
 
+Na perda irreversivel da conversa original de implementacao, nunca inventar
+referencia ChatGPT. Somente a opcao `github-implementation-provenance`
+explicitamente habilitada **na base confiavel** permite substituir a declaracao
+de sessao por historico GitHub autenticado; a auditoria permanece numa conversa
+real distinta, com `separate-context-declared-not-cryptographically-proven`.
+O parecer exige controles independentes, e a simples equivalencia de merge
+preview nao altera SHA de HEAD/base nem autoriza merge. Seguir
+[docs/WEB_INDEPENDENT_AUDIT.md](docs/WEB_INDEPENDENT_AUDIT.md).
+
 ## Forma canônica da issue
 
 O ciclo de entrega deriva requisitos do corpo da issue. As seções `Escopo`, `Requisitos`, `Critérios de aceite` e `Invariantes` são lidas como candidatos obrigatórios do fechamento, por dois parsers independentes: o produtor em `entregar-issue` e o controle de auditoria em `auditar-issue`.

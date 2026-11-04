@@ -1,0 +1,72 @@
+name: Verify solo Ed25519 audit attestation
+
+# Separate assurance mode. The candidate PR, comment, issue, and artifacts are DATA only.
+# The gate never claims a third-party human review and never edits the native audit gate.
+on:
+  pull_request_target:
+    branches: [develop, main]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  issue_comment:
+    types: [created, edited, deleted]
+  issues:
+    types: [edited]
+  workflow_run:
+    workflows: ["Validate skills", "Validate GitHub Audit MCP", "Collect and certify exact-SHA handoff"]
+    types: [completed]
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+  checks: write
+
+concurrency:
+  group: solo-audit-attestation-${{ github.repository }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  revalidate:
+    name: Trusted solo audit controller
+    # No caller-selected ref. `github.workflow_sha` is checked out below; the
+    # event payload is used only to locate live PRs through authenticated REST.
+    if: >-
+      github.ref_protected &&
+      ((github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') ||
+       github.event_name == 'pull_request_review') &&
+      (github.event_name != 'issue_comment' || github.event.issue.pull_request) &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout trusted workflow source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install hash-pinned verifier dependencies
+        run: python -m pip install --disable-pip-version-check --require-hashes -r auditar-issue/requirements.lock.txt
+      - name: Validate the solo-context Ed25519 attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          TARGET_REPOSITORY: ${{ github.repository }}
+          TRUSTED_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          TRUSTED_RUN_ID: ${{ github.run_id }}
+        run: >-
+          python scripts/verify_solo_audit_attestation.py
+          --repo "$TARGET_REPOSITORY"
+          --event "$GITHUB_EVENT_PATH"
+          --workflow-sha "$TRUSTED_WORKFLOW_SHA"
+          --run-id "$TRUSTED_RUN_ID"

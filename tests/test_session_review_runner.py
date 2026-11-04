@@ -613,3 +613,80 @@ def test_review_rechecks_operator_permission_before_publication(review_backend):
     assert backend.run() == 2
     assert backend.checks[-1]["conclusion"] == "failure"
     assert not any(body.get("conclusion") == "success" for _, body in backend.writes)
+
+
+@pytest.mark.parametrize("mutation", ["same-tree", "second-rotation", "changed-tree", "changed-parent"])
+def test_evaluate_stable_certified_preview_during_github_recreation(review_backend, monkeypatch, mutation):
+    backend = review_backend
+    certified, first_live, later_live = "c" * 40, "d" * 40, "e" * 40
+    backend.packet["certification_event_sha256"] = "f" * 64
+    backend.packet["merge_preview_reconciliation"] = {
+        "certified_sha": certified, "current_sha": first_live,
+        "mode": "equivalent-ordered-parents-and-tree", "tree_sha": "1" * 40,
+        "ordered_parents": ["b" * 40, "a" * 40]}
+    backend.pr["merge_commit_sha"] = first_live
+    original_api = backend.api
+
+    def read(endpoint, *, method="GET", data=None):
+        if "/git/commits/" in endpoint and method == "GET":
+            sha = endpoint.rsplit("/", 1)[-1]
+            result = {"sha": sha, "parents": [{"sha": "b" * 40}, {"sha": "a" * 40}],
+                      "tree": {"sha": "1" * 40}}
+            if mutation == "changed-tree" and sha == first_live:
+                result["tree"]["sha"] = "2" * 40
+            if mutation == "changed-parent" and sha == first_live:
+                result["parents"].reverse()
+            return result
+        return original_api(endpoint, method=method, data=data)
+
+    monkeypatch.setattr(runner, "api", read)
+    if mutation == "second-rotation":
+        backend.on_recheck = lambda: backend.pr.update(merge_commit_sha=later_live)
+    status = backend.run()
+    if mutation in {"same-tree", "second-rotation"}:
+        assert status == 0
+        receipt = json.loads(backend.checks[-1]["output"]["text"])
+        assert receipt["identity"]["merge_preview_sha"] == certified
+        assert receipt["merge_preview_reconciliation"]["current_sha"] == (
+            later_live if mutation == "second-rotation" else first_live)
+        assert backend.checks[-1]["conclusion"] == "success"
+    else:
+        assert status == 2
+        assert backend.checks[-1]["conclusion"] == "failure"
+
+
+def test_final_pr_identity_recheck_blocks_concurrent_tree_change(review_backend, monkeypatch):
+    """A preview replaced while final comment is read cannot reuse an old proof."""
+    backend = review_backend
+    original = "c" * 40
+    current = "d" * 40
+    changed = "e" * 40
+    backend.packet["certification_event_sha256"] = "1" * 64
+    backend.packet["merge_preview_reconciliation"] = {
+        "certified_sha": original, "current_sha": current,
+        "mode": "equivalent-ordered-parents-and-tree", "tree_sha": "2" * 40,
+        "ordered_parents": ["b" * 40, "a" * 40]}
+    backend.pr["merge_commit_sha"] = current
+    original_api = backend.api
+    responses = [0]
+
+    def individual(comment):
+        responses[0] += 1
+        if responses[0] == 2:
+            backend.pr["merge_commit_sha"] = changed
+        return comment
+
+    backend.get_comment_form = individual
+
+    def reader(endpoint, *, method="GET", data=None):
+        if "/git/commits/" in endpoint and method == "GET":
+            sha = endpoint.rsplit("/", 1)[-1]
+            return {"sha": sha, "parents": [{"sha": "b" * 40}, {"sha": "a" * 40}],
+                    "tree": {"sha": ("f" if sha == changed else "2") * 40}}
+        return original_api(endpoint, method=method, data=data)
+
+    monkeypatch.setattr(runner, "api", reader)
+    assert backend.run() == 2
+    assert responses[0] >= 2
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert all(body.get("conclusion") != "success" for _, body in backend.writes)
