@@ -95,6 +95,7 @@ def test_classifier_policy_examples_never_require_live_performance_evidence(tmp_
         for s in item["risk_surfaces"]
     )
     assert "benchmark-path-fidelity" not in validated.stdout
+    assert "critical-path-necessity" not in validated.stdout
     assert validated.returncode == 2  # Unrelated missing controls still block.
 
 
@@ -108,4 +109,5 @@ def test_runtime_p95_benchmark_with_named_report_still_requires_evidence(tmp_pat
     assert "performance_contract" in item
     assert any(s["surface"] == "benchmark-path-fidelity" for s in item["risk_surfaces"])
     assert validated.returncode == 2
+    assert "critical-path-necessity" in validated.stdout
     assert "performance_contract" in validated.stdout
