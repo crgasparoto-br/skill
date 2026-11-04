@@ -8,5 +8,9 @@
       "id": 255721831,
       "login": "crgasparoto-br"
     }
-  ]
+  ],
+  "implementation_provenance": {
+    "mode": "enabled",
+    "type": "github-implementation-provenance"
+  }
 }

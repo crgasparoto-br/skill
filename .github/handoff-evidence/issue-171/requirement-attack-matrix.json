@@ -1,0 +1,1496 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "requirements": [
+    {
+      "requirement_id": "R171-001",
+      "obligation_ids": [
+        "OBL-001"
+      ],
+      "risk_families": [
+        "authorization",
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Permitir que o operador unico conclua uma revisao por sessao valida quando a conversa original da implementacao nao for mais recuperavel, usando proveniencia GitHub autenticada e auditoria efetivamente separada, sem inventar sessao, aprovar automaticamente ou enfraquecer checks. Evitar tambem que a recriacao de um merge preview byte-equivalente gere bloqueio espurio."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-001 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-001",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-001 must be checked against authenticated source, distinct negative oracle and regression."
+        },
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-001 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-004",
+      "obligation_ids": [
+        "OBL-004"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "O contrato existente, em `docs/WEB_INDEPENDENT_AUDIT.md` e `scripts/session_review.py`, exige em `sessions.implementation` e `sessions.audit` duas referencias reais fornecidas pelo operador, distintas, e `separate_context_attested=true`."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-004 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-004",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-004 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-007",
+      "obligation_ids": [
+        "OBL-007"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "Definir e implementar uma via explicita de `implementation_provenance` para sessao original indisponivel, distinguindo registro GitHub autenticado de conversa ChatGPT."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-007 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-007",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-007 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[missing-source]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-008",
+      "obligation_ids": [
+        "OBL-008"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "Vincular a proveniencia recuperada a issue, PR, base/HEAD, commits materiais e handoff autenticado no GitHub, exigindo nova declaracao do operador e auditoria em contexto separado."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-008 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-008",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-008 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_certificate_event::test_implementation_chain_requires_git_authenticated_linear_material_history[valid]"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[wrong-handoff-digest]"
+        ],
+        "regression": [
+          "tests.test_session_certificate_event::test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-009",
+      "obligation_ids": [
+        "OBL-009"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "Corrigir a comparacao de merge preview para admitir somente equivalencia de resultado autenticada por GitHub entre commits sinteticos com os MESMOS pais ordenados e a MESMA tree, documentando as duas identidades e preservando verificacao exact-SHA do HEAD/base."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-009 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-009",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-009 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[equivalent]"
+        ],
+        "negative": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[different-tree]"
+        ],
+        "regression": [
+          "tests.test_session_certificate_event::test_certified_evidence_checks_pretest_event_before_verifier[equivalent-preview]"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-010",
+      "obligation_ids": [
+        "OBL-010"
+      ],
+      "risk_families": [
+        "documentation"
+      ],
+      "source_texts": [
+        "Estender os testes existentes de sessao e certificacao, conservando validadores oficiais, documentacao e caminho legado."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-010 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-010",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "documentation",
+          "surface": "normative-rollout-consistency",
+          "reason": "Potential documentation failure in R171-010 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[reversed-parents]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-011",
+      "obligation_ids": [
+        "OBL-011"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "A alternativa de proveniencia deve ser opt-in pela politica versionada da base confiavel e ser recusada quando ausente ou desabilitada."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-011 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-011",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-011 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[absent-policy]"
+        ],
+        "regression": [
+          "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-012",
+      "obligation_ids": [
+        "OBL-012"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "O revisor deve identificar expressamente o tipo `github-implementation-provenance`, sem alegar uma sessao ChatGPT original, e declarar a separacao real do contexto de auditoria."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-012 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-012",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-012 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[extra-field]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-013",
+      "obligation_ids": [
+        "OBL-013"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "O verificador deve autenticar via GitHub a cadeia de commits e o vinculo com a issue/PR e o SHA material, usando os objetos recebidos como dados nao confiaveis ate validacao."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-013 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-013",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-013 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_certificate_event::test_implementation_chain_requires_git_authenticated_linear_material_history[valid]"
+        ],
+        "negative": [
+          "tests.test_session_certificate_event::test_implementation_chain_requires_git_authenticated_linear_material_history[wrong-base]"
+        ],
+        "regression": [
+          "tests.test_session_certificate_event::test_promoted_trusted_base_requires_rebased_material_commits_and_new_handoff"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-014",
+      "obligation_ids": [
+        "OBL-014"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "A sessao auditora deve continuar sendo uma referencia real fornecida pelo operador e diferente da proveniencia da implementacao; sem referencia ou atestacao, o resultado deve continuar bloqueado."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-014 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-014",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-014 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[missing-audit]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-015",
+      "obligation_ids": [
+        "OBL-015"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Cada obrigacao canonica deve continuar a exigir analise independente especifica, fontes com linhas e SHA-256 e tres testes JUnit distintos: positivo, negativo e regressao."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-015 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-015",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-015 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review_dossier::test_current_dossier_reconciles_all_canonical_candidates"
+        ],
+        "negative": [
+          "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+        ],
+        "regression": [
+          "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-016",
+      "obligation_ids": [
+        "OBL-016"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "A equivalencia de merge preview deve exigir validacao autenticada de ambos os objetos Git, pais ordenados idênticos [base, HEAD] e tree identica; diferente tree, pai ou identidade deve falhar."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-016 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-016",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-016 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[equivalent]"
+        ],
+        "negative": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[reversed-parents]"
+        ],
+        "regression": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_requires_exact_base_and_head_before_api"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-017",
+      "obligation_ids": [
+        "OBL-017"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "O verificador deve continuar recusando comentario alterado/excluido, autor nao autorizado, revisao superada, certificado invalido, checks nao autenticados ou HEAD/base alterados."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-017 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-017",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-017 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review_runner::test_review_accepts_only_presentation_differences_across_rest_forms"
+        ],
+        "negative": [
+          "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]"
+        ],
+        "regression": [
+          "tests.test_session_review_runner::test_evaluate_rejects_review_revoked_during_final_revalidation[deleted]"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-018",
+      "obligation_ids": [
+        "OBL-018"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "O contrato anterior de sessoes reais v1 deve continuar funcionando sem migracao implicita ou relaxamento."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-018 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-018",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-018 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-019",
+      "obligation_ids": [
+        "OBL-019"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Nao usar API de IA, segundo usuario GitHub, VPS, chave privada ou servico externo alem de GitHub/Actions."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-019 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-019",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-019 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[unauthorized-author]"
+        ],
+        "regression": [
+          "tests.test_session_review_runner::test_review_rechecks_operator_permission_before_publication"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-020",
+      "obligation_ids": [
+        "OBL-020"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Executar revisao a partir de codigo e politica confiaveis; nunca executar implementacao candidata para validar a propria aprovacao."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-020 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-020",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-020 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_certificate_event::test_trusted_runner_binds_extracted_github_facts_to_protected_base"
+        ],
+        "negative": [
+          "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[different-base]"
+        ],
+        "regression": [
+          "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-021",
+      "obligation_ids": [
+        "OBL-021"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Preservar o modelo de operador unico com limitacao explicita `separate-context-declared-not-cryptographically-proven`."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-021 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-021",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-021 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-022",
+      "obligation_ids": [
+        "OBL-022"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "Nenhum atalho pode declarar `Verify session review (exact SHA)=success` sem parecer formal autenticado e controles reais de revisao separados."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-022 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-022",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-022 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review_workflows::test_begin_check_rejects_states_that_could_bypass_review[completed-success]"
+        ],
+        "regression": [
+          "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-023",
+      "obligation_ids": [
+        "OBL-023"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Nunca atribuir um ID, URL ou data falsa a conversa ChatGPT perdida."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-023 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-023",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-023 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[extra-field]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-024",
+      "obligation_ids": [
+        "OBL-024"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "Nenhum arquivo candidato pode autoconceder permissao para o proprio parecer; so fonte de base previamente instalada controla a transicao."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-024 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-024",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-024 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_certificate_event::test_trusted_runner_binds_extracted_github_facts_to_protected_base"
+        ],
+        "negative": [
+          "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[different-base]"
+        ],
+        "regression": [
+          "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-025",
+      "obligation_ids": [
+        "OBL-025"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "Nao alterar required checks, workflow de publicacao, permissao, regras de protecao, ou forcar reruns/commits vazios para obter verde."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-025 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-025",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-025 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+        ],
+        "negative": [
+          "tests.test_session_review_workflows::test_begin_check_rejects_states_that_could_bypass_review[completed-success]"
+        ],
+        "regression": [
+          "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-026",
+      "obligation_ids": [
+        "OBL-026"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "A auditoria em contexto implementador jamais conta como auditoria independente."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-026 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-026",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-026 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+        ],
+        "regression": [
+          "tests.test_session_review_runner::test_evaluate_rejects_review_revoked_during_final_revalidation[deleted]"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-027",
+      "obligation_ids": [
+        "OBL-027"
+      ],
+      "risk_families": [
+        "authorization",
+        "reference-liveness",
+        "temporal-consistency"
+      ],
+      "source_texts": [
+        "[ ] Positivo: proveniencia GitHub genuina e autenticada, atestacao verdadeira de separacao, parecer completo por 20 obrigacoes e testes validos produzem revisao de sessao aprovada no SHA alvo, apos instalacao em bases confiaveis."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-027 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-027",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-027 must be checked against authenticated source, distinct negative oracle and regression."
+        },
+        {
+          "risk_family": "reference-liveness",
+          "surface": "exact-sha-reference-revalidation",
+          "reason": "Potential reference-liveness failure in R171-027 must be checked against authenticated source, distinct negative oracle and regression."
+        },
+        {
+          "risk_family": "temporal-consistency",
+          "surface": "source-evidence-freshness",
+          "reason": "Potential temporal-consistency failure in R171-027 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-028",
+      "obligation_ids": [
+        "OBL-028"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "[ ] Negativos: proveniencia inexistente, alterada, de outra issue/PR/HEAD, ausencia de referencia auditora, campos indevidos e atestacao falsa ou ausente continuam falhando."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-028 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-028",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-028 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[wrong-issue]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-029",
+      "obligation_ids": [
+        "OBL-029"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "[ ] Positivo: dois previews Git com pais ordenados e tree iguais, mesmo base/HEAD e timestamps distintos nao invalidam evidencias; registro guarda o digest original e a reconciliacao."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-029 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-029",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-029 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[equivalent]"
+        ],
+        "negative": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[different-tree]"
+        ],
+        "regression": [
+          "tests.test_session_certificate_event::test_certified_evidence_checks_pretest_event_before_verifier[equivalent-preview]"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-030",
+      "obligation_ids": [
+        "OBL-030"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "[ ] Negativos: preview com qualquer pai invertido/trocado, tree divergente, alvo movido ou objeto Git nao autenticado impede certificacao/review."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-030 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-030",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-030 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[equivalent]"
+        ],
+        "negative": [
+          "tests.test_session_certificate_event::test_preview_reconciliation_accepts_only_authenticated_same_tree_and_parents[missing-object]"
+        ],
+        "regression": [
+          "tests.test_session_review_runner::test_final_pr_identity_recheck_blocks_concurrent_tree_change"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-031",
+      "obligation_ids": [
+        "OBL-031"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "[ ] Regressao: contrato v1, revogacao, watermark, provas de source lines, testes JUnit e checks tecnicos obrigatorios mantem comportamento."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-031 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-031",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-031 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ],
+        "negative": [
+          "tests.test_session_review_runner::test_evaluate_revocation_survives_reuse_and_old_approval_fallback[edited]"
+        ],
+        "regression": [
+          "tests.test_session_review_dossier::test_dossier_cannot_promote_unexecuted_controls[skipped]"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-033",
+      "obligation_ids": [
+        "OBL-033"
+      ],
+      "risk_families": [
+        "rollback",
+        "temporal-consistency"
+      ],
+      "source_texts": [
+        "[ ] Documentar instalacao sequencial `develop` -> `main`, rollback, politica de transicao e auditoria separada; sem mergir automaticamente ou fechar #169 antes das evidencias M2."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-033 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-033",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "rollback",
+          "surface": "rollout-rollback-safety",
+          "reason": "Potential rollback failure in R171-033 must be checked against authenticated source, distinct negative oracle and regression."
+        },
+        {
+          "risk_family": "temporal-consistency",
+          "surface": "source-evidence-freshness",
+          "reason": "Potential temporal-consistency failure in R171-033 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+        ],
+        "negative": [
+          "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[different-base]"
+        ],
+        "regression": [
+          "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-034",
+      "obligation_ids": [
+        "OBL-034"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Chat de auditoria tambem ausente: permanecer bloqueado, exigir referencia auditora real."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-034 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-034",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-034 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[missing-audit]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_legacy_real_sessions_still_work_with_provenance_feature_enabled"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-035",
+      "obligation_ids": [
+        "OBL-035"
+      ],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "source_texts": [
+        "Revisor reutiliza a propria conversa de implementacao como auditoria: negar aprovacao."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-035 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-035",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "trusted-code-identity",
+          "reason": "Potential structural-contract failure in R171-035 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[same-context]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-036",
+      "obligation_ids": [
+        "OBL-036"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Atualizar `docs/WEB_INDEPENDENT_AUDIT.md` e o contrato do verificador de sessao; manter AGENTS.md e fonte normativa alinhados."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-036 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-036",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-036 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+        ],
+        "negative": [
+          "tests.test_session_review_dossier::test_changed_canonical_contract_rejects_reviewed_overlay[replace]"
+        ],
+        "regression": [
+          "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-037",
+      "obligation_ids": [
+        "OBL-037"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "Registrar especificamente que GitHub rastreia implementacao, mas NAO comprova identidade humana independente nem a existencia de uma conversa ChatGPT."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-037 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-037",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-037 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review::test_single_account_can_submit_only_explicitly_limited_review"
+        ],
+        "negative": [
+          "tests.test_session_review::test_recovered_provenance_adversarial_mutations_block[github-audit]"
+        ],
+        "regression": [
+          "tests.test_session_review::test_recovered_github_provenance_requires_real_separate_audit_and_preserves_controls"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-038",
+      "obligation_ids": [
+        "OBL-038"
+      ],
+      "risk_families": [
+        "semantic-effect"
+      ],
+      "source_texts": [
+        "A PR #170 permanece bloqueada ate haver codigo confiavel instalado e parecer valido; este registro e um plano de correção e NAO uma aprovacao."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-038 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-038",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "semantic-effect",
+          "surface": "review-outcome-integrity",
+          "reason": "Potential semantic-effect failure in R171-038 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review_workflows::test_begin_check_accepts_only_non_authorizing_github_states[in_progress-None]"
+        ],
+        "negative": [
+          "tests.test_session_review_workflows::test_begin_check_rejects_states_that_could_bypass_review[completed-success]"
+        ],
+        "regression": [
+          "tests.test_session_review_workflows::test_completed_check_that_cannot_reopen_creates_new_pending_check"
+        ]
+      }
+    },
+    {
+      "requirement_id": "R171-040",
+      "obligation_ids": [
+        "OBL-040"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "source_texts": [
+        "Contrato de bootstrap deve prever instalacao administrativa explicitamente autorizada e documentada caso o gate antigo nao consiga certificar sua propria substituicao, preservando os outros controles."
+      ],
+      "plausible_wrong_implementation": "A verifier could accept the ordinary success case of R171-040 while failing to reject modified identity, authority, audit source or merge evidence; the exact attack requires per-surface independent review.",
+      "positive_control": null,
+      "negative_controls": [],
+      "regression_controls": [],
+      "obligation_control_map": [
+        {
+          "obligation_id": "OBL-040",
+          "primary_negative_control_id": ""
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "authenticated-github-authority",
+          "reason": "Potential authorization failure in R171-040 must be checked against authenticated source, distinct negative oracle and regression."
+        }
+      ],
+      "quantitative_evidence_required": false,
+      "evidence_review_state": "pending-review-not-a-certificate",
+      "reviewed_case_candidates": {
+        "positive": [
+          "tests.test_session_review_workflows::test_session_routing_requires_policy_bytes_on_trusted_default_and_base[enabled-True]"
+        ],
+        "negative": [
+          "tests.test_session_review_workflows::test_session_routing_refuses_policy_drift_and_invalid_authority[different-base]"
+        ],
+        "regression": [
+          "tests.test_session_review_workflows::test_session_routing_preserves_legacy_when_policy_is_absent_on_both_sides"
+        ]
+      }
+    }
+  ],
+  "uncovered_requirements": [
+    "R171-001",
+    "R171-004",
+    "R171-007",
+    "R171-008",
+    "R171-009",
+    "R171-010",
+    "R171-011",
+    "R171-012",
+    "R171-013",
+    "R171-014",
+    "R171-015",
+    "R171-016",
+    "R171-017",
+    "R171-018",
+    "R171-019",
+    "R171-020",
+    "R171-021",
+    "R171-022",
+    "R171-023",
+    "R171-024",
+    "R171-025",
+    "R171-026",
+    "R171-027",
+    "R171-028",
+    "R171-029",
+    "R171-030",
+    "R171-031",
+    "R171-033",
+    "R171-034",
+    "R171-035",
+    "R171-036",
+    "R171-037",
+    "R171-038",
+    "R171-040"
+  ],
+  "review_state": "incomplete",
+  "note": "Structural attack inventory only. No negative control or execution is approved by this draft; official initializer and validator must be run on final closure."
+}

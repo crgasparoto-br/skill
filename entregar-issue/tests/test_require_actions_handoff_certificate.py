@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 
+import handoff_merge_preview as previews
 import pytest
 import yaml
 
@@ -35,6 +36,7 @@ def fixture(tmp_path: Path, *, state: str = "blocked") -> tuple[Path, Path]:
     put(evidence / "handoff-preflight.json", {"identity": {
         "repository": "team/repo", "pull_request_number": 113,
         "issue_number": 112, "material_head_sha": HEAD,
+        "merge_preview_sha": MERGE,
     }})
     put(evidence / "handoff-certification-status.json", {
         "status": state, "reason": "semantic closures have not been supplied",
@@ -189,5 +191,66 @@ def test_trusted_gate_rejects_changed_pretest_event(tmp_path, monkeypatch, tampe
     else:
         candidate["pull_request"]["merge_commit_sha"] = "d" * 40
     put(path, candidate)
+    with pytest.raises(ValueError, match="normalized event differs"):
+        gate.verify(evidence, event, "develop")
+
+
+@pytest.mark.parametrize("mutation", [
+    "equivalent", "divergent-tree", "reversed-parents", "foreign-head",
+    "missing-object", "wrong-object-sha", "missing-tree",
+])
+def test_trusted_certificate_accepts_only_authenticated_equivalent_previews(
+        tmp_path, monkeypatch, mutation):
+    """Independent certifier preserves original artifact when two rotations occur."""
+    evidence, event = fixture(tmp_path, state="certificate-generated")
+    recorded = {"repository": {"full_name": "team/repo"}, "pull_request": {
+        "number": 113, "title": "", "body": "", "merge_commit_sha": MERGE,
+        "head": {"sha": HEAD, "repo": {"full_name": "team/repo"}},
+        "base": {"sha": "b" * 40, "ref": "develop"}}}
+    put(evidence / "certification-event.json", recorded)
+    certified, current = "d" * 40, "e" * 40
+    cert_path = evidence / ".audit/entregar-issue/handoff-ready.json"
+    certificate = json.loads(cert_path.read_text())
+    certificate["identity"]["merge_preview_sha"] = certified
+    certificate["identity"]["material_merge_preview_sha"] = certified
+    put(cert_path, certificate)
+    monkeypatch.setenv("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW", "1")
+    monkeypatch.setattr(gate, "require_event_merge_preview", lambda *_: current)
+
+    def read(path):
+        sha = path.rsplit("/", 1)[-1]
+        if mutation == "missing-object" and sha == certified:
+            raise ValueError("authenticated Git object unavailable")
+        parents = [{"sha": "b" * 40}, {"sha": HEAD}]
+        if mutation == "reversed-parents" and sha == certified:
+            parents.reverse()
+        if mutation == "foreign-head" and sha == certified:
+            parents[1]["sha"] = "f" * 40
+        tree = "f" * 40 if mutation == "divergent-tree" and sha == current else "1" * 40
+        value = {"sha": sha, "parents": parents, "tree": {"sha": tree}}
+        if mutation == "wrong-object-sha" and sha == certified:
+            value["sha"] = "f" * 40
+        if mutation == "missing-tree" and sha == certified:
+            del value["tree"]
+        return value
+
+    monkeypatch.setattr(previews, "_read_json", read)
+    if mutation == "equivalent":
+        gate.verify(evidence, event, "develop")
+    else:
+        with pytest.raises(ValueError):
+            gate.verify(evidence, event, "develop")
+
+
+def test_trusted_certificate_does_not_accept_forged_original_preview(tmp_path, monkeypatch):
+    evidence, event = fixture(tmp_path, state="certificate-generated")
+    recorded = {"repository": {"full_name": "team/repo"}, "pull_request": {
+        "number": 113, "title": "", "body": "", "merge_commit_sha": "f" * 40,
+        "head": {"sha": HEAD, "repo": {"full_name": "team/repo"}},
+        "base": {"sha": "b" * 40, "ref": "develop"}}}
+    put(evidence / "certification-event.json", recorded)
+    monkeypatch.setenv("SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW", "1")
+    monkeypatch.setattr(gate, "require_event_merge_preview", lambda *_: MERGE)
+    monkeypatch.setattr(previews, "_read_json", lambda *_: pytest.fail("forged preview must fail before Git lookup"))
     with pytest.raises(ValueError, match="normalized event differs"):
         gate.verify(evidence, event, "develop")
