@@ -8,6 +8,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from audit_artifact_io import load_json_artifact
+from performance_policy import is_performance_policy_meta
 from risk_inference import (
     CANONICAL_RISK_FAMILIES,
     SEMANTIC_IDENTITY_DIVERGENCE_RE,
@@ -24,7 +25,6 @@ from risk_inference import (
 from risk_inference import (
     derive_surfaces as derive_source_surfaces,
 )
-from performance_policy import is_performance_policy_meta
 
 HIGH_RISK = {
     "authorization", "tenant-isolation", "public-boundary", "reference-liveness",

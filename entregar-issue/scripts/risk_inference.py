@@ -5,8 +5,10 @@ import re
 from typing import TYPE_CHECKING
 
 from performance_policy import (
-    PERFORMANCE_BENCHMARK_RE, PERFORMANCE_COMPARISON_RE,
-    PERFORMANCE_METRIC_RE, is_performance_policy_meta,
+    PERFORMANCE_BENCHMARK_RE,
+    PERFORMANCE_COMPARISON_RE,
+    PERFORMANCE_METRIC_RE,
+    is_performance_policy_meta,
 )
 
 if TYPE_CHECKING:
