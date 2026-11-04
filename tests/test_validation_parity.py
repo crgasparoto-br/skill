@@ -29,6 +29,7 @@ from scripts.validate_workflow_classification import (
     is_validation,
     markdown_commands,
     normalize,
+    step_problems,
     validate_workflow_classification,
     workflow_commands,
 )
@@ -82,6 +83,64 @@ def test_packaging_is_not_part_of_the_validation_sequence() -> None:
 def test_every_workflow_step_is_classified() -> None:
     """Todo passo do workflow, comando ou ação externa, precisa estar classificado."""
     assert classification_problems(ROOT / WORKFLOW) == []
+
+
+def test_setup_python_v7_pin_is_classified_in_every_workflow() -> None:
+    """O SHA oficial e aceito, enquanto refs antigas e nao fixadas continuam rejeitadas."""
+    pin = "actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
+    assert pin in ALLOWED_USES
+    references: list[tuple[str, str]] = []
+    for workflow in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+        document = yaml.safe_load(workflow.read_text(encoding="utf-8"))
+        for job in (document.get("jobs") or {}).values():
+            if not isinstance(job, dict):
+                continue
+            for step in job.get("steps", []):
+                if not isinstance(step, dict):
+                    continue
+                reference = step.get("uses")
+                if isinstance(reference, str) and reference.startswith("actions/setup-python@"):
+                    references.append((workflow.name, reference))
+    assert references, "nenhum workflow configura Python"
+    assert all(reference == pin for _, reference in references), references
+    assert step_problems("validate", 1, {"name": "Set up Python", "uses": pin}, ROOT) == []
+    for rejected in (
+        "actions/setup-python@v7",
+        "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+        "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+        "actions/setup-python@" + "0" * 40,
+    ):
+        assert step_problems("validate", 1, {"name": "Set up Python", "uses": rejected}, ROOT)
+
+
+def test_dependabot_updates_all_target_develop() -> None:
+    """Toda atualizacao automatica deve nascer na branch de desenvolvimento."""
+    config = yaml.safe_load((ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8"))
+    assert config["version"] == 2
+    updates = config["updates"]
+    assert updates
+    assert {
+        (update["package-ecosystem"], update["directory"])
+        for update in updates
+    } >= {("pip", "/auditar-issue"), ("pip", "/entregar-issue"), ("github-actions", "/")}
+    assert all(update.get("target-branch") == "develop" for update in updates)
+
+
+
+def test_dependabot_rejects_missing_or_main_target() -> None:
+    """Controles negativos: cada ecossistema deve falhar se o destino divergir de develop."""
+    config = yaml.safe_load((ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8"))
+    updates = config["updates"]
+    assert updates
+    for index in range(len(updates)):
+        for wrong_target in (None, "main"):
+            altered = [dict(update) for update in updates]
+            if wrong_target is None:
+                altered[index].pop("target-branch", None)
+            else:
+                altered[index]["target-branch"] = wrong_target
+            assert not all(update.get("target-branch") == "develop" for update in altered)
+
 
 
 def test_upload_artifact_v7_0_2_exact_sha_is_classified(tmp_path: Path) -> None:

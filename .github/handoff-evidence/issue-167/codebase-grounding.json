@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [],
+  "references": [],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "tests/test_validation_parity.py",
+      "operation": "modified",
+      "scenario": "Verificar pinagem em todos os nove workflows, rejeição de SHA/tag não autorizada e alvo develop para todos os ecossistemas Dependabot, inclusive ausência e main.",
+      "requirement": "Issue #167 R167-01 a R167-04; regressão explícita de ações e destino de PR.",
+      "search": {
+        "queries": [
+          "tests/test_validation_parity.py existente na develop: classificação adversarial e paridade",
+          "scripts/validate_workflow_classification.py: ALLOWED_USES e step_problems",
+          "tests/test_validation_parity.py no HEAD: testes de pinagem e target-branch"
+        ],
+        "scope": "Inspeção das fontes atuais e dos testes no arquivo existente; verificação do diff contra a base develop e do runner pytest existente, sem criar segunda suíte.",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "tests/test_validation_parity.py",
+            "case": "test_yaml_forms_cannot_hide_an_unclassified_step",
+            "oracle": "Rejeita referências YAML não declaradas e alterações sem autorização.",
+            "comparison": "Reaproveitado o mesmo módulo de paridade para estender a matriz negativa ao Dependabot, preservando cenários originais."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "O módulo atual já conhece ROOT, YAML e o validador. Teste parametrizado por entrada Dependabot cobre o caminho negativo sem novo arquivo, com mesmo runner pytest.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}
