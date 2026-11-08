@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "system": "skill-catalog",
-  "catalog_version": "2026-10-08.2",
+  "catalog_version": "2026-11-08.1",
   "skills": [
     {
       "id": "auditar-issue",
@@ -150,6 +150,9 @@
       "contract_version": "2026-08-20.3",
       "positive_triggers": [
         "implementar uma issue",
+        "implementar pendências",
+        "implementar as pendências",
+        "implementar todas as pendências",
         "entregar uma PR",
         "resolver uma pendência de software",
         "fazer a entrega ponta a ponta",
