@@ -7,7 +7,7 @@
         "R183-001"
       ],
       "inventory_ids": [
-        "INV-183-ROUTES"
+        "INV-183001"
       ],
       "assertion_ids": [],
       "scope_decision": null,
@@ -27,7 +27,7 @@
         "R183-003"
       ],
       "inventory_ids": [
-        "INV-183-ROUTES"
+        "INV-183001"
       ],
       "assertion_ids": [],
       "scope_decision": null,
@@ -49,7 +49,7 @@
         "R183-005"
       ],
       "inventory_ids": [
-        "INV-183-VERSION"
+        "INV-183002"
       ],
       "assertion_ids": [],
       "scope_decision": null,
@@ -61,7 +61,7 @@
         "R183-006"
       ],
       "inventory_ids": [
-        "INV-183-ROUTES"
+        "INV-183001"
       ],
       "assertion_ids": [],
       "scope_decision": null,
@@ -73,7 +73,7 @@
         "R183-007"
       ],
       "inventory_ids": [
-        "INV-183-ROUTES"
+        "INV-183001"
       ],
       "assertion_ids": [],
       "scope_decision": null,
@@ -155,7 +155,7 @@
         "R183-015"
       ],
       "inventory_ids": [
-        "INV-183-ROUTES"
+        "INV-183001"
       ],
       "assertion_ids": [],
       "scope_decision": null,
@@ -197,7 +197,7 @@
         "R183-019"
       ],
       "inventory_ids": [
-        "INV-183-VERSION"
+        "INV-183002"
       ],
       "assertion_ids": [],
       "scope_decision": null,
@@ -229,7 +229,7 @@
         "R183-022"
       ],
       "inventory_ids": [
-        "INV-183-VERSION"
+        "INV-183002"
       ],
       "assertion_ids": [],
       "scope_decision": null,
@@ -239,7 +239,7 @@
   "controls": {
     "domain_inventories": [
       {
-        "id": "INV-183-ROUTES",
+        "id": "INV-183001",
         "name": "Formas literais do comando implementar pendências",
         "closed_world": true,
         "producer_sources": [
@@ -292,7 +292,7 @@
         "rationale": "O escopo da issue define exatamente três expressões; as três são verificadas no teste de seleção."
       },
       {
-        "id": "INV-183-VERSION",
+        "id": "INV-183002",
         "name": "Projeções de catalog_version do snapshot 2026-11-08.1",
         "closed_world": true,
         "producer_sources": [
@@ -378,7 +378,7 @@
       "applicability_reason": "Invariantes estruturais OBL-004 e OBL-011 requerem seletor/owner únicos já existentes.",
       "entries": [
         {
-          "id": "SIC-183-004",
+          "id": "SIC-183004",
           "kind": "structural",
           "requirement_ids": [
             "R183-004"
@@ -403,7 +403,7 @@
           ]
         },
         {
-          "id": "SIC-183-011",
+          "id": "SIC-183011",
           "kind": "forbidden-implementation",
           "requirement_ids": [
             "R183-011"
@@ -434,7 +434,7 @@
       "applicability_reason": "O seletor lê metadados do catálogo e emite decision, candidatos e capacidades; as projeções expõem versão do catálogo.",
       "entries": [
         {
-          "id": "RMC-183-A",
+          "id": "RMC-183001",
           "contract_kind": "read-model",
           "requirement_ids": [
             "R183-001",
@@ -469,7 +469,7 @@
           ]
         },
         {
-          "id": "RMC-183-B",
+          "id": "RMC-183002",
           "contract_kind": "versioning",
           "requirement_ids": [
             "R183-005",
@@ -510,7 +510,7 @@
       "applicability_reason": "O catálogo é fonte de gatilhos/versões; projeções e seletor não são owners concorrentes.",
       "entries": [
         {
-          "id": "CSC-183-A",
+          "id": "CSC-183001",
           "semantic_field": "owner de implementar pendências",
           "canonical_source": "config/skills-catalog.json entregar-issue",
           "alternative_sources": [
@@ -540,7 +540,7 @@
           }
         },
         {
-          "id": "CSC-183-B",
+          "id": "CSC-183002",
           "semantic_field": "catalog_version",
           "canonical_source": "config/skills-catalog.json.catalog_version",
           "alternative_sources": [
