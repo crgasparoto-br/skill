@@ -12,11 +12,11 @@
   "audit_history": "verified-no-rejection",
   "audit_history_evidence": "Consulta autenticada da PR #184 em 08/11/2026 confirmou zero reviews e zero comentários de rejeição independente; a pré-auditoria deste chat não é rejeição externa.",
   "artifact_sha256": {
-    "reviewed-closure.json": "255d038f25940f32be773ee9fd4b12853c4e8ec37b3ff64db45c9c87d6592342",
-    "requirement-attack-matrix.json": "cd885adf3339884158c25f1ce8ab5485a0ccaf92086023eeff9d07979f2bcba8",
-    "risk-saturation.json": "65973bbfdb95a8c973c90599a078bacd5a16c5bd37202a2c26fa27be27b4c458",
-    "inherited-controls.json": "7fd94871f8e5daba7d3ed762fc8c1aa2813626f9802e7144dc8f44ced948e08c",
-    "codebase-grounding.json": "5b379203884e08bb9052a2085d2ff1d6b4b598ef9d027e94f9d2557c555e4713"
+    "requirement-attack-matrix.json": "285db1f9f58012f8fb7b718d6052d3bf0176895ce230ff1b450bd5d6e27acfde",
+    "risk-saturation.json": "b1b740f4deba587fcb64a9cbd0cd33633324c93c85376f3626d6a9c50e77a3c0",
+    "reviewed-closure.json": "b86b55bc34c144503cee07798ac4de8400411018103d77b20d5b637dbb8b7f84",
+    "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
+    "codebase-grounding.json": "fce80e3d4aececa3e1e9e69ab2a3af403442a47e5fc92716177cc039ed957115"
   },
   "test_bindings": {
     "R183-001": {
