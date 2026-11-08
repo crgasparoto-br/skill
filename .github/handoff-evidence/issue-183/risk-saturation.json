@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "families": [
+    {
+      "family": "authorization",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Controles específicos de authorization vinculam decisões e regressões a testes executados no SHA material.",
+      "control_ids": [
+        "NEG-R183-008-OBL-008",
+        "NEG-R183-017-OBL-017"
+      ],
+      "dimensions": [
+        {
+          "surface": "repository-write-capability",
+          "reason": "A superfície repository-write-capability possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-008-OBL-008",
+            "NEG-R183-017-OBL-017"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "concurrency-atomicity",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O diff de #183 muda roteamento de catálogo e testes; não alcança operação material independente de concurrency-atomicity.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "documentation",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Controles específicos de documentation vinculam decisões e regressões a testes executados no SHA material.",
+      "control_ids": [
+        "NEG-R183-005-OBL-005",
+        "NEG-R183-019-OBL-019",
+        "NEG-R183-022-OBL-022"
+      ],
+      "dimensions": [
+        {
+          "surface": "snapshot-version-parity",
+          "reason": "A superfície snapshot-version-parity possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-005-OBL-005",
+            "NEG-R183-019-OBL-019",
+            "NEG-R183-022-OBL-022"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "historical-immutability",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O diff de #183 muda roteamento de catálogo e testes; não alcança operação material independente de historical-immutability.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "idempotency",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Controles específicos de idempotency vinculam decisões e regressões a testes executados no SHA material.",
+      "control_ids": [
+        "NEG-R183-018-OBL-018"
+      ],
+      "dimensions": [
+        {
+          "surface": "duplicate-processing",
+          "reason": "A superfície duplicate-processing possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-018-OBL-018"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "public-boundary",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O diff de #183 muda roteamento de catálogo e testes; não alcança operação material independente de public-boundary.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "reference-liveness",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O diff de #183 muda roteamento de catálogo e testes; não alcança operação material independente de reference-liveness.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "rollback",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O diff de #183 muda roteamento de catálogo e testes; não alcança operação material independente de rollback.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "structural-contract",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Controles específicos de structural-contract vinculam decisões e regressões a testes executados no SHA material.",
+      "control_ids": [
+        "NEG-R183-001-OBL-001",
+        "NEG-R183-003-OBL-003",
+        "NEG-R183-004-OBL-004",
+        "NEG-R183-006-OBL-006",
+        "NEG-R183-007-OBL-007",
+        "NEG-R183-009-OBL-009",
+        "NEG-R183-010-OBL-010",
+        "NEG-R183-011-OBL-011",
+        "NEG-R183-012-OBL-012",
+        "NEG-R183-013-OBL-013",
+        "NEG-R183-014-OBL-014",
+        "NEG-R183-015-OBL-015",
+        "NEG-R183-020-OBL-020",
+        "NEG-R183-021-OBL-021"
+      ],
+      "dimensions": [
+        {
+          "surface": "catalog-routing",
+          "reason": "A superfície catalog-routing possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-001-OBL-001",
+            "NEG-R183-003-OBL-003",
+            "NEG-R183-006-OBL-006",
+            "NEG-R183-007-OBL-007",
+            "NEG-R183-015-OBL-015"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "existing-skill-ownership",
+          "reason": "A superfície existing-skill-ownership possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-004-OBL-004",
+            "NEG-R183-011-OBL-011",
+            "NEG-R183-012-OBL-012"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "workflow-separation",
+          "reason": "A superfície workflow-separation possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-009-OBL-009"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "no-implicit-merge",
+          "reason": "A superfície no-implicit-merge possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-010-OBL-010",
+            "NEG-R183-014-OBL-014",
+            "NEG-R183-020-OBL-020"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "negative-controls-preservation",
+          "reason": "A superfície negative-controls-preservation possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-013-OBL-013"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "existing-test-suite-reuse",
+          "reason": "A superfície existing-test-suite-reuse possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-021-OBL-021"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-consistency",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O diff de #183 muda roteamento de catálogo e testes; não alcança operação material independente de temporal-consistency.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "temporal-destination",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "O diff de #183 muda roteamento de catálogo e testes; não alcança operação material independente de temporal-destination.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "tenant-isolation",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Controles específicos de tenant-isolation vinculam decisões e regressões a testes executados no SHA material.",
+      "control_ids": [
+        "NEG-R183-016-OBL-016"
+      ],
+      "dimensions": [
+        {
+          "surface": "operational-profile-isolation",
+          "reason": "A superfície operational-profile-isolation possui ataque negativo e variantes irmãs.",
+          "control_ids": [
+            "NEG-R183-016-OBL-016"
+          ],
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "material_families_missing_controls": []
+}

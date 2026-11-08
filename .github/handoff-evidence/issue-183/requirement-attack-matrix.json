@@ -1,0 +1,2002 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "requirements": [
+    {
+      "requirement_id": "R183-001",
+      "obligation_ids": [
+        "OBL-001"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_routes_implementation_pendencies_to_delivery"
+        },
+        "evidence": "As três formas devem rotear a entregar-issue.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_pending_implementation_without_write_capability"
+          },
+          "evidence": "O teste executa as três expressões e confere a escolha do mesmo owner.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-001-OBL-001",
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "dimension": "source-obligation-001",
+          "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-001 e com o diff da PR #184.",
+          "expected": "As três formas devem rotear a entregar-issue.",
+          "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-001-OBL-001-S1",
+              "surface": "catalog-routing",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_pending_implementation_without_write_capability"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-001-OBL-001-S2",
+              "surface": "catalog-routing",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_explains_delivery_selection"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_explains_delivery_selection"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "reason": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-003",
+      "obligation_ids": [
+        "OBL-003"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_routes_implementation_pendencies_to_delivery"
+        },
+        "evidence": "As três formas devem rotear a entregar-issue.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_pending_implementation_without_write_capability"
+          },
+          "evidence": "O teste executa as três expressões e confere a escolha do mesmo owner.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-003-OBL-003",
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "dimension": "source-obligation-003",
+          "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-003 e com o diff da PR #184.",
+          "expected": "As três formas devem rotear a entregar-issue.",
+          "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-003-OBL-003-S1",
+              "surface": "catalog-routing",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_pending_implementation_without_write_capability"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-003-OBL-003-S2",
+              "surface": "catalog-routing",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_explains_delivery_selection"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_explains_delivery_selection"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "reason": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-004",
+      "obligation_ids": [
+        "OBL-004"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_catalog_is_valid_and_matches_skill_metadata"
+        },
+        "evidence": "Preservar os oito IDs canônicos e a heurística do seletor.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+          },
+          "evidence": "O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-004-OBL-004",
+          "risk_family": "structural-contract",
+          "surface": "existing-skill-ownership",
+          "dimension": "source-obligation-004",
+          "failure_mode": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
+          "plausible_wrong_implementation": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-004 e com o diff da PR #184.",
+          "expected": "Preservar os oito IDs canônicos e a heurística do seletor.",
+          "observed": "O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-004-OBL-004-S1",
+              "surface": "existing-skill-ownership",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-004-OBL-004-S2",
+              "surface": "existing-skill-ownership",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_runtime_skill_allowlist_matches_catalog"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_runtime_skill_allowlist_matches_catalog"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "existing-skill-ownership",
+          "reason": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-005",
+      "obligation_ids": [
+        "OBL-005"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "documentation"
+      ],
+      "plausible_wrong_implementation": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_versioning",
+          "name": "test_versioning_manifest_is_consistent"
+        },
+        "evidence": "A versão 2026-11-08.1 deve ser idêntica nas projeções sem alterar 0.3.3 nem system_version.; fonte tests/test_versioning.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_versioning.py",
+        "evidence_sha256": "7e3c504e554e1e33015f386d09ac20176990ea1da55a823f722edb1d273e4f9d"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_versioning",
+            "name": "test_versioning_rejects_stale_public_surfaces"
+          },
+          "evidence": "Os testes de versionamento e validação de documentação passaram na CI.; fonte tests/test_versioning.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_versioning.py",
+          "evidence_sha256": "7e3c504e554e1e33015f386d09ac20176990ea1da55a823f722edb1d273e4f9d",
+          "id": "NEG-R183-005-OBL-005",
+          "risk_family": "documentation",
+          "surface": "snapshot-version-parity",
+          "dimension": "source-obligation-005",
+          "failure_mode": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
+          "plausible_wrong_implementation": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
+          "procedure": "Executar test_versioning_rejects_stale_public_surfaces; source tests/test_versioning.py:488-504 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-005 e com o diff da PR #184.",
+          "expected": "A versão 2026-11-08.1 deve ser idêntica nas projeções sem alterar 0.3.3 nem system_version.",
+          "observed": "Os testes de versionamento e validação de documentação passaram na CI.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-005-OBL-005-S1",
+              "surface": "snapshot-version-parity",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_versioning",
+                "name": "test_versioning_rejects_stale_public_surfaces"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-005-OBL-005-S2",
+              "surface": "snapshot-version-parity",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_versioning",
+                "name": "test_versioning_rejects_system_version_drift"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_versioning",
+            "name": "test_versioning_rejects_system_version_drift"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_versioning.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_versioning.py",
+          "evidence_sha256": "7e3c504e554e1e33015f386d09ac20176990ea1da55a823f722edb1d273e4f9d"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "documentation",
+          "surface": "snapshot-version-parity",
+          "reason": "Manter versão antiga do catálogo em algum manifesto geraria drift documental."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-006",
+      "obligation_ids": [
+        "OBL-006"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_routes_implementation_pendencies_to_delivery"
+        },
+        "evidence": "As três formas devem rotear a entregar-issue.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_pending_implementation_without_write_capability"
+          },
+          "evidence": "O teste executa as três expressões e confere a escolha do mesmo owner.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-006-OBL-006",
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "dimension": "source-obligation-006",
+          "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-006 e com o diff da PR #184.",
+          "expected": "As três formas devem rotear a entregar-issue.",
+          "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-006-OBL-006-S1",
+              "surface": "catalog-routing",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_pending_implementation_without_write_capability"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-006-OBL-006-S2",
+              "surface": "catalog-routing",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_explains_delivery_selection"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_explains_delivery_selection"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "reason": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-007",
+      "obligation_ids": [
+        "OBL-007"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_routes_implementation_pendencies_to_delivery"
+        },
+        "evidence": "As três formas devem rotear a entregar-issue.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_pending_implementation_without_write_capability"
+          },
+          "evidence": "O teste executa as três expressões e confere a escolha do mesmo owner.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-007-OBL-007",
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "dimension": "source-obligation-007",
+          "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-007 e com o diff da PR #184.",
+          "expected": "As três formas devem rotear a entregar-issue.",
+          "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-007-OBL-007-S1",
+              "surface": "catalog-routing",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_pending_implementation_without_write_capability"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-007-OBL-007-S2",
+              "surface": "catalog-routing",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_explains_delivery_selection"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_explains_delivery_selection"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "reason": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-008",
+      "obligation_ids": [
+        "OBL-008"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_blocks_pending_implementation_without_write_capability"
+        },
+        "evidence": "Quando falta capacidade obrigatória o resultado tem de ser BLOCKED.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+          },
+          "evidence": "O teste de entrada sem repository-write observa BLOCKED, não concessão implícita.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-008-OBL-008",
+          "risk_family": "authorization",
+          "surface": "repository-write-capability",
+          "dimension": "source-obligation-008",
+          "failure_mode": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
+          "plausible_wrong_implementation": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-008 e com o diff da PR #184.",
+          "expected": "Quando falta capacidade obrigatória o resultado tem de ser BLOCKED.",
+          "observed": "O teste de entrada sem repository-write observa BLOCKED, não concessão implícita.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-008-OBL-008-S1",
+              "surface": "repository-write-capability",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-008-OBL-008-S2",
+              "surface": "repository-write-capability",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_delivery_without_write_capability"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_delivery_without_write_capability"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "repository-write-capability",
+          "reason": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-009",
+      "obligation_ids": [
+        "OBL-009"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "A seleção nova poderia tomar pedidos exclusivos de auditoria, revisão ou corrigir CI.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+        },
+        "evidence": "Pedidos isolados usam seus owners antigos; combinação ambígua permanece UNKNOWN.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+          },
+          "evidence": "O teste cobre essas rotas e a combinação com implementar pendências.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-009-OBL-009",
+          "risk_family": "structural-contract",
+          "surface": "workflow-separation",
+          "dimension": "source-obligation-009",
+          "failure_mode": "A seleção nova poderia tomar pedidos exclusivos de auditoria, revisão ou corrigir CI.",
+          "plausible_wrong_implementation": "A seleção nova poderia tomar pedidos exclusivos de auditoria, revisão ou corrigir CI.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-009 e com o diff da PR #184.",
+          "expected": "Pedidos isolados usam seus owners antigos; combinação ambígua permanece UNKNOWN.",
+          "observed": "O teste cobre essas rotas e a combinação com implementar pendências.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-009-OBL-009-S1",
+              "surface": "workflow-separation",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-009-OBL-009-S2",
+              "surface": "workflow-separation",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_explains_delivery_selection"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_explains_delivery_selection"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "workflow-separation",
+          "reason": "A seleção nova poderia tomar pedidos exclusivos de auditoria, revisão ou corrigir CI."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-010",
+      "obligation_ids": [
+        "OBL-010"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_explains_delivery_selection"
+        },
+        "evidence": "O roteamento não concede execução parcial, merge ou aprovação independente.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+          },
+          "evidence": "Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-010-OBL-010",
+          "risk_family": "structural-contract",
+          "surface": "no-implicit-merge",
+          "dimension": "source-obligation-010",
+          "failure_mode": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
+          "plausible_wrong_implementation": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-010 e com o diff da PR #184.",
+          "expected": "O roteamento não concede execução parcial, merge ou aprovação independente.",
+          "observed": "Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-010-OBL-010-S1",
+              "surface": "no-implicit-merge",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-010-OBL-010-S2",
+              "surface": "no-implicit-merge",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_catalog_is_valid_and_matches_skill_metadata"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_catalog_is_valid_and_matches_skill_metadata"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "no-implicit-merge",
+          "reason": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-011",
+      "obligation_ids": [
+        "OBL-011"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_catalog_is_valid_and_matches_skill_metadata"
+        },
+        "evidence": "Preservar os oito IDs canônicos e a heurística do seletor.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+          },
+          "evidence": "O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-011-OBL-011",
+          "risk_family": "structural-contract",
+          "surface": "existing-skill-ownership",
+          "dimension": "source-obligation-011",
+          "failure_mode": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
+          "plausible_wrong_implementation": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-011 e com o diff da PR #184.",
+          "expected": "Preservar os oito IDs canônicos e a heurística do seletor.",
+          "observed": "O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-011-OBL-011-S1",
+              "surface": "existing-skill-ownership",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-011-OBL-011-S2",
+              "surface": "existing-skill-ownership",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_runtime_skill_allowlist_matches_catalog"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_runtime_skill_allowlist_matches_catalog"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "existing-skill-ownership",
+          "reason": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-012",
+      "obligation_ids": [
+        "OBL-012"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_catalog_is_valid_and_matches_skill_metadata"
+        },
+        "evidence": "Preservar os oito IDs canônicos e a heurística do seletor.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+          },
+          "evidence": "O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-012-OBL-012",
+          "risk_family": "structural-contract",
+          "surface": "existing-skill-ownership",
+          "dimension": "source-obligation-012",
+          "failure_mode": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
+          "plausible_wrong_implementation": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-012 e com o diff da PR #184.",
+          "expected": "Preservar os oito IDs canônicos e a heurística do seletor.",
+          "observed": "O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-012-OBL-012-S1",
+              "surface": "existing-skill-ownership",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-012-OBL-012-S2",
+              "surface": "existing-skill-ownership",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_runtime_skill_allowlist_matches_catalog"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_runtime_skill_allowlist_matches_catalog"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "existing-skill-ownership",
+          "reason": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-013",
+      "obligation_ids": [
+        "OBL-013"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Remover negativos ou adaptar indevidamente a heurística permitiria regressões em rotas concorrentes.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+        },
+        "evidence": "Rotas negativas, capacidade e UNKNOWN continuam com controles de regressão.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_pending_implementation_without_write_capability"
+          },
+          "evidence": "Testes negativos e antigos de ambiguidade permaneceram passed no run 42446128890.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-013-OBL-013",
+          "risk_family": "structural-contract",
+          "surface": "negative-controls-preservation",
+          "dimension": "source-obligation-013",
+          "failure_mode": "Remover negativos ou adaptar indevidamente a heurística permitiria regressões em rotas concorrentes.",
+          "plausible_wrong_implementation": "Remover negativos ou adaptar indevidamente a heurística permitiria regressões em rotas concorrentes.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-013 e com o diff da PR #184.",
+          "expected": "Rotas negativas, capacidade e UNKNOWN continuam com controles de regressão.",
+          "observed": "Testes negativos e antigos de ambiguidade permaneceram passed no run 42446128890.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-013-OBL-013-S1",
+              "surface": "negative-controls-preservation",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_pending_implementation_without_write_capability"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-013-OBL-013-S2",
+              "surface": "negative-controls-preservation",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "negative-controls-preservation",
+          "reason": "Remover negativos ou adaptar indevidamente a heurística permitiria regressões em rotas concorrentes."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-014",
+      "obligation_ids": [
+        "OBL-014"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_explains_delivery_selection"
+        },
+        "evidence": "O roteamento não concede execução parcial, merge ou aprovação independente.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+          },
+          "evidence": "Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-014-OBL-014",
+          "risk_family": "structural-contract",
+          "surface": "no-implicit-merge",
+          "dimension": "source-obligation-014",
+          "failure_mode": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
+          "plausible_wrong_implementation": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-014 e com o diff da PR #184.",
+          "expected": "O roteamento não concede execução parcial, merge ou aprovação independente.",
+          "observed": "Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-014-OBL-014-S1",
+              "surface": "no-implicit-merge",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-014-OBL-014-S2",
+              "surface": "no-implicit-merge",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_catalog_is_valid_and_matches_skill_metadata"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_catalog_is_valid_and_matches_skill_metadata"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "no-implicit-merge",
+          "reason": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-015",
+      "obligation_ids": [
+        "OBL-015"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_routes_implementation_pendencies_to_delivery"
+        },
+        "evidence": "As três formas devem rotear a entregar-issue.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_pending_implementation_without_write_capability"
+          },
+          "evidence": "O teste executa as três expressões e confere a escolha do mesmo owner.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-015-OBL-015",
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "dimension": "source-obligation-015",
+          "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-015 e com o diff da PR #184.",
+          "expected": "As três formas devem rotear a entregar-issue.",
+          "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-015-OBL-015-S1",
+              "surface": "catalog-routing",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_pending_implementation_without_write_capability"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-015-OBL-015-S2",
+              "surface": "catalog-routing",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_explains_delivery_selection"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_explains_delivery_selection"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "catalog-routing",
+          "reason": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-016",
+      "obligation_ids": [
+        "OBL-016"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "tenant-isolation"
+      ],
+      "plausible_wrong_implementation": "Misturar dois perfis de operação distintos de auditoria e entrega escolheria owner incorreto.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+        },
+        "evidence": "Perfis de tarefa diferentes retornam rotas separadas e pedido misto retorna UNKNOWN.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+          },
+          "evidence": "O teste observa rotas de auditoria, revisão, CI e entrega sem misturá-las.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-016-OBL-016",
+          "risk_family": "tenant-isolation",
+          "surface": "operational-profile-isolation",
+          "dimension": "source-obligation-016",
+          "failure_mode": "Misturar dois perfis de operação distintos de auditoria e entrega escolheria owner incorreto.",
+          "plausible_wrong_implementation": "Misturar dois perfis de operação distintos de auditoria e entrega escolheria owner incorreto.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-016 e com o diff da PR #184.",
+          "expected": "Perfis de tarefa diferentes retornam rotas separadas e pedido misto retorna UNKNOWN.",
+          "observed": "O teste observa rotas de auditoria, revisão, CI e entrega sem misturá-las.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-016-OBL-016-S1",
+              "surface": "operational-profile-isolation",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_fails_closed_on_ambiguous_or_unknown_request"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-016-OBL-016-S2",
+              "surface": "operational-profile-isolation",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_explains_delivery_selection"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_explains_delivery_selection"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "tenant-isolation",
+          "surface": "operational-profile-isolation",
+          "reason": "Misturar dois perfis de operação distintos de auditoria e entrega escolheria owner incorreto."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-017",
+      "obligation_ids": [
+        "OBL-017"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_blocks_pending_implementation_without_write_capability"
+        },
+        "evidence": "Quando falta capacidade obrigatória o resultado tem de ser BLOCKED.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+          },
+          "evidence": "O teste de entrada sem repository-write observa BLOCKED, não concessão implícita.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-017-OBL-017",
+          "risk_family": "authorization",
+          "surface": "repository-write-capability",
+          "dimension": "source-obligation-017",
+          "failure_mode": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
+          "plausible_wrong_implementation": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-017 e com o diff da PR #184.",
+          "expected": "Quando falta capacidade obrigatória o resultado tem de ser BLOCKED.",
+          "observed": "O teste de entrada sem repository-write observa BLOCKED, não concessão implícita.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-017-OBL-017-S1",
+              "surface": "repository-write-capability",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-017-OBL-017-S2",
+              "surface": "repository-write-capability",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_delivery_without_write_capability"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_delivery_without_write_capability"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "repository-write-capability",
+          "reason": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-018",
+      "obligation_ids": [
+        "OBL-018"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "idempotency"
+      ],
+      "plausible_wrong_implementation": "Criar fixture duplicada para cada caso poderia ocultar a regra única do seletor de catálogo.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+        },
+        "evidence": "Os testes usam um único catálogo e preservam os cenários positivos e negativos.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_pending_implementation_without_write_capability"
+          },
+          "evidence": "O diff mostra extensão do módulo existente sem criar fixture ou nova suíte.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-018-OBL-018",
+          "risk_family": "idempotency",
+          "surface": "duplicate-processing",
+          "dimension": "source-obligation-018",
+          "failure_mode": "Criar fixture duplicada para cada caso poderia ocultar a regra única do seletor de catálogo.",
+          "plausible_wrong_implementation": "Criar fixture duplicada para cada caso poderia ocultar a regra única do seletor de catálogo.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-018 e com o diff da PR #184.",
+          "expected": "Os testes usam um único catálogo e preservam os cenários positivos e negativos.",
+          "observed": "O diff mostra extensão do módulo existente sem criar fixture ou nova suíte.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-018-OBL-018-S1",
+              "surface": "duplicate-processing",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_pending_implementation_without_write_capability"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-018-OBL-018-S2",
+              "surface": "duplicate-processing",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_catalog_is_valid_and_matches_skill_metadata"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_catalog_is_valid_and_matches_skill_metadata"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "idempotency",
+          "surface": "duplicate-processing",
+          "reason": "Criar fixture duplicada para cada caso poderia ocultar a regra única do seletor de catálogo."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-019",
+      "obligation_ids": [
+        "OBL-019"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "documentation"
+      ],
+      "plausible_wrong_implementation": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_versioning",
+          "name": "test_versioning_manifest_is_consistent"
+        },
+        "evidence": "A versão 2026-11-08.1 deve ser idêntica nas projeções sem alterar 0.3.3 nem system_version.; fonte tests/test_versioning.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_versioning.py",
+        "evidence_sha256": "7e3c504e554e1e33015f386d09ac20176990ea1da55a823f722edb1d273e4f9d"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_versioning",
+            "name": "test_versioning_rejects_stale_public_surfaces"
+          },
+          "evidence": "Os testes de versionamento e validação de documentação passaram na CI.; fonte tests/test_versioning.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_versioning.py",
+          "evidence_sha256": "7e3c504e554e1e33015f386d09ac20176990ea1da55a823f722edb1d273e4f9d",
+          "id": "NEG-R183-019-OBL-019",
+          "risk_family": "documentation",
+          "surface": "snapshot-version-parity",
+          "dimension": "source-obligation-019",
+          "failure_mode": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
+          "plausible_wrong_implementation": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
+          "procedure": "Executar test_versioning_rejects_stale_public_surfaces; source tests/test_versioning.py:488-504 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-019 e com o diff da PR #184.",
+          "expected": "A versão 2026-11-08.1 deve ser idêntica nas projeções sem alterar 0.3.3 nem system_version.",
+          "observed": "Os testes de versionamento e validação de documentação passaram na CI.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-019-OBL-019-S1",
+              "surface": "snapshot-version-parity",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_versioning",
+                "name": "test_versioning_rejects_stale_public_surfaces"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-019-OBL-019-S2",
+              "surface": "snapshot-version-parity",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_versioning",
+                "name": "test_versioning_rejects_system_version_drift"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_versioning",
+            "name": "test_versioning_rejects_system_version_drift"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_versioning.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_versioning.py",
+          "evidence_sha256": "7e3c504e554e1e33015f386d09ac20176990ea1da55a823f722edb1d273e4f9d"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "documentation",
+          "surface": "snapshot-version-parity",
+          "reason": "Manter versão antiga do catálogo em algum manifesto geraria drift documental."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-020",
+      "obligation_ids": [
+        "OBL-020"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_explains_delivery_selection"
+        },
+        "evidence": "O roteamento não concede execução parcial, merge ou aprovação independente.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+          },
+          "evidence": "Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-020-OBL-020",
+          "risk_family": "structural-contract",
+          "surface": "no-implicit-merge",
+          "dimension": "source-obligation-020",
+          "failure_mode": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
+          "plausible_wrong_implementation": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-020 e com o diff da PR #184.",
+          "expected": "O roteamento não concede execução parcial, merge ou aprovação independente.",
+          "observed": "Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-020-OBL-020-S1",
+              "surface": "no-implicit-merge",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-020-OBL-020-S2",
+              "surface": "no-implicit-merge",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_catalog_is_valid_and_matches_skill_metadata"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_catalog_is_valid_and_matches_skill_metadata"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "no-implicit-merge",
+          "reason": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-021",
+      "obligation_ids": [
+        "OBL-021"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Uma fixture de teste duplicada ou suíte paralela poderia ocultar falhas de roteamento.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_catalog_governance",
+          "name": "test_router_preserves_distinct_or_ambiguous_workflows"
+        },
+        "evidence": "Usar tests/test_catalog_governance.py e o rank_skills existente, com positivos e negativos.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_catalog_governance.py",
+        "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_router_blocks_pending_implementation_without_write_capability"
+          },
+          "evidence": "O diff somente estende o arquivo de testes existente e os novos casos passaram.; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6",
+          "id": "NEG-R183-021-OBL-021",
+          "risk_family": "structural-contract",
+          "surface": "existing-test-suite-reuse",
+          "dimension": "source-obligation-021",
+          "failure_mode": "Uma fixture de teste duplicada ou suíte paralela poderia ocultar falhas de roteamento.",
+          "plausible_wrong_implementation": "Uma fixture de teste duplicada ou suíte paralela poderia ocultar falhas de roteamento.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-021 e com o diff da PR #184.",
+          "expected": "Usar tests/test_catalog_governance.py e o rank_skills existente, com positivos e negativos.",
+          "observed": "O diff somente estende o arquivo de testes existente e os novos casos passaram.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-021-OBL-021-S1",
+              "surface": "existing-test-suite-reuse",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_router_blocks_pending_implementation_without_write_capability"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-021-OBL-021-S2",
+              "surface": "existing-test-suite-reuse",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_catalog_governance",
+                "name": "test_catalog_is_valid_and_matches_skill_metadata"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_catalog_governance",
+            "name": "test_catalog_is_valid_and_matches_skill_metadata"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_catalog_governance.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_catalog_governance.py",
+          "evidence_sha256": "bf8dec4822dd0e15370187231c4ce4e7dfc077acc2ce752e52c2e20e3d4577b6"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "existing-test-suite-reuse",
+          "reason": "Uma fixture de teste duplicada ou suíte paralela poderia ocultar falhas de roteamento."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R183-022",
+      "obligation_ids": [
+        "OBL-022"
+      ],
+      "source_texts": [],
+      "risk_families": [
+        "documentation"
+      ],
+      "plausible_wrong_implementation": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_versioning",
+          "name": "test_versioning_manifest_is_consistent"
+        },
+        "evidence": "A versão 2026-11-08.1 deve ser idêntica nas projeções sem alterar 0.3.3 nem system_version.; fonte tests/test_versioning.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+        "evidence_path": "tests/test_versioning.py",
+        "evidence_sha256": "7e3c504e554e1e33015f386d09ac20176990ea1da55a823f722edb1d273e4f9d"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_versioning",
+            "name": "test_versioning_rejects_stale_public_surfaces"
+          },
+          "evidence": "Os testes de versionamento e validação de documentação passaram na CI.; fonte tests/test_versioning.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_versioning.py",
+          "evidence_sha256": "7e3c504e554e1e33015f386d09ac20176990ea1da55a823f722edb1d273e4f9d",
+          "id": "NEG-R183-022-OBL-022",
+          "risk_family": "documentation",
+          "surface": "snapshot-version-parity",
+          "dimension": "source-obligation-022",
+          "failure_mode": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
+          "plausible_wrong_implementation": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
+          "procedure": "Executar test_versioning_rejects_stale_public_surfaces; source tests/test_versioning.py:488-504 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-022 e com o diff da PR #184.",
+          "expected": "A versão 2026-11-08.1 deve ser idêntica nas projeções sem alterar 0.3.3 nem system_version.",
+          "observed": "Os testes de versionamento e validação de documentação passaram na CI.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R183-022-OBL-022-S1",
+              "surface": "snapshot-version-parity",
+              "dimension": "alternate-route-or-value",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_versioning",
+                "name": "test_versioning_rejects_stale_public_surfaces"
+              },
+              "evidence": "A entrada negativa exercita rota ou valor alternativo e exige a decisão conservadora."
+            },
+            {
+              "id": "NEG-R183-022-OBL-022-S2",
+              "surface": "snapshot-version-parity",
+              "dimension": "existing-contract-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_versioning",
+                "name": "test_versioning_rejects_system_version_drift"
+              },
+              "evidence": "A variante irmã preserva o contrato anterior comprovado pelo JUnit de regressão."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_versioning",
+            "name": "test_versioning_rejects_system_version_drift"
+          },
+          "evidence": "Controle de regressão anterior preservado; fonte tests/test_versioning.py; execução é verificada no JUnit autenticado do material SHA pelo gate Actions.",
+          "evidence_path": "tests/test_versioning.py",
+          "evidence_sha256": "7e3c504e554e1e33015f386d09ac20176990ea1da55a823f722edb1d273e4f9d"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "documentation",
+          "surface": "snapshot-version-parity",
+          "reason": "Manter versão antiga do catálogo em algum manifesto geraria drift documental."
+        }
+      ],
+      "quantitative_evidence_required": false
+    }
+  ],
+  "uncovered_requirements": []
+}

@@ -48,6 +48,45 @@ def test_router_explains_delivery_selection() -> None:
     assert result["candidates"][0]["matched_positive"]
 
 
+def test_router_routes_implementation_pendencies_to_delivery() -> None:
+    catalog = load_catalog(ROOT)
+    for query in (
+        "implementar pendências",
+        "implementar as pendências",
+        "implementar todas as pendências",
+        "implementar todas as pendências da auditoria",
+    ):
+        result = rank_skills(query, catalog)
+        assert result["decision"] == "entregar-issue", query
+        assert result["candidates"][0]["matched_positive"], query
+
+
+def test_router_blocks_pending_implementation_without_write_capability() -> None:
+    catalog = load_catalog(ROOT)
+    for query in (
+        "implementar pendências",
+        "implementar as pendências",
+        "implementar todas as pendências",
+    ):
+        result = rank_skills(query, catalog, {"repository-read", "test-execution", "ci-read", "immutable-identity"})
+        assert result["decision"] == "BLOCKED", query
+        selected = result["candidates"][0]
+        assert selected["skill"] == "entregar-issue", query
+        assert "repository-write" in selected["missing_capabilities"], query
+
+
+def test_router_preserves_distinct_or_ambiguous_workflows() -> None:
+    catalog = load_catalog(ROOT)
+    for query, expected in (
+        ("auditar uma PR", "auditar-issue"),
+        ("corrigir a CI", "corrigir-ci"),
+        ("revisar uma issue", "revisar-issue"),
+        ("sem merge", "UNKNOWN"),
+        ("corrigir a CI e implementar pendências", "UNKNOWN"),
+    ):
+        assert rank_skills(query, catalog)["decision"] == expected, query
+
+
 def test_router_blocks_delivery_without_write_capability() -> None:
     result = rank_skills(
         "implementar uma issue e entregar a PR",
