@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 183,
+  "pull_request_number": 184,
+  "base_ref": "develop",
+  "head_ref": "fix/183-explicitar-entregar-pendencias",
+  "work_item_start_sha": "a28be10db466631cd5e5e4dbe0429da250cd8b42",
+  "review_state": "approved",
+  "evidence_profile": "critical",
+  "risk_justification": "Os flags canônicos da issue #183 incluem atomicity, isolation e política de reutilização; o validador standard bloqueia estes flags. O perfil critical mantém os controles de escopo, roteamento e regressão sem reduzir os gates.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "Consulta autenticada da PR #184 em 08/11/2026 confirmou zero reviews e zero comentários de rejeição independente; a pré-auditoria deste chat não é rejeição externa.",
+  "artifact_sha256": {
+    "reviewed-closure.json": "255d038f25940f32be773ee9fd4b12853c4e8ec37b3ff64db45c9c87d6592342",
+    "requirement-attack-matrix.json": "cd885adf3339884158c25f1ce8ab5485a0ccaf92086023eeff9d07979f2bcba8",
+    "risk-saturation.json": "65973bbfdb95a8c973c90599a078bacd5a16c5bd37202a2c26fa27be27b4c458",
+    "inherited-controls.json": "7fd94871f8e5daba7d3ed762fc8c1aa2813626f9802e7144dc8f44ced948e08c",
+    "codebase-grounding.json": "5b379203884e08bb9052a2085d2ff1d6b4b598ef9d027e94f9d2557c555e4713"
+  },
+  "test_bindings": {
+    "R183-001": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ]
+    },
+    "R183-003": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ]
+    },
+    "R183-004": {
+      "positive": [
+        "tests.test_catalog_governance::test_catalog_is_valid_and_matches_skill_metadata"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_runtime_skill_allowlist_matches_catalog"
+      ]
+    },
+    "R183-005": {
+      "positive": [
+        "tests.test_versioning::test_versioning_manifest_is_consistent"
+      ],
+      "negative": [
+        "tests.test_versioning::test_versioning_rejects_stale_public_surfaces"
+      ],
+      "regression": [
+        "tests.test_versioning::test_versioning_rejects_system_version_drift"
+      ]
+    },
+    "R183-006": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ]
+    },
+    "R183-007": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ]
+    },
+    "R183-008": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_blocks_delivery_without_write_capability"
+      ]
+    },
+    "R183-009": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ]
+    },
+    "R183-010": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_catalog_is_valid_and_matches_skill_metadata"
+      ]
+    },
+    "R183-011": {
+      "positive": [
+        "tests.test_catalog_governance::test_catalog_is_valid_and_matches_skill_metadata"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_runtime_skill_allowlist_matches_catalog"
+      ]
+    },
+    "R183-012": {
+      "positive": [
+        "tests.test_catalog_governance::test_catalog_is_valid_and_matches_skill_metadata"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_runtime_skill_allowlist_matches_catalog"
+      ]
+    },
+    "R183-013": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request"
+      ]
+    },
+    "R183-014": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_catalog_is_valid_and_matches_skill_metadata"
+      ]
+    },
+    "R183-015": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ]
+    },
+    "R183-016": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ]
+    },
+    "R183-017": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_blocks_delivery_without_write_capability"
+      ]
+    },
+    "R183-018": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_catalog_is_valid_and_matches_skill_metadata"
+      ]
+    },
+    "R183-019": {
+      "positive": [
+        "tests.test_versioning::test_versioning_manifest_is_consistent"
+      ],
+      "negative": [
+        "tests.test_versioning::test_versioning_rejects_stale_public_surfaces"
+      ],
+      "regression": [
+        "tests.test_versioning::test_versioning_rejects_system_version_drift"
+      ]
+    },
+    "R183-020": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_explains_delivery_selection"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_catalog_is_valid_and_matches_skill_metadata"
+      ]
+    },
+    "R183-021": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_catalog_is_valid_and_matches_skill_metadata"
+      ]
+    },
+    "R183-022": {
+      "positive": [
+        "tests.test_versioning::test_versioning_manifest_is_consistent"
+      ],
+      "negative": [
+        "tests.test_versioning::test_versioning_rejects_stale_public_surfaces"
+      ],
+      "regression": [
+        "tests.test_versioning::test_versioning_rejects_system_version_drift"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "tests/test_catalog_governance.py": [
+      {
+        "case": "tests/test_catalog_governance.py::test_router_routes_implementation_pendencies_to_delivery",
+        "test_case_id": "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      },
+      {
+        "case": "tests/test_catalog_governance.py::test_router_blocks_pending_implementation_without_write_capability",
+        "test_case_id": "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      },
+      {
+        "case": "tests/test_catalog_governance.py::test_router_preserves_distinct_or_ambiguous_workflows",
+        "test_case_id": "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      }
+    ]
+  },
+  "review_scope": "Escopo da issue #183, PR #184, sem autorização de merge e sem afirmar auditoria independente; dossiê técnico ligado a testes reproduzíveis."
+}

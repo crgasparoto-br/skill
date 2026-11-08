@@ -1,0 +1,660 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "a49cd3d23c1fa42d955faa52f2da1666569de721c11ef151ab18b88391006a41": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-001"
+      ],
+      "inventory_ids": [
+        "INV-183-ROUTES"
+      ],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O teste executa as três expressões e confere a escolha do mesmo owner. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "d96503e626e8e2bb70698ab7b5b0bfda7c9f46553ebdf18c045927b2e17583fc": {
+      "disposition": "not-applicable",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A obrigação é narrativa histórica sobre o estado anterior do catálogo. O comportamento implementável está nos itens OBL-001/003/007; não se exige que o estado antigo permaneça no HEAD."
+    },
+    "5163752d79e38165cc4ef9d4be740582a65355479dbe61c32264fb3c475ad8c7": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-003"
+      ],
+      "inventory_ids": [
+        "INV-183-ROUTES"
+      ],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O teste executa as três expressões e confere a escolha do mesmo owner. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "d5c506b6ff0f44e3eb3c3d7b1cb2ffa1f8e7b32e47dd6d5cc36022f7cc1b76c2": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-004"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "de4372e8484f46976b2250c82c00f21e863769101dd8e51a5592861ff76dde2c": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-005"
+      ],
+      "inventory_ids": [
+        "INV-183-VERSION"
+      ],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. Os testes de versionamento e validação de documentação passaram na CI. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "9c9abc87fffba540e63b338fabb695ae092add66439fea4b9c6fc145c5d34484": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-006"
+      ],
+      "inventory_ids": [
+        "INV-183-ROUTES"
+      ],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O teste executa as três expressões e confere a escolha do mesmo owner. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "daaa8541043e5082808a562753b923e41cf725a9433bf954c8f645ef1afdf3a6": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-007"
+      ],
+      "inventory_ids": [
+        "INV-183-ROUTES"
+      ],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O teste executa as três expressões e confere a escolha do mesmo owner. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "5f4be3e317cf9e993524fb9c27378bde6e5c444a5ac7372713a5a1393bd0eb31": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-008"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O teste de entrada sem repository-write observa BLOCKED, não concessão implícita. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "fc0c4f4b88b6d4d37835151a4e82d7b704a9059d1e15b9c2f17e3bb6d472d476": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-009"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O teste cobre essas rotas e a combinação com implementar pendências. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "f440ed0261e8aee0440fadccd982452d923f921dfb7efb852109d02ac84c5d2e": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-010"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "367e2e7a33e0169d1857b4c6396d980aebde7bc28acaf85690a0506630a80ad8": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-011"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "5b23b8e7070f5b81c925c50f518e0712ed47756526f3d2cc6d44a041771d8577": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-012"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "800db36f94fd149229b35ed0f4ef617473d813898a34635ada91a10f9a934846": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-013"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. Testes negativos e antigos de ambiguidade permaneceram passed no run 42446128890. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "0b1c47aa86eb3cd9708b3454b5b1701bfe76c2221e2a931b30c642c0b8edb5f8": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-014"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "9a0d240491b3517cdaa0dd2eb91f89138b17af5c011dda6365b0f385134010bc": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-015"
+      ],
+      "inventory_ids": [
+        "INV-183-ROUTES"
+      ],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O teste executa as três expressões e confere a escolha do mesmo owner. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "a354a31f2bca8034af204e863095cea24451af3f7842987f2ed52c80af1e6cda": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-016"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O teste cobre essas rotas e a combinação com implementar pendências. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "89458d678c35ff61a3c86e99581db61a6e69c2e93420b8afe74f6b5944cc2ebe": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-017"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O teste de entrada sem repository-write observa BLOCKED, não concessão implícita. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "e132ed69f5fba0c129301358e71077428616998c93726a1a089282de99d07e0b": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-018"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O diff somente estende o arquivo de testes existente e os novos casos passaram. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "6e30dbb7b332b978e77e2a5da230654924ebde068dc2b02a511da2263afd96b6": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-019"
+      ],
+      "inventory_ids": [
+        "INV-183-VERSION"
+      ],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. Os testes de versionamento e validação de documentação passaram na CI. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "a68b4024b82a3e302020b7f73417d9e9cac74be237eeb33ec831904477d6ef34": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-020"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "a4ffd2d60182d1701130535ef024f0e1f124f40d365f0ba6102c2b5d1c18746b": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-021"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. O diff somente estende o arquivo de testes existente e os novos casos passaram. Testes e fontes foram revisados sem inferir aprovação externa."
+    },
+    "a63d466cfc27f1dc943f3fe2b012697f6661a98ffdcda7ce4418e2d0e6ff683a": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R183-022"
+      ],
+      "inventory_ids": [
+        "INV-183-VERSION"
+      ],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Escopo verificado no diff da PR #184 contra a issue #183. Os testes de versionamento e validação de documentação passaram na CI. Testes e fontes foram revisados sem inferir aprovação externa."
+    }
+  },
+  "controls": {
+    "domain_inventories": [
+      {
+        "id": "INV-183-ROUTES",
+        "name": "Formas literais do comando implementar pendências",
+        "closed_world": true,
+        "producer_sources": [
+          "config/skills-catalog.json positive_triggers"
+        ],
+        "consumer_sources": [
+          "scripts/select_skill.py",
+          "tests/test_catalog_governance.py"
+        ],
+        "values": [
+          {
+            "value": "implementar pendências",
+            "producer_evidence": [
+              "Fonte canônica versionada: routing fornece 'implementar pendências' ao consumidor."
+            ],
+            "consumer_evidence": [
+              "Testes do catálogo e da versão validaram o valor implementar pendências no HEAD da PR."
+            ],
+            "scenario_ids": [
+              "test_router_routes_implementation_pendencies_to_delivery"
+            ]
+          },
+          {
+            "value": "implementar as pendências",
+            "producer_evidence": [
+              "Fonte canônica versionada: routing fornece 'implementar as pendências' ao consumidor."
+            ],
+            "consumer_evidence": [
+              "Testes do catálogo e da versão validaram o valor implementar as pendências no HEAD da PR."
+            ],
+            "scenario_ids": [
+              "test_router_routes_implementation_pendencies_to_delivery"
+            ]
+          },
+          {
+            "value": "implementar todas as pendências",
+            "producer_evidence": [
+              "Fonte canônica versionada: routing fornece 'implementar todas as pendências' ao consumidor."
+            ],
+            "consumer_evidence": [
+              "Testes do catálogo e da versão validaram o valor implementar todas as pendências no HEAD da PR."
+            ],
+            "scenario_ids": [
+              "test_router_routes_implementation_pendencies_to_delivery"
+            ]
+          }
+        ],
+        "unmapped_values": [],
+        "fallback_policy": "none",
+        "rationale": "O escopo da issue define exatamente três expressões; as três são verificadas no teste de seleção."
+      },
+      {
+        "id": "INV-183-VERSION",
+        "name": "Projeções de catalog_version do snapshot 2026-11-08.1",
+        "closed_world": true,
+        "producer_sources": [
+          "config/skills-catalog.json"
+        ],
+        "consumer_sources": [
+          "config/compatibility.json",
+          "config/platform-adapters.json",
+          "README.md",
+          "docs/RELEASE.md",
+          "scripts/validate_versioning.py"
+        ],
+        "values": [
+          {
+            "value": "config/skills-catalog.json",
+            "producer_evidence": [
+              "Fonte canônica versionada: versioning fornece 'config/skills-catalog.json' ao consumidor."
+            ],
+            "consumer_evidence": [
+              "Testes do catálogo e da versão validaram o valor config/skills-catalog.json no HEAD da PR."
+            ],
+            "scenario_ids": [
+              "test_versioning_manifest_is_consistent"
+            ]
+          },
+          {
+            "value": "config/compatibility.json",
+            "producer_evidence": [
+              "Fonte canônica versionada: versioning fornece 'config/compatibility.json' ao consumidor."
+            ],
+            "consumer_evidence": [
+              "Testes do catálogo e da versão validaram o valor config/compatibility.json no HEAD da PR."
+            ],
+            "scenario_ids": [
+              "test_versioning_manifest_is_consistent"
+            ]
+          },
+          {
+            "value": "config/platform-adapters.json",
+            "producer_evidence": [
+              "Fonte canônica versionada: versioning fornece 'config/platform-adapters.json' ao consumidor."
+            ],
+            "consumer_evidence": [
+              "Testes do catálogo e da versão validaram o valor config/platform-adapters.json no HEAD da PR."
+            ],
+            "scenario_ids": [
+              "test_versioning_manifest_is_consistent"
+            ]
+          },
+          {
+            "value": "README.md",
+            "producer_evidence": [
+              "Fonte canônica versionada: versioning fornece 'README.md' ao consumidor."
+            ],
+            "consumer_evidence": [
+              "Testes do catálogo e da versão validaram o valor README.md no HEAD da PR."
+            ],
+            "scenario_ids": [
+              "test_versioning_manifest_is_consistent"
+            ]
+          },
+          {
+            "value": "docs/RELEASE.md",
+            "producer_evidence": [
+              "Fonte canônica versionada: versioning fornece 'docs/RELEASE.md' ao consumidor."
+            ],
+            "consumer_evidence": [
+              "Testes do catálogo e da versão validaram o valor docs/RELEASE.md no HEAD da PR."
+            ],
+            "scenario_ids": [
+              "test_versioning_manifest_is_consistent"
+            ]
+          }
+        ],
+        "unmapped_values": [],
+        "fallback_policy": "none",
+        "rationale": "Cinco locais apresentam catalog_version sincronizado; VERSION e system_version não foram promovidos."
+      }
+    ],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "passed",
+      "applicability_reason": "Invariantes estruturais OBL-004 e OBL-011 requerem seletor/owner únicos já existentes.",
+      "entries": [
+        {
+          "id": "SIC-183-004",
+          "kind": "structural",
+          "requirement_ids": [
+            "R183-004"
+          ],
+          "obligation_ids": [
+            "OBL-004"
+          ],
+          "plausible_wrong_implementation": "Modificar seletor ou adicionar implementação paralela sem necessidade funcional comprovada.",
+          "canonical_path": "config/skills-catalog.json -> scripts/select_skill.py -> entregar-issue",
+          "competing_paths": [
+            "novo seletor",
+            "alteração da heurística"
+          ],
+          "evidence_ids": [
+            "PR184-DIFF-SIX-FILES"
+          ],
+          "scenario_ids": [
+            "test_router_fails_closed_on_ambiguous_or_unknown_request"
+          ],
+          "negative_control_evidence": [
+            "Diff não altera scripts/select_skill.py; os negativos de UNKNOWN passaram."
+          ]
+        },
+        {
+          "id": "SIC-183-011",
+          "kind": "forbidden-implementation",
+          "requirement_ids": [
+            "R183-011"
+          ],
+          "obligation_ids": [
+            "OBL-011"
+          ],
+          "plausible_wrong_implementation": "Adicionar uma Skill nova com owner de escrita para o mesmo comando implementar pendências.",
+          "canonical_path": "registro único entregar-issue no catálogo canônico",
+          "competing_paths": [
+            "criar preparar-candidato-issue"
+          ],
+          "evidence_ids": [
+            "CATALOG-EIGHT-SKILLS"
+          ],
+          "scenario_ids": [
+            "test_catalog_is_valid_and_matches_skill_metadata"
+          ],
+          "negative_control_evidence": [
+            "O teste compara os oito IDs atuais e impede adição acidental de outro owner."
+          ]
+        }
+      ],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "passed",
+      "applicability_reason": "O seletor lê metadados do catálogo e emite decision, candidatos e capacidades; as projeções expõem versão do catálogo.",
+      "entries": [
+        {
+          "id": "RMC-183-A",
+          "contract_kind": "read-model",
+          "requirement_ids": [
+            "R183-001",
+            "R183-007",
+            "R183-008",
+            "R183-017"
+          ],
+          "required_fields": [
+            "positive_triggers",
+            "required_capabilities",
+            "missing_capabilities",
+            "decision"
+          ],
+          "producer_evidence": [
+            "config/skills-catalog.json: owner existente e gatilhos positivos."
+          ],
+          "public_projection_evidence": [
+            "scripts/select_skill.py rank_skills retorna decision e candidates."
+          ],
+          "consumer_evidence": [
+            "tests/test_catalog_governance.py: casos de seleção e BLOCKED."
+          ],
+          "visible_surface_evidence": [
+            "Workflow Validate skills 42446128890 terminou success."
+          ],
+          "scenario_ids": [
+            "test_router_routes_implementation_pendencies_to_delivery",
+            "test_router_blocks_pending_implementation_without_write_capability"
+          ],
+          "negative_control_evidence": [
+            "Retirar repository-write dos disponíveis faz retornar BLOCKED."
+          ]
+        },
+        {
+          "id": "RMC-183-B",
+          "contract_kind": "versioning",
+          "requirement_ids": [
+            "R183-005",
+            "R183-019",
+            "R183-022"
+          ],
+          "required_fields": [
+            "catalog_version",
+            "system_version",
+            "release_version"
+          ],
+          "producer_evidence": [
+            "config/skills-catalog.json: snapshot 2026-11-08.1."
+          ],
+          "public_projection_evidence": [
+            "README.md e docs/RELEASE.md atualizados."
+          ],
+          "consumer_evidence": [
+            "config/compatibility.json e config/platform-adapters.json atualizados."
+          ],
+          "visible_surface_evidence": [
+            "Validate release versioning passou no run 42446128890."
+          ],
+          "scenario_ids": [
+            "test_versioning_manifest_is_consistent",
+            "test_versioning_rejects_stale_public_surfaces"
+          ],
+          "negative_control_evidence": [
+            "Teste de divergência de system_version rejeita configuração inválida."
+          ]
+        }
+      ],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "passed",
+      "applicability_reason": "O catálogo é fonte de gatilhos/versões; projeções e seletor não são owners concorrentes.",
+      "entries": [
+        {
+          "id": "CSC-183-A",
+          "semantic_field": "owner de implementar pendências",
+          "canonical_source": "config/skills-catalog.json entregar-issue",
+          "alternative_sources": [
+            "auditar-issue",
+            "corrigir-ci",
+            "revisar-issue"
+          ],
+          "surfaces": [
+            "scripts/select_skill.py",
+            "tests/test_catalog_governance.py"
+          ],
+          "evidence_ids": [
+            "CI-42446128890"
+          ],
+          "scenario_ids": [
+            "test_router_preserves_distinct_or_ambiguous_workflows"
+          ],
+          "negative_control_evidence": [
+            "Pedidos de auditar PR, corrigir CI e revisar issue selecionam owners distintos; pedido misto é UNKNOWN."
+          ],
+          "divergent_fixture": {
+            "canonical_value": "implementar pendências -> entregar-issue",
+            "alternative_values": [
+              "auditar uma PR -> auditar-issue",
+              "corrigir a CI -> corrigir-ci"
+            ]
+          }
+        },
+        {
+          "id": "CSC-183-B",
+          "semantic_field": "catalog_version",
+          "canonical_source": "config/skills-catalog.json.catalog_version",
+          "alternative_sources": [
+            "config/compatibility.json",
+            "config/platform-adapters.json",
+            "README.md",
+            "docs/RELEASE.md"
+          ],
+          "surfaces": [
+            "scripts/validate_versioning.py",
+            "scripts/validate_adapters.py"
+          ],
+          "evidence_ids": [
+            "CI-42446128890"
+          ],
+          "scenario_ids": [
+            "test_versioning_manifest_is_consistent",
+            "test_versioning_rejects_stale_public_surfaces"
+          ],
+          "negative_control_evidence": [
+            "Projeções com snapshot divergente são detectadas pelos validadores executados."
+          ],
+          "divergent_fixture": {
+            "canonical_value": "2026-11-08.1",
+            "alternative_values": [
+              "2026-10-08.2",
+              "2026-11-08.2"
+            ]
+          }
+        }
+      ],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "Alinhamento de snapshot de catálogo sem mudar VERSION ou system_version.",
+      "old_contract_terms": [
+        "catalog_version 2026-10-08.2"
+      ],
+      "new_contract_terms": [
+        "catalog_version 2026-11-08.1"
+      ],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "AGENTS.md e docs/SKILL_SYSTEM_SPEC.md foram consultados na develop.",
+        "A comparação dos seis arquivos com develop preserva release 0.3.3 e system_version 2026-10-08.2.",
+        "Validate skills run 42446128890: versioning, docs, catálogo e adaptadores aprovados."
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": []
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "R183-001",
+        "R183-003",
+        "R183-004",
+        "R183-005",
+        "R183-006",
+        "R183-007",
+        "R183-008",
+        "R183-009",
+        "R183-010",
+        "R183-011",
+        "R183-012",
+        "R183-013",
+        "R183-014",
+        "R183-015",
+        "R183-016",
+        "R183-017",
+        "R183-018",
+        "R183-019",
+        "R183-020",
+        "R183-021",
+        "R183-022"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-002",
+        "OBL-003",
+        "OBL-004",
+        "OBL-005",
+        "OBL-006",
+        "OBL-007",
+        "OBL-008",
+        "OBL-009",
+        "OBL-010",
+        "OBL-011",
+        "OBL-012",
+        "OBL-013",
+        "OBL-014",
+        "OBL-015",
+        "OBL-016",
+        "OBL-017",
+        "OBL-018",
+        "OBL-019",
+        "OBL-020",
+        "OBL-021",
+        "OBL-022"
+      ],
+      "evidence": [
+        "Issue #183 relida e inventário próprio das 22 obrigações reconciliado com o artifact do run 42446128792.",
+        "Diff GitHub de seis arquivos em bfe09181 comparado com a28be10; entrada e consumidor rank_skills conferidos.",
+        "Os 3227 testes e 11 subtests de 42446128890 passaram; esta revisão interna não equivale a auditoria independente."
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}
