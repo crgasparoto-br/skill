@@ -44,7 +44,7 @@
           "dimension": "source-obligation-001",
           "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
           "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-001 e com o diff da PR #184.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-001 e com o diff da PR #184.",
           "expected": "As três formas devem rotear a entregar-issue.",
           "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
           "sibling_cases": [
@@ -139,7 +139,7 @@
           "dimension": "source-obligation-003",
           "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
           "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-003 e com o diff da PR #184.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-003 e com o diff da PR #184.",
           "expected": "As três formas devem rotear a entregar-issue.",
           "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
           "sibling_cases": [
@@ -234,7 +234,7 @@
           "dimension": "source-obligation-004",
           "failure_mode": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
           "plausible_wrong_implementation": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-004 e com o diff da PR #184.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-004 e com o diff da PR #184.",
           "expected": "Preservar os oito IDs canônicos e a heurística do seletor.",
           "observed": "O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo.",
           "sibling_cases": [
@@ -329,7 +329,7 @@
           "dimension": "source-obligation-005",
           "failure_mode": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
           "plausible_wrong_implementation": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
-          "procedure": "Executar tests.test_versioning::test_versioning_rejects_stale_public_surfaces na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-005 e com o diff da PR #184.",
+          "procedure": "Executar test_versioning_rejects_stale_public_surfaces; source tests/test_versioning.py:488-504 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-005 e com o diff da PR #184.",
           "expected": "A versão 2026-11-08.1 deve ser idêntica nas projeções sem alterar 0.3.3 nem system_version.",
           "observed": "Os testes de versionamento e validação de documentação passaram na CI.",
           "sibling_cases": [
@@ -424,7 +424,7 @@
           "dimension": "source-obligation-006",
           "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
           "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-006 e com o diff da PR #184.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-006 e com o diff da PR #184.",
           "expected": "As três formas devem rotear a entregar-issue.",
           "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
           "sibling_cases": [
@@ -519,7 +519,7 @@
           "dimension": "source-obligation-007",
           "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
           "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-007 e com o diff da PR #184.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-007 e com o diff da PR #184.",
           "expected": "As três formas devem rotear a entregar-issue.",
           "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
           "sibling_cases": [
@@ -614,7 +614,7 @@
           "dimension": "source-obligation-008",
           "failure_mode": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
           "plausible_wrong_implementation": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-008 e com o diff da PR #184.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-008 e com o diff da PR #184.",
           "expected": "Quando falta capacidade obrigatória o resultado tem de ser BLOCKED.",
           "observed": "O teste de entrada sem repository-write observa BLOCKED, não concessão implícita.",
           "sibling_cases": [
@@ -709,7 +709,7 @@
           "dimension": "source-obligation-009",
           "failure_mode": "A seleção nova poderia tomar pedidos exclusivos de auditoria, revisão ou corrigir CI.",
           "plausible_wrong_implementation": "A seleção nova poderia tomar pedidos exclusivos de auditoria, revisão ou corrigir CI.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-009 e com o diff da PR #184.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-009 e com o diff da PR #184.",
           "expected": "Pedidos isolados usam seus owners antigos; combinação ambígua permanece UNKNOWN.",
           "observed": "O teste cobre essas rotas e a combinação com implementar pendências.",
           "sibling_cases": [
@@ -804,7 +804,7 @@
           "dimension": "source-obligation-010",
           "failure_mode": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
           "plausible_wrong_implementation": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-010 e com o diff da PR #184.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-010 e com o diff da PR #184.",
           "expected": "O roteamento não concede execução parcial, merge ou aprovação independente.",
           "observed": "Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados.",
           "sibling_cases": [
@@ -899,7 +899,7 @@
           "dimension": "source-obligation-011",
           "failure_mode": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
           "plausible_wrong_implementation": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-011 e com o diff da PR #184.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-011 e com o diff da PR #184.",
           "expected": "Preservar os oito IDs canônicos e a heurística do seletor.",
           "observed": "O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo.",
           "sibling_cases": [
@@ -994,7 +994,7 @@
           "dimension": "source-obligation-012",
           "failure_mode": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
           "plausible_wrong_implementation": "Criar Skill concorrente ou mudar scripts/select_skill.py quebraria a fonte única do roteamento.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-012 e com o diff da PR #184.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-012 e com o diff da PR #184.",
           "expected": "Preservar os oito IDs canônicos e a heurística do seletor.",
           "observed": "O diff mantém scripts/select_skill.py inalterado e a suíte verifica o catálogo.",
           "sibling_cases": [
@@ -1089,7 +1089,7 @@
           "dimension": "source-obligation-013",
           "failure_mode": "Remover negativos ou adaptar indevidamente a heurística permitiria regressões em rotas concorrentes.",
           "plausible_wrong_implementation": "Remover negativos ou adaptar indevidamente a heurística permitiria regressões em rotas concorrentes.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-013 e com o diff da PR #184.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-013 e com o diff da PR #184.",
           "expected": "Rotas negativas, capacidade e UNKNOWN continuam com controles de regressão.",
           "observed": "Testes negativos e antigos de ambiguidade permaneceram passed no run 42446128890.",
           "sibling_cases": [
@@ -1184,7 +1184,7 @@
           "dimension": "source-obligation-014",
           "failure_mode": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
           "plausible_wrong_implementation": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-014 e com o diff da PR #184.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-014 e com o diff da PR #184.",
           "expected": "O roteamento não concede execução parcial, merge ou aprovação independente.",
           "observed": "Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados.",
           "sibling_cases": [
@@ -1279,7 +1279,7 @@
           "dimension": "source-obligation-015",
           "failure_mode": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
           "plausible_wrong_implementation": "Gatilho ausente devolveria UNKNOWN, mesmo com a forma requerida pela issue.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-015 e com o diff da PR #184.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-015 e com o diff da PR #184.",
           "expected": "As três formas devem rotear a entregar-issue.",
           "observed": "O teste executa as três expressões e confere a escolha do mesmo owner.",
           "sibling_cases": [
@@ -1374,7 +1374,7 @@
           "dimension": "source-obligation-016",
           "failure_mode": "Misturar dois perfis de operação distintos de auditoria e entrega escolheria owner incorreto.",
           "plausible_wrong_implementation": "Misturar dois perfis de operação distintos de auditoria e entrega escolheria owner incorreto.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-016 e com o diff da PR #184.",
+          "procedure": "Executar test_router_fails_closed_on_ambiguous_or_unknown_request; source tests/test_catalog_governance.py:100-105 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-016 e com o diff da PR #184.",
           "expected": "Perfis de tarefa diferentes retornam rotas separadas e pedido misto retorna UNKNOWN.",
           "observed": "O teste observa rotas de auditoria, revisão, CI e entrega sem misturá-las.",
           "sibling_cases": [
@@ -1469,7 +1469,7 @@
           "dimension": "source-obligation-017",
           "failure_mode": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
           "plausible_wrong_implementation": "A ausência de repository-write poderia selecionar a Skill de escrita indevidamente.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-017 e com o diff da PR #184.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-017 e com o diff da PR #184.",
           "expected": "Quando falta capacidade obrigatória o resultado tem de ser BLOCKED.",
           "observed": "O teste de entrada sem repository-write observa BLOCKED, não concessão implícita.",
           "sibling_cases": [
@@ -1564,7 +1564,7 @@
           "dimension": "source-obligation-018",
           "failure_mode": "Criar fixture duplicada para cada caso poderia ocultar a regra única do seletor de catálogo.",
           "plausible_wrong_implementation": "Criar fixture duplicada para cada caso poderia ocultar a regra única do seletor de catálogo.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-018 e com o diff da PR #184.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-018 e com o diff da PR #184.",
           "expected": "Os testes usam um único catálogo e preservam os cenários positivos e negativos.",
           "observed": "O diff mostra extensão do módulo existente sem criar fixture ou nova suíte.",
           "sibling_cases": [
@@ -1659,7 +1659,7 @@
           "dimension": "source-obligation-019",
           "failure_mode": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
           "plausible_wrong_implementation": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
-          "procedure": "Executar tests.test_versioning::test_versioning_rejects_stale_public_surfaces na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-019 e com o diff da PR #184.",
+          "procedure": "Executar test_versioning_rejects_stale_public_surfaces; source tests/test_versioning.py:488-504 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-019 e com o diff da PR #184.",
           "expected": "A versão 2026-11-08.1 deve ser idêntica nas projeções sem alterar 0.3.3 nem system_version.",
           "observed": "Os testes de versionamento e validação de documentação passaram na CI.",
           "sibling_cases": [
@@ -1754,7 +1754,7 @@
           "dimension": "source-obligation-020",
           "failure_mode": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
           "plausible_wrong_implementation": "Tratar o resultado do roteador como autorização automática de merge reduziria a governança.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-020 e com o diff da PR #184.",
+          "procedure": "Executar test_router_preserves_distinct_or_ambiguous_workflows; source tests/test_catalog_governance.py:78-88 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-020 e com o diff da PR #184.",
           "expected": "O roteamento não concede execução parcial, merge ou aprovação independente.",
           "observed": "Estado autenticado da PR é open e unmerged; gates de certificação e revisão são separados.",
           "sibling_cases": [
@@ -1849,7 +1849,7 @@
           "dimension": "source-obligation-021",
           "failure_mode": "Uma fixture de teste duplicada ou suíte paralela poderia ocultar falhas de roteamento.",
           "plausible_wrong_implementation": "Uma fixture de teste duplicada ou suíte paralela poderia ocultar falhas de roteamento.",
-          "procedure": "Executar tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-021 e com o diff da PR #184.",
+          "procedure": "Executar test_router_blocks_pending_implementation_without_write_capability; source tests/test_catalog_governance.py:64-76 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-021 e com o diff da PR #184.",
           "expected": "Usar tests/test_catalog_governance.py e o rank_skills existente, com positivos e negativos.",
           "observed": "O diff somente estende o arquivo de testes existente e os novos casos passaram.",
           "sibling_cases": [
@@ -1944,7 +1944,7 @@
           "dimension": "source-obligation-022",
           "failure_mode": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
           "plausible_wrong_implementation": "Manter versão antiga do catálogo em algum manifesto geraria drift documental.",
-          "procedure": "Executar tests.test_versioning::test_versioning_rejects_stale_public_surfaces na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-022 e com o diff da PR #184.",
+          "procedure": "Executar test_versioning_rejects_stale_public_surfaces; source tests/test_versioning.py:488-504 na CI do HEAD; comparar a asserção no arquivo real com o requisito OBL-022 e com o diff da PR #184.",
           "expected": "A versão 2026-11-08.1 deve ser idêntica nas projeções sem alterar 0.3.3 nem system_version.",
           "observed": "Os testes de versionamento e validação de documentação passaram na CI.",
           "sibling_cases": [

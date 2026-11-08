@@ -12,7 +12,7 @@
   "audit_history": "verified-no-rejection",
   "audit_history_evidence": "Consulta autenticada da PR #184 em 08/11/2026 confirmou zero reviews e zero comentários de rejeição independente; a pré-auditoria deste chat não é rejeição externa.",
   "artifact_sha256": {
-    "requirement-attack-matrix.json": "285db1f9f58012f8fb7b718d6052d3bf0176895ce230ff1b450bd5d6e27acfde",
+    "requirement-attack-matrix.json": "a7db33cda929d97d5d116931123df54e78d56088e0a87d56b6894d242aa88db9",
     "risk-saturation.json": "b1b740f4deba587fcb64a9cbd0cd33633324c93c85376f3626d6a9c50e77a3c0",
     "reviewed-closure.json": "0fff92fa00859bc36687dfaf6843910a34679aa77a33cce1fb7f8767223c487c",
     "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
