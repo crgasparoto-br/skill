@@ -182,6 +182,13 @@ Esse limite de eventos pendentes nao limita o historico de pareceres no mesmo SH
 
 O comentario da PR e comparado por um snapshot semantico explicito entre a listagem e a consulta individual: ID, corpo integral, autor (ID, login, tipo), URLs REST canonicas de comentario e `issue_url` vinculado a PR autenticada, e timestamps de criacao/atualizacao. Os campos de apresentacao `pin`, `user.avatar_url` e detalhes de `performed_via_github_app` nao alteram a autoridade do parecer e podem diferir entre endpoints. O mesmo snapshot e conferido novamente depois da revalidacao de identidade, permissao, evidencias e ordem dos pareceres, imediatamente antes da publicacao do check. Alteracao material, edicao, exclusao, perda de permissao ou parecer posterior invalido mantem o bloqueio.
 
+Nas varreduras em background de `push` e `workflow_run`, somente PRs
+abertas com `draft=false` autenticado no GitHub entram na avaliacao da sessao:
+PR draft nao pode ser promovida e nao deve causar falha em um push sem entrega
+pendente. Campo `draft` ausente nao equivale a PR pronta. Eventos explicitamente
+vinculados a PR ou issue continuam incluindo PR draft para permitir bloqueio e
+revogacao; um draft jamais recebe aprovacao positiva por esta excecao.
+
 ## Marcos de entrega e responsabilidades
 
 | Marco | Evidencia de conclusao | Responsavel e limite |
