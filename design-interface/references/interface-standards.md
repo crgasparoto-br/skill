@@ -117,11 +117,11 @@ Não colocar cada campo, métrica ou parágrafo em um card. Preferir seções, l
 
 ## Golden Screens e controles de escolha
 
-- Antes de criar ou alterar botao, combobox, opcao de menu, radiogroup ou modal, identificar o modelo executavel da Golden Screen aprovada do projeto e reutilizar variante/estados e tokens. A aparencia neutra tambem faz parte do contrato, nao so o grid.
-- Opcao de escolha e acao de confirmar sao responsabilidades diferentes. Alternativas equivalentes devem ter o **mesmo estilo neutro**, com texto legivel, sem fundo de acao primaria ou selecao implicita antes do clique. Reservar `primary` para confirmacao final.
-- Conferir a cascata CSS global e local, especialmente regras genericas como `button:hover:not(:disabled)`. O componente deve manter o contraste correto de background, foreground e border em **repouso, hover, focus-visible, active e disabled**; nao confiar apenas na presenca de classes ou propriedades estaticas.
+- Antes de alterar controles, identificar a referencia visual aprovada do projeto, quando existir, e reutilizar variantes, estados e tokens executaveis da propria solucao. Na ausencia de referencia formal, priorizar componentes locais verificaveis.
+- Distinguir visualmente alternativa disponivel, item selecionado e acao de confirmacao conforme o design system do projeto. Nao indicar selecao inexistente nem impor uma variante proprietaria de outro produto.
+- Conferir a cascata CSS global e local e os estilos computados de fundo, texto e borda em **repouso, hover, focus-visible, active e disabled**; nao confiar apenas na presenca de classes ou propriedades estaticas.
 - Quando existirem variantes e tokens locais para controles de escolha, reutilizar seus estados e verificar a precedencia dos seletores no CSS executado, sem introduzir convencoes proprias de outro produto.
-- Bloquear o aceite de mudanca visual quando um unico estado de hover/foco divergir da Golden Screen ou tiver contraste insuficiente. Validar o estado real no navegador com ponteiro e teclado; conferir o HEAD exato, desktop e mobile e registrar evidencia.
+- Bloquear o aceite quando um estado material tiver contraste insuficiente ou divergir injustificadamente de referencia local aprovada, quando houver. Validar o estado real no navegador com ponteiro e teclado; conferir o HEAD exato, desktop e mobile e registrar evidencia.
 
 ## Botões e ícones
 

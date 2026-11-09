@@ -45,6 +45,15 @@ def test_normative_guidance_has_no_consumer_specific_visual_rules() -> None:
         assert token not in content
 
 
+def test_selection_states_are_defined_by_the_local_design_system() -> None:
+    standards = (ROOT / "references/interface-standards.md").read_text(encoding="utf-8")
+    audit = (ROOT / "references/visual-audit.md").read_text(encoding="utf-8")
+    assert "segundo os componentes locais" in audit
+    assert "conforme o design system do projeto" in standards
+    assert "alternativas equivalentes devem ter o **mesmo estilo neutro**" not in standards.casefold()
+    assert "iniciem neutras" not in audit.casefold()
+
+
 def test_project_rules_are_owned_by_consumer_repositories() -> None:
     spec = (ROOT.parent / "docs/SKILL_SYSTEM_SPEC.md").read_text(encoding="utf-8")
     agents = (ROOT.parent / "AGENTS.md").read_text(encoding="utf-8")
