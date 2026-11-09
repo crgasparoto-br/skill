@@ -1,0 +1,717 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "e07fee2a1cbcc8bbccc87abf8379a060f330f5a9fa152d3a2f63bbf4212d07d9": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-001"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-001: Local source discovery and exclusion of consumer-specific instructions. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "1e8ea1209484ab8d771ceeb2925e71a7fd81a8fc6d436bceac44a000aa79a8a8": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-002"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-002: Scoped discovery in the design-interface control plane. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "4bb1e79ebb9338591f7bb425d350389283bb974942dd2e9250dd13bd6d256427": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-003"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-003: Local hierarchy with documented fallback. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "8c38576b7048da615a444cf06d5099567337d15f7e376c65191304b255ce9258": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-004"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-004: Negative isolation against leaked consumer rules. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+    },
+    "229ad9329028bbef56f11fff2e8832a892accbbb2713da049cbfd249165889fb": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-005"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-005: Normative project ownership in catalog governance. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+    },
+    "544511ea0d9074a644d8f5a66492729f8800e2c0f5badcbc54fbb2c684973212": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-006"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-006: Sources must be read within the delegated UI scope. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "8e994d994ed71a1693e4fb9bf945bd144df2aae54b07e552768ae6f6e4967f64": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-007"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-007: Approved sources precede executable components and generic defaults. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "8395985f879573f86571069d17e452880728d5a2b33fb24ebc338e3047d3a4f7": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-008"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-008: Conflicts and absence are explicitly recorded. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_conflicts_are_recorded_instead_of_silently_overridden. This is implementer-side verification, not independent approval."
+    },
+    "0b16fc98a16d2a4659b4c9e42ae1f681a2a7ccc830df7b1f915b281fdd1a6acd": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-009"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-009: No product selectors or CSS tokens inside universal instructions. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+    },
+    "7d74c5067110f47a5127354199a7dad6e344401529162bbd1ff0588d0e3bb7d1": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-010"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-010: Project-specific Golden Screen rules stay with the consumer. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+    },
+    "3a0598adb4f35e7ca6b95654f14782e5f3cfcf2f6ec903bb1ef111b3ce3ee877": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-011"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-011: Audit versus implementation separation remains declared. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+    },
+    "3f4331eda9b3d9d289b6574a510ed192ec33efa80186718aee0a44b747db514f": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-012"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-012: No new schema, flow, library, or shared-contract change. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+    },
+    "2f642508bbb9fb5c74cde770ef4296904487ac9259b2656bd79c0332d69faf15": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-013"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-013: Accessibility and security cannot be weakened by local UI style. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_selection_states_are_defined_by_the_local_design_system. This is implementer-side verification, not independent approval."
+    },
+    "ebcb32027a23cf12b7e10f24ec59353d081894522ab8af6ba906bcec2fe3d081": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-014"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-014: Local approved contract prevails over aesthetic preference. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "6acaf9404f1212dd8b7794d178fca3cbb44b1c6d340a34e74f9bf7c3a5391e9e": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-015"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-015: Unverified files cannot be promoted to approved design. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_conflicts_are_recorded_instead_of_silently_overridden. This is implementer-side verification, not independent approval."
+    },
+    "35f9531d27b0bac8eb894c994cb4df3c1959ad3c43a20e3feff5c496d3d89457": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-016"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-016: Consumer names and tokens do not become permanent catalog rules. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+    },
+    "767e694f5928118104d98f2136a420f677cd7907374f1bb86fb3c1f719e46b67": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-017"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-017: SolverFin Golden Screen documentation remains product-owned. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+    },
+    "9db0378d3ed8e526f0935e9292e84518bb5df2202f7d3c12e23caba81e64241c": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-018"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-018: Approved local standard is selected before generic defaults. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "ae5abb67947db1bb09f27166a3d50682e8b046e2ffa9b3515f5d8e1b95c9bc13": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-019"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-019: Executable tokens are used without pretending approval. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "a8f29549a537c33badf1f8d79e3bd453f2325bf2561efa4621ba9b1b5666028a": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-020"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-020: No local standard means declare absence and use general defaults. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "565ff7d06a12ba599547642aae0b7fb59bc79966e15989707fe73445eab06337": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-021"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-021: Contradictory sources are surfaced before choosing an option. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_conflicts_are_recorded_instead_of_silently_overridden. This is implementer-side verification, not independent approval."
+    },
+    "50eaf3b4acb40f3de82c9f11b286869104de82dd7937938b6bb23c37ccfbd4f1": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-022"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-022: Normative reference files contain no consumer identifiers. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+    },
+    "6023d48cf194785b98bfb44e2850526a6fd22d92115f82b8a884cc9d1aa9f1a8": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-023"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-023: Product Golden Screen is versioned in its own repository. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+    },
+    "6bdbca3d71e0534590c2dcc2022f3d5f14224a3ba55349898a6125dad27dbe4b": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-024"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-024: Negative regression detects reintroduced concrete tokens. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+    },
+    "48fefca88d528b4fbd566a9fff5ab5ad1a1726ab6380d82a85fe61c2c81bfdd6": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-025"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-025: Complete exact-SHA suite and focused cases are recorded. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+    },
+    "6a73101b27d5a7ed96706846d9cd8f5f651965a7ff0d581b24fa896490be2b22": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-026"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-026: Project without design docs retains reusable components. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "9cc0fa4825e6444708de5ccb99f259f279d617683124b515ba195c2c6321a9e6": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-027"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-027: Project without UI sources declares the documentation gap. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+    },
+    "474a2b89bf03df8937bccc33a4c329a4f82cbd753ab4122776a63da374a612a3": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-028"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-028: Structural negative regression guards product-neutral precedence. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+    },
+    "c3ce4f4d5fb9c31e9c1e7cfa68f14c9654a024d78c059350799118c8c34eabc5": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-029"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-029: Design-interface and global documentation preserve ownership. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+    },
+    "a0016e5e2f75fe38c98764debec4d089952b09d364e32f791b7aed0b7892f070": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R191-030"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue 191 OBL-030: No new delivery orchestration or shared-contract complexity. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+    }
+  },
+  "controls": {
+    "domain_inventories": [],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "passed",
+      "applicability_reason": "Issue 191 includes structural source precedence, consumer isolation, and forbidden duplicate catalog paths; each inferred structural obligation maps to its own control.",
+      "entries": [
+        {
+          "id": "SIC-191001",
+          "kind": "structural",
+          "requirement_ids": [
+            "R191-001"
+          ],
+          "obligation_ids": [
+            "OBL-001"
+          ],
+          "plausible_wrong_implementation": "The catalog could embed product-owned rules or override the documented local precedence for Local source discovery and exclusion of consumer-specific instructions.",
+          "canonical_path": "design-interface/SKILL.md -> design-interface/references/interface-standards.md -> sources in current project",
+          "competing_paths": [
+            "borrowed consumer design system",
+            "unverified default styling"
+          ],
+          "evidence_ids": [
+            "CI-42669221740-001"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+          ],
+          "negative_control_evidence": [
+            "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Local source discovery and exclusion of consumer-specific instructions; certification re-executes it at current material SHA."
+          ]
+        },
+        {
+          "id": "SIC-191003",
+          "kind": "precedence",
+          "requirement_ids": [
+            "R191-003"
+          ],
+          "obligation_ids": [
+            "OBL-003"
+          ],
+          "plausible_wrong_implementation": "The catalog could embed product-owned rules or override the documented local precedence for Local hierarchy with documented fallback.",
+          "canonical_path": "design-interface/SKILL.md -> design-interface/references/interface-standards.md -> sources in current project",
+          "competing_paths": [
+            "borrowed consumer design system",
+            "unverified default styling"
+          ],
+          "evidence_ids": [
+            "CI-42669221740-003"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+          ],
+          "negative_control_evidence": [
+            "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Local hierarchy with documented fallback; certification re-executes it at current material SHA."
+          ]
+        },
+        {
+          "id": "SIC-191007",
+          "kind": "precedence",
+          "requirement_ids": [
+            "R191-007"
+          ],
+          "obligation_ids": [
+            "OBL-007"
+          ],
+          "plausible_wrong_implementation": "The catalog could embed product-owned rules or override the documented local precedence for Approved sources precede executable components and generic defaults.",
+          "canonical_path": "design-interface/SKILL.md -> design-interface/references/interface-standards.md -> sources in current project",
+          "competing_paths": [
+            "borrowed consumer design system",
+            "unverified default styling"
+          ],
+          "evidence_ids": [
+            "CI-42669221740-007"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+          ],
+          "negative_control_evidence": [
+            "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Approved sources precede executable components and generic defaults; certification re-executes it at current material SHA."
+          ]
+        },
+        {
+          "id": "SIC-191012",
+          "kind": "structural",
+          "requirement_ids": [
+            "R191-012"
+          ],
+          "obligation_ids": [
+            "OBL-012"
+          ],
+          "plausible_wrong_implementation": "The catalog could embed product-owned rules or override the documented local precedence for No new schema, flow, library, or shared-contract change.",
+          "canonical_path": "design-interface/SKILL.md -> design-interface/references/interface-standards.md -> sources in current project",
+          "competing_paths": [
+            "borrowed consumer design system",
+            "unverified default styling"
+          ],
+          "evidence_ids": [
+            "CI-42669221740-012"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+          ],
+          "negative_control_evidence": [
+            "Existing source assertion test_normative_guidance_has_no_consumer_specific_visual_rules checks No new schema, flow, library, or shared-contract change; certification re-executes it at current material SHA."
+          ]
+        },
+        {
+          "id": "SIC-191018",
+          "kind": "structural",
+          "requirement_ids": [
+            "R191-018"
+          ],
+          "obligation_ids": [
+            "OBL-018"
+          ],
+          "plausible_wrong_implementation": "The catalog could embed product-owned rules or override the documented local precedence for Approved local standard is selected before generic defaults.",
+          "canonical_path": "design-interface/SKILL.md -> design-interface/references/interface-standards.md -> sources in current project",
+          "competing_paths": [
+            "borrowed consumer design system",
+            "unverified default styling"
+          ],
+          "evidence_ids": [
+            "CI-42669221740-018"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+          ],
+          "negative_control_evidence": [
+            "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Approved local standard is selected before generic defaults; certification re-executes it at current material SHA."
+          ]
+        },
+        {
+          "id": "SIC-191019",
+          "kind": "structural",
+          "requirement_ids": [
+            "R191-019"
+          ],
+          "obligation_ids": [
+            "OBL-019"
+          ],
+          "plausible_wrong_implementation": "The catalog could embed product-owned rules or override the documented local precedence for Executable tokens are used without pretending approval.",
+          "canonical_path": "design-interface/SKILL.md -> design-interface/references/interface-standards.md -> sources in current project",
+          "competing_paths": [
+            "borrowed consumer design system",
+            "unverified default styling"
+          ],
+          "evidence_ids": [
+            "CI-42669221740-019"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+          ],
+          "negative_control_evidence": [
+            "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Executable tokens are used without pretending approval; certification re-executes it at current material SHA."
+          ]
+        },
+        {
+          "id": "SIC-191026",
+          "kind": "structural",
+          "requirement_ids": [
+            "R191-026"
+          ],
+          "obligation_ids": [
+            "OBL-026"
+          ],
+          "plausible_wrong_implementation": "The catalog could embed product-owned rules or override the documented local precedence for Project without design docs retains reusable components.",
+          "canonical_path": "design-interface/SKILL.md -> design-interface/references/interface-standards.md -> sources in current project",
+          "competing_paths": [
+            "borrowed consumer design system",
+            "unverified default styling"
+          ],
+          "evidence_ids": [
+            "CI-42669221740-026"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+          ],
+          "negative_control_evidence": [
+            "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Project without design docs retains reusable components; certification re-executes it at current material SHA."
+          ]
+        },
+        {
+          "id": "SIC-191028",
+          "kind": "precedence",
+          "requirement_ids": [
+            "R191-028"
+          ],
+          "obligation_ids": [
+            "OBL-028"
+          ],
+          "plausible_wrong_implementation": "The catalog could embed product-owned rules or override the documented local precedence for Structural negative regression guards product-neutral precedence.",
+          "canonical_path": "design-interface/SKILL.md -> design-interface/references/interface-standards.md -> sources in current project",
+          "competing_paths": [
+            "borrowed consumer design system",
+            "unverified default styling"
+          ],
+          "evidence_ids": [
+            "CI-42669221740-028"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+          ],
+          "negative_control_evidence": [
+            "Existing source assertion test_selection_states_are_defined_by_the_local_design_system checks Structural negative regression guards product-neutral precedence; certification re-executes it at current material SHA."
+          ]
+        },
+        {
+          "id": "SIC-191030",
+          "kind": "structural",
+          "requirement_ids": [
+            "R191-030"
+          ],
+          "obligation_ids": [
+            "OBL-030"
+          ],
+          "plausible_wrong_implementation": "The catalog could embed product-owned rules or override the documented local precedence for No new delivery orchestration or shared-contract complexity.",
+          "canonical_path": "design-interface/SKILL.md -> design-interface/references/interface-standards.md -> sources in current project",
+          "competing_paths": [
+            "borrowed consumer design system",
+            "unverified default styling"
+          ],
+          "evidence_ids": [
+            "CI-42669221740-030"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+          ],
+          "negative_control_evidence": [
+            "Existing source assertion test_normative_guidance_has_no_consumer_specific_visual_rules checks No new delivery orchestration or shared-contract complexity; certification re-executes it at current material SHA."
+          ]
+        }
+      ],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "passed",
+      "applicability_reason": "The versioned consumer design references and downstream normative use are checked; this issue does not change database or application read-model behavior.",
+      "entries": [
+        {
+          "id": "RMC-191023",
+          "contract_kind": "read-model",
+          "requirement_ids": [
+            "R191-023"
+          ],
+          "required_fields": [
+            "product-owned Golden Screen documentation",
+            "versioned local design system"
+          ],
+          "producer_evidence": [
+            "SolverFin develop docs/DESIGN_SYSTEM.md, docs/GOLDEN_STATEMENT.md and docs/UI_PRIMITIVES.md are present."
+          ],
+          "public_projection_evidence": [
+            "design-interface/SKILL.md now directs discovery of local project-approved sources."
+          ],
+          "consumer_evidence": [
+            "design-interface/references/interface-standards.md orders local approved, executable, related screen and fallback sources."
+          ],
+          "visible_surface_evidence": [
+            "GitHub Actions run 42669221740 verified prior material; new exact-HEAD run is required."
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+          ],
+          "negative_control_evidence": [
+            "Structural negative control rejects consumer-owned tokens in the universal design-interface skill."
+          ]
+        }
+      ],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "passed",
+      "applicability_reason": "Approved project-owned UI rules must override generic defaults and accidental CSS divergence.",
+      "entries": [
+        {
+          "id": "CSC-191001",
+          "semantic_field": "UI design-source precedence",
+          "canonical_source": "design-interface/references/interface-standards.md",
+          "alternative_sources": [
+            "unapproved CSS variant",
+            "another product Golden Screen"
+          ],
+          "surfaces": [
+            "design-interface/SKILL.md",
+            "design-interface/references/visual-audit.md"
+          ],
+          "evidence_ids": [
+            "CI-42669221740"
+          ],
+          "scenario_ids": [
+            "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last",
+            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+          ],
+          "negative_control_evidence": [
+            "The precedence test orders approved sources before runtime components and fallback; the conflict test prevents silent override."
+          ],
+          "divergent_fixture": {
+            "canonical_value": "Approved local project reference before runtime component values",
+            "alternative_values": [
+              "CSS changes without approval",
+              "Another consumer's Golden Screen"
+            ]
+          }
+        }
+      ],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "The universal catalog rule and skill-specific references were updated together without copying consumer design documentation.",
+      "old_contract_terms": [
+        "No SolverFin, consultar docs/DESIGN_SYSTEM.md",
+        "button[data-button-variant=neutral] as a universal rule"
+      ],
+      "new_contract_terms": [
+        "Project-owned UI sources have explicit precedence",
+        "Executable components and generic fallback must follow project context"
+      ],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "Issue 191 and the seven-file PR 192 diff identify the generic-versus-consumer boundary.",
+        "design-interface/tests/test_design_system_resolution.py rejects previous consumer names, tokens and selectors.",
+        "SolverFin develop retains its own DESIGN_SYSTEM.md, GOLDEN_STATEMENT.md and UI_PRIMITIVES.md."
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": []
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "R191-001",
+        "R191-002",
+        "R191-003",
+        "R191-004",
+        "R191-005",
+        "R191-006",
+        "R191-007",
+        "R191-008",
+        "R191-009",
+        "R191-010",
+        "R191-011",
+        "R191-012",
+        "R191-013",
+        "R191-014",
+        "R191-015",
+        "R191-016",
+        "R191-017",
+        "R191-018",
+        "R191-019",
+        "R191-020",
+        "R191-021",
+        "R191-022",
+        "R191-023",
+        "R191-024",
+        "R191-025",
+        "R191-026",
+        "R191-027",
+        "R191-028",
+        "R191-029",
+        "R191-030"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-002",
+        "OBL-003",
+        "OBL-004",
+        "OBL-005",
+        "OBL-006",
+        "OBL-007",
+        "OBL-008",
+        "OBL-009",
+        "OBL-010",
+        "OBL-011",
+        "OBL-012",
+        "OBL-013",
+        "OBL-014",
+        "OBL-015",
+        "OBL-016",
+        "OBL-017",
+        "OBL-018",
+        "OBL-019",
+        "OBL-020",
+        "OBL-021",
+        "OBL-022",
+        "OBL-023",
+        "OBL-024",
+        "OBL-025",
+        "OBL-026",
+        "OBL-027",
+        "OBL-028",
+        "OBL-029",
+        "OBL-030"
+      ],
+      "evidence": [
+        "All 30 immutable source obligations were independently re-enumerated from the GitHub Actions issue-191 technical artifact 13699245746.",
+        "The PR 192 seven-file material diff contains only skill docs, policy, registry and focused tests.",
+        "The prior test result 42669221740 is a baseline; the next CI must bind all test cases and the packet to the new exact SHA.",
+        "These are implementer-reviewed semantic decisions, not an independent audit approval."
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}

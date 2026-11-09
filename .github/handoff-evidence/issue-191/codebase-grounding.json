@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [],
+  "references": [],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "design-interface/tests/test_design_system_resolution.py",
+      "operation": "added",
+      "scenario": "Scoped design-source resolution, fallback, conflict, consumer-neutral rules and selection states",
+      "requirement": "Issue 191 OBL-003,004,007,008,018-024,026-028",
+      "search": {
+        "queries": [
+          "test_audience_semantics in design-interface/tests",
+          "test_contract_sync in design-interface/tests",
+          "test_controller_resume_hints_contract in design-interface/tests"
+        ],
+        "scope": "Design-interface tests present in immutable develop base before issue 191",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "design-interface/tests/test_audience_semantics.py",
+            "case": "Audience-specific negative assertions for visible copy and state",
+            "oracle": "Different audiences must have discriminating visual text.",
+            "comparison": "This existing test does not check source precedence, generic fallback or consumer-specific CSS tokens."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "Existing tests did not assert local design discovery and negative coupling; the new module is focused and retains prior cases.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}

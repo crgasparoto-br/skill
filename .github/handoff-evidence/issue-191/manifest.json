@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 191,
+  "pull_request_number": 192,
+  "base_ref": "develop",
+  "head_ref": "feat/191-design-interface-local-precedence",
+  "work_item_start_sha": "ff8a0a26f879512b48a4cd19079a4c73a995b387",
+  "review_state": "approved",
+  "evidence_profile": "critical",
+  "risk_justification": "Issue 191 requires project-owned UI precedence and source-reference integrity; critical evidence preserves all source-derived reference-liveness, idempotency and structural risk families instead of relaxing the classification.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "Authenticated GitHub PR 192 review history is empty. The earlier ChatGPT read-only review is not a published formal independent GitHub review and is not represented as an authenticated rejection.",
+  "artifact_sha256": {
+    "reviewed-closure.json": "0a07dda21612c649e3c6534b666277a65b6d8148dd79e9ab9a72899c3a2f39a0",
+    "requirement-attack-matrix.json": "2c92101cc6f646a0d05ff1c9d76a2fc292e1846c88e9af94e33a210f4159ab6f",
+    "risk-saturation.json": "7624fb860ceeff9203e89e7a448f288042bb971783eea2b1e4570ffb84df60da",
+    "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
+    "codebase-grounding.json": "3b70df42e4bee642a82361de2a958984ffc274a1d179dffafa2dd9dea15e332f"
+  },
+  "test_bindings": {
+    "R191-001": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-002": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-003": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-004": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-005": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-006": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-007": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-008": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-009": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-010": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-011": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-012": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-013": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-014": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-015": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-016": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-017": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-018": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-019": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-020": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-021": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-022": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-023": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-024": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-025": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-026": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-027": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-028": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ]
+    },
+    "R191-029": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    },
+    "R191-030": {
+      "positive": [
+        "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+      ],
+      "negative": [
+        "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      ],
+      "regression": [
+        "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "design-interface/tests/test_design_system_resolution.py": [
+      {
+        "case": "design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules",
+        "test_case_id": "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+      }
+    ]
+  }
+}
