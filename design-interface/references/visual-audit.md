@@ -45,14 +45,16 @@ Sem execução visual, classificar a auditoria como `Não verificável`. Leitura
 
 ### Golden Screen e estados de seleção
 
-- identificar e consultar a Golden Screen oficialmente aprovada no repositório e confrontar componente, variante, tokens e hierarquia;
-- para escolhas de escopo em modais, verificar que alternativas equivalentes iniciem neutras, sem seleção visual indevida, com a cor primária reservada à confirmação final;
+- identificar a referencia visual oficialmente aprovada no proprio repositorio, quando existir, e confrontar componente, variante, tokens e hierarquia;
+- para escolhas de escopo em modais, verificar os estados disponivel, selecionado e confirmado segundo os componentes locais, sem representar selecao que nao ocorreu;
 - inspecionar no navegador cores computadas de fundo, texto e borda sob repouso, hover, `focus-visible`, ativo e desabilitado; comparar tokens e contraste, não somente class names;
-- verificar sobreposição entre `button:hover` global e seletores específicos do componente; fundo escuro e texto escuro em hover é achado alto e reprova a Golden Screen;
+- verificar sobreposicao entre estilos globais de interacao e regras do componente; contraste insuficiente em hover ou foco e achado alto, com ou sem referencia visual formal;
 - exigir registro de viewport desktop/mobile e estado com mouse/teclado; sem renderização, declarar `Não verificável`.
 
 ### Consistência
 
+- identificar as fontes de UI da propria solucao, conforme a precedencia de `interface-standards.md`, e registrar lacunas, conflitos e defaults usados;
+- nao importar referencia visual, token, rota ou variante de outro produto como norma do projeto auditado;
 - componentes e tokens seguem o projeto;
 - mesma ação usa mesmo texto, ícone e padrão;
 - padrões de filtros, formulários, modais e feedback são coerentes;

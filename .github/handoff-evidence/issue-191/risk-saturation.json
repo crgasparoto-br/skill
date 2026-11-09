@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "families": [
+    {
+      "family": "authorization",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "No issue 191 obligation derives authorization risk or changes that runtime boundary.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "concurrency-atomicity",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "No issue 191 obligation derives concurrency-atomicity risk or changes that runtime boundary.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "documentation",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue 191 includes documentation source-derived obligations and per-surface controls.",
+      "control_ids": [
+        "NEG-R191-006-documentation-1",
+        "NEG-R191-019-documentation-1",
+        "NEG-R191-026-documentation-1"
+      ],
+      "dimensions": [
+        {
+          "surface": "canonical-claims",
+          "reason": "The documentation surface canonical-claims is exercised by linked exact-head negative and regression assertions.",
+          "control_ids": [
+            "NEG-R191-006-documentation-1",
+            "NEG-R191-019-documentation-1",
+            "NEG-R191-026-documentation-1"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "historical-immutability",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "No issue 191 obligation derives historical-immutability risk or changes that runtime boundary.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "idempotency",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue 191 includes idempotency source-derived obligations and per-surface controls.",
+      "control_ids": [
+        "NEG-R191-010-idempotency-1",
+        "NEG-R191-029-idempotency-1"
+      ],
+      "dimensions": [
+        {
+          "surface": "duplicate-processing",
+          "reason": "The idempotency surface duplicate-processing is exercised by linked exact-head negative and regression assertions.",
+          "control_ids": [
+            "NEG-R191-010-idempotency-1",
+            "NEG-R191-029-idempotency-1"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "public-boundary",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "No issue 191 obligation derives public-boundary risk or changes that runtime boundary.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "reference-liveness",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue 191 includes reference-liveness source-derived obligations and per-surface controls.",
+      "control_ids": [
+        "NEG-R191-006-reference-liveness-1",
+        "NEG-R191-008-reference-liveness-1",
+        "NEG-R191-015-reference-liveness-1",
+        "NEG-R191-018-reference-liveness-1",
+        "NEG-R191-019-reference-liveness-1"
+      ],
+      "dimensions": [
+        {
+          "surface": "verified-local-reference",
+          "reason": "The reference-liveness surface verified-local-reference is exercised by linked exact-head negative and regression assertions.",
+          "control_ids": [
+            "NEG-R191-006-reference-liveness-1",
+            "NEG-R191-008-reference-liveness-1",
+            "NEG-R191-015-reference-liveness-1",
+            "NEG-R191-018-reference-liveness-1",
+            "NEG-R191-019-reference-liveness-1"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "rollback",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "No issue 191 obligation derives rollback risk or changes that runtime boundary.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "structural-contract",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue 191 includes structural-contract source-derived obligations and per-surface controls.",
+      "control_ids": [
+        "NEG-R191-001-structural-contract-1",
+        "NEG-R191-003-structural-contract-1",
+        "NEG-R191-007-structural-contract-1",
+        "NEG-R191-012-structural-contract-1",
+        "NEG-R191-018-structural-contract-1",
+        "NEG-R191-019-structural-contract-1",
+        "NEG-R191-026-structural-contract-1",
+        "NEG-R191-028-structural-contract-1",
+        "NEG-R191-030-structural-contract-1"
+      ],
+      "dimensions": [
+        {
+          "surface": "local-source-precedence",
+          "reason": "The structural-contract surface local-source-precedence is exercised by linked exact-head negative and regression assertions.",
+          "control_ids": [
+            "NEG-R191-001-structural-contract-1",
+            "NEG-R191-003-structural-contract-1",
+            "NEG-R191-007-structural-contract-1",
+            "NEG-R191-012-structural-contract-1",
+            "NEG-R191-018-structural-contract-1",
+            "NEG-R191-019-structural-contract-1",
+            "NEG-R191-026-structural-contract-1",
+            "NEG-R191-028-structural-contract-1",
+            "NEG-R191-030-structural-contract-1"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-consistency",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue 191 includes temporal-consistency source-derived obligations and per-surface controls.",
+      "control_ids": [
+        "NEG-R191-018-temporal-consistency-1"
+      ],
+      "dimensions": [
+        {
+          "surface": "approved-reference-drift",
+          "reason": "The temporal-consistency surface approved-reference-drift is exercised by linked exact-head negative and regression assertions.",
+          "control_ids": [
+            "NEG-R191-018-temporal-consistency-1"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-destination",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "No issue 191 obligation derives temporal-destination risk or changes that runtime boundary.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "tenant-isolation",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "No issue 191 obligation derives tenant-isolation risk or changes that runtime boundary.",
+      "control_ids": [],
+      "dimensions": []
+    }
+  ],
+  "material_families_missing_controls": []
+}
