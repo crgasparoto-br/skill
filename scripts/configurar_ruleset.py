@@ -7,7 +7,9 @@ Preview is read-only; --apply requires explicit operator action.
 from __future__ import annotations
 
 import argparse
+import base64
 import copy
+import hashlib
 import json
 import re
 import subprocess
@@ -104,6 +106,46 @@ def verify(before: dict, after: dict, payload: dict) -> None:
             raise ValueError(f"ruleset read-back mismatch: {field}")
 
 
+
+def refuse_legacy_apply_in_single_operator_mode(repo: str, branch: str) -> None:
+    """Prevent restoring mandatory human review under trusted solo opt-in."""
+    path = f"/repos/{repo}/contents/.github/session-review-policy.json?ref={branch}"
+    source = gh(path)
+    if (source.get("type") != "file" or source.get("encoding") != "base64"
+            or not isinstance(source.get("content"), str)
+            or not isinstance(source.get("sha"), str)):
+        raise ValueError("trusted session-review policy is unavailable")
+
+    def unique_keys(pairs: list[tuple[str, object]]) -> dict:
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate trusted session-review policy key")
+            result[key] = value
+        return result
+
+    try:
+        raw = base64.b64decode("".join(source["content"].split()), validate=True)
+        if len(raw) > 32768:
+            raise ValueError("trusted session-review policy too large")
+        expected = hashlib.sha1(f"blob {len(raw)}\0".encode() + raw).hexdigest()
+        if source["sha"] != expected:
+            raise ValueError("trusted session-review policy blob SHA mismatch")
+        policy = json.loads(raw, object_pairs_hook=unique_keys)
+    except (ValueError, UnicodeError, TypeError) as exc:
+        raise ValueError(f"invalid trusted session-review policy: {exc}") from exc
+    if (not isinstance(policy, dict) or type(policy.get("schema_version")) is not int
+            or policy["schema_version"] != 1
+            or policy.get("mode") not in {"enabled", "disabled"}
+            or policy.get("assurance") != "operator-attested-session-review"
+            or policy.get("acknowledgement") != "separate-context-declared-not-cryptographically-proven"):
+        raise ValueError("trusted session-review policy shape is invalid")
+    if policy["mode"] == "enabled":
+        raise ValueError(
+            "legacy human-audit ruleset apply forbidden under trusted single-operator policy; "
+            "use the reviewed M2 session ruleset migration instead"
+        )
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", required=True)
@@ -159,6 +201,8 @@ def main() -> None:
     for field in ("updated_at", "rules", "bypass_actors", "conditions"):
         if before.get(field) != current.get(field):
             raise ValueError(f"ruleset changed after preview: {field}")
+    # Last fail-closed guard after stale-ruleset checks and before remote write.
+    refuse_legacy_apply_in_single_operator_mode(args.repo, args.branch)
     gh(endpoint, method="PUT", payload=payload)
     verify(before, gh(endpoint), payload)
     print("APPLIED AND READ-BACK VERIFIED")

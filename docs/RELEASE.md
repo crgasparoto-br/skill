@@ -71,6 +71,16 @@ com conteúdo hostil vindo de README, de issue, de fixture e de contrato, na mes
 
 ## Handoff de release
 
+O workflow de certificado semântico de **issue** (`.github/workflows/handoff-evidence.yml`)
+é exclusivo de PRs contra `develop`. Uma PR de promoção `develop` → `main`
+não pode reutilizar `.github/handoff-evidence/issue-N/manifest.json` vinculado
+a outra PR/base/HEAD. Essa colisão foi observada na release PR #185, que rejeitou
+corretamente o manifesto da PR #184. A promoção deve preparar a própria evidência
+de release, com o contrato `scripts/release_handoff.py`, depois de obter os
+checks técnicos no SHA final e o parecer de revisão exigido pelo modo de garantia
+adotado. A ausência de evidência bloqueia **release readiness**; remover o
+workflow de issue da `main` não equivale a certificar a release.
+
 Promover `develop` a `main` segue um contrato verificável, e não uma decisão de memória. `scripts/release_handoff.py`
 recebe a evidência declarada e reprova quando falta item obrigatório, quando um identificador é desconhecido,
 quando o commit não é hexadecimal de 40 caracteres, quando `develop` e `main` estão no mesmo commit ou quando a

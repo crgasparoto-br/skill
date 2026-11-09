@@ -84,11 +84,14 @@ classica. HTTP 404 sem permissao administrativa comprovada nao prova ausencia
 de branch protection.
 
 Antes de aplicar uma proposta a `main`, o administrador deve comprovar em
-uma PR real contra `main` que `Offline authorization tests` e
-`collect / Require certified semantic handoff (exact SHA)` sao emitidos pela
-aplicacao GitHub Actions exigida e podem concluir com sucesso. O ruleset
-atual da `main` nao exige esses dois checks. Sem provas operacionais,
-nao aplicar a proposta nem ativar as regras: manter a configuracao anterior.
+PR real os checks tecnicos e a revisao por sessao no SHA final. O certificado
+`collect / Require certified semantic handoff (exact SHA)` e de entrega de
+issue para `develop`, **nao** de release; exigir esse contexto na `main`
+reintroduziria o falso bloqueio da PR #185. O contrato distinto de handoff de
+release fica em `scripts/release_handoff.py` e deve ser validado com evidencias
+da propria promocao. Nenhum check de sessao ou release e presumido verde por
+omissao. Sem provas operacionais e read-back administrativo completo, nao
+ativar as regras.
 
 Campos de contagem de review, code-owner, last-push e lista de revisores
 obrigatorios devem estar explicitamente observaveis. Omissao nao representa

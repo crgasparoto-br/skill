@@ -118,11 +118,14 @@ A issue #66 estabelece **somente o padrão compartilhado**. Cada issue consumido
 
 ## Gate de auditoria independente GitHub-native
 
-O workflow `.github/workflows/independent-audit-gate.yml` introduz o contexto
-`Verify independent audit (exact SHA)` para PRs destinadas a `develop` e `main`.
-Ele executa a política da **base confiável**, sem checkout de código da PR e sem
-token de escrita. Não realiza a auditoria: verifica um review GitHub `APPROVED`
-de revisor distinto de todos os contribuidores do diff e um contrato explícito.
+O workflow `.github/workflows/independent-audit-gate.yml` oferece o contexto
+**opcional** `Verify independent audit (exact SHA)` somente quando houver
+evento `pull_request_review` nas PRs destinadas a `develop` ou `main`.
+Ele não é disparado na abertura/sincronização de PRs: o proprietário que trabalha
+sozinho usa `Verify session review (exact SHA)` como garantia declarada, sem
+afirmar auditoria humana de terceiro. A via nativa mantém a política da **base
+confiável**, sem checkout de código candidato nem token de escrita, e só aprova
+review GitHub `APPROVED` de revisor distinto de quem implementou.
 
 O review independente precisa trazer uma linha própria:
 

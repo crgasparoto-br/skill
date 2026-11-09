@@ -18,7 +18,6 @@ REQUIRED = {
     "main": (
         "Structure and tests",
         "Offline authorization tests",
-        "collect / Require certified semantic handoff (exact SHA)",
         SESSION,
     ),
 }
