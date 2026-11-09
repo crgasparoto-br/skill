@@ -38,7 +38,7 @@ Aplicar nesta ordem, somente onde a fonte tratar o componente ou estado em quest
 - Quando nao houver documento formal, mas houver componentes locais, reutilizar seu comportamento e registrar que a referencia e **implementada**, nao oficialmente aprovada.
 - Na ausencia de fonte local verificavel, declarar **sem padrao local identificado** e usar os defaults pertinentes desta skill; nao criar design system ficticio nem copiar referencias de outra aplicacao.
 - Documentar no resultado as fontes consultadas, a precedencia aplicada, os defaults, as lacunas e os conflitos relevantes, sem criar inventario global ou artefato novo por padrao.
-- Regras do SolverFin, inclusive Golden Screen do Extrato e tokens `--sf-*`, so valem no proprio SolverFin. Acessibilidade e seguranca nao podem ser reduzidas por convencao visual local.
+- Convencoes de produto, rotas, seletores, tokens e referencias visuais particulares pertencem exclusivamente ao repositorio consumidor. Esta Skill define somente o processo geral de descoberta e verificacao. Acessibilidade e seguranca nao podem ser reduzidas por convencao visual local.
 
 ## Hierarquia
 
@@ -120,7 +120,7 @@ Não colocar cada campo, métrica ou parágrafo em um card. Preferir seções, l
 - Antes de criar ou alterar botao, combobox, opcao de menu, radiogroup ou modal, identificar o modelo executavel da Golden Screen aprovada do projeto e reutilizar variante/estados e tokens. A aparencia neutra tambem faz parte do contrato, nao so o grid.
 - Opcao de escolha e acao de confirmar sao responsabilidades diferentes. Alternativas equivalentes devem ter o **mesmo estilo neutro**, com texto legivel, sem fundo de acao primaria ou selecao implicita antes do clique. Reservar `primary` para confirmacao final.
 - Conferir a cascata CSS global e local, especialmente regras genericas como `button:hover:not(:disabled)`. O componente deve manter o contraste correto de background, foreground e border em **repouso, hover, focus-visible, active e disabled**; nao confiar apenas na presenca de classes ou propriedades estaticas.
-- No SolverFin, consultar `docs/DESIGN_SYSTEM.md`, `docs/GOLDEN_STATEMENT.md` e `docs/UI_PRIMITIVES.md`. Para opcoes operacionais no SSR, reutilizar `button[data-button-variant="neutral"]`, seus tokens `--sf-*` e aliases; nunca criar botao escuro de escolha com texto escuro.
+- Quando existirem variantes e tokens locais para controles de escolha, reutilizar seus estados e verificar a precedencia dos seletores no CSS executado, sem introduzir convencoes proprias de outro produto.
 - Bloquear o aceite de mudanca visual quando um unico estado de hover/foco divergir da Golden Screen ou tiver contraste insuficiente. Validar o estado real no navegador com ponteiro e teclado; conferir o HEAD exato, desktop e mobile e registrar evidencia.
 
 ## Botões e ícones

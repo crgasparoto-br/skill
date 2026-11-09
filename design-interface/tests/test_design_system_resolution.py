@@ -30,10 +30,26 @@ def test_conflicts_are_recorded_instead_of_silently_overridden() -> None:
     assert "registrar lacunas, conflitos e defaults usados" in audit
 
 
-def test_solverfin_rules_remain_conditional_on_repository() -> None:
+def test_normative_guidance_has_no_consumer_specific_visual_rules() -> None:
+    sources = [ROOT / "SKILL.md", *sorted((ROOT / "references").glob("*.md"))]
+    content = "\n".join(path.read_text(encoding="utf-8") for path in sources).casefold()
+    # Negative regression for previously leaked, product-owned references.
+    forbidden = (
+        "solver" + "fin",
+        "--" + "sf-",
+        "docs/golden_" + "statement.md",
+        'data-button-variant="neutral"',
+        "/lanca" + "mentos",
+    )
+    for token in forbidden:
+        assert token not in content
+
+
+def test_project_rules_are_owned_by_consumer_repositories() -> None:
+    spec = (ROOT.parent / "docs/SKILL_SYSTEM_SPEC.md").read_text(encoding="utf-8")
+    agents = (ROOT.parent / "AGENTS.md").read_text(encoding="utf-8")
     standards = (ROOT / "references/interface-standards.md").read_text(encoding="utf-8")
-    skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
-    audit = (ROOT / "references/visual-audit.md").read_text(encoding="utf-8")
-    assert "so valem no proprio SolverFin" in standards
-    assert "No SolverFin, consultar" in skill
-    assert "nao importar Golden Screen ou tokens especificos de outro produto" in audit
+    assert "### 4.12 Portabilidade e propriedade das regras por projeto" in spec
+    assert "repositorio consumidor" in spec
+    assert "As regras normativas do catalogo devem ser portaveis" in agents
+    assert "pertencem exclusivamente ao repositorio consumidor" in standards

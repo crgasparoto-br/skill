@@ -54,7 +54,7 @@ Sem execução visual, classificar a auditoria como `Não verificável`. Leitura
 ### Consistência
 
 - identificar as fontes de UI da propria solucao, conforme a precedencia de `interface-standards.md`, e registrar lacunas, conflitos e defaults usados;
-- nao importar Golden Screen ou tokens especificos de outro produto (inclusive SolverFin) sem contrato local;
+- nao importar referencia visual, token, rota ou variante de outro produto como norma do projeto auditado;
 - componentes e tokens seguem o projeto;
 - mesma ação usa mesmo texto, ícone e padrão;
 - padrões de filtros, formulários, modais e feedback são coerentes;

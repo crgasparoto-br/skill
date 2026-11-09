@@ -36,7 +36,7 @@ Aplicar somente para efeito percebido ou operado pelo usuario: texto, icone, ord
 1. No recorte recebido, identificar as fontes de UI da propria solucao: documentacao aprovada, Golden Screen, componentes, tokens, estilos executaveis e telas correlatas. Aplicar a precedencia de `references/interface-standards.md`.
    - Antes de editar componente visivel, consultar a referencia oficialmente aprovada, quando existir, e conferir seus estados e tokens executaveis, sem redescoberta global.
    - Sem padrao local verificavel, registrar a lacuna e usar somente defaults genericos pertinentes; nunca importar convencoes de outra solucao.
-   - No SolverFin, consultar `docs/DESIGN_SYSTEM.md`, `docs/GOLDEN_STATEMENT.md`, `docs/UI_PRIMITIVES.md` e o CSS compartilhado, tomando o Extrato aprovado como referencia de componentes, **inclusive estados de hover, foco e escolha em dialogs**. Aplicar em todos os modais/telas relacionados, nao somente na tela principal.
+   - Conferir estados de repouso, hover, foco, ativo e desabilitado nas superficies afetadas, inclusive modais e menus, conforme os componentes e tokens da propria solucao.
 2. Definir hierarquia, ordem, acao primaria, estados e estrategia responsiva.
 3. Reutilizar componentes existentes e alterar o menor conjunto coeso.
 4. Tratar loading, vazio, erro, sucesso, indisponibilidade, permissao, teclado, foco, contraste e overflow quando aplicaveis.
