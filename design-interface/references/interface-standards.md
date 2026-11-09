@@ -2,6 +2,27 @@
 
 Usar primeiro os padrões do repositório. Aplicar estes defaults apenas quando o projeto não fornecer uma regra mais específica.
 
+## Quando ler este arquivo
+
+Consultar quando o recorte de UI exigir decidir a fonte visual, a precedencia, os componentes ou os defaults pertinentes. Carregar somente as secoes necessarias a etapa, sem refazer descoberta global.
+
+## Índice
+
+- [Descoberta e precedencia por solucao](#descoberta-e-precedencia-por-solucao)
+- [Hierarquia](#hierarquia)
+- [Grid e largura](#grid-e-largura)
+- [Espaçamento e densidade](#espaçamento-e-densidade)
+- [Tipografia](#tipografia)
+- [Cards e contêineres](#cards-e-contêineres)
+- [Formulários](#formulários)
+- [Modais e drawers](#modais-e-drawers)
+- [Tabelas e listas](#tabelas-e-listas)
+- [Golden Screens e controles de escolha](#golden-screens-e-controles-de-escolha)
+- [Botões e ícones](#botões-e-ícones)
+- [Cores e estados semânticos](#cores-e-estados-semânticos)
+- [Responsividade](#responsividade)
+- [Acessibilidade](#acessibilidade)
+
 ## Descoberta e precedencia por solucao
 
 No recorte atribuido, localizar fontes da **propria solucao**, sem varrer novamente todo o repositorio: documentacao canonica de UI/UX, Golden Screen oficialmente aprovada, biblioteca de componentes, tokens/CSS executaveis e telas correlatas. Conferir caminhos e estados reais; nome de arquivo, aparencia similar ou memoria de outro projeto nao comprovam aprovacao.
