@@ -33,8 +33,9 @@ Aplicar somente para efeito percebido ou operado pelo usuario: texto, icone, ord
 
 ## Implementar
 
-1. Inspecionar somente componentes, tokens, icones e breakpoints relacionados.
-   - Antes de editar qualquer componente visivel, identificar Golden Screen ou referencia visual oficialmente aprovada, quando existir, e ler seu contrato e tokens executaveis.
+1. No recorte recebido, identificar as fontes de UI da propria solucao: documentacao aprovada, Golden Screen, componentes, tokens, estilos executaveis e telas correlatas. Aplicar a precedencia de `references/interface-standards.md`.
+   - Antes de editar componente visivel, consultar a referencia oficialmente aprovada, quando existir, e conferir seus estados e tokens executaveis, sem redescoberta global.
+   - Sem padrao local verificavel, registrar a lacuna e usar somente defaults genericos pertinentes; nunca importar convencoes de outra solucao.
    - No SolverFin, consultar `docs/DESIGN_SYSTEM.md`, `docs/GOLDEN_STATEMENT.md`, `docs/UI_PRIMITIVES.md` e o CSS compartilhado, tomando o Extrato aprovado como referencia de componentes, **inclusive estados de hover, foco e escolha em dialogs**. Aplicar em todos os modais/telas relacionados, nao somente na tela principal.
 2. Definir hierarquia, ordem, acao primaria, estados e estrategia responsiva.
 3. Reutilizar componentes existentes e alterar o menor conjunto coeso.
@@ -55,7 +56,7 @@ Executar uma amostra representativa por classe, usando desktop e mobile quando h
 
 ## Verificacao e auditoria
 
-Operar em leitura. Rederivar criterios no modo independente; no modo interno, usar o recorte recebido. Testar conteudo longo, viewport reduzida, teclado, zoom, estados e permissoes somente quando vinculados ao risco/contrato.
+Operar em leitura. Rederivar criterios no modo independente; no modo interno, usar o recorte recebido. Conferir fontes locais, precedencia, conflitos e defaults registrados, sem atribuir a outra solucao o padrao do projeto auditado. Testar conteudo longo, viewport reduzida, teclado, zoom, estados e permissoes somente quando vinculados ao risco/contrato.
 
 Quando o mesmo estado atende audiencias distintas, exigir contrato explicito por audiencia e controles negativos que rejeitem a copy das audiencias irmas. rota autenticada, rota publica tokenizada e area administrativa devem ter semantica discriminante quando o contexto for diferente.
 
@@ -65,7 +66,7 @@ Registrar rota, cenario, SHA, viewport, dados, interacao, observacao ou screensh
 
 ## Entrega
 
-Retornar status, requisitos visuais, arquivos, classes de cenario, viewports, evidencias, findings, validacoes focadas, impacto documental, fingerprints e limitacoes. Nao fazer merge nem declarar auditoria independente no contexto de implementacao.
+Retornar status, requisitos visuais, fontes locais de UI, conflitos ou lacunas, defaults usados, arquivos, classes de cenario, viewports, evidencias, findings, validacoes focadas, impacto documental, fingerprints e limitacoes. Nao fazer merge nem declarar auditoria independente no contexto de implementacao.
 
 ## Contrato de reutilizacao
 
