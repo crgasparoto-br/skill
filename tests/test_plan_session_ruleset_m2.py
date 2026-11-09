@@ -473,7 +473,7 @@ def test_github_fnmatch_pathname_does_not_cross_slashes_and_supports_double_star
 def test_release_main_does_not_require_an_issue_pr_handoff():
     assert "collect / Require certified semantic handoff (exact SHA)" not in plan.REQUIRED["main"]
     assert "collect / Require certified semantic handoff (exact SHA)" in plan.REQUIRED["develop"]
-    assert plan.SESSION in plan.REQUIRED["main"]
+    assert "Verify session review (exact SHA)" in plan.REQUIRED["main"]
     root = Path(__file__).resolve().parents[1]
     workflow = (root / ".github" / "workflows" / "handoff-evidence.yml").read_text(encoding="utf-8")
     triggers = workflow.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
