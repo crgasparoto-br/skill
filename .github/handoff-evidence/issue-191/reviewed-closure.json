@@ -328,7 +328,7 @@
             "CI-42669221740-001"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+            "design-interface.tests.test_design_system_resolution test_conflicts_are_recorded_instead_of_silently_overridden"
           ],
           "negative_control_evidence": [
             "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Local source discovery and exclusion of consumer-specific instructions; certification re-executes it at current material SHA."
@@ -353,7 +353,7 @@
             "CI-42669221740-003"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+            "design-interface.tests.test_design_system_resolution test_conflicts_are_recorded_instead_of_silently_overridden"
           ],
           "negative_control_evidence": [
             "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Local hierarchy with documented fallback; certification re-executes it at current material SHA."
@@ -378,7 +378,7 @@
             "CI-42669221740-007"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+            "design-interface.tests.test_design_system_resolution test_conflicts_are_recorded_instead_of_silently_overridden"
           ],
           "negative_control_evidence": [
             "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Approved sources precede executable components and generic defaults; certification re-executes it at current material SHA."
@@ -403,7 +403,7 @@
             "CI-42669221740-012"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+            "design-interface.tests.test_design_system_resolution test_normative_guidance_has_no_consumer_specific_visual_rules"
           ],
           "negative_control_evidence": [
             "Existing source assertion test_normative_guidance_has_no_consumer_specific_visual_rules checks No new schema, flow, library, or shared-contract change; certification re-executes it at current material SHA."
@@ -428,7 +428,7 @@
             "CI-42669221740-018"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+            "design-interface.tests.test_design_system_resolution test_conflicts_are_recorded_instead_of_silently_overridden"
           ],
           "negative_control_evidence": [
             "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Approved local standard is selected before generic defaults; certification re-executes it at current material SHA."
@@ -453,7 +453,7 @@
             "CI-42669221740-019"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+            "design-interface.tests.test_design_system_resolution test_conflicts_are_recorded_instead_of_silently_overridden"
           ],
           "negative_control_evidence": [
             "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Executable tokens are used without pretending approval; certification re-executes it at current material SHA."
@@ -478,7 +478,7 @@
             "CI-42669221740-026"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+            "design-interface.tests.test_design_system_resolution test_conflicts_are_recorded_instead_of_silently_overridden"
           ],
           "negative_control_evidence": [
             "Existing source assertion test_conflicts_are_recorded_instead_of_silently_overridden checks Project without design docs retains reusable components; certification re-executes it at current material SHA."
@@ -503,7 +503,7 @@
             "CI-42669221740-028"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_selection_states_are_defined_by_the_local_design_system"
+            "design-interface.tests.test_design_system_resolution test_selection_states_are_defined_by_the_local_design_system"
           ],
           "negative_control_evidence": [
             "Existing source assertion test_selection_states_are_defined_by_the_local_design_system checks Structural negative regression guards product-neutral precedence; certification re-executes it at current material SHA."
@@ -528,7 +528,7 @@
             "CI-42669221740-030"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_normative_guidance_has_no_consumer_specific_visual_rules"
+            "design-interface.tests.test_design_system_resolution test_normative_guidance_has_no_consumer_specific_visual_rules"
           ],
           "negative_control_evidence": [
             "Existing source assertion test_normative_guidance_has_no_consumer_specific_visual_rules checks No new delivery orchestration or shared-contract complexity; certification re-executes it at current material SHA."
@@ -564,7 +564,7 @@
             "GitHub Actions run 42669221740 verified prior material; new exact-HEAD run is required."
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_project_rules_are_owned_by_consumer_repositories"
+            "design-interface.tests.test_design_system_resolution test_project_rules_are_owned_by_consumer_repositories"
           ],
           "negative_control_evidence": [
             "Structural negative control rejects consumer-owned tokens in the universal design-interface skill."
@@ -594,8 +594,8 @@
             "CI-42669221740"
           ],
           "scenario_ids": [
-            "design-interface.tests.test_design_system_resolution::test_local_precedence_keeps_fallback_last",
-            "design-interface.tests.test_design_system_resolution::test_conflicts_are_recorded_instead_of_silently_overridden"
+            "design-interface.tests.test_design_system_resolution test_local_precedence_keeps_fallback_last",
+            "design-interface.tests.test_design_system_resolution test_conflicts_are_recorded_instead_of_silently_overridden"
           ],
           "negative_control_evidence": [
             "The precedence test orders approved sources before runtime components and fallback; the conflict test prevents silent override."

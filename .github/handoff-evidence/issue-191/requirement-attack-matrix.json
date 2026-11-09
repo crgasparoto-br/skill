@@ -43,7 +43,7 @@
           "dimension": "consumer-boundary-001-1",
           "failure_mode": "The normative clause for Local source discovery and exclusion of consumer-specific instructions could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Local source discovery and exclusion of consumer-specific instructions.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Local source discovery and exclusion of consumer-specific instructions take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -137,7 +137,7 @@
           "dimension": "consumer-boundary-002-1",
           "failure_mode": "The normative clause for Scoped discovery in the design-interface control plane could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Scoped discovery in the design-interface control plane.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Scoped discovery in the design-interface control plane take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -231,7 +231,7 @@
           "dimension": "consumer-boundary-003-1",
           "failure_mode": "The normative clause for Local hierarchy with documented fallback could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Local hierarchy with documented fallback.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Local hierarchy with documented fallback take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -325,7 +325,7 @@
           "dimension": "consumer-boundary-004-1",
           "failure_mode": "The normative clause for Negative isolation against leaked consumer rules could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Negative isolation against leaked consumer rules.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Negative isolation against leaked consumer rules take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_selection_states_are_defined_by_the_local_design_system rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -419,7 +419,7 @@
           "dimension": "consumer-boundary-005-1",
           "failure_mode": "The normative clause for Normative project ownership in catalog governance could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Normative project ownership in catalog governance.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Normative project ownership in catalog governance take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -514,7 +514,7 @@
           "dimension": "consumer-boundary-006-1",
           "failure_mode": "The normative clause for Sources must be read within the delegated UI scope could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Sources must be read within the delegated UI scope.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Sources must be read within the delegated UI scope take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -560,7 +560,7 @@
           "dimension": "consumer-boundary-006-1",
           "failure_mode": "The normative clause for Sources must be read within the delegated UI scope could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Sources must be read within the delegated UI scope.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Sources must be read within the delegated UI scope take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -659,7 +659,7 @@
           "dimension": "consumer-boundary-007-1",
           "failure_mode": "The normative clause for Approved sources precede executable components and generic defaults could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Approved sources precede executable components and generic defaults.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Approved sources precede executable components and generic defaults take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -753,7 +753,7 @@
           "dimension": "consumer-boundary-008-1",
           "failure_mode": "The normative clause for Conflicts and absence are explicitly recorded could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Conflicts and absence are explicitly recorded.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Conflicts and absence are explicitly recorded take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -847,7 +847,7 @@
           "dimension": "consumer-boundary-009-1",
           "failure_mode": "The normative clause for No product selectors or CSS tokens inside universal instructions could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for No product selectors or CSS tokens inside universal instructions.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for No product selectors or CSS tokens inside universal instructions take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_selection_states_are_defined_by_the_local_design_system rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -941,7 +941,7 @@
           "dimension": "consumer-boundary-010-1",
           "failure_mode": "The normative clause for Project-specific Golden Screen rules stay with the consumer could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Project-specific Golden Screen rules stay with the consumer.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Project-specific Golden Screen rules stay with the consumer take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_selection_states_are_defined_by_the_local_design_system rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1035,7 +1035,7 @@
           "dimension": "consumer-boundary-011-1",
           "failure_mode": "The normative clause for Audit versus implementation separation remains declared could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Audit versus implementation separation remains declared.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Audit versus implementation separation remains declared take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1129,7 +1129,7 @@
           "dimension": "consumer-boundary-012-1",
           "failure_mode": "The normative clause for No new schema, flow, library, or shared-contract change could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for No new schema, flow, library, or shared-contract change.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for No new schema, flow, library, or shared-contract change take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1223,7 +1223,7 @@
           "dimension": "consumer-boundary-013-1",
           "failure_mode": "The normative clause for Accessibility and security cannot be weakened by local UI style could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Accessibility and security cannot be weakened by local UI style.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Accessibility and security cannot be weakened by local UI style take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1317,7 +1317,7 @@
           "dimension": "consumer-boundary-014-1",
           "failure_mode": "The normative clause for Local approved contract prevails over aesthetic preference could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Local approved contract prevails over aesthetic preference.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Local approved contract prevails over aesthetic preference take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1411,7 +1411,7 @@
           "dimension": "consumer-boundary-015-1",
           "failure_mode": "The normative clause for Unverified files cannot be promoted to approved design could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Unverified files cannot be promoted to approved design.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Unverified files cannot be promoted to approved design take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1505,7 +1505,7 @@
           "dimension": "consumer-boundary-016-1",
           "failure_mode": "The normative clause for Consumer names and tokens do not become permanent catalog rules could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Consumer names and tokens do not become permanent catalog rules.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Consumer names and tokens do not become permanent catalog rules take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_selection_states_are_defined_by_the_local_design_system rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1599,7 +1599,7 @@
           "dimension": "consumer-boundary-017-1",
           "failure_mode": "The normative clause for SolverFin Golden Screen documentation remains product-owned could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for SolverFin Golden Screen documentation remains product-owned.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for SolverFin Golden Screen documentation remains product-owned take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_selection_states_are_defined_by_the_local_design_system rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1695,7 +1695,7 @@
           "dimension": "consumer-boundary-018-1",
           "failure_mode": "The normative clause for Approved local standard is selected before generic defaults could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Approved local standard is selected before generic defaults.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Approved local standard is selected before generic defaults take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1741,7 +1741,7 @@
           "dimension": "consumer-boundary-018-1",
           "failure_mode": "The normative clause for Approved local standard is selected before generic defaults could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Approved local standard is selected before generic defaults.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Approved local standard is selected before generic defaults take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1787,7 +1787,7 @@
           "dimension": "consumer-boundary-018-1",
           "failure_mode": "The normative clause for Approved local standard is selected before generic defaults could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Approved local standard is selected before generic defaults.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Approved local standard is selected before generic defaults take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1893,7 +1893,7 @@
           "dimension": "consumer-boundary-019-1",
           "failure_mode": "The normative clause for Executable tokens are used without pretending approval could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Executable tokens are used without pretending approval.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Executable tokens are used without pretending approval take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1939,7 +1939,7 @@
           "dimension": "consumer-boundary-019-1",
           "failure_mode": "The normative clause for Executable tokens are used without pretending approval could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Executable tokens are used without pretending approval.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Executable tokens are used without pretending approval take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -1985,7 +1985,7 @@
           "dimension": "consumer-boundary-019-1",
           "failure_mode": "The normative clause for Executable tokens are used without pretending approval could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Executable tokens are used without pretending approval.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Executable tokens are used without pretending approval take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2089,7 +2089,7 @@
           "dimension": "consumer-boundary-020-1",
           "failure_mode": "The normative clause for No local standard means declare absence and use general defaults could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for No local standard means declare absence and use general defaults.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for No local standard means declare absence and use general defaults take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2183,7 +2183,7 @@
           "dimension": "consumer-boundary-021-1",
           "failure_mode": "The normative clause for Contradictory sources are surfaced before choosing an option could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Contradictory sources are surfaced before choosing an option.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Contradictory sources are surfaced before choosing an option take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2277,7 +2277,7 @@
           "dimension": "consumer-boundary-022-1",
           "failure_mode": "The normative clause for Normative reference files contain no consumer identifiers could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Normative reference files contain no consumer identifiers.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Normative reference files contain no consumer identifiers take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_selection_states_are_defined_by_the_local_design_system rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2371,7 +2371,7 @@
           "dimension": "consumer-boundary-023-1",
           "failure_mode": "The normative clause for Product Golden Screen is versioned in its own repository could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Product Golden Screen is versioned in its own repository.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Product Golden Screen is versioned in its own repository take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2465,7 +2465,7 @@
           "dimension": "consumer-boundary-024-1",
           "failure_mode": "The normative clause for Negative regression detects reintroduced concrete tokens could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Negative regression detects reintroduced concrete tokens.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Negative regression detects reintroduced concrete tokens take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_selection_states_are_defined_by_the_local_design_system rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2559,7 +2559,7 @@
           "dimension": "consumer-boundary-025-1",
           "failure_mode": "The normative clause for Complete exact-SHA suite and focused cases are recorded could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Complete exact-SHA suite and focused cases are recorded.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Complete exact-SHA suite and focused cases are recorded take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2654,7 +2654,7 @@
           "dimension": "consumer-boundary-026-1",
           "failure_mode": "The normative clause for Project without design docs retains reusable components could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Project without design docs retains reusable components.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Project without design docs retains reusable components take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2700,7 +2700,7 @@
           "dimension": "consumer-boundary-026-1",
           "failure_mode": "The normative clause for Project without design docs retains reusable components could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Project without design docs retains reusable components.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Project without design docs retains reusable components take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2799,7 +2799,7 @@
           "dimension": "consumer-boundary-027-1",
           "failure_mode": "The normative clause for Project without UI sources declares the documentation gap could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Project without UI sources declares the documentation gap.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_conflicts_are_recorded_instead_of_silently_overridden and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Project without UI sources declares the documentation gap take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_conflicts_are_recorded_instead_of_silently_overridden rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2893,7 +2893,7 @@
           "dimension": "consumer-boundary-028-1",
           "failure_mode": "The normative clause for Structural negative regression guards product-neutral precedence could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Structural negative regression guards product-neutral precedence.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py::test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_selection_states_are_defined_by_the_local_design_system and design-interface/tests/test_design_system_resolution.py test_project_rules_are_owned_by_consumer_repositories at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Structural negative regression guards product-neutral precedence take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_selection_states_are_defined_by_the_local_design_system rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -2987,7 +2987,7 @@
           "dimension": "consumer-boundary-029-1",
           "failure_mode": "The normative clause for Design-interface and global documentation preserve ownership could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for Design-interface and global documentation preserve ownership.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for Design-interface and global documentation preserve ownership take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
@@ -3081,7 +3081,7 @@
           "dimension": "consumer-boundary-030-1",
           "failure_mode": "The normative clause for No new delivery orchestration or shared-contract complexity could be falsely satisfied by a foreign product convention instead of local sources.",
           "plausible_wrong_implementation": "The skill could hardcode another consumer design system or silently override the local project source, invalidating the contract for No new delivery orchestration or shared-contract complexity.",
-          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py::test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py::test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
+          "procedure": "Inspect and execute design-interface/tests/test_design_system_resolution.py test_normative_guidance_has_no_consumer_specific_visual_rules and design-interface/tests/test_design_system_resolution.py test_local_precedence_keeps_fallback_last at the actual HEAD; compare missing sources and conflicting local rules against the changed Markdown.",
           "expected": "Project-controlled rules for No new delivery orchestration or shared-contract complexity take precedence; a borrowed consumer rule or silent conflict is not accepted.",
           "observed": "The assertion in test_normative_guidance_has_no_consumer_specific_visual_rules rejects incompatible wording or ordering; the runner verifies its result on the current material commit.",
           "sibling_cases": [
