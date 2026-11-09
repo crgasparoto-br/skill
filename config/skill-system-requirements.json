@@ -462,6 +462,22 @@
         "scripts/validate_release_handoff.py",
         "tests/test_release_handoff.py"
       ]
+    },
+    {
+      "id": "SKSYS-030",
+      "title": "Consumer-neutral normative skills and project-owned design rules",
+      "status": "implemented",
+      "summary": "Permanent normative skills express portable requirements only. Product-specific design systems, Golden Screens, selectors, tokens and routes stay in their consumer repositories. UI skills discover local sources with explicit precedence and generic fallback; focused regressions reject previously leaked consumer-specific rules.",
+      "implementationRefs": [
+        "file:docs/SKILL_SYSTEM_SPEC.md",
+        "file:AGENTS.md",
+        "file:design-interface/SKILL.md",
+        "file:design-interface/references/interface-standards.md",
+        "file:design-interface/references/visual-audit.md"
+      ],
+      "validationRefs": [
+        "file:design-interface/tests/test_design_system_resolution.py"
+      ]
     }
   ],
   "system_version": "2026-10-08.2"

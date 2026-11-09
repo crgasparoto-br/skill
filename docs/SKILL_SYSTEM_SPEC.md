@@ -95,6 +95,12 @@ Contadores e métricas devem distinguir:
 
 Não preencher ausência de telemetria com zero. Identidades de tentativa, execução e evidência devem permanecer separadas quando representarem conceitos diferentes.
 
+### 4.12 Portabilidade e propriedade das regras por projeto
+
+As instrucoes normativas das Skills e suas referencias devem permanecer genericas e reutilizaveis, sem impor nomes de produtos, caminhos de telas, rotas, seletores, tokens ou componentes de uma aplicacao consumidora.
+
+Cada repositorio consumidor e a fonte de verdade para sua identidade visual, design system, referencias oficialmente aprovadas e contratos funcionais. Ao atuar em um projeto, a Skill deve descobrir suas fontes verificaveis no recorte atribuido, respeitar a precedencia local, registrar ausencias ou conflitos e usar orientacoes genericas apenas para lacunas. Nunca copiar uma regra particular de um produto para o catalogo ou aplica-la a outro consumidor.
+
 ## 5. Contexto e carregamento progressivo
 
 O `SKILL.md` deve permanecer como control plane compacto da skill. Referências, schemas, contratos e scripts são carregados somente quando necessários ao passo corrente. Se uma referência for necessária para decidir um gate, sua ausência é falha de evidência, não autorização para ignorar o gate.
