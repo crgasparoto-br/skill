@@ -2,6 +2,23 @@
 
 Usar primeiro os padrões do repositório. Aplicar estes defaults apenas quando o projeto não fornecer uma regra mais específica.
 
+## Descoberta e precedencia por solucao
+
+No recorte atribuido, localizar fontes da **propria solucao**, sem varrer novamente todo o repositorio: documentacao canonica de UI/UX, Golden Screen oficialmente aprovada, biblioteca de componentes, tokens/CSS executaveis e telas correlatas. Conferir caminhos e estados reais; nome de arquivo, aparencia similar ou memoria de outro projeto nao comprovam aprovacao.
+
+Aplicar nesta ordem, somente onde a fonte tratar o componente ou estado em questao:
+
+1. **Padroes locais aprovados**: design system, Golden Screen e convencoes visuais oficialmente adotadas e versionadas pelo projeto.
+2. **Componentes locais executaveis**: variantes, tokens, CSS e estados da propria aplicacao, para detalhes nao cobertos por fonte aprovada.
+3. **Telas correlatas da mesma solucao**: padroes existentes e observaveis quando nao houver regra mais especifica.
+4. **Defaults genericos desta skill**: aplicar apenas ao que permanecer sem padrao local identificavel.
+
+- Requisitos e criterios da issue delimitam a mudanca, mas nao substituem silenciosamente fontes canonicas. Em conflito entre documentacao aprovada, implementacao real ou requisito, identificar as fontes e a divergencia antes de decidir; nao presumir que uma mudanca acidental de CSS revogou o padrao.
+- Quando nao houver documento formal, mas houver componentes locais, reutilizar seu comportamento e registrar que a referencia e **implementada**, nao oficialmente aprovada.
+- Na ausencia de fonte local verificavel, declarar **sem padrao local identificado** e usar os defaults pertinentes desta skill; nao criar design system ficticio nem copiar referencias de outra aplicacao.
+- Documentar no resultado as fontes consultadas, a precedencia aplicada, os defaults, as lacunas e os conflitos relevantes, sem criar inventario global ou artefato novo por padrao.
+- Regras do SolverFin, inclusive Golden Screen do Extrato e tokens `--sf-*`, so valem no proprio SolverFin. Acessibilidade e seguranca nao podem ser reduzidas por convencao visual local.
+
 ## Hierarquia
 
 - Manter um único título principal por página.
