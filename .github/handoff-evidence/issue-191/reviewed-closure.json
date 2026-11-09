@@ -9,7 +9,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-001: Local source discovery and exclusion of consumer-specific instructions. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-001: Local source discovery and exclusion of consumer-specific instructions. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/SKILL.md:36."
     },
     "1e8ea1209484ab8d771ceeb2925e71a7fd81a8fc6d436bceac44a000aa79a8a8": {
       "disposition": "covered",
@@ -19,7 +19,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-002: Scoped discovery in the design-interface control plane. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-002: Scoped discovery in the design-interface control plane. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/SKILL.md:36."
     },
     "4bb1e79ebb9338591f7bb425d350389283bb974942dd2e9250dd13bd6d256427": {
       "disposition": "covered",
@@ -29,7 +29,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-003: Local hierarchy with documented fallback. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-003: Local hierarchy with documented fallback. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:30."
     },
     "8c38576b7048da615a444cf06d5099567337d15f7e376c65191304b255ce9258": {
       "disposition": "covered",
@@ -39,7 +39,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-004: Negative isolation against leaked consumer rules. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-004: Negative isolation against leaked consumer rules. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33."
     },
     "229ad9329028bbef56f11fff2e8832a892accbbb2713da049cbfd249165889fb": {
       "disposition": "covered",
@@ -49,7 +49,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-005: Normative project ownership in catalog governance. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-005: Normative project ownership in catalog governance. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98."
     },
     "544511ea0d9074a644d8f5a66492729f8800e2c0f5badcbc54fbb2c684973212": {
       "disposition": "covered",
@@ -59,7 +59,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-006: Sources must be read within the delegated UI scope. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-006: Sources must be read within the delegated UI scope. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/SKILL.md:36."
     },
     "8e994d994ed71a1693e4fb9bf945bd144df2aae54b07e552768ae6f6e4967f64": {
       "disposition": "covered",
@@ -69,7 +69,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-007: Approved sources precede executable components and generic defaults. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-007: Approved sources precede executable components and generic defaults. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:30."
     },
     "8395985f879573f86571069d17e452880728d5a2b33fb24ebc338e3047d3a4f7": {
       "disposition": "covered",
@@ -79,7 +79,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-008: Conflicts and absence are explicitly recorded. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_conflicts_are_recorded_instead_of_silently_overridden. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-008: Conflicts and absence are explicitly recorded. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_conflicts_are_recorded_instead_of_silently_overridden. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:36."
     },
     "0b16fc98a16d2a4659b4c9e42ae1f681a2a7ccc830df7b1f915b281fdd1a6acd": {
       "disposition": "covered",
@@ -89,7 +89,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-009: No product selectors or CSS tokens inside universal instructions. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-009: No product selectors or CSS tokens inside universal instructions. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33."
     },
     "7d74c5067110f47a5127354199a7dad6e344401529162bbd1ff0588d0e3bb7d1": {
       "disposition": "covered",
@@ -99,7 +99,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-010: Project-specific Golden Screen rules stay with the consumer. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-010: Project-specific Golden Screen rules stay with the consumer. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98."
     },
     "3a0598adb4f35e7ca6b95654f14782e5f3cfcf2f6ec903bb1ef111b3ce3ee877": {
       "disposition": "covered",
@@ -109,7 +109,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-011: Audit versus implementation separation remains declared. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-011: Audit versus implementation separation remains declared. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/SKILL.md:57."
     },
     "3f4331eda9b3d9d289b6574a510ed192ec33efa80186718aee0a44b747db514f": {
       "disposition": "covered",
@@ -119,7 +119,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-012: No new schema, flow, library, or shared-contract change. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-012: No new schema, flow, library, or shared-contract change. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98."
     },
     "2f642508bbb9fb5c74cde770ef4296904487ac9259b2656bd79c0332d69faf15": {
       "disposition": "covered",
@@ -129,7 +129,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-013: Accessibility and security cannot be weakened by local UI style. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_selection_states_are_defined_by_the_local_design_system. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-013: Accessibility and security cannot be weakened by local UI style. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_selection_states_are_defined_by_the_local_design_system. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/SKILL.md:39."
     },
     "ebcb32027a23cf12b7e10f24ec59353d081894522ab8af6ba906bcec2fe3d081": {
       "disposition": "covered",
@@ -139,7 +139,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-014: Local approved contract prevails over aesthetic preference. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-014: Local approved contract prevails over aesthetic preference. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:34."
     },
     "6acaf9404f1212dd8b7794d178fca3cbb44b1c6d340a34e74f9bf7c3a5391e9e": {
       "disposition": "covered",
@@ -149,7 +149,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-015: Unverified files cannot be promoted to approved design. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_conflicts_are_recorded_instead_of_silently_overridden. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-015: Unverified files cannot be promoted to approved design. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_conflicts_are_recorded_instead_of_silently_overridden. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:38."
     },
     "35f9531d27b0bac8eb894c994cb4df3c1959ad3c43a20e3feff5c496d3d89457": {
       "disposition": "covered",
@@ -159,7 +159,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-016: Consumer names and tokens do not become permanent catalog rules. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-016: Consumer names and tokens do not become permanent catalog rules. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33."
     },
     "767e694f5928118104d98f2136a420f677cd7907374f1bb86fb3c1f719e46b67": {
       "disposition": "covered",
@@ -169,7 +169,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-017: SolverFin Golden Screen documentation remains product-owned. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-017: SolverFin Golden Screen documentation remains product-owned. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98."
     },
     "9db0378d3ed8e526f0935e9292e84518bb5df2202f7d3c12e23caba81e64241c": {
       "disposition": "covered",
@@ -179,7 +179,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-018: Approved local standard is selected before generic defaults. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-018: Approved local standard is selected before generic defaults. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:30."
     },
     "ae5abb67947db1bb09f27166a3d50682e8b046e2ffa9b3515f5d8e1b95c9bc13": {
       "disposition": "covered",
@@ -189,7 +189,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-019: Executable tokens are used without pretending approval. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-019: Executable tokens are used without pretending approval. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:33."
     },
     "a8f29549a537c33badf1f8d79e3bd453f2325bf2561efa4621ba9b1b5666028a": {
       "disposition": "covered",
@@ -199,7 +199,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-020: No local standard means declare absence and use general defaults. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-020: No local standard means declare absence and use general defaults. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:39."
     },
     "565ff7d06a12ba599547642aae0b7fb59bc79966e15989707fe73445eab06337": {
       "disposition": "covered",
@@ -209,7 +209,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-021: Contradictory sources are surfaced before choosing an option. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_conflicts_are_recorded_instead_of_silently_overridden. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-021: Contradictory sources are surfaced before choosing an option. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_conflicts_are_recorded_instead_of_silently_overridden. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:37."
     },
     "50eaf3b4acb40f3de82c9f11b286869104de82dd7937938b6bb23c37ccfbd4f1": {
       "disposition": "covered",
@@ -219,7 +219,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-022: Normative reference files contain no consumer identifiers. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-022: Normative reference files contain no consumer identifiers. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33."
     },
     "6023d48cf194785b98bfb44e2850526a6fd22d92115f82b8a884cc9d1aa9f1a8": {
       "disposition": "covered",
@@ -229,7 +229,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-023: Product Golden Screen is versioned in its own repository. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-023: Product Golden Screen is versioned in its own repository. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98."
     },
     "6bdbca3d71e0534590c2dcc2022f3d5f14224a3ba55349898a6125dad27dbe4b": {
       "disposition": "covered",
@@ -239,7 +239,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-024: Negative regression detects reintroduced concrete tokens. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-024: Negative regression detects reintroduced concrete tokens. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33."
     },
     "48fefca88d528b4fbd566a9fff5ab5ad1a1726ab6380d82a85fe61c2c81bfdd6": {
       "disposition": "covered",
@@ -249,7 +249,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-025: Complete exact-SHA suite and focused cases are recorded. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-025: Complete exact-SHA suite and focused cases are recorded. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/tests/test_design_system_resolution.py:8."
     },
     "6a73101b27d5a7ed96706846d9cd8f5f651965a7ff0d581b24fa896490be2b22": {
       "disposition": "covered",
@@ -259,7 +259,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-026: Project without design docs retains reusable components. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-026: Project without design docs retains reusable components. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:32."
     },
     "9cc0fa4825e6444708de5ccb99f259f279d617683124b515ba195c2c6321a9e6": {
       "disposition": "covered",
@@ -269,7 +269,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-027: Project without UI sources declares the documentation gap. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-027: Project without UI sources declares the documentation gap. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_local_precedence_keeps_fallback_last. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/references/interface-standards.md:39."
     },
     "474a2b89bf03df8937bccc33a4c329a4f82cbd753ab4122776a63da374a612a3": {
       "disposition": "covered",
@@ -279,7 +279,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-028: Structural negative regression guards product-neutral precedence. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-028: Structural negative regression guards product-neutral precedence. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_normative_guidance_has_no_consumer_specific_visual_rules. This is implementer-side verification, not independent approval. Verifiable source location: design-interface/tests/test_design_system_resolution.py:8."
     },
     "c3ce4f4d5fb9c31e9c1e7cfa68f14c9654a024d78c059350799118c8c34eabc5": {
       "disposition": "covered",
@@ -289,7 +289,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-029: Design-interface and global documentation preserve ownership. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-029: Design-interface and global documentation preserve ownership. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval. Verifiable source location: AGENTS.md:96."
     },
     "a0016e5e2f75fe38c98764debec4d089952b09d364e32f791b7aed0b7892f070": {
       "disposition": "covered",
@@ -299,7 +299,7 @@
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "Issue 191 OBL-030: No new delivery orchestration or shared-contract complexity. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval."
+      "rationale": "Issue 191 OBL-030: No new delivery orchestration or shared-contract complexity. Verified the applicable text in design-interface/SKILL.md, references/interface-standards.md, references/visual-audit.md, AGENTS.md, or docs/SKILL_SYSTEM_SPEC.md and the scoped exact-head test test_project_rules_are_owned_by_consumer_repositories. This is implementer-side verification, not independent approval. Verifiable source location: AGENTS.md:96."
     }
   },
   "controls": {

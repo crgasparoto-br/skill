@@ -12,8 +12,8 @@
   "audit_history": "verified-no-rejection",
   "audit_history_evidence": "Authenticated GitHub PR 192 review history is empty. The earlier ChatGPT read-only review is not a published formal independent GitHub review and is not represented as an authenticated rejection.",
   "artifact_sha256": {
-    "reviewed-closure.json": "87a6058b6929d40bec35674d5dd4a9f82fa66f6e9a3660c94a4a08b835700424",
-    "requirement-attack-matrix.json": "f29ca8a54289c35f7a70a07124d6c1ec78b667660f6fd1ef1fe7087264b9bc54",
+    "reviewed-closure.json": "cd01eea89c8a07097bff42723e48f50ccb05cab39865ac20af6609164efb42d0",
+    "requirement-attack-matrix.json": "c0b6fa179a20c1b9cbffd95cb2efc9247380895a5cac4b625b8fa7d27aa8031b",
     "risk-saturation.json": "7624fb860ceeff9203e89e7a448f288042bb971783eea2b1e4570ffb84df60da",
     "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
     "codebase-grounding.json": "3b70df42e4bee642a82361de2a958984ffc274a1d179dffafa2dd9dea15e332f"

@@ -20,7 +20,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Local source discovery and exclusion of consumer-specific instructions against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Local source discovery and exclusion of consumer-specific instructions against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/SKILL.md:36.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -114,7 +114,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Scoped discovery in the design-interface control plane against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Scoped discovery in the design-interface control plane against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/SKILL.md:36.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -208,7 +208,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Local hierarchy with documented fallback against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Local hierarchy with documented fallback against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:30.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -302,7 +302,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_normative_guidance_has_no_consumer_specific_visual_rules"
         },
-        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Negative isolation against leaked consumer rules against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Negative isolation against leaked consumer rules against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -396,7 +396,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_project_rules_are_owned_by_consumer_repositories"
         },
-        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Normative project ownership in catalog governance against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Normative project ownership in catalog governance against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -491,7 +491,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Sources must be read within the delegated UI scope against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Sources must be read within the delegated UI scope against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/SKILL.md:36.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -636,7 +636,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Approved sources precede executable components and generic defaults against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Approved sources precede executable components and generic defaults against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:30.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -730,7 +730,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_conflicts_are_recorded_instead_of_silently_overridden"
         },
-        "evidence": "Exact-head JUnit positive case test_conflicts_are_recorded_instead_of_silently_overridden examines Conflicts and absence are explicitly recorded against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_conflicts_are_recorded_instead_of_silently_overridden examines Conflicts and absence are explicitly recorded against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:36.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -824,7 +824,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_normative_guidance_has_no_consumer_specific_visual_rules"
         },
-        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines No product selectors or CSS tokens inside universal instructions against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines No product selectors or CSS tokens inside universal instructions against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -918,7 +918,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_normative_guidance_has_no_consumer_specific_visual_rules"
         },
-        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Project-specific Golden Screen rules stay with the consumer against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Project-specific Golden Screen rules stay with the consumer against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -1012,7 +1012,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_project_rules_are_owned_by_consumer_repositories"
         },
-        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Audit versus implementation separation remains declared against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Audit versus implementation separation remains declared against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/SKILL.md:57.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -1106,7 +1106,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_project_rules_are_owned_by_consumer_repositories"
         },
-        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines No new schema, flow, library, or shared-contract change against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines No new schema, flow, library, or shared-contract change against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -1200,7 +1200,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_selection_states_are_defined_by_the_local_design_system"
         },
-        "evidence": "Exact-head JUnit positive case test_selection_states_are_defined_by_the_local_design_system examines Accessibility and security cannot be weakened by local UI style against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_selection_states_are_defined_by_the_local_design_system examines Accessibility and security cannot be weakened by local UI style against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/SKILL.md:39.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -1294,7 +1294,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Local approved contract prevails over aesthetic preference against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Local approved contract prevails over aesthetic preference against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:34.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -1388,7 +1388,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_conflicts_are_recorded_instead_of_silently_overridden"
         },
-        "evidence": "Exact-head JUnit positive case test_conflicts_are_recorded_instead_of_silently_overridden examines Unverified files cannot be promoted to approved design against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_conflicts_are_recorded_instead_of_silently_overridden examines Unverified files cannot be promoted to approved design against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:38.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -1482,7 +1482,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_normative_guidance_has_no_consumer_specific_visual_rules"
         },
-        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Consumer names and tokens do not become permanent catalog rules against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Consumer names and tokens do not become permanent catalog rules against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -1576,7 +1576,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_normative_guidance_has_no_consumer_specific_visual_rules"
         },
-        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines SolverFin Golden Screen documentation remains product-owned against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines SolverFin Golden Screen documentation remains product-owned against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -1672,7 +1672,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Approved local standard is selected before generic defaults against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Approved local standard is selected before generic defaults against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:30.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -1870,7 +1870,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Executable tokens are used without pretending approval against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Executable tokens are used without pretending approval against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:33.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2066,7 +2066,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines No local standard means declare absence and use general defaults against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines No local standard means declare absence and use general defaults against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:39.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2160,7 +2160,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_conflicts_are_recorded_instead_of_silently_overridden"
         },
-        "evidence": "Exact-head JUnit positive case test_conflicts_are_recorded_instead_of_silently_overridden examines Contradictory sources are surfaced before choosing an option against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_conflicts_are_recorded_instead_of_silently_overridden examines Contradictory sources are surfaced before choosing an option against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:37.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2254,7 +2254,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_normative_guidance_has_no_consumer_specific_visual_rules"
         },
-        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Normative reference files contain no consumer identifiers against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Normative reference files contain no consumer identifiers against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2348,7 +2348,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_project_rules_are_owned_by_consumer_repositories"
         },
-        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Product Golden Screen is versioned in its own repository against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Product Golden Screen is versioned in its own repository against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: docs/SKILL_SYSTEM_SPEC.md:98.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2442,7 +2442,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_normative_guidance_has_no_consumer_specific_visual_rules"
         },
-        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Negative regression detects reintroduced concrete tokens against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Negative regression detects reintroduced concrete tokens against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/tests/test_design_system_resolution.py:33.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2536,7 +2536,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_project_rules_are_owned_by_consumer_repositories"
         },
-        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Complete exact-SHA suite and focused cases are recorded against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Complete exact-SHA suite and focused cases are recorded against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/tests/test_design_system_resolution.py:8.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2631,7 +2631,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Project without design docs retains reusable components against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Project without design docs retains reusable components against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:32.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2776,7 +2776,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_local_precedence_keeps_fallback_last"
         },
-        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Project without UI sources declares the documentation gap against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_local_precedence_keeps_fallback_last examines Project without UI sources declares the documentation gap against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/references/interface-standards.md:39.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2870,7 +2870,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_normative_guidance_has_no_consumer_specific_visual_rules"
         },
-        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Structural negative regression guards product-neutral precedence against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_normative_guidance_has_no_consumer_specific_visual_rules examines Structural negative regression guards product-neutral precedence against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: design-interface/tests/test_design_system_resolution.py:8.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -2964,7 +2964,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_project_rules_are_owned_by_consumer_repositories"
         },
-        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Design-interface and global documentation preserve ownership against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines Design-interface and global documentation preserve ownership against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: AGENTS.md:96.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
@@ -3058,7 +3058,7 @@
           "classname": "design-interface.tests.test_design_system_resolution",
           "name": "test_project_rules_are_owned_by_consumer_repositories"
         },
-        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines No new delivery orchestration or shared-contract complexity against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD.",
+        "evidence": "Exact-head JUnit positive case test_project_rules_are_owned_by_consumer_repositories examines No new delivery orchestration or shared-contract complexity against committed source assertions in design-interface/tests/test_design_system_resolution.py; GitHub Actions must reconfirm execution on the material HEAD. Verifiable source location: AGENTS.md:96.",
         "evidence_path": "design-interface/tests/test_design_system_resolution.py",
         "evidence_sha256": "0df04de6e1c4242fde12c485bdc5bfccb9f10505154981e0775ce5218376609d"
       },
