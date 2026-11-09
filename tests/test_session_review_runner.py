@@ -101,6 +101,41 @@ def test_edited_issue_selects_only_its_open_pr(monkeypatch):
     assert runner.resolve_targets("owner/repo", event) == [(10, 9)]
 
 
+
+def test_background_push_only_evaluates_ready_prs(monkeypatch):
+    prs = [
+        {"number": 10, "state": "open", "draft": True, "base": {"ref": "develop"}, "body": "Refs #9"},
+        {"number": 11, "state": "open", "draft": False, "base": {"ref": "main"}, "body": "Refs #8"},
+        {"number": 12, "state": "open", "base": {"ref": "develop"}, "body": "Refs #7"},
+    ]
+    monkeypatch.setattr(runner, "pages", lambda *_: prs)
+    monkeypatch.setattr(runner, "api", lambda path: next(p for p in prs if path.endswith("/" + str(p["number"]))))
+    event = {"repository": {"full_name": "owner/repo"}, "ref": "refs/heads/develop"}
+    assert runner.resolve_targets("owner/repo", event) == [(11, 8)]
+
+
+def test_background_workflow_run_skips_only_draft_prs(monkeypatch):
+    pr = {"number": 10, "state": "open", "draft": True,
+          "base": {"ref": "develop"}, "body": "Refs #9"}
+    monkeypatch.setattr(runner, "api", lambda *_: pr)
+    monkeypatch.setattr(runner, "pages", lambda *_: pytest.fail("unexpected PR lookup"))
+    event = {"repository": {"full_name": "owner/repo"},
+             "workflow_run": {"event": "pull_request", "pull_requests": [{"number": 10}]}}
+    assert runner.resolve_targets("owner/repo", event) == []
+
+
+def test_explicit_pr_and_issue_events_preserve_draft_revocation(monkeypatch):
+    pr = {"number": 10, "state": "open", "draft": True,
+          "base": {"ref": "develop"}, "body": "Refs #9"}
+    monkeypatch.setattr(runner, "api", lambda *_: pr)
+    monkeypatch.setattr(runner, "pages", lambda *_: [pr])
+    base = {"repository": {"full_name": "owner/repo"}}
+    assert runner.resolve_targets("owner/repo", {**base, "pull_request": {"number": 10}}) == [(10, 9)]
+    assert runner.resolve_targets(
+        "owner/repo", {**base, "issue": {"number": 9}, "action": "edited"}
+    ) == [(10, 9)]
+
+
 def test_no_recursive_workflow_trigger(tmp_path):
     root = Path(__file__).resolve().parents[1]
     workflow = (root / ".github/workflows/session-review.yml").read_text()

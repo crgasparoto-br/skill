@@ -452,6 +452,9 @@ def linked_issue(pr: dict) -> int:
 
 def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
     require(event.get("repository", {}).get("full_name") == repo, "event repository mismatch")
+    # A background sweep must not turn unrelated draft PRs into failed push CI.
+    # Explicit PR/issue events still reach evaluate() and can revoke approvals.
+    background = set(event).isdisjoint({"pull_request", "issue", "inputs"})
     numbers = []
     if isinstance(event.get("pull_request"), dict):
         numbers = [event["pull_request"]["number"]]
@@ -470,7 +473,9 @@ def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
     result = []
     for number in sorted(set(numbers)):
         pr = api(f"/repos/{repo}/pulls/{number}")
-        if pr.get("state") != "open" or pr.get("base", {}).get("ref") not in {"develop", "main"}:
+        if (pr.get("state") != "open"
+                or pr.get("base", {}).get("ref") not in {"develop", "main"}
+                or (background and pr.get("draft") is not False)):
             continue
         try:
             issue = linked_issue(pr)
