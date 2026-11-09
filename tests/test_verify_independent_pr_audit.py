@@ -650,3 +650,14 @@ def test_stable_live_review_recheck_can_approve(monkeypatch):
     assert "pullrequestreview-1" in gate.run(
         "org/repo", 3, "develop", BASE_SHA, "token")
     assert seen["reviews"] == 2
+
+
+def test_human_audit_workflow_is_not_an_automatic_solo_pr_gate():
+    workflow = (Path(__file__).resolve().parents[1] / ".github" / "workflows"
+                / "independent-audit-gate.yml").read_text(encoding="utf-8")
+    triggers = workflow.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
+    assert "  pull_request_review:" in triggers
+    assert "types: [submitted, edited, dismissed]" in triggers
+    assert "  pull_request:" not in triggers
+    assert "ref: ${{ github.event.pull_request.base.sha }}" in workflow
+    assert "python scripts/verify_independent_pr_audit.py" in workflow
