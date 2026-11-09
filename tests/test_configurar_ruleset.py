@@ -1,8 +1,11 @@
 """Regression controls for the opt-in GitHub ruleset administrative utility."""
 from __future__ import annotations
 
+import base64
 import copy
+import hashlib
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -253,6 +256,8 @@ def test_admin_apply_requires_failed_gate_without_bypassing_it(monkeypatch):
                 {"name": "Verify independent audit (exact SHA)",
                  "conclusion": "failure", "app": {"id": 15368}},
             ]}
+        if "session-review-policy.json" in endpoint:
+            return trusted_session_policy_blob("disabled")
         if "/contents/" in endpoint:
             return {"type": "file", "sha": "a" * 40}
         if method == "PUT":
@@ -307,3 +312,52 @@ def test_admin_apply_blocks_unusable_sample_even_with_trusted_emitter(monkeypatc
     with pytest.raises(ValueError, match="sample check not terminal"):
         admin.main()
     assert writes == []
+
+
+def trusted_session_policy_blob(mode: str) -> dict:
+    policy = {
+        "schema_version": 1,
+        "mode": mode,
+        "assurance": "operator-attested-session-review",
+        "acknowledgement": "separate-context-declared-not-cryptographically-proven",
+        "operators": [{"id": 255721831, "login": "crgasparoto-br"}],
+    }
+    raw = (json.dumps(policy, sort_keys=True) + "\n").encode("utf-8")
+    sha = hashlib.sha1(f"blob {len(raw)}\0".encode() + raw).hexdigest()
+    return {"type": "file", "encoding": "base64", "sha": sha,
+            "content": base64.b64encode(raw).decode("ascii")}
+
+
+def test_legacy_apply_rejects_single_operator_policy_without_mutation(monkeypatch):
+    writes = []
+
+    def fake_gh(endpoint, method="GET", payload=None):
+        if method != "GET":
+            writes.append(endpoint)
+            pytest.fail("single-operator policy cannot authorize legacy ruleset mutation")
+        return trusted_session_policy_blob("enabled")
+
+    monkeypatch.setattr(admin, "gh", fake_gh)
+    with pytest.raises(ValueError, match="legacy human-audit ruleset apply forbidden"):
+        admin.refuse_legacy_apply_in_single_operator_mode(REPO, "develop")
+    assert writes == []
+
+
+@pytest.mark.parametrize("mutation", ["invalid-sha", "missing-content", "invalid-mode"])
+def test_legacy_apply_rejects_untrusted_or_unknown_policy(monkeypatch, mutation):
+    policy = trusted_session_policy_blob("disabled")
+    if mutation == "invalid-sha":
+        policy["sha"] = "0" * 40
+    elif mutation == "missing-content":
+        policy.pop("content")
+    else:
+        policy = trusted_session_policy_blob("unexpected")
+    monkeypatch.setattr(admin, "gh", lambda *args, **kwargs: policy)
+    with pytest.raises(ValueError, match="policy"):
+        admin.refuse_legacy_apply_in_single_operator_mode(REPO, "develop")
+
+
+def test_explicit_disabled_policy_keeps_human_audit_capability(monkeypatch):
+    monkeypatch.setattr(admin, "gh",
+                        lambda *args, **kwargs: trusted_session_policy_blob("disabled"))
+    admin.refuse_legacy_apply_in_single_operator_mode(REPO, "develop")

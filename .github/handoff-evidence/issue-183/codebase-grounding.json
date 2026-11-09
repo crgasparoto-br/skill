@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [],
+  "references": [],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "tests/test_catalog_governance.py",
+      "operation": "modified",
+      "scenario": "Testar três frases e BLOCKED, preservar owners de CI, auditoria e revisão.",
+      "requirement": "Issue #183 OBL-006,007,008,009,016,017,018,021.",
+      "search": {
+        "queries": [
+          "test_router_explains_delivery_selection preexistente em develop",
+          "scripts/select_skill.py usa rank_skills e catálogo atual"
+        ],
+        "scope": "Inspeção de testes existentes, entrada do seletor e novo delta de 39 linhas na suíte canônica.",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "tests/test_catalog_governance.py",
+            "case": "test_router_explains_delivery_selection",
+            "oracle": "A rota existente seleciona entregar-issue com pedido de issue.",
+            "comparison": "O teste estendido cobre as novas frases sem trocar heurística ou criar suíte paralela."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "Teste canônico já usa load_catalog e rank_skills; a extensão mantém reuso e evita fixtures duplicadas.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 name: Collect and certify exact-SHA handoff
 
+# This is an issue-delivery certificate. Release promotions to main use the
+# separate release-handoff contract, not a prior issue PR dossier.
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [develop]
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:

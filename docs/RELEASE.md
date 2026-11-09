@@ -5,7 +5,7 @@
 | Superfície | Exemplo | Finalidade |
 | --- | --- | --- |
 | `VERSION` | `0.3.3` | Versão pública SemVer do conjunto de skills e adaptadores. |
-| `config/skills-catalog.json.catalog_version` | `2026-10-08.2` | Snapshot temporal do catálogo e da governança interna. |
+| `config/skills-catalog.json.catalog_version` | `2026-11-08.1` | Snapshot temporal do catálogo e da governança interna. |
 | `config/skill-system-requirements.json.system_version` | `2026-10-08.2` | Versão das invariantes globais do sistema. |
 | `contracts/version.json.contract_version` | `2026-08-20.3` | Linhagem interna legada dos contratos já consumidos pelas skills. |
 | `config/compatibility.json.contract_policy.public_contract_version` | `1.0.0` | Versão pública SemVer do contrato de composição. |
@@ -70,6 +70,16 @@ Os casos de prompt injection não estão entre os itens abertos: a matriz `V030-
 com conteúdo hostil vindo de README, de issue, de fixture e de contrato, na mesma ordem.
 
 ## Handoff de release
+
+O workflow de certificado semântico de **issue** (`.github/workflows/handoff-evidence.yml`)
+é exclusivo de PRs contra `develop`. Uma PR de promoção `develop` → `main`
+não pode reutilizar `.github/handoff-evidence/issue-N/manifest.json` vinculado
+a outra PR/base/HEAD. Essa colisão foi observada na release PR #185, que rejeitou
+corretamente o manifesto da PR #184. A promoção deve preparar a própria evidência
+de release, com o contrato `scripts/release_handoff.py`, depois de obter os
+checks técnicos no SHA final e o parecer de revisão exigido pelo modo de garantia
+adotado. A ausência de evidência bloqueia **release readiness**; remover o
+workflow de issue da `main` não equivale a certificar a release.
 
 Promover `develop` a `main` segue um contrato verificável, e não uma decisão de memória. `scripts/release_handoff.py`
 recebe a evidência declarada e reprova quando falta item obrigatório, quando um identificador é desconhecido,

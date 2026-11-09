@@ -1,10 +1,10 @@
 name: Independent audit (exact SHA)
 
+# Optional human third-party audit. The single-operator required assurance is
+# Verify session review (exact SHA), not this independent-human verification.
+# Never emit a failing human-only check merely because a solo PR was opened.
 # Evaluate trusted policy from base SHA; never checkout untrusted PR HEAD.
 on:
-  pull_request:
-    branches: [develop, main]
-    types: [opened, synchronize, reopened, ready_for_review]
   pull_request_review:
     types: [submitted, edited, dismissed]
 
