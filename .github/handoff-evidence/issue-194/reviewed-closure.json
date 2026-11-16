@@ -1,0 +1,421 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "78f7e704e2160eda4851d0d505817be50c1648b144a44f77714998bbfbbaae5e": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-001"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-001: first Git-proven bootstrap without assuming a missing snapshot is a valid prior ledger. Checked entregar-issue/scripts/verify_first_audit_escape.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_existing_issue_ledger_must_be_preserved_not_bootstrapped; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_missing_checkout_or_source_does_not_become_false_negative. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "37df8753e4061bc98dae5f6ff2007efbc235bc63fc5341d241bfe63d5fb12b3a": {
+      "disposition": "not-applicable",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Descreve somente o consumidor vinculado à demanda, não uma ação/contrato da Skill; prova histórica consta na issue #194 e PR SolverFin #794."
+    },
+    "85d54e7818cfaff6e0c22606c03d84f6cf6901e86d436588082da1c4c5a4b900": {
+      "disposition": "not-applicable",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Descreve a mensagem de erro de versão anterior, reproduzida no material pré-correção, não o comportamento desejado da Skill."
+    },
+    "c96146c95c5e1a0e7b38138da499455dd353f6e059bc58a4c8a9d8bae55c346f": {
+      "disposition": "not-applicable",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Registra dados preexistentes do consumidor SolverFin e não exige alterar seus 41 requisitos na PR da Skill."
+    },
+    "5f2c47ff3bcb9da1be5a5eda809057f0435d424b608728283e6094b2dcb3324b": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-005"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-005: target-scoped Git-object proof at both audited and material SHAs, without fabricated empty snapshots. Checked entregar-issue/scripts/git_tree_snapshot.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_missing_checkout_or_source_does_not_become_false_negative; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_sharded_global_ledger_for_another_target_cannot_be_reused. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "b660f58ad200935db345d1de632ffb5db87cffd1a851192a25f216ac8dcc9dca": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-006"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-006: separate absent, existing and foreign-target ledgers with strict unknown handling. Checked entregar-issue/scripts/verify_first_audit_escape.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_existing_or_unverifiable_root_ledger_rejects_bootstrap[subject0]; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_sharded_global_ledger_for_another_target_cannot_be_reused. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "53f6f3ee1667429ffc7245648518712b143efae13ce792eff1cb5d5c343d5fcc": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-007"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-007: monotonicity from last independent rejection through transient commit history and terminal child. Checked entregar-issue/scripts/validate_audit_escape_lineage.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_existing_issue_ledger_must_be_preserved_not_bootstrapped; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_intermediate_issue_ledger_created_then_deleted_still_blocks; regression=entregar-issue.tests.test_terminal_handoff_contract::test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "d5612314d7f0cf75df2f07c5d82f927ff717e91ecfe170929eb1bc6990e0af9c": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-008"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-008: consistent certificate/readiness/lineage/terminal contracts on same Git-proven target. Checked entregar-issue/scripts/validate_handoff_certificate.py and JUnit cases: positive=entregar-issue.tests.test_independent_rejection_handoff_contract::test_certificate_builder_requires_previous_snapshots_and_forwards_learning; negative=entregar-issue.tests.test_handoff_postcondition_records::test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]; regression=entregar-issue.tests.test_independent_rejection_handoff_contract::test_terminal_guard_revalidates_learning_against_published_escape_ledger. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "c9be461651c65ee8fa13ddde6b7b97236c350342c8fd7404cde64b61656baeb8": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-009"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-009: material-child target binds actual rejection and new escapes without old fake snapshots. Checked entregar-issue/scripts/build_handoff_certificate.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_wrong_identity_or_unknown_git_object_never_proves_absence[target0]; regression=entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "41d9cc938f896b09babde762fec7c528e93f3165c556090a69bfea13c371dff4": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-010"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-010: tie Git-object absence to canonical repository/issue/PR and immutable audit/material ancestor. Checked entregar-issue/scripts/git_tree_snapshot.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_wrong_identity_or_unknown_git_object_never_proves_absence[target1]; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_parent_git_symlink_fails_closed. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "858b3140091f8cf39af98fcdda9f548d64082916aa554b2f5e9772158a346189": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-011"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-011: deny READY on unavailable Git, edited/intermediate ledgers, foreign target and untrusted refs. Checked entregar-issue/scripts/verify_first_audit_escape.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_missing_checkout_or_source_does_not_become_false_negative; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_intermediate_root_ledger_created_then_deleted_still_blocks. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "8441f6dac87316e72fef954ba4e3a306559ab1e7f2a67002e8c29dc340c70811": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-012"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-012: trusted native-GitHub audit selection remains separate from certified-handoff artifacts. Checked entregar-issue/references/terminal-handoff.md and JUnit cases: positive=entregar-issue.tests.test_delivery_native_audit_contract::test_native_mode_has_no_universal_legacy_handoff_requirement; negative=auditar-issue.tests.test_audit_transport_native_contract::test_candidate_cannot_self_exempt_from_handoff; regression=entregar-issue.tests.test_delivery_native_audit_contract::test_delivery_contract_never_publishes_audit_root_in_native_mode. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "e0b458cd9b02649f298f2f3b66738273f121a0800b4141695dac194c79cafbe4": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-013"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-013: positive first rejection accepted only with Git absence, negative existing prior ledger denied. Checked entregar-issue/tests/test_first_audit_escape_bootstrap.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_existing_issue_ledger_must_be_preserved_not_bootstrapped; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_intermediate_issue_ledger_created_then_deleted_still_blocks. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "4d8d6a6f91a94bd89b0074f4d05c0a4de50c679b7462d312edad00074c3511ee": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-014"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-014: a prior escape ledger, even if removed between commits, cannot vanish from verification. Checked entregar-issue/tests/test_first_audit_escape_bootstrap.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_existing_issue_ledger_must_be_preserved_not_bootstrapped; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_removed_issue_ledger_after_audit_is_not_absence; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_intermediate_root_ledger_created_then_deleted_still_blocks. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "fe2ad54f06a767494b5469aca2ae5c2e3f2b7855f0f2961a38a6c40370b05168": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-015"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-015: negative proof for Git missing, object absent, symlink, stale SHA and wrong issue/repository. Checked entregar-issue/tests/test_first_audit_escape_bootstrap.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_parent_git_symlink_fails_closed; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_wrong_identity_or_unknown_git_object_never_proves_absence[target4]. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "6f11a19093295be5ee88141cdc9b4fbf8a833fe859900213f7a31849f326522e": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-016"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-016: subsequent rejection cannot retire previously witnessed escapes or drop finding IDs. Checked entregar-issue/scripts/validate_audit_escape_lineage.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_existing_issue_ledger_must_be_preserved_not_bootstrapped; negative=entregar-issue.tests.test_terminal_handoff_contract::test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child; regression=entregar-issue.tests.test_independent_rejection_closure::test_rejects_new_independent_rejection_missing_from_escape_ledger. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "61ba2dcc917ee07ce6fdb764ad8f2df1de92e27166dba78c324ba1279613def7": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-017"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-017: authenticated CI/checks, publisher proof and independently reviewed exact-result child remain mandatory. Checked entregar-issue/scripts/publish_actions_handoff.py and JUnit cases: positive=entregar-issue.tests.test_publish_actions_handoff::test_material_ci_requires_every_required_check_green; negative=entregar-issue.tests.test_publish_actions_handoff::test_publisher_rejects_untrusted_execution_before_publication[missing-proof]; regression=entregar-issue.tests.test_terminal_handoff_contract::test_terminal_guard_requires_actual_published_child. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "2ba199ed03b75f52217ecfcf8de7784ec5d023803284a75242b51abe1c381353": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-018"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-018: new normative first-escape branch is documented, checked in code and not merged by CI. Checked entregar-issue/references/audit-escape-closure.md and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_delivery_native_audit_contract::test_untrusted_candidate_contract_cannot_select_native_mode; regression=auditar-issue.tests.test_audit_transport_native_contract::test_native_precedence_is_explicit_in_skill_and_reference. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "50fa1667fa4fa112f67fd4637619db8ea0726ebe0af9474a20cf8d715503b963": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-019"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-019: no empty historical snapshot, no implementer-written absence claim and no bypass of gates. Checked entregar-issue/scripts/verify_first_audit_escape.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence]; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_missing_checkout_or_source_does_not_become_false_negative. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "d652c82dc65e63c3bc5e3212706aecc6bad207cf57f1222f618547f723102594": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-020"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-020: reuse canonical Git tree parent proof and avoid duplicate trusted history generation. Checked entregar-issue/scripts/git_tree_snapshot.py and JUnit cases: positive=entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_accepts_exact_snapshot; negative=entregar-issue.tests.test_terminal_handoff_contract::test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-repository]; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "ba32f616c0c68f05cd7576da7ea4c0600f95aac119fd986600f98f30b28eeb1f": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-021"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-021: single source of ledger existence is exact Git tree of canonical target not mutable PR prose. Checked entregar-issue/scripts/verify_first_audit_escape.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_sharded_global_ledger_for_another_target_cannot_be_reused; regression=entregar-issue.tests.test_first_audit_escape_bootstrap::test_intermediate_root_ledger_created_then_deleted_still_blocks. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "16761c5853dc5d61ede00590a4a633ef5afbcf90b5e27836db156e13afd598d2": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R194-022"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Issue #194, OBL-022: offline Git objects suffice, missing runner/remote object must remain unknown not approved. Checked entregar-issue/scripts/verify_first_audit_escape.py and JUnit cases: positive=entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git; negative=entregar-issue.tests.test_first_audit_escape_bootstrap::test_missing_checkout_or_source_does_not_become_false_negative; regression=entregar-issue.tests.test_publish_actions_handoff::test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]. CI exact SHA 195947a ran 3262/3262 tests. This is implementer-side review, not an independent audit or assertion that the result-only child is published."
+    },
+    "459912b32ef04315a9fb24c7aa33757b89cd5bdbfdfa61ab93885c14d30f5d54": {
+      "disposition": "not-applicable",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Impacto motivador do defeito, não um controle operacional executável adicional à Skill; o bloqueio de merge continua preservado."
+    }
+  },
+  "controls": {
+    "domain_inventories": [],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "passed",
+      "applicability_reason": "Canonical target/ledger paths, Git history identities and forbidden missing-snapshot fallback are structural invariants.",
+      "entries": [
+        {
+          "id": "SIC-194001",
+          "kind": "structural",
+          "requirement_ids": [
+            "R194-005",
+            "R194-010",
+            "R194-021"
+          ],
+          "obligation_ids": [
+            "OBL-005",
+            "OBL-010",
+            "OBL-021"
+          ],
+          "plausible_wrong_implementation": "A foreign PR/issue ledger could be silently used as a previous snapshot.",
+          "canonical_path": "entregar-issue/scripts/verify_first_audit_escape.py -> git_tree_snapshot.py -> validate_handoff_certificate.py",
+          "competing_paths": [
+            "mutable PR description",
+            "globally shared ledger from another PR"
+          ],
+          "evidence_ids": [
+            "GH-195-195947-JUNIT"
+          ],
+          "scenario_ids": [
+            "entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git",
+            "entregar-issue.tests.test_first_audit_escape_bootstrap::test_wrong_identity_or_unknown_git_object_never_proves_absence[target1]"
+          ],
+          "negative_control_evidence": [
+            "Checked exact Git tree source and negative test for missing commit, foreign ledger and wrong issue."
+          ]
+        }
+      ],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "passed",
+      "applicability_reason": "History and version preservation are relevant to subsequent rejected audits and result-only children.",
+      "entries": [],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "passed",
+      "applicability_reason": "The verified source of truth for ledger existence is authenticated Git tree at audited and current immutable SHA.",
+      "entries": [
+        {
+          "id": "CSC-194001",
+          "semantic_field": "first-escape prior ledger existence",
+          "canonical_source": "entregar-issue/scripts/git_tree_snapshot.py",
+          "alternative_sources": [
+            "unverified PR narrative",
+            "foreign target ledger",
+            "empty fabricated JSON"
+          ],
+          "surfaces": [
+            "entregar-issue/scripts/verify_first_audit_escape.py",
+            "auditar-issue/scripts/verify_first_audit_escape.py"
+          ],
+          "evidence_ids": [
+            "GH-195-195947-JUNIT"
+          ],
+          "scenario_ids": [
+            "entregar-issue.tests.test_first_audit_escape_bootstrap::test_first_rejection_without_ledger_is_proven_by_git",
+            "entregar-issue.tests.test_first_audit_escape_bootstrap::test_existing_or_unverifiable_root_ledger_rejects_bootstrap[subject0]"
+          ],
+          "negative_control_evidence": [
+            "The regression rejects sharded unrelated ledgers and missing Git while proving local absence in both immutable commits."
+          ],
+          "divergent_fixture": {
+            "canonical_value": "Git-verified absent scoped ledger on both audited and current material trees",
+            "alternative_values": [
+              "PR text says absent",
+              "global ledger from different issue"
+            ]
+          }
+        }
+      ],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "Normative docs and the deliver/auditar synchronized guards describe the same first-rejection rule and native transport separation.",
+      "old_contract_terms": [
+        "always require previous-audit-escape-closure snapshot for first rejection"
+      ],
+      "new_contract_terms": [
+        "require a real immutable Git proof when no same-target previous ledger exists"
+      ],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "entregar-issue/references/audit-escape-closure.md and references/terminal-handoff.md checked against official validator code and tests.",
+        "auditar-issue/scripts/verify_first_audit_escape.py synchronized byte-for-byte with canonical script.",
+        "entregar-issue/tests/test_delivery_native_audit_contract.py preserves native mode without legacy audit artifacts."
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": [
+        {
+          "path": "issue-194",
+          "line": 7,
+          "text": "Consumidor: `crgasparoto-br/SolverFin`, issue #694 / PR #794.",
+          "disposition": "not-a-reduction",
+          "decision_source_id": "SRC-ISSUE-194",
+          "rationale": "Descreve somente o consumidor vinculado à demanda, não uma ação/contrato da Skill; prova histórica consta na issue #194 e PR SolverFin #794."
+        },
+        {
+          "path": "issue-194",
+          "line": 10,
+          "text": "`validate_handoff_readiness.py --previous-independent-rejection --remediation-mode targeted-remediation` rejeita `previous independent rejection requi",
+          "disposition": "not-a-reduction",
+          "decision_source_id": "SRC-ISSUE-194",
+          "rationale": "Descreve a mensagem de erro de versão anterior, reproduzida no material pré-correção, não o comportamento desejado da Skill."
+        },
+        {
+          "path": "issue-194",
+          "line": 12,
+          "text": "Matriz de 41 obrigações, controles de risco, evidências e ledger de remediação passam seus validadores quando executados no material exato; a certific",
+          "disposition": "not-a-reduction",
+          "decision_source_id": "SRC-ISSUE-194",
+          "rationale": "Registra dados preexistentes do consumidor SolverFin e não exige alterar seus 41 requisitos na PR da Skill."
+        },
+        {
+          "path": "issue-194",
+          "line": 44,
+          "text": "**Impacto:** Enquanto este caso de primeira rejeição não for resolvido com segurança, PRs como SolverFin #794 podem ficar com CI material verde e um h",
+          "disposition": "not-a-reduction",
+          "decision_source_id": "SRC-ISSUE-194",
+          "rationale": "Impacto motivador do defeito, não um controle operacional executável adicional à Skill; o bloqueio de merge continua preservado."
+        }
+      ]
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "R194-001",
+        "R194-005",
+        "R194-006",
+        "R194-007",
+        "R194-008",
+        "R194-009",
+        "R194-010",
+        "R194-011",
+        "R194-012",
+        "R194-013",
+        "R194-014",
+        "R194-015",
+        "R194-016",
+        "R194-017",
+        "R194-018",
+        "R194-019",
+        "R194-020",
+        "R194-021",
+        "R194-022"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-005",
+        "OBL-006",
+        "OBL-007",
+        "OBL-008",
+        "OBL-009",
+        "OBL-010",
+        "OBL-011",
+        "OBL-012",
+        "OBL-013",
+        "OBL-014",
+        "OBL-015",
+        "OBL-016",
+        "OBL-017",
+        "OBL-018",
+        "OBL-019",
+        "OBL-020",
+        "OBL-021",
+        "OBL-022"
+      ],
+      "evidence": [
+        "Canonical issue 194 parsed into 23 candidates, four are historical context, all 19 actionable controls reviewed against code and test source."
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}
