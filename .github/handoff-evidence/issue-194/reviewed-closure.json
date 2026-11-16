@@ -237,11 +237,13 @@
           "requirement_ids": [
             "R194-005",
             "R194-010",
+            "R194-020",
             "R194-021"
           ],
           "obligation_ids": [
             "OBL-005",
             "OBL-010",
+            "OBL-020",
             "OBL-021"
           ],
           "plausible_wrong_implementation": "A foreign PR/issue ledger could be silently used as a previous snapshot.",
