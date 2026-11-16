@@ -12,8 +12,8 @@
   "audit_history": "verified-no-rejection",
   "audit_history_evidence": "GitHub PR 195 authenticated review history checked at 195947a and contains no independent rejection. SolverFin PR 794 rejection is external consumer provenance, not an audit of Skill PR 195.",
   "artifact_sha256": {
-    "reviewed-closure.json": "75d67b163758baf9c96b07352dca949640cfc28b6c454f3d2b74ecd8dac6ec29",
-    "requirement-attack-matrix.json": "3825cdeb397abafa7b5d430c8fcf008f04c5e455419338975eddb9138f1ba48b",
+    "reviewed-closure.json": "a4a7e99498b492ba93b9cd9549d8986e93bd20f013ad4b2fff539db2aabcaf5d",
+    "requirement-attack-matrix.json": "890dc64af55b79f72bc9ab02b5646da94991f7afb0bd024df29275a8c6662488",
     "risk-saturation.json": "a844e9f59d8a3142b80aed954ab3e1ca2302673feeb454429f700f49ad026043",
     "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27",
     "codebase-grounding.json": "4a588fa78c92c47ef9cb1ba0018cc5a5245c1280c23339e8ada804b88ffd51c4"
