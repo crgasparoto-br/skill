@@ -17,7 +17,6 @@ from pathlib import Path
 from audit_artifact_io import load_json_artifact
 from git_tree_snapshot import material_parent_blob
 from handoff_postcondition import require_final_phase
-from verify_first_audit_escape import prove_first_audit_escape
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CERT_REPO_PATH = ".audit/entregar-issue/handoff-ready.json"

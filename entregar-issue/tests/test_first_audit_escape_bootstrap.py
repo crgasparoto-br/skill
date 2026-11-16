@@ -10,8 +10,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from audit_artifact_io import pack_json_artifact  # noqa: E402
-from verify_first_audit_escape import prove_first_audit_escape  # noqa: E402
+from audit_artifact_io import pack_json_artifact  # noqa: E402 - CLI test loads script modules via their own search path
+from verify_first_audit_escape import prove_first_audit_escape  # noqa: E402 - CLI test loads script modules via their own search path
 
 REPO = "owner/repo"
 
@@ -58,9 +58,11 @@ def fixture_repo(tmp_path: Path, *, old_root: dict | None = None,
 
 
 def proof(case: dict, **overrides):
-    args = dict(repository=case["repo"], audited_sha=case["audited"],
-                material_sha=case["material"], repository_name=REPO,
-                issue_number=42, pull_request_number=99, audit_result=case["source"])
+    args = {
+        "repository": case["repo"], "audited_sha": case["audited"],
+        "material_sha": case["material"], "repository_name": REPO,
+        "issue_number": 42, "pull_request_number": 99, "audit_result": case["source"],
+    }
     return prove_first_audit_escape(**(args | overrides))
 
 
@@ -139,9 +141,9 @@ def test_removed_issue_ledger_after_audit_is_not_absence(tmp_path):
 
 def test_missing_checkout_or_source_does_not_become_false_negative(tmp_path):
     case = fixture_repo(tmp_path)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="requires Git checkout"):
         proof(case, repository=tmp_path / "missing")
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="requires Git checkout"):
         proof(case, audit_result=tmp_path / "missing.json")
 
 
