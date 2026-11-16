@@ -11,9 +11,9 @@ from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, load_json_artifact
 from handoff_postcondition import require_final_phase
-from verify_first_audit_escape import prove_first_audit_escape
 from validate_evidence_source_locations import candidate_locations
 from validate_evidence_source_locations import validate as validate_source_locations
+from verify_first_audit_escape import prove_first_audit_escape
 
 # Must stay equal to plan_execution.CODE_SUFFIXES; the auditor copy of this file has no planner to import.
 CODE_SUFFIXES = (
