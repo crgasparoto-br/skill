@@ -147,6 +147,33 @@ def test_missing_checkout_or_source_does_not_become_false_negative(tmp_path):
         proof(case, audit_result=tmp_path / "missing.json")
 
 
+def test_intermediate_issue_ledger_created_then_deleted_still_blocks(tmp_path):
+    case = fixture_repo(tmp_path)
+    ledger = case["repo"] / ".audit/entregar-issue/issue-42/audit-escape-closure.json"
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    ledger.write_text('{"escapes": [{"escape_id":"HISTORY"}]}')
+    commit(case["repo"], "history-created")
+    ledger.unlink()
+    case["material"] = commit(case["repo"], "history-deleted")
+    with pytest.raises(ValueError, match="snapshot required"):
+        proof(case)
+
+
+def test_intermediate_root_ledger_created_then_deleted_still_blocks(tmp_path):
+    case = fixture_repo(tmp_path)
+    root = case["repo"] / ".audit/entregar-issue/audit-escape-closure.json"
+    root.write_text(json.dumps({
+        "subject": {"repository": REPO, "issue_number": 42,
+                    "pull_request_number": 99, "material_head_sha": "a" * 40},
+        "escapes": [{"escape_id": "HISTORY"}],
+    }))
+    commit(case["repo"], "root-created")
+    root.unlink()
+    case["material"] = commit(case["repo"], "root-deleted")
+    with pytest.raises(ValueError, match="snapshot required"):
+        proof(case)
+
+
 def test_parent_git_symlink_fails_closed(tmp_path):
     case = fixture_repo(tmp_path)
     path = case["repo"] / ".audit/entregar-issue/issue-42/audit-escape-closure.json"

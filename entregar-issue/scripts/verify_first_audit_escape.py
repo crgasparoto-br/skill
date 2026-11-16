@@ -45,6 +45,31 @@ def verified_global_subject(repository: Path, source_sha: str, raw: bytes) -> di
         raise ValueError("previous global ledger cannot be validated") from exc
 
 
+def ensure_no_intermediate_ledger(
+    repository: Path, audited_sha: str, material_sha: str, issue_path: str,
+    repository_name: str, issue_number: int,
+) -> None:
+    """Reject ledger creation/deletion between the audited and material trees."""
+    for path in (issue_path, ROOT_LEDGER):
+        changes = git_run(repository, "log", "--full-history", "--format=%H",
+                          f"{audited_sha}..{material_sha}", "--", path).decode("ascii").splitlines()
+        if len(changes) > 2000:
+            raise ValueError("first-escape history exceeds proof budget")
+        for commit_sha in changes:
+            if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
+                raise ValueError("first-escape history returned malformed commit")
+            raw = material_parent_blob(repository, commit_sha, path)
+            if raw is None:
+                continue
+            if path == issue_path:
+                raise ValueError("intermediate same-target audit escape exists; snapshot required")
+            subject = verified_global_subject(repository, commit_sha, raw)
+            if subject.get("repository") != repository_name:
+                raise ValueError("intermediate ledger repository differs from trusted target")
+            if subject.get("issue_number") == issue_number:
+                raise ValueError("intermediate same-target global ledger exists; snapshot required")
+
+
 def prove_first_audit_escape(
     repository: Path, *, audited_sha: str, material_sha: str,
     repository_name: str, issue_number: int, pull_request_number: int | None,
@@ -75,6 +100,8 @@ def prove_first_audit_escape(
         raise ValueError("first-escape proof audited SHA, rejection or subject mismatch")
     git_run(repository, "cat-file", "-e", audited_sha + "^{commit}")
     git_run(repository, "cat-file", "-e", material_sha + "^{commit}")
+    if git_run(repository, "rev-parse", "--is-shallow-repository").strip() != b"false":
+        raise ValueError("first-escape absence requires complete Git history")
     try:
         git_run(repository, "merge-base", "--is-ancestor", audited_sha, material_sha)
     except subprocess.CalledProcessError as exc:
@@ -98,6 +125,10 @@ def prove_first_audit_escape(
             if subject.get("issue_number") == issue_number:
                 raise ValueError("previous same-target global ledger exists; snapshot required")
             foreign.add(path)
+
+    # A temporary ledger cannot be hidden by deleting it before the new SHA.
+    ensure_no_intermediate_ledger(repository, audited_sha, material_sha, issue_path,
+                                  repository_name, issue_number)
 
     return {
         "status": "absent-proved-on-target",

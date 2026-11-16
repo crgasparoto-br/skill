@@ -119,11 +119,11 @@
   },
   "accepted": [
     {
-      "id": "duplication:047c7cc2eb6bf483",
+      "id": "duplication:b604061355f0370d",
       "reason": "Normalizacao de texto duplicada entre a skill de entrega (entregar-issue/scripts/specification.py) e a de auditoria (auditar-issue/scripts/check_normative_section_coverage.py). As duas skills sao empacotadas de forma independente e cada uma roda sozinha no proprio diretorio, e consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria: enquanto a decisao nao for tomada, a duplicacao fica registrada e aceita com este motivo, em vez de escondida. Retomar quando o modulo compartilhado for criado, quando a excecao sai da politica."
     },
     {
-      "id": "duplication:1219b3ff0435e48f",
+      "id": "duplication:201392f2ad21b55b",
       "reason": "Normalizacao de texto duplicada entre a skill de entrega (entregar-issue/scripts/specification.py) e a de auditoria (auditar-issue/scripts/check_normative_section_coverage.py). As duas skills sao empacotadas de forma independente e cada uma roda sozinha no proprio diretorio, e consolidar exige declarar um modulo compartilhado em config/shared-files.json, que e decisao de contrato com entrega propria: enquanto a decisao nao for tomada, a duplicacao fica registrada e aceita com este motivo, em vez de escondida. Retomar quando o modulo compartilhado for criado, quando a excecao sai da politica."
     }
   ],
