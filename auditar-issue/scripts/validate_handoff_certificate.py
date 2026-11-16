@@ -11,6 +11,7 @@ from pathlib import Path
 
 from audit_artifact_io import artifact_metadata, load_json_artifact
 from handoff_postcondition import require_final_phase
+from verify_first_audit_escape import prove_first_audit_escape
 from validate_evidence_source_locations import candidate_locations
 from validate_evidence_source_locations import validate as validate_source_locations
 
@@ -426,6 +427,27 @@ def main() -> int:
 
     if target_mismatch:
         recovery = "fresh-handoff-required"
+
+    bootstrap = cert.get("first_escape_bootstrap")
+    if bootstrap is not None:
+        try:
+            if not cert.get("previous_independent_rejection") or not isinstance(bootstrap, dict):
+                raise ValueError("first-escape proof without independent rejection")
+            if not args.source_repository_root:
+                raise ValueError("first-escape proof requires trusted source Git repository")
+            report = artifact_paths.get("audit_source_result")
+            subject = cert.get("subject") or {}
+            audited = bootstrap.get("reference_sha")
+            actual = prove_first_audit_escape(
+                Path(args.source_repository_root), audited_sha=audited,
+                material_sha=material_head, repository_name=subject.get("repository"),
+                issue_number=subject.get("issue_number"),
+                pull_request_number=subject.get("pull_request_number"), audit_result=report,
+            )
+            if bootstrap != actual:
+                raise ValueError("first-escape proof differs from exact audited Git facts")
+        except Exception as exc:
+            errors.append(f"certificate first-escape bootstrap: {exc}")
 
     if not errors and (cert.get("previous_independent_rejection") or "postcondition_proof" in cert):
         try:

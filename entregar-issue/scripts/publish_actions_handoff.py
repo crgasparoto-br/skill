@@ -249,9 +249,10 @@ def terminal_args(cert: dict, repo: str, pr: int, head: str, base: str, publishe
         args.extend(["--published-changed-path", path, "--current-changed-path", path])
     if cert.get("previous_independent_rejection"):
         past = audit / "previous-audit-escape-closure.json"
-        if not past.is_file():
-            block("previous audit escape snapshot not available for the terminal guard")
-        args.extend(["--previous-audit-escape-closure", str(past)])
+        if past.is_file():
+            args.extend(["--previous-audit-escape-closure", str(past)])
+        elif not cert.get("first_escape_bootstrap"):
+            block("previous audit escape snapshot or first-escape Git proof required")
         if cert.get("remediation_mode") in {"systemic-remediation", "mixed-remediation"}:
             previous = audit / "previous-inherited-controls.json"
             if not previous.is_file():

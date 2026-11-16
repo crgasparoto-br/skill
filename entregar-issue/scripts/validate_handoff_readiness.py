@@ -11,6 +11,7 @@ from audit_artifact_io import load_json_artifact
 from handoff_postcondition_records import validated_preparation_plan
 from handoff_semantic_guards import validate_terminal_requirement_closure
 from validate_risk_saturation import validate_escape_target
+from verify_first_audit_escape import prove_first_audit_escape
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -50,6 +51,9 @@ def main() -> int:
     parser.add_argument("--previous-inherited-controls")
     parser.add_argument("--historical-inherited-controls", action="append", default=[])
     parser.add_argument("--previous-audit-escape-closure")
+    parser.add_argument("--first-escape-audited-sha")
+    parser.add_argument("--first-escape-repository", type=Path)
+    parser.add_argument("--first-escape-audit-result", type=Path)
     parser.add_argument("--previous-independent-rejection", action="store_true")
     parser.add_argument("--remediation-mode", choices=("targeted-remediation", "systemic-remediation", "mixed-remediation"), default="targeted-remediation")
     parser.add_argument("--head-sha")
@@ -245,8 +249,22 @@ def main() -> int:
         errors.append("previous independent rejection requires explicit --audit-escape-closure for the current target")
     if args.previous_independent_rejection and not learning_path:
         errors.append("previous independent rejection requires learning-closure.json")
-    if args.previous_independent_rejection and not args.previous_audit_escape_closure:
-        errors.append("previous independent rejection requires previous audit-escape-closure snapshot")
+    if args.previous_audit_escape_closure and args.first_escape_audited_sha:
+        errors.append("previous audit escape snapshot and first-escape proof are mutually exclusive")
+    if args.first_escape_audited_sha and not args.previous_independent_rejection:
+        errors.append("first-escape proof requires a previous independent rejection")
+    if args.previous_independent_rejection and not (args.previous_audit_escape_closure or args.first_escape_audited_sha):
+        errors.append("previous independent rejection requires prior snapshot or proven first-escape absence")
+    if args.first_escape_audited_sha:
+        try:
+            prove_first_audit_escape(
+                args.first_escape_repository, audited_sha=args.first_escape_audited_sha,
+                material_sha=args.head_sha, repository_name=args.target_repository,
+                issue_number=args.issue_number, pull_request_number=args.pull_request_number,
+                audit_result=args.first_escape_audit_result,
+            )
+        except Exception as exc:
+            errors.append(f"first-escape Git absence proof failed: {exc}")
 
     if learning_path:
         if not learning_path.is_file():
@@ -260,11 +278,21 @@ def main() -> int:
             escape_args = [sys.executable, str(ROOT / "scripts" / "validate_audit_escape_lineage.py"), "--closure", str(escape_path)]
             if head_sha:
                 escape_args.extend(["--head-sha", head_sha])
-            if args.previous_independent_rejection and args.previous_audit_escape_closure:
+            if args.previous_independent_rejection:
+                escape_args.append("--require-previous")
                 escape_args.extend([
-                    "--require-previous",
-                    "--previous-closure", args.previous_audit_escape_closure,
+                    "--target-repository", args.target_repository or "",
+                    "--target-issue-number", str(args.issue_number or ""),
+                    "--target-pull-request-number", str(args.pull_request_number or ""),
                 ])
+                if args.previous_audit_escape_closure:
+                    escape_args.extend(["--previous-closure", args.previous_audit_escape_closure])
+                else:
+                    escape_args.extend([
+                        "--first-escape-audited-sha", args.first_escape_audited_sha,
+                        "--first-escape-repository", str(args.first_escape_repository),
+                        "--first-escape-audit-result", str(args.first_escape_audit_result),
+                    ])
             escape_args.extend(phase_arguments)
             run_validator(escape_args, errors)
     if args.previous_independent_rejection and learning_path and escape_path and learning_path.is_file() and escape_path.is_file():
