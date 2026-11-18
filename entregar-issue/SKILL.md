@@ -312,7 +312,7 @@ Usar `ci_mode=delivery-snapshot` somente para a primeira observacao do material 
 
 ## Fechamento obrigatorio
 
-Apos parecer independente recebido e autenticado, executar a reconciliacao documental de `references/issue-checklist-reconciliation.md` para cada criterio de aceite com prova valida no material SHA. A fase de escrita autorizada atualiza o corpo da issue e relê o resultado; `auditar-issue` nunca escreve. Checklist completo nao substitui a aprovacao independente, os gates nem a decisao de encerramento. Sem parecer independente valido, nao marcar novos criterios como verificados.
+Apos parecer independente autenticado ou atestacao solo formalmente aceita pelo contrato confiavel, executar a reconciliacao documental de `references/issue-checklist-reconciliation.md` para cada criterio de aceite com prova valida no material SHA. A fase de escrita autorizada atualiza o corpo da issue e relê o resultado; `auditar-issue` nunca escreve. Checklist completo nao substitui a aprovacao independente, os gates nem a decisao de encerramento. Sem validacao formal do parecer/atestacao para o SHA exato, nao marcar novos criterios como verificados; atestacao solo nao equivale a aprovacao independente.
 
 `handoff-not-produced|handoff-stale` **nao seleciona fast path sozinho**; aplicar sempre o classificador e respeitar o piso de recuperacao da auditoria.
 
