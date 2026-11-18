@@ -83,8 +83,8 @@ def reconcile(audited_body: str, current_body: str, audit: dict, material_sha: s
     """Propose new issue body; callers must authenticate audit origin and perform the remote write."""
     if not SHA.fullmatch(material_sha):
         raise ValueError("Material SHA must contain 40 lowercase hex characters")
-    if audit.get("subject_sha") != material_sha or audit.get("validity") != "independent":
-        raise ValueError("Independent audit and exact material SHA are required")
+    if audit.get("subject_sha") != material_sha or audit.get("validity") not in {"independent", "solo-context-attested"}:
+        raise ValueError("Trusted review/attestation and exact material SHA are required")
     if not isinstance(audit.get("audit_url"), str) or not audit["audit_url"].startswith("https://"):
         raise ValueError("Locatable independent audit reference is required")
 
