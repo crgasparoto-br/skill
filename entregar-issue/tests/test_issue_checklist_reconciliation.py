@@ -36,7 +36,7 @@ def audit(*statuses: str, body: str = BODY) -> dict:
                 "status": status,
                 "evidence": ["test:case; sha=" + SHA] if status in {"verified", "failed", "partial"} else [],
             }
-            for item, status in zip(items, statuses)
+            for item, status in zip(items, statuses, strict=True)
         ],
     }
 
