@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 
 HEADING = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t]*\r?\n?$")
-CRITERIA_TITLE = re.compile(r"^(crit[eé]rios de aceite|acceptance criteria)$", re.I)
+CRITERIA_TITLE = re.compile(r"^(crit[eé]rios de aceite|acceptance criteria)$", re.IGNORECASE)
 ITEM = re.compile(
     r"^(?P<prefix>[ \t]{0,3}(?:[-*+]|\d+[.)])[ \t]+)"
     r"(?P<checkbox>\[[ xX]\][ \t]+)?"
@@ -102,7 +102,7 @@ def reconcile(audited_body: str, current_body: str, audit: dict, material_sha: s
     changes: list[dict] = []
     warnings: list[str] = []
 
-    for expected, observed, decision in zip(original, live, decisions):
+    for expected, observed, decision in zip(original, live, decisions, strict=True):
         if (
             not isinstance(decision, dict)
             or decision.get("ordinal") != expected["ordinal"]
