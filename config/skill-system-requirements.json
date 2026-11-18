@@ -483,7 +483,7 @@
       "id": "SKSYS-031",
       "title": "Acceptance-criteria evidence and authorized issue checklist reconciliation",
       "status": "implemented",
-      "summary": "Independent read-only audit assesses every acceptance criterion and all applicable implementation gates, then an authorized post-audit owner reconciles only verified checklist states using an exact-material-SHA, full-item decisions, normative-text drift check and remote read-back. Checkmarks never replace audit approval.",
+      "summary": "Read-only audit assesses every acceptance criterion and all applicable implementation gates; a formally verified independent review or accepted solo-context attestation enables an authorized post-audit owner reconciles only verified checklist states using an exact-material-SHA, full-item decisions, normative-text drift check and remote read-back. Checkmarks never replace audit approval.",
       "implementationRefs": [
         "file:docs/SKILL_SYSTEM_SPEC.md",
         "file:auditar-issue/SKILL.md",
