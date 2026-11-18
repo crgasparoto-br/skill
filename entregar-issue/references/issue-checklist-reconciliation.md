@@ -37,7 +37,7 @@ Formato mínimo de `verified-criteria.json` (um objeto em `criteria` por item da
 
 O campo `validity` admite `independent` ou `solo-context-attested` somente após prova remota do controle correspondente; `pre-audit` não autoriza marcação.
 
-`verified` marca `[x]` (inclusive em item que ainda não tinha checkbox); `failed` ou `partial` desmarca `[ ]` quando houver prova de falha; `unknown` e `not-applicable` não modificam o checkbox e geram aviso se já estiver marcado sem prova. Falta de decisão, divergência de texto/posição, seção ambígua, evidência vazia ou alteração além dos marcadores de checkbox bloqueia a reconciliação. O script não aceita uma matriz parcial e é idempotente.
+`verified` marca `[x]` (inclusive em item que ainda não tinha checkbox); `failed` ou `partial` desmarca `[ ]` quando houver prova de falha; `unknown` e `not-applicable` deixam `[ ]` aberto e removem marcação preexistente não comprovada, registrando aviso. Falta de decisão, divergência de texto/posição, seção ambígua, evidência vazia ou alteração além dos marcadores de checkbox bloqueia a reconciliação. O script não aceita uma matriz parcial e é idempotente.
 
 ## Publicação autorizada e read-back
 
