@@ -33,6 +33,7 @@ def audit(*statuses: str, body: str = BODY) -> dict:
             {
                 "ordinal": item["ordinal"],
                 "text": item["text"],
+                "original_checked": item["checked"],
                 "status": status,
                 "evidence": ["test:case; sha=" + SHA] if status in {"verified", "failed", "partial"} else [],
             }
@@ -117,3 +118,61 @@ def test_ignore_fenced_examples_and_require_single_section() -> None:
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]
     with pytest.raises(ValueError, match="exactly one"):
         mod.analyze_body("## Contexto\n- [ ] Sem criterios\n")
+
+
+def test_reject_audit_snapshot_checkbox_mismatch() -> None:
+    records = audit("verified", "partial", "unknown")
+    records["criteria"][1]["original_checked"] = False
+    with pytest.raises(ValueError, match="identity"):
+        mod.reconcile(BODY, BODY, records, SHA)
+
+
+def test_longer_fence_keeps_shorter_markers_and_examples_inert() -> None:
+    fence = chr(96) * 4
+    shorter = chr(96) * 3
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Primeiro\n"
+        + f"{fence}markdown\n{shorter}\n"
+        + "- [ ] Exemplo inerte\n"
+        + f"{fence}\n"
+        + "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+    result, _ = mod.reconcile(body, body, audit("verified", "verified", body=body), SHA)
+    assert "- [x] Primeiro\n" in result
+    assert "- [ ] Exemplo inerte\n" in result
+    assert "- [x] Segundo\n" in result
+
+
+def test_html_comment_in_fenced_example_does_not_hide_real_criteria() -> None:
+    fence = chr(96) * 4
+    shorter = chr(96) * 3
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Primeiro\n"
+        + f"{fence}md\n"
+        + "<!--\n"
+        + f"{shorter}\n"
+        + "- [ ] Exemplo inerte\n"
+        + f"{fence}\n"
+        + "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+
+
+def test_fence_close_requires_matching_length_and_no_info_string() -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "~~~~markdown\n"
+        "~~~\n"
+        "- [ ] Exemplo inerte\n"
+        "~~~~\n"
+        "- [ ] Real\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]
+
+
+def test_acceptance_heading_with_closing_hashes() -> None:
+    body = "## Critérios de aceite ##\n- [ ] Real\n"
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]

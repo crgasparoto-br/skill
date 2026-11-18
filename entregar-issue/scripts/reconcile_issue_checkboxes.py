@@ -25,33 +25,42 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     items: list[dict] = []
     in_criteria = False
     sections = 0
-    fenced = False
-    fence_symbol = ""
+    fence_marker = ""
+    fence_width = 0
     in_comment = False
 
     for index, line in enumerate(lines):
-        stripped = line.lstrip()
+        stripped = line.lstrip(" ")
+        indentation = len(line) - len(stripped)
+        if indentation <= 3 and stripped.startswith((chr(96) * 3, "~~~")):
+            symbol = stripped[0]
+            width = len(stripped) - len(stripped.lstrip(symbol))
+            suffix = stripped[width:].strip()
+            if not fence_marker:
+                # A backtick opening fence cannot have backticks in its info string.
+                if symbol == "~" or chr(96) not in suffix:
+                    fence_marker, fence_width = symbol, width
+                    continue
+            elif symbol == fence_marker and width >= fence_width and not suffix:
+                fence_marker, fence_width = "", 0
+                continue
+        if fence_marker:
+            continue
+
+        # Comments inside fenced code must not change parser state.
         if stripped.startswith("<!--"):
             in_comment = True
         if in_comment:
             if "-->" in line:
                 in_comment = False
             continue
-        if stripped.startswith((chr(96) * 3, "~~~")):
-            symbol = stripped[0]
-            if not fenced:
-                fenced, fence_symbol = True, symbol
-            elif fence_symbol == symbol:
-                fenced = False
-            continue
-        if fenced:
-            continue
 
         heading = HEADING.match(line)
         if heading:
             depth = len(heading.group(1))
             if depth <= 2:
-                in_criteria = depth == 2 and bool(CRITERIA_TITLE.fullmatch(heading.group(2).strip()))
+                heading_title = re.sub(r"[ \t]+#+[ \t]*$", "", heading.group(2)).strip()
+                in_criteria = depth == 2 and bool(CRITERIA_TITLE.fullmatch(heading_title))
                 if in_criteria:
                     sections += 1
             continue
@@ -107,6 +116,7 @@ def reconcile(audited_body: str, current_body: str, audit: dict, material_sha: s
             not isinstance(decision, dict)
             or decision.get("ordinal") != expected["ordinal"]
             or decision.get("text") != expected["text"]
+            or decision.get("original_checked") is not expected["checked"]
             or observed["text"] != expected["text"]
         ):
             raise ValueError("Criterion identity/order does not match the audited issue")
