@@ -99,7 +99,8 @@ Ler somente quando aplicavel:
 - finding independente contra candidato antes aprovado internamente: `references/audit-escape-closure.md`;
 - calculo, relatorio, projecao ou destino de mutacao dependente de periodo/data/futuro: `references/temporal-consistency-gate.md`;
 - registry/ativacao de gates: `contracts/gate-registry.json` e `references/gate-registry.md`;
-- resposta final: `references/controller-result-template.md`.
+- resposta final: `references/controller-result-template.md`;
+- retorno independente com atualizacao do checklist da issue: `references/issue-checklist-reconciliation.md`.
 
 Nao carregar referencias condicionais por antecipacao.
 
@@ -310,6 +311,8 @@ Usar `ci_mode=delivery-snapshot` somente para a primeira observacao do material 
 - finding novo nos mesmos arquivos: novo `work_item_fingerprint`; igualdade de paths nao autoriza reuso.
 
 ## Fechamento obrigatorio
+
+Apos parecer independente recebido e autenticado, executar a reconciliacao documental de `references/issue-checklist-reconciliation.md` para cada criterio de aceite com prova valida no material SHA. A fase de escrita autorizada atualiza o corpo da issue e relê o resultado; `auditar-issue` nunca escreve. Checklist completo nao substitui a aprovacao independente, os gates nem a decisao de encerramento. Sem parecer independente valido, nao marcar novos criterios como verificados.
 
 `handoff-not-produced|handoff-stale` **nao seleciona fast path sozinho**; aplicar sempre o classificador e respeitar o piso de recuperacao da auditoria.
 
