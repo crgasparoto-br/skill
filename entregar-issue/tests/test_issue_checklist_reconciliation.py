@@ -133,10 +133,10 @@ def test_longer_fence_keeps_shorter_markers_and_examples_inert() -> None:
     body = (
         "## Critérios de aceite\n"
         "- [ ] Primeiro\n"
-        + f"{fence}markdown\n{shorter}\n"
-        + "- [ ] Exemplo inerte\n"
-        + f"{fence}\n"
-        + "- [ ] Segundo\n"
+        f"{fence}markdown\n{shorter}\n"
+        "- [ ] Exemplo inerte\n"
+        f"{fence}\n"
+        "- [ ] Segundo\n"
     )
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
     result, _ = mod.reconcile(body, body, audit("verified", "verified", body=body), SHA)
@@ -151,12 +151,12 @@ def test_html_comment_in_fenced_example_does_not_hide_real_criteria() -> None:
     body = (
         "## Critérios de aceite\n"
         "- [ ] Primeiro\n"
-        + f"{fence}md\n"
-        + "<!--\n"
-        + f"{shorter}\n"
-        + "- [ ] Exemplo inerte\n"
-        + f"{fence}\n"
-        + "- [ ] Segundo\n"
+        f"{fence}md\n"
+        "<!--\n"
+        f"{shorter}\n"
+        "- [ ] Exemplo inerte\n"
+        f"{fence}\n"
+        "- [ ] Segundo\n"
     )
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
 
