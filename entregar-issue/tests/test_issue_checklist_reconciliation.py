@@ -73,7 +73,7 @@ def test_reject_material_issue_drift(changed: str) -> None:
 def test_reject_missing_or_untrusted_decisions() -> None:
     with pytest.raises(ValueError, match="Every criterion"):
         mod.reconcile(BODY, BODY, {"validity": "independent", "subject_sha": SHA, "audit_url": "https://x", "criteria": []}, SHA)
-    with pytest.raises(ValueError, match="Independent audit"):
+    with pytest.raises(ValueError, match="review/attestation"):
         mod.reconcile(BODY, BODY, {**audit("verified", "failed", "verified"), "validity": "pre-audit"}, SHA)
     with pytest.raises(ValueError, match="evidence"):
         records = audit("verified", "failed", "verified")
@@ -88,6 +88,13 @@ def test_reject_stale_sha_and_identity_swap() -> None:
     records["criteria"][1]["text"] = "Um"
     with pytest.raises(ValueError, match="identity"):
         mod.reconcile(BODY, BODY, records, SHA)
+
+
+def test_solo_attestation_is_allowed_without_claiming_independence() -> None:
+    records = {**audit("verified", "failed", "verified"), "validity": "solo-context-attested"}
+    result, summary = mod.reconcile(BODY, BODY, records, SHA)
+    assert len(summary["changes"]) == 3
+    assert "- [x] Um" in result
 
 
 def test_keep_unknown_checked_without_claiming_verified() -> None:
