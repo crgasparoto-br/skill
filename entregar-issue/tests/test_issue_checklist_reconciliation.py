@@ -72,7 +72,7 @@ def test_reject_material_issue_drift(changed: str) -> None:
 
 def test_reject_missing_or_untrusted_decisions() -> None:
     with pytest.raises(ValueError, match="Every criterion"):
-        mod.reconcile(BODY, BODY, {"validity": "independent", "subject_sha": SHA, "audit_url": "https://x", "criteria": []}, SHA)
+        mod.reconcile(BODY, BODY, {"validity": "independent", "subject_sha": SHA, "audit_url": "https://example.com/audit", "criteria": []}, SHA)
     with pytest.raises(ValueError, match="review/attestation"):
         mod.reconcile(BODY, BODY, {**audit("verified", "failed", "verified"), "validity": "pre-audit"}, SHA)
     with pytest.raises(ValueError, match="evidence"):
