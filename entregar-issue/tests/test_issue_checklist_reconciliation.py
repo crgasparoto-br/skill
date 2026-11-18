@@ -97,10 +97,11 @@ def test_solo_attestation_is_allowed_without_claiming_independence() -> None:
     assert "- [x] Um" in result
 
 
-def test_keep_unknown_checked_without_claiming_verified() -> None:
+def test_reopen_checked_criteria_without_verified_evidence() -> None:
     result, summary = mod.reconcile(BODY, BODY, audit("unknown", "unknown", "not-applicable"), SHA)
-    assert result == BODY
-    assert summary["warnings"] == ["Criterion 2 remains checked without verification"]
+    assert result == BODY.replace("- [x] Dois", "- [ ] Dois")
+    assert len(summary["changes"]) == 1
+    assert summary["warnings"] == ["Criterion 2 reopened: no verified evidence"]
 
 
 def test_duplicate_items_use_order_not_text_search() -> None:
