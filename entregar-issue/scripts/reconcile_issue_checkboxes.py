@@ -126,9 +126,9 @@ def reconcile(audited_body: str, current_body: str, audit: dict, material_sha: s
         elif status in {"failed", "partial"}:
             desired = False
         else:
-            desired = observed["checked"]
-            if desired:
-                warnings.append(f"Criterion {expected['ordinal']} remains checked without verification")
+            desired = False
+            if observed["checked"]:
+                warnings.append(f"Criterion {expected['ordinal']} reopened: no verified evidence")
         if desired == observed["checked"]:
             continue
         current_lines[observed["line"]] = (
