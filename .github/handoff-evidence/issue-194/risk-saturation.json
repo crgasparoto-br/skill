@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "families": [
+    {
+      "family": "authorization",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue #194 requires authorization controls over canonical Git source and first-escape auditing.",
+      "control_ids": [
+        "NEG-R194-001-authorization-git-absence-trust-boundary",
+        "NEG-R194-005-authorization-git-absence-trust-boundary",
+        "NEG-R194-010-authorization-git-absence-trust-boundary",
+        "NEG-R194-013-authorization-git-absence-trust-boundary",
+        "NEG-R194-015-authorization-git-absence-trust-boundary",
+        "NEG-R194-017-authorization-git-absence-trust-boundary",
+        "NEG-R194-019-authorization-git-absence-trust-boundary",
+        "NEG-R194-021-authorization-git-absence-trust-boundary",
+        "NEG-R194-022-authorization-git-absence-trust-boundary"
+      ],
+      "dimensions": [
+        {
+          "surface": "git-absence-trust-boundary",
+          "reason": "Exact-head tests distinguish accepted Git evidence from rejected foreign/missing sources at git-absence-trust-boundary.",
+          "control_ids": [
+            "NEG-R194-001-authorization-git-absence-trust-boundary",
+            "NEG-R194-005-authorization-git-absence-trust-boundary",
+            "NEG-R194-010-authorization-git-absence-trust-boundary",
+            "NEG-R194-013-authorization-git-absence-trust-boundary",
+            "NEG-R194-015-authorization-git-absence-trust-boundary",
+            "NEG-R194-017-authorization-git-absence-trust-boundary",
+            "NEG-R194-019-authorization-git-absence-trust-boundary",
+            "NEG-R194-021-authorization-git-absence-trust-boundary",
+            "NEG-R194-022-authorization-git-absence-trust-boundary"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "concurrency-atomicity",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Issue #194 material does not change the concurrency-atomicity boundary beyond already mapped surfaces.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "documentation",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue #194 requires documentation controls over canonical Git source and first-escape auditing.",
+      "control_ids": [
+        "NEG-R194-018-documentation-canonical-guidance-consistency"
+      ],
+      "dimensions": [
+        {
+          "surface": "canonical-guidance-consistency",
+          "reason": "Exact-head tests distinguish accepted Git evidence from rejected foreign/missing sources at canonical-guidance-consistency.",
+          "control_ids": [
+            "NEG-R194-018-documentation-canonical-guidance-consistency"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "historical-immutability",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue #194 requires historical-immutability controls over canonical Git source and first-escape auditing.",
+      "control_ids": [
+        "NEG-R194-006-historical-immutability-immutable-escape-lineage",
+        "NEG-R194-009-historical-immutability-immutable-escape-lineage",
+        "NEG-R194-014-historical-immutability-immutable-escape-lineage",
+        "NEG-R194-016-historical-immutability-immutable-escape-lineage"
+      ],
+      "dimensions": [
+        {
+          "surface": "immutable-escape-lineage",
+          "reason": "Exact-head tests distinguish accepted Git evidence from rejected foreign/missing sources at immutable-escape-lineage.",
+          "control_ids": [
+            "NEG-R194-006-historical-immutability-immutable-escape-lineage",
+            "NEG-R194-009-historical-immutability-immutable-escape-lineage",
+            "NEG-R194-014-historical-immutability-immutable-escape-lineage",
+            "NEG-R194-016-historical-immutability-immutable-escape-lineage"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "idempotency",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue #194 requires idempotency controls over canonical Git source and first-escape auditing.",
+      "control_ids": [
+        "NEG-R194-020-idempotency-duplicate-processing"
+      ],
+      "dimensions": [
+        {
+          "surface": "duplicate-processing",
+          "reason": "Exact-head tests distinguish accepted Git evidence from rejected foreign/missing sources at duplicate-processing.",
+          "control_ids": [
+            "NEG-R194-020-idempotency-duplicate-processing"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "public-boundary",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Issue #194 material does not change the public-boundary boundary beyond already mapped surfaces.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "reference-liveness",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue #194 requires reference-liveness controls over canonical Git source and first-escape auditing.",
+      "control_ids": [
+        "NEG-R194-011-reference-liveness-immutable-source-availability"
+      ],
+      "dimensions": [
+        {
+          "surface": "immutable-source-availability",
+          "reason": "Exact-head tests distinguish accepted Git evidence from rejected foreign/missing sources at immutable-source-availability.",
+          "control_ids": [
+            "NEG-R194-011-reference-liveness-immutable-source-availability"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "rollback",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Issue #194 material does not change the rollback boundary beyond already mapped surfaces.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "structural-contract",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue #194 requires structural-contract controls over canonical Git source and first-escape auditing.",
+      "control_ids": [
+        "NEG-R194-008-structural-contract-canonical-ledger-path",
+        "NEG-R194-012-structural-contract-canonical-ledger-path",
+        "NEG-R194-021-structural-contract-canonical-ledger-path",
+        "NEG-R194-021-structural-contract-relational-semantic-integrity"
+      ],
+      "dimensions": [
+        {
+          "surface": "canonical-ledger-path",
+          "reason": "Exact-head tests distinguish accepted Git evidence from rejected foreign/missing sources at canonical-ledger-path.",
+          "control_ids": [
+            "NEG-R194-008-structural-contract-canonical-ledger-path",
+            "NEG-R194-012-structural-contract-canonical-ledger-path",
+            "NEG-R194-021-structural-contract-canonical-ledger-path"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "relational-semantic-integrity",
+          "reason": "Exact-head tests distinguish accepted Git evidence from rejected foreign/missing sources at relational-semantic-integrity.",
+          "control_ids": [
+            "NEG-R194-021-structural-contract-relational-semantic-integrity"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-consistency",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue #194 requires temporal-consistency controls over canonical Git source and first-escape auditing.",
+      "control_ids": [
+        "NEG-R194-007-temporal-consistency-reporting-availability-window"
+      ],
+      "dimensions": [
+        {
+          "surface": "reporting-availability-window",
+          "reason": "Exact-head tests distinguish accepted Git evidence from rejected foreign/missing sources at reporting-availability-window.",
+          "control_ids": [
+            "NEG-R194-007-temporal-consistency-reporting-availability-window"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-destination",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "Issue #194 material does not change the temporal-destination boundary beyond already mapped surfaces.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "tenant-isolation",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Issue #194 requires tenant-isolation controls over canonical Git source and first-escape auditing.",
+      "control_ids": [
+        "NEG-R194-021-tenant-isolation-cross-target-ledger-isolation"
+      ],
+      "dimensions": [
+        {
+          "surface": "cross-target-ledger-isolation",
+          "reason": "Exact-head tests distinguish accepted Git evidence from rejected foreign/missing sources at cross-target-ledger-isolation.",
+          "control_ids": [
+            "NEG-R194-021-tenant-isolation-cross-target-ledger-isolation"
+          ],
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "material_families_missing_controls": []
+}

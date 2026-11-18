@@ -22,6 +22,7 @@ from audit_artifact_io import artifact_metadata, artifact_relative_paths, load_j
 from validate_evidence_source_locations import candidate_locations
 from validate_evidence_source_locations import validate as validate_source_locations
 from validate_handoff_certificate import completion_fields, scope_touches_code, scope_touches_tests
+from verify_first_audit_escape import prove_first_audit_escape
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REPO_DIR = ".audit/entregar-issue"
@@ -102,6 +103,7 @@ def main() -> int:
     parser.add_argument("--remediation-mode", choices=("targeted-remediation", "systemic-remediation", "mixed-remediation"), default="targeted-remediation")
     parser.add_argument("--previous-inherited-controls")
     parser.add_argument("--previous-audit-escape-closure")
+    parser.add_argument("--first-escape-audited-sha")
     parser.add_argument("--head-sha", required=True, help="Material candidate SHA, before the result-only handoff commit")
     parser.add_argument("--base-sha", required=True)
     parser.add_argument("--merge-preview-sha", help="Merge preview for the material candidate SHA")
@@ -184,8 +186,14 @@ def main() -> int:
     if args.previous_independent_rejection and "audit_escape_closure" not in files:
         print("BLOCK: previous independent rejection requires audit-escape-closure.json")
         return 2
-    if args.previous_independent_rejection and not args.previous_audit_escape_closure:
-        print("BLOCK: previous independent rejection requires previous audit-escape-closure snapshot")
+    if args.previous_audit_escape_closure and args.first_escape_audited_sha:
+        print("BLOCK: previous snapshot and first-escape proof are mutually exclusive")
+        return 2
+    if args.first_escape_audited_sha and not args.previous_independent_rejection:
+        print("BLOCK: first-escape proof requires previous independent rejection")
+        return 2
+    if args.previous_independent_rejection and not (args.previous_audit_escape_closure or args.first_escape_audited_sha):
+        print("BLOCK: previous rejection requires prior snapshot or authenticated first-escape absence")
         return 2
     if systemic_reaudit and profile != "critical":
         print("BLOCK: systemic audit remediation requires critical evidence profile")
@@ -222,6 +230,20 @@ def main() -> int:
     if snapshot.get("issue") != issue_number:
         print("BLOCK: specification snapshot issue differs from handoff subject")
         return 2
+
+    first_escape_proof = None
+    if args.first_escape_audited_sha:
+        try:
+            first_escape_proof = prove_first_audit_escape(
+                Path(args.source_repository_root) if args.source_repository_root else None,
+                audited_sha=args.first_escape_audited_sha, material_sha=args.head_sha,
+                repository_name=args.repository, issue_number=issue_number,
+                pull_request_number=pull_request_number,
+                audit_result=Path(args.audit_source_result) if args.audit_source_result else None,
+            )
+        except Exception as exc:
+            print(f"BLOCK: first-escape Git absence proof failed: {exc}")
+            return 2
 
     issue_scope = None
     if args.work_item_start_sha:
@@ -298,9 +320,15 @@ def main() -> int:
                 "--previous-independent-rejection",
                 "--remediation-mode",
                 args.remediation_mode,
-                "--previous-audit-escape-closure",
-                str(Path(args.previous_audit_escape_closure).resolve()),
             ])
+            if args.previous_audit_escape_closure:
+                handoff_args.extend(["--previous-audit-escape-closure", str(Path(args.previous_audit_escape_closure).resolve())])
+            else:
+                handoff_args.extend([
+                    "--first-escape-audited-sha", args.first_escape_audited_sha,
+                    "--first-escape-repository", str(Path(args.source_repository_root).resolve()),
+                    "--first-escape-audit-result", str(files["audit_source_result"]),
+                ])
         if systemic_reaudit:
             handoff_args.extend([
                 "--previous-inherited-controls",
@@ -441,6 +469,8 @@ def main() -> int:
         },
         "previous_independent_rejection": bool(args.previous_independent_rejection),
     }
+    if first_escape_proof:
+        payload["first_escape_bootstrap"] = first_escape_proof
     out = Path(args.out).resolve()
     try:
         if args.phase == "preparation":

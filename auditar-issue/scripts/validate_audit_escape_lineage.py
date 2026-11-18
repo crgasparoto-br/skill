@@ -7,6 +7,7 @@ from pathlib import Path
 from audit_artifact_io import load_json_artifact
 from handoff_postcondition_records import escape_key, validated_preparation_plan
 from handoff_semantic_guards import conflicting_current_sha_claims
+from verify_first_audit_escape import prove_first_audit_escape
 
 
 def load(path: Path) -> dict:
@@ -61,12 +62,37 @@ def validate_entry(item: dict, index: int, errors: list[str], head_sha: str | No
                 )
 
 
+def validate_previous_source(args: argparse.Namespace, errors: list[str]) -> None:
+    """Keep snapshot monotonicity separate from the one-time authenticated bootstrap."""
+    if args.previous_closure and args.first_escape_audited_sha:
+        errors.append("previous snapshot and first-escape absence proof are mutually exclusive")
+    if args.require_previous and not args.previous_closure and not args.first_escape_audited_sha:
+        errors.append("re-audit remediation requires previous snapshot or authenticated first-escape proof")
+    if args.first_escape_audited_sha:
+        try:
+            prove_first_audit_escape(
+                args.first_escape_repository, audited_sha=args.first_escape_audited_sha,
+                material_sha=args.head_sha, repository_name=args.target_repository,
+                issue_number=args.target_issue_number,
+                pull_request_number=args.target_pull_request_number,
+                audit_result=args.first_escape_audit_result,
+            )
+        except Exception as exc:
+            errors.append(f"first-escape Git absence proof failed: {exc}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--closure", required=True)
     parser.add_argument("--previous-closure")
     parser.add_argument("--head-sha")
     parser.add_argument("--require-previous", action="store_true")
+    parser.add_argument("--first-escape-audited-sha")
+    parser.add_argument("--first-escape-repository", type=Path)
+    parser.add_argument("--first-escape-audit-result", type=Path)
+    parser.add_argument("--target-repository")
+    parser.add_argument("--target-issue-number", type=int)
+    parser.add_argument("--target-pull-request-number", type=int)
     parser.add_argument("--phase", choices=("final", "preparation"), default="final")
     parser.add_argument("--postcondition-plan", type=Path)
     parser.add_argument("--repository", type=Path)
@@ -104,8 +130,7 @@ def main() -> int:
                 errors.append(f"audit escape {eid} is duplicated")
             current_ids.add(eid)
 
-    if args.require_previous and not args.previous_closure:
-        errors.append("re-audit remediation requires previous audit-escape-closure snapshot for monotonic validation")
+    validate_previous_source(args, errors)
     if args.previous_closure:
         previous_path = Path(args.previous_closure)
         if not previous_path.is_file():
@@ -116,6 +141,14 @@ def main() -> int:
             except Exception as exc:
                 errors.append(f"invalid previous audit escape closure: {exc}")
             else:
+                if args.target_repository and args.target_issue_number and args.target_pull_request_number:
+                    subject = previous.get("subject")
+                    if not isinstance(subject, dict) or (
+                        subject.get("repository") != args.target_repository
+                        or subject.get("issue_number") != args.target_issue_number
+                        or subject.get("pull_request_number") != args.target_pull_request_number
+                    ):
+                        errors.append("previous audit escape snapshot belongs to a different target")
                 previous_ids = set(by_id(previous))
                 missing = sorted(eid for eid in previous_ids if not eid.startswith("__missing_") and eid not in current_ids)
                 if missing:

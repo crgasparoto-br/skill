@@ -116,6 +116,18 @@
       "copies": [
         "auditar-issue/scripts/handoff_semantic_guards.py"
       ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/git_tree_snapshot.py",
+      "copies": [
+        "auditar-issue/scripts/git_tree_snapshot.py"
+      ]
+    },
+    {
+      "canonical": "entregar-issue/scripts/verify_first_audit_escape.py",
+      "copies": [
+        "auditar-issue/scripts/verify_first_audit_escape.py"
+      ]
     }
   ]
 }

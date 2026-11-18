@@ -276,7 +276,9 @@ def _resolve_certification_requirements(out: Path, args: argparse.Namespace,
                          "audit_source_result": "audit-source-result.json",
                          "learning_closure": "learning-closure.json",
                          "audit_escape_closure": "audit-escape-closure.json",
-                         "previous_audit_escape_closure": "previous-audit-escape-closure.json"})
+                         })
+        if _audit_path(out, "previous-audit-escape-closure.json").is_file():
+            required["previous_audit_escape_closure"] = "previous-audit-escape-closure.json"
     touched_code = any(path.endswith((".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".sh")) for path in changed)
     touched_tests = any("test" in path.lower() or path.endswith((".cy.ts", ".spec.ts")) for path in changed)
     if touched_code or touched_tests:
@@ -402,8 +404,15 @@ def certify(args: argparse.Namespace) -> None:
         if key in resolved and key != "previous_audit_escape_closure":
             builder.extend([option, str(resolved[key])])
     if inputs["audit_history"] == "previous-rejection":
-        builder.extend(["--previous-independent-rejection", "--previous-audit-escape-closure",
-                        str(resolved["previous_audit_escape_closure"])])
+        builder.append("--previous-independent-rejection")
+        if "previous_audit_escape_closure" in resolved:
+            builder.extend(["--previous-audit-escape-closure", str(resolved["previous_audit_escape_closure"])])
+        else:
+            audit_report = _load_record(resolved["audit_source_result"])
+            audited_sha = audit_report.get("head_sha")
+            if not isinstance(audited_sha, str) or len(audited_sha) != 40:
+                fail("first-escape proof requires exact previous audited SHA")
+            builder.extend(["--first-escape-audited-sha", audited_sha])
     if profile == "critical" and (audit / "evidence-provenance.json").is_file():
         builder.extend(["--evidence-provenance", str(_audit_path(out, "evidence-provenance.json"))])
     if "remediation_mode" in inputs:
