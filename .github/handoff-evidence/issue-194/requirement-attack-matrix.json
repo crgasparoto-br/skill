@@ -1,0 +1,1948 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "requirements": [
+    {
+      "requirement_id": "R194-001",
+      "obligation_ids": [
+        "OBL-001"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing first Git-proven bootstrap without assuming a missing snapshot is a valid prior ledger.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected accept only a legitimate first escape/history state for first Git-proven bootstrap without assuming a missing snapshot is a valid prior ledger. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/verify_first_audit_escape.py:73.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_existing_issue_ledger_must_be_preserved_not_bootstrapped"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for first Git-proven bootstrap without assuming a missing snapshot is a valid prior ledger. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-001-authorization-git-absence-trust-boundary",
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "dimension": "git-absence-trust-boundary-wrong-target",
+          "failure_mode": "first Git-proven bootstrap without assuming a missing snapshot is a valid prior ledger: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during first Git-proven bootstrap without assuming a missing snapshot is a valid prior ledger.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped at the material SHA and inspect entregar-issue/scripts/verify_first_audit_escape.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: first Git-proven bootstrap without assuming a missing snapshot is a valid prior ledger.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-001-authorization-git-absence-trust-boundary-S1",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-001-authorization-git-absence-trust-boundary-S2",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_missing_checkout_or_source_does_not_become_false_negative"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_missing_checkout_or_source_does_not_become_false_negative"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected preserve existing negative/gate protections after extending bootstrap for first Git-proven bootstrap without assuming a missing snapshot is a valid prior ledger. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "reason": "The authorization / git-absence-trust-boundary boundary protects first Git-proven bootstrap without assuming a missing snapshot is a valid prior ledger; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-005",
+      "obligation_ids": [
+        "OBL-005"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing target-scoped Git-object proof at both audited and material SHAs, without fabricated empty snapshots.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/git_tree_snapshot.py; expected accept only a legitimate first escape/history state for target-scoped Git-object proof at both audited and material SHAs, without fabricated empty snapshots. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/git_tree_snapshot.py:19.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_missing_checkout_or_source_does_not_become_false_negative"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/git_tree_snapshot.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for target-scoped Git-object proof at both audited and material SHAs, without fabricated empty snapshots. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-005-authorization-git-absence-trust-boundary",
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "dimension": "git-absence-trust-boundary-wrong-target",
+          "failure_mode": "target-scoped Git-object proof at both audited and material SHAs, without fabricated empty snapshots: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during target-scoped Git-object proof at both audited and material SHAs, without fabricated empty snapshots.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative at the material SHA and inspect entregar-issue/scripts/git_tree_snapshot.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: target-scoped Git-object proof at both audited and material SHAs, without fabricated empty snapshots.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-005-authorization-git-absence-trust-boundary-S1",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-005-authorization-git-absence-trust-boundary-S2",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_sharded_global_ledger_for_another_target_cannot_be_reused"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_sharded_global_ledger_for_another_target_cannot_be_reused"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/git_tree_snapshot.py; expected preserve existing negative/gate protections after extending bootstrap for target-scoped Git-object proof at both audited and material SHAs, without fabricated empty snapshots. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "reason": "The authorization / git-absence-trust-boundary boundary protects target-scoped Git-object proof at both audited and material SHAs, without fabricated empty snapshots; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-006",
+      "obligation_ids": [
+        "OBL-006"
+      ],
+      "risk_families": [
+        "historical-immutability"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing separate absent, existing and foreign-target ledgers with strict unknown handling.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected accept only a legitimate first escape/history state for separate absent, existing and foreign-target ledgers with strict unknown handling. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/verify_first_audit_escape.py:73.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_existing_or_unverifiable_root_ledger_rejects_bootstrap[subject0]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_or_unverifiable_root_ledger_rejects_bootstrap[subject0] in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for separate absent, existing and foreign-target ledgers with strict unknown handling. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-006-historical-immutability-immutable-escape-lineage",
+          "risk_family": "historical-immutability",
+          "surface": "immutable-escape-lineage",
+          "dimension": "immutable-escape-lineage-wrong-target",
+          "failure_mode": "separate absent, existing and foreign-target ledgers with strict unknown handling: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during separate absent, existing and foreign-target ledgers with strict unknown handling.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_or_unverifiable_root_ledger_rejects_bootstrap[subject0] at the material SHA and inspect entregar-issue/scripts/verify_first_audit_escape.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: separate absent, existing and foreign-target ledgers with strict unknown handling.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_or_unverifiable_root_ledger_rejects_bootstrap[subject0] PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-006-historical-immutability-immutable-escape-lineage-S1",
+              "surface": "immutable-escape-lineage",
+              "dimension": "immutable-escape-lineage-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-006-historical-immutability-immutable-escape-lineage-S2",
+              "surface": "immutable-escape-lineage",
+              "dimension": "immutable-escape-lineage-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_sharded_global_ledger_for_another_target_cannot_be_reused"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_sharded_global_ledger_for_another_target_cannot_be_reused"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected preserve existing negative/gate protections after extending bootstrap for separate absent, existing and foreign-target ledgers with strict unknown handling. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "historical-immutability",
+          "surface": "immutable-escape-lineage",
+          "reason": "The historical-immutability / immutable-escape-lineage boundary protects separate absent, existing and foreign-target ledgers with strict unknown handling; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_or_unverifiable_root_ledger_rejects_bootstrap[subject0] exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-007",
+      "obligation_ids": [
+        "OBL-007"
+      ],
+      "risk_families": [
+        "temporal-consistency"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing monotonicity from last independent rejection through transient commit history and terminal child.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_existing_issue_ledger_must_be_preserved_not_bootstrapped"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/validate_audit_escape_lineage.py; expected accept only a legitimate first escape/history state for monotonicity from last independent rejection through transient commit history and terminal child. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/validate_audit_escape_lineage.py:65.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_intermediate_issue_ledger_created_then_deleted_still_blocks"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_issue_ledger_created_then_deleted_still_blocks in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/validate_audit_escape_lineage.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for monotonicity from last independent rejection through transient commit history and terminal child. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-007-temporal-consistency-reporting-availability-window",
+          "risk_family": "temporal-consistency",
+          "surface": "reporting-availability-window",
+          "dimension": "reporting-availability-window-wrong-target",
+          "failure_mode": "monotonicity from last independent rejection through transient commit history and terminal child: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during monotonicity from last independent rejection through transient commit history and terminal child.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_issue_ledger_created_then_deleted_still_blocks at the material SHA and inspect entregar-issue/scripts/validate_audit_escape_lineage.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped and entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: monotonicity from last independent rejection through transient commit history and terminal child.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_issue_ledger_created_then_deleted_still_blocks PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-007-temporal-consistency-reporting-availability-window-S1",
+              "surface": "reporting-availability-window",
+              "dimension": "reporting-availability-window-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_existing_issue_ledger_must_be_preserved_not_bootstrapped"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-007-temporal-consistency-reporting-availability-window-S2",
+              "surface": "reporting-availability-window",
+              "dimension": "reporting-availability-window-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+                "name": "test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child"
+              },
+              "evidence": "entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+            "name": "test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child in entregar-issue/tests/test_terminal_handoff_contract.py: inspected code path entregar-issue/scripts/validate_audit_escape_lineage.py; expected preserve existing negative/gate protections after extending bootstrap for monotonicity from last independent rejection through transient commit history and terminal child. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+          "evidence_sha256": "a72ea85b782cc055257891ab8d2528cf43e48dfcc46779de937bb5753d27fa4e"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "temporal-consistency",
+          "surface": "reporting-availability-window",
+          "reason": "The temporal-consistency / reporting-availability-window boundary protects monotonicity from last independent rejection through transient commit history and terminal child; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_issue_ledger_created_then_deleted_still_blocks exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-008",
+      "obligation_ids": [
+        "OBL-008"
+      ],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing consistent certificate/readiness/lineage/terminal contracts on same Git-proven target.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_independent_rejection_handoff_contract",
+          "name": "test_certificate_builder_requires_previous_snapshots_and_forwards_learning"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_independent_rejection_handoff_contract.py#test_certificate_builder_requires_previous_snapshots_and_forwards_learning in entregar-issue/tests/test_independent_rejection_handoff_contract.py: inspected code path entregar-issue/scripts/validate_handoff_certificate.py; expected accept only a legitimate first escape/history state for consistent certificate/readiness/lineage/terminal contracts on same Git-proven target. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/validate_handoff_certificate.py:25.",
+        "evidence_path": "entregar-issue/tests/test_independent_rejection_handoff_contract.py",
+        "evidence_sha256": "5ca1f6b49664c72a5b5d19bd2d991a68a5a5a4bc11ce6077dfcb97bd69a08434"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_handoff_postcondition_records",
+            "name": "test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_handoff_postcondition_records.py#test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness] in entregar-issue/tests/test_handoff_postcondition_records.py: inspected code path entregar-issue/scripts/validate_handoff_certificate.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for consistent certificate/readiness/lineage/terminal contracts on same Git-proven target. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+          "evidence_sha256": "5c6bf61af2a293e9f7c051d3ad295c33c779b8fbc1d201e56de1f2adb65a4f2f",
+          "id": "NEG-R194-008-structural-contract-canonical-ledger-path",
+          "risk_family": "structural-contract",
+          "surface": "canonical-ledger-path",
+          "dimension": "canonical-ledger-path-wrong-target",
+          "failure_mode": "consistent certificate/readiness/lineage/terminal contracts on same Git-proven target: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during consistent certificate/readiness/lineage/terminal contracts on same Git-proven target.",
+          "procedure": "Execute entregar-issue/tests/test_handoff_postcondition_records.py#test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness] at the material SHA and inspect entregar-issue/scripts/validate_handoff_certificate.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_independent_rejection_handoff_contract.py#test_certificate_builder_requires_previous_snapshots_and_forwards_learning and entregar-issue/tests/test_independent_rejection_handoff_contract.py#test_terminal_guard_revalidates_learning_against_published_escape_ledger.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: consistent certificate/readiness/lineage/terminal contracts on same Git-proven target.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_handoff_postcondition_records.py#test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness] PASSED; its checked-in assertion in entregar-issue/tests/test_handoff_postcondition_records.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-008-structural-contract-canonical-ledger-path-S1",
+              "surface": "canonical-ledger-path",
+              "dimension": "canonical-ledger-path-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_independent_rejection_handoff_contract",
+                "name": "test_certificate_builder_requires_previous_snapshots_and_forwards_learning"
+              },
+              "evidence": "entregar-issue/tests/test_independent_rejection_handoff_contract.py#test_certificate_builder_requires_previous_snapshots_and_forwards_learning: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-008-structural-contract-canonical-ledger-path-S2",
+              "surface": "canonical-ledger-path",
+              "dimension": "canonical-ledger-path-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_independent_rejection_handoff_contract",
+                "name": "test_terminal_guard_revalidates_learning_against_published_escape_ledger"
+              },
+              "evidence": "entregar-issue/tests/test_independent_rejection_handoff_contract.py#test_terminal_guard_revalidates_learning_against_published_escape_ledger: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_independent_rejection_handoff_contract",
+            "name": "test_terminal_guard_revalidates_learning_against_published_escape_ledger"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_independent_rejection_handoff_contract.py#test_terminal_guard_revalidates_learning_against_published_escape_ledger in entregar-issue/tests/test_independent_rejection_handoff_contract.py: inspected code path entregar-issue/scripts/validate_handoff_certificate.py; expected preserve existing negative/gate protections after extending bootstrap for consistent certificate/readiness/lineage/terminal contracts on same Git-proven target. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_independent_rejection_handoff_contract.py",
+          "evidence_sha256": "5ca1f6b49664c72a5b5d19bd2d991a68a5a5a4bc11ce6077dfcb97bd69a08434"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "canonical-ledger-path",
+          "reason": "The structural-contract / canonical-ledger-path boundary protects consistent certificate/readiness/lineage/terminal contracts on same Git-proven target; entregar-issue/tests/test_independent_rejection_handoff_contract.py#test_certificate_builder_requires_previous_snapshots_and_forwards_learning and entregar-issue/tests/test_handoff_postcondition_records.py#test_preparation_validators_authenticate_plan_and_keep_final_blocked[readiness] exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-009",
+      "obligation_ids": [
+        "OBL-009"
+      ],
+      "risk_families": [
+        "historical-immutability"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing material-child target binds actual rejection and new escapes without old fake snapshots.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/build_handoff_certificate.py; expected accept only a legitimate first escape/history state for material-child target binds actual rejection and new escapes without old fake snapshots. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/build_handoff_certificate.py:73.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_wrong_identity_or_unknown_git_object_never_proves_absence[target0]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target0] in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/build_handoff_certificate.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for material-child target binds actual rejection and new escapes without old fake snapshots. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-009-historical-immutability-immutable-escape-lineage",
+          "risk_family": "historical-immutability",
+          "surface": "immutable-escape-lineage",
+          "dimension": "immutable-escape-lineage-wrong-target",
+          "failure_mode": "material-child target binds actual rejection and new escapes without old fake snapshots: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during material-child target binds actual rejection and new escapes without old fake snapshots.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target0] at the material SHA and inspect entregar-issue/scripts/build_handoff_certificate.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_publish_actions_handoff.py#test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted].",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: material-child target binds actual rejection and new escapes without old fake snapshots.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target0] PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-009-historical-immutability-immutable-escape-lineage-S1",
+              "surface": "immutable-escape-lineage",
+              "dimension": "immutable-escape-lineage-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-009-historical-immutability-immutable-escape-lineage-S2",
+              "surface": "immutable-escape-lineage",
+              "dimension": "immutable-escape-lineage-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_publish_actions_handoff",
+                "name": "test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
+              },
+              "evidence": "entregar-issue/tests/test_publish_actions_handoff.py#test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_publish_actions_handoff",
+            "name": "test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_publish_actions_handoff.py#test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted] in entregar-issue/tests/test_publish_actions_handoff.py: inspected code path entregar-issue/scripts/build_handoff_certificate.py; expected preserve existing negative/gate protections after extending bootstrap for material-child target binds actual rejection and new escapes without old fake snapshots. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_publish_actions_handoff.py",
+          "evidence_sha256": "6a60644ff617aac48abc646f26ee02dc72e7e82fe6fcfff931debd7d68c10815"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "historical-immutability",
+          "surface": "immutable-escape-lineage",
+          "reason": "The historical-immutability / immutable-escape-lineage boundary protects material-child target binds actual rejection and new escapes without old fake snapshots; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target0] exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-010",
+      "obligation_ids": [
+        "OBL-010"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing tie Git-object absence to canonical repository/issue/PR and immutable audit/material ancestor.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/git_tree_snapshot.py; expected accept only a legitimate first escape/history state for tie Git-object absence to canonical repository/issue/PR and immutable audit/material ancestor. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/git_tree_snapshot.py:19.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_wrong_identity_or_unknown_git_object_never_proves_absence[target1]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target1] in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/git_tree_snapshot.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for tie Git-object absence to canonical repository/issue/PR and immutable audit/material ancestor. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-010-authorization-git-absence-trust-boundary",
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "dimension": "git-absence-trust-boundary-wrong-target",
+          "failure_mode": "tie Git-object absence to canonical repository/issue/PR and immutable audit/material ancestor: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during tie Git-object absence to canonical repository/issue/PR and immutable audit/material ancestor.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target1] at the material SHA and inspect entregar-issue/scripts/git_tree_snapshot.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_parent_git_symlink_fails_closed.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: tie Git-object absence to canonical repository/issue/PR and immutable audit/material ancestor.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target1] PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-010-authorization-git-absence-trust-boundary-S1",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-010-authorization-git-absence-trust-boundary-S2",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_parent_git_symlink_fails_closed"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_parent_git_symlink_fails_closed: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_parent_git_symlink_fails_closed"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_parent_git_symlink_fails_closed in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/git_tree_snapshot.py; expected preserve existing negative/gate protections after extending bootstrap for tie Git-object absence to canonical repository/issue/PR and immutable audit/material ancestor. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "reason": "The authorization / git-absence-trust-boundary boundary protects tie Git-object absence to canonical repository/issue/PR and immutable audit/material ancestor; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target1] exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-011",
+      "obligation_ids": [
+        "OBL-011"
+      ],
+      "risk_families": [
+        "reference-liveness"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing deny READY on unavailable Git, edited/intermediate ledgers, foreign target and untrusted refs.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected accept only a legitimate first escape/history state for deny READY on unavailable Git, edited/intermediate ledgers, foreign target and untrusted refs. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/verify_first_audit_escape.py:73.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_missing_checkout_or_source_does_not_become_false_negative"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for deny READY on unavailable Git, edited/intermediate ledgers, foreign target and untrusted refs. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-011-reference-liveness-immutable-source-availability",
+          "risk_family": "reference-liveness",
+          "surface": "immutable-source-availability",
+          "dimension": "immutable-source-availability-wrong-target",
+          "failure_mode": "deny READY on unavailable Git, edited/intermediate ledgers, foreign target and untrusted refs: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during deny READY on unavailable Git, edited/intermediate ledgers, foreign target and untrusted refs.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative at the material SHA and inspect entregar-issue/scripts/verify_first_audit_escape.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: deny READY on unavailable Git, edited/intermediate ledgers, foreign target and untrusted refs.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-011-reference-liveness-immutable-source-availability-S1",
+              "surface": "immutable-source-availability",
+              "dimension": "immutable-source-availability-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-011-reference-liveness-immutable-source-availability-S2",
+              "surface": "immutable-source-availability",
+              "dimension": "immutable-source-availability-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_intermediate_root_ledger_created_then_deleted_still_blocks"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_intermediate_root_ledger_created_then_deleted_still_blocks"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected preserve existing negative/gate protections after extending bootstrap for deny READY on unavailable Git, edited/intermediate ledgers, foreign target and untrusted refs. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "reference-liveness",
+          "surface": "immutable-source-availability",
+          "reason": "The reference-liveness / immutable-source-availability boundary protects deny READY on unavailable Git, edited/intermediate ledgers, foreign target and untrusted refs; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-012",
+      "obligation_ids": [
+        "OBL-012"
+      ],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing trusted native-GitHub audit selection remains separate from certified-handoff artifacts.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_delivery_native_audit_contract",
+          "name": "test_native_mode_has_no_universal_legacy_handoff_requirement"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_delivery_native_audit_contract.py#test_native_mode_has_no_universal_legacy_handoff_requirement in entregar-issue/tests/test_delivery_native_audit_contract.py: inspected code path entregar-issue/references/terminal-handoff.md; expected accept only a legitimate first escape/history state for trusted native-GitHub audit selection remains separate from certified-handoff artifacts. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/references/terminal-handoff.md:1.",
+        "evidence_path": "entregar-issue/tests/test_delivery_native_audit_contract.py",
+        "evidence_sha256": "5a0f869fdb504be4b80237d0d0f3d43690dda68fb2a7ec53d4d05baccaa13929"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "auditar-issue.tests.test_audit_transport_native_contract",
+            "name": "test_candidate_cannot_self_exempt_from_handoff"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case auditar-issue/tests/test_audit_transport_native_contract.py#test_candidate_cannot_self_exempt_from_handoff in auditar-issue/tests/test_audit_transport_native_contract.py: inspected code path entregar-issue/references/terminal-handoff.md; expected reject a missing/foreign/stale ledger or unauthorized bypass for trusted native-GitHub audit selection remains separate from certified-handoff artifacts. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "auditar-issue/tests/test_audit_transport_native_contract.py",
+          "evidence_sha256": "c52df474386349d233baf7acce57eecb0357248a8440623f080c5873a37c290b",
+          "id": "NEG-R194-012-structural-contract-canonical-ledger-path",
+          "risk_family": "structural-contract",
+          "surface": "canonical-ledger-path",
+          "dimension": "canonical-ledger-path-wrong-target",
+          "failure_mode": "trusted native-GitHub audit selection remains separate from certified-handoff artifacts: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during trusted native-GitHub audit selection remains separate from certified-handoff artifacts.",
+          "procedure": "Execute auditar-issue/tests/test_audit_transport_native_contract.py#test_candidate_cannot_self_exempt_from_handoff at the material SHA and inspect entregar-issue/references/terminal-handoff.md; compare wrong-target or missing historical ledger to entregar-issue/tests/test_delivery_native_audit_contract.py#test_native_mode_has_no_universal_legacy_handoff_requirement and entregar-issue/tests/test_delivery_native_audit_contract.py#test_delivery_contract_never_publishes_audit_root_in_native_mode.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: trusted native-GitHub audit selection remains separate from certified-handoff artifacts.",
+          "observed": "The exact-SHA JUnit records auditar-issue/tests/test_audit_transport_native_contract.py#test_candidate_cannot_self_exempt_from_handoff PASSED; its checked-in assertion in auditar-issue/tests/test_audit_transport_native_contract.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-012-structural-contract-canonical-ledger-path-S1",
+              "surface": "canonical-ledger-path",
+              "dimension": "canonical-ledger-path-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_delivery_native_audit_contract",
+                "name": "test_native_mode_has_no_universal_legacy_handoff_requirement"
+              },
+              "evidence": "entregar-issue/tests/test_delivery_native_audit_contract.py#test_native_mode_has_no_universal_legacy_handoff_requirement: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-012-structural-contract-canonical-ledger-path-S2",
+              "surface": "canonical-ledger-path",
+              "dimension": "canonical-ledger-path-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_delivery_native_audit_contract",
+                "name": "test_delivery_contract_never_publishes_audit_root_in_native_mode"
+              },
+              "evidence": "entregar-issue/tests/test_delivery_native_audit_contract.py#test_delivery_contract_never_publishes_audit_root_in_native_mode: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_delivery_native_audit_contract",
+            "name": "test_delivery_contract_never_publishes_audit_root_in_native_mode"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_delivery_native_audit_contract.py#test_delivery_contract_never_publishes_audit_root_in_native_mode in entregar-issue/tests/test_delivery_native_audit_contract.py: inspected code path entregar-issue/references/terminal-handoff.md; expected preserve existing negative/gate protections after extending bootstrap for trusted native-GitHub audit selection remains separate from certified-handoff artifacts. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_delivery_native_audit_contract.py",
+          "evidence_sha256": "5a0f869fdb504be4b80237d0d0f3d43690dda68fb2a7ec53d4d05baccaa13929"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "canonical-ledger-path",
+          "reason": "The structural-contract / canonical-ledger-path boundary protects trusted native-GitHub audit selection remains separate from certified-handoff artifacts; entregar-issue/tests/test_delivery_native_audit_contract.py#test_native_mode_has_no_universal_legacy_handoff_requirement and auditar-issue/tests/test_audit_transport_native_contract.py#test_candidate_cannot_self_exempt_from_handoff exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-013",
+      "obligation_ids": [
+        "OBL-013"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing positive first rejection accepted only with Git absence, negative existing prior ledger denied.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/tests/test_first_audit_escape_bootstrap.py; expected accept only a legitimate first escape/history state for positive first rejection accepted only with Git absence, negative existing prior ledger denied. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/tests/test_first_audit_escape_bootstrap.py:69.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_existing_issue_ledger_must_be_preserved_not_bootstrapped"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/tests/test_first_audit_escape_bootstrap.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for positive first rejection accepted only with Git absence, negative existing prior ledger denied. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-013-authorization-git-absence-trust-boundary",
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "dimension": "git-absence-trust-boundary-wrong-target",
+          "failure_mode": "positive first rejection accepted only with Git absence, negative existing prior ledger denied: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during positive first rejection accepted only with Git absence, negative existing prior ledger denied.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped at the material SHA and inspect entregar-issue/tests/test_first_audit_escape_bootstrap.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_issue_ledger_created_then_deleted_still_blocks.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: positive first rejection accepted only with Git absence, negative existing prior ledger denied.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-013-authorization-git-absence-trust-boundary-S1",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-013-authorization-git-absence-trust-boundary-S2",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_intermediate_issue_ledger_created_then_deleted_still_blocks"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_issue_ledger_created_then_deleted_still_blocks: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_intermediate_issue_ledger_created_then_deleted_still_blocks"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_issue_ledger_created_then_deleted_still_blocks in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/tests/test_first_audit_escape_bootstrap.py; expected preserve existing negative/gate protections after extending bootstrap for positive first rejection accepted only with Git absence, negative existing prior ledger denied. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "reason": "The authorization / git-absence-trust-boundary boundary protects positive first rejection accepted only with Git absence, negative existing prior ledger denied; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-014",
+      "obligation_ids": [
+        "OBL-014"
+      ],
+      "risk_families": [
+        "historical-immutability"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing a prior escape ledger, even if removed between commits, cannot vanish from verification.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_existing_issue_ledger_must_be_preserved_not_bootstrapped"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/tests/test_first_audit_escape_bootstrap.py; expected accept only a legitimate first escape/history state for a prior escape ledger, even if removed between commits, cannot vanish from verification. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/tests/test_first_audit_escape_bootstrap.py:69.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_removed_issue_ledger_after_audit_is_not_absence"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_removed_issue_ledger_after_audit_is_not_absence in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/tests/test_first_audit_escape_bootstrap.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for a prior escape ledger, even if removed between commits, cannot vanish from verification. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-014-historical-immutability-immutable-escape-lineage",
+          "risk_family": "historical-immutability",
+          "surface": "immutable-escape-lineage",
+          "dimension": "immutable-escape-lineage-wrong-target",
+          "failure_mode": "a prior escape ledger, even if removed between commits, cannot vanish from verification: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during a prior escape ledger, even if removed between commits, cannot vanish from verification.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_removed_issue_ledger_after_audit_is_not_absence at the material SHA and inspect entregar-issue/tests/test_first_audit_escape_bootstrap.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: a prior escape ledger, even if removed between commits, cannot vanish from verification.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_removed_issue_ledger_after_audit_is_not_absence PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-014-historical-immutability-immutable-escape-lineage-S1",
+              "surface": "immutable-escape-lineage",
+              "dimension": "immutable-escape-lineage-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_existing_issue_ledger_must_be_preserved_not_bootstrapped"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-014-historical-immutability-immutable-escape-lineage-S2",
+              "surface": "immutable-escape-lineage",
+              "dimension": "immutable-escape-lineage-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_intermediate_root_ledger_created_then_deleted_still_blocks"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_intermediate_root_ledger_created_then_deleted_still_blocks"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/tests/test_first_audit_escape_bootstrap.py; expected preserve existing negative/gate protections after extending bootstrap for a prior escape ledger, even if removed between commits, cannot vanish from verification. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "historical-immutability",
+          "surface": "immutable-escape-lineage",
+          "reason": "The historical-immutability / immutable-escape-lineage boundary protects a prior escape ledger, even if removed between commits, cannot vanish from verification; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_removed_issue_ledger_after_audit_is_not_absence exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-015",
+      "obligation_ids": [
+        "OBL-015"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing negative proof for Git missing, object absent, symlink, stale SHA and wrong issue/repository.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/tests/test_first_audit_escape_bootstrap.py; expected accept only a legitimate first escape/history state for negative proof for Git missing, object absent, symlink, stale SHA and wrong issue/repository. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/tests/test_first_audit_escape_bootstrap.py:69.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_parent_git_symlink_fails_closed"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_parent_git_symlink_fails_closed in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/tests/test_first_audit_escape_bootstrap.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for negative proof for Git missing, object absent, symlink, stale SHA and wrong issue/repository. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-015-authorization-git-absence-trust-boundary",
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "dimension": "git-absence-trust-boundary-wrong-target",
+          "failure_mode": "negative proof for Git missing, object absent, symlink, stale SHA and wrong issue/repository: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during negative proof for Git missing, object absent, symlink, stale SHA and wrong issue/repository.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_parent_git_symlink_fails_closed at the material SHA and inspect entregar-issue/tests/test_first_audit_escape_bootstrap.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target4].",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: negative proof for Git missing, object absent, symlink, stale SHA and wrong issue/repository.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_parent_git_symlink_fails_closed PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-015-authorization-git-absence-trust-boundary-S1",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-015-authorization-git-absence-trust-boundary-S2",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_wrong_identity_or_unknown_git_object_never_proves_absence[target4]"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target4]: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_wrong_identity_or_unknown_git_object_never_proves_absence[target4]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_wrong_identity_or_unknown_git_object_never_proves_absence[target4] in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/tests/test_first_audit_escape_bootstrap.py; expected preserve existing negative/gate protections after extending bootstrap for negative proof for Git missing, object absent, symlink, stale SHA and wrong issue/repository. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "reason": "The authorization / git-absence-trust-boundary boundary protects negative proof for Git missing, object absent, symlink, stale SHA and wrong issue/repository; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_parent_git_symlink_fails_closed exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-016",
+      "obligation_ids": [
+        "OBL-016"
+      ],
+      "risk_families": [
+        "historical-immutability"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing subsequent rejection cannot retire previously witnessed escapes or drop finding IDs.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_existing_issue_ledger_must_be_preserved_not_bootstrapped"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/validate_audit_escape_lineage.py; expected accept only a legitimate first escape/history state for subsequent rejection cannot retire previously witnessed escapes or drop finding IDs. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/validate_audit_escape_lineage.py:65.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+            "name": "test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child in entregar-issue/tests/test_terminal_handoff_contract.py: inspected code path entregar-issue/scripts/validate_audit_escape_lineage.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for subsequent rejection cannot retire previously witnessed escapes or drop finding IDs. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+          "evidence_sha256": "a72ea85b782cc055257891ab8d2528cf43e48dfcc46779de937bb5753d27fa4e",
+          "id": "NEG-R194-016-historical-immutability-immutable-escape-lineage",
+          "risk_family": "historical-immutability",
+          "surface": "immutable-escape-lineage",
+          "dimension": "immutable-escape-lineage-wrong-target",
+          "failure_mode": "subsequent rejection cannot retire previously witnessed escapes or drop finding IDs: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during subsequent rejection cannot retire previously witnessed escapes or drop finding IDs.",
+          "procedure": "Execute entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child at the material SHA and inspect entregar-issue/scripts/validate_audit_escape_lineage.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped and entregar-issue/tests/test_independent_rejection_closure.py#test_rejects_new_independent_rejection_missing_from_escape_ledger.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: subsequent rejection cannot retire previously witnessed escapes or drop finding IDs.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child PASSED; its checked-in assertion in entregar-issue/tests/test_terminal_handoff_contract.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-016-historical-immutability-immutable-escape-lineage-S1",
+              "surface": "immutable-escape-lineage",
+              "dimension": "immutable-escape-lineage-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_existing_issue_ledger_must_be_preserved_not_bootstrapped"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-016-historical-immutability-immutable-escape-lineage-S2",
+              "surface": "immutable-escape-lineage",
+              "dimension": "immutable-escape-lineage-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_independent_rejection_closure",
+                "name": "test_rejects_new_independent_rejection_missing_from_escape_ledger"
+              },
+              "evidence": "entregar-issue/tests/test_independent_rejection_closure.py#test_rejects_new_independent_rejection_missing_from_escape_ledger: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_independent_rejection_closure",
+            "name": "test_rejects_new_independent_rejection_missing_from_escape_ledger"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_independent_rejection_closure.py#test_rejects_new_independent_rejection_missing_from_escape_ledger in entregar-issue/tests/test_independent_rejection_closure.py: inspected code path entregar-issue/scripts/validate_audit_escape_lineage.py; expected preserve existing negative/gate protections after extending bootstrap for subsequent rejection cannot retire previously witnessed escapes or drop finding IDs. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_independent_rejection_closure.py",
+          "evidence_sha256": "a072b42f26034ac1a7e416f12e578e952ee8aea0f3402de00f46246ef5f59bed"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "historical-immutability",
+          "surface": "immutable-escape-lineage",
+          "reason": "The historical-immutability / immutable-escape-lineage boundary protects subsequent rejection cannot retire previously witnessed escapes or drop finding IDs; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_existing_issue_ledger_must_be_preserved_not_bootstrapped and entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_rejects_escape_removed_between_material_parent_and_result_child exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-017",
+      "obligation_ids": [
+        "OBL-017"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing authenticated CI/checks, publisher proof and independently reviewed exact-result child remain mandatory.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_publish_actions_handoff",
+          "name": "test_material_ci_requires_every_required_check_green"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_publish_actions_handoff.py#test_material_ci_requires_every_required_check_green in entregar-issue/tests/test_publish_actions_handoff.py: inspected code path entregar-issue/scripts/publish_actions_handoff.py; expected accept only a legitimate first escape/history state for authenticated CI/checks, publisher proof and independently reviewed exact-result child remain mandatory. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/publish_actions_handoff.py:240.",
+        "evidence_path": "entregar-issue/tests/test_publish_actions_handoff.py",
+        "evidence_sha256": "6a60644ff617aac48abc646f26ee02dc72e7e82fe6fcfff931debd7d68c10815"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_publish_actions_handoff",
+            "name": "test_publisher_rejects_untrusted_execution_before_publication[missing-proof]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_publish_actions_handoff.py#test_publisher_rejects_untrusted_execution_before_publication[missing-proof] in entregar-issue/tests/test_publish_actions_handoff.py: inspected code path entregar-issue/scripts/publish_actions_handoff.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for authenticated CI/checks, publisher proof and independently reviewed exact-result child remain mandatory. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_publish_actions_handoff.py",
+          "evidence_sha256": "6a60644ff617aac48abc646f26ee02dc72e7e82fe6fcfff931debd7d68c10815",
+          "id": "NEG-R194-017-authorization-git-absence-trust-boundary",
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "dimension": "git-absence-trust-boundary-wrong-target",
+          "failure_mode": "authenticated CI/checks, publisher proof and independently reviewed exact-result child remain mandatory: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during authenticated CI/checks, publisher proof and independently reviewed exact-result child remain mandatory.",
+          "procedure": "Execute entregar-issue/tests/test_publish_actions_handoff.py#test_publisher_rejects_untrusted_execution_before_publication[missing-proof] at the material SHA and inspect entregar-issue/scripts/publish_actions_handoff.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_publish_actions_handoff.py#test_material_ci_requires_every_required_check_green and entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_requires_actual_published_child.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: authenticated CI/checks, publisher proof and independently reviewed exact-result child remain mandatory.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_publish_actions_handoff.py#test_publisher_rejects_untrusted_execution_before_publication[missing-proof] PASSED; its checked-in assertion in entregar-issue/tests/test_publish_actions_handoff.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-017-authorization-git-absence-trust-boundary-S1",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_publish_actions_handoff",
+                "name": "test_material_ci_requires_every_required_check_green"
+              },
+              "evidence": "entregar-issue/tests/test_publish_actions_handoff.py#test_material_ci_requires_every_required_check_green: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-017-authorization-git-absence-trust-boundary-S2",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+                "name": "test_terminal_guard_requires_actual_published_child"
+              },
+              "evidence": "entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_requires_actual_published_child: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+            "name": "test_terminal_guard_requires_actual_published_child"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_guard_requires_actual_published_child in entregar-issue/tests/test_terminal_handoff_contract.py: inspected code path entregar-issue/scripts/publish_actions_handoff.py; expected preserve existing negative/gate protections after extending bootstrap for authenticated CI/checks, publisher proof and independently reviewed exact-result child remain mandatory. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+          "evidence_sha256": "a72ea85b782cc055257891ab8d2528cf43e48dfcc46779de937bb5753d27fa4e"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "reason": "The authorization / git-absence-trust-boundary boundary protects authenticated CI/checks, publisher proof and independently reviewed exact-result child remain mandatory; entregar-issue/tests/test_publish_actions_handoff.py#test_material_ci_requires_every_required_check_green and entregar-issue/tests/test_publish_actions_handoff.py#test_publisher_rejects_untrusted_execution_before_publication[missing-proof] exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-018",
+      "obligation_ids": [
+        "OBL-018"
+      ],
+      "risk_families": [
+        "documentation"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing new normative first-escape branch is documented, checked in code and not merged by CI.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/references/audit-escape-closure.md; expected accept only a legitimate first escape/history state for new normative first-escape branch is documented, checked in code and not merged by CI. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/references/audit-escape-closure.md:1.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_delivery_native_audit_contract",
+            "name": "test_untrusted_candidate_contract_cannot_select_native_mode"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_delivery_native_audit_contract.py#test_untrusted_candidate_contract_cannot_select_native_mode in entregar-issue/tests/test_delivery_native_audit_contract.py: inspected code path entregar-issue/references/audit-escape-closure.md; expected reject a missing/foreign/stale ledger or unauthorized bypass for new normative first-escape branch is documented, checked in code and not merged by CI. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_delivery_native_audit_contract.py",
+          "evidence_sha256": "5a0f869fdb504be4b80237d0d0f3d43690dda68fb2a7ec53d4d05baccaa13929",
+          "id": "NEG-R194-018-documentation-canonical-guidance-consistency",
+          "risk_family": "documentation",
+          "surface": "canonical-guidance-consistency",
+          "dimension": "canonical-guidance-consistency-wrong-target",
+          "failure_mode": "new normative first-escape branch is documented, checked in code and not merged by CI: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during new normative first-escape branch is documented, checked in code and not merged by CI.",
+          "procedure": "Execute entregar-issue/tests/test_delivery_native_audit_contract.py#test_untrusted_candidate_contract_cannot_select_native_mode at the material SHA and inspect entregar-issue/references/audit-escape-closure.md; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and auditar-issue/tests/test_audit_transport_native_contract.py#test_native_precedence_is_explicit_in_skill_and_reference.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: new normative first-escape branch is documented, checked in code and not merged by CI.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_delivery_native_audit_contract.py#test_untrusted_candidate_contract_cannot_select_native_mode PASSED; its checked-in assertion in entregar-issue/tests/test_delivery_native_audit_contract.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-018-documentation-canonical-guidance-consistency-S1",
+              "surface": "canonical-guidance-consistency",
+              "dimension": "canonical-guidance-consistency-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-018-documentation-canonical-guidance-consistency-S2",
+              "surface": "canonical-guidance-consistency",
+              "dimension": "canonical-guidance-consistency-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "auditar-issue.tests.test_audit_transport_native_contract",
+                "name": "test_native_precedence_is_explicit_in_skill_and_reference"
+              },
+              "evidence": "auditar-issue/tests/test_audit_transport_native_contract.py#test_native_precedence_is_explicit_in_skill_and_reference: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "auditar-issue.tests.test_audit_transport_native_contract",
+            "name": "test_native_precedence_is_explicit_in_skill_and_reference"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case auditar-issue/tests/test_audit_transport_native_contract.py#test_native_precedence_is_explicit_in_skill_and_reference in auditar-issue/tests/test_audit_transport_native_contract.py: inspected code path entregar-issue/references/audit-escape-closure.md; expected preserve existing negative/gate protections after extending bootstrap for new normative first-escape branch is documented, checked in code and not merged by CI. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "auditar-issue/tests/test_audit_transport_native_contract.py",
+          "evidence_sha256": "c52df474386349d233baf7acce57eecb0357248a8440623f080c5873a37c290b"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "documentation",
+          "surface": "canonical-guidance-consistency",
+          "reason": "The documentation / canonical-guidance-consistency boundary protects new normative first-escape branch is documented, checked in code and not merged by CI; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_delivery_native_audit_contract.py#test_untrusted_candidate_contract_cannot_select_native_mode exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-019",
+      "obligation_ids": [
+        "OBL-019"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing no empty historical snapshot, no implementer-written absence claim and no bypass of gates.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected accept only a legitimate first escape/history state for no empty historical snapshot, no implementer-written absence claim and no bypass of gates. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/verify_first_audit_escape.py:73.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+            "name": "test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence] in entregar-issue/tests/test_terminal_handoff_contract.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for no empty historical snapshot, no implementer-written absence claim and no bypass of gates. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+          "evidence_sha256": "a72ea85b782cc055257891ab8d2528cf43e48dfcc46779de937bb5753d27fa4e",
+          "id": "NEG-R194-019-authorization-git-absence-trust-boundary",
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "dimension": "git-absence-trust-boundary-wrong-target",
+          "failure_mode": "no empty historical snapshot, no implementer-written absence claim and no bypass of gates: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during no empty historical snapshot, no implementer-written absence claim and no bypass of gates.",
+          "procedure": "Execute entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence] at the material SHA and inspect entregar-issue/scripts/verify_first_audit_escape.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: no empty historical snapshot, no implementer-written absence claim and no bypass of gates.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence] PASSED; its checked-in assertion in entregar-issue/tests/test_terminal_handoff_contract.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-019-authorization-git-absence-trust-boundary-S1",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-019-authorization-git-absence-trust-boundary-S2",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_missing_checkout_or_source_does_not_become_false_negative"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_missing_checkout_or_source_does_not_become_false_negative"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected preserve existing negative/gate protections after extending bootstrap for no empty historical snapshot, no implementer-written absence claim and no bypass of gates. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "reason": "The authorization / git-absence-trust-boundary boundary protects no empty historical snapshot, no implementer-written absence claim and no bypass of gates; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_rejects_untrusted_snapshots[false-absence] exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-020",
+      "obligation_ids": [
+        "OBL-020"
+      ],
+      "risk_families": [
+        "idempotency"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing reuse canonical Git tree parent proof and avoid duplicate trusted history generation.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+          "name": "test_terminal_parent_git_proof_accepts_exact_snapshot"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_accepts_exact_snapshot in entregar-issue/tests/test_terminal_handoff_contract.py: inspected code path entregar-issue/scripts/git_tree_snapshot.py; expected accept only a legitimate first escape/history state for reuse canonical Git tree parent proof and avoid duplicate trusted history generation. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/git_tree_snapshot.py:19.",
+        "evidence_path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+        "evidence_sha256": "a72ea85b782cc055257891ab8d2528cf43e48dfcc46779de937bb5753d27fa4e"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+            "name": "test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-repository]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-repository] in entregar-issue/tests/test_terminal_handoff_contract.py: inspected code path entregar-issue/scripts/git_tree_snapshot.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for reuse canonical Git tree parent proof and avoid duplicate trusted history generation. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+          "evidence_sha256": "a72ea85b782cc055257891ab8d2528cf43e48dfcc46779de937bb5753d27fa4e",
+          "id": "NEG-R194-020-idempotency-duplicate-processing",
+          "risk_family": "idempotency",
+          "surface": "duplicate-processing",
+          "dimension": "duplicate-processing-wrong-target",
+          "failure_mode": "reuse canonical Git tree parent proof and avoid duplicate trusted history generation: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during reuse canonical Git tree parent proof and avoid duplicate trusted history generation.",
+          "procedure": "Execute entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-repository] at the material SHA and inspect entregar-issue/scripts/git_tree_snapshot.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_accepts_exact_snapshot and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: reuse canonical Git tree parent proof and avoid duplicate trusted history generation.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-repository] PASSED; its checked-in assertion in entregar-issue/tests/test_terminal_handoff_contract.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-020-idempotency-duplicate-processing-S1",
+              "surface": "duplicate-processing",
+              "dimension": "duplicate-processing-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_terminal_handoff_contract",
+                "name": "test_terminal_parent_git_proof_accepts_exact_snapshot"
+              },
+              "evidence": "entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_accepts_exact_snapshot: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-020-idempotency-duplicate-processing-S2",
+              "surface": "duplicate-processing",
+              "dimension": "duplicate-processing-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_first_rejection_without_ledger_is_proven_by_git"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/git_tree_snapshot.py; expected preserve existing negative/gate protections after extending bootstrap for reuse canonical Git tree parent proof and avoid duplicate trusted history generation. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "idempotency",
+          "surface": "duplicate-processing",
+          "reason": "The idempotency / duplicate-processing boundary protects reuse canonical Git tree parent proof and avoid duplicate trusted history generation; entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_accepts_exact_snapshot and entregar-issue/tests/test_terminal_handoff_contract.py#test_terminal_parent_git_proof_rejects_untrusted_snapshots[missing-repository] exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-021",
+      "obligation_ids": [
+        "OBL-021"
+      ],
+      "risk_families": [
+        "authorization",
+        "structural-contract",
+        "tenant-isolation"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing single source of ledger existence is exact Git tree of canonical target not mutable PR prose.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected accept only a legitimate first escape/history state for single source of ledger existence is exact Git tree of canonical target not mutable PR prose. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/verify_first_audit_escape.py:73.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_sharded_global_ledger_for_another_target_cannot_be_reused"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for single source of ledger existence is exact Git tree of canonical target not mutable PR prose. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-021-authorization-git-absence-trust-boundary",
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "dimension": "git-absence-trust-boundary-wrong-target",
+          "failure_mode": "single source of ledger existence is exact Git tree of canonical target not mutable PR prose: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during single source of ledger existence is exact Git tree of canonical target not mutable PR prose.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused at the material SHA and inspect entregar-issue/scripts/verify_first_audit_escape.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: single source of ledger existence is exact Git tree of canonical target not mutable PR prose.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-021-authorization-git-absence-trust-boundary-S1",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-021-authorization-git-absence-trust-boundary-S2",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_intermediate_root_ledger_created_then_deleted_still_blocks"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_sharded_global_ledger_for_another_target_cannot_be_reused"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for single source of ledger existence is exact Git tree of canonical target not mutable PR prose. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-021-structural-contract-canonical-ledger-path",
+          "risk_family": "structural-contract",
+          "surface": "canonical-ledger-path",
+          "dimension": "canonical-ledger-path-wrong-target",
+          "failure_mode": "single source of ledger existence is exact Git tree of canonical target not mutable PR prose: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during single source of ledger existence is exact Git tree of canonical target not mutable PR prose.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused at the material SHA and inspect entregar-issue/scripts/verify_first_audit_escape.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: single source of ledger existence is exact Git tree of canonical target not mutable PR prose.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-021-structural-contract-canonical-ledger-path-S1",
+              "surface": "canonical-ledger-path",
+              "dimension": "canonical-ledger-path-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-021-structural-contract-canonical-ledger-path-S2",
+              "surface": "canonical-ledger-path",
+              "dimension": "canonical-ledger-path-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_intermediate_root_ledger_created_then_deleted_still_blocks"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_sharded_global_ledger_for_another_target_cannot_be_reused"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for single source of ledger existence is exact Git tree of canonical target not mutable PR prose. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-021-structural-contract-relational-semantic-integrity",
+          "risk_family": "structural-contract",
+          "surface": "relational-semantic-integrity",
+          "dimension": "relational-semantic-integrity-wrong-target",
+          "failure_mode": "single source of ledger existence is exact Git tree of canonical target not mutable PR prose: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during single source of ledger existence is exact Git tree of canonical target not mutable PR prose.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused at the material SHA and inspect entregar-issue/scripts/verify_first_audit_escape.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks. Inject two deliberately divergent linked Git ledger source/issue values into the canonical producer entrypoint; read back rejection and verify no invalid downstream certificate write.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: single source of ledger existence is exact Git tree of canonical target not mutable PR prose.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-021-structural-contract-relational-semantic-integrity-S1",
+              "surface": "relational-semantic-integrity",
+              "dimension": "relational-semantic-integrity-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-021-structural-contract-relational-semantic-integrity-S2",
+              "surface": "relational-semantic-integrity",
+              "dimension": "relational-semantic-integrity-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_intermediate_root_ledger_created_then_deleted_still_blocks"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_sharded_global_ledger_for_another_target_cannot_be_reused"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for single source of ledger existence is exact Git tree of canonical target not mutable PR prose. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-021-tenant-isolation-cross-target-ledger-isolation",
+          "risk_family": "tenant-isolation",
+          "surface": "cross-target-ledger-isolation",
+          "dimension": "cross-target-ledger-isolation-wrong-target",
+          "failure_mode": "single source of ledger existence is exact Git tree of canonical target not mutable PR prose: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during single source of ledger existence is exact Git tree of canonical target not mutable PR prose.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused at the material SHA and inspect entregar-issue/scripts/verify_first_audit_escape.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks.",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: single source of ledger existence is exact Git tree of canonical target not mutable PR prose.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-021-tenant-isolation-cross-target-ledger-isolation-S1",
+              "surface": "cross-target-ledger-isolation",
+              "dimension": "cross-target-ledger-isolation-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-021-tenant-isolation-cross-target-ledger-isolation-S2",
+              "surface": "cross-target-ledger-isolation",
+              "dimension": "cross-target-ledger-isolation-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_intermediate_root_ledger_created_then_deleted_still_blocks"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_intermediate_root_ledger_created_then_deleted_still_blocks"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_intermediate_root_ledger_created_then_deleted_still_blocks in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected preserve existing negative/gate protections after extending bootstrap for single source of ledger existence is exact Git tree of canonical target not mutable PR prose. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "reason": "The authorization / git-absence-trust-boundary boundary protects single source of ledger existence is exact Git tree of canonical target not mutable PR prose; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused exercise the distinguishable states."
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "canonical-ledger-path",
+          "reason": "The structural-contract / canonical-ledger-path boundary protects single source of ledger existence is exact Git tree of canonical target not mutable PR prose; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused exercise the distinguishable states."
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "relational-semantic-integrity",
+          "reason": "The structural-contract / relational-semantic-integrity boundary protects single source of ledger existence is exact Git tree of canonical target not mutable PR prose; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused exercise the distinguishable states."
+        },
+        {
+          "risk_family": "tenant-isolation",
+          "surface": "cross-target-ledger-isolation",
+          "reason": "The tenant-isolation / cross-target-ledger-isolation boundary protects single source of ledger existence is exact Git tree of canonical target not mutable PR prose; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_sharded_global_ledger_for_another_target_cannot_be_reused exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R194-022",
+      "obligation_ids": [
+        "OBL-022"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "plausible_wrong_implementation": "Accept a mutable, missing or cross-target Git artifact in place of a canonical immutable identity when implementing offline Git objects suffice, missing runner/remote object must remain unknown not approved.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+          "name": "test_first_rejection_without_ledger_is_proven_by_git"
+        },
+        "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected accept only a legitimate first escape/history state for offline Git objects suffice, missing runner/remote object must remain unknown not approved. The test has a discriminating assertion in its checked-in test source. Source anchor: entregar-issue/scripts/verify_first_audit_escape.py:73.",
+        "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+        "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+            "name": "test_missing_checkout_or_source_does_not_become_false_negative"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative in entregar-issue/tests/test_first_audit_escape_bootstrap.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected reject a missing/foreign/stale ledger or unauthorized bypass for offline Git objects suffice, missing runner/remote object must remain unknown not approved. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+          "evidence_sha256": "9aa81a7fc1b9b3288dc511a8ff7fabf3e585ff60696e85aeb424b7de54146142",
+          "id": "NEG-R194-022-authorization-git-absence-trust-boundary",
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "dimension": "git-absence-trust-boundary-wrong-target",
+          "failure_mode": "offline Git objects suffice, missing runner/remote object must remain unknown not approved: a wrong, stale or foreign Git tree could have been accepted by the certificate path.",
+          "plausible_wrong_implementation": "Trust a mutable PR narrative or a foreign ledger instead of the authenticated Git tree during offline Git objects suffice, missing runner/remote object must remain unknown not approved.",
+          "procedure": "Execute entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative at the material SHA and inspect entregar-issue/scripts/verify_first_audit_escape.py; compare wrong-target or missing historical ledger to entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_publish_actions_handoff.py#test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted].",
+          "expected": "The negative fixture rejects the forged or missing source, and the positive fixture still accepts the legitimate case: offline Git objects suffice, missing runner/remote object must remain unknown not approved.",
+          "observed": "The exact-SHA JUnit records entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative PASSED; its checked-in assertion in entregar-issue/tests/test_first_audit_escape_bootstrap.py fails if the wrong source is permitted.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R194-022-authorization-git-absence-trust-boundary-S1",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-existing-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_first_audit_escape_bootstrap",
+                "name": "test_first_rejection_without_ledger_is_proven_by_git"
+              },
+              "evidence": "entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git: expected current valid behavior remains distinguishable from the forged source."
+            },
+            {
+              "id": "NEG-R194-022-authorization-git-absence-trust-boundary-S2",
+              "surface": "git-absence-trust-boundary",
+              "dimension": "git-absence-trust-boundary-regression-history",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_publish_actions_handoff",
+                "name": "test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
+              },
+              "evidence": "entregar-issue/tests/test_publish_actions_handoff.py#test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]: historical or downstream control does not regress when the first-escape mode is used."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_publish_actions_handoff",
+            "name": "test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted]"
+          },
+          "evidence": "Authenticated exact-SHA JUnit case entregar-issue/tests/test_publish_actions_handoff.py#test_first_critical_reaudit_handoff_proves_material_parent_absence[critical-targeted] in entregar-issue/tests/test_publish_actions_handoff.py: inspected code path entregar-issue/scripts/verify_first_audit_escape.py; expected preserve existing negative/gate protections after extending bootstrap for offline Git objects suffice, missing runner/remote object must remain unknown not approved. The test has a discriminating assertion in its checked-in test source.",
+          "evidence_path": "entregar-issue/tests/test_publish_actions_handoff.py",
+          "evidence_sha256": "6a60644ff617aac48abc646f26ee02dc72e7e82fe6fcfff931debd7d68c10815"
+        }
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "git-absence-trust-boundary",
+          "reason": "The authorization / git-absence-trust-boundary boundary protects offline Git objects suffice, missing runner/remote object must remain unknown not approved; entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_first_rejection_without_ledger_is_proven_by_git and entregar-issue/tests/test_first_audit_escape_bootstrap.py#test_missing_checkout_or_source_does_not_become_false_negative exercise the distinguishable states."
+        }
+      ],
+      "quantitative_evidence_required": false
+    }
+  ],
+  "uncovered_requirements": []
+}

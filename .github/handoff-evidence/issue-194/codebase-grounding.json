@@ -1,0 +1,207 @@
+{
+  "schema_version": 2,
+  "subject_sha": "__MATERIAL_HEAD_SHA__",
+  "base_sha": "__WORK_ITEM_START_SHA__",
+  "creations": [
+    {
+      "path": "auditar-issue/scripts/git_tree_snapshot.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "git_tree_snapshot",
+          "verify_first_audit_escape",
+          "material_parent_blob"
+        ],
+        "scope": "Base develop prior to #194: delivery guards and independent auditor synchronized scripts",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/validate_terminal_handoff.py",
+            "reason_not_reused": "Existing validation embeds only consumer-specific material-parent checks, not the shared canonical current/audited first-rejection Git proof."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "New narrow trusted proof module added once per isolated Skill package and synchronized from canonical owner; existing modules remain reused by consumers."
+    },
+    {
+      "path": "auditar-issue/scripts/verify_first_audit_escape.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "git_tree_snapshot",
+          "verify_first_audit_escape",
+          "material_parent_blob"
+        ],
+        "scope": "Base develop prior to #194: delivery guards and independent auditor synchronized scripts",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/validate_audit_escape_lineage.py",
+            "reason_not_reused": "Existing validation embeds only consumer-specific material-parent checks, not the shared canonical current/audited first-rejection Git proof."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "New narrow trusted proof module added once per isolated Skill package and synchronized from canonical owner; existing modules remain reused by consumers."
+    },
+    {
+      "path": "entregar-issue/scripts/git_tree_snapshot.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "git_tree_snapshot",
+          "verify_first_audit_escape",
+          "material_parent_blob"
+        ],
+        "scope": "Base develop prior to #194: delivery guards and independent auditor synchronized scripts",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/validate_terminal_handoff.py",
+            "reason_not_reused": "Existing validation embeds only consumer-specific material-parent checks, not the shared canonical current/audited first-rejection Git proof."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "New narrow trusted proof module added once per isolated Skill package and synchronized from canonical owner; existing modules remain reused by consumers."
+    },
+    {
+      "path": "entregar-issue/scripts/verify_first_audit_escape.py",
+      "kind": "file",
+      "search": {
+        "queries": [
+          "git_tree_snapshot",
+          "verify_first_audit_escape",
+          "material_parent_blob"
+        ],
+        "scope": "Base develop prior to #194: delivery guards and independent auditor synchronized scripts",
+        "candidates": [
+          {
+            "path": "entregar-issue/scripts/validate_audit_escape_lineage.py",
+            "reason_not_reused": "Existing validation embeds only consumer-specific material-parent checks, not the shared canonical current/audited first-rejection Git proof."
+          }
+        ]
+      },
+      "decision": "create",
+      "justification": "New narrow trusted proof module added once per isolated Skill package and synchronized from canonical owner; existing modules remain reused by consumers."
+    }
+  ],
+  "references": [],
+  "replacements": [],
+  "test_decisions": [
+    {
+      "path": "entregar-issue/tests/test_first_audit_escape_bootstrap.py",
+      "operation": "added",
+      "scenario": "Trusted first-rejection bootstrap, historical ledger preservation and terminal first-child proof",
+      "requirement": "Issue #194 OBL-005,006,007,010,011,013,014,015,016,017",
+      "search": {
+        "queries": [
+          "first rejection without previous audit escape ledger",
+          "material-parent Git absence"
+        ],
+        "scope": "Prior exact SHA base, entregar-issue/tests and auditar-issue/tests",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_independent_rejection_handoff_contract.py",
+            "case": "Prior certificate or terminal guard contract tests",
+            "oracle": "Fail-closed on insufficient previous snapshot or invalid Git proof",
+            "comparison": "Retained original tests and extended the adversarial cases for first audit rejection with Git absence proof."
+          }
+        ]
+      },
+      "decision": "new-test-required",
+      "justification": "A confirmed first-audit escape and cross-target Git history were absent from previous test suite; existing security controls were extended, never deleted.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+      "operation": "modified",
+      "scenario": "Trusted first-rejection bootstrap, historical ledger preservation and terminal first-child proof",
+      "requirement": "Issue #194 OBL-005,006,007,010,011,013,014,015,016,017",
+      "search": {
+        "queries": [
+          "first rejection without previous audit escape ledger",
+          "material-parent Git absence"
+        ],
+        "scope": "Prior exact SHA base, entregar-issue/tests and auditar-issue/tests",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_handoff_postcondition_records.py",
+            "case": "Prior certificate or terminal guard contract tests",
+            "oracle": "Fail-closed on insufficient previous snapshot or invalid Git proof",
+            "comparison": "Retained original tests and extended the adversarial cases for first audit rejection with Git absence proof."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "A confirmed first-audit escape and cross-target Git history were absent from previous test suite; existing security controls were extended, never deleted.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+      "operation": "modified",
+      "scenario": "Trusted first-rejection bootstrap, historical ledger preservation and terminal first-child proof",
+      "requirement": "Issue #194 OBL-005,006,007,010,011,013,014,015,016,017",
+      "search": {
+        "queries": [
+          "first rejection without previous audit escape ledger",
+          "material-parent Git absence"
+        ],
+        "scope": "Prior exact SHA base, entregar-issue/tests and auditar-issue/tests",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_publish_actions_handoff.py",
+            "case": "Prior certificate or terminal guard contract tests",
+            "oracle": "Fail-closed on insufficient previous snapshot or invalid Git proof",
+            "comparison": "Retained original tests and extended the adversarial cases for first audit rejection with Git absence proof."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "A confirmed first-audit escape and cross-target Git history were absent from previous test suite; existing security controls were extended, never deleted.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    },
+    {
+      "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+      "operation": "modified",
+      "scenario": "Trusted first-rejection bootstrap, historical ledger preservation and terminal first-child proof",
+      "requirement": "Issue #194 OBL-005,006,007,010,011,013,014,015,016,017",
+      "search": {
+        "queries": [
+          "first rejection without previous audit escape ledger",
+          "material-parent Git absence"
+        ],
+        "scope": "Prior exact SHA base, entregar-issue/tests and auditar-issue/tests",
+        "runner": "python -m pytest -vv --junitxml=\"$EVIDENCE_DIR/pytest-exact-head.xml\"",
+        "candidates": [
+          {
+            "path": "entregar-issue/tests/test_terminal_handoff_contract.py",
+            "case": "Prior certificate or terminal guard contract tests",
+            "oracle": "Fail-closed on insufficient previous snapshot or invalid Git proof",
+            "comparison": "Retained original tests and extended the adversarial cases for first audit rejection with Git absence proof."
+          }
+        ]
+      },
+      "decision": "extend-existing",
+      "justification": "A confirmed first-audit escape and cross-target Git history were absent from previous test suite; existing security controls were extended, never deleted.",
+      "disposition": "keep",
+      "verification": {
+        "status": "unknown",
+        "reason": "awaiting-exact-SHA-JUnit"
+      }
+    }
+  ]
+}

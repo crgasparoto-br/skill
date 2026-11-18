@@ -223,7 +223,12 @@ def authenticated_records(tmp_path):
                "escapes": [escape]}
     learning = escape_fixture.learning(rejection_id=source["rejection_id"])
     learning["source_event"].update({"finding_ids": [case["source_id"]], "audit_report_sha256": ledger["source"]["audit_report_sha256"]})
-    for name, value in (("ledger", ledger), ("escape", closure), ("learning", learning), ("previous", {"schema_version": 1, "escapes": []})):
+    for name, value in (("ledger", ledger), ("escape", closure), ("learning", learning), ("previous", {"schema_version": 1,
+                          "subject": {"repository": target["repository"],
+                                      "issue_number": target["issue_number"],
+                                      "pull_request_number": target["pull_request_number"],
+                                      "material_head_sha": case["base"]},
+                          "escapes": []})):
         case[name] = tmp_path / (name + ".json")
         literal_fixture.write_json(case[name], value)
     delivery = tmp_path / "delivery"
