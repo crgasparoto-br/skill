@@ -34,6 +34,15 @@ def git(root: Path, *arguments: str) -> bytes:
     return proc.stdout
 
 
+def _unique_json_pairs(pairs: list[tuple[str, object]]) -> dict:
+    result: dict = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate trusted native contract JSON field")
+        result[key] = value
+    return result
+
+
 def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict | None:
     entries = git(root, "ls-tree", "--full-tree", base_sha, "--", CONTRACT_PATH)
     if not entries:
@@ -49,13 +58,16 @@ def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict
         raise ValueError("trusted contract must be a regular Git blob at the canonical path")
     object_sha = fields[2].decode("ascii")
     raw = git(root, "cat-file", "blob", object_sha)
+    if len(raw) > 16384:
+        raise ValueError("trusted native contract exceeds size budget")
     recomputed = hashlib.sha1(
-        b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw
+        b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw,
+        usedforsecurity=False,
     ).hexdigest()
     if object_sha != recomputed:
         raise ValueError("trusted contract Git blob digest mismatch")
     try:
-        source = json.loads(raw.decode("utf-8"))
+        source = json.loads(raw.decode("utf-8"), object_pairs_hook=_unique_json_pairs)
     except (UnicodeError, json.JSONDecodeError) as exc:
         raise ValueError("trusted contract JSON is invalid") from exc
     if not isinstance(source, dict) or set(source) != EXPECTED_FIELDS:
