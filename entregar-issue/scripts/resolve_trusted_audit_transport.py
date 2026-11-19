@@ -16,8 +16,8 @@ import tempfile
 from pathlib import Path
 
 CONTRACT_PATH = "docs/audit/github-native-contract.json"
-SHA = re.compile(r"[0-9a-f]{40}\\Z")
-REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\\Z")
+SHA = re.compile(r"[0-9a-f]{40}\Z")
+REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
 EXPECTED_FIELDS = frozenset({
     "schema_version", "repository", "base_ref", "canonical", "audit_mode",
     "legacy_handoff_policy", "github_native_identity", "exact_sha_evidence",
@@ -42,16 +42,16 @@ def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict
     lines = entries.splitlines()
     if len(lines) != 1:
         raise ValueError("trusted contract path is ambiguous")
-    metadata, separator, actual_path = lines[0].partition(b"\\t")
+    metadata, separator, actual_path = lines[0].partition(b"\t")
     fields = metadata.split()
-    if (separator != b"\\t" or actual_path != CONTRACT_PATH.encode("utf-8")
+    if (separator != b"\t" or actual_path != CONTRACT_PATH.encode("utf-8")
             or len(fields) != 3 or fields[0] != b"100644"
             or fields[1] != b"blob" or SHA.fullmatch(fields[2].decode("ascii")) is None):
         raise ValueError("trusted contract must be a regular Git blob at the canonical path")
     object_sha = fields[2].decode("ascii")
     raw = git(root, "cat-file", "blob", object_sha)
     recomputed = hashlib.sha1(
-        b"blob " + str(len(raw)).encode("ascii") + b"\\0" + raw
+        b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw
     ).hexdigest()
     if object_sha != recomputed:
         raise ValueError("trusted contract Git blob digest mismatch")
@@ -133,7 +133,7 @@ def main() -> int:
     try:
         result = resolve(args.root.resolve(), args.repository, args.base_ref,
                          args.base_sha, args.head_sha)
-        output = json.dumps(result, sort_keys=True, separators=(",", ":")) + "\\n"
+        output = json.dumps(result, sort_keys=True, separators=(",", ":")) + "\n"
         if args.output is not None:
             args.output.write_text(output, encoding="utf-8")
         print(output, end="")
