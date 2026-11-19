@@ -21,7 +21,7 @@ REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
 EXPECTED_FIELDS = frozenset({
     "schema_version", "repository", "base_ref", "canonical", "audit_mode",
     "legacy_handoff_policy", "github_native_identity", "exact_sha_evidence",
-    "independent_review", "remote_ci_evidence", "review_assurance",
+    "independent_review", "remote_ci_evidence",
 })
 
 
@@ -77,7 +77,6 @@ def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict
             or source["canonical"] is not True
             or source["audit_mode"] != "native-github"
             or source["legacy_handoff_policy"] not in ("not-required", "forbidden")
-            or source["review_assurance"] != "operator-attested-session-review"
             or any(source[key] is not True for key in (
                 "github_native_identity", "exact_sha_evidence",
                 "independent_review", "remote_ci_evidence"
