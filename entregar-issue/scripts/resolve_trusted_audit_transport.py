@@ -27,8 +27,7 @@ EXPECTED_FIELDS = frozenset({
 
 def git(root: Path, *arguments: str) -> bytes:
     proc = subprocess.run(
-        ["git", *arguments], cwd=root, stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, check=False,
+        ["git", *arguments], cwd=root, capture_output=True, check=False,
     )
     if proc.returncode:
         raise ValueError("trusted Git object or ancestry validation failed")
@@ -110,7 +109,7 @@ def resolve(root: Path, repository: str, base_ref: str,
         proc = subprocess.run(
             [sys.executable, str(Path(__file__).with_name("classify_audit_transport.py")),
              "--manifest", str(path)],
-            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+            text=True, capture_output=True, check=False,
         )
     if proc.returncode:
         raise ValueError("canonical audit transport classifier rejected the manifest")
