@@ -348,3 +348,111 @@ def test_trusted_runner_binds_extracted_github_facts_to_protected_base():
     assert "scripts/session_review.py" in runner.TRUSTED_PATHS
     assert "entregar-issue/scripts/require_actions_handoff_certificate.py" in runner.TRUSTED_PATHS
     assert "entregar-issue/scripts/handoff_merge_preview.py" in runner.TRUSTED_PATHS
+
+@pytest.mark.parametrize("attack", [
+    "valid", "missing-native-contract", "changed-native-contract",
+    "changed-base", "stale-issue", "changed-head", "stale-test-index",
+    "skipped-native-test", "native-check-failed",
+])
+def test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate(
+        monkeypatch, tmp_path, attack):
+    """Native route skips only the legacy certificate, never JUnit or trusted Actions."""
+    import build_test_candidate_index
+    import verify_independent_pr_audit
+
+    identity, pr, _ = sample()
+    event = {"repository": {"full_name": REPO}, "pull_request": {
+        "number": 10, "title": pr["title"], "body": pr["body"],
+        "merge_commit_sha": PREVIEW,
+        "base": {"ref": "develop", "sha": BASE},
+        "head": {"sha": HEAD, "repo": {"full_name": REPO}},
+    }}
+    canonical_contract_sha = "f" * 64
+    transport = {"mode": "native-github-audit", "contract_sha256": canonical_contract_sha}
+    source = {"mode": "native-github-audit", "repository": REPO,
+              "trusted_anchor_sha": BASE, "material_head_sha": HEAD,
+              "contract": {"source_sha256": canonical_contract_sha}}
+    if attack == "missing-native-contract":
+        source.pop("contract")
+    if attack == "changed-native-contract":
+        source["contract"]["source_sha256"] = "0" * 64
+    if attack == "changed-base":
+        source["trusted_anchor_sha"] = "0" * 40
+    if attack == "changed-head":
+        source["material_head_sha"] = "0" * 40
+
+    log = b"1 passed\n"
+    junit_bytes = (b'<testsuite name="pytest"><testcase classname="tests.native" '
+                   b'name="test_native_review"/></testsuite>')
+    if attack == "skipped-native-test":
+        junit_bytes = (b'<testsuite name="pytest"><testcase classname="tests.native" '
+                       b'name="test_native_review"><skipped/></testcase></testsuite>')
+    junit = tmp_path / "native-junit.xml"
+    junit.write_bytes(junit_bytes)
+    index = build_test_candidate_index.collect(junit, HEAD)
+    if attack == "stale-test-index":
+        index["subject_sha"] = "0" * 40
+    issue_digest = identity["issue_sha256"]
+    if attack == "stale-issue":
+        issue_digest = "0" * 64
+    records = {
+        "certification-event.json": json.dumps(event),
+        "handoff-preflight.json": json.dumps({
+            "identity": {"issue_number": 9, "base_sha": BASE,
+                         "merge_preview_sha": PREVIEW},
+            "source": {"issue_body_sha256": issue_digest},
+        }),
+        "audit-transport.json": json.dumps(source),
+        "test-execution-facts.json": json.dumps({
+            "subject_sha": HEAD, "verification": "passed",
+            "execution": {"exit_code": 0, "log_sha256": runner.digest(log)},
+        }),
+        "pytest-exact-head.log": log,
+        "pytest-exact-head.xml": junit_bytes,
+        "test-candidate-index.json": json.dumps(index),
+    }
+    zipped = io.BytesIO()
+    with zipfile.ZipFile(zipped, "w") as arc:
+        for name, content in records.items():
+            arc.writestr(name, content)
+    blob = zipped.getvalue()
+    name = f"handoff-evidence-10-{HEAD}"
+    artifact = {"id": 42, "name": name, "expired": False,
+                "digest": "sha256:" + runner.digest(blob)}
+    check_names = ["Structure and tests", "Offline authorization tests",
+                   verify_independent_pr_audit.NATIVE_EVIDENCE]
+    checks = {"total_count": 3, "check_runs": [
+        {"id": i + 1, "name": check_name, "head_sha": HEAD,
+         "status": "completed", "conclusion": (
+             "failure" if attack == "native-check-failed" and i == 2 else "success"),
+         "completed_at": "2026-11-19T00:00:00Z",
+         "details_url": f"https://github.com/{REPO}/actions/runs/19/job/21",
+         "app": {"id": 15368}}
+        for i, check_name in enumerate(check_names)
+    ]}
+
+    def api(path, *, binary=False):
+        if path == f"/repos/{REPO}/actions/runs/19/artifacts?per_page=100":
+            return {"total_count": 1, "artifacts": [artifact]}
+        if path == f"/repos/{REPO}/actions/artifacts/42/zip" and binary:
+            return blob
+        raise AssertionError(path)
+
+    monkeypatch.setenv("GH_TOKEN", "unit-test-only")
+    monkeypatch.setattr(runner, "api", api)
+    monkeypatch.setattr(runner, "authenticated_certificate_event", lambda *_: event)
+    monkeypatch.setattr(runner, "authenticated_preview_reconciliation",
+                        lambda *_: {"mode": "exact"})
+    monkeypatch.setattr(verify_independent_pr_audit, "trusted_workflow_check",
+                        lambda *_: True)
+
+    if attack == "valid":
+        metadata, passed = runner.certified_evidence(identity, checks, tmp_path, transport)
+        assert metadata["audit_transport"] == "native-github-audit"
+        assert metadata["native_contract_sha256"] == canonical_contract_sha
+        assert metadata["technical_check_ids"] == [1, 2, 3]
+        assert "certified_handoff_preview_reconciliation" not in metadata
+        assert passed
+    else:
+        with pytest.raises(ValueError):
+            runner.certified_evidence(identity, checks, tmp_path, transport)
