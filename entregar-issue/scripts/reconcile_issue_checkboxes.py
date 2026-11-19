@@ -11,7 +11,7 @@ from pathlib import Path
 HEADING = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*\r?\n?$")
 CRITERIA_TITLE = re.compile(r"^(crit[eé]rios de aceite|acceptance criteria)$", re.IGNORECASE)
 ITEM = re.compile(
-    r"^(?P<prefix>[ \t]{0,3}(?:[-*+]|[0-9]{1,9}[.)])[ \t]+)"
+    r"^(?P<prefix>[ \t]*(?:[-*+]|[0-9]{1,9}[.)])[ \t]+)"
     r"(?P<checkbox>\[[ xX]\][ \t]+)?"
     r"(?P<text>\S.*?)(?P<ending>\r?\n?)$"
 )
@@ -82,12 +82,26 @@ def _criterion_match(line: str, in_criteria: bool, paragraph_open: bool) -> re.M
     if not in_criteria:
         return None
     match = ITEM.match(line)
-    if match is None or THEMATIC_BREAK.fullmatch(line):
+    if match is None or THEMATIC_BREAK.fullmatch(line.lstrip(" \t")):
         return None
     ordered = re.match(r"([0-9]+)[.)]", match.group("prefix").lstrip())
     if paragraph_open and ordered and int(ordered.group(1)) != 1:
         return None
     return match
+
+
+
+def _relative_list_indent(line: str, content_indents: list[int]) -> int:
+    """Compute code indentation relative to the innermost active list item.
+
+    An indented child marker may be valid list content, not a code block.
+    Pop containers when a line returns to an enclosing list or the document.
+    """
+    prefix = line[:len(line) - len(line.lstrip(" \t"))]
+    columns = len(prefix.expandtabs(4))
+    while content_indents and columns < content_indents[-1]:
+        content_indents.pop()
+    return columns - (content_indents[-1] if content_indents else 0)
 
 
 def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
@@ -102,10 +116,11 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     in_comment = False
     html_block = ""
     paragraph_open = False
+    list_content_indents: list[int] = []
 
     for index, line in enumerate(lines):
-        stripped = line.lstrip(" ")
-        indentation = len(line) - len(stripped)
+        stripped = line.lstrip(" \t")
+        relative_indent = _relative_list_indent(line, list_content_indents) if line.strip() else 0
         # Track inert blocks before examining delimiters inside them.
         if in_comment:
             if "-->" in line:
@@ -117,11 +132,10 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
         if not line.strip():
             paragraph_open = False
             continue
-        # A leading tab is a four-space Markdown code indentation.
-        leading = line[:len(line) - len(line.lstrip(" \t"))]
-        if len(leading.expandtabs(4)) >= 4:
+        # A code block is indented four columns relative to its list container.
+        if relative_indent >= 4:
             continue
-        if indentation <= 3 and stripped.startswith((chr(96) * 3, "~~~")):
+        if stripped.startswith((chr(96) * 3, "~~~")):
             symbol = stripped[0]
             width = len(stripped) - len(stripped.lstrip(symbol))
             suffix = stripped[width:].strip()
@@ -151,6 +165,9 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
         heading = HEADING.match(line)
         if heading:
             paragraph_open = False
+            if list_content_indents:
+                # A heading within a list item cannot end the top-level section.
+                continue
             depth = len(heading.group(1))
             if depth <= 2:
                 heading_title = re.sub(r"[ \t]+#+[ \t]*$", "", heading.group(2)).strip()
@@ -163,6 +180,7 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
             paragraph_open = not bool(THEMATIC_BREAK.fullmatch(line))
             continue
         paragraph_open = False
+        list_content_indents.append(len(match.group("prefix").expandtabs(4)))
         items.append(
             {
                 "ordinal": len(items) + 1,
