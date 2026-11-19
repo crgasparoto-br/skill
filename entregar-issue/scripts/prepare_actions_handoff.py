@@ -49,13 +49,10 @@ def read_event(path: Path, base_ref: str = "develop") -> tuple[str, int, int, st
     references = set(ISSUE_REF.findall(combined))
     trailing = re.search(r"\(#(\d+)\)\s*$", title)
     if trailing:
-        # A canonical issue in the title outranks incidental mentions in a PR
-        # description (e.g. a related branch-ruleset issue). Explicit closing
-        # references to other issues are still contradictory and must fail.
-        closed = set(re.findall(r"\b(?:fixes|closes|resolves)\s*#(\d+)\b",
-                                combined, re.IGNORECASE))
-        if closed - {trailing.group(1)}:
-            fail("closing reference conflicts with primary issue in PR title")
+        # A canonical title resolves bare #N mentions, but must not erase
+        # contradictory explicit Issue/Refs/Fixes/Closes/Resolves references.
+        if references - {trailing.group(1)}:
+            fail("explicit issue reference conflicts with primary issue in PR title")
         references = {trailing.group(1)}
     if len(references) != 1:
         fail("expected exactly one unambiguous Issue #N reference in PR title/body")
