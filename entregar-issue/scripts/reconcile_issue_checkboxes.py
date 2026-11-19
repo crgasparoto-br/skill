@@ -32,6 +32,11 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     for index, line in enumerate(lines):
         stripped = line.lstrip(" ")
         indentation = len(line) - len(stripped)
+        # HTML comments are inert: do not treat their fenced examples as code.
+        if in_comment:
+            if "-->" in line:
+                in_comment = False
+            continue
         if indentation <= 3 and stripped.startswith((chr(96) * 3, "~~~")):
             symbol = stripped[0]
             width = len(stripped) - len(stripped.lstrip(symbol))
@@ -49,10 +54,7 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
 
         # Comments inside fenced code must not change parser state.
         if stripped.startswith("<!--"):
-            in_comment = True
-        if in_comment:
-            if "-->" in line:
-                in_comment = False
+            in_comment = "-->" not in line
             continue
 
         heading = HEADING.match(line)

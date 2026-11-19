@@ -176,3 +176,17 @@ def test_fence_close_requires_matching_length_and_no_info_string() -> None:
 def test_acceptance_heading_with_closing_hashes() -> None:
     body = "## Critérios de aceite ##\n- [ ] Real\n"
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]
+
+
+def test_fenced_markers_inside_html_comment_do_not_hide_real_criteria() -> None:
+    fence = chr(96) * 3
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Primeiro\n"
+        "<!-- exemplo inerte\n"
+        f"{fence}md\n"
+        "- [ ] Item dentro do comentário\n"
+        "-->\n"
+        "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
