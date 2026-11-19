@@ -84,7 +84,8 @@ def test_native_contract_from_immutable_trusted_base_passes(tmp_path):
     assert result["legacy_handoff_required"] is False
     assert result["trusted_anchor_sha"] == base
     assert result["material_head_sha"] == head
-    raw = git(root, "show", f"{base}:{POLICY_PATH}").encode()
+    raw = subprocess.run(["git", "show", f"{base}:{POLICY_PATH}"], cwd=root,
+                         check=True, capture_output=True).stdout
     assert result["contract"]["source_sha256"] == hashlib.sha256(raw).hexdigest()
 
 
