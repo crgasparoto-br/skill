@@ -323,3 +323,10 @@ def test_canonical_title_preserves_unqualified_related_issue_mentions(tmp_path):
         title="fix: trusted issue (#112)",
         body="Refs #112\nRelated context: #119 (not a closing/reference directive)")))
     assert mod.read_event(event_path) == ("team/skill", 113, 112, HEAD, BASE)
+
+@pytest.mark.parametrize("kind", ["Refs", "Issue", "Fixes", "Closes", "Resolves"])
+def test_canonical_title_accepts_matching_explicit_issue_reference(kind, tmp_path):
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps(event(title="fix: same issue (#112)",
+                                           body=f"{kind} #112")))
+    assert mod.read_event(event_path) == ("team/skill", 113, 112, HEAD, BASE)
