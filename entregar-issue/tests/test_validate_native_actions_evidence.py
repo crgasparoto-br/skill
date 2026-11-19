@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import sys
 from pathlib import Path
@@ -10,7 +11,7 @@ import pytest
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
-import validate_native_actions_evidence as native  # noqa: E402
+native = importlib.import_module("validate_native_actions_evidence")
 
 
 BASE, HEAD, PREVIEW = "b" * 40, "a" * 40, "c" * 40
