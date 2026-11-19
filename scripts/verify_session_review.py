@@ -192,7 +192,8 @@ def trusted_audit_transport(identity: dict) -> dict:
 
 def certified_evidence(identity: dict, checks: dict, directory: Path,
                        transport: dict | None = None) -> tuple[dict, set[str]]:
-    transport = trusted_audit_transport(identity) if transport is None else transport
+    # Direct legacy callers never authorize native mode implicitly.
+    transport = {"mode": "certified-handoff", "contract_sha256": None} if transport is None else transport
     return github_facts.certified_evidence(
         identity, checks, directory, api=api, unpack=unpack,
         authenticated_certificate_event=authenticated_certificate_event,
