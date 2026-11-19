@@ -1,0 +1,977 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "requirements": [
+    {
+      "requirement_id": "R198-003",
+      "obligation_ids": [
+        "OBL-003"
+      ],
+      "risk_families": [
+        "authorization"
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "authorization",
+          "surface": "ruleset-no-mutation",
+          "reason": "Modificar a branch main ou elevar a política de review sem autorização não pode ser equivalente a desenvolver na develop."
+        }
+      ],
+      "plausible_wrong_implementation": "A migração poderia mudar os rulesets sem read-back, exigir outro revisor ou afetar main.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_session_review_runner",
+          "name": "test_owner_authorization_needs_no_extra_account_or_admin_secret"
+        },
+        "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret passed; source tests/test_session_review_runner.py; positive for OBL-003 material bootstrap.",
+        "evidence_path": "tests/test_session_review_runner.py",
+        "evidence_sha256": "0015e71e4cf78d6376c3b1c497c0056af10793c857924a085c3715bc57bf6c93"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+            "name": "test_main_release_cannot_be_treated_as_develop_issue"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; negative for OBL-003 material bootstrap.",
+          "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+          "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839",
+          "id": "NEG-R198-003-ruleset-no-mutation",
+          "risk_family": "authorization",
+          "surface": "ruleset-no-mutation",
+          "dimension": "ruleset-no-mutation-rejected-invalid-origin",
+          "failure_mode": "OBL-003: Modificar a branch main ou elevar a política de review sem autorização não pode ser equivalente a desenvolver na develop. O teste negativo entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "A migração poderia mudar os rulesets sem read-back, exigir outro revisor ou afetar main.",
+          "procedure": "Executar entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue com a suite exata da PR #203 e confrontar asserções com tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret; classificar ruleset-no-mutation separadamente.",
+          "expected": "O cenário inválido ruleset-no-mutation deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-003-ruleset-no-mutation-S1",
+              "surface": "ruleset-no-mutation",
+              "dimension": "ruleset-no-mutation-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_review_runner",
+                "name": "test_owner_authorization_needs_no_extra_account_or_admin_secret"
+              },
+              "evidence": "Controle de comparação positivo tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-003-ruleset-no-mutation-S2",
+              "surface": "ruleset-no-mutation",
+              "dimension": "ruleset-no-mutation-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_native_audit_workflows",
+                "name": "test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success"
+              },
+              "evidence": "Controle de regressão tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_native_audit_workflows",
+            "name": "test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success passed; source tests/test_native_audit_workflows.py; regression for OBL-003 material bootstrap.",
+          "evidence_path": "tests/test_native_audit_workflows.py",
+          "evidence_sha256": "8ac1266ea10d815d2e434b43a7a676b0939d4803b60f487592ec34f9c763b0c1"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R198-004",
+      "obligation_ids": [
+        "OBL-004"
+      ],
+      "risk_families": [
+        "structural-contract",
+        "documentation"
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "trusted-git-contract",
+          "reason": "Contrato só passa quando lido no SHA imutável de base e o HEAD candidato não muda sua autoridade."
+        },
+        {
+          "risk_family": "documentation",
+          "surface": "bootstrap-contract-rollout",
+          "reason": "Plano de ativação proíbe tratar job skipped como sucesso durante bootstrap."
+        }
+      ],
+      "plausible_wrong_implementation": "A candidata pode instalar um arquivo de configuração autoaprovando seu próprio transporte.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+          "name": "test_native_contract_from_immutable_trusted_base_passes"
+        },
+        "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; positive for OBL-004 material bootstrap.",
+        "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+        "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+            "name": "test_candidate_cannot_install_own_native_exemption"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; negative for OBL-004 material bootstrap.",
+          "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+          "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839",
+          "id": "NEG-R198-004-trusted-git-contract",
+          "risk_family": "structural-contract",
+          "surface": "trusted-git-contract",
+          "dimension": "trusted-git-contract-rejected-invalid-origin",
+          "failure_mode": "OBL-004: Contrato só passa quando lido no SHA imutável de base e o HEAD candidato não muda sua autoridade. O teste negativo entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "A candidata pode instalar um arquivo de configuração autoaprovando seu próprio transporte.",
+          "procedure": "Executar entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption com a suite exata da PR #203 e confrontar asserções com entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes; classificar trusted-git-contract separadamente.",
+          "expected": "O cenário inválido trusted-git-contract deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-004-trusted-git-contract-S1",
+              "surface": "trusted-git-contract",
+              "dimension": "trusted-git-contract-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_native_contract_from_immutable_trusted_base_passes"
+              },
+              "evidence": "Controle de comparação positivo entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-004-trusted-git-contract-S2",
+              "surface": "trusted-git-contract",
+              "dimension": "trusted-git-contract-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_duplicate_json_key_in_trusted_base_fails_closed"
+              },
+              "evidence": "Controle de regressão entregar-issue.tests.test_resolve_trusted_audit_transport::test_duplicate_json_key_in_trusted_base_fails_closed executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_native_audit_workflows",
+            "name": "test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success passed; source tests/test_native_audit_workflows.py; negative for OBL-004 material bootstrap.",
+          "evidence_path": "tests/test_native_audit_workflows.py",
+          "evidence_sha256": "8ac1266ea10d815d2e434b43a7a676b0939d4803b60f487592ec34f9c763b0c1",
+          "id": "NEG-R198-004-bootstrap-contract-rollout",
+          "risk_family": "documentation",
+          "surface": "bootstrap-contract-rollout",
+          "dimension": "bootstrap-contract-rollout-rejected-invalid-origin",
+          "failure_mode": "OBL-004: Plano de ativação proíbe tratar job skipped como sucesso durante bootstrap. O teste negativo tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "A candidata pode instalar um arquivo de configuração autoaprovando seu próprio transporte.",
+          "procedure": "Executar tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success com a suite exata da PR #203 e confrontar asserções com entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes; classificar bootstrap-contract-rollout separadamente.",
+          "expected": "O cenário inválido bootstrap-contract-rollout deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-004-bootstrap-contract-rollout-S1",
+              "surface": "bootstrap-contract-rollout",
+              "dimension": "bootstrap-contract-rollout-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_native_contract_from_immutable_trusted_base_passes"
+              },
+              "evidence": "Controle de comparação positivo entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-004-bootstrap-contract-rollout-S2",
+              "surface": "bootstrap-contract-rollout",
+              "dimension": "bootstrap-contract-rollout-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_duplicate_json_key_in_trusted_base_fails_closed"
+              },
+              "evidence": "Controle de regressão entregar-issue.tests.test_resolve_trusted_audit_transport::test_duplicate_json_key_in_trusted_base_fails_closed executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+            "name": "test_duplicate_json_key_in_trusted_base_fails_closed"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_duplicate_json_key_in_trusted_base_fails_closed passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; regression for OBL-004 material bootstrap.",
+          "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+          "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R198-005",
+      "obligation_ids": [
+        "OBL-005"
+      ],
+      "risk_families": [
+        "structural-contract"
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "workflow-route-separation",
+          "reason": "Rotas do YAML têm jobs diferentes e o gate de handoff não é executado pelo job nativo."
+        }
+      ],
+      "plausible_wrong_implementation": "O workflow pode selecionar dois transportes, declarar skipped como sucesso ou suprimir testes originais.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_native_audit_workflows",
+          "name": "test_native_and_legacy_routes_have_separate_real_validation_jobs"
+        },
+        "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_native_audit_workflows::test_native_and_legacy_routes_have_separate_real_validation_jobs passed; source tests/test_native_audit_workflows.py; positive for OBL-005 material bootstrap.",
+        "evidence_path": "tests/test_native_audit_workflows.py",
+        "evidence_sha256": "8ac1266ea10d815d2e434b43a7a676b0939d4803b60f487592ec34f9c763b0c1"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_native_audit_workflows",
+            "name": "test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success passed; source tests/test_native_audit_workflows.py; negative for OBL-005 material bootstrap.",
+          "evidence_path": "tests/test_native_audit_workflows.py",
+          "evidence_sha256": "8ac1266ea10d815d2e434b43a7a676b0939d4803b60f487592ec34f9c763b0c1",
+          "id": "NEG-R198-005-workflow-route-separation",
+          "risk_family": "structural-contract",
+          "surface": "workflow-route-separation",
+          "dimension": "workflow-route-separation-rejected-invalid-origin",
+          "failure_mode": "OBL-005: Rotas do YAML têm jobs diferentes e o gate de handoff não é executado pelo job nativo. O teste negativo tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "O workflow pode selecionar dois transportes, declarar skipped como sucesso ou suprimir testes originais.",
+          "procedure": "Executar tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success com a suite exata da PR #203 e confrontar asserções com tests.test_native_audit_workflows::test_native_and_legacy_routes_have_separate_real_validation_jobs; classificar workflow-route-separation separadamente.",
+          "expected": "O cenário inválido workflow-route-separation deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-005-workflow-route-separation-S1",
+              "surface": "workflow-route-separation",
+              "dimension": "workflow-route-separation-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_native_audit_workflows",
+                "name": "test_native_and_legacy_routes_have_separate_real_validation_jobs"
+              },
+              "evidence": "Controle de comparação positivo tests.test_native_audit_workflows::test_native_and_legacy_routes_have_separate_real_validation_jobs no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-005-workflow-route-separation-S2",
+              "surface": "workflow-route-separation",
+              "dimension": "workflow-route-separation-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_native_audit_workflows",
+                "name": "test_collector_does_not_replace_junit_with_certificate_or_candidate_test_claims"
+              },
+              "evidence": "Controle de regressão tests.test_native_audit_workflows::test_collector_does_not_replace_junit_with_certificate_or_candidate_test_claims executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_native_audit_workflows",
+            "name": "test_collector_does_not_replace_junit_with_certificate_or_candidate_test_claims"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_native_audit_workflows::test_collector_does_not_replace_junit_with_certificate_or_candidate_test_claims passed; source tests/test_native_audit_workflows.py; regression for OBL-005 material bootstrap.",
+          "evidence_path": "tests/test_native_audit_workflows.py",
+          "evidence_sha256": "8ac1266ea10d815d2e434b43a7a676b0939d4803b60f487592ec34f9c763b0c1"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R198-008",
+      "obligation_ids": [
+        "OBL-008"
+      ],
+      "risk_families": [
+        "historical-immutability",
+        "authorization"
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "historical-immutability",
+          "surface": "review-journal-history",
+          "reason": "A revogação do parecer durante a leitura deve invalidar o resultado antigo."
+        },
+        {
+          "risk_family": "authorization",
+          "surface": "untrusted-review-origin",
+          "reason": "Falha de autorização do autor não pode gerar aprovação da revisão."
+        }
+      ],
+      "plausible_wrong_implementation": "A troca do transporte pode ressuscitar aprovação revogada, ignorar rejeição posterior ou aceitar fonte sem autoria.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_session_review_runner",
+          "name": "test_evaluate_preserves_revocation_across_pages_and_reuse"
+        },
+        "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse passed; source tests/test_session_review_runner.py; positive for OBL-008 material bootstrap.",
+        "evidence_path": "tests/test_session_review_runner.py",
+        "evidence_sha256": "0015e71e4cf78d6376c3b1c497c0056af10793c857924a085c3715bc57bf6c93"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_session_review_runner",
+            "name": "test_evaluate_rejects_review_revoked_during_final_revalidation[edited]"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_session_review_runner::test_evaluate_rejects_review_revoked_during_final_revalidation[edited] passed; source tests/test_session_review_runner.py; negative for OBL-008 material bootstrap.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "0015e71e4cf78d6376c3b1c497c0056af10793c857924a085c3715bc57bf6c93",
+          "id": "NEG-R198-008-review-journal-history",
+          "risk_family": "historical-immutability",
+          "surface": "review-journal-history",
+          "dimension": "review-journal-history-rejected-invalid-origin",
+          "failure_mode": "OBL-008: A revogação do parecer durante a leitura deve invalidar o resultado antigo. O teste negativo tests.test_session_review_runner::test_evaluate_rejects_review_revoked_during_final_revalidation[edited] distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "A troca do transporte pode ressuscitar aprovação revogada, ignorar rejeição posterior ou aceitar fonte sem autoria.",
+          "procedure": "Executar tests.test_session_review_runner::test_evaluate_rejects_review_revoked_during_final_revalidation[edited] com a suite exata da PR #203 e confrontar asserções com tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse; classificar review-journal-history separadamente.",
+          "expected": "O cenário inválido review-journal-history deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para tests.test_session_review_runner::test_evaluate_rejects_review_revoked_during_final_revalidation[edited] no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-008-review-journal-history-S1",
+              "surface": "review-journal-history",
+              "dimension": "review-journal-history-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_review_runner",
+                "name": "test_evaluate_preserves_revocation_across_pages_and_reuse"
+              },
+              "evidence": "Controle de comparação positivo tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-008-review-journal-history-S2",
+              "surface": "review-journal-history",
+              "dimension": "review-journal-history-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_review_runner",
+                "name": "test_review_rejects_later_invalid_report_during_final_revalidation"
+              },
+              "evidence": "Controle de regressão tests.test_session_review_runner::test_review_rejects_later_invalid_report_during_final_revalidation executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_verify_independent_pr_audit",
+            "name": "test_permission_api_error_does_not_grant_approval"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_verify_independent_pr_audit::test_permission_api_error_does_not_grant_approval passed; source tests/test_verify_independent_pr_audit.py; negative for OBL-008 material bootstrap.",
+          "evidence_path": "tests/test_verify_independent_pr_audit.py",
+          "evidence_sha256": "97d9dce310a53631b8430fcd79cbdb65b24e139956bc8ab16bac5f593f118d5f",
+          "id": "NEG-R198-008-untrusted-review-origin",
+          "risk_family": "authorization",
+          "surface": "untrusted-review-origin",
+          "dimension": "untrusted-review-origin-rejected-invalid-origin",
+          "failure_mode": "OBL-008: Falha de autorização do autor não pode gerar aprovação da revisão. O teste negativo tests.test_verify_independent_pr_audit::test_permission_api_error_does_not_grant_approval distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "A troca do transporte pode ressuscitar aprovação revogada, ignorar rejeição posterior ou aceitar fonte sem autoria.",
+          "procedure": "Executar tests.test_verify_independent_pr_audit::test_permission_api_error_does_not_grant_approval com a suite exata da PR #203 e confrontar asserções com tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse; classificar untrusted-review-origin separadamente.",
+          "expected": "O cenário inválido untrusted-review-origin deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para tests.test_verify_independent_pr_audit::test_permission_api_error_does_not_grant_approval no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-008-untrusted-review-origin-S1",
+              "surface": "untrusted-review-origin",
+              "dimension": "untrusted-review-origin-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_review_runner",
+                "name": "test_evaluate_preserves_revocation_across_pages_and_reuse"
+              },
+              "evidence": "Controle de comparação positivo tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-008-untrusted-review-origin-S2",
+              "surface": "untrusted-review-origin",
+              "dimension": "untrusted-review-origin-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_review_runner",
+                "name": "test_review_rejects_later_invalid_report_during_final_revalidation"
+              },
+              "evidence": "Controle de regressão tests.test_session_review_runner::test_review_rejects_later_invalid_report_during_final_revalidation executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_session_review_runner",
+            "name": "test_review_rejects_later_invalid_report_during_final_revalidation"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_session_review_runner::test_review_rejects_later_invalid_report_during_final_revalidation passed; source tests/test_session_review_runner.py; regression for OBL-008 material bootstrap.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "0015e71e4cf78d6376c3b1c497c0056af10793c857924a085c3715bc57bf6c93"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R198-009",
+      "obligation_ids": [
+        "OBL-009"
+      ],
+      "risk_families": [
+        "structural-contract",
+        "authorization"
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "structural-contract",
+          "surface": "base-blob-integrity",
+          "reason": "Symlink ou blob não regular não deve virar contrato canônico."
+        },
+        {
+          "risk_family": "authorization",
+          "surface": "candidate-policy-forgery",
+          "reason": "Política introduzida apenas no HEAD não pode conceder isenção ao próprio candidato."
+        }
+      ],
+      "plausible_wrong_implementation": "O SHA da política ou o contrato na candidata pode passar por prova do blob canônico na base.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+          "name": "test_native_contract_from_immutable_trusted_base_passes"
+        },
+        "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; positive for OBL-009 material bootstrap.",
+        "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+        "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+            "name": "test_symlink_does_not_become_a_canonical_contract"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_symlink_does_not_become_a_canonical_contract passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; negative for OBL-009 material bootstrap.",
+          "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+          "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839",
+          "id": "NEG-R198-009-base-blob-integrity",
+          "risk_family": "structural-contract",
+          "surface": "base-blob-integrity",
+          "dimension": "base-blob-integrity-rejected-invalid-origin",
+          "failure_mode": "OBL-009: Symlink ou blob não regular não deve virar contrato canônico. O teste negativo entregar-issue.tests.test_resolve_trusted_audit_transport::test_symlink_does_not_become_a_canonical_contract distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "O SHA da política ou o contrato na candidata pode passar por prova do blob canônico na base.",
+          "procedure": "Executar entregar-issue.tests.test_resolve_trusted_audit_transport::test_symlink_does_not_become_a_canonical_contract com a suite exata da PR #203 e confrontar asserções com entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes; classificar base-blob-integrity separadamente.",
+          "expected": "O cenário inválido base-blob-integrity deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para entregar-issue.tests.test_resolve_trusted_audit_transport::test_symlink_does_not_become_a_canonical_contract no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-009-base-blob-integrity-S1",
+              "surface": "base-blob-integrity",
+              "dimension": "base-blob-integrity-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_native_contract_from_immutable_trusted_base_passes"
+              },
+              "evidence": "Controle de comparação positivo entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-009-base-blob-integrity-S2",
+              "surface": "base-blob-integrity",
+              "dimension": "base-blob-integrity-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_unavailable_or_fake_git_object_fails_closed[base_sha]"
+              },
+              "evidence": "Controle de regressão entregar-issue.tests.test_resolve_trusted_audit_transport::test_unavailable_or_fake_git_object_fails_closed[base_sha] executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+            "name": "test_candidate_cannot_install_own_native_exemption"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; negative for OBL-009 material bootstrap.",
+          "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+          "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839",
+          "id": "NEG-R198-009-candidate-policy-forgery",
+          "risk_family": "authorization",
+          "surface": "candidate-policy-forgery",
+          "dimension": "candidate-policy-forgery-rejected-invalid-origin",
+          "failure_mode": "OBL-009: Política introduzida apenas no HEAD não pode conceder isenção ao próprio candidato. O teste negativo entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "O SHA da política ou o contrato na candidata pode passar por prova do blob canônico na base.",
+          "procedure": "Executar entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption com a suite exata da PR #203 e confrontar asserções com entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes; classificar candidate-policy-forgery separadamente.",
+          "expected": "O cenário inválido candidate-policy-forgery deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-009-candidate-policy-forgery-S1",
+              "surface": "candidate-policy-forgery",
+              "dimension": "candidate-policy-forgery-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_native_contract_from_immutable_trusted_base_passes"
+              },
+              "evidence": "Controle de comparação positivo entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-009-candidate-policy-forgery-S2",
+              "surface": "candidate-policy-forgery",
+              "dimension": "candidate-policy-forgery-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_unavailable_or_fake_git_object_fails_closed[base_sha]"
+              },
+              "evidence": "Controle de regressão entregar-issue.tests.test_resolve_trusted_audit_transport::test_unavailable_or_fake_git_object_fails_closed[base_sha] executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+            "name": "test_unavailable_or_fake_git_object_fails_closed[base_sha]"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_unavailable_or_fake_git_object_fails_closed[base_sha] passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; regression for OBL-009 material bootstrap.",
+          "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+          "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R198-011",
+      "obligation_ids": [
+        "OBL-011"
+      ],
+      "risk_families": [
+        "reference-liveness",
+        "structural-contract"
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "reference-liveness",
+          "surface": "trusted-base-policy-freshness",
+          "reason": "A base sem contrato continua selecionando o transporte legado apesar de bytes novos no HEAD."
+        },
+        {
+          "risk_family": "structural-contract",
+          "surface": "legacy-gate-preservation",
+          "reason": "Base main não pode ser confundida com PR para develop ao decidir o transporte."
+        }
+      ],
+      "plausible_wrong_implementation": "A falta de contrato na base pode ser convertida em um resultado nativo aprovado, evitando o handoff que continua obrigatório.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+          "name": "test_missing_contract_remains_legacy_without_false_success"
+        },
+        "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; positive for OBL-011 material bootstrap.",
+        "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+        "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+            "name": "test_candidate_cannot_install_own_native_exemption"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; negative for OBL-011 material bootstrap.",
+          "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+          "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839",
+          "id": "NEG-R198-011-trusted-base-policy-freshness",
+          "risk_family": "reference-liveness",
+          "surface": "trusted-base-policy-freshness",
+          "dimension": "trusted-base-policy-freshness-rejected-invalid-origin",
+          "failure_mode": "OBL-011: A base sem contrato continua selecionando o transporte legado apesar de bytes novos no HEAD. O teste negativo entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "A falta de contrato na base pode ser convertida em um resultado nativo aprovado, evitando o handoff que continua obrigatório.",
+          "procedure": "Executar entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption com a suite exata da PR #203 e confrontar asserções com entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success; classificar trusted-base-policy-freshness separadamente.",
+          "expected": "O cenário inválido trusted-base-policy-freshness deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-011-trusted-base-policy-freshness-S1",
+              "surface": "trusted-base-policy-freshness",
+              "dimension": "trusted-base-policy-freshness-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_missing_contract_remains_legacy_without_false_success"
+              },
+              "evidence": "Controle de comparação positivo entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-011-trusted-base-policy-freshness-S2",
+              "surface": "trusted-base-policy-freshness",
+              "dimension": "trusted-base-policy-freshness-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_validate_native_actions_evidence",
+                "name": "test_legacy_mode_cannot_claim_native_readiness"
+              },
+              "evidence": "Controle de regressão entregar-issue.tests.test_validate_native_actions_evidence::test_legacy_mode_cannot_claim_native_readiness executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+            "name": "test_main_release_cannot_be_treated_as_develop_issue"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue passed; source entregar-issue/tests/test_resolve_trusted_audit_transport.py; negative for OBL-011 material bootstrap.",
+          "evidence_path": "entregar-issue/tests/test_resolve_trusted_audit_transport.py",
+          "evidence_sha256": "a65c7c3e9c248a836640db91ce0ad31b556a4c1b34542347354a5464f642c839",
+          "id": "NEG-R198-011-legacy-gate-preservation",
+          "risk_family": "structural-contract",
+          "surface": "legacy-gate-preservation",
+          "dimension": "legacy-gate-preservation-rejected-invalid-origin",
+          "failure_mode": "OBL-011: Base main não pode ser confundida com PR para develop ao decidir o transporte. O teste negativo entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "A falta de contrato na base pode ser convertida em um resultado nativo aprovado, evitando o handoff que continua obrigatório.",
+          "procedure": "Executar entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue com a suite exata da PR #203 e confrontar asserções com entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success; classificar legacy-gate-preservation separadamente.",
+          "expected": "O cenário inválido legacy-gate-preservation deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-011-legacy-gate-preservation-S1",
+              "surface": "legacy-gate-preservation",
+              "dimension": "legacy-gate-preservation-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_resolve_trusted_audit_transport",
+                "name": "test_missing_contract_remains_legacy_without_false_success"
+              },
+              "evidence": "Controle de comparação positivo entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-011-legacy-gate-preservation-S2",
+              "surface": "legacy-gate-preservation",
+              "dimension": "legacy-gate-preservation-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "entregar-issue.tests.test_validate_native_actions_evidence",
+                "name": "test_legacy_mode_cannot_claim_native_readiness"
+              },
+              "evidence": "Controle de regressão entregar-issue.tests.test_validate_native_actions_evidence::test_legacy_mode_cannot_claim_native_readiness executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "entregar-issue.tests.test_validate_native_actions_evidence",
+            "name": "test_legacy_mode_cannot_claim_native_readiness"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: entregar-issue.tests.test_validate_native_actions_evidence::test_legacy_mode_cannot_claim_native_readiness passed; source entregar-issue/tests/test_validate_native_actions_evidence.py; regression for OBL-011 material bootstrap.",
+          "evidence_path": "entregar-issue/tests/test_validate_native_actions_evidence.py",
+          "evidence_sha256": "b8184860678eb8f70334984be749596f6e790092926f0236e6b28d30353dfa41"
+        }
+      ],
+      "quantitative_evidence_required": false
+    },
+    {
+      "requirement_id": "R198-013",
+      "obligation_ids": [
+        "OBL-013"
+      ],
+      "risk_families": [
+        "concurrency-atomicity",
+        "reference-liveness",
+        "authorization"
+      ],
+      "risk_surfaces": [
+        {
+          "risk_family": "concurrency-atomicity",
+          "surface": "concurrent-pr-head-change",
+          "reason": "Mudança de árvore concorrente à revisão deve bloquear a publicação do parecer."
+        },
+        {
+          "risk_family": "reference-liveness",
+          "surface": "stale-issue-source",
+          "reason": "Hash da issue alterada após coleta deve invalidar evidência anterior."
+        },
+        {
+          "risk_family": "authorization",
+          "surface": "foreign-native-contract",
+          "reason": "Contrato da base adulterado não pode dar identidade ou autorização ao HEAD corrente."
+        }
+      ],
+      "plausible_wrong_implementation": "Uma edição concorrente do PR, um JUnit stale ou a revogação de review pode permitir auditoria para outro objeto Git.",
+      "positive_control": {
+        "status": "passed",
+        "head_sha": "__MATERIAL_HEAD_SHA__",
+        "control_type": "test",
+        "evidence_kind": "behavioral",
+        "junit_case": {
+          "classname": "tests.test_session_certificate_event",
+          "name": "test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]"
+        },
+        "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid] passed; source tests/test_session_certificate_event.py; positive for OBL-013 material bootstrap.",
+        "evidence_path": "tests/test_session_certificate_event.py",
+        "evidence_sha256": "91e1fcc0b257ab77b4589bf67145413b7a2785100508a6ac04470a09828db1f1"
+      },
+      "negative_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_session_review_runner",
+            "name": "test_final_pr_identity_recheck_blocks_concurrent_tree_change"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_session_review_runner::test_final_pr_identity_recheck_blocks_concurrent_tree_change passed; source tests/test_session_review_runner.py; negative for OBL-013 material bootstrap.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "0015e71e4cf78d6376c3b1c497c0056af10793c857924a085c3715bc57bf6c93",
+          "id": "NEG-R198-013-concurrent-pr-head-change",
+          "risk_family": "concurrency-atomicity",
+          "surface": "concurrent-pr-head-change",
+          "dimension": "concurrent-pr-head-change-rejected-invalid-origin",
+          "failure_mode": "OBL-013: Mudança de árvore concorrente à revisão deve bloquear a publicação do parecer. O teste negativo tests.test_session_review_runner::test_final_pr_identity_recheck_blocks_concurrent_tree_change distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "Uma edição concorrente do PR, um JUnit stale ou a revogação de review pode permitir auditoria para outro objeto Git.",
+          "procedure": "Executar tests.test_session_review_runner::test_final_pr_identity_recheck_blocks_concurrent_tree_change com a suite exata da PR #203 e confrontar asserções com tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]; classificar concurrent-pr-head-change separadamente.",
+          "expected": "O cenário inválido concurrent-pr-head-change deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para tests.test_session_review_runner::test_final_pr_identity_recheck_blocks_concurrent_tree_change no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-013-concurrent-pr-head-change-S1",
+              "surface": "concurrent-pr-head-change",
+              "dimension": "concurrent-pr-head-change-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_certificate_event",
+                "name": "test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]"
+              },
+              "evidence": "Controle de comparação positivo tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid] no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-013-concurrent-pr-head-change-S2",
+              "surface": "concurrent-pr-head-change",
+              "dimension": "concurrent-pr-head-change-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_certificate_event",
+                "name": "test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract]"
+              },
+              "evidence": "Controle de regressão tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract] executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_session_certificate_event",
+            "name": "test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[stale-issue]"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[stale-issue] passed; source tests/test_session_certificate_event.py; negative for OBL-013 material bootstrap.",
+          "evidence_path": "tests/test_session_certificate_event.py",
+          "evidence_sha256": "91e1fcc0b257ab77b4589bf67145413b7a2785100508a6ac04470a09828db1f1",
+          "id": "NEG-R198-013-stale-issue-source",
+          "risk_family": "reference-liveness",
+          "surface": "stale-issue-source",
+          "dimension": "stale-issue-source-rejected-invalid-origin",
+          "failure_mode": "OBL-013: Hash da issue alterada após coleta deve invalidar evidência anterior. O teste negativo tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[stale-issue] distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "Uma edição concorrente do PR, um JUnit stale ou a revogação de review pode permitir auditoria para outro objeto Git.",
+          "procedure": "Executar tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[stale-issue] com a suite exata da PR #203 e confrontar asserções com tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]; classificar stale-issue-source separadamente.",
+          "expected": "O cenário inválido stale-issue-source deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[stale-issue] no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-013-stale-issue-source-S1",
+              "surface": "stale-issue-source",
+              "dimension": "stale-issue-source-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_certificate_event",
+                "name": "test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]"
+              },
+              "evidence": "Controle de comparação positivo tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid] no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-013-stale-issue-source-S2",
+              "surface": "stale-issue-source",
+              "dimension": "stale-issue-source-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_certificate_event",
+                "name": "test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract]"
+              },
+              "evidence": "Controle de regressão tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract] executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        },
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_session_review_runner",
+            "name": "test_native_audit_transport_is_read_only_from_authenticated_base[tampered-blob]"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_session_review_runner::test_native_audit_transport_is_read_only_from_authenticated_base[tampered-blob] passed; source tests/test_session_review_runner.py; negative for OBL-013 material bootstrap.",
+          "evidence_path": "tests/test_session_review_runner.py",
+          "evidence_sha256": "0015e71e4cf78d6376c3b1c497c0056af10793c857924a085c3715bc57bf6c93",
+          "id": "NEG-R198-013-foreign-native-contract",
+          "risk_family": "authorization",
+          "surface": "foreign-native-contract",
+          "dimension": "foreign-native-contract-rejected-invalid-origin",
+          "failure_mode": "OBL-013: Contrato da base adulterado não pode dar identidade ou autorização ao HEAD corrente. O teste negativo tests.test_session_review_runner::test_native_audit_transport_is_read_only_from_authenticated_base[tampered-blob] distingue identidade ou fluxo indevido.",
+          "plausible_wrong_implementation": "Uma edição concorrente do PR, um JUnit stale ou a revogação de review pode permitir auditoria para outro objeto Git.",
+          "procedure": "Executar tests.test_session_review_runner::test_native_audit_transport_is_read_only_from_authenticated_base[tampered-blob] com a suite exata da PR #203 e confrontar asserções com tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]; classificar foreign-native-contract separadamente.",
+          "expected": "O cenário inválido foreign-native-contract deve ser rejeitado; o cenário legítimo deve permanecer aceito.",
+          "observed": "O índice JUnit do run 44622033197 contém PASSED para tests.test_session_review_runner::test_native_audit_transport_is_read_only_from_authenticated_base[tampered-blob] no commit da PR #203; o arquivo-fonte foi inspecionado por SHA-256.",
+          "sibling_cases": [
+            {
+              "id": "NEG-R198-013-foreign-native-contract-S1",
+              "surface": "foreign-native-contract",
+              "dimension": "foreign-native-contract-valid-counterexample",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_certificate_event",
+                "name": "test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]"
+              },
+              "evidence": "Controle de comparação positivo tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid] no índice JUnit exact-SHA da PR #203."
+            },
+            {
+              "id": "NEG-R198-013-foreign-native-contract-S2",
+              "surface": "foreign-native-contract",
+              "dimension": "foreign-native-contract-stale-regression",
+              "status": "passed",
+              "junit_case": {
+                "classname": "tests.test_session_certificate_event",
+                "name": "test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract]"
+              },
+              "evidence": "Controle de regressão tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract] executado e aprovado no mesmo índice JUnit."
+            }
+          ]
+        }
+      ],
+      "regression_controls": [
+        {
+          "status": "passed",
+          "head_sha": "__MATERIAL_HEAD_SHA__",
+          "control_type": "test",
+          "evidence_kind": "behavioral",
+          "junit_case": {
+            "classname": "tests.test_session_certificate_event",
+            "name": "test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract]"
+          },
+          "evidence": "GitHub Actions run 44622033197, pytest-exact-head.xml: tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract] passed; source tests/test_session_certificate_event.py; regression for OBL-013 material bootstrap.",
+          "evidence_path": "tests/test_session_certificate_event.py",
+          "evidence_sha256": "91e1fcc0b257ab77b4589bf67145413b7a2785100508a6ac04470a09828db1f1"
+        }
+      ],
+      "quantitative_evidence_required": false
+    }
+  ],
+  "uncovered_requirements": []
+}
