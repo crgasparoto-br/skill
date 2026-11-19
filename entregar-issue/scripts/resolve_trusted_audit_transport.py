@@ -105,10 +105,12 @@ def resolve(root: Path, repository: str, base_ref: str,
     git(root, "cat-file", "-e", head_sha + "^{commit}")
     if git(root, "rev-parse", "HEAD").decode("ascii").strip() != head_sha:
         raise ValueError("material checkout HEAD differs from authenticated PR head")
-    try:
-        git(root, "merge-base", "--is-ancestor", base_sha, head_sha)
-    except ValueError as exc:
-        raise ValueError("trusted PR base is not an ancestor of the material HEAD") from exc
+    # A normal PR may be behind develop: its current base SHA need not be an
+    # ancestor of the feature head. Require a genuine shared Git history,
+    # without inventing a fast-forward relation.
+    common_base = git(root, "merge-base", base_sha, head_sha).decode("ascii").strip()
+    if SHA.fullmatch(common_base) is None:
+        raise ValueError("trusted base and material HEAD lack a valid common ancestor")
     manifest = {
         "schema_version": 1,
         "repository": repository,
