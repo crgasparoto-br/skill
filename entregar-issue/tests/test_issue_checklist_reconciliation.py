@@ -364,7 +364,7 @@ def test_thematic_break_closes_paragraph_before_ordered_list() -> None:
     assert "- - -\n" in proposed
 
 
-@pytest.mark.parametrize("digit", ["١", "۲", "४", "２", "𝟙"])
+@pytest.mark.parametrize("digit", ["\u0661", "\u06f2", "\u096a", "\uff12", "\U0001d7d9"])
 def test_unicode_numeric_markers_are_not_commonmark_list_items(digit: str) -> None:
     # Python \d matches Unicode, but CommonMark ordered list markers use ASCII 0-9.
     body = "## Critérios de aceite\n\n" + digit + ". [ ] Exemplo inválido\n- [ ] Real\n"
