@@ -66,3 +66,20 @@ preview e identidade do contrato, sem conceder aprovacao independente.
 A revalidacao remota e o parecer de sessao autentico continuam obrigatorios. Uma PR de
 migracao ainda segue o modo legado enquanto a sua base nao contiver um
 contrato previamente integrado e revisado.
+
+## Distincao entre ancestralidade do transporte e proveniencia de sessao
+
+A ancestralidade comum validada por `resolve_trusted_audit_transport.py`
+serve **somente** para consultar a politica no SHA autenticado da base e
+classificar o transporte. Uma PR atrasada em relacao a `develop` pode,
+portanto, ter seu modo classificado sem fast-forward.
+
+Essa classificacao nao constitui prova da implementacao recuperada para
+`operator-attested-session-review`. Quando a sessao original nao esta
+disponivel, `authenticated_implementation_provenance` exige os commits
+materiais em cadeia linear iniciada **no base_sha atual da PR**. Uma branch
+criada sobre uma base anterior precisa ser reconciliada por rebase linear
+autorizado, produzir novo HEAD, nova CI, novo handoff e novo parecer; nao
+pode reutilizar provas de outra base mediante `merge-base` ou compare
+reportado. Um eventual suporte a proveniencia por fork-point exigiria
+contrato de confianca e testes adversariais adicionais, em entrega separada.

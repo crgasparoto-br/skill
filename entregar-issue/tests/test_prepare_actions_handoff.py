@@ -294,3 +294,39 @@ def test_certification_refuses_missing_or_invalid_authenticated_merge_preview(
     args.event.write_text(json.dumps(event_value))
     with pytest.raises(ValueError, match="merge preview SHA"):
         mod.require_event_merge_preview(args.event, "team/skill", 113, HEAD, BASE)
+
+@pytest.mark.parametrize("text", ["Refs #112", "refs #112", "Fixes #112"])
+def test_canonical_issue_resolution_accepts_standard_issue_reference(tmp_path, text):
+    p = tmp_path / "event.json"
+    p.write_text(json.dumps(event(title="feat: authorized checklist audit", body=text)))
+    assert mod.read_event(p) == ("team/skill", 113, 112, HEAD, BASE)
+
+
+def test_canonical_issue_resolution_blocks_ambiguous_refs(tmp_path):
+    p = tmp_path / "event.json"
+    p.write_text(json.dumps(event(title="feat: check", body="Refs #112 and Refs #119")))
+    with pytest.raises(ValueError, match="exactly one"):
+        mod.read_event(p)
+
+@pytest.mark.parametrize("kind", ["Refs", "Fixes", "Closes", "Resolves"])
+def test_canonical_title_never_masks_explicit_conflicting_issue(kind, tmp_path):
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps(event(title="fix: trusted issue (#112)",
+                                           body=f"{kind} #119")))
+    with pytest.raises(ValueError, match="reference conflicts"):
+        mod.read_event(event_path)
+
+
+def test_canonical_title_preserves_unqualified_related_issue_mentions(tmp_path):
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps(event(
+        title="fix: trusted issue (#112)",
+        body="Refs #112\nRelated context: #119 (not a closing/reference directive)")))
+    assert mod.read_event(event_path) == ("team/skill", 113, 112, HEAD, BASE)
+
+@pytest.mark.parametrize("kind", ["Refs", "Issue", "Fixes", "Closes", "Resolves"])
+def test_canonical_title_accepts_matching_explicit_issue_reference(kind, tmp_path):
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps(event(title="fix: same issue (#112)",
+                                           body=f"{kind} #112")))
+    assert mod.read_event(event_path) == ("team/skill", 113, 112, HEAD, BASE)

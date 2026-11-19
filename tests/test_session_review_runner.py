@@ -725,3 +725,45 @@ def test_final_pr_identity_recheck_blocks_concurrent_tree_change(review_backend,
     assert responses[0] >= 2
     assert backend.checks[-1]["conclusion"] == "failure"
     assert all(body.get("conclusion") != "success" for _, body in backend.writes)
+
+@pytest.mark.parametrize("case", ["trusted", "candidate-only", "tampered-blob", "partial-policy",
+                                   "foreign-repo", "wrong-base"])
+def test_native_audit_transport_is_read_only_from_authenticated_base(
+        monkeypatch, case):
+    """A GitHub-native opt-in is never selected from the untrusted PR HEAD."""
+    import hashlib
+
+    data = {
+        "schema_version": 1, "repository": "owner/repo", "base_ref": "develop",
+        "canonical": True, "audit_mode": "native-github",
+        "legacy_handoff_policy": "not-required", "github_native_identity": True,
+        "exact_sha_evidence": True, "independent_review": True, "remote_ci_evidence": True,
+    }
+    if case == "partial-policy":
+        data["exact_sha_evidence"] = False
+    elif case == "foreign-repo":
+        data["repository"] = "another/repo"
+    elif case == "wrong-base":
+        data["base_ref"] = "main"
+    raw = json.dumps(data).encode()
+    sha = hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw,
+                       usedforsecurity=False).hexdigest()
+    seen = []
+
+    def trusted_content(repo, path, ref):
+        seen.append((repo, path, ref))
+        if case == "candidate-only":
+            raise ValueError("authenticated GitHub GET /repos/owner/repo/contents/file request failed (HTTP 404)")
+        return raw, "f" * 40 if case == "tampered-blob" else sha
+
+    monkeypatch.setattr(runner, "content", trusted_content)
+    identity = {"repository": "owner/repo", "base_ref": "develop",
+                "base_sha": "b" * 40, "head_sha": "a" * 40}
+    if case in {"trusted", "candidate-only"}:
+        observed = runner.trusted_audit_transport(identity)
+        assert observed["mode"] == ("native-github-audit" if case == "trusted" else "certified-handoff")
+    else:
+        with pytest.raises(ValueError):
+            runner.trusted_audit_transport(identity)
+    assert len(seen) == 1
+    assert seen[0][2] == identity["base_sha"]
