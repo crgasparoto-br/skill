@@ -20,6 +20,19 @@ Esta implantação requer controle explícito de bootstrap porque a própria PR 
 6. Inspecionar regras efetivas e rulesets por API antes de alterar required checks. Os nomes legados e nativos diferem; para modo nativo, exigir o **job nativo realmente executado**, nunca job ausente ou `skipped`. Em `main`, preservar o contrato próprio de release e não transportar automaticamente o check de PR de issue para promoção. Ativar os rulesets somente por operação autorizada, com read-back e prova positiva/negativa no novo modo.
 7. Após qualquer mudança de base/HEAD, issue, pacote, revisão ou workflow, invalidar a evidência stale e repetir os checks aplicáveis. Marcar checkboxes da issue apenas por executor autorizado, com prova por critério, CAS/read-back e sem declarar auditoria aprovada a partir dos checkboxes.
 
+## Inventário autenticado anterior à ativação (19/11/2026)
+
+Leitura somente leitura pela API de rulesets do próprio repositório, antes de qualquer PUT. **Este registro é um snapshot operacional, não uma autorização ou prova de ativação.** Os dois rulesets têm `enforcement=disabled`, `strict_required_status_checks_policy=true`, bloqueio de exclusão/force-push configurado e `required_approving_review_count=0` (operador único). As regras efetivas consultadas por branch retornaram lista vazia; proteção clássica não foi observada, o que não prova ausência de outros mecanismos. A lista de bypass actors não foi disponibilizada pela conexão: **UNKNOWN**, nunca presumir vazia.
+
+| Alvo | Ruleset | Required checks configurados, GitHub Actions app 15368 | Estado |
+| --- | --- | --- | --- |
+| `develop` | `Protect develop` (#24821474) | `Structure and tests`; `Offline authorization tests`; `collect / Require certified semantic handoff (exact SHA)`; `Verify session review (exact SHA)` | disabled |
+| `main` | `Protect main` (#24821457) | `Structure and tests`; `Verify session review (exact SHA)` | disabled |
+
+**Transição sem janela insegura:** fechar ou reconciliar com a nova base todos os PRs legados ainda abertos **antes** de substituir o required check de `develop`. Com o contrato implantado e os jobs reais observados em uma PR nova, somente uma ação administrativa autorizada poderá substituir o contexto legado pelo nativo `collect / Require native GitHub audit evidence (exact SHA)`; manter os demais checks técnicos e de revisão configurados. Não exigir simultaneamente o job legado skipped nem aceitar `skipped` como `success`. Suspender a ativação se alguma PR baseada na política anterior continuar precisando do certificado legado. A simples troca de contexto do required check **não certifica** automaticamente novas PRs.
+
+**Read-back obrigatório:** antes e depois de cada eventual operação, recuperar `GET /repos/crgasparoto-br/skill/rulesets/24821474`, `.../rulesets/24821457`, as regras efetivas e proteções das branches, os nomes e `integration_id` dos checks e o SHA da `develop`. Comparar as snapshots e registrar a aprovação administrativa, os jobs reais positivos/negativos e o plano de rollback. `main` deve permanecer exatamente como antes, salvo autorização de release específica. Se identidade, cobertura ou enforcement divergirem do planejado, interromper sem reduzir o gate.
+
 ## Critérios de interrupção e rollback
 
 - Contrato ausente, malformado, origem candidata ou digest divergente: **não** escolher o transporte nativo. Falha detectada em contrato existente não deve ser mascarada pelo fallback.
