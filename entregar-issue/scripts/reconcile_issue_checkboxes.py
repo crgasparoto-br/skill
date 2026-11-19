@@ -18,6 +18,15 @@ ITEM = re.compile(
 SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
+def _open_raw_html_block(line: str) -> tuple[bool, str]:
+    """Detect inert raw HTML and track its terminator separately from checkboxes."""
+    raw_tag = re.match(r"<(pre|script|style|textarea)\b", line, re.IGNORECASE)
+    if raw_tag is None:
+        return False, ""
+    tag = raw_tag.group(1).lower()
+    return True, tag if not re.search(rf"</{tag}[ \t]*>", line, re.IGNORECASE) else ""
+
+
 def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     """Return original lines, criteria, and text normalized only for checkbox markers."""
     lines = body.splitlines(keepends=True)
@@ -61,11 +70,8 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
         if fence_marker:
             continue
 
-        raw_tag = re.match(r"<(pre|script|style|textarea)\b", stripped, re.IGNORECASE)
-        if raw_tag:
-            tag = raw_tag.group(1).lower()
-            if not re.search(rf"</{tag}[ \t]*>", stripped, re.IGNORECASE):
-                html_block = tag
+        raw_inert, html_block = _open_raw_html_block(stripped)
+        if raw_inert:
             continue
 
         # Comments inside fenced code must not change parser state.
