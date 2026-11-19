@@ -270,3 +270,50 @@ def test_other_multiline_html_inert_blocks_do_not_inject_items(
 ) -> None:
     body = "## Critérios de aceite\n" + opening + "- [ ] Falso\n" + closing + "- [ ] Real\n"
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]
+
+
+@pytest.mark.parametrize("tag", ["custom-panel", "span", "custom-widget"])
+def test_type7_tag_cannot_interrupt_an_open_paragraph(tag: str) -> None:
+    # CommonMark type-7 HTML does not interrupt a paragraph; a following bullet can.
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Primeiro\n"
+        "Texto explicativo\n"
+        f"<{tag}>\n"
+        "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+    proposed, summary = mod.reconcile(body, body, audit("verified", "verified", body=body), SHA)
+    assert "- [x] Segundo\n" in proposed
+    assert len(summary["changes"]) == 2
+
+
+@pytest.mark.parametrize("marker", ["2.", "2)", "0.", "02."])
+def test_non_one_ordered_item_cannot_interrupt_an_open_paragraph(marker: str) -> None:
+    # An ordered list interrupts a paragraph only when its start number is one.
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Primeiro\n"
+        "Texto explicativo\n"
+        f"{marker} [ ] Apenas exemplo no parágrafo\n"
+        "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+
+
+def test_one_ordered_item_can_interrupt_an_open_paragraph() -> None:
+    body = "## Critérios de aceite\nTexto explicativo\n1. [ ] Critério real\n"
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Critério real"]
+
+
+def test_type6_html_block_still_interrupts_an_open_paragraph() -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Primeiro\n"
+        "Texto explicativo\n"
+        "<div>\n"
+        "- [ ] Exemplo inerte\n"
+        "\n"
+        "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]

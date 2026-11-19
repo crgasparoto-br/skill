@@ -41,7 +41,7 @@ HTML_BLOCK_GENERIC = re.compile(
     r"[ \t]*/?>[ \t]*$"
 )
 
-def _open_raw_html_block(line: str) -> tuple[bool, str]:
+def _open_raw_html_block(line: str, paragraph_open: bool) -> tuple[bool, str]:
     """Return whether this is an inert CommonMark HTML opener and how it ends."""
     raw_tag = re.match(r"<(pre|script|style|textarea)(?=[ \t>])", line, re.IGNORECASE)
     if raw_tag is not None:
@@ -55,7 +55,10 @@ def _open_raw_html_block(line: str) -> tuple[bool, str]:
             return True, f"terminator:{terminator}" if terminator not in line else ""
     if re.match(r"<![A-Z]", line):
         return True, "terminator:>" if ">" not in line else ""
-    if HTML_BLOCK_OPEN.match(line) or HTML_BLOCK_GENERIC.match(line.rstrip("\r\n")):
+    if HTML_BLOCK_OPEN.match(line):
+        return True, "until-blank"
+    # CommonMark type 7 cannot interrupt an already open paragraph.
+    if not paragraph_open and HTML_BLOCK_GENERIC.match(line.rstrip("\r\n")):
         return True, "until-blank"
     return False, ""
 
@@ -80,6 +83,7 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     fence_width = 0
     in_comment = False
     html_block = ""
+    paragraph_open = False
 
     for index, line in enumerate(lines):
         stripped = line.lstrip(" ")
@@ -91,6 +95,9 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
             continue
         if html_block:
             html_block = _advance_html_block(html_block, stripped)
+            continue
+        if not line.strip():
+            paragraph_open = False
             continue
         # A leading tab is a four-space Markdown code indentation.
         leading = line[:len(line) - len(line.lstrip(" \t"))]
@@ -104,6 +111,7 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
                 # A backtick opening fence cannot have backticks in its info string.
                 if symbol == "~" or chr(96) not in suffix:
                     fence_marker, fence_width = symbol, width
+                    paragraph_open = False
                     continue
             elif symbol == fence_marker and width >= fence_width and not suffix:
                 fence_marker, fence_width = "", 0
@@ -111,17 +119,20 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
         if fence_marker:
             continue
 
-        raw_inert, html_block = _open_raw_html_block(stripped)
+        raw_inert, html_block = _open_raw_html_block(stripped, paragraph_open)
         if raw_inert:
+            paragraph_open = False
             continue
 
         # Comments inside fenced code must not change parser state.
         if stripped.startswith("<!--"):
             in_comment = "-->" not in line
+            paragraph_open = False
             continue
 
         heading = HEADING.match(line)
         if heading:
+            paragraph_open = False
             depth = len(heading.group(1))
             if depth <= 2:
                 heading_title = re.sub(r"[ \t]+#+[ \t]*$", "", heading.group(2)).strip()
@@ -130,10 +141,18 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
                     sections += 1
             continue
         if not in_criteria:
+            paragraph_open = True
             continue
         match = ITEM.match(line)
         if match is None:
+            paragraph_open = True
             continue
+        # Ordered lists starting at a number other than one do not interrupt
+        # an open paragraph; treating them as criteria would change the contract.
+        ordered = re.match(r"(\d+)[.)]", match.group("prefix").lstrip())
+        if paragraph_open and ordered and int(ordered.group(1)) != 1:
+            continue
+        paragraph_open = False
         items.append(
             {
                 "ordinal": len(items) + 1,
