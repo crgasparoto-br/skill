@@ -284,7 +284,7 @@ def test_terminal_systemic_reaudit_guard_requires_historical_snapshots() -> None
         proc = _run(cert, artifacts, material, published, material, [".audit/entregar-issue/handoff-ready.json"])
         assert proc.returncode == 2
         assert "systemic terminal re-audit handoff requires previous inherited-controls snapshot" in proc.stdout
-        assert "requires previous audit-escape-closure snapshot" in proc.stdout
+        assert "requires previous snapshot or first-escape proof" in proc.stdout
 
 
 def test_terminal_targeted_reaudit_does_not_require_previous_inherited_controls() -> None:

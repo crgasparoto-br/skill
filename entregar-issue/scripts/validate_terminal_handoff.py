@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
+from git_tree_snapshot import material_parent_blob
 from handoff_postcondition import require_final_phase
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,30 +29,6 @@ def load(path: Path) -> dict:
     if not isinstance(value, dict):
         raise ValueError("expected object")
     return value
-
-
-def material_parent_blob(repository: Path, material: str, relative: str) -> bytes | None:
-    """Read a regular blob, or prove its absence, from the exact material commit."""
-    if not re.fullmatch(r"[0-9a-f]{40}", material):
-        raise ValueError("material-parent verification requires an exact commit SHA")
-    prefix = ["git", "--no-replace-objects", "-C", str(repository)]
-    subprocess.run([*prefix, "cat-file", "-e", material + "^{commit}"], check=True, capture_output=True)
-    parts = Path(relative).parts
-    entry = []
-    for index in range(1, len(parts) + 1):
-        name = "/".join(parts[:index])
-        result = subprocess.run([*prefix, "ls-tree", "-z", material, "--", name], check=True, capture_output=True)
-        if not result.stdout:
-            return None
-        metadata, observed = result.stdout.removesuffix(b"\0").split(b"\t", 1)
-        entry = metadata.decode("ascii").split()
-        if observed.decode("utf-8") != name or len(entry) != 3:
-            raise ValueError("material-parent Git tree returned an unexpected entry")
-        expected = {"040000"} if index < len(parts) else {"100644", "100755"}
-        kind = "tree" if index < len(parts) else "blob"
-        if entry[0] not in expected or entry[1] != kind:
-            raise ValueError(f"material-parent path has an unsafe Git type or symlink: {name}")
-    return subprocess.run([*prefix, "cat-file", "blob", entry[2]], check=True, capture_output=True).stdout
 
 
 def verify_material_parent_snapshots(repository: str | None, material: str, changed: set[str],
@@ -246,9 +222,12 @@ def main() -> int:
         AUDIT_ESCAPE_CLOSURE_REPO_PATH: args.material_parent_audit_escape_closure,
     }, errors)
 
+    bootstrap = cert.get("first_escape_bootstrap")
+    if bootstrap and args.previous_audit_escape_closure:
+        errors.append("terminal cannot combine previous snapshot and first-escape bootstrap")
     if previous_rejection:
-        if not args.previous_audit_escape_closure:
-            errors.append("terminal re-audit handoff requires previous audit-escape-closure snapshot")
+        if not args.previous_audit_escape_closure and not bootstrap:
+            errors.append("terminal re-audit handoff requires previous snapshot or first-escape proof")
         if systemic_reaudit and not args.previous_inherited_controls:
             errors.append("systemic terminal re-audit handoff requires previous inherited-controls snapshot")
 
@@ -291,9 +270,21 @@ def main() -> int:
             sys.executable, str(ROOT / "scripts" / "validate_audit_escape_lineage.py"),
             "--closure", str(current_escape),
         ]
-        if args.material_parent_audit_escape_closure:
+        if args.material_parent_audit_escape_closure and not bootstrap:
             escape_cmd.extend(["--previous-closure", str(Path(args.material_parent_audit_escape_closure).resolve()),
                                "--require-previous"])
+        if bootstrap:
+            # Foreign-target ledgers belong to another PR: authenticate them in
+            # prove_first_audit_escape, but never demand their IDs in this PR.
+            escape_cmd.extend([
+                "--require-previous", "--first-escape-audited-sha", str(bootstrap.get("reference_sha")),
+                "--first-escape-repository", str(args.material_parent_repository),
+                "--first-escape-audit-result", str(artifact_path("audit_source_result")),
+                "--target-repository", args.repository,
+                "--target-issue-number", str(expected_issue_number),
+                "--target-pull-request-number", str(expected_pull_request),
+                "--head-sha", args.material_head_sha,
+            ])
         proc = subprocess.run(escape_cmd, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         if proc.returncode != 0:
             print(proc.stdout.strip() or "BLOCK: result-only child audit escape lineage regressed from material parent")
@@ -334,8 +325,15 @@ def main() -> int:
             "--learning-closure", str(artifact_path("learning_closure")),
             "--previous-independent-rejection",
             "--remediation-mode", remediation_mode,
-            "--previous-audit-escape-closure", str(Path(args.previous_audit_escape_closure).resolve()),
         ]
+        if args.previous_audit_escape_closure:
+            readiness.extend(["--previous-audit-escape-closure", str(Path(args.previous_audit_escape_closure).resolve())])
+        elif bootstrap:
+            readiness.extend([
+                "--first-escape-audited-sha", str(bootstrap.get("reference_sha")),
+                "--first-escape-repository", str(args.material_parent_repository),
+                "--first-escape-audit-result", str(artifact_path("audit_source_result")),
+            ])
         if expected_issue_number is not None:
             readiness.extend(["--issue-number", str(expected_issue_number)])
         if expected_pull_request is not None:
@@ -386,6 +384,8 @@ def main() -> int:
         "current_changed_paths": sorted(current_changed),
         "material_parent_absent_paths": sorted(absent),
     }
+    if bootstrap:
+        proof["first_escape_bootstrap"] = bootstrap
     if args.proof_out:
         proof_out = Path(args.proof_out).resolve()
         proof_out.parent.mkdir(parents=True, exist_ok=True)

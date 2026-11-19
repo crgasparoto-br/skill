@@ -280,7 +280,11 @@ def critical_reaudit_arguments(files, candidate):
                                              "pull_request_number": 99,
                                              "material_head_sha": candidate["head"]},
                                  "escapes": [escape]},
-        "previous-audit-escape-closure": {"schema_version": 1, "escapes": [previous]},
+        "previous-audit-escape-closure": {"schema_version": 1,
+                                          "subject": {"repository": "owner/repo", "issue_number": 42,
+                                                      "pull_request_number": 99,
+                                                      "material_head_sha": candidate["base"]},
+                                          "escapes": [previous]},
         "learning-closure": learning,
     }
     args = ["--previous-independent-rejection", "--remediation-mode", "targeted-remediation",

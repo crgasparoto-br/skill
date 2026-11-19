@@ -38,3 +38,31 @@ O modo nativo remove somente o artefato legado. Nao permite:
 - usar contrato introduzido pelo proprio candidato para se autoisentar.
 
 Se o classificador nao provar o contrato nativo confiavel, executar o fluxo `certified-handoff` existente sem alteracao.
+
+## Proveniencia executavel da base confiavel
+
+Quando o alvo e uma PR para `develop`, a selecao em ambientes com checkout Git
+pode usar `scripts/resolve_trusted_audit_transport.py` com
+`--root`, `--repository`, `--base-ref=develop`, `--base-sha` e
+`--head-sha` provenientes de identidade remota autenticada.
+
+O resolvedor valida os commits existentes, a ancestralidade comum (sem exigir
+fast-forward quando a PR esta atrasada em relacao a `develop`) e o checkout
+exato, le exclusivamente os bytes Git de
+`docs/audit/github-native-contract.json` **na arvore do base SHA**,
+recalcula o SHA do blob Git e o SHA-256 da fonte e chama o classificador
+canonico. Ausencia comprovada do arquivo na base seleciona o transporte
+legado. Contrato existente malformado, de outro repositorio, symlink ou
+identidade inconsistente bloqueia. Um contrato acrescentado apenas no HEAD
+candidato nao pode se autoautorizar.
+
+A execucao desse comando somente constitui prova se realizada por codigo do
+workflow confiavel com checkout obtido do GitHub. Nao aceitar resultado
+fornecido na PR como afirmacao de autoridade. Esta classificacao de
+transporte nao equivale a check verde, certificado semantico ou revisao
+independente. A rota nativa exige checks GitHub exact-SHA proprios, com
+`scripts/validate_native_actions_evidence.py` validando issue, JUnit, merge
+preview e identidade do contrato, sem conceder aprovacao independente.
+A revalidacao remota e o parecer de sessao autentico continuam obrigatorios. Uma PR de
+migracao ainda segue o modo legado enquanto a sua base nao contiver um
+contrato previamente integrado e revisado.

@@ -40,7 +40,10 @@ ROOT = Path(__file__).resolve().parents[1]
 MAX_BYTES = 32 * 1024 * 1024
 WORKFLOW = ".github/workflows/session-review.yml"
 # Both the emitter and its verification policy must already exist in trusted base.
-TRUSTED_PATHS = (WORKFLOW, POLICY_PATH, "scripts/session_review.py", "scripts/session_review_github.py",
+TRUSTED_PATHS = (WORKFLOW, POLICY_PATH, ".github/workflows/reusable-handoff.yml",
+                 "entregar-issue/scripts/resolve_trusted_audit_transport.py",
+                 "entregar-issue/scripts/validate_native_actions_evidence.py",
+                 "scripts/session_review.py", "scripts/session_review_github.py",
                  "scripts/verify_session_review.py",
                  "scripts/verify_independent_pr_audit.py", "entregar-issue/scripts/specification.py",
                  "entregar-issue/scripts/require_actions_handoff_certificate.py",
@@ -171,11 +174,31 @@ def authenticated_implementation_provenance(identity: dict, metadata: dict) -> d
     return github_facts.authenticated_implementation_provenance(identity, metadata, pages, api)
 
 
-def certified_evidence(identity: dict, checks: dict, directory: Path) -> tuple[dict, set[str]]:
+def trusted_audit_transport(identity: dict) -> dict:
+    """Native policy is read from authenticated immutable base bytes, never PR HEAD."""
+    sys.path.insert(0, str(ROOT / "entregar-issue" / "scripts"))
+    from resolve_trusted_audit_transport import CONTRACT_PATH, validate_native_contract_blob
+
+    try:
+        raw, git_blob = content(identity["repository"], CONTRACT_PATH, identity["base_sha"])
+    except ValueError as exc:
+        if "(HTTP 404)" in str(exc):
+            # Missing is stricter legacy, not permission to bypass certification.
+            return {"mode": "certified-handoff", "contract_sha256": None}
+        raise
+    validate_native_contract_blob(raw, git_blob, identity["repository"], identity["base_ref"])
+    return {"mode": "native-github-audit", "contract_sha256": digest(raw)}
+
+
+def certified_evidence(identity: dict, checks: dict, directory: Path,
+                       transport: dict | None = None) -> tuple[dict, set[str]]:
+    # Direct legacy callers never authorize native mode implicitly.
+    transport = {"mode": "certified-handoff", "contract_sha256": None} if transport is None else transport
     return github_facts.certified_evidence(
         identity, checks, directory, api=api, unpack=unpack,
         authenticated_certificate_event=authenticated_certificate_event,
-        authenticated_preview_reconciliation=authenticated_preview_reconciliation, root=ROOT)
+        authenticated_preview_reconciliation=authenticated_preview_reconciliation,
+        audit_transport=transport, root=ROOT)
 
 
 def freeze_files(repo: str, changed: list[dict], base: str, head: str) -> tuple[dict, dict]:
@@ -226,8 +249,9 @@ def prepare(repo: str, number: int, issue_number: int, *, require_enabled: bool)
     require(len(changed) == pr["changed_files"] and bool(changed), "changed-file inventory incomplete")
     files, diffs = freeze_files(repo, changed, base, identity["head_sha"])
     checks = api(f"/repos/{repo}/commits/{identity['head_sha']}/check-runs?per_page=100")
+    transport = trusted_audit_transport(identity)
     with tempfile.TemporaryDirectory() as temporary:
-        metadata, passed = certified_evidence(identity, checks, Path(temporary))
+        metadata, passed = certified_evidence(identity, checks, Path(temporary), transport)
     # The material SHA and base are fixed. The certified synthetic merge
     # remains the stable review identity even when GitHub recreates its commit.
     stable = {**identity, "merge_preview_sha": metadata["merge_preview_reconciliation"]["certified_sha"]}
@@ -309,10 +333,18 @@ def recheck_inputs(packet: dict) -> None:
     repo, head, base = ident["repository"], ident["head_sha"], ident["base_sha"]
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     checks = api(f"/repos/{repo}/commits/{head}/check-runs?per_page=100")
+    transport = trusted_audit_transport(ident)
+    require(transport["mode"] == packet["audit_transport"]
+            and transport["contract_sha256"] == packet.get("native_contract_sha256"),
+            "trusted audit transport changed during review")
     required_checks_green(checks, head, "develop", lambda name, check: trusted_workflow_check(
-        repo, ident["pull_request"], name, check, head, base, token))
+        repo, ident["pull_request"], name, check, head, base, token),
+        audit_transport=transport["mode"])
+    evidence_check = ("collect / Require native GitHub audit evidence (exact SHA)"
+                      if transport["mode"] == "native-github-audit"
+                      else "collect / Require certified semantic handoff (exact SHA)")
     ids = sorted(c["id"] for c in checks["check_runs"] if c.get("name") in {
-        "Structure and tests", "Offline authorization tests", "collect / Require certified semantic handoff (exact SHA)"})
+        "Structure and tests", "Offline authorization tests", evidence_check})
     require(ids == packet["technical_check_ids"], "technical evidence changed during verification")
     artifact = api(f"/repos/{repo}/actions/artifacts/{packet['artifact_id']}")
     require(not artifact.get("expired") and artifact.get("digest") == packet["artifact_digest"],

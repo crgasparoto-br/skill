@@ -12,6 +12,7 @@ Ler quando houver PR aberta, publicação, CI ou coleta remota com `audit_transp
 - [Vinculo com o alvo antes do fechamento](#vinculo-com-o-alvo-antes-do-fechamento)
 - [Pre-publicacao e preservacao da PR](#pre-publicacao-e-preservacao-da-pr)
 - [Antes de qualquer handoff independente](#antes-de-qualquer-handoff-independente)
+- [Primeiro audit escape sem snapshot da mesma issue](#primeiro-audit-escape-sem-snapshot-da-mesma-issue)
 - [Barreira universal pos-escrita](#barreira-universal-pos-escrita)
 - [Precedencia da decisao de recovery](#precedencia-da-decisao-de-recovery)
 - [Post-write refreeze](#post-write-refreeze)
@@ -67,6 +68,17 @@ Sem repositorio Git, permanece a interface legada de snapshots; omissao nao
 constitui prova de ausencia. O recibo terminal registra separadamente os
 `material_parent_absent_paths` comprovados, sem atribuir controles ou escapes
 ao commit que nao os continha.
+
+## Primeiro audit escape sem snapshot da mesma issue
+
+Quando o historico tem a primeira rejeicao e o Git prova que nao havia ledger
+para a issue/PR (mesmo quando existe ledger global de outra issue), usar o
+`first_escape_bootstrap` certificado conforme `references/audit-escape-closure.md`.
+Nao fornecer snapshot ficticio, nao aceitar ledger global estrangeiro como
+snapshot da issue atual e nao suprimir comparacao de bytes do material parent.
+O `validate_terminal_handoff.py` reexecuta a prova Git, valida o certificado
+contra o source report e separa explicitamente a lineage de outro alvo.
+Sem acesso autentico ao SHA anterior, retorno `BLOCK`, nao `READY`.
 
 ## Barreira universal pos-escrita
 
