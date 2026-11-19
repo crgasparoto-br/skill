@@ -186,3 +186,33 @@ def test_main_release_cannot_be_treated_as_develop_issue(tmp_path):
     root, base = repository(tmp_path, policy())
     head = commit_file(root, "feature.txt", "change\n")
     assert run(root, base, head, base_ref="main").returncode == 2
+
+
+def test_duplicate_json_key_in_trusted_base_fails_closed(tmp_path):
+    root, base = repository(tmp_path)
+    contract = root / POLICY_PATH
+    contract.parent.mkdir(parents=True, exist_ok=True)
+    duplicate = json.dumps(policy())
+    duplicate = duplicate.replace('"canonical": true,', '"canonical": true, "canonical": false,')
+    contract.write_text(duplicate + "\n", encoding="utf-8")
+    git(root, "add", POLICY_PATH)
+    git(root, "commit", "-m", "ambiguous trusted policy")
+    linked_base = git(root, "rev-parse", "HEAD")
+    head = commit_file(root, "feature.txt", "change\n")
+    outcome = run(root, linked_base, head)
+    assert outcome.returncode == 2
+    assert "duplicate trusted native contract" in outcome.stderr
+
+
+def test_oversized_trusted_policy_fails_closed(tmp_path):
+    root, _base = repository(tmp_path)
+    contract = root / POLICY_PATH
+    contract.parent.mkdir(parents=True, exist_ok=True)
+    contract.write_text(json.dumps(policy()) + " " * 17000, encoding="utf-8")
+    git(root, "add", POLICY_PATH)
+    git(root, "commit", "-m", "oversized trusted contract")
+    linked_base = git(root, "rev-parse", "HEAD")
+    head = commit_file(root, "feature.txt", "change\n")
+    outcome = run(root, linked_base, head)
+    assert outcome.returncode == 2
+    assert "size budget" in outcome.stderr
