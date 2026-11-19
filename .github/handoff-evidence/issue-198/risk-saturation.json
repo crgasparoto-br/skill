@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "head_sha": "__MATERIAL_HEAD_SHA__",
+  "families": [
+    {
+      "family": "authorization",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Obrigações cobertas da issue #198 exercem a fronteira authorization; cada cenário inválido dispõe de controle executado na CI exata #44622033197.",
+      "control_ids": [
+        "NEG-R198-003-ruleset-no-mutation",
+        "NEG-R198-008-untrusted-review-origin",
+        "NEG-R198-009-candidate-policy-forgery",
+        "NEG-R198-013-foreign-native-contract"
+      ],
+      "dimensions": [
+        {
+          "surface": "ruleset-no-mutation",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição ruleset-no-mutation, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-003-ruleset-no-mutation"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "untrusted-review-origin",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição untrusted-review-origin, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-008-untrusted-review-origin"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "candidate-policy-forgery",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição candidate-policy-forgery, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-009-candidate-policy-forgery"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "foreign-native-contract",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição foreign-native-contract, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-013-foreign-native-contract"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "tenant-isolation",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "As obrigações cobertas do bootstrap documental não acionam a família tenant-isolation, conforme a natureza dos arquivos e do comportamento afetado.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "public-boundary",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "As obrigações cobertas do bootstrap documental não acionam a família public-boundary, conforme a natureza dos arquivos e do comportamento afetado.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "reference-liveness",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Obrigações cobertas da issue #198 exercem a fronteira reference-liveness; cada cenário inválido dispõe de controle executado na CI exata #44622033197.",
+      "control_ids": [
+        "NEG-R198-011-trusted-base-policy-freshness",
+        "NEG-R198-013-stale-issue-source"
+      ],
+      "dimensions": [
+        {
+          "surface": "trusted-base-policy-freshness",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição trusted-base-policy-freshness, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-011-trusted-base-policy-freshness"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "stale-issue-source",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição stale-issue-source, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-013-stale-issue-source"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "temporal-consistency",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "As obrigações cobertas do bootstrap documental não acionam a família temporal-consistency, conforme a natureza dos arquivos e do comportamento afetado.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "temporal-destination",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "As obrigações cobertas do bootstrap documental não acionam a família temporal-destination, conforme a natureza dos arquivos e do comportamento afetado.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "concurrency-atomicity",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Obrigações cobertas da issue #198 exercem a fronteira concurrency-atomicity; cada cenário inválido dispõe de controle executado na CI exata #44622033197.",
+      "control_ids": [
+        "NEG-R198-013-concurrent-pr-head-change"
+      ],
+      "dimensions": [
+        {
+          "surface": "concurrent-pr-head-change",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição concurrent-pr-head-change, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-013-concurrent-pr-head-change"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "idempotency",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "As obrigações cobertas do bootstrap documental não acionam a família idempotency, conforme a natureza dos arquivos e do comportamento afetado.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "rollback",
+      "applicable": false,
+      "status": "not-applicable",
+      "reason": "As obrigações cobertas do bootstrap documental não acionam a família rollback, conforme a natureza dos arquivos e do comportamento afetado.",
+      "control_ids": [],
+      "dimensions": []
+    },
+    {
+      "family": "historical-immutability",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Obrigações cobertas da issue #198 exercem a fronteira historical-immutability; cada cenário inválido dispõe de controle executado na CI exata #44622033197.",
+      "control_ids": [
+        "NEG-R198-008-review-journal-history"
+      ],
+      "dimensions": [
+        {
+          "surface": "review-journal-history",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição review-journal-history, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-008-review-journal-history"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "structural-contract",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Obrigações cobertas da issue #198 exercem a fronteira structural-contract; cada cenário inválido dispõe de controle executado na CI exata #44622033197.",
+      "control_ids": [
+        "NEG-R198-004-trusted-git-contract",
+        "NEG-R198-005-workflow-route-separation",
+        "NEG-R198-009-base-blob-integrity",
+        "NEG-R198-011-legacy-gate-preservation"
+      ],
+      "dimensions": [
+        {
+          "surface": "trusted-git-contract",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição trusted-git-contract, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-004-trusted-git-contract"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "workflow-route-separation",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição workflow-route-separation, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-005-workflow-route-separation"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "base-blob-integrity",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição base-blob-integrity, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-009-base-blob-integrity"
+          ],
+          "status": "passed"
+        },
+        {
+          "surface": "legacy-gate-preservation",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição legacy-gate-preservation, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-011-legacy-gate-preservation"
+          ],
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "family": "documentation",
+      "applicable": true,
+      "status": "passed",
+      "reason": "Obrigações cobertas da issue #198 exercem a fronteira documentation; cada cenário inválido dispõe de controle executado na CI exata #44622033197.",
+      "control_ids": [
+        "NEG-R198-004-bootstrap-contract-rollout"
+      ],
+      "dimensions": [
+        {
+          "surface": "bootstrap-contract-rollout",
+          "reason": "Fonte, código e JUnit da issue #198 exercem a rejeição bootstrap-contract-rollout, sem reconhecer aprovação independente.",
+          "control_ids": [
+            "NEG-R198-004-bootstrap-contract-rollout"
+          ],
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "material_families_missing_controls": []
+}

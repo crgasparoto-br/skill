@@ -1,0 +1,391 @@
+{
+  "schema_version": 1,
+  "obligations": {
+    "e35ac6b93b3da41f6e845231d387e817410765d699a7b9929f438ed9c7a91916": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R198-001"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-198",
+        "decision_source_sha256": "1f1f03f9d48e516a0d5a36e623e673694eca760b3802d4ddf650d9e3e6f984ee",
+        "decision_locator": "Eliminar a dependência indevida de handoff `certified-handoff` nos repositórios que **comprovadamente** adotaram auditoria GitHub-native, com identificação GitHub exact-SHA, revisão em contexto separado e controles de qualidade equivalentes.",
+        "target_issue": 198,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "Não alterar retroativamente a certificação da issue #196 / PR #197 nem transformar gate vermelho em sucesso artificial",
+          "rationale": "Conteúdo anterior ao handoff é confrontado com o código da develop, os dois arquivos do bootstrap e os casos JUnit da execução exata #44622033197. A prova futura permanece explicitamente aberta em OBL-001."
+        }
+      },
+      "rationale": "A adoção em PR efetivamente nativa depende da integração posterior do bootstrap; proibir autopromoção e preservação histórica já são verificáveis."
+    },
+    "ce4bdc0903fdaa839ca7289d4e13d50e1f92400a08ea2ef214c229ee16b64050": {
+      "disposition": "not-applicable",
+      "requirement_ids": [],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Registra a fotografia histórica da base antes do bootstrap; não introduz obrigação independente da implantação do contrato na OBL-004."
+    },
+    "21dc1295fc96ce55e4906460b401bdb8e6f8bb8f5e338dd25532145d45c4b4f0": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R198-003"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Snapshot remoto do GitHub indica rulesets #24821474 e #24821457 disabled e o diff 674884c..86e2ced não altera regras; o fluxo proíbe modificação silenciosa."
+    },
+    "2feca0782d4973863926bfabe73181b375b71c4c09e303659480f9110d226f12": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R198-004"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O candidato inclui contrato canônico em docs/audit/github-native-contract.json, único commit linear sobre a develop atual, e testes de origem Git e digest da base."
+    },
+    "62b2731722437f777115393c50cb89a2fcd66256bd2e3f014d11d56dc3847116": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R198-005"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A base contém workflows separados por modo e o teste de workflow assegura job efetivo e legado fail-closed sem tratar skipped como success."
+    },
+    "d09664768f70677c792f05f7c0cefe5bab79a075e892f76618052643278f5e3e": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R198-006"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-198",
+        "decision_source_sha256": "1f1f03f9d48e516a0d5a36e623e673694eca760b3802d4ddf650d9e3e6f984ee",
+        "decision_locator": "review real em contexto separado",
+        "target_issue": 198,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "Adaptar o pacote neutro e o verificador de revisão `operator-attested-session-review` ao modo nativo, preservando , identificação de origem e revalidação de HEAD/base/issue, fontes, JUnit e checks",
+          "rationale": "Conteúdo anterior ao handoff é confrontado com o código da develop, os dois arquivos do bootstrap e os casos JUnit da execução exata #44622033197. A prova futura permanece explicitamente aberta em OBL-006."
+        }
+      },
+      "rationale": "O pacote e verificador nativos possuem testes positivos, negativos e de regressão; a revisão REAL em contexto separado depende do handoff certificado."
+    },
+    "7235f111dd36e37b971b0c76eda70c35f9c1ea17fc54e21018d9ce0e074cd206": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R198-007"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-198",
+        "decision_source_sha256": "1f1f03f9d48e516a0d5a36e623e673694eca760b3802d4ddf650d9e3e6f984ee",
+        "decision_locator": "testes positivos/negativos em PR real",
+        "target_issue": 198,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "Documentar migração e eventual reconfiguração dos required checks de `develop`/`main` com inventário/read-back, aprovação e . Não usar checks skipped como certificado positivo",
+          "rationale": "Conteúdo anterior ao handoff é confrontado com o código da develop, os dois arquivos do bootstrap e os casos JUnit da execução exata #44622033197. A prova futura permanece explicitamente aberta em OBL-007."
+        }
+      },
+      "rationale": "O guia de migração e o inventário dos rulesets existem; execução positiva/negativa em uma PR real nativa depende do contrato previamente integrado."
+    },
+    "a888f70e76bc104f684c2c3aa52a6a72e81aaf4b887195ae6de6f8a76d2b00a0": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R198-008"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A revisão de sessão rejeita revogação, edição e parecer não autenticado; nenhum artefato histórico da PR #197 foi modificado neste diff."
+    },
+    "0dc70d6742358b0fd237c7bc6d9fcc27e181135c12fd3a5d7308b2457161ea45": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R198-009"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "O contrato só pode ser lido da árvore Git da base, com verificação de hash; fixtures de candidato forjado, symlink, SHA/base e campos inválidos rejeitam."
+    },
+    "d55058f47b02bf6967e5860f877bb3293a4218e0048f0ab5d1bea89f4f1254ad": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R198-010"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-198",
+        "decision_source_sha256": "1f1f03f9d48e516a0d5a36e623e673694eca760b3802d4ddf650d9e3e6f984ee",
+        "decision_locator": "PR em modo nativo coleta evidências técnicas no SHA exato sem tentar certificar handoff legado",
+        "target_issue": 198,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "[ ] ; um job efetivo falha em caso de CI/teste/identidade/evidência inválidos, sem sucesso artificial",
+          "rationale": "Conteúdo anterior ao handoff é confrontado com o código da develop, os dois arquivos do bootstrap e os casos JUnit da execução exata #44622033197. A prova futura permanece explicitamente aberta em OBL-010."
+        }
+      },
+      "rationale": "A verificação real do job nativo só é possível em uma PR criada depois de o contrato entrar no SHA da base; os ataques de CI/identidade já são negativos."
+    },
+    "f23a00716c2f663058d1615f498bb2044b4e88e292a58ba34df65cd4e573c55f": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R198-011"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "A execução autenticada da PR #203 selecionou certified-handoff na ausência do contrato na base e reprovou por dossiê ausente, sem fabricar aprovação."
+    },
+    "edbdb618e5f95e4e8cadcb3192879e21eb07886ce6efa91f106850d4af2e30b6": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R198-012"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-198",
+        "decision_source_sha256": "1f1f03f9d48e516a0d5a36e623e673694eca760b3802d4ddf650d9e3e6f984ee",
+        "decision_locator": "parecer real separado, por requisito, fontes e três controles JUnit e sem reuso de outro SHA",
+        "target_issue": 198,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "[ ] Pacote e verificador da revisão de sessão aceitam modo nativo somente quando verificado, com ; comentários/reviews não autenticados permanecem bloqueados",
+          "rationale": "Conteúdo anterior ao handoff é confrontado com o código da develop, os dois arquivos do bootstrap e os casos JUnit da execução exata #44622033197. A prova futura permanece explicitamente aberta em OBL-012."
+        }
+      },
+      "rationale": "O verificador nativo preserva JUnit, fontes e controles, mas o parecer independente em outra sessão será produzido APÓS handoff e não pode ser autodeclarado."
+    },
+    "339dc3debc7c1165f8e0c22dc8d06fcbc179ea5e9616cc6fd21d3e8593f60fc9": {
+      "disposition": "covered",
+      "requirement_ids": [
+        "R198-013"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": null,
+      "rationale": "Fixtures do HEAD/base, corpo da issue, digest de contrato, JUnit, revogação, merge preview e mudança concorrente de árvore exercem rejeição, com CI exata."
+    },
+    "28f61072834f019b639e834d5b50659002073eb2d6b68f2e481c140d4e332729": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R198-014"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-198",
+        "decision_source_sha256": "1f1f03f9d48e516a0d5a36e623e673694eca760b3802d4ddf650d9e3e6f984ee",
+        "decision_locator": "Migração dos checks",
+        "target_issue": 198,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "[ ]  não introduz required check pendente/skipped como substituto, não exige segundo usuário e mantém `develop` como branch base; não muda `main` por acidente",
+          "rationale": "Conteúdo anterior ao handoff é confrontado com o código da develop, os dois arquivos do bootstrap e os casos JUnit da execução exata #44622033197. A prova futura permanece explicitamente aberta em OBL-014."
+        }
+      },
+      "rationale": "A seleção segura e os checks foram testados e nenhum ruleset foi modificado; a migração administrativa em produção é etapa posterior à prova nativa real."
+    },
+    "df7b855ed22b093ae1438656f59f487de3d49dd7b7b7b6f3c03cd01f6828b858": {
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R198-015"
+      ],
+      "inventory_ids": [],
+      "assertion_ids": [],
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-198",
+        "decision_source_sha256": "1f1f03f9d48e516a0d5a36e623e673694eca760b3802d4ddf650d9e3e6f984ee",
+        "decision_locator": "auditoria separada aprovados",
+        "target_issue": 198,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "[ ] Skills, documentação, testes focados/canônicos, security checks e ; rulesets alterados somente após autorização/read-back",
+          "rationale": "Conteúdo anterior ao handoff é confrontado com o código da develop, os dois arquivos do bootstrap e os casos JUnit da execução exata #44622033197. A prova futura permanece explicitamente aberta em OBL-015."
+        }
+      },
+      "rationale": "As Skills, a documentação, a suíte e os security checks executaram; aprovação de auditoria separada é necessariamente posterior ao handoff."
+    }
+  },
+  "controls": {
+    "domain_inventories": [],
+    "observable_assertions": [],
+    "structural_invariant_closures": {
+      "status": "passed",
+      "applicability_reason": "O bootstrap estabelece caminho canônico de contrato no Git e proíbe a candidata de se autorizar.",
+      "entries": [
+        {
+          "id": "SIC-198001",
+          "kind": "structural",
+          "requirement_ids": [
+            "R198-004",
+            "R198-009",
+            "R198-011"
+          ],
+          "obligation_ids": [
+            "OBL-004",
+            "OBL-009",
+            "OBL-011"
+          ],
+          "plausible_wrong_implementation": "Ler o contrato alterado pela candidata e escolher o transporte nativo sem contrato previamente confiável.",
+          "canonical_path": "docs/audit/github-native-contract.json -> entregar-issue/scripts/resolve_trusted_audit_transport.py -> entregar-issue/scripts/classify_audit_transport.py",
+          "competing_paths": [
+            "PR head contract",
+            "PR body assertion",
+            "skipped native gate"
+          ],
+          "evidence_ids": [
+            "GH-203-44622033197"
+          ],
+          "scenario_ids": [
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_native_contract_from_immutable_trusted_base_passes",
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_candidate_cannot_install_own_native_exemption",
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_missing_contract_remains_legacy_without_false_success"
+          ],
+          "negative_control_evidence": [
+            "O modo certified-handoff persistiu na execução #44622033197; a fixture forjada do HEAD não concede isenção."
+          ]
+        }
+      ],
+      "unresolved_invariants": []
+    },
+    "read_model_closures": {
+      "status": "passed",
+      "applicability_reason": "A origem do histórico e da revogação continua no journal autenticado, não no contrato GitHub-native.",
+      "entries": [],
+      "unconsumed_outputs": [],
+      "unmapped_required_fields": []
+    },
+    "canonical_source_consistency": {
+      "status": "passed",
+      "applicability_reason": "Git tree da base autenticada é a fonte única da seleção de transporte; o HEAD candidato não concede exceção.",
+      "entries": [
+        {
+          "id": "CSC-198001",
+          "semantic_field": "audit_transport native activation",
+          "canonical_source": "entregar-issue/scripts/resolve_trusted_audit_transport.py leitura de docs/audit/github-native-contract.json na arvore base_sha",
+          "alternative_sources": [
+            "arquivo apenas no HEAD candidato",
+            "texto da PR declarando sucesso",
+            "artifact de outro SHA"
+          ],
+          "surfaces": [
+            "entregar-issue/scripts/classify_audit_transport.py",
+            ".github/workflows/reusable-handoff.yml",
+            "scripts/session_review_github.py"
+          ],
+          "evidence_ids": [
+            "GH-203-44622033197"
+          ],
+          "scenario_ids": [
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_native_contract_from_immutable_trusted_base_passes",
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_candidate_cannot_install_own_native_exemption",
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_missing_contract_remains_legacy_without_false_success"
+          ],
+          "negative_control_evidence": [
+            "A coleta anterior em #44622033197 registrou contract=null e mode=certified-handoff; o HEAD possui o contrato mas não foi considerado confiável."
+          ],
+          "divergent_fixture": {
+            "canonical_value": "base develop 674884c sem contrato: certified-handoff",
+            "alternative_values": [
+              "HEAD 86e2ced com contrato: native-github-audit ilegal",
+              "PR body candidata declara isencao"
+            ]
+          }
+        }
+      ],
+      "unverified_surfaces": [],
+      "missing_divergent_tests": []
+    },
+    "documentation_consistency": {
+      "status": "passed",
+      "applicability_reason": "A mudança documental de ativação do transporte foi confrontada com o resolvedor, workflows, Skills e política de revisão da base.",
+      "old_contract_terms": [
+        "handoff legado obrigatório quando não existe contrato na base confiável",
+        "revisão não autenticada não autoriza aprovação"
+      ],
+      "new_contract_terms": [
+        "contrato integrado à base habilita apenas a seleção do transporte nativo futuro",
+        "PR bootstrap continua legacy; job skipped nunca é prova positiva"
+      ],
+      "occurrences": [],
+      "unresolved_contradictions": [],
+      "searched_outside_diff": true,
+      "search_evidence": [
+        "docs/audit/github-native-rollout.md:1-42 foi lido junto de entregar-issue/references/native-github-audit-contract.md e auditar-issue/references/native-github-audit-contract.md na develop.",
+        "AGENTS.md, .github/workflows/reusable-handoff.yml e tests/test_native_audit_workflows.py foram inspecionados; nenhum required check foi alterado em PR #203.",
+        "GitHub CI de referencia anterior #44622033197 provou o fallback legacy e o bloqueio legítimo na mesma candidata."
+      ]
+    },
+    "scope_reduction_review": {
+      "status": "passed",
+      "matches": [
+        {
+          "path": "issue-198",
+          "line": 5,
+          "text": "`auditar-issue` e `entregar-issue` já reconhecem `audit_transport=native-github-audit` **somente** se o contrato for obtido do `base_sha` confiável; o repositório `skill` ainda não tem esse contrato canônico em `develop`.",
+          "disposition": "not-a-reduction",
+          "decision_source_id": "SRC-ISSUE-198",
+          "rationale": "OBL-002 retrata o estado inicial da base antes do contrato; obrigações operacionais ficam explícitas em OBL-004 e OBL-005."
+        }
+      ]
+    },
+    "pass_c": {
+      "status": "passed",
+      "requirement_ids": [
+        "R198-001",
+        "R198-003",
+        "R198-004",
+        "R198-005",
+        "R198-006",
+        "R198-007",
+        "R198-008",
+        "R198-009",
+        "R198-010",
+        "R198-011",
+        "R198-012",
+        "R198-013",
+        "R198-014",
+        "R198-015"
+      ],
+      "obligation_ids": [
+        "OBL-001",
+        "OBL-003",
+        "OBL-004",
+        "OBL-005",
+        "OBL-006",
+        "OBL-007",
+        "OBL-008",
+        "OBL-009",
+        "OBL-010",
+        "OBL-011",
+        "OBL-012",
+        "OBL-013",
+        "OBL-014",
+        "OBL-015"
+      ],
+      "evidence": [
+        "As 15 candidatas da issue #198 foram examinadas; OBL-002 é contexto histórico, 7 têm fase posterior explícita e as demais possuem casos JUnit e inspeção GitHub.",
+        "Refs CI #44622033307 (3347 testes, 11 subtestes), #44622033199 e #44622033197 (coleta válida, sem certificado).",
+        "GitHub rulesets #24821474 e #24821457 lidos sem escrita; main/develop sem mudanças de política nesta PR."
+      ],
+      "rederived_without_pr_description": true,
+      "reviewed_user_visible_semantics": true,
+      "reviewed_producer_consumer_parity": true,
+      "reviewed_all_specification_sources": true
+    }
+  }
+}

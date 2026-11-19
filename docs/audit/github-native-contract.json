@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "base_ref": "develop",
+  "canonical": true,
+  "audit_mode": "native-github",
+  "legacy_handoff_policy": "not-required",
+  "github_native_identity": true,
+  "exact_sha_evidence": true,
+  "independent_review": true,
+  "remote_ci_evidence": true
+}
