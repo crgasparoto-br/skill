@@ -143,7 +143,7 @@ def test_extra_unreviewed_policy_field_fails_closed(tmp_path):
 
 
 def test_symlink_does_not_become_a_canonical_contract(tmp_path):
-    root, base = repository(tmp_path)
+    root, _base = repository(tmp_path)
     path = root / POLICY_PATH
     path.parent.mkdir(parents=True)
     path.symlink_to("../../README.md")
