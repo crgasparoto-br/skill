@@ -26,12 +26,14 @@ REPO = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
 APP_ID = 15368  # GitHub Actions
 TECHNICAL = ("Structure and tests", "Offline authorization tests")
 HANDOFF = "collect / Require certified semantic handoff (exact SHA)"
+NATIVE_EVIDENCE = "collect / Require native GitHub audit evidence (exact SHA)"
 AUTHORIZED_PERMISSIONS = frozenset({"write", "maintain", "admin"})
 # Only these repository-owned workflow entrypoints may supply these check jobs.
 EXPECTED_WORKFLOWS = {
     TECHNICAL[0]: ".github/workflows/validate.yml",
     TECHNICAL[1]: ".github/workflows/github-audit-mcp.yml",
     HANDOFF: ".github/workflows/handoff-evidence.yml",
+    NATIVE_EVIDENCE: ".github/workflows/handoff-evidence.yml",
 }
 
 
@@ -274,13 +276,17 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
 
 
 def required_checks_green(checks: dict, head: str, base: str,
-                          trusted: Callable[[str, dict], bool]) -> None:
+                          trusted: Callable[[str, dict], bool], *,
+                          audit_transport: str = "certified-handoff") -> None:
+    if audit_transport not in {"certified-handoff", "native-github-audit"}:
+        raise ValueError("untrusted audit transport cannot select required checks")
     if not isinstance(checks, dict) or not isinstance(checks.get("check_runs"), list):
         raise ValueError("check-run inventory missing")
     runs = checks["check_runs"]
     if checks.get("total_count", len(runs)) > len(runs):
         raise ValueError("check-run inventory truncated")
-    names = (*TECHNICAL, *((HANDOFF,) if base == "develop" else ()))
+    required_evidence = NATIVE_EVIDENCE if audit_transport == "native-github-audit" else HANDOFF
+    names = (*TECHNICAL, *((required_evidence,) if base == "develop" else ()))
     for name in names:
         matches = [
             c for c in runs if c.get("name") == name and c.get("head_sha") == head
