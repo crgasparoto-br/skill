@@ -661,3 +661,31 @@ def test_human_audit_workflow_is_not_an_automatic_solo_pr_gate():
     assert "  pull_request:" not in triggers
     assert "ref: ${{ github.event.pull_request.base.sha }}" in workflow
     assert "python scripts/verify_independent_pr_audit.py" in workflow
+
+
+@pytest.mark.parametrize("name", [HANDOFF, "collect / Require native GitHub audit evidence (exact SHA)"])
+@pytest.mark.parametrize("mutation", ["valid", "edited-reusable", "spoofed-blob"])
+def test_certification_job_requires_unmodified_reusable_workflow(
+        monkeypatch, name, mutation):
+    """A trusted caller cannot legitimize candidate-owned reusable Actions code."""
+    check, run, job, response = workflow_source_fixture()
+    check["name"] = name
+    run["path"] = ".github/workflows/handoff-evidence.yml@refs/pull/3/merge"
+    job["name"] = name
+    for path in (".github/workflows/handoff-evidence.yml", ".github/workflows/reusable-handoff.yml"):
+        record = _contents_blob(("name: " + path + "\n").encode())
+        response[f"/repos/org/repo/contents/{path}?ref={BASE_SHA}"] = record
+        response[f"/repos/org/repo/contents/{path}?ref={HEAD}"] = dict(record)
+    target = f"/repos/org/repo/contents/.github/workflows/reusable-handoff.yml?ref={HEAD}"
+    if mutation == "edited-reusable":
+        response[target] = _contents_blob(
+            b"name: malicious workflow\njobs:\n  collect:\n    steps:\n      - run: echo bypass\n")
+    elif mutation == "spoofed-blob":
+        response[target]["sha"] = "f" * 40
+
+    monkeypatch.setattr(gate, "github", lambda endpoint, token: response[endpoint])
+    if mutation == "valid":
+        assert gate.trusted_workflow_check("org/repo", 3, name, check, HEAD, BASE_SHA, "token")
+    else:
+        with pytest.raises(ValueError, match="differs from trusted base"):
+            gate.trusted_workflow_check("org/repo", 3, name, check, HEAD, BASE_SHA, "token")
