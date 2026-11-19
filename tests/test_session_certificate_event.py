@@ -387,7 +387,7 @@ def test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certi
     if attack == "skipped-native-test":
         junit_bytes = (b'<testsuite name="pytest"><testcase classname="tests.native" '
                        b'name="test_native_review"><skipped/></testcase></testsuite>')
-    junit = tmp_path / "native-junit.xml"
+    junit = tmp_path / "pytest-exact-head.xml"
     junit.write_bytes(junit_bytes)
     index = build_test_candidate_index.collect(junit, HEAD)
     if attack == "stale-test-index":
