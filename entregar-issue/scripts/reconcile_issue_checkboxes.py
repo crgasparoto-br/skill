@@ -59,6 +59,16 @@ def _open_raw_html_block(line: str) -> tuple[bool, str]:
         return True, "until-blank"
     return False, ""
 
+
+def _advance_html_block(block: str, line: str) -> str:
+    """Keep raw HTML inert until its CommonMark termination rule is met."""
+    if block == "until-blank":
+        return "" if not line.strip() else block
+    if block.startswith("terminator:"):
+        return "" if block[len("terminator:"):] in line else block
+    return "" if re.search(rf"</{block}[ \t]*>", line, re.IGNORECASE) else block
+
+
 def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     """Return original lines, criteria, and text normalized only for checkbox markers."""
     lines = body.splitlines(keepends=True)
@@ -80,14 +90,7 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
                 in_comment = False
             continue
         if html_block:
-            if html_block == "until-blank":
-                if not stripped.strip():
-                    html_block = ""
-            elif html_block.startswith("terminator:"):
-                if html_block[len("terminator:"):] in stripped:
-                    html_block = ""
-            elif re.search(rf"</{html_block}[ \t]*>", stripped, re.IGNORECASE):
-                html_block = ""
+            html_block = _advance_html_block(html_block, stripped)
             continue
         # A leading tab is a four-space Markdown code indentation.
         leading = line[:len(line) - len(line.lstrip(" \t"))]
