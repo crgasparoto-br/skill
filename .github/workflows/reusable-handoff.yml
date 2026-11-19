@@ -158,7 +158,7 @@ jobs:
 
       - name: Validate evidence and build handoff certificate, fail closed
         id: certificate
-        if: ${{ always() && steps.exact_tests.outputs.exit_code != '' }}
+        if: ${{ always() && steps.exact_tests.outputs.exit_code != '' && steps.transport.outputs.mode == 'certified-handoff' }}
         shell: bash
         env:
           BASE_REF: ${{ inputs.base-ref }}
