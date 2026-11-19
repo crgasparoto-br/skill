@@ -11,11 +11,16 @@ from pathlib import Path
 HEADING = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*\r?\n?$")
 CRITERIA_TITLE = re.compile(r"^(crit[eé]rios de aceite|acceptance criteria)$", re.IGNORECASE)
 ITEM = re.compile(
-    r"^(?P<prefix>[ \t]{0,3}(?:[-*+]|\d{1,9}[.)])[ \t]+)"
+    r"^(?P<prefix>[ \t]{0,3}(?:[-*+]|[0-9]{1,9}[.)])[ \t]+)"
     r"(?P<checkbox>\[[ xX]\][ \t]+)?"
     r"(?P<text>\S.*?)(?P<ending>\r?\n?)$"
 )
 SHA = re.compile(r"^[0-9a-f]{40}$")
+# In CommonMark thematic breaks take precedence over list items.
+# They are inert separators, never acceptance criteria.
+THEMATIC_BREAK = re.compile(
+    r"^ {0,3}(?:-[ \t]*){3,}\r?\n?$|^ {0,3}(?:\*[ \t]*){3,}\r?\n?$"
+)
 
 
 HTML_BLOCK_TAGS = (
@@ -79,7 +84,7 @@ def _criterion_match(line: str, in_criteria: bool, paragraph_open: bool) -> re.M
     match = ITEM.match(line)
     if match is None:
         return None
-    ordered = re.match(r"(\d+)[.)]", match.group("prefix").lstrip())
+    ordered = re.match(r"([0-9]+)[.)]", match.group("prefix").lstrip())
     if paragraph_open and ordered and int(ordered.group(1)) != 1:
         return None
     return match
@@ -152,6 +157,9 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
                 in_criteria = depth == 2 and bool(CRITERIA_TITLE.fullmatch(heading_title))
                 if in_criteria:
                     sections += 1
+            continue
+        if THEMATIC_BREAK.fullmatch(line):
+            paragraph_open = False
             continue
         match = _criterion_match(line, in_criteria, paragraph_open)
         if match is None:
