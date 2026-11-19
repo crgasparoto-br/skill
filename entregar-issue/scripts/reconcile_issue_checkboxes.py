@@ -72,6 +72,19 @@ def _advance_html_block(block: str, line: str) -> str:
     return "" if re.search(rf"</{block}[ \t]*>", line, re.IGNORECASE) else block
 
 
+def _criterion_match(line: str, in_criteria: bool, paragraph_open: bool) -> re.Match[str] | None:
+    """Return only real criteria; a non-one ordered item cannot start a list mid-paragraph."""
+    if not in_criteria:
+        return None
+    match = ITEM.match(line)
+    if match is None:
+        return None
+    ordered = re.match(r"(\d+)[.)]", match.group("prefix").lstrip())
+    if paragraph_open and ordered and int(ordered.group(1)) != 1:
+        return None
+    return match
+
+
 def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     """Return original lines, criteria, and text normalized only for checkbox markers."""
     lines = body.splitlines(keepends=True)
@@ -140,17 +153,9 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
                 if in_criteria:
                     sections += 1
             continue
-        if not in_criteria:
-            paragraph_open = True
-            continue
-        match = ITEM.match(line)
+        match = _criterion_match(line, in_criteria, paragraph_open)
         if match is None:
             paragraph_open = True
-            continue
-        # Ordered lists starting at a number other than one do not interrupt
-        # an open paragraph; treating them as criteria would change the contract.
-        ordered = re.match(r"(\d+)[.)]", match.group("prefix").lstrip())
-        if paragraph_open and ordered and int(ordered.group(1)) != 1:
             continue
         paragraph_open = False
         items.append(
