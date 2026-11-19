@@ -39,4 +39,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python entregar-issue/scripts/publish_actions_handoff.py --event "$GITHUB_EVENT_PATH"
+          python entregar-issue/scripts/publish_actions_handoff.py --event "$GITHUB_EVENT_PATH" --skip-native-publication
