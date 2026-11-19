@@ -37,6 +37,8 @@ permissions:
 jobs:
   evidence:
     name: Collect exact-SHA technical evidence
+    outputs:
+      audit_transport: ${{ steps.transport.outputs.mode }}
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == inputs.base-ref }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -70,6 +72,24 @@ jobs:
           mv -- .handoff-tooling "$tooling_target"
           echo "HANDOFF_TOOLING=$tooling_target" >> "$GITHUB_ENV"
           test ! -e .handoff-tooling
+
+      - name: Resolve audit transport from authenticated GitHub PR base
+        id: transport
+        shell: bash
+        env:
+          BASE_REF: ${{ inputs.base-ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MATERIAL_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          python "$HANDOFF_TOOLING/entregar-issue/scripts/resolve_trusted_audit_transport.py" \
+            --root . --repository "$GITHUB_REPOSITORY" --base-ref "$BASE_REF" \
+            --base-sha "$BASE_SHA" --head-sha "$MATERIAL_SHA" \
+            --output "$EVIDENCE_DIR/audit-transport.json"
+          mode=$(python -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8"))["mode"])' \
+            "$EVIDENCE_DIR/audit-transport.json")
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python for trusted Skill validators
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -128,7 +148,7 @@ jobs:
             --out "$EVIDENCE_DIR/test-candidate-index.json"
 
       - name: Produce project-specific semantic evidence (when configured)
-        if: ${{ steps.exact_tests.outputs.exit_code == '0' && inputs.evidence-command != '' }}
+        if: ${{ steps.exact_tests.outputs.exit_code == '0' && inputs.evidence-command != '' && steps.transport.outputs.mode == 'certified-handoff' }}
         shell: bash
         env:
           EVIDENCE_COMMAND: ${{ inputs.evidence-command }}
@@ -172,7 +192,7 @@ jobs:
   certification:
     name: Require certified semantic handoff (exact SHA)
     needs: evidence
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == inputs.base-ref }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == inputs.base-ref && needs.evidence.outputs.audit_transport == 'certified-handoff' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -199,3 +219,41 @@ jobs:
           python .trusted-handoff-gate/entregar-issue/scripts/require_actions_handoff_certificate.py \
             --event "$GITHUB_EVENT_PATH" --base-ref "$BASE_REF" \
             --evidence-dir "$RUNNER_TEMP/handoff-certification"
+
+  native_audit_evidence:
+    name: Require native GitHub audit evidence (exact SHA)
+    needs: evidence
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == inputs.base-ref && needs.evidence.outputs.audit_transport == 'native-github-audit' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download exact-SHA technical evidence
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: handoff-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/native-evidence
+
+      - name: Checkout exact material SHA for trusted Git verification
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout trusted official native evidence validator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.tooling-repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .trusted-native-audit
+          persist-credentials: false
+
+      - name: Require authenticated native GitHub evidence (not review approval)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ inputs.base-ref }}
+          SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW: "1"
+        run: |
+          python .trusted-native-audit/entregar-issue/scripts/validate_native_actions_evidence.py \
+            --root . --event "$GITHUB_EVENT_PATH" --base-ref "$BASE_REF" \
+            --evidence-dir "$RUNNER_TEMP/native-evidence"
