@@ -23,6 +23,7 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 - [Escopo auditado](#escopo-auditado)
 - [Estado dos gates e alcance de testes](#estado-dos-gates-e-alcance-de-testes)
 - [Matriz de requisitos](#matriz-de-requisitos)
+- [Critérios de aceite e validações da implementação](#critérios-de-aceite-e-validações-da-implementação)
 - [Achados bloqueantes](#achados-bloqueantes)
 - [Riscos inferidos nao confirmados](#riscos-inferidos-nao-confirmados)
 - [Limitacoes exclusivas do auditor](#limitacoes-exclusivas-do-auditor)
@@ -141,6 +142,18 @@ Nao marcar teste posterior ao primeiro abort como executado. Nao extrapolar job 
 | REQ-001 | issue | ... | `arquivo:linhas`, teste ou comportamento | Implementado | ... |
 
 Usar uma linha por requisito. Não combinar requisitos diferentes para aparentar cobertura.
+
+## Critérios de aceite e validações da implementação
+
+Registrar cada item da seção `Critérios de aceite` da issue, inclusive os já marcados. Usar posição e texto da fonte como identidade; indicar evidência reproduzível e o SHA. Esta matriz é a proposta de reconciliação, não autorização de escrita pelo auditor.
+
+| Posição | Texto do critério | Checkbox observado | Decisão | Prova e SHA | Ação proposta |
+|---|---|---|---|---|---|
+| 1 | ... | `[ ]` | `verified/failed/partial/unknown/not-applicable` | `teste, comando, URL, observado, SHA` | `marcar/desmarcar/manter` |
+
+**Validações adicionais:** testes unitários, integração, E2E, negativos, regressão, CI exact-SHA, lint/typecheck/build, segurança, arquitetura, persistência, documentação, interface e demais gates aplicáveis. Para cada família registrar o resultado observado e a fonte; justificar não aplicabilidade e distinguir `declared/reached/passed`. Checklist já marcado e CI verde isolada não bastam.
+
+A reconciliação remota do checklist pertence ao executor autorizado após a auditoria; a Skill `auditar-issue` permanece somente leitura. Não confundir itens individualmente comprovados com aprovação global ou fechamento da issue.
 
 ## Achados bloqueantes
 

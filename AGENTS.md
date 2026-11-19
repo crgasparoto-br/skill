@@ -44,6 +44,8 @@ Consequências práticas para quem escreve a issue:
 - os comentários dos templates servem como orientação e devem ser apagados antes de abrir a issue;
 - `Invariantes` é a seção para restrição estrutural: comportamento proibido, reuso de fonte existente, fonte única de verdade, proibição de dependência, precedência entre fontes ou caminho de código vedado.
 
+Após parecer independente autenticado ou atestação solo aceita por gate confiável, o controlador autorizado pode reconciliar os checkboxes comprovados da issue; a auditoria permanece somente leitura. Confrontar sempre cada critério com evidência, além dos testes, CI, segurança, arquitetura, documentação e regressões aplicáveis. Um checkbox marcado não é aprovação nem autoriza encerrar a issue.
+
 As seções normativas lidas pelos extratores estão declaradas em [config/issue-templates.json](config/issue-templates.json) e validadas por `scripts/validate_issue_templates.py`. O padrão completo de especificação está em [revisar-issue/references/specification-standard.md](revisar-issue/references/specification-standard.md).
 
 ### Restrição de redação nos templates

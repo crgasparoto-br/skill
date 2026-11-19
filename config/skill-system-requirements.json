@@ -478,6 +478,24 @@
       "validationRefs": [
         "file:design-interface/tests/test_design_system_resolution.py"
       ]
+    },
+    {
+      "id": "SKSYS-031",
+      "title": "Acceptance-criteria evidence and authorized issue checklist reconciliation",
+      "status": "implemented",
+      "summary": "Read-only audit assesses every acceptance criterion and all applicable implementation gates; a formally verified independent review or accepted solo-context attestation enables an authorized post-audit owner reconciles only verified checklist states using an exact-material-SHA, full-item decisions, normative-text drift check and remote read-back. Checkmarks never replace audit approval.",
+      "implementationRefs": [
+        "file:docs/SKILL_SYSTEM_SPEC.md",
+        "file:auditar-issue/SKILL.md",
+        "file:auditar-issue/references/report-template.md",
+        "file:entregar-issue/SKILL.md",
+        "file:entregar-issue/references/issue-checklist-reconciliation.md",
+        "file:entregar-issue/scripts/reconcile_issue_checkboxes.py"
+      ],
+      "validationRefs": [
+        "file:entregar-issue/tests/test_issue_checklist_reconciliation.py",
+        "file:.github/workflows/validate.yml"
+      ]
     }
   ],
   "system_version": "2026-10-08.2"

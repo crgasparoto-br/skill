@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 196,
+  "pull_request_number": 197,
+  "base_ref": "develop",
+  "head_ref": "feat/issue-196-audit-checklist-closure",
+  "work_item_start_sha": "0e7ad534729598ed0df6bc5163ccb626669feae3",
+  "review_state": "incomplete",
+  "evidence_profile": "critical",
+  "risk_justification": "Critérios de aceite e fluxo de aprovação afetam autorização de escrita em issue GitHub, integridade de evidência, SHA exato e auditoria independente. Exigem controles adversariais e certificação crítica.",
+  "audit_history": "previous-rejection",
+  "audit_history_evidence": "A auditoria anterior desta PR em conversa separada retornou REPROVADA com A-001 (context budget) e A-002 (parser fenced Markdown), ID audit-rejection:40f45186-90c5-43e0-97c5-9ed337fa0876. O resultado não foi publicado como revisão autenticada no GitHub; autenticidade/lineage continuam pendentes.",
+  "remediation_mode": "targeted-remediation",
+  "artifact_sha256": {},
+  "test_bindings": {
+    "R196-003": {
+      "positive": [
+        "tests.test_issue_templates::test_configured_normative_sections_match_independent_audit_parser"
+      ],
+      "negative": [
+        "tests.test_issue_templates::test_non_normative_heading_does_not_satisfy_a_normative_section"
+      ],
+      "regression": [
+        "tests.test_issue_templates::test_shipped_issue_templates_are_valid"
+      ]
+    },
+    "R196-005": {
+      "positive": [
+        "tests.test_audit_completeness_gate::test_complete_audit_can_publish"
+      ],
+      "negative": [
+        "tests.test_audit_completeness_gate::test_false_approval_and_false_completeness_are_blocked"
+      ],
+      "regression": [
+        "tests.test_audit_completeness_gate::test_entrypoint_requires_completeness_gate"
+      ]
+    },
+    "R196-010": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence"
+      ]
+    },
+    "R196-011": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_idempotence_and_checkbox_only_concurrent_updates"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_material_issue_drift[changed0]"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_stale_sha_and_identity_swap"
+      ]
+    },
+    "R196-012": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_solo_attestation_is_allowed_without_claiming_independence"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence"
+      ]
+    },
+    "R196-013": {
+      "positive": [
+        "tests.test_catalog_governance::test_catalog_is_valid_and_matches_skill_metadata"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_fails_closed_on_ambiguous_or_unknown_request"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_runtime_skill_allowlist_matches_catalog"
+      ]
+    },
+    "R196-014": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_delivery_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ]
+    },
+    "R196-019": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_lists_after_blank_line_and_in_ordered_parent"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_stale_sha_and_identity_swap",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_indented_code_not_promoted_to_nested_acceptance_criterion"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_acceptance_items_are_audited_individually"
+      ]
+    },
+    "R196-020": {
+      "positive": [
+        "tests.test_audit_completeness_gate::test_no_unreported_blocker_and_no_premature_closure"
+      ],
+      "negative": [
+        "tests.test_audit_completeness_gate::test_false_approval_and_false_completeness_are_blocked"
+      ],
+      "regression": [
+        "tests.test_audit_completeness_gate::test_complete_audit_can_publish"
+      ]
+    },
+    "R196-021": {
+      "positive": [
+        "tests.test_catalog_governance::test_documentation_references_are_current"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_contract_validator_detects_generated_copy_drift"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_catalog_documentation_is_generated_and_current"
+      ]
+    },
+    "R196-022": {
+      "positive": [
+        "tests.test_issue_templates::test_shipped_issue_templates_are_valid"
+      ],
+      "negative": [
+        "tests.test_issue_templates::test_missing_required_template_blocks"
+      ],
+      "regression": [
+        "tests.test_issue_templates::test_configured_normative_sections_match_producer_parser"
+      ]
+    },
+    "R196-023": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_acceptance_items_are_audited_individually"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_material_issue_drift[changed0]",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_indented_code_not_promoted_to_nested_acceptance_criterion"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_idempotence_and_checkbox_only_concurrent_updates",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_lists_after_blank_line_and_in_ordered_parent"
+      ]
+    },
+    "R196-024": {
+      "positive": [
+        "tests.test_audit_completeness_gate::test_complete_audit_can_publish"
+      ],
+      "negative": [
+        "tests.test_audit_completeness_gate::test_changed_path_is_not_silently_skipped"
+      ],
+      "regression": [
+        "tests.test_audit_completeness_gate::test_diff_source_is_not_self_reported"
+      ]
+    },
+    "R196-025": {
+      "positive": [
+        "tests.test_catalog_governance::test_documentation_references_are_current"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_contract_validator_detects_generated_copy_drift"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_catalog_documentation_is_generated_and_current"
+      ]
+    },
+    "R196-001": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence"
+      ]
+    },
+    "R196-002": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_delivery_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ]
+    },
+    "R196-004": {
+      "positive": [
+        "tests.test_audit_completeness_gate::test_complete_audit_can_publish"
+      ],
+      "negative": [
+        "tests.test_audit_completeness_gate::test_missing_requirement_or_surface_is_blocked"
+      ],
+      "regression": [
+        "tests.test_audit_completeness_gate::test_entrypoint_requires_completeness_gate"
+      ]
+    },
+    "R196-007": {
+      "positive": [
+        "tests.test_issue_templates::test_configured_normative_sections_match_independent_audit_parser"
+      ],
+      "negative": [
+        "tests.test_issue_templates::test_non_normative_heading_does_not_satisfy_a_normative_section"
+      ],
+      "regression": [
+        "tests.test_issue_templates::test_shipped_issue_templates_are_valid"
+      ]
+    },
+    "R196-008": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_acceptance_items_are_audited_individually"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_orphan_indented_code_is_inert_and_missing_child_decision_blocks"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_heading_does_not_terminate_acceptance_section"
+      ]
+    },
+    "R196-017": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_delivery_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ]
+    },
+    "R196-018": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_idempotence_and_checkbox_only_concurrent_updates"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence"
+      ]
+    }
+  },
+  "grounding_test_bindings": {
+    "entregar-issue/tests/test_first_audit_escape_bootstrap.py": [
+      {
+        "case": "entregar-issue/tests/test_first_audit_escape_bootstrap.py::test_audit_source_cannot_be_substituted[head_sha-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]",
+        "test_case_id": "entregar-issue.tests.test_first_audit_escape_bootstrap::test_audit_source_cannot_be_substituted[head_sha-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb]"
+      }
+    ],
+    "entregar-issue/tests/test_handoff_postcondition_records.py": [
+      {
+        "case": "entregar-issue/tests/test_handoff_postcondition_records.py::test_default_remediation_validation_rejects_blocked_preparation",
+        "test_case_id": "entregar-issue.tests.test_handoff_postcondition_records::test_default_remediation_validation_rejects_blocked_preparation"
+      }
+    ],
+    "entregar-issue/tests/test_publish_actions_handoff.py": [
+      {
+        "case": "entregar-issue/tests/test_publish_actions_handoff.py::test_allowlist_blocks_material_paths_and_unexpected_names",
+        "test_case_id": "entregar-issue.tests.test_publish_actions_handoff::test_allowlist_blocks_material_paths_and_unexpected_names"
+      }
+    ],
+    "entregar-issue/tests/test_terminal_handoff_contract.py": [
+      {
+        "case": "entregar-issue/tests/test_terminal_handoff_contract.py::test_pending_ci_delegates_before_terminal_handoff",
+        "test_case_id": "entregar-issue.tests.test_terminal_handoff_contract::test_pending_ci_delegates_before_terminal_handoff"
+      }
+    ],
+    "entregar-issue/tests/test_issue_checklist_reconciliation.py": [
+      {
+        "case": "entregar-issue/tests/test_issue_checklist_reconciliation.py::test_mark_verified_unmark_failed_and_preserve_other_sections",
+        "test_case_id": "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections"
+      }
+    ],
+    "tests/test_context_budget.py": [
+      {
+        "case": "tests/test_context_budget.py::test_shipped_allowances_are_live_measurements",
+        "test_case_id": "tests.test_context_budget::test_shipped_allowances_are_live_measurements"
+      }
+    ]
+  }
+}

@@ -58,6 +58,8 @@ Nenhuma skill possui autoridade implícita para merge. Aprovação interna, audi
 
 Auditoria independente usa identidade e evidência do candidato, não raciocínio privado do implementador. Trocar o nome da skill dentro do mesmo contexto não prova independência.
 
+O auditor confronta individualmente os critérios de aceite da issue e todos os gates aplicáveis, registra provas e propõe o estado do checklist sem alterar o GitHub. Um executor autorizado, em etapa pós-auditoria, pode reconciliar marcadores de conclusão de cada item comprovado, preservando a identidade material e o texto normativo, com leitura remota posterior. Checkbox não substitui prova, aprovação independente nem autorização de fechamento.
+
 ### 4.6 Ownership exclusivo por fase
 
 Quando uma fase transfere ownership — por exemplo, `entregar-issue -> corrigir-ci` — apenas um owner pode controlar a mesma responsabilidade para o mesmo material SHA. O retorno deve ser explícito e estruturado.

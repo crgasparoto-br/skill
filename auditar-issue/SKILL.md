@@ -206,6 +206,8 @@ Executar `documentacao-repositorio`, `design-interface` e `fluxos-conversacionai
 
 Requisitos: `Implementado`, `Parcial`, `Nao implementado`, `Incorreto`, `Nao verificavel` ou `Fora do escopo`.
 
+Mapear individualmente todos os itens da secao `Criterios de aceite` da issue, inclusive checkboxes ja marcados: texto, posicao, estado inicial, prova positiva/negativa e regressao pertinentes, decisao e acao documental proposta. Nao equiparar checkbox ou CI verde a evidencia; auditar tambem seguranca, arquitetura, testes, documentacao e demais gates aplicaveis. Na saida, fornecer a matriz para reconciliacao posterior pelo executor autorizado, sem editar issue ou candidato.
+
 Achados: `Bloqueador`, `Alto`, `Medio` ou `Baixo`, sempre ligados a requisito e impacto. Todo finding deve emitir `remediation_mode=targeted-remediation|systemic-remediation`. Recomendacoes devem possuir ID estavel, `actionable=true|false` e `remediation_mode`; itens acionaveis devem ser consumidos pelo dono de remediacao correspondente a `delivery_origin`, sem troca automatica de controlador.
 
 Parecer independente: `Aprovado`, `Aprovado com ressalvas`, `Inconclusivo` ou `Reprovado`. Usar `Inconclusivo` apenas para limitacao externa ao candidato/entrega.
