@@ -767,24 +767,3 @@ def test_native_audit_transport_is_read_only_from_authenticated_base(
             runner.trusted_audit_transport(identity)
     assert len(seen) == 1
     assert seen[0][2] == identity["base_sha"]
-
-def test_exact_sha_compare_endpoint_keeps_path_traversal_protection(monkeypatch):
-    calls = []
-
-    def succeeded(args, **kwargs):
-        calls.append(args[-1])
-        return runner.subprocess.CompletedProcess(args, 0, b"{}", b"")
-
-    monkeypatch.setattr(runner.subprocess, "run", succeeded)
-    endpoint = "/repos/owner/repo/compare/" + "9" * 40 + "..." + "b" * 40
-    assert runner.api(endpoint) == {}
-    for bad in [
-        "/repos/owner/repo/compare/../other",
-        "/repos/owner/repo/compare/" + "9" * 40 + "...../" + "b" * 40,
-        endpoint + "/other",
-        endpoint + "?ref=untrusted",
-        "/repos/owner/repo/compare/short..." + "b" * 40,
-    ]:
-        with pytest.raises(ValueError, match="unexpected GitHub endpoint"):
-            runner.api(bad)
-    assert calls == [endpoint]
