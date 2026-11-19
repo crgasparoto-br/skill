@@ -373,3 +373,90 @@ def test_unicode_numeric_markers_are_not_commonmark_list_items(digit: str) -> No
     proposed, _ = mod.reconcile(body, body, audit("verified", body=body), SHA)
     assert digit + ". [ ] Exemplo inválido\n" in proposed
     assert "- [x] Real\n" in proposed
+
+
+
+def test_nested_acceptance_items_are_audited_individually() -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Pai\n"
+        "    - [ ] Filho com quatro espaços\n"
+        "- [ ] Outro\n"
+    )
+    items = mod.analyze_body(body)[1]
+    assert [item["text"] for item in items] == [
+        "Pai", "Filho com quatro espaços", "Outro",
+    ]
+    result, summary = mod.reconcile(
+        body, body, audit("verified", "failed", "verified", body=body), SHA,
+    )
+    assert "- [x] Pai\n" in result
+    assert "    - [ ] Filho com quatro espaços\n" in result
+    assert "- [x] Outro\n" in result
+    assert summary["criteria_total"] == 3
+
+
+def test_nested_lists_after_blank_line_and_in_ordered_parent() -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "1. [ ] Pai ordenado\n\n"
+        "    - [ ] Filho\n"
+        "        - [ ] Neto\n"
+        "2. [ ] Irmão\n"
+    )
+    items = mod.analyze_body(body)[1]
+    assert [item["text"] for item in items] == [
+        "Pai ordenado", "Filho", "Neto", "Irmão",
+    ]
+    result, summary = mod.reconcile(
+        body, body, audit("verified", "verified", "unknown", "verified", body=body), SHA,
+    )
+    assert "    - [x] Filho\n" in result
+    assert "        - [ ] Neto\n" in result
+    assert summary["criteria_total"] == 4
+
+
+def test_indented_code_not_promoted_to_nested_acceptance_criterion() -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Pai\n\n"
+        "      - [ ] Dentro de código do pai\n"
+        "- [ ] Segundo\n"
+        "    - [ ] Filho legítimo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == [
+        "Pai", "Segundo", "Filho legítimo",
+    ]
+    result, summary = mod.reconcile(
+        body, body, audit("verified", "verified", "verified", body=body), SHA,
+    )
+    assert "      - [ ] Dentro de código do pai\n" in result
+    assert "    - [x] Filho legítimo\n" in result
+    assert len(summary["changes"]) == 3
+
+
+def test_orphan_indented_code_is_inert_and_missing_child_decision_blocks() -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "    - [ ] Código órfão\n"
+        "- [ ] Pai\n"
+        "    - [ ] Filho\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Pai", "Filho"]
+    with pytest.raises(ValueError, match="Every criterion"):
+        mod.reconcile(body, body, audit("verified", "verified", body=body) | {
+            "criteria": audit("verified", "verified", body=body)["criteria"][:1]
+        }, SHA)
+
+
+def test_nested_heading_does_not_terminate_acceptance_section() -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Pai\n"
+        "  ## Subtítulo dentro do item\n"
+        "    - [ ] Filho\n"
+        "- [ ] Outro\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == [
+        "Pai", "Filho", "Outro",
+    ]
