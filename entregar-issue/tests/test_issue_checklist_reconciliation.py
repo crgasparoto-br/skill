@@ -225,3 +225,48 @@ def test_unterminated_inert_block_fails_closed(opening: str) -> None:
 def test_indented_acceptance_heading_is_recognized() -> None:
     body = "  ## Critérios de aceite ###\n- [ ] Real\n"
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]
+
+@pytest.mark.parametrize("tag", ["div", "details", "section", "custom-panel"])
+def test_html_blocks_do_not_inject_fake_headings_or_acceptance_items(tag: str) -> None:
+    # CommonMark type 6 (standard tags) and type 7 (custom tags) are inert.
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Primeiro\n"
+        f"<{tag}>\n"
+        "## Cabeçalho de exemplo\n"
+        "- [ ] Falso\n"
+        f"</{tag}>\n"
+        "\n"
+        "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+    result, summary = mod.reconcile(body, body, audit("verified", "verified", body=body), SHA)
+    assert "- [x] Primeiro\n" in result
+    assert "- [ ] Falso\n" in result
+    assert "- [x] Segundo\n" in result
+    assert len(summary["changes"]) == 2
+
+
+def test_standard_html_block_stays_inert_until_blank_line() -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Primeiro\n"
+        "<div>\n"
+        "- [ ] Exemplo\n"
+        "</div>\n"
+        "- [ ] Ainda inerte\n"
+        "\n"
+        "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+
+
+@pytest.mark.parametrize(
+    ("opening", "closing"),
+    [("<?demo\n", "?>\n"), ("<![CDATA[\n", "]]>\n"), ("<!DOCTYPE html\n", ">\n")],
+)
+def test_other_multiline_html_inert_blocks_do_not_inject_items(
+    opening: str, closing: str
+) -> None:
+    body = "## Critérios de aceite\n" + opening + "- [ ] Falso\n" + closing + "- [ ] Real\n"
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]

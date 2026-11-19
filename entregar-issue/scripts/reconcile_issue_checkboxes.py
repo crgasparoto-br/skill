@@ -18,14 +18,46 @@ ITEM = re.compile(
 SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
-def _open_raw_html_block(line: str) -> tuple[bool, str]:
-    """Detect inert raw HTML and track its terminator separately from checkboxes."""
-    raw_tag = re.match(r"<(pre|script|style|textarea)\b", line, re.IGNORECASE)
-    if raw_tag is None:
-        return False, ""
-    tag = raw_tag.group(1).lower()
-    return True, tag if not re.search(rf"</{tag}[ \t]*>", line, re.IGNORECASE) else ""
+HTML_BLOCK_TAGS = (
+    "address", "article", "aside", "base", "basefont", "blockquote", "body",
+    "caption", "center", "col", "colgroup", "dd", "details", "dialog",
+    "dir", "div", "dl", "dt", "fieldset", "figcaption", "figure",
+    "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4",
+    "h5", "h6", "head", "header", "hr", "html", "iframe", "legend",
+    "li", "link", "main", "menu", "menuitem", "meta", "nav",
+    "noframes", "ol", "optgroup", "option", "output", "p", "param",
+    "search", "section", "summary", "table", "tbody", "td", "tfoot",
+    "th", "thead", "title", "tr", "track", "ul",
+)
+HTML_BLOCK_OPEN = re.compile(
+    r"^ {0,3}</?(?:" + "|".join(HTML_BLOCK_TAGS) + r")(?=[ \t/>])",
+    re.IGNORECASE,
+)
+# CommonMark type 7: a complete opening/closing HTML tag on its own line
+# starts a raw block terminated by a blank line, including custom elements.
+HTML_BLOCK_GENERIC = re.compile(
+    r"^ {0,3}</?[A-Za-z][A-Za-z0-9-]*"
+    r"(?:[ \t]+[A-Za-z_:][\w:.-]*(?:[ \t]*=[ \t]*(?:\"[^\"]*\"|'[^']*'|[^ \t=<>\x60'\"]+))?)*"
+    r"[ \t]*/?>[ \t]*$"
+)
 
+def _open_raw_html_block(line: str) -> tuple[bool, str]:
+    """Return whether this is an inert CommonMark HTML opener and how it ends."""
+    raw_tag = re.match(r"<(pre|script|style|textarea)(?=[ \t>])", line, re.IGNORECASE)
+    if raw_tag is not None:
+        tag = raw_tag.group(1).lower()
+        return True, tag if not re.search(rf"</{tag}[ \t]*>", line, re.IGNORECASE) else ""
+
+    # Types 3-5 have a content terminator. Types 6-7 end at a blank line,
+    # even if a closing HTML tag appears earlier.
+    for prefix, terminator in (("<?", "?>"), ("<![CDATA[", "]]>")):
+        if line.startswith(prefix):
+            return True, f"terminator:{terminator}" if terminator not in line else ""
+    if re.match(r"<![A-Z]", line):
+        return True, "terminator:>" if ">" not in line else ""
+    if HTML_BLOCK_OPEN.match(line) or HTML_BLOCK_GENERIC.match(line.rstrip("\r\n")):
+        return True, "until-blank"
+    return False, ""
 
 def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     """Return original lines, criteria, and text normalized only for checkbox markers."""
@@ -48,7 +80,13 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
                 in_comment = False
             continue
         if html_block:
-            if re.search(rf"</{html_block}[ \t]*>", stripped, re.IGNORECASE):
+            if html_block == "until-blank":
+                if not stripped.strip():
+                    html_block = ""
+            elif html_block.startswith("terminator:"):
+                if html_block[len("terminator:"):] in stripped:
+                    html_block = ""
+            elif re.search(rf"</{html_block}[ \t]*>", stripped, re.IGNORECASE):
                 html_block = ""
             continue
         # A leading tab is a four-space Markdown code indentation.
@@ -105,7 +143,7 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
         )
         normalized[index] = match.group("prefix") + match.group("text") + match.group("ending")
 
-    if fence_marker or in_comment or html_block:
+    if fence_marker or in_comment or (html_block and html_block != "until-blank"):
         raise ValueError("Unterminated inert Markdown block")
     if sections != 1:
         raise ValueError("Expected exactly one level-2 acceptance-criteria section")
