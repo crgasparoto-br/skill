@@ -32,7 +32,6 @@ def policy(**changes) -> dict:
         "exact_sha_evidence": True,
         "independent_review": True,
         "remote_ci_evidence": True,
-        "review_assurance": "operator-attested-session-review",
     }
     data.update(changes)
     return data
