@@ -170,7 +170,10 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
     mode = audit_transport.get("mode")
     require(mode in {"certified-handoff", "native-github-audit"}, "unknown audit transport")
     evidence_check = NATIVE_EVIDENCE if mode == "native-github-audit" else HANDOFF
-    required_checks_green(checks, head, "develop", trust, audit_transport=mode)
+    if mode == "certified-handoff":
+        required_checks_green(checks, head, "develop", trust)
+    else:
+        required_checks_green(checks, head, "develop", trust, audit_transport=mode)
     candidates = [c for c in checks["check_runs"] if c.get("name") == evidence_check
                   and c.get("head_sha") == head and trust(evidence_check, c)]
     chosen = max(candidates, key=lambda c: c["id"])
