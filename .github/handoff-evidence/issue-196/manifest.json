@@ -93,13 +93,16 @@
     },
     "R196-019": {
       "positive": [
-        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections"
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_lists_after_blank_line_and_in_ordered_parent"
       ],
       "negative": [
-        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_stale_sha_and_identity_swap"
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_stale_sha_and_identity_swap",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_indented_code_not_promoted_to_nested_acceptance_criterion"
       ],
       "regression": [
-        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence"
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_acceptance_items_are_audited_individually"
       ]
     },
     "R196-020": {
@@ -137,13 +140,16 @@
     },
     "R196-023": {
       "positive": [
-        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections"
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_acceptance_items_are_audited_individually"
       ],
       "negative": [
-        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_material_issue_drift[changed0]"
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_material_issue_drift[changed0]",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_indented_code_not_promoted_to_nested_acceptance_criterion"
       ],
       "regression": [
-        "entregar-issue.tests.test_issue_checklist_reconciliation::test_idempotence_and_checkbox_only_concurrent_updates"
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_idempotence_and_checkbox_only_concurrent_updates",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_lists_after_blank_line_and_in_ordered_parent"
       ]
     },
     "R196-024": {
@@ -214,13 +220,16 @@
     },
     "R196-008": {
       "positive": [
-        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections"
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_acceptance_items_are_audited_individually"
       ],
       "negative": [
-        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions"
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_orphan_indented_code_is_inert_and_missing_child_decision_blocks"
       ],
       "regression": [
-        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence"
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence",
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_nested_heading_does_not_terminate_acceptance_section"
       ]
     },
     "R196-017": {
