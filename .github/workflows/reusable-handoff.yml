@@ -244,7 +244,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.tooling-repository }}
-          ref: ${{ job.workflow_sha }}
+          # Self-hosted official repo: use immutable PR base, never candidate code.
+          # External consumers must pin a trusted reusable workflow SHA.
+          ref: ${{ inputs.tooling-repository == github.repository && github.event.pull_request.base.sha || job.workflow_sha }}
           path: .trusted-native-audit
           persist-credentials: false
 
