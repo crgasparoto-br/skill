@@ -189,7 +189,7 @@ def test_main_release_cannot_be_treated_as_develop_issue(tmp_path):
 
 
 def test_duplicate_json_key_in_trusted_base_fails_closed(tmp_path):
-    root, base = repository(tmp_path)
+    root, _base = repository(tmp_path)
     contract = root / POLICY_PATH
     contract.parent.mkdir(parents=True, exist_ok=True)
     duplicate = json.dumps(policy())
