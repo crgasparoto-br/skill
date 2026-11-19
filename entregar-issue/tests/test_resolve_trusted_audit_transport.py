@@ -172,14 +172,28 @@ def test_material_checkout_must_match_authenticated_head(tmp_path):
     assert "checkout HEAD" in outcome.stderr
 
 
-def test_trusted_base_must_be_ancestor_of_material_head(tmp_path):
-    root, base = repository(tmp_path, policy())
+def test_pr_behind_develop_can_still_use_its_trusted_base_contract(tmp_path):
+    root, ancestor = repository(tmp_path, policy())
+    git(root, "checkout", "-b", "feature", ancestor)
     head = commit_file(root, "feature.txt", "change\n")
-    git(root, "checkout", "-b", "unrelated", base)
-    other = commit_file(root, "other.txt", "change\n")
+    git(root, "checkout", "develop")
+    base = commit_file(root, "upstream.txt", "new develop commit\n")
+    git(root, "checkout", "feature")
+    outcome = run(root, base, head)
+    assert outcome.returncode == 0, outcome.stderr
+    assert json.loads(outcome.stdout)["mode"] == "native-github-audit"
+
+
+def test_unrelated_git_histories_fail_closed(tmp_path):
+    root, _base = repository(tmp_path, policy())
+    head = commit_file(root, "feature.txt", "change\n")
+    git(root, "checkout", "--orphan", "unrelated")
+    git(root, "rm", "-rf", ".")
+    other = commit_file(root, "unrelated.txt", "new root\n")
     git(root, "checkout", "develop")
     outcome = run(root, other, head)
     assert outcome.returncode == 2
+    assert "trusted Git object or ancestry" in outcome.stderr
 
 
 def test_main_release_cannot_be_treated_as_develop_issue(tmp_path):
