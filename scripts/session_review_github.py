@@ -122,7 +122,7 @@ def authenticated_implementation_provenance(identity: dict, metadata: dict, page
 
 def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, unpack,
                        authenticated_certificate_event, authenticated_preview_reconciliation,
-                       audit_transport: dict, root: Path) -> tuple[dict, set[str]]:
+                       root: Path, audit_transport: dict | None = None) -> tuple[dict, set[str]]:
     """Technical workflow authentication is reused, not replaced by check-name matching."""
     from verify_independent_pr_audit import HANDOFF, NATIVE_EVIDENCE, required_checks_green, trusted_workflow_check
     repo, number = identity["repository"], identity["pull_request"]
@@ -130,6 +130,7 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     require(bool(token), "GitHub credential missing")
     trust = lambda name, check: trusted_workflow_check(repo, number, name, check, head, base, token)
+    audit_transport = audit_transport or {"mode": "certified-handoff", "contract_sha256": None}
     mode = audit_transport.get("mode")
     require(mode in {"certified-handoff", "native-github-audit"}, "unknown audit transport")
     evidence_check = NATIVE_EVIDENCE if mode == "native-github-audit" else HANDOFF
