@@ -122,17 +122,20 @@ def authenticated_implementation_provenance(identity: dict, metadata: dict, page
 
 def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, unpack,
                        authenticated_certificate_event, authenticated_preview_reconciliation,
-                       root: Path) -> tuple[dict, set[str]]:
+                       audit_transport: dict, root: Path) -> tuple[dict, set[str]]:
     """Technical workflow authentication is reused, not replaced by check-name matching."""
-    from verify_independent_pr_audit import HANDOFF, required_checks_green, trusted_workflow_check
+    from verify_independent_pr_audit import HANDOFF, NATIVE_EVIDENCE, required_checks_green, trusted_workflow_check
     repo, number = identity["repository"], identity["pull_request"]
     head, base = identity["head_sha"], identity["base_sha"]
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     require(bool(token), "GitHub credential missing")
     trust = lambda name, check: trusted_workflow_check(repo, number, name, check, head, base, token)
-    # Session mode certifies all targets, including main. The legacy human route is unchanged.
-    required_checks_green(checks, head, "develop", trust)
-    candidates = [c for c in checks["check_runs"] if c.get("name") == HANDOFF and c.get("head_sha") == head and trust(HANDOFF, c)]
+    mode = audit_transport.get("mode")
+    require(mode in {"certified-handoff", "native-github-audit"}, "unknown audit transport")
+    evidence_check = NATIVE_EVIDENCE if mode == "native-github-audit" else HANDOFF
+    required_checks_green(checks, head, "develop", trust, audit_transport=mode)
+    candidates = [c for c in checks["check_runs"] if c.get("name") == evidence_check
+                  and c.get("head_sha") == head and trust(evidence_check, c)]
     chosen = max(candidates, key=lambda c: c["id"])
     run_id = int(re.search(r"/actions/runs/(\d+)/", chosen["details_url"])[1])
     artifacts = api(f"/repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100")
@@ -170,19 +173,31 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
             and isinstance(preflight_snapshot.get("identity"), dict)
             and preflight_snapshot["identity"].get("merge_preview_sha") == original_preview,
             "pre-test merge preview differs from authenticated snapshot")
-    certificate = strict_json((directory / ".audit/entregar-issue/handoff-ready.json").read_text(encoding="utf-8"))
-    certificate_identity = certificate.get("identity") if isinstance(certificate, dict) else None
-    require(isinstance(certificate_identity, dict), "certified handoff identity is missing")
-    certificate_preview = certificate_identity.get("material_merge_preview_sha")
-    require(isinstance(certificate_preview, str) and SHA.fullmatch(certificate_preview)
-            and certificate_identity.get("merge_preview_sha") == certificate_preview,
-            "certified handoff merge preview is missing or inconsistent")
-    certificate_reconciliation = authenticated_preview_reconciliation(identity, certificate_preview)
-    verified_event = copy.deepcopy(recorded)
-    verified_event["pull_request"]["merge_commit_sha"] = certificate_preview
-    event_path = directory / "trusted-event.json"
-    event_path.write_bytes(canonical(verified_event))
-    verify(directory, event_path, identity["base_ref"])
+    if mode == "certified-handoff":
+        certificate = strict_json((directory / ".audit/entregar-issue/handoff-ready.json").read_text(encoding="utf-8"))
+        certificate_identity = certificate.get("identity") if isinstance(certificate, dict) else None
+        require(isinstance(certificate_identity, dict), "certified handoff identity is missing")
+        certificate_preview = certificate_identity.get("material_merge_preview_sha")
+        require(isinstance(certificate_preview, str) and SHA.fullmatch(certificate_preview)
+                and certificate_identity.get("merge_preview_sha") == certificate_preview,
+                "certified handoff merge preview is missing or inconsistent")
+        certificate_reconciliation = authenticated_preview_reconciliation(identity, certificate_preview)
+        verified_event = copy.deepcopy(recorded)
+        verified_event["pull_request"]["merge_commit_sha"] = certificate_preview
+        event_path = directory / "trusted-event.json"
+        event_path.write_bytes(canonical(verified_event))
+        verify(directory, event_path, identity["base_ref"])
+    else:
+        source = strict_json((directory / "audit-transport.json").read_text(encoding="utf-8"))
+        contract = source.get("contract") if isinstance(source, dict) else None
+        require(source.get("mode") == "native-github-audit"
+                and source.get("repository") == repo
+                and source.get("trusted_anchor_sha") == base
+                and source.get("material_head_sha") == head
+                and isinstance(contract, dict)
+                and contract.get("source_sha256") == audit_transport.get("contract_sha256"),
+                "native evidence differs from authenticated trusted-base policy")
+        certificate_reconciliation = None
     preflight = json.loads((directory / "handoff-preflight.json").read_bytes())
     require(preflight["identity"]["issue_number"] == identity["issue"]
             and preflight["identity"]["base_sha"] == base, "certificate issue/base mismatch")
@@ -195,10 +210,18 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
     require(not any(marker in junit.read_bytes().upper() for marker in (b"<!DOCTYPE", b"<!ENTITY")), "unsafe JUnit XML")
     index = collect(junit, head)
     require(index["counts"]["failure"] == 0 and index["counts"]["error"] == 0, "JUnit contains failing tests")
+    if mode == "native-github-audit":
+        require(index["counts"]["skipped"] == 0, "native JUnit contains skipped controls")
+        from build_test_candidate_index import collect as collect_fresh
+        observed = strict_json((directory / "test-candidate-index.json").read_text(encoding="utf-8"))
+        require(observed == collect_fresh(junit, head), "native test candidate index is stale or altered")
     metadata = {"artifact_digest": artifact["digest"], "artifact_id": artifact["id"], "certified_at": chosen["completed_at"],
+                "audit_transport": mode,
+                "native_contract_sha256": audit_transport.get("contract_sha256"),
                 "technical_check_ids": sorted(c["id"] for c in checks["check_runs"] if c.get("name") in
-                                             {"Structure and tests", "Offline authorization tests", HANDOFF})}
+                                             {"Structure and tests", "Offline authorization tests", evidence_check})}
     metadata["merge_preview_reconciliation"] = proof
-    metadata["certified_handoff_preview_reconciliation"] = certificate_reconciliation
+    if certificate_reconciliation is not None:
+        metadata["certified_handoff_preview_reconciliation"] = certificate_reconciliation
     metadata["certification_event_sha256"] = digest(recorded_raw)
     return metadata, {t["id"] for t in index["tests"] if t["status"] == "passed"}
