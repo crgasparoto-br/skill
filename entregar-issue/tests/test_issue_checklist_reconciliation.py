@@ -317,3 +317,19 @@ def test_type6_html_block_still_interrupts_an_open_paragraph() -> None:
         "- [ ] Segundo\n"
     )
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+
+
+def test_ten_digit_ordered_marker_is_not_a_commonmark_list_item() -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Primeiro\n"
+        "\n"
+        "1234567890. [ ] Não é um critério\n"
+        "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+
+
+def test_nine_digit_ordered_marker_can_start_its_own_list() -> None:
+    body = "## Critérios de aceite\n\n123456789. [ ] Critério válido\n"
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Critério válido"]

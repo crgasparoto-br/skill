@@ -11,7 +11,7 @@ from pathlib import Path
 HEADING = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*\r?\n?$")
 CRITERIA_TITLE = re.compile(r"^(crit[eé]rios de aceite|acceptance criteria)$", re.IGNORECASE)
 ITEM = re.compile(
-    r"^(?P<prefix>[ \t]{0,3}(?:[-*+]|\d+[.)])[ \t]+)"
+    r"^(?P<prefix>[ \t]{0,3}(?:[-*+]|\d{1,9}[.)])[ \t]+)"
     r"(?P<checkbox>\[[ xX]\][ \t]+)?"
     r"(?P<text>\S.*?)(?P<ending>\r?\n?)$"
 )
