@@ -12,7 +12,7 @@
 
 ## Matriz completa da especificação original
 
-O texto da coluna **Fonte literal** foi rederivado da issue #196; a disposição e o racional abaixo são os registrados no dossiê de implementação. `covered` indica somente cobertura proposta pelo implementador; `deferred` exige evento posterior com a issue aberta. Para os testes, os nomes são **vínculos declarados no manifesto**, nunca certificação de oráculo.
+O texto da coluna **Fonte literal** foi extraído diretamente do corpo da issue #196; a disposição e o racional abaixo são os registrados no dossiê de implementação. `covered` indica somente cobertura proposta pelo implementador; `deferred` exige evento posterior com a issue aberta. Para os testes, os nomes são **vínculos declarados no manifesto**, nunca certificação de oráculo.
 
 ### OBL-001 — R196-001
 
