@@ -60,7 +60,9 @@ A execucao desse comando somente constitui prova se realizada por codigo do
 workflow confiavel com checkout obtido do GitHub. Nao aceitar resultado
 fornecido na PR como afirmacao de autoridade. Esta classificacao de
 transporte nao equivale a check verde, certificado semantico ou revisao
-independente. A rota nativa exige checks GitHub exact-SHA proprios,
-revalidacao da identidade remota e parecer de sessao autentico. Uma PR de
+independente. A rota nativa exige checks GitHub exact-SHA proprios, com
+`scripts/validate_native_actions_evidence.py` validando issue, JUnit, merge
+preview e identidade do contrato, sem conceder aprovacao independente.
+A revalidacao remota e o parecer de sessao autentico continuam obrigatorios. Uma PR de
 migracao ainda segue o modo legado enquanto a sua base nao contiver um
 contrato previamente integrado e revisado.
