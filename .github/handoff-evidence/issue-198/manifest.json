@@ -12,8 +12,8 @@
   "audit_history": "verified-no-rejection",
   "audit_history_evidence": "PR #203 foi criada como substituicao da #202 sem review GitHub autenticado anterior neste HEAD; parecer da conversa da PR #202 e historico nao autenticado, nao convertido em fato de auditoria independente.",
   "artifact_sha256": {
-    "reviewed-closure.json": "12ad8010b00796594c223929f43bcd17956b891819713bf3c7d869aa1facf5ef",
-    "requirement-attack-matrix.json": "2798a11cfcab7924985bfc5bb798ee038516d581ac2c5da0d699e40d781efe5d",
+    "reviewed-closure.json": "aae2033cc106589679a386de46f4add3abbab7f7d21cdcb3fb8da895a934fd27",
+    "requirement-attack-matrix.json": "1aa3c03a5abf23ebbbeab45f68a6818d5452766b328036e1b01d899dc1f0f9bd",
     "risk-saturation.json": "29ae592d5ace3891b30e5cc071293301f7e99cc5437d8b5b5d9e910227ad06de",
     "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27"
   },

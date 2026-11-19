@@ -228,7 +228,7 @@
       "applicability_reason": "O bootstrap estabelece caminho canônico de contrato no Git e proíbe a candidata de se autorizar.",
       "entries": [
         {
-          "id": "SIC-198-TRUSTED-BASE",
+          "id": "SIC-198001",
           "kind": "structural",
           "requirement_ids": [
             "R198-004",
@@ -251,9 +251,9 @@
             "GH-203-44622033197"
           ],
           "scenario_ids": [
-            "entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes",
-            "entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption",
-            "entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success"
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_native_contract_from_immutable_trusted_base_passes",
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_candidate_cannot_install_own_native_exemption",
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_missing_contract_remains_legacy_without_false_success"
           ],
           "negative_control_evidence": [
             "O modo certified-handoff persistiu na execução #44622033197; a fixture forjada do HEAD não concede isenção."
@@ -274,7 +274,7 @@
       "applicability_reason": "Git tree da base autenticada é a fonte única da seleção de transporte; o HEAD candidato não concede exceção.",
       "entries": [
         {
-          "id": "CSC-198-TRUST-ANCHOR",
+          "id": "CSC-198001",
           "semantic_field": "audit_transport native activation",
           "canonical_source": "entregar-issue/scripts/resolve_trusted_audit_transport.py leitura de docs/audit/github-native-contract.json na arvore base_sha",
           "alternative_sources": [
@@ -291,12 +291,12 @@
             "GH-203-44622033197"
           ],
           "scenario_ids": [
-            "entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes",
-            "entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption",
-            "entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success"
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_native_contract_from_immutable_trusted_base_passes",
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_candidate_cannot_install_own_native_exemption",
+            "entregar-issue.tests.test_resolve_trusted_audit_transport#test_missing_contract_remains_legacy_without_false_success"
           ],
           "negative_control_evidence": [
-            "A coleta em #44622033197 registrou contract=null e mode=certified-handoff; o HEAD possui o contrato mas não foi considerado confiável."
+            "A coleta anterior em #44622033197 registrou contract=null e mode=certified-handoff; o HEAD possui o contrato mas não foi considerado confiável."
           ],
           "divergent_fixture": {
             "canonical_value": "base develop 674884c sem contrato: certified-handoff",
@@ -327,7 +327,7 @@
       "search_evidence": [
         "docs/audit/github-native-rollout.md:1-42 foi lido junto de entregar-issue/references/native-github-audit-contract.md e auditar-issue/references/native-github-audit-contract.md na develop.",
         "AGENTS.md, .github/workflows/reusable-handoff.yml e tests/test_native_audit_workflows.py foram inspecionados; nenhum required check foi alterado em PR #203.",
-        "GitHub CI #44622033197 provou o fallback legacy e o bloqueio legítimo na mesma candidata."
+        "GitHub CI de referencia anterior #44622033197 provou o fallback legacy e o bloqueio legítimo na mesma candidata."
       ]
     },
     "scope_reduction_review": {
