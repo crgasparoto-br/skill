@@ -82,7 +82,7 @@ def _criterion_match(line: str, in_criteria: bool, paragraph_open: bool) -> re.M
     if not in_criteria:
         return None
     match = ITEM.match(line)
-    if match is None:
+    if match is None or THEMATIC_BREAK.fullmatch(line):
         return None
     ordered = re.match(r"([0-9]+)[.)]", match.group("prefix").lstrip())
     if paragraph_open and ordered and int(ordered.group(1)) != 1:
@@ -158,12 +158,9 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
                 if in_criteria:
                     sections += 1
             continue
-        if THEMATIC_BREAK.fullmatch(line):
-            paragraph_open = False
-            continue
         match = _criterion_match(line, in_criteria, paragraph_open)
         if match is None:
-            paragraph_open = True
+            paragraph_open = not bool(THEMATIC_BREAK.fullmatch(line))
             continue
         paragraph_open = False
         items.append(
