@@ -102,6 +102,32 @@ def trusted_default_base_ref(event: dict, producer_path: str) -> str:
     return base_ref
 
 
+def native_transport_installed(repo: str, base: str, base_ref: str) -> bool:
+    """Only a contract from authenticated GitHub base can suppress legacy publication."""
+    import base64
+    import urllib.error
+
+    from resolve_trusted_audit_transport import CONTRACT_PATH, validate_native_contract_blob
+
+    if base_ref != "develop":
+        return False
+    if HEX_SHA.fullmatch(base) is None:
+        block("invalid immutable base for native transport routing")
+    try:
+        payload = api_get(repo, f"contents/{CONTRACT_PATH}?ref={base}")
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return False  # A candidate-only policy never exempts legacy.
+        raise
+    if (payload.get("type") != "file" or payload.get("encoding") != "base64"
+            or not isinstance(payload.get("content"), str)
+            or not isinstance(payload.get("sha"), str)):
+        block("trusted native audit policy source is not an authenticated regular Git blob")
+    raw = base64.b64decode("".join(payload["content"].split()), validate=True)
+    validate_native_contract_blob(raw, payload["sha"], repo, base_ref)
+    return True
+
+
 def allowed_paths(cert: dict) -> list[str]:
     from handoff_postcondition import require_final_phase
     require_final_phase(cert)
@@ -351,11 +377,16 @@ def confirm_published_result(repo: str, number: int, head: str, base: str,
 
 def publish(event_path: Path, *, base_ref: str | None = None,
             producer_path: str = ".github/workflows/handoff-evidence.yml",
-            required_checks: set[str] | None = None) -> str | None:
+            required_checks: set[str] | None = None,
+            skip_native_publication: bool = False) -> str | None:
     event = json.loads(event_path.read_text(encoding="utf-8"))
     selected_base = trusted_default_base_ref(event, producer_path) if base_ref is None else base_ref
     repo, pr_number, head, base = target_from_event(event, selected_base, producer_path)
     base_ref = selected_base
+    if skip_native_publication and native_transport_installed(repo, base, base_ref):
+        # Native GitHub audit consumes the material HEAD directly; result-only
+        # publication is forbidden and legacy certificate absence is not a defect.
+        return None
     run_id = event["workflow_run"]["id"]
     name = f"handoff-evidence-{pr_number}-{head}"
     listed = api_get(repo, f"actions/runs/{run_id}/artifacts?per_page=100")
@@ -480,17 +511,19 @@ def main() -> int:
     parser.add_argument("--base-ref", default=None)
     parser.add_argument("--producer-path", default=".github/workflows/handoff-evidence.yml")
     parser.add_argument("--required-checks-csv", default="")
+    parser.add_argument("--skip-native-publication", action="store_true")
     args = parser.parse_args()
     names = {name.strip() for name in args.required_checks_csv.split(",") if name.strip()}
     try:
         published = publish(args.event, base_ref=args.base_ref,
                             producer_path=args.producer_path,
-                            required_checks=names or None)
+                            required_checks=names or None,
+                            skip_native_publication=args.skip_native_publication)
     except (ValueError, KeyError, OSError, subprocess.CalledProcessError, json.JSONDecodeError) as exc:
         print(f"BLOCK: certified handoff publication aborted: {exc}")
         return 2
     if published is None:
-        print("NOT_APPLICABLE: trusted session mode preserves the certified material HEAD")
+        print("NOT_APPLICABLE: trusted execution preserves the exact material HEAD without result-only publication")
     else:
         print(f"READY: result-only handoff child published and verified {published}")
     return 0
