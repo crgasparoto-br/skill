@@ -192,15 +192,33 @@ def test_fenced_markers_inside_html_comment_do_not_hide_real_criteria() -> None:
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
 
 
-@pytest.mark.parametrize("indent", ["\t", "  \t"])
-def test_indented_code_is_not_a_checklist_criterion(indent: str) -> None:
+@pytest.mark.parametrize("indent", ["\\t", "  \\t"])
+def test_tab_indented_child_is_a_real_nested_list_item(indent: str) -> None:
+    # CommonMark tabs indented after a parent list marker are child items.
     body = (
-        "## Critérios de aceite\n"
-        "- [ ] Real\n"
-        f"{indent}- [ ] Inerte em código\n"
-        "- [ ] Segundo\n"
+        "## Critérios de aceite\\n"
+        "- [ ] Pai\\n"
+        f"{indent}- [ ] Filho\\n"
+        "- [ ] Segundo\\n"
     )
-    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real", "Segundo"]
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == [
+        "Pai", "Filho", "Segundo",
+    ]
+    proposed, summary = mod.reconcile(
+        body, body, audit("verified", "verified", "unknown", body=body), SHA,
+    )
+    assert f"{indent}- [x] Filho\\n" in proposed
+    assert summary["criteria_total"] == 3
+
+
+@pytest.mark.parametrize("indent", ["\\t", "  \\t", "    "])
+def test_indented_code_outside_list_is_not_a_criterion(indent: str) -> None:
+    body = (
+        "## Critérios de aceite\\n"
+        f"{indent}- [ ] Inerte em código\\n"
+        "- [ ] Real\\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]
 
 
 @pytest.mark.parametrize("tag", ["pre", "script", "style", "textarea"])
