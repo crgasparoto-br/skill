@@ -104,6 +104,13 @@ def _relative_list_indent(line: str, content_indents: list[int]) -> int:
     return columns - (content_indents[-1] if content_indents else 0)
 
 
+def _top_level_heading(line: str, content_indents: list[int]) -> re.Match[str] | None:
+    """Nested headings belong to a list item, not to the issue section index."""
+    if content_indents:
+        return None
+    return HEADING.match(line)
+
+
 def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     """Return original lines, criteria, and text normalized only for checkbox markers."""
     lines = body.splitlines(keepends=True)
@@ -162,12 +169,9 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
             paragraph_open = False
             continue
 
-        heading = HEADING.match(line)
+        heading = _top_level_heading(line, list_content_indents)
         if heading:
             paragraph_open = False
-            if list_content_indents:
-                # A heading within a list item cannot end the top-level section.
-                continue
             depth = len(heading.group(1))
             if depth <= 2:
                 heading_title = re.sub(r"[ \t]+#+[ \t]*$", "", heading.group(2)).strip()
