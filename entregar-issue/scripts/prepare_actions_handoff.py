@@ -20,7 +20,7 @@ from pathlib import Path
 from handoff_merge_preview import require_event_merge_preview
 
 SCRIPTS = Path(__file__).resolve().parent
-ISSUE_REF = re.compile(r"\b(?:issue|fixes|closes|resolves)\s*#(\d+)\b", re.IGNORECASE)
+ISSUE_REF = re.compile(r"\b(?:issue|refs|fixes|closes|resolves)\s*#(\d+)\b", re.IGNORECASE)
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
 
