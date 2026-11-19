@@ -43,21 +43,8 @@ def _unique_json_pairs(pairs: list[tuple[str, object]]) -> dict:
     return result
 
 
-def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict | None:
-    entries = git(root, "ls-tree", "--full-tree", base_sha, "--", CONTRACT_PATH)
-    if not entries:
-        return None
-    lines = entries.splitlines()
-    if len(lines) != 1:
-        raise ValueError("trusted contract path is ambiguous")
-    metadata, separator, actual_path = lines[0].partition(b"\t")
-    fields = metadata.split()
-    if (separator != b"\t" or actual_path != CONTRACT_PATH.encode("utf-8")
-            or len(fields) != 3 or fields[0] != b"100644"
-            or fields[1] != b"blob" or SHA.fullmatch(fields[2].decode("ascii")) is None):
-        raise ValueError("trusted contract must be a regular Git blob at the canonical path")
-    object_sha = fields[2].decode("ascii")
-    raw = git(root, "cat-file", "blob", object_sha)
+def validate_native_contract_blob(raw: bytes, object_sha: str,
+                                  repository: str, base_ref: str) -> dict:
     if len(raw) > 16384:
         raise ValueError("trusted native contract exceeds size budget")
     recomputed = hashlib.sha1(
@@ -82,6 +69,25 @@ def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict
                 "independent_review", "remote_ci_evidence"
             ))):
         raise ValueError("trusted native audit contract is incomplete or foreign")
+    return source
+
+
+def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict | None:
+    entries = git(root, "ls-tree", "--full-tree", base_sha, "--", CONTRACT_PATH)
+    if not entries:
+        return None
+    lines = entries.splitlines()
+    if len(lines) != 1:
+        raise ValueError("trusted contract path is ambiguous")
+    metadata, separator, actual_path = lines[0].partition(b"\t")
+    fields = metadata.split()
+    if (separator != b"\t" or actual_path != CONTRACT_PATH.encode("utf-8")
+            or len(fields) != 3 or fields[0] != b"100644"
+            or fields[1] != b"blob" or SHA.fullmatch(fields[2].decode("ascii")) is None):
+        raise ValueError("trusted contract must be a regular Git blob at the canonical path")
+    object_sha = fields[2].decode("ascii")
+    raw = git(root, "cat-file", "blob", object_sha)
+    source = validate_native_contract_blob(raw, object_sha, repository, base_ref)
     return {
         "path": CONTRACT_PATH,
         "observed_at_sha": base_sha,
