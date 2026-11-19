@@ -8,7 +8,7 @@ import json
 import re
 from pathlib import Path
 
-HEADING = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t]*\r?\n?$")
+HEADING = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*\r?\n?$")
 CRITERIA_TITLE = re.compile(r"^(crit[eé]rios de aceite|acceptance criteria)$", re.IGNORECASE)
 ITEM = re.compile(
     r"^(?P<prefix>[ \t]{0,3}(?:[-*+]|\d+[.)])[ \t]+)"
@@ -28,14 +28,23 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
     fence_marker = ""
     fence_width = 0
     in_comment = False
+    html_block = ""
 
     for index, line in enumerate(lines):
         stripped = line.lstrip(" ")
         indentation = len(line) - len(stripped)
-        # HTML comments are inert: do not treat their fenced examples as code.
+        # Track inert blocks before examining delimiters inside them.
         if in_comment:
             if "-->" in line:
                 in_comment = False
+            continue
+        if html_block:
+            if re.search(rf"</{html_block}[ \t]*>", stripped, re.IGNORECASE):
+                html_block = ""
+            continue
+        # A leading tab is a four-space Markdown code indentation.
+        leading = line[:len(line) - len(line.lstrip(" \t"))]
+        if len(leading.expandtabs(4)) >= 4:
             continue
         if indentation <= 3 and stripped.startswith((chr(96) * 3, "~~~")):
             symbol = stripped[0]
@@ -50,6 +59,13 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
                 fence_marker, fence_width = "", 0
                 continue
         if fence_marker:
+            continue
+
+        raw_tag = re.match(r"<(pre|script|style|textarea)\b", stripped, re.IGNORECASE)
+        if raw_tag:
+            tag = raw_tag.group(1).lower()
+            if not re.search(rf"</{tag}[ \t]*>", stripped, re.IGNORECASE):
+                html_block = tag
             continue
 
         # Comments inside fenced code must not change parser state.
@@ -83,6 +99,8 @@ def analyze_body(body: str) -> tuple[list[str], list[dict], str]:
         )
         normalized[index] = match.group("prefix") + match.group("text") + match.group("ending")
 
+    if fence_marker or in_comment or html_block:
+        raise ValueError("Unterminated inert Markdown block")
     if sections != 1:
         raise ValueError("Expected exactly one level-2 acceptance-criteria section")
     if not items:

@@ -190,3 +190,38 @@ def test_fenced_markers_inside_html_comment_do_not_hide_real_criteria() -> None:
         "- [ ] Segundo\n"
     )
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+
+
+@pytest.mark.parametrize("indent", ["\t", "  \t"])
+def test_indented_code_is_not_a_checklist_criterion(indent: str) -> None:
+    body = (
+        "## Critérios de aceite\n"
+        "- [ ] Real\n"
+        f"{indent}- [ ] Inerte em código\n"
+        "- [ ] Segundo\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real", "Segundo"]
+
+
+@pytest.mark.parametrize("tag", ["pre", "script", "style", "textarea"])
+def test_raw_html_block_is_inert(tag: str) -> None:
+    body = (
+        "## Critérios de aceite\n"
+        f"<{tag}>\n"
+        "- [ ] Exemplo inerte\n"
+        f"</{tag}>\n"
+        "- [ ] Critério real\n"
+    )
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Critério real"]
+
+
+@pytest.mark.parametrize("opening", ["~~~md\n", "<!-- exemplo\n", "<pre>\n"])
+def test_unterminated_inert_block_fails_closed(opening: str) -> None:
+    body = "## Critérios de aceite\n- [ ] Real\n" + opening + "- [ ] Inerte\n"
+    with pytest.raises(ValueError, match="Unterminated"):
+        mod.analyze_body(body)
+
+
+def test_indented_acceptance_heading_is_recognized() -> None:
+    body = "  ## Critérios de aceite ###\n- [ ] Real\n"
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]
