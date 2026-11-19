@@ -19,7 +19,7 @@ SHA = re.compile(r"^[0-9a-f]{40}$")
 # In CommonMark thematic breaks take precedence over list items.
 # They are inert separators, never acceptance criteria.
 THEMATIC_BREAK = re.compile(
-    r"^ {0,3}(?:-[ \t]*){3,}\r?\n?$|^ {0,3}(?:\*[ \t]*){3,}\r?\n?$"
+    r"^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})\r?\n?$"
 )
 
 
