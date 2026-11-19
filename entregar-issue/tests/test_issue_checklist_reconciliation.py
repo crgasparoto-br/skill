@@ -333,3 +333,42 @@ def test_ten_digit_ordered_marker_is_not_a_commonmark_list_item() -> None:
 def test_nine_digit_ordered_marker_can_start_its_own_list() -> None:
     body = "## Critérios de aceite\n\n123456789. [ ] Critério válido\n"
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Critério válido"]
+
+
+@pytest.mark.parametrize(
+    "separator",
+    ["- - -\n", "* * *\n", "- \t- \t-   \n", "*  *   *\n", "---\n", "***\n"],
+)
+def test_thematic_breaks_never_become_criteria(separator: str) -> None:
+    # CommonMark thematic breaks outrank otherwise plausible list-item markers.
+    body = "## Critérios de aceite\n- [ ] Primeiro\n" + separator + "- [ ] Segundo\n"
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Primeiro", "Segundo"]
+    proposed, summary = mod.reconcile(body, body, audit("verified", "verified", body=body), SHA)
+    assert separator in proposed
+    assert "- [x] Primeiro\n" in proposed
+    assert "- [x] Segundo\n" in proposed
+    assert len(summary["changes"]) == 2
+
+
+@pytest.mark.parametrize("separator", ["- - -\n", "* * *\n"])
+def test_thematic_break_alone_is_not_a_criterion(separator: str) -> None:
+    with pytest.raises(ValueError, match="no list items"):
+        mod.analyze_body("## Critérios de aceite\n" + separator)
+
+
+def test_thematic_break_closes_paragraph_before_ordered_list() -> None:
+    body = "## Critérios de aceite\nTexto explicativo\n- - -\n2. [ ] Critério real\n"
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Critério real"]
+    proposed, _ = mod.reconcile(body, body, audit("verified", body=body), SHA)
+    assert "2. [x] Critério real" in proposed
+    assert "- - -\n" in proposed
+
+
+@pytest.mark.parametrize("digit", ["١", "۲", "४", "２", "𝟙"])
+def test_unicode_numeric_markers_are_not_commonmark_list_items(digit: str) -> None:
+    # Python \d matches Unicode, but CommonMark ordered list markers use ASCII 0-9.
+    body = "## Critérios de aceite\n\n" + digit + ". [ ] Exemplo inválido\n- [ ] Real\n"
+    assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Real"]
+    proposed, _ = mod.reconcile(body, body, audit("verified", body=body), SHA)
+    assert digit + ". [ ] Exemplo inválido\n" in proposed
+    assert "- [x] Real\n" in proposed
