@@ -46,8 +46,9 @@ pode usar `scripts/resolve_trusted_audit_transport.py` com
 `--root`, `--repository`, `--base-ref=develop`, `--base-sha` e
 `--head-sha` provenientes de identidade remota autenticada.
 
-O resolvedor valida os commits existentes, a ancestralidade `base..HEAD` e o
-checkout exato, le exclusivamente os bytes Git de
+O resolvedor valida os commits existentes, a ancestralidade comum (sem exigir
+fast-forward quando a PR esta atrasada em relacao a `develop`) e o checkout
+exato, le exclusivamente os bytes Git de
 `docs/audit/github-native-contract.json` **na arvore do base SHA**,
 recalcula o SHA do blob Git e o SHA-256 da fonte e chama o classificador
 canonico. Ausencia comprovada do arquivo na base seleciona o transporte
