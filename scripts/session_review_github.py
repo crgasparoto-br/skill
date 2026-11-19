@@ -120,6 +120,42 @@ def authenticated_implementation_provenance(identity: dict, metadata: dict, page
             "handoff": {"artifact_id": metadata["artifact_id"], "digest": metadata["artifact_digest"]}}
 
 
+def _legacy_certificate_proof(directory: Path, identity: dict, recorded: dict,
+                              reconcile) -> dict:
+    """Keep historical certificate checks isolated from native transport."""
+    from require_actions_handoff_certificate import verify
+
+    certificate = strict_json(
+        (directory / ".audit/entregar-issue/handoff-ready.json").read_text(encoding="utf-8"))
+    certificate_identity = certificate.get("identity") if isinstance(certificate, dict) else None
+    require(isinstance(certificate_identity, dict), "certified handoff identity is missing")
+    certificate_preview = certificate_identity.get("material_merge_preview_sha")
+    require(isinstance(certificate_preview, str) and SHA.fullmatch(certificate_preview)
+            and certificate_identity.get("merge_preview_sha") == certificate_preview,
+            "certified handoff merge preview is missing or inconsistent")
+    reconciliation = reconcile(identity, certificate_preview)
+    verified_event = copy.deepcopy(recorded)
+    verified_event["pull_request"]["merge_commit_sha"] = certificate_preview
+    event_path = directory / "trusted-event.json"
+    event_path.write_bytes(canonical(verified_event))
+    verify(directory, event_path, identity["base_ref"])
+    return reconciliation
+
+
+def _native_contract_proof(directory: Path, identity: dict, transport: dict) -> None:
+    """Bind technical ZIP only to policy authenticated separately on PR base."""
+    source = strict_json((directory / "audit-transport.json").read_text(encoding="utf-8"))
+    require(isinstance(source, dict), "native technical transport record malformed")
+    contract = source.get("contract")
+    require(source.get("mode") == "native-github-audit"
+            and source.get("repository") == identity["repository"]
+            and source.get("trusted_anchor_sha") == identity["base_sha"]
+            and source.get("material_head_sha") == identity["head_sha"]
+            and isinstance(contract, dict)
+            and contract.get("source_sha256") == transport.get("contract_sha256"),
+            "native evidence differs from authenticated trusted-base policy")
+
+
 def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, unpack,
                        authenticated_certificate_event, authenticated_preview_reconciliation,
                        root: Path, audit_transport: dict | None = None) -> tuple[dict, set[str]]:
@@ -150,7 +186,6 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
     unpack(raw, directory)
     sys.path.insert(0, str(root / "entregar-issue/scripts"))
     from build_test_candidate_index import collect
-    from require_actions_handoff_certificate import verify
     event = authenticated_certificate_event(identity)
     recorded_raw = (directory / "certification-event.json").read_bytes()
     recorded = strict_json(recorded_raw.decode())
@@ -175,29 +210,10 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
             and preflight_snapshot["identity"].get("merge_preview_sha") == original_preview,
             "pre-test merge preview differs from authenticated snapshot")
     if mode == "certified-handoff":
-        certificate = strict_json((directory / ".audit/entregar-issue/handoff-ready.json").read_text(encoding="utf-8"))
-        certificate_identity = certificate.get("identity") if isinstance(certificate, dict) else None
-        require(isinstance(certificate_identity, dict), "certified handoff identity is missing")
-        certificate_preview = certificate_identity.get("material_merge_preview_sha")
-        require(isinstance(certificate_preview, str) and SHA.fullmatch(certificate_preview)
-                and certificate_identity.get("merge_preview_sha") == certificate_preview,
-                "certified handoff merge preview is missing or inconsistent")
-        certificate_reconciliation = authenticated_preview_reconciliation(identity, certificate_preview)
-        verified_event = copy.deepcopy(recorded)
-        verified_event["pull_request"]["merge_commit_sha"] = certificate_preview
-        event_path = directory / "trusted-event.json"
-        event_path.write_bytes(canonical(verified_event))
-        verify(directory, event_path, identity["base_ref"])
+        certificate_reconciliation = _legacy_certificate_proof(
+            directory, identity, recorded, authenticated_preview_reconciliation)
     else:
-        source = strict_json((directory / "audit-transport.json").read_text(encoding="utf-8"))
-        contract = source.get("contract") if isinstance(source, dict) else None
-        require(source.get("mode") == "native-github-audit"
-                and source.get("repository") == repo
-                and source.get("trusted_anchor_sha") == base
-                and source.get("material_head_sha") == head
-                and isinstance(contract, dict)
-                and contract.get("source_sha256") == audit_transport.get("contract_sha256"),
-                "native evidence differs from authenticated trusted-base policy")
+        _native_contract_proof(directory, identity, audit_transport)
         certificate_reconciliation = None
     preflight = json.loads((directory / "handoff-preflight.json").read_bytes())
     require(preflight["identity"]["issue_number"] == identity["issue"]
