@@ -167,6 +167,83 @@
       "regression": [
         "tests.test_catalog_governance::test_catalog_documentation_is_generated_and_current"
       ]
+    },
+    "R196-001": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence"
+      ]
+    },
+    "R196-002": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_delivery_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_preserves_distinct_or_ambiguous_workflows"
+      ]
+    },
+    "R196-004": {
+      "positive": [
+        "tests.test_audit_completeness_gate::test_complete_audit_can_publish"
+      ],
+      "negative": [
+        "tests.test_audit_completeness_gate::test_missing_requirement_or_surface_is_blocked"
+      ],
+      "regression": [
+        "tests.test_audit_completeness_gate::test_entrypoint_requires_completeness_gate"
+      ]
+    },
+    "R196-007": {
+      "positive": [
+        "tests.test_issue_templates::test_configured_normative_sections_match_independent_audit_parser"
+      ],
+      "negative": [
+        "tests.test_issue_templates::test_non_normative_heading_does_not_satisfy_a_normative_section"
+      ],
+      "regression": [
+        "tests.test_issue_templates::test_shipped_issue_templates_are_valid"
+      ]
+    },
+    "R196-008": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_mark_verified_unmark_failed_and_preserve_other_sections"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence"
+      ]
+    },
+    "R196-017": {
+      "positive": [
+        "tests.test_catalog_governance::test_router_routes_implementation_pendencies_to_delivery"
+      ],
+      "negative": [
+        "tests.test_catalog_governance::test_router_blocks_delivery_without_write_capability"
+      ],
+      "regression": [
+        "tests.test_catalog_governance::test_router_blocks_pending_implementation_without_write_capability"
+      ]
+    },
+    "R196-018": {
+      "positive": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_idempotence_and_checkbox_only_concurrent_updates"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reject_missing_or_untrusted_decisions"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_issue_checklist_reconciliation::test_reopen_checked_criteria_without_verified_evidence"
+      ]
     }
   }
 }

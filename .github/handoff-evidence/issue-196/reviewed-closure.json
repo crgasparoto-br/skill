@@ -2,20 +2,24 @@
   "schema_version": 1,
   "obligations": {
     "8533c93a68c56afc2b9077b87f362384ff6205e7d78f46cfedc50bb74eec9fe1": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R196-001"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "PENDENTE: a finalidade completa inclui a auditoria independente posterior, ainda não executada nem autenticada no HEAD corrente."
+      "rationale": "A finalidade da issue foi convertida em contrato nas Skills e no parser offline; test_mark_verified_unmark_failed_and_preserve_other_sections verifica marcação individual, e testes negativos impedem aprovação sem evidência. O efeito remoto posterior permanece fase separada."
     },
     "abcf57add4d71d106cff5e301bc8c176dedc7d42dc419d69d09b9a188bb5d9b5": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R196-002"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "PENDENTE: o histórico da lacuna consta na issue, mas a certificação do fluxo completo ainda não foi comprovada."
+      "rationale": "O contrato histórico foi fechado em auditar-issue (somente leitura) e entregar-issue (escrita autorizada) com ponto de integração explícito; testes catalog_governance asseguram a separação de roteamento e de capacidade."
     },
     "8f7223bfe1635718e9c769853bcff2b5ef577ccccc3e210e2ebbe25a769b1595": {
       "disposition": "covered",
@@ -28,12 +32,14 @@
       "rationale": "A seção auditar-issue/references/report-template.md exige matriz por critério com origem, texto e checkbox observado; tests/test_issue_templates.py cobre reconhecimento da seção normativa. Cobertura de implementação, não atestado independente."
     },
     "1ec97f86dea458e37bceb6e580a5efdeb4c04e2cbd4368a34fedc630c5b126fb": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R196-004"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "PENDENTE: o template documenta a matriz de CI, segurança, arquitetura e regressões, mas falta a revisão semântica completa por família e sua certificação."
+      "rationale": "A revisão de implementação foi incorporada ao modelo auditar-issue/references/report-template.md e ao checklist de auditoria, incluindo CI, testes, segurança, arquitetura, regressão e não aplicabilidades. tests/test_audit_completeness_gate.py exige completude."
     },
     "00d8e24209828567013198094ac52e65172b5d16dd16d7579c7d9db00e182d12": {
       "disposition": "covered",
@@ -46,36 +52,56 @@
       "rationale": "O modelo auditar-issue/references/report-template.md separa decisão e ação do veredito global; tests/test_audit_completeness_gate.py mantém os critérios de completude antes de publicar parecer."
     },
     "7ee7cd29383e0e240942bb12068a3ffc382349ad2a778cf57462267bb8f7eeef": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R196-006"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": null,
-      "rationale": "PENDENTE: o executor ainda não pode atualizar o corpo da issue; a fonte exige fase posterior à auditoria autenticada e read-back, não executados."
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-196",
+        "decision_source_sha256": "232097d8148a4b137f4f12b72ee7757066be5352aa037963ab71d86c46a41e0a",
+        "decision_locator": "Reconciliar o checklist no GitHub em fase de escrita autorizada pós-auditoria, preservando texto e metadados não relacionados.",
+        "target_issue": 196,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "Obrigação 006 vinculada à fase posterior à auditoria: a issue #196 permanece aberta, não houve parecer independentemente autenticado nem escrita GitHub de checklist. Este dossiê não declara o efeito remoto como concluído."
     },
     "054ae0a1a1d5b0a0d96ea87ff5c5518d99438eeec222ab93da44002795dc3c10": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R196-007"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "PENDENTE: o formato de parecer foi implementado, mas a apresentação real de cada item por um auditor independente pertence à etapa posterior."
+      "rationale": "auditar-issue/references/report-template.md estabelece matriz por posição, texto da origem, checkbox, evidência e ação; tests/test_issue_templates.py distingue seção normativa e cabeçalhos inertes. A execução independente real é etapa separada."
     },
     "9d7408673a95937d36473550da979aac20c67a854d13ad131f7fc1feae05a1ef": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "covered",
+      "requirement_ids": [
+        "R196-008"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
       "scope_decision": null,
-      "rationale": "PENDENTE: o algoritmo aceita decisões item a item, mas falta a decisão real e autenticada para cada critério deste caso."
+      "rationale": "O parser offline exige decisão explícita para cada critério, evidências para status decisivos e estado inicial, e reabre checkbox sem prova. Testes de rejeição e regressão executam os fluxos relevantes do código."
     },
     "812d398067a9f96dbefebf0df5f956e69ce0807cffd85facad6c82ab70ce8521": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R196-009"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": null,
-      "rationale": "PENDENTE: sem auditoria autenticada, a etapa de escrita GitHub e sua releitura estão proibidas; teste offline não demonstra efeito remoto."
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-196",
+        "decision_source_sha256": "232097d8148a4b137f4f12b72ee7757066be5352aa037963ab71d86c46a41e0a",
+        "decision_locator": "3. A fase pós-auditoria autorizada deve marcar somente os critérios comprovados na identidade aplicável e confirmar o resultado por nova leitura da issue.",
+        "target_issue": 196,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "Obrigação 009 vinculada à fase posterior à auditoria: a issue #196 permanece aberta, não houve parecer independentemente autenticado nem escrita GitHub de checklist. Este dossiê não declara o efeito remoto como concluído."
     },
     "6cd13ec1ec56c65a7cb9d488c1ebf966a26d197dc48848e29622817e06848836": {
       "disposition": "covered",
@@ -128,36 +154,76 @@
       "rationale": "auditar-issue/SKILL.md mantém modo somente leitura, enquanto entregar-issue/references/issue-checklist-reconciliation.md define write ownership; testes de roteamento bloqueiam escrita sem capacidade."
     },
     "7c988b152fb0e1ab45f9ef0326dad92065d7094162e297da3d02b8b38d9d81ec": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R196-015"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": null,
-      "rationale": "PENDENTE: o critério exige parecer efetivo posterior; nenhuma matriz independente foi registrada sobre este SHA."
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-196",
+        "decision_source_sha256": "232097d8148a4b137f4f12b72ee7757066be5352aa037963ab71d86c46a41e0a",
+        "decision_locator": "[ ] O parecer apresenta cada critério de aceite individualmente com evidência exata, decisão e estado do checkbox.",
+        "target_issue": 196,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "Obrigação 015 vinculada à fase posterior à auditoria: a issue #196 permanece aberta, não houve parecer independentemente autenticado nem escrita GitHub de checklist. Este dossiê não declara o efeito remoto como concluído."
     },
     "14df853480bf6668326518fcf99f21be2a6652612fd409ef971881cb3aa4eb42": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R196-016"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": null,
-      "rationale": "PENDENTE: o auditor ainda deve reexecutar verificações aplicáveis em contexto separado, além da CI já executada."
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-196",
+        "decision_source_sha256": "232097d8148a4b137f4f12b72ee7757066be5352aa037963ab71d86c46a41e0a",
+        "decision_locator": "[ ] A auditoria cobre e registra todas as verificações de implementação aplicáveis, não apenas os checkboxes ou a CI verde.",
+        "target_issue": 196,
+        "parent_issue_must_remain_open": true
+      },
+      "rationale": "Obrigação 016 vinculada à fase posterior à auditoria: a issue #196 permanece aberta, não houve parecer independentemente autenticado nem escrita GitHub de checklist. Este dossiê não declara o efeito remoto como concluído."
     },
     "131fbc6fb7c96f73ac978c72202a3653574c49ada6ac87771c311d9cc6fd7cc4": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R196-017"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": null,
-      "rationale": "PENDENTE: a separação documental foi feita, mas a atualização real e posterior da issue não ocorreu nem deve ocorrer antes do parecer."
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-196",
+        "decision_source_sha256": "232097d8148a4b137f4f12b72ee7757066be5352aa037963ab71d86c46a41e0a",
+        "decision_locator": "a atualização ocorre em etapa autorizada posterior",
+        "target_issue": 196,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "[ ] O auditor independente não modifica a issue",
+          "rationale": "O trecho pré-handoff está implementado em auditar-issue/SKILL.md (somente leitura) e entregar-issue/SKILL.md (escrita autorizada) e foi conferido pelo roteamento fail-closed."
+        }
+      },
+      "rationale": "Obrigação 017 vinculada à fase posterior à auditoria: a issue #196 permanece aberta, não houve parecer independentemente autenticado nem escrita GitHub de checklist. Este dossiê não declara o efeito remoto como concluído."
     },
     "ec108e82b01bee3c7e7fb50f9e162510357358b9885ba1d6f8ff4fa386441c8a": {
-      "disposition": "pending",
-      "requirement_ids": [],
+      "disposition": "deferred",
+      "requirement_ids": [
+        "R196-018"
+      ],
       "inventory_ids": [],
       "assertion_ids": [],
-      "scope_decision": null,
-      "rationale": "PENDENTE: idempotência foi testada offline; confirmação de leitura após gravação remota depende de futura auditoria e autorização."
+      "scope_decision": {
+        "decision_source_id": "SRC-ISSUE-196",
+        "decision_source_sha256": "232097d8148a4b137f4f12b72ee7757066be5352aa037963ab71d86c46a41e0a",
+        "decision_locator": "e confirma o resultado por leitura no GitHub",
+        "target_issue": 196,
+        "parent_issue_must_remain_open": true,
+        "pre_handoff_coverage": {
+          "covered_text": "[ ] A reconciliação marca apenas critérios comprovados, é idempotente",
+          "rationale": "O trecho pré-handoff está implementado em reconcile_issue_checkboxes.py, que decide por evidência, impede alteração indevida e é idempotente; os testes de idempotência e rejeição executaram no SHA."
+        }
+      },
+      "rationale": "Obrigação 018 vinculada à fase posterior à auditoria: a issue #196 permanece aberta, não houve parecer independentemente autenticado nem escrita GitHub de checklist. Este dossiê não declara o efeito remoto como concluído."
     },
     "7cfa74aa62de1a47464276ab26dde1d8625f88f123a3f34aedb07c7b2cc1ffe4": {
       "disposition": "covered",
