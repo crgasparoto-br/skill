@@ -39,9 +39,6 @@ from session_review import (
 ROOT = Path(__file__).resolve().parents[1]
 MAX_BYTES = 32 * 1024 * 1024
 WORKFLOW = ".github/workflows/session-review.yml"
-COMPARE_ENDPOINT = re.compile(
-    r"/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/compare/[0-9a-f]{40}\.\.\.[0-9a-f]{40}\Z"
-)
 # Both the emitter and its verification policy must already exist in trusted base.
 TRUSTED_PATHS = (WORKFLOW, POLICY_PATH, ".github/workflows/reusable-handoff.yml",
                  "entregar-issue/scripts/resolve_trusted_audit_transport.py",
@@ -60,8 +57,7 @@ TRUSTED_PATHS = (WORKFLOW, POLICY_PATH, ".github/workflows/reusable-handoff.yml"
 
 def api(path: str, *, method: str = "GET", data: dict | None = None, binary: bool = False):
     """gh is used only for authenticated GitHub calls, never model inference."""
-    require(path.startswith("/repos/") and (".." not in path or COMPARE_ENDPOINT.fullmatch(path)),
-            "unexpected GitHub endpoint")
+    require(path.startswith("/repos/") and ".." not in path, "unexpected GitHub endpoint")
     command = ["gh", "api", "--method", method, path]
     if data is not None:
         command.extend(["--input", "-"])
