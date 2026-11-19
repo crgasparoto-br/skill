@@ -337,7 +337,7 @@ def test_nine_digit_ordered_marker_can_start_its_own_list() -> None:
 
 @pytest.mark.parametrize(
     "separator",
-    ["- - -\n", "* * *\n", "- \t- \t-   \n", "*  *   *\n", "---\n", "***\n"],
+    ["- - -\n", "* * *\n", "_ _ _\n", "- \t- \t-   \n", "*  *   *\n", "---\n", "***\n", "___\n"],
 )
 def test_thematic_breaks_never_become_criteria(separator: str) -> None:
     # CommonMark thematic breaks outrank otherwise plausible list-item markers.
@@ -350,18 +350,19 @@ def test_thematic_breaks_never_become_criteria(separator: str) -> None:
     assert len(summary["changes"]) == 2
 
 
-@pytest.mark.parametrize("separator", ["- - -\n", "* * *\n"])
+@pytest.mark.parametrize("separator", ["- - -\n", "* * *\n", "_ _ _\n"])
 def test_thematic_break_alone_is_not_a_criterion(separator: str) -> None:
     with pytest.raises(ValueError, match="no list items"):
         mod.analyze_body("## Critérios de aceite\n" + separator)
 
 
-def test_thematic_break_closes_paragraph_before_ordered_list() -> None:
-    body = "## Critérios de aceite\nTexto explicativo\n- - -\n2. [ ] Critério real\n"
+@pytest.mark.parametrize("separator", ["- - -\n", "* * *\n", "_ _ _\n"])
+def test_thematic_break_closes_paragraph_before_ordered_list(separator: str) -> None:
+    body = "## Critérios de aceite\nTexto explicativo\n" + separator + "2. [ ] Critério real\n"
     assert [item["text"] for item in mod.analyze_body(body)[1]] == ["Critério real"]
     proposed, _ = mod.reconcile(body, body, audit("verified", body=body), SHA)
     assert "2. [x] Critério real" in proposed
-    assert "- - -\n" in proposed
+    assert separator in proposed
 
 
 @pytest.mark.parametrize("digit", ["\u0661", "\u06f2", "\u096a", "\uff12", "\U0001d7d9"])
