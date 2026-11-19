@@ -94,12 +94,43 @@ def reconcile_target(packet: dict, live_identity: dict,
     return proof
 
 
+def _verify_fork_point_with_current_base(repo: str, fork_point: str,
+                                         base_sha: str, api) -> None:
+    """A feature head may predate a newer base; require a GitHub-proven common ancestor."""
+    if fork_point == base_sha:
+        return
+    require(SHA.fullmatch(fork_point) is not None and SHA.fullmatch(base_sha) is not None,
+            "invalid material fork point or protected base SHA")
+    comparison = api(f"/repos/{repo}/compare/{fork_point}...{base_sha}")
+    merge = comparison.get("merge_base_commit") if isinstance(comparison, dict) else None
+    origin = comparison.get("base_commit") if isinstance(comparison, dict) else None
+    require(isinstance(origin, dict) and origin.get("sha") == fork_point
+            and isinstance(merge, dict) and merge.get("sha") == fork_point
+            and comparison.get("status") == "ahead"
+            and type(comparison.get("behind_by")) is int and comparison["behind_by"] == 0
+            and type(comparison.get("ahead_by")) is int and comparison["ahead_by"] > 0,
+            "feature branch fork is not authenticated as an ancestor of current develop")
+
+
 def authenticated_implementation_provenance(identity: dict, metadata: dict, pages, api) -> dict:
     """Rebuild the linear material commit chain using only authenticated GitHub API."""
     repo, number = identity["repository"], identity["pull_request"]
     commits = pages(repo, f"pulls/{number}/commits")
     require(bool(commits) and len(commits) <= 2500, "material GitHub PR commits missing or truncated")
-    seen, previous, shas = set(), identity["base_sha"], []
+    first_sha = commits[0].get("sha")
+    require(isinstance(first_sha, str) and SHA.fullmatch(first_sha),
+            "first material commit SHA missing")
+    first = api(f"/repos/{repo}/git/commits/{first_sha}")
+    first_parents = first.get("parents") if isinstance(first, dict) else None
+    require(isinstance(first, dict) and first.get("sha") == first_sha
+            and isinstance(first_parents, list) and len(first_parents) == 1
+            and isinstance(first_parents[0], dict),
+            "first material commit has no unique authenticated fork point")
+    fork_point = first_parents[0].get("sha")
+    require(isinstance(fork_point, str) and SHA.fullmatch(fork_point),
+            "first material commit fork point is invalid")
+    _verify_fork_point_with_current_base(repo, fork_point, identity["base_sha"], api)
+    seen, previous, shas = set(), fork_point, []
     for row in commits:
         sha = row.get("sha")
         require(isinstance(sha, str) and SHA.fullmatch(sha) and sha not in seen,
