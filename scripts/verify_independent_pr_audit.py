@@ -263,6 +263,11 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
 
     # A workflow reported by the Actions app can still have untrusted code.
     verify_trusted_workflow_source(repo, EXPECTED_WORKFLOWS[name], base_sha, head, token)
+    if name in {HANDOFF, NATIVE_EVIDENCE}:
+        # GitHub reports the caller path even if its reusable workflow is
+        # modified by the candidate. Authenticate both executable layers.
+        verify_trusted_workflow_source(
+            repo, ".github/workflows/reusable-handoff.yml", base_sha, head, token)
 
     # A failed official job must remain eligible for recency selection; filtering
     # by success here would let an older green run hide a newer red run.

@@ -38,6 +38,7 @@ def proof(tmp_path, monkeypatch):
     monkeypatch.setattr(native, "resolve", lambda *_: transport)
     monkeypatch.setattr(native, "issue_body", lambda *_: BODY)
     monkeypatch.setattr(native, "require_event_merge_preview", lambda *_: PREVIEW)
+    monkeypatch.setattr(native, "read_live_pr", lambda *_: {"title": "feat #198", "body": "Refs #198"})
     previews = []
     monkeypatch.setattr(native, "require_equivalent_merge_previews", lambda *args:
                         previews.append(args))
@@ -170,4 +171,23 @@ def test_symlinked_evidence_cannot_be_verified(proof):
     index.rename(target)
     index.symlink_to(target)
     with pytest.raises(ValueError, match="missing"):
+        native.verify(root, evidence, event, "develop")
+
+@pytest.mark.parametrize("field", ["title", "body"])
+def test_changed_live_pr_identity_blocks_stale_native_evidence(proof, monkeypatch, field):
+    root, evidence, event, _ = proof
+    payload = {"title": "feat #198", "body": "Refs #198"}
+    payload[field] = "modified after CI"
+    monkeypatch.setattr(native, "read_live_pr", lambda *_: payload)
+    with pytest.raises(ValueError, match="live GitHub PR title/body changed"):
+        native.verify(root, evidence, event, "develop")
+
+
+def test_duplicate_json_fields_are_not_accepted_as_native_evidence(proof):
+    root, evidence, event, _ = proof
+    path = evidence / "test-execution-facts.json"
+    data = path.read_text(encoding="utf-8")
+    path.write_text('{"subject_sha":"a","subject_sha":"b","execution":{}}', encoding="utf-8")
+    assert data != path.read_text(encoding="utf-8")
+    with pytest.raises(ValueError, match="duplicate native evidence JSON"):
         native.verify(root, evidence, event, "develop")

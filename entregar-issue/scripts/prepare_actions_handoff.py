@@ -20,7 +20,7 @@ from pathlib import Path
 from handoff_merge_preview import require_event_merge_preview
 
 SCRIPTS = Path(__file__).resolve().parent
-ISSUE_REF = re.compile(r"\b(?:issue|fixes|closes|resolves)\s*#(\d+)\b", re.IGNORECASE)
+ISSUE_REF = re.compile(r"\b(?:issue|refs|fixes|closes|resolves)\s*#(\d+)\b", re.IGNORECASE)
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
 
@@ -49,13 +49,15 @@ def read_event(path: Path, base_ref: str = "develop") -> tuple[str, int, int, st
     references = set(ISSUE_REF.findall(combined))
     trailing = re.search(r"\(#(\d+)\)\s*$", title)
     if trailing:
-        # A canonical issue in the title outranks incidental mentions in a PR
-        # description (e.g. a related branch-ruleset issue). Explicit closing
-        # references to other issues are still contradictory and must fail.
+        # Issue #M in prose may describe a related issue. Explicit Refs and
+        # closing directives bind the PR and must not contradict the title.
         closed = set(re.findall(r"\b(?:fixes|closes|resolves)\s*#(\d+)\b",
                                 combined, re.IGNORECASE))
+        explicit_refs = set(re.findall(r"\brefs\s*#(\d+)\b", combined, re.IGNORECASE))
         if closed - {trailing.group(1)}:
             fail("closing reference conflicts with primary issue in PR title")
+        if explicit_refs - {trailing.group(1)}:
+            fail("explicit issue reference conflicts with primary issue in PR title")
         references = {trailing.group(1)}
     if len(references) != 1:
         fail("expected exactly one unambiguous Issue #N reference in PR title/body")

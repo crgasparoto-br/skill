@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 from build_test_candidate_index import collect
+from handoff_merge_preview import _read_json as read_live_pr
 from handoff_merge_preview import require_equivalent_merge_previews, require_event_merge_preview
 from prepare_actions_handoff import issue_body, read_event
 from resolve_trusted_audit_transport import resolve
@@ -18,10 +19,20 @@ from resolve_trusted_audit_transport import resolve
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
 
+def _unique_json_fields(pairs: list[tuple[str, object]]) -> dict:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate native evidence JSON field")
+        result[key] = value
+    return result
+
+
 def record(path: Path) -> dict:
-    if path.is_symlink() or not path.is_file() or not path.stat().st_size:
-        raise ValueError(f"required native evidence is missing: {path.name}")
-    value = json.loads(path.read_text(encoding="utf-8"))
+    if (path.is_symlink() or not path.is_file() or not path.stat().st_size
+            or path.stat().st_size > 16 * 1024 * 1024):
+        raise ValueError(f"required native evidence is missing or oversized: {path.name}")
+    value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_json_fields)
     if not isinstance(value, dict):
         raise ValueError(f"required native evidence must be JSON object: {path.name}")
     return value
@@ -61,8 +72,15 @@ def check_recorded_event(evidence: Path, event: Path, repository: str,
         "base": {"ref": base_ref, "sha": base},
     }
     if (recorded.get("repository") != {"full_name": repository}
+            or set(recorded) != {"repository", "pull_request"}
+            or set(recorded_pr) != {*expected_pr, "merge_commit_sha"}
             or any(recorded_pr.get(key) != value for key, value in expected_pr.items())):
         raise ValueError("technical event differs from authenticated PR inputs")
+    live_pr = read_live_pr(f"repos/{repository}/pulls/{number}")
+    if (not isinstance(live_pr, dict)
+            or (live_pr.get("title") or "") != expected_pr["title"]
+            or (live_pr.get("body") or "") != expected_pr["body"]):
+        raise ValueError("live GitHub PR title/body changed after exact-SHA evidence collection")
     recorded_preview = recorded_pr.get("merge_commit_sha")
     preflight = record(evidence / "handoff-preflight.json")
     if (not isinstance(recorded_preview, str) or SHA.fullmatch(recorded_preview) is None
