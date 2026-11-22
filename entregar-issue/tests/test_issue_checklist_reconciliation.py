@@ -478,3 +478,23 @@ def test_nested_heading_does_not_terminate_acceptance_section() -> None:
     assert [item["text"] for item in mod.analyze_body(body)[1]] == [
         "Pai", "Filho", "Outro",
     ]
+
+def test_remote_readback_accepts_identical_body_and_sha() -> None:
+    proposed = BODY.replace("- [ ] Um", "- [x] Um")
+    result = mod.check_remote_readback(proposed, proposed, SHA, SHA)
+    assert result == {"subject_sha": SHA, "criteria_total": 3,
+                      "criteria_checked": 2, "body_match": True}
+
+
+def test_remote_readback_rejects_race_and_unrelated_changes() -> None:
+    proposed = BODY.replace("- [ ] Um", "- [x] Um")
+    for actual in (BODY, proposed.replace("Preservar comportamento.", "Modificado."),
+                   proposed.replace("- [x] Um", "- [x] Outro")):
+        with pytest.raises(ValueError, match="read-back differs"):
+            mod.check_remote_readback(proposed, actual, SHA, SHA)
+
+
+def test_remote_readback_rejects_head_drift_and_malformed_sha() -> None:
+    for sha, current in ((SHA, "b" * 40), ("not-a-sha", "not-a-sha")):
+        with pytest.raises(ValueError, match="material SHA"):
+            mod.check_remote_readback(BODY, BODY, sha, current)

@@ -273,6 +273,27 @@ def reconcile(audited_body: str, current_body: str, audit: dict, material_sha: s
     return new_body, {"changes": changes, "warnings": warnings, "criteria_total": len(original)}
 
 
+def check_remote_readback(expected_body: str, observed_body: str,
+                          material_sha: str, observed_sha: str) -> dict:
+    """Fail closed on a fresh controller-supplied GitHub read-back.
+
+    This comparison does not fetch GitHub data, prove provenance or grant write
+    authority. The authorized controller must supply the *new* remote issue body
+    and the freshly observed PR HEAD after publishing the proposed body.
+    """
+    if not SHA.fullmatch(material_sha) or material_sha != observed_sha:
+        raise ValueError("Remote read-back material SHA differs from audited SHA")
+    if observed_body != expected_body:
+        raise ValueError("Remote issue read-back differs from proposed body")
+    _, criteria, _ = analyze_body(observed_body)
+    return {
+        "subject_sha": material_sha,
+        "criteria_total": len(criteria),
+        "criteria_checked": sum(bool(item["checked"]) for item in criteria),
+        "body_match": True,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--audited-body", type=Path, required=True)
