@@ -39,6 +39,14 @@ O campo `validity` admite `independent` ou `solo-context-attested` somente após
 
 `verified` marca `[x]` (inclusive em item que ainda não tinha checkbox); `failed` ou `partial` desmarca `[ ]` quando houver prova de falha; `unknown` e `not-applicable` deixam `[ ]` aberto e removem marcação preexistente não comprovada, registrando aviso. Falta de decisão, divergência de texto/posição/estado original (campo `original_checked`), seção ambígua, evidência vazia ou alteração além dos marcadores de checkbox bloqueia a reconciliação. O script não aceita uma matriz parcial e é idempotente.
 
+Para validar depois da atualização, o controlador obtém **novamente** o corpo remoto
+e o SHA material efetivo, confirma a origem no GitHub e repete o comando de
+renderização com `--readback-body <corpo-remoto.md>` e
+`--observed-material-sha <sha-material-revalidado>`. O comando retorna erro se
+o corpo divergir, se o material SHA não coincidir ou se apenas um dos dois
+argumentos de read-back for informado. A ausência dessas opções executa apenas
+a proposta offline e **não** atesta que houve publicação remota.
+
 ## Publicação autorizada e read-back
 
 1. Reconsultar o corpo **imediatamente antes** da atualização e comparar com a base congelada. Uma mudança material exige rederivação/reauditoria antes de qualquer escrita. Uma mudança exclusiva de `[ ]`/`[x]` pode ser reconciliada semanticamente, preservando a evidência do snapshot original.

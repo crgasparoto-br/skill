@@ -302,11 +302,20 @@ def main() -> int:
     parser.add_argument("--audit", type=Path, required=True)
     parser.add_argument("--material-sha", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--readback-body", type=Path)
+    parser.add_argument("--observed-material-sha")
     args = parser.parse_args()
+    if (args.readback_body is None) != (args.observed_material_sha is None):
+        raise ValueError("Read-back body and observed material SHA must both be provided")
     audited_body = args.audited_body.read_text(encoding="utf-8")
     current_body = args.current_body.read_text(encoding="utf-8")
     audit = json.loads(args.audit.read_text(encoding="utf-8"))
     result, summary = reconcile(audited_body, current_body, audit, args.material_sha)
+    if args.readback_body is not None:
+        summary["remote_readback"] = check_remote_readback(
+            result, args.readback_body.read_text(encoding="utf-8"),
+            args.material_sha, args.observed_material_sha,
+        )
     args.output.write_text(result, encoding="utf-8")
     print(json.dumps(summary, ensure_ascii=False, sort_keys=True))
     return 0

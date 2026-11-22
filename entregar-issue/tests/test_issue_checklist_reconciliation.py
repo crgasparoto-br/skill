@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -498,3 +500,33 @@ def test_remote_readback_rejects_head_drift_and_malformed_sha() -> None:
     for sha, current in ((SHA, "b" * 40), ("not-a-sha", "not-a-sha")):
         with pytest.raises(ValueError, match="material SHA"):
             mod.check_remote_readback(BODY, BODY, sha, current)
+
+def test_cli_remote_readback_reconciles_and_checks_exact_body_and_sha(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    source = tmp_path / "issue.md"
+    decision = tmp_path / "audit.json"
+    readback = tmp_path / "remote-body.md"
+    out = tmp_path / "proposed.md"
+    source.write_text(BODY, encoding="utf-8")
+    decision.write_text(json.dumps(audit("verified", "unknown", "unknown")), encoding="utf-8")
+    proposed = mod.reconcile(BODY, BODY, audit("verified", "unknown", "unknown"), SHA)[0]
+    readback.write_text(proposed, encoding="utf-8")
+    arguments = ["prog", "--audited-body", str(source), "--current-body", str(source),
+                 "--audit", str(decision), "--material-sha", SHA, "--output", str(out),
+                 "--readback-body", str(readback), "--observed-material-sha", SHA]
+    monkeypatch.setattr(sys, "argv", arguments)
+    assert mod.main() == 0
+    assert out.read_text(encoding="utf-8") == proposed
+    assert json.loads(capsys.readouterr().out)["remote_readback"]["body_match"] is True
+
+    readback.write_text(BODY, encoding="utf-8")
+    out.unlink()
+    with pytest.raises(ValueError, match="read-back differs"):
+        mod.main()
+    assert not out.exists()
+
+    readback.write_text(proposed, encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", arguments[:-2])
+    with pytest.raises(ValueError, match="both be provided"):
+        mod.main()
