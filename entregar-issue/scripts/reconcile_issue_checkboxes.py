@@ -274,14 +274,15 @@ def reconcile(audited_body: str, current_body: str, audit: dict, material_sha: s
 
 
 def check_remote_readback(expected_body: str, observed_body: str,
-                          material_sha: str, observed_sha: str) -> dict:
+                          material_sha: str, observed_material_sha: str) -> dict:
     """Fail closed on a fresh controller-supplied GitHub read-back.
 
     This comparison does not fetch GitHub data, prove provenance or grant write
     authority. The authorized controller must supply the *new* remote issue body
-    and the freshly observed PR HEAD after publishing the proposed body.
+    and the freshly validated material identity after the remote update. A
+    certified result-only child may have a different current PR HEAD.
     """
-    if not SHA.fullmatch(material_sha) or material_sha != observed_sha:
+    if not SHA.fullmatch(material_sha) or material_sha != observed_material_sha:
         raise ValueError("Remote read-back material SHA differs from audited SHA")
     if observed_body != expected_body:
         raise ValueError("Remote issue read-back differs from proposed body")
