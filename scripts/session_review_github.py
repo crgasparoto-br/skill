@@ -13,7 +13,9 @@ import re
 import sys
 from typing import TYPE_CHECKING
 
-from session_review import PROVENANCE_TYPE, SHA, canonical, digest, require, strict_json
+from session_review import (
+    MAX_TECHNICAL_JSON, PROVENANCE_TYPE, SHA, canonical, digest, require, strict_json,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -233,7 +235,10 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
     if mode == "native-github-audit":
         require(index["counts"]["skipped"] == 0, "native JUnit contains skipped controls")
         from build_test_candidate_index import collect as collect_fresh
-        observed = strict_json((directory / "test-candidate-index.json").read_text(encoding="utf-8"))
+        # The authenticated JUnit-derived index can exceed the review-comment limit.
+        # Keep a separate bounded parser and exact comparison to regenerated evidence.
+        index_raw = (directory / "test-candidate-index.json").read_text(encoding="utf-8")
+        observed = strict_json(index_raw, max_bytes=MAX_TECHNICAL_JSON)
         require(observed == collect_fresh(junit, head), "native test candidate index is stale or altered")
     metadata = {"artifact_digest": artifact["digest"], "artifact_id": artifact["id"], "certified_at": chosen["completed_at"],
                 "audit_transport": mode,
