@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "entregar-issue" / "scripts"))
-from verify_github_completion import audit_contract, github
 from resolve_trusted_audit_transport import CONTRACT_PATH, validate_native_contract_blob
+from verify_github_completion import audit_contract, github
 
 if TYPE_CHECKING:
     from collections.abc import Callable
