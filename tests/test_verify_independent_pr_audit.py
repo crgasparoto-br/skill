@@ -45,12 +45,13 @@ def fixture(base="develop"):
     return pr, reviews, commits, checks
 
 
-def verify(data, base="develop", authorized=None, trusted=None):
+def verify(data, base="develop", authorized=None, trusted=None, *, audit_transport="certified-handoff"):
     if authorized is None:
         authorized = lambda reviewer: reviewer == "independent-auditor"
     if trusted is None:
         trusted = lambda _name, _check: True  # Pure gate unit tests only.
-    return gate.verify_gate(*data, base, authorized, trusted)
+    return gate.verify_gate(*data, base, authorized, trusted,
+                            audit_transport=audit_transport)
 
 
 def test_valid_independent_review_exact_sha_and_all_checks():
@@ -211,6 +212,7 @@ def test_paginated_review_inventory_is_not_truncated(monkeypatch):
 
 
 def test_pr_head_change_after_approval_rejected(monkeypatch):
+    monkeypatch.setattr(gate, "trusted_audit_transport", lambda *args: "certified-handoff")
     data = fixture()
     calls = 0
     def github(path, token):
@@ -299,6 +301,7 @@ def test_check_requires_matching_github_workflow_suite_and_job(monkeypatch, muta
 
 @pytest.mark.parametrize("phase", ["initial", "final"])
 def test_trusted_base_sha_drift_is_rejected(monkeypatch, phase):
+    monkeypatch.setattr(gate, "trusted_audit_transport", lambda *args: "certified-handoff")
     data = fixture()
     calls = 0
 
@@ -590,6 +593,7 @@ def test_inconsistent_official_workflow_outcome_blocks(monkeypatch, mutation, re
     "review-dismissed", "review-edited", "permission-revoked", "latest-check-failed",
 ])
 def test_recheck_rejects_midflight_review_or_ci_drift(monkeypatch, drift):
+    monkeypatch.setattr(gate, "trusted_audit_transport", lambda *args: "certified-handoff")
     pr, reviews, commits, checks = fixture()
     seen = {"reviews": 0, "checks": 0, "permissions": 0}
 
@@ -628,6 +632,7 @@ def test_recheck_rejects_midflight_review_or_ci_drift(monkeypatch, drift):
 
 
 def test_stable_live_review_recheck_can_approve(monkeypatch):
+    monkeypatch.setattr(gate, "trusted_audit_transport", lambda *args: "certified-handoff")
     pr, reviews, commits, checks = fixture()
     seen = {"reviews": 0}
 
@@ -689,3 +694,41 @@ def test_certification_job_requires_unmodified_reusable_workflow(
     else:
         with pytest.raises(ValueError, match="differs from trusted base"):
             gate.trusted_workflow_check("org/repo", 3, name, check, HEAD, BASE_SHA, "token")
+
+def test_trusted_native_evidence_check_is_selected_without_legacy_fallback():
+    data = fixture()
+    data[3]["check_runs"][-1]["name"] = gate.NATIVE_EVIDENCE
+    with pytest.raises(ValueError, match="certified semantic handoff"):
+        verify(data)
+    assert "pullrequestreview-1" in verify(data, audit_transport="native-github-audit")
+    data[3]["check_runs"][-1]["conclusion"] = "skipped"
+    with pytest.raises(ValueError, match="not green"):
+        verify(data, audit_transport="native-github-audit")
+
+
+def test_human_gate_resolves_native_transport_only_from_verified_base_blob(monkeypatch):
+    contract = {
+        "schema_version": 1, "repository": "org/repo", "base_ref": "develop",
+        "canonical": True, "audit_mode": "native-github",
+        "legacy_handoff_policy": "not-required",
+        "github_native_identity": True, "exact_sha_evidence": True,
+        "independent_review": True, "remote_ci_evidence": True,
+    }
+    raw = json.dumps(contract).encode()
+    blob = _contents_blob(raw)
+    requested = f"/repos/org/repo/contents/{gate.CONTRACT_PATH}?ref={BASE_SHA}"
+    monkeypatch.setattr(gate, "github", lambda path, token: (
+        blob if path == requested and token == "token" else None))
+    assert gate.trusted_audit_transport("org/repo", "develop", BASE_SHA, "token") == "native-github-audit"
+    assert gate.trusted_audit_transport("org/repo", "main", BASE_SHA, "token") == "certified-handoff"
+    tampered = {**blob, "sha": "f" * 40}
+    monkeypatch.setattr(gate, "github", lambda path, token: tampered)
+    with pytest.raises(ValueError, match="Git blob"):
+        gate.trusted_audit_transport("org/repo", "develop", BASE_SHA, "token")
+    monkeypatch.setattr(gate, "github", lambda path, token: (
+        _ for _ in ()).throw(urllib.error.HTTPError(path, 404, "missing", {}, None)))
+    assert gate.trusted_audit_transport("org/repo", "develop", BASE_SHA, "token") == "certified-handoff"
+    monkeypatch.setattr(gate, "github", lambda path, token: (
+        _ for _ in ()).throw(urllib.error.HTTPError(path, 403, "denied", {}, None)))
+    with pytest.raises(urllib.error.HTTPError):
+        gate.trusted_audit_transport("org/repo", "develop", BASE_SHA, "token")
