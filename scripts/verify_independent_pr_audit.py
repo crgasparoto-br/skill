@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "entregar-issue" / "scripts"))
 from verify_github_completion import audit_contract, github
+from resolve_trusted_audit_transport import CONTRACT_PATH, validate_native_contract_blob
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -280,6 +281,22 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
     return True
 
 
+
+def trusted_audit_transport(repo: str, base: str, base_sha: str, token: str) -> str:
+    """Select CI evidence only from a Git-verified contract at the immutable PR base."""
+    if base != "develop":
+        return "certified-handoff"
+    try:
+        blob = github(f"/repos/{repo}/contents/{CONTRACT_PATH}?ref={base_sha}", token)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return "certified-handoff"
+        raise
+    raw = _authenticated_blob_bytes(blob)
+    validate_native_contract_blob(raw, blob["sha"], repo, base)
+    return "native-github-audit"
+
+
 def required_checks_green(checks: dict, head: str, base: str,
                           trusted: Callable[[str, dict], bool], *,
                           audit_transport: str = "certified-handoff") -> None:
@@ -357,7 +374,8 @@ def is_authorized_reviewer(repo: str, reviewer: str, token: str) -> bool:
 
 def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
                 checks: dict, base: str, authorized: Callable[[str], bool],
-                trusted: Callable[[str, dict], bool]) -> str:
+                trusted: Callable[[str, dict], bool], *,
+                audit_transport: str = "certified-handoff") -> str:
     """Authenticate identities, exact-HEAD checks and an actual independent review."""
     if base not in ("develop", "main") or pr.get("base", {}).get("ref") != base:
         raise ValueError("PR base differs from protected branch")
@@ -369,7 +387,7 @@ def verify_gate(pr: dict, reviews: list[dict], commits: list[dict],
     if not reviews or not commits:
         raise ValueError("independent audit requires review history and commits")
     implementers = contributor_logins(pr, commits)
-    required_checks_green(checks, head, base, trusted)
+    required_checks_green(checks, head, base, trusted, audit_transport=audit_transport)
     current = latest_reviews(reviews)
     if any(x.get("state") == "CHANGES_REQUESTED" for x in current.values()):
         raise ValueError("outstanding request for changes")
@@ -388,6 +406,7 @@ def run(repo: str, number: int, base: str, base_sha: str, token: str) -> str:
     pr = github(f"/repos/{repo}/pulls/{number}", token)
     if pr.get("base", {}).get("ref") != base or pr["base"].get("sha") != base_sha:
         raise ValueError("trusted PR base SHA changed before verification")
+    audit_transport = trusted_audit_transport(repo, base, base_sha, token)
     reviews = page_all(repo, f"pulls/{number}/reviews", token)
     commits = page_all(repo, f"pulls/{number}/commits", token)
     head = pr["head"]["sha"]
@@ -397,6 +416,7 @@ def run(repo: str, number: int, base: str, base_sha: str, token: str) -> str:
         lambda reviewer: is_authorized_reviewer(repo, reviewer, token),
         lambda name, check: trusted_workflow_check(
             repo, number, name, check, head, base_sha, token),
+        audit_transport=audit_transport,
     )
     current = github(f"/repos/{repo}/pulls/{number}", token)
     if (current.get("head", {}).get("sha") != head
@@ -413,6 +433,7 @@ def run(repo: str, number: int, base: str, base_sha: str, token: str) -> str:
         lambda reviewer: is_authorized_reviewer(repo, reviewer, token),
         lambda name, check: trusted_workflow_check(
             repo, number, name, check, head, base_sha, token),
+        audit_transport=audit_transport,
     )
     if current_approval != approval:
         raise ValueError("independent approval changed while validating")
