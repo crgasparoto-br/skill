@@ -14,7 +14,13 @@ import sys
 from typing import TYPE_CHECKING
 
 from session_review import (
-    MAX_TECHNICAL_JSON, PROVENANCE_TYPE, SHA, canonical, digest, require, strict_json,
+    MAX_TECHNICAL_JSON,
+    PROVENANCE_TYPE,
+    SHA,
+    canonical,
+    digest,
+    require,
+    strict_json,
 )
 
 if TYPE_CHECKING:
