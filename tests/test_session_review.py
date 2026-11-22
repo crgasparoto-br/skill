@@ -242,3 +242,18 @@ def test_legacy_real_sessions_still_work_with_provenance_feature_enabled():
     active = policy()
     active["implementation_provenance"] = {"mode": "enabled", "type": gate.PROVENANCE_TYPE}
     assert verify(selected_policy=active)["identity"]["pull_request"] == 10
+
+def test_large_authenticated_test_index_does_not_relax_operator_review_limit():
+    """CI has thousands of executed tests; the operator's comment remains bounded."""
+    evidence = {"tests": ["verified-case-" + "x" * (gate.MAX_BODY + 128)]}
+    raw = json.dumps(evidence)
+    assert gate.MAX_BODY < len(raw.encode()) < gate.MAX_TECHNICAL_JSON
+    with pytest.raises(ValueError, match="review payload exceeds bounded size"):
+        gate.strict_json(raw)
+    assert gate.strict_json(raw, max_bytes=gate.MAX_TECHNICAL_JSON) == evidence
+    with pytest.raises(ValueError, match="invalid trusted JSON size limit"):
+        gate.strict_json(raw, max_bytes=gate.MAX_TECHNICAL_JSON + 1)
+    with pytest.raises(ValueError, match="invalid trusted JSON size limit"):
+        gate.strict_json(raw, max_bytes=True)
+    with pytest.raises(ValueError, match="duplicate JSON key"):
+        gate.strict_json('{"tests": [], "tests": [1]}', max_bytes=gate.MAX_TECHNICAL_JSON)
