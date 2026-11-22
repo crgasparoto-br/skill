@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "repository": "crgasparoto-br/skill",
+  "issue_number": 198,
+  "pull_request_number": 203,
+  "base_ref": "develop",
+  "head_ref": "chore/issue-198-native-bootstrap-linear",
+  "work_item_start_sha": "674884cd63dec963d75880b7f184d912d955d3d3",
+  "review_state": "approved",
+  "evidence_profile": "critical",
+  "risk_justification": "Perfil critico: ativacao de politica de auditoria GitHub-native, handoff, confianca na base, JUnit exato, origem/revogacao de revisoes e regras de protecao; prova em PR posterior diferida explicitamente.",
+  "audit_history": "verified-no-rejection",
+  "audit_history_evidence": "PR #203 foi criada como substituicao da #202 sem review GitHub autenticado anterior neste HEAD; parecer da conversa da PR #202 e historico nao autenticado, nao convertido em fato de auditoria independente.",
+  "artifact_sha256": {
+    "reviewed-closure.json": "aae2033cc106589679a386de46f4add3abbab7f7d21cdcb3fb8da895a934fd27",
+    "requirement-attack-matrix.json": "1aa3c03a5abf23ebbbeab45f68a6818d5452766b328036e1b01d899dc1f0f9bd",
+    "risk-saturation.json": "29ae592d5ace3891b30e5cc071293301f7e99cc5437d8b5b5d9e910227ad06de",
+    "inherited-controls.json": "c1695bc885183201143d7377822f3ce1f2a0c7ceff9445c4d70ecead7e0fdf27"
+  },
+  "test_bindings": {
+    "R198-001": {
+      "positive": [
+        "tests.test_native_audit_workflows::test_native_and_legacy_routes_have_separate_real_validation_jobs"
+      ],
+      "negative": [
+        "tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success"
+      ],
+      "regression": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]"
+      ]
+    },
+    "R198-003": {
+      "positive": [
+        "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue"
+      ],
+      "regression": [
+        "tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success"
+      ]
+    },
+    "R198-004": {
+      "positive": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_duplicate_json_key_in_trusted_base_fails_closed"
+      ]
+    },
+    "R198-005": {
+      "positive": [
+        "tests.test_native_audit_workflows::test_native_and_legacy_routes_have_separate_real_validation_jobs"
+      ],
+      "negative": [
+        "tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success"
+      ],
+      "regression": [
+        "tests.test_native_audit_workflows::test_collector_does_not_replace_junit_with_certificate_or_candidate_test_claims"
+      ]
+    },
+    "R198-006": {
+      "positive": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]"
+      ],
+      "negative": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[stale-issue]"
+      ],
+      "regression": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract]"
+      ]
+    },
+    "R198-007": {
+      "positive": [
+        "tests.test_native_audit_workflows::test_native_and_legacy_routes_have_separate_real_validation_jobs"
+      ],
+      "negative": [
+        "tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success"
+      ]
+    },
+    "R198-008": {
+      "positive": [
+        "tests.test_session_review_runner::test_evaluate_preserves_revocation_across_pages_and_reuse"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_evaluate_rejects_review_revoked_during_final_revalidation[edited]"
+      ],
+      "regression": [
+        "tests.test_session_review_runner::test_review_rejects_later_invalid_report_during_final_revalidation"
+      ]
+    },
+    "R198-009": {
+      "positive": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_native_contract_from_immutable_trusted_base_passes"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_symlink_does_not_become_a_canonical_contract"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_unavailable_or_fake_git_object_fails_closed[base_sha]"
+      ]
+    },
+    "R198-010": {
+      "positive": [
+        "entregar-issue.tests.test_validate_native_actions_evidence::test_exact_sha_native_proof_does_not_self_approve"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_validate_native_actions_evidence::test_legacy_mode_cannot_claim_native_readiness"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_validate_native_actions_evidence::test_invalid_test_or_junit_evidence_is_rejected[failed]"
+      ]
+    },
+    "R198-011": {
+      "positive": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_candidate_cannot_install_own_native_exemption"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_validate_native_actions_evidence::test_legacy_mode_cannot_claim_native_readiness"
+      ]
+    },
+    "R198-012": {
+      "positive": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]"
+      ],
+      "negative": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[stale-issue]"
+      ],
+      "regression": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-base]"
+      ]
+    },
+    "R198-013": {
+      "positive": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[valid]"
+      ],
+      "negative": [
+        "tests.test_session_review_runner::test_final_pr_identity_recheck_blocks_concurrent_tree_change"
+      ],
+      "regression": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[changed-native-contract]"
+      ]
+    },
+    "R198-014": {
+      "positive": [
+        "tests.test_session_review_runner::test_owner_authorization_needs_no_extra_account_or_admin_secret"
+      ],
+      "negative": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_main_release_cannot_be_treated_as_develop_issue"
+      ],
+      "regression": [
+        "tests.test_native_audit_workflows::test_trusted_publish_and_review_hooks_cannot_use_skipped_check_as_success"
+      ]
+    },
+    "R198-015": {
+      "positive": [
+        "tests.test_native_audit_workflows::test_native_and_legacy_routes_have_separate_real_validation_jobs"
+      ],
+      "negative": [
+        "tests.test_session_certificate_event::test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate[skipped-native-test]"
+      ],
+      "regression": [
+        "entregar-issue.tests.test_resolve_trusted_audit_transport::test_missing_contract_remains_legacy_without_false_success"
+      ]
+    }
+  }
+}
