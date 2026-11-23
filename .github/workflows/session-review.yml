@@ -7,7 +7,6 @@ on:
     types: [created, edited, deleted]
   pull_request_target:
     branches: [develop, main]
-    # Invalidate any prior same-SHA review immediately; readiness is deferred in the runner.
     types: [opened, synchronize, reopened, ready_for_review, edited]
   issues:
     types: [edited]
