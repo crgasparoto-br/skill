@@ -545,11 +545,7 @@ def preflight_pull_request_check(repo: str, event: dict) -> tuple[str, int] | No
     return head, begin_check(repo, head, {"third_party_identity_proven": False}, [])
 
 
-def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
-    require(event.get("repository", {}).get("full_name") == repo, "event repository mismatch")
-    # A background sweep must not turn unrelated draft PRs into failed push CI.
-    # Explicit PR/issue events still reach evaluate() and can revoke approvals.
-    background = set(event).isdisjoint({"pull_request", "issue", "inputs"})
+def _event_target_numbers(repo: str, event: dict) -> tuple[list[int], str | None]:
     numbers = []
     event_head = None
     pull_request = event.get("pull_request")
@@ -579,35 +575,58 @@ def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
         numbers = [pr["number"] for pr in pull_requests]
     else:
         numbers = [p["number"] for p in pages(repo, "pulls?state=open")]
+    return numbers, event_head
+
+
+def _associated_open_pull_numbers(repo: str, event_head: str) -> list[int]:
+    numbers = []
+    for associated in pages(repo, f"commits/{event_head}/pulls"):
+        state = associated.get("state")
+        require(state in {"open", "closed"}, "invalid pull request association state")
+        if state != "open":
+            continue
+        candidate_head = (associated.get("head") or {}).get("sha")
+        candidate_number = associated.get("number")
+        require(type(candidate_number) is int and candidate_number > 0
+                and isinstance(candidate_head, str) and SHA.fullmatch(candidate_head),
+                "invalid open pull request association")
+        if candidate_head == event_head:
+            numbers.append(candidate_number)
+    return numbers
+
+
+def _live_target(
+    repo: str, number: int, event_head: str | None, background: bool, event: dict
+) -> tuple[int, int] | None:
+    pr = api(f"/repos/{repo}/pulls/{number}")
+    if event_head is not None and (pr.get("head") or {}).get("sha") != event_head:
+        return None
+    if (pr.get("state") != "open"
+            or pr.get("base", {}).get("ref") not in {"develop", "main"}
+            or (background and pr.get("draft") is not False)):
+        return None
+    try:
+        issue = linked_issue(pr)
+    except ValueError:
+        issue = 0  # Keep the PR target so evaluate revokes a previous approval.
+    if issue and event.get("issue") and not event["issue"].get("pull_request") and event["issue"]["number"] != issue:
+        return None
+    return number, issue
+
+
+def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
+    require(event.get("repository", {}).get("full_name") == repo, "event repository mismatch")
+    # A background sweep must not turn unrelated draft PRs into failed push CI.
+    # Explicit PR/issue events still reach evaluate() and can revoke approvals.
+    background = set(event).isdisjoint({"pull_request", "issue", "inputs"})
+    numbers, event_head = _event_target_numbers(repo, event)
     if event_head is not None:
-        for associated in pages(repo, f"commits/{event_head}/pulls"):
-            state = associated.get("state")
-            require(state in {"open", "closed"}, "invalid pull request association state")
-            if state != "open":
-                continue
-            candidate_head = (associated.get("head") or {}).get("sha")
-            candidate_number = associated.get("number")
-            require(type(candidate_number) is int and candidate_number > 0
-                    and isinstance(candidate_head, str) and SHA.fullmatch(candidate_head),
-                    "invalid open pull request association")
-            if candidate_head == event_head:
-                numbers.append(candidate_number)
+        numbers.extend(_associated_open_pull_numbers(repo, event_head))
     result = []
     for number in sorted(set(numbers)):
-        pr = api(f"/repos/{repo}/pulls/{number}")
-        if event_head is not None and (pr.get("head") or {}).get("sha") != event_head:
-            continue
-        if (pr.get("state") != "open"
-                or pr.get("base", {}).get("ref") not in {"develop", "main"}
-                or (background and pr.get("draft") is not False)):
-            continue
-        try:
-            issue = linked_issue(pr)
-        except ValueError:
-            issue = 0  # Keep the PR target so evaluate revokes a previous approval.
-        if issue and event.get("issue") and not event["issue"].get("pull_request") and event["issue"]["number"] != issue:
-            continue
-        result.append((number, issue))
+        target = _live_target(repo, number, event_head, background, event)
+        if target is not None:
+            result.append(target)
     return result
 
 
