@@ -149,6 +149,38 @@ def test_no_recursive_workflow_trigger(tmp_path):
     assert "persist-credentials: false" in workflow
 
 
+def test_pull_request_event_starts_pending_check_before_live_target_lookup(monkeypatch, tmp_path):
+    head = "a" * 40
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "pull_request": {"number": 10, "head": {"sha": head}},
+    }))
+    writes = []
+
+    def api(path, *, method="GET", data=None):
+        writes.append((path, method, copy.deepcopy(data)))
+        assert method == "POST"
+        return {"id": 12, "name": runner.CHECK_NAME, "head_sha": head, "status": "in_progress"}
+
+    def unavailable(repo, event):
+        assert repo == "owner/repo"
+        assert writes and writes[0][1] == "POST"
+        raise OSError("live PR lookup unavailable")
+
+    monkeypatch.setattr(runner, "api", api)
+    monkeypatch.setattr(runner, "resolve_targets", unavailable)
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+    with pytest.raises(OSError, match="live PR lookup unavailable"):
+        runner.main()
+
+    assert len(writes) == 1
+    assert writes[0][2]["head_sha"] == head
+    assert writes[0][2]["status"] == "in_progress"
+
+
 def test_revocation_watermark_survives_missing_report(monkeypatch):
     check = {"id": 5, "head_sha": "a" * 40, "name": runner.CHECK_NAME, "app": {"id": 15368},
              "output": {"text": json.dumps({"review_comment_id": 41})}}
@@ -209,6 +241,28 @@ def test_failure_leaves_no_previous_green_as_latest_check(review_backend, monkey
     assert backend.checks[-1]["status"] == "completed"
     assert backend.checks[-1]["conclusion"] == "failure"
     assert "certificate missing" in backend.checks[-1]["output"]["summary"]
+
+
+def test_pending_prerequisites_defer_without_authorizing_and_resume(review_backend):
+    backend = review_backend
+    backend.seed(1)  # Same-SHA success must be invalidated before deferring.
+    pending = True
+
+    def readiness():
+        if pending:
+            raise runner.RequiredChecksNotReadyError("required exact-HEAD check pending: Structure and tests")
+
+    backend.on_prepare = readiness
+    assert backend.run() == 0
+    assert len(backend.checks) == 1
+    assert backend.checks[-1]["status"] == "in_progress"
+    assert backend.checks[-1].get("conclusion") is None
+    assert not any(data.get("conclusion") in {"success", "failure"} for _, data in backend.writes)
+
+    pending = False
+    assert backend.run() == 0
+    assert backend.checks[-1]["status"] == "completed"
+    assert backend.checks[-1]["conclusion"] == "success"
 
 
 @pytest.mark.parametrize("path", ["a//b", "a/./b", ".", "./", "a\x00b"])

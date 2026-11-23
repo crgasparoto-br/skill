@@ -24,6 +24,7 @@ from session_review import (
     POLICY_PATH,
     PREFIX,
     PROVENANCE_TYPE,
+    SHA,
     allowed,
     canonical,
     digest,
@@ -35,6 +36,7 @@ from session_review import (
     validate_policy,
     verify_review,
 )
+from verify_independent_pr_audit import RequiredChecksNotReadyError
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_BYTES = 32 * 1024 * 1024
@@ -468,6 +470,14 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         publish(repo, head, "success", summary, receipt, os.environ.get("GITHUB_RUN_ID", ""), check_id)
         print(summary)
         return 0
+    except RequiredChecksNotReadyError as exc:
+        if packet_out:
+            print(f"BLOCK: {type(exc).__name__}: {exc}", file=sys.stderr)
+            return 2
+        # begin_check already left the trusted exact-SHA check in progress. A
+        # later workflow_run will re-evaluate when all required jobs are terminal.
+        print(f"DEFERRED: {exc}; exact-SHA review remains in progress")
+        return 0
     except (ValueError, KeyError, TypeError, OSError, zipfile.BadZipFile, subprocess.SubprocessError) as exc:
         reason = f"BLOCK: {type(exc).__name__}: {exc}"
         if not packet_out:
@@ -480,6 +490,19 @@ def linked_issue(pr: dict) -> int:
     refs = {int(x) for x in re.findall(r"(?im)^\s*(?:closes|fixes|refs)\s+#([1-9][0-9]*)\s*$", pr.get("body") or "")}
     require(len(refs) == 1, "PR must reference exactly one canonical issue")
     return next(iter(refs))
+
+
+def preflight_pull_request_check(repo: str, event: dict) -> None:
+    """Block stale same-SHA checks before live PR discovery can fail or stall."""
+    pr = event.get("pull_request")
+    if not isinstance(pr, dict):
+        return
+    require(event.get("repository", {}).get("full_name") == repo, "event repository mismatch")
+    head = (pr.get("head") or {}).get("sha")
+    number = pr.get("number")
+    require(type(number) is int and number > 0 and isinstance(head, str) and SHA.fullmatch(head),
+            "invalid pull_request event identity before review check")
+    begin_check(repo, head, {"third_party_identity_proven": False}, [])
 
 
 def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
@@ -530,7 +553,9 @@ def main() -> int:
     require(bool(re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", args.repo)), "invalid repository")
     if args.event:
         require(not args.pr and not args.issue and not args.packet_out, "event mode does not take explicit targets")
-        targets = resolve_targets(args.repo, json.loads(args.event.read_bytes()))
+        event = json.loads(args.event.read_bytes())
+        preflight_pull_request_check(args.repo, event)
+        targets = resolve_targets(args.repo, event)
     else:
         require(type(args.pr) is int and args.pr > 0 and type(args.issue) is int and args.issue > 0,
                 "positive PR and issue required")
