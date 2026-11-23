@@ -352,7 +352,7 @@ def test_trusted_runner_binds_extracted_github_facts_to_protected_base():
 @pytest.mark.parametrize("attack", [
     "valid", "missing-native-contract", "changed-native-contract",
     "changed-base", "stale-issue", "changed-head", "stale-test-index",
-    "skipped-native-test", "native-check-failed",
+    "oversized-test-index", "skipped-native-test", "native-check-failed",
 ])
 def test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certificate(
         monkeypatch, tmp_path, attack):
@@ -384,6 +384,11 @@ def test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certi
     log = b"1 passed\n"
     junit_bytes = (b'<testsuite name="pytest"><testcase classname="tests.native" '
                    b'name="test_native_review"/></testsuite>')
+    if attack == "oversized-test-index":
+        cases = "".join(
+            f'<testcase classname="t" name="t{i}"/>' for i in range(40000)
+        )
+        junit_bytes = f'<testsuite name="pytest">{cases}</testsuite>'.encode()
     if attack == "skipped-native-test":
         junit_bytes = (b'<testsuite name="pytest"><testcase classname="tests.native" '
                        b'name="test_native_review"><skipped/></testcase></testsuite>')
@@ -392,6 +397,9 @@ def test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certi
     index = build_test_candidate_index.collect(junit, HEAD)
     if attack == "stale-test-index":
         index["subject_sha"] = "0" * 40
+    if attack == "oversized-test-index":
+        serialized_index = json.dumps(index, ensure_ascii=False, indent=2)
+        assert len(serialized_index.encode()) > 2 * 1024 * 1024
     issue_digest = identity["issue_sha256"]
     if attack == "stale-issue":
         issue_digest = "0" * 64
@@ -409,7 +417,7 @@ def test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certi
         }),
         "pytest-exact-head.log": log,
         "pytest-exact-head.xml": junit_bytes,
-        "test-candidate-index.json": json.dumps(index),
+        "test-candidate-index.json": json.dumps(index, ensure_ascii=False, indent=2),
     }
     zipped = io.BytesIO()
     with zipfile.ZipFile(zipped, "w") as arc:
@@ -446,13 +454,13 @@ def test_native_session_review_uses_real_exact_sha_evidence_without_legacy_certi
     monkeypatch.setattr(verify_independent_pr_audit, "trusted_workflow_check",
                         lambda *_: True)
 
-    if attack == "valid":
+    if attack in {"valid", "oversized-test-index"}:
         metadata, passed = runner.certified_evidence(identity, checks, tmp_path, transport)
         assert metadata["audit_transport"] == "native-github-audit"
         assert metadata["native_contract_sha256"] == canonical_contract_sha
         assert metadata["technical_check_ids"] == [1, 2, 3]
         assert "certified_handoff_preview_reconciliation" not in metadata
-        assert passed
+        assert len(passed) == (40000 if attack == "oversized-test-index" else 1)
     else:
         with pytest.raises(ValueError):
             runner.certified_evidence(identity, checks, tmp_path, transport)

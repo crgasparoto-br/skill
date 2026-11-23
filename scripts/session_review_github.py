@@ -19,6 +19,15 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+# An extracted artifact is capped at 32 MiB; no accepted index can exceed it.
+MAX_TEST_CANDIDATE_INDEX_BYTES = 32 * 1024 * 1024
+
+
+def parse_test_candidate_index(raw: str) -> dict:
+    """Parse the generated, bounded JUnit index without relaxing review limits."""
+    return strict_json(raw, limit=MAX_TEST_CANDIDATE_INDEX_BYTES)
+
+
 def authenticated_certificate_event(identity: dict, api) -> dict:
     """Rebuild the certificate event using live GitHub PR and ordered merge parents."""
     repo, number = identity["repository"], identity["pull_request"]
@@ -233,7 +242,8 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
     if mode == "native-github-audit":
         require(index["counts"]["skipped"] == 0, "native JUnit contains skipped controls")
         from build_test_candidate_index import collect as collect_fresh
-        observed = strict_json((directory / "test-candidate-index.json").read_text(encoding="utf-8"))
+        observed = parse_test_candidate_index(
+            (directory / "test-candidate-index.json").read_text(encoding="utf-8"))
         require(observed == collect_fresh(junit, head), "native test candidate index is stale or altered")
     metadata = {"artifact_digest": artifact["digest"], "artifact_id": artifact["id"], "certified_at": chosen["completed_at"],
                 "audit_transport": mode,

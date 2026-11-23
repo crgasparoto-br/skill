@@ -132,6 +132,23 @@ def test_ambiguous_or_oversized_json_rejected(text):
         gate.strict_json(text)
 
 
+def test_generated_test_index_has_its_own_bounded_json_limit(monkeypatch):
+    github_facts = importlib.import_module("session_review_github")
+    payload = json.dumps({"tests": ["x" * 60001]})
+    assert len(payload.encode()) > gate.MAX_BODY
+    with pytest.raises(ValueError, match="review payload exceeds"):
+        gate.strict_json(payload)
+    assert github_facts.parse_test_candidate_index(payload)["tests"][0].startswith("x")
+
+    assert github_facts.MAX_TEST_CANDIDATE_INDEX_BYTES == 32 * 1024 * 1024
+    monkeypatch.setattr(github_facts, "MAX_TEST_CANDIDATE_INDEX_BYTES", 128)
+    oversized = json.dumps({"tests": ["x" * 128]})
+    with pytest.raises(ValueError, match="bounded size"):
+        github_facts.parse_test_candidate_index(oversized)
+    with pytest.raises(ValueError, match="positive integer"):
+        gate.strict_json("{}", limit=True)
+
+
 def test_main_is_bound_to_same_exact_evidence_requirements():
     receipt = verify(lambda p, r, *_: (p["identity"].update(base_ref="main"), r["identity"].update(base_ref="main")))
     assert receipt["identity"]["base_ref"] == "main"
