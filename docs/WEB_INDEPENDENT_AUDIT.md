@@ -16,7 +16,7 @@ A conta do mesmo proprietário pode assinar e publicar o JSON como comentário p
 
 Alteração de Actions Variables não gera automaticamente evento GitHub Actions. A revogação operacional exige apagar o comentário ativo para disparar reavaliação/bloqueio e, para novo parecer, publicar um comentário novo após revalidar a configuração. Um check verde antigo não se torna vermelho por alteração silenciosa de variável; M2 precisa provar read-back e mecanismo de reavaliação próximo ao merge, ou manter o modo desativado. A PR M1 não muda rulesets, approval count, required checks remotos, merge nem release; até bootstrap confiável/read-back de M2, continuam valendo as proteções atuais.
 
-O GitHub associa Check Runs ao commit, não exclusivamente a uma PR. O M1 cria um run novo por execução confiável, vincula `external_id` ao alvo/run ID e não adota objetos anteriores por metadados, além de bloquear quando encontra mais de uma PR aberta com o mesmo HEAD. Antes do PATCH de sucesso, repete as leituras de evidência/autoridade após o GET do run e relê o mesmo objeto imediatamente antes da escrita; leituras REST não são transacionais e não eliminam a janela de concorrência. Isso ainda não torna o status per-PR para branch protection. M2 precisa exigir a execução confiável em cada PR (ou mecanismo equivalente com escopo demonstrável), comprovar a proteção/read-back de `develop` e `main` e testar duas PRs no mesmo HEAD. Se a plataforma não garantir esse vínculo, a revisão humana/native gate permanece obrigatória e o solo não pode substituí-la.
+O GitHub associa Check Runs ao commit, não exclusivamente a uma PR. O runner inicia o preflight no SHA autenticado do evento e passa o mesmo ID do check à avaliação; não trata a identidade do check como identidade per-PR. Antes de avaliar e novamente imediatamente antes de publicar sucesso, exige que exista exatamente uma PR aberta com aquele HEAD. A colisão bloqueia mesmo quando a outra PR é draft ou aponta para base fora do escopo. Antes de escrever o preflight de `pull_request_target`, valida também que o repositório do HEAD da PR é o repositório de destino. Leituras REST não são transacionais e não eliminam toda a janela de concorrência; o check continua commit-scoped. M2 precisa exigir a execução confiável em cada PR (ou mecanismo equivalente com escopo demonstrável), comprovar a proteção/read-back de `develop` e `main` e testar duas PRs no mesmo HEAD. Se a plataforma não garantir esse vínculo, a revisão humana/native gate permanece obrigatória e o solo não pode substituí-la.
 
 ## Componentes
 
@@ -329,13 +329,20 @@ permaneça indevidamente como o mais recente. Mudanca de identidade bloqueia
 sem fallback. O novo check depende de revisao real e evidencias: nunca e
 marcado como `success` pela ausencia de review.
 
-Em eventos `workflow_run` de PR, o preflight valida o repositorio e o
-`head_sha` do evento e inicia um novo check pendente antes de descobrir PRs
-por consultas ao vivo. Se a descoberta falhar ou confirmar que nao ha alvo
-elegivel, o check termina em `failure`, sem deixar um sucesso anterior ou um
-check pendente orfao; execucoes de outros repositorios ou eventos nao iniciam
-esse check. `neutral` nao e usado para evitar que a ausencia de um alvo seja
-interpretada como aprovacao por uma regra de required status check.
+Em `pull_request_target`, o preflight valida `pull_request.head.repo.full_name`
+antes de criar qualquer Check Run; PRs de fork não iniciam esse gate. Em
+`workflow_run` de PR, valida o repositório do evento, `head_repository` e o
+`head_sha`, depois inicia o preflight antes da descoberta live. A resolução une
+as PRs do evento às associações autenticadas de `/commits/{sha}/pulls` e só
+mantém uma PR cuja cabeça atual ainda seja exatamente o SHA do evento. Se o
+HEAD avançou, a descoberta falhou ou não há alvo elegível, o check antigo do
+evento termina em `failure`; ele não permanece `in_progress` nem autoriza o
+novo HEAD. O mesmo ID preflight é passado à avaliação, incluindo a consulta
+inicial da PR; falhas inesperadas após a descoberta também finalizam esse check
+em `failure`. A única exceção deliberada é a espera por checks técnicos ainda
+pendentes, que conserva o estado `in_progress` para retomada por `workflow_run`.
+`neutral` não é usado para evitar que a ausência de um alvo seja interpretada
+como aprovação por uma regra de required status check.
 
 O publicador da `main` usa `git add -f --` exclusivamente nos caminhos
 autorizados pelo certificado, porque `.audit/` esta corretamente no

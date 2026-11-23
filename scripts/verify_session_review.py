@@ -384,16 +384,24 @@ def publish(repo: str, sha: str, conclusion: str, summary: str, receipt: dict, r
             "check publication was not confirmed")
 
 
-def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None = None) -> int:
+def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None = None,
+             preflight: tuple[str, int] | None = None) -> int:
     receipt = {"third_party_identity_proven": False}
-    pr = api(f"/repos/{repo}/pulls/{number}")
-    head = pr["head"]["sha"]
-    check_id = None
+    head = preflight[0] if preflight else None
+    check_id = preflight[1] if preflight else None
     try:
+        pr = api(f"/repos/{repo}/pulls/{number}")
+        live_head = pr["head"]["sha"]
+        require(isinstance(live_head, str) and SHA.fullmatch(live_head), "invalid live pull request HEAD")
+        if head is None:
+            head = live_head
+        require(live_head == head, "target HEAD changed after the event preflight")
         watermark, previous = review_journal(repo, head) if not packet_out else (0, [])
         receipt["minimum_comment_id"] = watermark
-        if not packet_out:
+        if not packet_out and check_id is None:
             check_id = begin_check(repo, head, receipt, previous)
+        if not packet_out:
+            require_unique_open_head(repo, number, head)
         policy_raw = (ROOT / POLICY_PATH).read_bytes()
         local_policy = strict_json(policy_raw.decode())
         watermark = max(watermark, event_review_id(local_policy)) if not packet_out else watermark
@@ -466,6 +474,7 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         if terminal_proof is not None:
             receipt["merge_preview_reconciliation"] = terminal_proof
             receipt["fingerprint"] = digest(canonical({k: v for k, v in receipt.items() if k != "fingerprint"}))
+        require_unique_open_head(repo, number, head)
         summary = "Verified evidence-bound session review. Session separation is operator-attested, NOT third-party identity."
         publish(repo, head, "success", summary, receipt, os.environ.get("GITHUB_RUN_ID", ""), check_id)
         print(summary)
@@ -480,7 +489,7 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
         return 0
     except (ValueError, KeyError, TypeError, OSError, zipfile.BadZipFile, subprocess.SubprocessError) as exc:
         reason = f"BLOCK: {type(exc).__name__}: {exc}"
-        if not packet_out:
+        if not packet_out and head is not None:
             publish(repo, head, "failure", reason[:4000], receipt, os.environ.get("GITHUB_RUN_ID", ""), check_id)
         print(reason, file=sys.stderr)
         return 2
@@ -492,11 +501,32 @@ def linked_issue(pr: dict) -> int:
     return next(iter(refs))
 
 
+def require_unique_open_head(repo: str, number: int, head: str) -> None:
+    associations = pages(repo, f"commits/{head}/pulls")
+    matching = []
+    for pr in associations:
+        state = pr.get("state")
+        require(state in {"open", "closed"}, "invalid pull request association state")
+        if state != "open":
+            continue
+        candidate_number = pr.get("number")
+        candidate_head = (pr.get("head") or {}).get("sha")
+        require(type(candidate_number) is int and candidate_number > 0
+                and isinstance(candidate_head, str) and SHA.fullmatch(candidate_head),
+                "invalid open pull request association")
+        if candidate_head == head:
+            matching.append(candidate_number)
+    require(sorted(set(matching)) == [number],
+            "multiple open pull requests share this HEAD; per-PR review is ambiguous")
+
+
 def preflight_pull_request_check(repo: str, event: dict) -> tuple[str, int] | None:
     """Block stale same-SHA checks before live PR discovery can fail or stall."""
     pr = event.get("pull_request")
     if isinstance(pr, dict):
         require(event.get("repository", {}).get("full_name") == repo, "event repository mismatch")
+        require(((pr.get("head") or {}).get("repo") or {}).get("full_name") == repo,
+                "pull_request head repository mismatch before review check")
         head = (pr.get("head") or {}).get("sha")
         number = pr.get("number")
         require(type(number) is int and number > 0 and isinstance(head, str) and SHA.fullmatch(head),
@@ -521,8 +551,16 @@ def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
     # Explicit PR/issue events still reach evaluate() and can revoke approvals.
     background = set(event).isdisjoint({"pull_request", "issue", "inputs"})
     numbers = []
-    if isinstance(event.get("pull_request"), dict):
-        numbers = [event["pull_request"]["number"]]
+    event_head = None
+    pull_request = event.get("pull_request")
+    if isinstance(pull_request, dict):
+        require(((pull_request.get("head") or {}).get("repo") or {}).get("full_name") == repo,
+                "pull_request head repository mismatch")
+        event_head = (pull_request.get("head") or {}).get("sha")
+        require(isinstance(event_head, str) and SHA.fullmatch(event_head), "invalid pull_request head SHA")
+        number = pull_request.get("number")
+        require(type(number) is int and number > 0, "invalid pull_request number")
+        numbers = [number]
     elif event.get("issue", {}).get("pull_request"):
         numbers = [event["issue"]["number"]]
     elif event.get("inputs", {}).get("pull_request"):
@@ -530,14 +568,35 @@ def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
     elif event.get("workflow_run"):
         run = event["workflow_run"]
         require(run.get("event") == "pull_request", "not a PR technical workflow")
-        numbers = [p["number"] for p in run.get("pull_requests", [])]
-        if not numbers:
-            numbers = [p["number"] for p in pages(repo, f"commits/{run['head_sha']}/pulls") if p.get("state") == "open"]
+        require((run.get("head_repository") or {}).get("full_name") == repo,
+                "workflow_run head repository mismatch")
+        event_head = run.get("head_sha")
+        require(isinstance(event_head, str) and SHA.fullmatch(event_head), "invalid workflow_run head SHA")
+        pull_requests = run.get("pull_requests", [])
+        require(isinstance(pull_requests, list)
+                and all(isinstance(pr, dict) and type(pr.get("number")) is int and pr["number"] > 0
+                        for pr in pull_requests), "invalid workflow_run pull request associations")
+        numbers = [pr["number"] for pr in pull_requests]
     else:
         numbers = [p["number"] for p in pages(repo, "pulls?state=open")]
+    if event_head is not None:
+        for associated in pages(repo, f"commits/{event_head}/pulls"):
+            state = associated.get("state")
+            require(state in {"open", "closed"}, "invalid pull request association state")
+            if state != "open":
+                continue
+            candidate_head = (associated.get("head") or {}).get("sha")
+            candidate_number = associated.get("number")
+            require(type(candidate_number) is int and candidate_number > 0
+                    and isinstance(candidate_head, str) and SHA.fullmatch(candidate_head),
+                    "invalid open pull request association")
+            if candidate_head == event_head:
+                numbers.append(candidate_number)
     result = []
     for number in sorted(set(numbers)):
         pr = api(f"/repos/{repo}/pulls/{number}")
+        if event_head is not None and (pr.get("head") or {}).get("sha") != event_head:
+            continue
         if (pr.get("state") != "open"
                 or pr.get("base", {}).get("ref") not in {"develop", "main"}
                 or (background and pr.get("draft") is not False)):
@@ -564,14 +623,22 @@ def main() -> int:
     if args.event:
         require(not args.pr and not args.issue and not args.packet_out, "event mode does not take explicit targets")
         event = json.loads(args.event.read_bytes())
-        preflight = preflight_pull_request_check(args.repo, event)
+        try:
+            preflight = preflight_pull_request_check(args.repo, event)
+        except Exception as exc:
+            print(f"BLOCK: {type(exc).__name__}: event preflight rejected before target evaluation", file=sys.stderr)
+            return 2
         try:
             targets = resolve_targets(args.repo, event)
-        except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError) as exc:
+        except Exception as exc:
             if preflight is not None:
                 head, check_id = preflight
-                publish(args.repo, head, "failure", f"Live target discovery failed: {type(exc).__name__}",
-                        {"third_party_identity_proven": False}, os.environ.get("GITHUB_RUN_ID", ""), check_id)
+                try:
+                    publish(args.repo, head, "failure", f"Live target discovery failed: {type(exc).__name__}",
+                            {"third_party_identity_proven": False}, os.environ.get("GITHUB_RUN_ID", ""), check_id)
+                except Exception as publish_exc:
+                    print(f"BLOCK: target discovery and preflight finalization failed: {type(publish_exc).__name__}",
+                          file=sys.stderr)
             print(f"BLOCK: {type(exc).__name__}: {exc}", file=sys.stderr)
             return 2
         if not targets and preflight is not None:
@@ -580,11 +647,31 @@ def main() -> int:
                     {"third_party_identity_proven": False}, os.environ.get("GITHUB_RUN_ID", ""), check_id)
             print("BLOCK: no applicable session-review target; exact-SHA approval withheld")
             return 0
+        if preflight is not None and len(targets) != 1:
+            head, check_id = preflight
+            publish(args.repo, head, "failure", "Multiple live PR targets share this event SHA; approval is withheld.",
+                    {"third_party_identity_proven": False}, os.environ.get("GITHUB_RUN_ID", ""), check_id)
+            print("BLOCK: multiple live PR targets share the event SHA", file=sys.stderr)
+            return 2
     else:
         require(type(args.pr) is int and args.pr > 0 and type(args.issue) is int and args.issue > 0,
                 "positive PR and issue required")
         targets = [(args.pr, args.issue)]
-    results = [evaluate(args.repo, number, issue, args.packet_out) for number, issue in targets]
+    results = []
+    for number, issue in targets:
+        try:
+            results.append(evaluate(args.repo, number, issue, args.packet_out, preflight=preflight if args.event else None))
+        except Exception as exc:
+            if args.event and preflight is not None:
+                head, check_id = preflight
+                try:
+                    publish(args.repo, head, "failure", f"Evaluation failed: {type(exc).__name__}",
+                            {"third_party_identity_proven": False}, os.environ.get("GITHUB_RUN_ID", ""), check_id)
+                except Exception as publish_exc:
+                    print(f"BLOCK: evaluation and preflight finalization failed: {type(publish_exc).__name__}",
+                          file=sys.stderr)
+            print(f"BLOCK: evaluation failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+            return 2
     return max(results, default=0)
 
 
