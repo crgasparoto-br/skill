@@ -173,6 +173,41 @@ def test_symlinked_evidence_cannot_be_verified(proof):
     with pytest.raises(ValueError, match="missing"):
         native.verify(root, evidence, event, "develop")
 
+
+def test_exact_sha_test_index_above_16_mib_is_accepted(proof):
+    root, evidence, event, _ = proof
+    junit = evidence / "pytest-exact-head.xml"
+    long_name = "\\" * (8 * 1024 * 1024)
+    junit.write_text(
+        '<testsuite><testcase classname="tests.unit" name="' + long_name + '"/></testsuite>',
+        encoding="utf-8",
+    )
+    index = native.collect(junit, HEAD)
+    encoded = json.dumps(index, ensure_ascii=False, indent=2) + "\n"
+    size = len(encoded.encode("utf-8"))
+    assert 16 * 1024 * 1024 < size <= native.MAX_TEST_CANDIDATE_INDEX_BYTES
+    (evidence / "test-candidate-index.json").write_text(encoded, encoding="utf-8")
+    receipt = native.verify(root, evidence, event, "develop")
+    assert receipt["test_count"] == 1
+
+
+def test_only_test_index_uses_the_32_mib_limit(tmp_path):
+    assert native.MAX_NATIVE_RECORD_BYTES == 16 * 1024 * 1024
+    assert native.MAX_TEST_CANDIDATE_INDEX_BYTES == 32 * 1024 * 1024
+
+    ordinary = tmp_path / "ordinary-record.json"
+    with ordinary.open("wb") as stream:
+        stream.truncate(native.MAX_NATIVE_RECORD_BYTES + 1)
+    with pytest.raises(ValueError, match="oversized"):
+        native.record(ordinary)
+
+    index = tmp_path / "test-candidate-index.json"
+    with index.open("wb") as stream:
+        stream.truncate(native.MAX_TEST_CANDIDATE_INDEX_BYTES + 1)
+    with pytest.raises(ValueError, match="oversized"):
+        native.record(index, max_bytes=native.MAX_TEST_CANDIDATE_INDEX_BYTES)
+
+
 @pytest.mark.parametrize("field", ["title", "body"])
 def test_changed_live_pr_identity_blocks_stale_native_evidence(proof, monkeypatch, field):
     root, evidence, event, _ = proof

@@ -11,6 +11,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 gate = importlib.import_module("session_review")
+github_facts = importlib.import_module("session_review_github")
 
 
 def policy():
@@ -132,6 +133,36 @@ def test_ambiguous_or_oversized_json_rejected(text):
         gate.strict_json(text)
 
 
+def test_generated_test_index_has_its_own_bounded_json_limit(monkeypatch):
+    github_facts = importlib.import_module("session_review_github")
+    payload = json.dumps({"tests": ["x" * 60001]})
+    assert len(payload.encode()) > gate.MAX_BODY
+    with pytest.raises(ValueError, match="review payload exceeds"):
+        gate.strict_json(payload)
+    assert github_facts.parse_test_candidate_index(payload)["tests"][0].startswith("x")
+
+    assert github_facts.MAX_TEST_CANDIDATE_INDEX_BYTES == 32 * 1024 * 1024
+    monkeypatch.setattr(github_facts, "MAX_TEST_CANDIDATE_INDEX_BYTES", 128)
+    oversized = json.dumps({"tests": ["x" * 128]})
+    with pytest.raises(ValueError, match="bounded size"):
+        github_facts.parse_test_candidate_index(oversized)
+    with pytest.raises(ValueError, match="positive integer"):
+        gate.strict_json("{}", limit=True)
+
+
+def test_test_index_parser_accepts_above_16_mib_but_rejects_above_32_mib():
+    index = {"tests": ["x" * (16 * 1024 * 1024)]}
+    payload = json.dumps(index, separators=(",", ":"))
+    assert 16 * 1024 * 1024 < len(payload.encode("utf-8")) <= github_facts.MAX_TEST_CANDIDATE_INDEX_BYTES
+    parsed = github_facts.parse_test_candidate_index(payload)
+    assert len(parsed["tests"][0]) == 16 * 1024 * 1024
+
+    oversized = json.dumps({"tests": ["x" * (32 * 1024 * 1024)]}, separators=(",", ":"))
+    assert len(oversized.encode("utf-8")) > github_facts.MAX_TEST_CANDIDATE_INDEX_BYTES
+    with pytest.raises(ValueError, match="bounded size"):
+        github_facts.parse_test_candidate_index(oversized)
+
+
 def test_main_is_bound_to_same_exact_evidence_requirements():
     receipt = verify(lambda p, r, *_: (p["identity"].update(base_ref="main"), r["identity"].update(base_ref="main")))
     assert receipt["identity"]["base_ref"] == "main"
@@ -243,17 +274,18 @@ def test_legacy_real_sessions_still_work_with_provenance_feature_enabled():
     active["implementation_provenance"] = {"mode": "enabled", "type": gate.PROVENANCE_TYPE}
     assert verify(selected_policy=active)["identity"]["pull_request"] == 10
 
-def test_large_authenticated_test_index_does_not_relax_operator_review_limit():
+def test_large_authenticated_test_index_does_not_relax_operator_review_limit(monkeypatch):
     """CI has thousands of executed tests; the operator's comment remains bounded."""
     evidence = {"tests": ["verified-case-" + "x" * (gate.MAX_BODY + 128)]}
     raw = json.dumps(evidence)
-    assert gate.MAX_BODY < len(raw.encode()) < gate.MAX_TECHNICAL_JSON
+    assert gate.MAX_BODY < len(raw.encode()) < github_facts.MAX_TEST_CANDIDATE_INDEX_BYTES
     with pytest.raises(ValueError, match="review payload exceeds bounded size"):
         gate.strict_json(raw)
-    assert gate.strict_json(raw, max_bytes=gate.MAX_TECHNICAL_JSON) == evidence
-    with pytest.raises(ValueError, match="invalid trusted JSON size limit"):
-        gate.strict_json(raw, max_bytes=gate.MAX_TECHNICAL_JSON + 1)
-    with pytest.raises(ValueError, match="invalid trusted JSON size limit"):
-        gate.strict_json(raw, max_bytes=True)
+    assert github_facts.parse_test_candidate_index(raw) == evidence
+    monkeypatch.setattr(github_facts, "MAX_TEST_CANDIDATE_INDEX_BYTES", len(raw.encode()) - 1)
+    with pytest.raises(ValueError, match="JSON payload exceeds bounded size"):
+        github_facts.parse_test_candidate_index(raw)
+    with pytest.raises(ValueError, match="JSON byte limit must be a positive integer"):
+        gate.strict_json(raw, limit=True)
     with pytest.raises(ValueError, match="duplicate JSON key"):
-        gate.strict_json('{"tests": [], "tests": [1]}', max_bytes=gate.MAX_TECHNICAL_JSON)
+        github_facts.parse_test_candidate_index('{"tests": [], "tests": [1]}')

@@ -38,6 +38,10 @@ EXPECTED_WORKFLOWS = {
 }
 
 
+class RequiredChecksNotReadyError(ValueError):
+    """Required exact-HEAD checks are missing or still running; defer, do not approve."""
+
+
 def page_all(repo: str, suffix: str, token: str, max_pages: int = 25) -> list[dict]:
     """Refuse truncated inventories rather than omitting a contributor or review."""
     collected: list[dict] = []
@@ -310,15 +314,21 @@ def required_checks_green(checks: dict, head: str, base: str,
     required_evidence = NATIVE_EVIDENCE if audit_transport == "native-github-audit" else HANDOFF
     names = (*TECHNICAL, *((required_evidence,) if base == "develop" else ()))
     for name in names:
+        named = [c for c in runs if c.get("name") == name and c.get("head_sha") == head]
+        if not named:
+            raise RequiredChecksNotReadyError(f"required exact-HEAD check not available: {name}")
+        published = [c for c in named if (c.get("app") or {}).get("id") == APP_ID]
+        if not published:
+            raise ValueError(f"required exact-HEAD check lacks trusted publisher: {name}")
         matches = [
-            c for c in runs if c.get("name") == name and c.get("head_sha") == head
-            and (c.get("app") or {}).get("id") == APP_ID
-            and trusted(name, c)
+            c for c in published if trusted(name, c)
         ]
         if not matches:
             raise ValueError(f"required trusted exact-HEAD check missing: {name}")
         latest = max(matches, key=lambda c: int(c.get("id") or 0))
-        if latest.get("status") != "completed" or latest.get("conclusion") != "success":
+        if latest.get("status") != "completed":
+            raise RequiredChecksNotReadyError(f"required exact-HEAD check pending: {name}")
+        if latest.get("conclusion") != "success":
             raise ValueError(f"required exact-HEAD check not green: {name}")
 
 

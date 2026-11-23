@@ -17,6 +17,8 @@ from prepare_actions_handoff import issue_body, read_event
 from resolve_trusted_audit_transport import resolve
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
+MAX_NATIVE_RECORD_BYTES = 16 * 1024 * 1024
+MAX_TEST_CANDIDATE_INDEX_BYTES = 32 * 1024 * 1024
 
 
 def _unique_json_fields(pairs: list[tuple[str, object]]) -> dict:
@@ -28,9 +30,9 @@ def _unique_json_fields(pairs: list[tuple[str, object]]) -> dict:
     return result
 
 
-def record(path: Path) -> dict:
+def record(path: Path, *, max_bytes: int = MAX_NATIVE_RECORD_BYTES) -> dict:
     if (path.is_symlink() or not path.is_file() or not path.stat().st_size
-            or path.stat().st_size > 16 * 1024 * 1024):
+            or path.stat().st_size > max_bytes):
         raise ValueError(f"required native evidence is missing or oversized: {path.name}")
     value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_json_fields)
     if not isinstance(value, dict):
@@ -113,7 +115,8 @@ def check_test_execution(evidence: Path, head: str) -> int:
     index = collect(junit, head)
     if any(index["counts"][kind] for kind in ("failure", "error", "skipped")):
         raise ValueError("JUnit contains failed, errored or skipped controls")
-    if record(evidence / "test-candidate-index.json") != index:
+    if record(evidence / "test-candidate-index.json",
+              max_bytes=MAX_TEST_CANDIDATE_INDEX_BYTES) != index:
         raise ValueError("test candidate index differs from authentic JUnit bytes")
     return index["counts"]["passed"]
 

@@ -68,7 +68,7 @@ def test_valid_independent_review_exact_sha_and_all_checks():
     (lambda d: d[1][0].update(state="COMMENTED"), "independent APPROVED"),
     (lambda d: d[1][0].update(body="SOLVERIT_AUDIT_JSON:{}"), "independent APPROVED"),
     (lambda d: d[3]["check_runs"][0].update(conclusion="failure"), "not green"),
-    (lambda d: d[3]["check_runs"][0]["app"].update(id=999), "missing"),
+    (lambda d: d[3]["check_runs"][0]["app"].update(id=999), "publisher"),
     (lambda d: d[3].update(total_count=99), "truncated"),
     (lambda d: d[0]["base"].update(ref="other"), "PR base"),
 ])
@@ -365,6 +365,38 @@ def test_latest_official_failure_wins_over_prior_success(monkeypatch):
     with pytest.raises(ValueError, match="not green: Structure and tests"):
         gate.required_checks_green(
             {"total_count": 2, "check_runs": [old, newer]}, HEAD, "main", trusted)
+
+
+def test_missing_or_pending_checks_defer_but_untrusted_or_failed_checks_block():
+    def check(name, check_id, *, status="completed", conclusion="success", app_id=gate.APP_ID):
+        return {"id": check_id, "name": name, "head_sha": HEAD, "status": status,
+                "conclusion": conclusion, "app": {"id": app_id}}
+
+    first, second = gate.TECHNICAL
+
+    def trusted(*_):
+        return True
+
+    with pytest.raises(gate.RequiredChecksNotReadyError, match="not available"):
+        gate.required_checks_green(
+            {"total_count": 1, "check_runs": [check(first, 1)]}, HEAD, "main", trusted)
+
+    pending = [check(first, 1), check(second, 2, status="in_progress", conclusion=None)]
+    with pytest.raises(gate.RequiredChecksNotReadyError, match="pending"):
+        gate.required_checks_green(
+            {"total_count": 2, "check_runs": pending}, HEAD, "main", trusted)
+
+    untrusted = [check(first, 1, app_id=999), check(second, 2)]
+    with pytest.raises(ValueError, match="lacks trusted publisher") as raised:
+        gate.required_checks_green(
+            {"total_count": 2, "check_runs": untrusted}, HEAD, "main", trusted)
+    assert not isinstance(raised.value, gate.RequiredChecksNotReadyError)
+
+    failed = [check(first, 1), check(second, 2, conclusion="failure")]
+    with pytest.raises(ValueError, match="not green") as raised:
+        gate.required_checks_green(
+            {"total_count": 2, "check_runs": failed}, HEAD, "main", trusted)
+    assert not isinstance(raised.value, gate.RequiredChecksNotReadyError)
 
 
 
@@ -732,3 +764,50 @@ def test_human_gate_resolves_native_transport_only_from_verified_base_blob(monke
         _ for _ in ()).throw(urllib.error.HTTPError(path, 403, "denied", {}, None)))
     with pytest.raises(urllib.error.HTTPError):
         gate.trusted_audit_transport("org/repo", "develop", BASE_SHA, "token")
+
+
+@pytest.mark.parametrize("contract_present", [True, False])
+def test_run_selects_audit_check_from_authenticated_base_contract(monkeypatch, contract_present):
+    data = fixture()
+    evidence_name = gate.NATIVE_EVIDENCE if contract_present else gate.HANDOFF
+    data[3]["check_runs"][-1]["name"] = evidence_name
+    contract = {
+        "schema_version": 1, "repository": "org/repo", "base_ref": "develop",
+        "canonical": True, "audit_mode": "native-github",
+        "legacy_handoff_policy": "not-required",
+        "github_native_identity": True, "exact_sha_evidence": True,
+        "independent_review": True, "remote_ci_evidence": True,
+    }
+    contract_path = f"/repos/org/repo/contents/{gate.CONTRACT_PATH}?ref={BASE_SHA}"
+    blob = _contents_blob(json.dumps(contract).encode())
+    api_paths = []
+    selected_checks = []
+
+    def github(path, token):
+        api_paths.append(path)
+        if path == contract_path:
+            if contract_present:
+                return blob
+            raise urllib.error.HTTPError(path, 404, "missing", {}, None)
+        if path.endswith("/pulls/3"):
+            return copy.deepcopy(data[0])
+        if "/reviews?" in path:
+            return copy.deepcopy(data[1])
+        if "/commits?" in path:
+            return copy.deepcopy(data[2])
+        if "/check-runs?" in path:
+            return copy.deepcopy(data[3])
+        if "/collaborators/" in path:
+            return {"permission": "write"}
+        raise AssertionError(path)
+
+    monkeypatch.setattr(gate, "github", github)
+    monkeypatch.setattr(
+        gate, "trusted_workflow_check",
+        lambda _repo, _number, name, *_args: selected_checks.append(name) or True,
+    )
+    assert "pullrequestreview-1" in gate.run("org/repo", 3, "develop", BASE_SHA, "token")
+    assert contract_path in api_paths
+    assert evidence_name in selected_checks
+    other_name = gate.HANDOFF if contract_present else gate.NATIVE_EVIDENCE
+    assert other_name not in selected_checks

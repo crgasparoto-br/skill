@@ -21,7 +21,6 @@ POLICY_PATH = ".github/session-review-policy.json"
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 MAX_BODY = 60000
-MAX_TECHNICAL_JSON = 16 * 1024 * 1024
 PROVENANCE_TYPE = "github-implementation-provenance"
 
 
@@ -33,7 +32,7 @@ def canonical(value: object) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
 
 
-def strict_json(raw: str, *, max_bytes: int = MAX_BODY) -> dict:
+def strict_json(raw: str, *, limit: int = MAX_BODY) -> dict:
     def unique(pairs):
         result = {}
         for key, value in pairs:
@@ -41,11 +40,11 @@ def strict_json(raw: str, *, max_bytes: int = MAX_BODY) -> dict:
                 raise ValueError(f"duplicate JSON key: {key}")
             result[key] = value
         return result
-    if (type(max_bytes) is not int or max_bytes < MAX_BODY
-            or max_bytes > MAX_TECHNICAL_JSON):
-        raise ValueError("invalid trusted JSON size limit")
-    if len(raw.encode()) > max_bytes:
-        raise ValueError("review payload exceeds bounded size")
+    if type(limit) is not int or limit <= 0:
+        raise ValueError("JSON byte limit must be a positive integer")
+    if len(raw.encode("utf-8")) > limit:
+        message = "review payload exceeds bounded size" if limit == MAX_BODY else "JSON payload exceeds bounded size"
+        raise ValueError(message)
     value = json.loads(raw, object_pairs_hook=unique)
     if not isinstance(value, dict):
         raise ValueError("JSON object required")
