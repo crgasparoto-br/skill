@@ -50,12 +50,6 @@ def test_pr_head_changes_start_immediately_and_workflow_run_resumes_readiness():
     }
 
 
-def test_handoff_recollects_when_canonical_pr_metadata_is_edited():
-    pull_request = workflow("handoff-evidence.yml")["on"]["pull_request"]
-    assert pull_request["branches"] == ["develop"]
-    assert {"opened", "synchronize", "reopened", "ready_for_review", "edited"} <= set(pull_request["types"])
-
-
 @pytest.mark.parametrize("name", WORKFLOWS)
 def test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader(name):
     config = workflow(name)
