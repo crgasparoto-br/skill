@@ -210,6 +210,8 @@ def test_pull_request_event_starts_pending_check_before_live_target_lookup(monke
         writes.append((path, method, copy.deepcopy(data)))
         if method == "POST":
             return copy.deepcopy(check)
+        if method == "GET" and "/commits/" in path:
+            return {"total_count": 0, "check_runs": []}
         if method == "GET":
             return copy.deepcopy(check)
         assert method == "PATCH" and data["conclusion"] == "failure"
@@ -218,7 +220,7 @@ def test_pull_request_event_starts_pending_check_before_live_target_lookup(monke
 
     def unavailable(repo, event):
         assert repo == "owner/repo"
-        assert writes and writes[0][1] == "POST"
+        assert any(method == "POST" for _, method, _ in writes)
         raise OSError("live PR lookup unavailable")
 
     monkeypatch.setattr(runner, "api", api)
@@ -229,9 +231,9 @@ def test_pull_request_event_starts_pending_check_before_live_target_lookup(monke
     ])
     assert runner.main() == 2
 
-    assert [write[1] for write in writes] == ["POST", "GET", "PATCH"]
-    assert writes[0][2]["head_sha"] == head
-    assert writes[0][2]["status"] == "in_progress"
+    assert [write[1] for write in writes] == ["GET", "POST", "GET", "PATCH"]
+    assert writes[1][2]["head_sha"] == head
+    assert writes[1][2]["status"] == "in_progress"
     assert writes[-1][2]["conclusion"] == "failure"
     assert check["status"] == "completed" and check["conclusion"] == "failure"
 
@@ -249,7 +251,7 @@ def test_workflow_run_replaces_old_success_before_live_pr_lookup(monkeypatch, tm
         },
     }))
     old_success = {"id": 11, "name": runner.CHECK_NAME, "head_sha": head,
-                   "status": "completed", "conclusion": "success"}
+                   "status": "completed", "conclusion": "success", "app": {"id": 15368}}
     checks = [old_success]
     writes = []
 
@@ -261,6 +263,8 @@ def test_workflow_run_replaces_old_success_before_live_pr_lookup(monkeypatch, tm
                        "status": "in_progress", "conclusion": None, "app": {"id": 15368}}
             checks.append(pending)
             return copy.deepcopy(pending)
+        if method == "PATCH" and path == "/repos/owner/repo/check-runs/11":
+            return copy.deepcopy(old_success)  # GitHub retained the terminal status.
         if method == "GET":
             assert path == "/repos/owner/repo/check-runs/12"
             return copy.deepcopy(checks[-1])
@@ -269,24 +273,32 @@ def test_workflow_run_replaces_old_success_before_live_pr_lookup(monkeypatch, tm
         return copy.deepcopy(checks[-1])
 
     def unavailable(*_args, **_kwargs):
-        assert writes and writes[0][1] == "POST"
+        assert any(method == "POST" for _, method, _ in writes)
         assert checks[-1]["status"] == "in_progress"
         raise OSError("live PR lookup unavailable")
 
+    def pages(_repo, _endpoint, *, field=None):
+        if field == "check_runs":
+            return copy.deepcopy(checks)
+        return unavailable()
+
     monkeypatch.setattr(runner, "api", api)
-    monkeypatch.setattr(runner, "pages", unavailable)
+    monkeypatch.setattr(runner, "pages", pages)
     monkeypatch.setenv("GITHUB_RUN_ID", "12345")
     monkeypatch.setattr(runner.sys, "argv", [
         "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
     ])
     assert runner.main() == 2
 
+    assert [write[1] for write in writes] == ["PATCH", "POST", "GET", "PATCH"]
     assert checks[0] == old_success
     assert checks[-1]["head_sha"] == head
     assert checks[-1]["status"] == "completed"
     assert checks[-1]["conclusion"] == "failure"
-    assert writes[0][2]["head_sha"] == head
+    assert writes[0][0] == "/repos/owner/repo/check-runs/11"
     assert writes[0][2]["status"] == "in_progress"
+    assert writes[1][2]["head_sha"] == head
+    assert writes[1][2]["status"] == "in_progress"
     assert writes[-1][2]["conclusion"] == "failure"
 
 
@@ -330,8 +342,13 @@ def test_workflow_run_completes_nonapplicable_target_without_orphaned_pending_ch
         checks[-1].update(status="completed", conclusion="failure")
         return copy.deepcopy(checks[-1])
 
+    def pages(_repo, endpoint, *, field=None):
+        if field == "check_runs":
+            return []
+        return [pr] if endpoint.endswith("/pulls") else []
+
     monkeypatch.setattr(runner, "api", api)
-    monkeypatch.setattr(runner, "pages", lambda *_: [pr])
+    monkeypatch.setattr(runner, "pages", pages)
     monkeypatch.setenv("GITHUB_RUN_ID", "12345")
     monkeypatch.setattr(runner.sys, "argv", [
         "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
@@ -387,8 +404,14 @@ def test_workflow_run_with_moved_head_fails_the_obsolete_preflight(monkeypatch, 
     pr = {"number": 10, "state": "open", "draft": False, "base": {"ref": "develop"},
           "body": "Refs #9", "head": {"sha": live_head, "repo": {"full_name": "owner/repo"}}}
     backend = EventBackend(old_head, pr)
+
+    def pages(_repo, endpoint, *, field=None):
+        if field == "check_runs":
+            return []
+        return [pr] if endpoint.endswith("/pulls") else []
+
     monkeypatch.setattr(runner, "api", backend.api)
-    monkeypatch.setattr(runner, "pages", lambda *_args, **_kwargs: [pr])
+    monkeypatch.setattr(runner, "pages", pages)
     monkeypatch.setenv("GITHUB_RUN_ID", "12345")
     event_path = tmp_path / "event.json"
     event_path.write_text(json.dumps({
@@ -540,6 +563,81 @@ def test_pending_prerequisites_defer_without_authorizing_and_resume(review_backe
     assert backend.run() == 0
     assert backend.checks[-1]["status"] == "completed"
     assert backend.checks[-1]["conclusion"] == "success"
+
+
+def test_workflow_run_reuses_one_pending_check_across_retries(review_backend, monkeypatch, tmp_path):
+    backend = review_backend
+    event_path = tmp_path / "workflow-run.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": backend.pr["head"]["sha"],
+            "head_repository": {"full_name": "owner/repo"},
+            "pull_requests": [{"number": 10}],
+        },
+    }))
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+
+    def readiness():
+        raise runner.RequiredChecksNotReadyError(
+            "required exact-HEAD check pending: Structure and tests"
+        )
+
+    backend.on_prepare = readiness
+    for attempt in range(2):
+        assert runner.main() == 0
+        assert len(backend.checks) == 1
+        assert backend.checks[0]["status"] == "in_progress"
+        assert backend.checks[0].get("conclusion") is None
+        if attempt == 0:
+            backend.checks[0]["output"]["text"] = json.dumps({"minimum_comment_id": 23})
+
+    assert [method for method, _ in backend.writes] == ["POST", "PATCH"]
+    assert json.loads(backend.checks[0]["output"]["text"])["minimum_comment_id"] == 23
+    active = [
+        check for check in backend.checks
+        if check.get("status") in {"queued", "in_progress"} and check.get("conclusion") is None
+    ]
+    assert len(active) == 1
+
+
+def test_preflight_journal_failure_publishes_terminal_failure(review_backend, monkeypatch, tmp_path):
+    backend = review_backend
+    backend.seed(1)
+    event_path = tmp_path / "workflow-run.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": backend.pr["head"]["sha"],
+            "head_repository": {"full_name": "owner/repo"},
+            "pull_requests": [{"number": 10}],
+        },
+    }))
+    monkeypatch.setattr(
+        runner, "review_journal",
+        lambda *_args: (_ for _ in ()).throw(OSError("journal unavailable")),
+    )
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+
+    assert runner.main() == 2
+
+    assert backend.checks[0]["status"] == "completed"
+    assert backend.checks[0]["conclusion"] == "success"
+    assert backend.checks[-1]["status"] == "completed"
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert (
+        "Prior exact-SHA review journal unavailable"
+        in backend.checks[-1]["output"]["summary"]
+    )
+    assert [method for method, _ in backend.writes] == ["POST", "PATCH"]
 
 
 @pytest.mark.parametrize("path", ["a//b", "a/./b", ".", "./", "a\x00b"])

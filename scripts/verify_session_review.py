@@ -522,6 +522,25 @@ def require_unique_open_head(repo: str, number: int, head: str) -> None:
 
 def preflight_pull_request_check(repo: str, event: dict) -> tuple[str, int] | None:
     """Block stale same-SHA checks before live PR discovery can fail or stall."""
+
+    def begin_preflight(head: str) -> tuple[str, int]:
+        receipt = {"third_party_identity_proven": False}
+        try:
+            watermark, previous = review_journal(repo, head)
+        except Exception as exc:
+            check_id = begin_check(repo, head, receipt, [])
+            reason = f"Prior exact-SHA review journal unavailable ({type(exc).__name__}); blocked."
+            try:
+                publish(repo, head, "failure", reason, receipt,
+                        os.environ.get("GITHUB_RUN_ID", ""), check_id)
+            except Exception as publish_exc:
+                raise ValueError(
+                    "prior review journal unavailable and fail-closed publication failed"
+                ) from publish_exc
+            raise ValueError("prior exact-SHA review journal unavailable; review blocked") from exc
+        receipt["minimum_comment_id"] = watermark
+        return head, begin_check(repo, head, receipt, previous)
+
     pr = event.get("pull_request")
     if isinstance(pr, dict):
         require(event.get("repository", {}).get("full_name") == repo, "event repository mismatch")
@@ -531,7 +550,7 @@ def preflight_pull_request_check(repo: str, event: dict) -> tuple[str, int] | No
         number = pr.get("number")
         require(type(number) is int and number > 0 and isinstance(head, str) and SHA.fullmatch(head),
                 "invalid pull_request event identity before review check")
-        return head, begin_check(repo, head, {"third_party_identity_proven": False}, [])
+        return begin_preflight(head)
 
     run = event.get("workflow_run")
     if not isinstance(run, dict) or run.get("event") != "pull_request":
@@ -542,7 +561,7 @@ def preflight_pull_request_check(repo: str, event: dict) -> tuple[str, int] | No
     head = run.get("head_sha")
     require(isinstance(head, str) and SHA.fullmatch(head),
             "invalid workflow_run event identity before review check")
-    return head, begin_check(repo, head, {"third_party_identity_proven": False}, [])
+    return begin_preflight(head)
 
 
 def _event_target_numbers(repo: str, event: dict) -> tuple[list[int], str | None]:
