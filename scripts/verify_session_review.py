@@ -492,7 +492,7 @@ def linked_issue(pr: dict) -> int:
     return next(iter(refs))
 
 
-def preflight_pull_request_check(repo: str, event: dict) -> None:
+def preflight_pull_request_check(repo: str, event: dict) -> tuple[str, int] | None:
     """Block stale same-SHA checks before live PR discovery can fail or stall."""
     pr = event.get("pull_request")
     if isinstance(pr, dict):
@@ -501,8 +501,7 @@ def preflight_pull_request_check(repo: str, event: dict) -> None:
         number = pr.get("number")
         require(type(number) is int and number > 0 and isinstance(head, str) and SHA.fullmatch(head),
                 "invalid pull_request event identity before review check")
-        begin_check(repo, head, {"third_party_identity_proven": False}, [])
-        return
+        return head, begin_check(repo, head, {"third_party_identity_proven": False}, [])
 
     run = event.get("workflow_run")
     if not isinstance(run, dict) or run.get("event") != "pull_request":
@@ -513,7 +512,7 @@ def preflight_pull_request_check(repo: str, event: dict) -> None:
     head = run.get("head_sha")
     require(isinstance(head, str) and SHA.fullmatch(head),
             "invalid workflow_run event identity before review check")
-    begin_check(repo, head, {"third_party_identity_proven": False}, [])
+    return head, begin_check(repo, head, {"third_party_identity_proven": False}, [])
 
 
 def resolve_targets(repo: str, event: dict) -> list[tuple[int, int]]:
@@ -565,8 +564,22 @@ def main() -> int:
     if args.event:
         require(not args.pr and not args.issue and not args.packet_out, "event mode does not take explicit targets")
         event = json.loads(args.event.read_bytes())
-        preflight_pull_request_check(args.repo, event)
-        targets = resolve_targets(args.repo, event)
+        preflight = preflight_pull_request_check(args.repo, event)
+        try:
+            targets = resolve_targets(args.repo, event)
+        except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError) as exc:
+            if preflight is not None:
+                head, check_id = preflight
+                publish(args.repo, head, "failure", f"Live target discovery failed: {type(exc).__name__}",
+                        {"third_party_identity_proven": False}, os.environ.get("GITHUB_RUN_ID", ""), check_id)
+            print(f"BLOCK: {type(exc).__name__}: {exc}", file=sys.stderr)
+            return 2
+        if not targets and preflight is not None:
+            head, check_id = preflight
+            publish(args.repo, head, "failure", "No applicable target was found; approval is withheld.",
+                    {"third_party_identity_proven": False}, os.environ.get("GITHUB_RUN_ID", ""), check_id)
+            print("BLOCK: no applicable session-review target; exact-SHA approval withheld")
+            return 0
     else:
         require(type(args.pr) is int and args.pr > 0 and type(args.issue) is int and args.issue > 0,
                 "positive PR and issue required")

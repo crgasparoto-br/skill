@@ -157,11 +157,18 @@ def test_pull_request_event_starts_pending_check_before_live_target_lookup(monke
         "pull_request": {"number": 10, "head": {"sha": head}},
     }))
     writes = []
+    check = {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
+             "status": "in_progress", "conclusion": None, "app": {"id": 15368}}
 
     def api(path, *, method="GET", data=None):
         writes.append((path, method, copy.deepcopy(data)))
-        assert method == "POST"
-        return {"id": 12, "name": runner.CHECK_NAME, "head_sha": head, "status": "in_progress"}
+        if method == "POST":
+            return copy.deepcopy(check)
+        if method == "GET":
+            return copy.deepcopy(check)
+        assert method == "PATCH" and data["conclusion"] == "failure"
+        check.update(status="completed", conclusion="failure")
+        return copy.deepcopy(check)
 
     def unavailable(repo, event):
         assert repo == "owner/repo"
@@ -170,15 +177,17 @@ def test_pull_request_event_starts_pending_check_before_live_target_lookup(monke
 
     monkeypatch.setattr(runner, "api", api)
     monkeypatch.setattr(runner, "resolve_targets", unavailable)
+    monkeypatch.setenv("GITHUB_RUN_ID", "12345")
     monkeypatch.setattr(runner.sys, "argv", [
         "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
     ])
-    with pytest.raises(OSError, match="live PR lookup unavailable"):
-        runner.main()
+    assert runner.main() == 2
 
-    assert len(writes) == 1
+    assert [write[1] for write in writes] == ["POST", "GET", "PATCH"]
     assert writes[0][2]["head_sha"] == head
     assert writes[0][2]["status"] == "in_progress"
+    assert writes[-1][2]["conclusion"] == "failure"
+    assert check["status"] == "completed" and check["conclusion"] == "failure"
 
 
 def test_workflow_run_replaces_old_success_before_live_pr_lookup(monkeypatch, tmp_path):
@@ -200,12 +209,18 @@ def test_workflow_run_replaces_old_success_before_live_pr_lookup(monkeypatch, tm
 
     def api(path, *, method="GET", data=None):
         writes.append((path, method, copy.deepcopy(data)))
-        assert path == "/repos/owner/repo/check-runs"
-        assert method == "POST"
-        pending = {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
-                   "status": "in_progress", "conclusion": None}
-        checks.append(pending)
-        return pending
+        if method == "POST":
+            assert path == "/repos/owner/repo/check-runs"
+            pending = {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
+                       "status": "in_progress", "conclusion": None, "app": {"id": 15368}}
+            checks.append(pending)
+            return copy.deepcopy(pending)
+        if method == "GET":
+            assert path == "/repos/owner/repo/check-runs/12"
+            return copy.deepcopy(checks[-1])
+        assert method == "PATCH" and data["conclusion"] == "failure"
+        checks[-1].update(status="completed", conclusion="failure")
+        return copy.deepcopy(checks[-1])
 
     def unavailable(*_args, **_kwargs):
         assert writes and writes[0][1] == "POST"
@@ -214,17 +229,74 @@ def test_workflow_run_replaces_old_success_before_live_pr_lookup(monkeypatch, tm
 
     monkeypatch.setattr(runner, "api", api)
     monkeypatch.setattr(runner, "pages", unavailable)
+    monkeypatch.setenv("GITHUB_RUN_ID", "12345")
     monkeypatch.setattr(runner.sys, "argv", [
         "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
     ])
-    with pytest.raises(OSError, match="live PR lookup unavailable"):
-        runner.main()
+    assert runner.main() == 2
 
     assert checks[0] == old_success
     assert checks[-1]["head_sha"] == head
-    assert checks[-1]["status"] == "in_progress"
+    assert checks[-1]["status"] == "completed"
+    assert checks[-1]["conclusion"] == "failure"
     assert writes[0][2]["head_sha"] == head
     assert writes[0][2]["status"] == "in_progress"
+    assert writes[-1][2]["conclusion"] == "failure"
+
+
+@pytest.mark.parametrize(("base_ref", "draft"), [("release", False), ("develop", True)])
+def test_workflow_run_completes_nonapplicable_target_without_orphaned_pending_check(
+    monkeypatch, tmp_path, base_ref, draft
+):
+    head = "d" * 40
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": head,
+            "head_repository": {"full_name": "owner/repo"},
+            "pull_requests": [{"number": 10}],
+        },
+    }))
+    old_success = {"id": 11, "name": runner.CHECK_NAME, "head_sha": head,
+                   "status": "completed", "conclusion": "success"}
+    checks = [old_success]
+    writes = []
+    pr = {"number": 10, "state": "open", "draft": draft,
+          "base": {"ref": base_ref}, "body": "Refs #9"}
+
+    def api(path, *, method="GET", data=None):
+        writes.append((path, method, copy.deepcopy(data)))
+        if method == "POST":
+            pending = {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
+                       "status": "in_progress", "conclusion": None, "app": {"id": 15368}}
+            checks.append(pending)
+            return copy.deepcopy(pending)
+        if path == "/repos/owner/repo/pulls/10":
+            assert method == "GET"
+            return copy.deepcopy(pr)
+        if method == "GET":
+            assert path == "/repos/owner/repo/check-runs/12"
+            return copy.deepcopy(checks[-1])
+        assert method == "PATCH" and data["conclusion"] == "failure"
+        checks[-1].update(status="completed", conclusion="failure")
+        return copy.deepcopy(checks[-1])
+
+    monkeypatch.setattr(runner, "api", api)
+    monkeypatch.setenv("GITHUB_RUN_ID", "12345")
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+
+    assert runner.main() == 0
+
+    assert checks[0] == old_success
+    assert checks[-1]["status"] == "completed"
+    assert checks[-1]["conclusion"] == "failure"
+    assert writes[0][0] == "/repos/owner/repo/check-runs"
+    assert writes[1][0] == "/repos/owner/repo/pulls/10"
+    assert writes[-1][2]["conclusion"] == "failure"
 
 
 def test_workflow_run_preflight_rejects_foreign_head_repository(monkeypatch):
