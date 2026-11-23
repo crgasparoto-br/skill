@@ -181,6 +181,70 @@ def test_pull_request_event_starts_pending_check_before_live_target_lookup(monke
     assert writes[0][2]["status"] == "in_progress"
 
 
+def test_workflow_run_replaces_old_success_before_live_pr_lookup(monkeypatch, tmp_path):
+    head = "b" * 40
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": head,
+            "head_repository": {"full_name": "owner/repo"},
+            "pull_requests": [],
+        },
+    }))
+    old_success = {"id": 11, "name": runner.CHECK_NAME, "head_sha": head,
+                   "status": "completed", "conclusion": "success"}
+    checks = [old_success]
+    writes = []
+
+    def api(path, *, method="GET", data=None):
+        writes.append((path, method, copy.deepcopy(data)))
+        assert path == "/repos/owner/repo/check-runs"
+        assert method == "POST"
+        pending = {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
+                   "status": "in_progress", "conclusion": None}
+        checks.append(pending)
+        return pending
+
+    def unavailable(*_args, **_kwargs):
+        assert writes and writes[0][1] == "POST"
+        assert checks[-1]["status"] == "in_progress"
+        raise OSError("live PR lookup unavailable")
+
+    monkeypatch.setattr(runner, "api", api)
+    monkeypatch.setattr(runner, "pages", unavailable)
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+    with pytest.raises(OSError, match="live PR lookup unavailable"):
+        runner.main()
+
+    assert checks[0] == old_success
+    assert checks[-1]["head_sha"] == head
+    assert checks[-1]["status"] == "in_progress"
+    assert writes[0][2]["head_sha"] == head
+    assert writes[0][2]["status"] == "in_progress"
+
+
+def test_workflow_run_preflight_rejects_foreign_head_repository(monkeypatch):
+    monkeypatch.setattr(
+        runner, "begin_check",
+        lambda *_args, **_kwargs: pytest.fail("foreign workflow_run must not start a check"),
+    )
+    event = {
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": "c" * 40,
+            "head_repository": {"full_name": "fork/repo"},
+        },
+    }
+
+    with pytest.raises(ValueError, match="head repository mismatch"):
+        runner.preflight_pull_request_check("owner/repo", event)
+
+
 def test_revocation_watermark_survives_missing_report(monkeypatch):
     check = {"id": 5, "head_sha": "a" * 40, "name": runner.CHECK_NAME, "app": {"id": 15368},
              "output": {"text": json.dumps({"review_comment_id": 41})}}

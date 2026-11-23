@@ -329,6 +329,12 @@ permaneça indevidamente como o mais recente. Mudanca de identidade bloqueia
 sem fallback. O novo check depende de revisao real e evidencias: nunca e
 marcado como `success` pela ausencia de review.
 
+Em eventos `workflow_run` de PR, o preflight valida o repositorio e o
+`head_sha` do evento e inicia um novo check pendente antes de descobrir PRs
+por consultas ao vivo. Uma falha nessa descoberta nao deixa um sucesso
+anterior como resultado mais recente; execucoes de outros repositorios ou
+eventos nao iniciam esse check.
+
 O publicador da `main` usa `git add -f --` exclusivamente nos caminhos
 autorizados pelo certificado, porque `.audit/` esta corretamente no
 `.gitignore` do repositorio. Nao se modifica o ignore global nem se

@@ -495,13 +495,24 @@ def linked_issue(pr: dict) -> int:
 def preflight_pull_request_check(repo: str, event: dict) -> None:
     """Block stale same-SHA checks before live PR discovery can fail or stall."""
     pr = event.get("pull_request")
-    if not isinstance(pr, dict):
+    if isinstance(pr, dict):
+        require(event.get("repository", {}).get("full_name") == repo, "event repository mismatch")
+        head = (pr.get("head") or {}).get("sha")
+        number = pr.get("number")
+        require(type(number) is int and number > 0 and isinstance(head, str) and SHA.fullmatch(head),
+                "invalid pull_request event identity before review check")
+        begin_check(repo, head, {"third_party_identity_proven": False}, [])
+        return
+
+    run = event.get("workflow_run")
+    if not isinstance(run, dict) or run.get("event") != "pull_request":
         return
     require(event.get("repository", {}).get("full_name") == repo, "event repository mismatch")
-    head = (pr.get("head") or {}).get("sha")
-    number = pr.get("number")
-    require(type(number) is int and number > 0 and isinstance(head, str) and SHA.fullmatch(head),
-            "invalid pull_request event identity before review check")
+    require((run.get("head_repository") or {}).get("full_name") == repo,
+            "workflow_run head repository mismatch before review check")
+    head = run.get("head_sha")
+    require(isinstance(head, str) and SHA.fullmatch(head),
+            "invalid workflow_run event identity before review check")
     begin_check(repo, head, {"third_party_identity_proven": False}, [])
 
 
