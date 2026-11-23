@@ -5,7 +5,8 @@ name: Collect and certify exact-SHA handoff
 on:
   pull_request:
     branches: [develop]
-    types: [opened, synchronize, reopened, ready_for_review]
+    # Title/body bind the canonical issue and can change without a new commit.
+    types: [opened, synchronize, reopened, ready_for_review, edited]
 
 permissions:
   contents: read
