@@ -505,7 +505,7 @@ def preflight_pull_request_check(repo: str, event: dict) -> tuple[str, int] | No
 
     run = event.get("workflow_run")
     if not isinstance(run, dict) or run.get("event") != "pull_request":
-        return
+        return None
     require(event.get("repository", {}).get("full_name") == repo, "event repository mismatch")
     require((run.get("head_repository") or {}).get("full_name") == repo,
             "workflow_run head repository mismatch before review check")
