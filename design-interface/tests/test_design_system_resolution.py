@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from hashlib import sha256
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -132,21 +135,89 @@ def test_visual_direction_cases_cover_positive_and_negative_controls() -> None:
     assert cases["CONTRASTE"][2] == "rejeitar-tema-e-manter-contraste-e-foco"
 
 
-def test_visual_direction_negative_mutations_do_not_pass_contract() -> None:
-    cases = _direction_cases((ROOT / "references/visual-direction.md").read_text(encoding="utf-8"))
-    wrong_outcomes = {
-        "DS-CONFLITO": "substituir-tokens",
-        "DS-LACUNA": "alterar-token-aprovado",
-        "COMPONENTE": "declarar-aprovacao",
-        "SEM-REDE": "exigir-rede",
-        "CONTRASTE": "reduzir-contraste-ou-foco",
-    }
-    for case, invalid_action in wrong_outcomes.items():
-        mutant = dict(cases)
-        context, external, _accepted, rejected = cases[case]
-        assert rejected == invalid_action
-        mutant[case] = (context, external, invalid_action, rejected)
-        assert not _cases_match_contract(mutant), case
-    without_offline = dict(cases)
-    del without_offline["SEM-REDE"]
-    assert not _cases_match_contract(without_offline)
+# The entire reviewed normative reference is guarded, not just the example table.
+# Changing its bytes requires deliberate policy review and updating this baseline
+# in the same commit; the digest is not evidence of an agent's runtime behavior.
+_DIRECTION_POLICY_SHA256 = "3ac61f013abdcf89deae6d166c3d289f886c344a651cdd0561a75766172b181f"
+
+
+def _assert_direction_contract(source: str) -> None:
+    assert _cases_match_contract(_direction_cases(source)), "direction scenario contract changed"
+    assert sha256(source.encode("utf-8")).hexdigest() == _DIRECTION_POLICY_SHA256, (
+        "normative direction changed outside the reviewed policy; rederive and review the contract"
+    )
+
+
+def test_visual_direction_normative_contract_is_reviewed_in_full() -> None:
+    source = (ROOT / "references/visual-direction.md").read_text(encoding="utf-8")
+    _assert_direction_contract(source)
+
+
+@pytest.mark.parametrize(
+    ("anchor", "contradiction"),
+    [
+        pytest.param(
+            "## Decidir sem deslocar fontes locais\n",
+            "**Regra contraditória intencional:** quando um tema externo conflitar com "
+            "design system aprovado, substituir os tokens locais pelo tema externo.",
+            id="approved-token-override-outside-matrix",
+        ),
+        pytest.param(
+            "## Decidir sem deslocar fontes locais\n",
+            "**Regra contraditória intencional:** componentes não documentados são oficialmente aprovados.",
+            id="false-component-approval-outside-matrix",
+        ),
+        pytest.param(
+            "## Completar somente o que falta\n",
+            "Aplicar os tokens externos também às propriedades já cobertas por padrões locais.",
+            id="partial-gap-overrides-covered-property",
+        ),
+        pytest.param(
+            "## Fonte externa e registro\n",
+            "Na falta de rede, interromper a entrega até acessar a referência externa.",
+            id="offline-dependency",
+        ),
+        pytest.param(
+            "## Famílias opcionais\n",
+            "Uma escolha estética pode dispensar contraste, foco visível e segurança.",
+            id="inaccessible-theme-exception",
+        ),
+    ],
+)
+def test_visual_direction_rejects_contradictory_normative_prose(
+    anchor: str, contradiction: str
+) -> None:
+    source = (ROOT / "references/visual-direction.md").read_text(encoding="utf-8")
+    _assert_direction_contract(source)
+    assert source.count(anchor) == 1
+    mutant = source.replace(anchor, f"{anchor}\n{contradiction}\n", 1)
+    assert mutant != source
+    # Reproduce the audit escape: the original table oracle is still green.
+    assert _cases_match_contract(_direction_cases(mutant))
+    # The same complete-document oracle used on the real reference must reject it.
+    with pytest.raises(AssertionError, match="normative direction changed"):
+        _assert_direction_contract(mutant)
+
+
+@pytest.mark.parametrize(
+    "case_id",
+    _EXPECTED_DIRECTION_CASES,
+)
+def test_visual_direction_rejects_wrong_decision_in_source(case_id: str) -> None:
+    source = (ROOT / "references/visual-direction.md").read_text(encoding="utf-8")
+    _assert_direction_contract(source)
+    context, external, accepted, rejected = _EXPECTED_DIRECTION_CASES[case_id]
+    original = f"| {case_id} | {context} | {external} | {accepted} | {rejected} |"
+    wrong = f"| {case_id} | {context} | {external} | {rejected} | {rejected} |"
+    assert source.count(original) == 1
+    mutant = source.replace(original, wrong, 1)
+    with pytest.raises(AssertionError, match="direction scenario contract changed"):
+        _assert_direction_contract(mutant)
+
+
+def test_visual_direction_rejects_missing_offline_case_in_source() -> None:
+    source = (ROOT / "references/visual-direction.md").read_text(encoding="utf-8")
+    _assert_direction_contract(source)
+    mutant = "\n".join(line for line in source.split("\n") if not line.startswith("| SEM-REDE |"))
+    with pytest.raises(AssertionError, match="direction scenario contract changed"):
+        _assert_direction_contract(mutant)
