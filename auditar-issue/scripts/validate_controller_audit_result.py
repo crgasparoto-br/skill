@@ -45,6 +45,58 @@ def main() -> int:
         requirement_ids = [item["id"] for item in report["requirements"]]
         if len(requirement_ids) != len(set(requirement_ids)):
             raise ValueError("requirement ids must be unique")
+        requirements_by_id = {item["id"]: item for item in report["requirements"]}
+        criterion_ids = [item["id"] for item in report["acceptance_criteria"]]
+        if len(criterion_ids) != len(set(criterion_ids)):
+            raise ValueError("acceptance criterion ids must be unique")
+        criterion_sources = []
+        for criterion in report["acceptance_criteria"]:
+            source = (
+                criterion["source_id"],
+                criterion["source_locator"],
+                criterion["source_line"],
+                criterion["text"],
+            )
+            criterion_sources.append(source)
+            requirement = requirements_by_id.get(criterion["requirement_id"])
+            if requirement is None:
+                raise ValueError(
+                    f"{criterion['id']} references unknown requirement "
+                    f"{criterion['requirement_id']}"
+                )
+            source_hash_matches_issue = (
+                criterion["source_sha256"]
+                == report["identity"]["issue_snapshot_sha256"]
+            )
+            if criterion["origin"] == "issue-body" and (
+                criterion["source_locator"] != "issue-body" or not source_hash_matches_issue
+            ):
+                raise ValueError(
+                    f"{criterion['id']} issue-body source identity is inconsistent"
+                )
+            if criterion["decision"] == "verified":
+                if not criterion["evidence"]:
+                    raise ValueError(f"{criterion['id']} verified criterion lacks evidence")
+                if requirement["status"] != "Implementado":
+                    raise ValueError(
+                        f"{criterion['id']} is verified but its requirement is not implemented"
+                    )
+                if criterion["proposed_checkbox_state"] != "checked":
+                    raise ValueError(
+                        f"{criterion['id']} verified criterion must propose checked"
+                    )
+            else:
+                expected_checkbox_state = (
+                    "unchanged"
+                    if criterion["initial_checkbox_state"] == "not-present"
+                    else "unchecked"
+                )
+                if criterion["proposed_checkbox_state"] != expected_checkbox_state:
+                    raise ValueError(
+                        f"{criterion['id']} unverified criterion must remain open"
+                    )
+        if len(criterion_sources) != len(set(criterion_sources)):
+            raise ValueError("acceptance criterion source locations must be unique")
         finding_ids = [item["id"] for item in report["findings"]]
         for item in report["findings"]:
             if item.get("status") == "open" and item.get("remediation_mode") not in {"targeted-remediation", "systemic-remediation"}:

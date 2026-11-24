@@ -38,6 +38,21 @@ class ControllerAuditResultTests(unittest.TestCase):
             "coverage_matrix_sha256": HASH,
             "neutral_packet_sha256": HASH,
             "neutral_packet": {"implementation_conclusions_included": False, "implementation_narrative_included": False, "allowed_contents": ["canonical-sources", "identity", "diff", "source", "tests", "raw-evidence"]},
+            "acceptance_criteria": [{
+                "id": "AC-1",
+                "requirement_id": "REQ-1",
+                "origin": "issue-body",
+                "source_id": "SRC-ISSUE",
+                "source_locator": "issue-body",
+                "source_sha256": HASH,
+                "source_line": 10,
+                "text": "Implement the requested behavior.",
+                "initial_checkbox_state": "unchecked",
+                "decision": "verified",
+                "evidence": ["tests", "implementation:42"],
+                "rationale": "The exact implementation and negative controls satisfy this criterion.",
+                "proposed_checkbox_state": "checked",
+            }],
             "prior_internal_approval": None,
             "audit_escapes": [],
             "requirements": [{
@@ -93,6 +108,33 @@ class ControllerAuditResultTests(unittest.TestCase):
             "disposition": "blocking", "remediation_mode": "targeted-remediation", "requirement_id": "REQ-1", "impact": "Breaks behavior",
             "evidence": ["reproduction"], "escape_category": "other", "sibling_cases": [],
         }]
+        self.assertNotEqual(self.run_report(report).returncode, 0)
+
+    def test_rejects_unverified_criterion_proposing_checked(self):
+        report = self.valid_report()
+        report["acceptance_criteria"][0]["decision"] = "inconclusive"
+        report["acceptance_criteria"][0]["evidence"] = []
+        self.assertNotEqual(self.run_report(report).returncode, 0)
+
+    def test_unverified_marked_criterion_must_propose_unchecked(self):
+        report = self.valid_report()
+        criterion = report["acceptance_criteria"][0]
+        criterion["initial_checkbox_state"] = "checked"
+        criterion["decision"] = "partial"
+        criterion["proposed_checkbox_state"] = "unchecked"
+        self.assertEqual(self.run_report(report).returncode, 0)
+        criterion["proposed_checkbox_state"] = "unchanged"
+        self.assertNotEqual(self.run_report(report).returncode, 0)
+
+    def test_rejects_verified_criterion_with_unimplemented_requirement(self):
+        report = self.valid_report()
+        report["requirements"][0]["status"] = "Parcial"
+        self.assertNotEqual(self.run_report(report).returncode, 0)
+
+    def test_rejects_duplicate_acceptance_criterion_source(self):
+        report = self.valid_report()
+        report["acceptance_criteria"].append(deepcopy(report["acceptance_criteria"][0]))
+        report["acceptance_criteria"][1]["id"] = "AC-2"
         self.assertNotEqual(self.run_report(report).returncode, 0)
 
     def test_rejects_implemented_requirement_without_negative_control(self):
