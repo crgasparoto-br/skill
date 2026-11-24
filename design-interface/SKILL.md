@@ -16,7 +16,7 @@ Entregar interface clara e operavel sem transformar preferencia estetica em requ
 - `independent-audit`;
 - `guidance`.
 
-Quando composta, ler `references/delivery-contract.md`. Carregar `interface-standards.md`, `screen-patterns.md` ou `visual-audit.md` somente para a etapa correspondente.
+Quando composta, ler `references/delivery-contract.md`. Carregar `interface-standards.md`, `screen-patterns.md` ou `visual-audit.md` somente para a etapa correspondente. Consultar `references/visual-direction.md` apenas se, apos a precedencia local, restar lacuna visual relevante ou for necessario verificar a decisao registrada; nao carrega-la como tema obrigatorio.
 
 ## Aplicabilidade
 
@@ -36,6 +36,8 @@ Aplicar somente para efeito percebido ou operado pelo usuario: texto, icone, ord
 1. No recorte recebido, identificar as fontes de UI da propria solucao: documentacao aprovada, Golden Screen, componentes, tokens, estilos executaveis e telas correlatas. Aplicar a precedencia de `references/interface-standards.md`.
    - Antes de editar componente visivel, consultar a referencia oficialmente aprovada, quando existir, e conferir seus estados e tokens executaveis, sem redescoberta global.
    - Sem padrao local verificavel, registrar a lacuna e usar somente defaults genericos pertinentes; nunca importar convencoes de outra solucao.
+   - Quando restarem lacunas por elemento ou estado, usar `references/visual-direction.md` para decidir entre familias visuais opcionais, composicao propria ou ausencia de tema. Preservar tokens e componentes locais validos; referencia externa nao prevalece nem exige rede.
+   - Na entrega existente, registrar fonte consultada, lacuna especifica, direcao ou decisao sem tema, justificativa breve, elementos locais preservados e condicao de aprovacao dos componentes observados. Nunca inferir aprovacao a partir da ausencia de documentacao.
    - Conferir estados de repouso, hover, foco, ativo e desabilitado nas superficies afetadas, inclusive modais e menus, conforme os componentes e tokens da propria solucao.
 2. Definir hierarquia, ordem, acao primaria, estados e estrategia responsiva.
 3. Reutilizar componentes existentes e alterar o menor conjunto coeso.
@@ -56,7 +58,7 @@ Executar uma amostra representativa por classe, usando desktop e mobile quando h
 
 ## Verificacao e auditoria
 
-Operar em leitura. Rederivar criterios no modo independente; no modo interno, usar o recorte recebido. Conferir fontes locais, precedencia, conflitos e defaults registrados, sem atribuir a outra solucao o padrao do projeto auditado. Testar conteudo longo, viewport reduzida, teclado, zoom, estados e permissoes somente quando vinculados ao risco/contrato.
+Operar em leitura. Rederivar criterios no modo independente; no modo interno, usar o recorte recebido. Conferir fontes locais, precedencia, conflitos e defaults registrados, sem atribuir a outra solucao o padrao do projeto auditado. Se houver direcao visual opcional, verificar que ela preenche apenas lacunas reais; refutar substituicao de tokens aprovados, falsa aprovacao de componentes e perda de contraste, foco ou seguranca, inclusive sem referencia externa acessivel. Testar conteudo longo, viewport reduzida, teclado, zoom, estados e permissoes somente quando vinculados ao risco/contrato.
 
 Quando o mesmo estado atende audiencias distintas, exigir contrato explicito por audiencia e controles negativos que rejeitem a copy das audiencias irmas. rota autenticada, rota publica tokenizada e area administrativa devem ter semantica discriminante quando o contexto for diferente.
 

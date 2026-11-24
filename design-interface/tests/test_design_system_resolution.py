@@ -62,3 +62,91 @@ def test_project_rules_are_owned_by_consumer_repositories() -> None:
     assert "repositorio consumidor" in spec
     assert "As regras normativas do catalogo devem ser portaveis" in agents
     assert "pertencem exclusivamente ao repositorio consumidor" in standards
+
+
+# Scenario-matrix tests constrain the decisions, not merely keyword presence.
+# Rendering and generative behavior need separate evidence under visual-audit.md.
+_EXPECTED_DIRECTION_CASES = {
+    "DS-CONFLITO": ("aprovado", "tema-conflitante", "preservar-tokens", "substituir-tokens"),
+    "DS-LACUNA": (
+        "aprovado-parcial",
+        "tema-opcional",
+        "preservar-tokens-e-completar-lacuna",
+        "alterar-token-aprovado",
+    ),
+    "COMPONENTE": (
+        "componente-nao-aprovado",
+        "referencia-estetica",
+        "reutilizar-implementacao-e-registrar-nao-aprovacao",
+        "declarar-aprovacao",
+    ),
+    "SEM-REDE": ("sem-fonte-local", "offline", "defaults-acessiveis-ou-sem-tema", "exigir-rede"),
+    "CONTRASTE": (
+        "sem-fonte-local",
+        "tema-baixo-contraste",
+        "rejeitar-tema-e-manter-contraste-e-foco",
+        "reduzir-contraste-ou-foco",
+    ),
+}
+
+
+def _direction_cases(source: str) -> dict[str, tuple[str, str, str, str]]:
+    section = source.split("## Casos verificáveis", 1)[1].split("\n## ", 1)[0]
+    rows = [row for row in section.splitlines() if row.startswith("| ")]
+    assert [cell.strip() for cell in rows[0].strip("|").split("|")] == [
+        "ID", "Contexto local", "Referência", "Aceitar", "Rejeitar"
+    ]
+    assert rows[1].startswith("| ---")
+    parsed = {}
+    for row in rows[2:]:
+        cells = tuple(cell.strip() for cell in row.strip("|").split("|"))
+        assert len(cells) == 5 and cells[0] not in parsed
+        parsed[cells[0]] = cells[1:]
+    return parsed
+
+
+def _cases_match_contract(cases: dict[str, tuple[str, str, str, str]]) -> bool:
+    return cases == _EXPECTED_DIRECTION_CASES
+
+
+def test_visual_direction_is_reachable_only_as_gap_fallback() -> None:
+    skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    standards = (ROOT / "references/interface-standards.md").read_text(encoding="utf-8")
+    reference = ROOT / "references/visual-direction.md"
+    assert reference.is_file()
+    assert "references/visual-direction.md" in skill
+    assert "depois de identificar uma lacuna visual relevante" in standards
+    assert "visual-direction.md" in standards
+    content = reference.read_text(encoding="utf-8")
+    assert "somente se a descoberta e a precedência" in content
+    assert "04977e15f3dfd6ee4b74c887dac3eb52665d6c92" in content
+
+
+def test_visual_direction_cases_cover_positive_and_negative_controls() -> None:
+    cases = _direction_cases((ROOT / "references/visual-direction.md").read_text(encoding="utf-8"))
+    assert _cases_match_contract(cases)
+    assert all(accepted != rejected for _, _, accepted, rejected in cases.values())
+    assert cases["DS-LACUNA"][2] == "preservar-tokens-e-completar-lacuna"
+    assert cases["COMPONENTE"][3] == "declarar-aprovacao"
+    assert cases["SEM-REDE"][2] == "defaults-acessiveis-ou-sem-tema"
+    assert cases["CONTRASTE"][2] == "rejeitar-tema-e-manter-contraste-e-foco"
+
+
+def test_visual_direction_negative_mutations_do_not_pass_contract() -> None:
+    cases = _direction_cases((ROOT / "references/visual-direction.md").read_text(encoding="utf-8"))
+    wrong_outcomes = {
+        "DS-CONFLITO": "substituir-tokens",
+        "DS-LACUNA": "alterar-token-aprovado",
+        "COMPONENTE": "declarar-aprovacao",
+        "SEM-REDE": "exigir-rede",
+        "CONTRASTE": "reduzir-contraste-ou-foco",
+    }
+    for case, invalid_action in wrong_outcomes.items():
+        mutant = dict(cases)
+        context, external, _accepted, rejected = cases[case]
+        assert rejected == invalid_action
+        mutant[case] = (context, external, invalid_action, rejected)
+        assert not _cases_match_contract(mutant), case
+    without_offline = dict(cases)
+    del without_offline["SEM-REDE"]
+    assert not _cases_match_contract(without_offline)
