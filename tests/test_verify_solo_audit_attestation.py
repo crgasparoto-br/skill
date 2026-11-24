@@ -1169,6 +1169,41 @@ def test_configuration_drift_between_initial_and_final_reads_publishes_failure(m
     assert "BLOCK:" in capsys.readouterr().err
 
 
+def test_missing_signed_report_comment_stays_blocked_with_safe_diagnostic(monkeypatch, capsys):
+    publications, _, _, _ = _success_fixture(monkeypatch)
+    monkeypatch.setattr(gate, "report_comment", lambda *args: contract.select_report_comment([]))
+
+    assert gate.evaluate_target(REPO, PR, ISSUE, "e" * 40, "12345") == 2
+
+    args, _ = publications[-1]
+    receipt = args[6]
+    assert args[5] == "failure"
+    assert receipt["blocker"] == "ValueError"
+    assert receipt["blocker_stage"] == "select_signed_report"
+    assert receipt["blocker_code"] == "signed_report_comment_missing_or_invalid"
+    assert not any(row[0][5] == "success" for row in publications)
+    assert "code=signed_report_comment_missing_or_invalid" in capsys.readouterr().err
+
+
+def test_controller_diagnostic_never_echoes_exception_message(monkeypatch, capsys):
+    publications, _, _, _ = _success_fixture(monkeypatch)
+    canary = "SENSITIVE-EXCEPTION-CANARY"
+
+    def fail_with_sensitive_message(*args):
+        raise ValueError(canary)
+
+    monkeypatch.setattr(gate, "report_comment", fail_with_sensitive_message)
+    assert gate.evaluate_target(REPO, PR, ISSUE, "e" * 40, "12345") == 2
+
+    args, _ = publications[-1]
+    captured = capsys.readouterr()
+    assert canary not in captured.err and canary not in captured.out
+    assert canary not in json.dumps(args[6])
+    assert args[5] == "failure"
+    assert args[6]["blocker_code"] == "signed_report_comment_missing_or_invalid"
+    assert gate.safe_blocker_code("unrecognized") == "controller_validation_failed"
+
+
 def test_execution_source_requires_exact_local_workflow_sha_and_base_files(monkeypatch):
     workflow_sha = "e" * 40
     monkeypatch.setenv("GITHUB_WORKFLOW_SHA", workflow_sha)

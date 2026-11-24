@@ -40,6 +40,28 @@ from solo_audit_source import (  # noqa: E402 - sys.path ajustado acima antes do
     verify_execution_source,
 )
 
+SAFE_BLOCKER_CODES = {
+    "read_live_pr": "live_pr_unavailable",
+    "begin_check": "provisional_check_creation_failed",
+    "resolve_pr_identity": "pr_issue_binding_invalid",
+    "load_trusted_config": "trusted_configuration_unavailable_or_invalid",
+    "verify_trusted_source": "trusted_workflow_provenance_invalid",
+    "select_signed_report": "signed_report_comment_missing_or_invalid",
+    "validate_signed_report": "signed_report_signature_or_binding_invalid",
+    "collect_required_evidence": "required_exact_sha_evidence_not_green",
+    "final_revalidation": "final_authority_revalidation_failed",
+    "publish_success_check": "exact_sha_check_publication_failed",
+    "validate_runtime_context": "trusted_runtime_context_invalid",
+    "read_event_payload": "trusted_event_payload_invalid",
+    "resolve_event_targets": "trusted_event_target_resolution_failed",
+    "evaluate_targets": "target_attestation_validation_failed",
+}
+
+
+def safe_blocker_code(stage: str) -> str:
+    """Return a fixed diagnostic identifier; never expose exception messages."""
+    return SAFE_BLOCKER_CODES.get(stage, "controller_validation_failed")
+
 
 def _recheck_comment(repo: str, number: int, initial: dict[str, Any], config: Any) -> None:
     selected, _, raw = report_comment(repo, number, config)
@@ -89,13 +111,16 @@ def evaluate_target(repo: str, number: int, expected_issue: int | None,
     head = ""
     check_id: int | None = None
     identity: dict[str, Any] | None = None
+    stage = "read_live_pr"
     try:
         initial_pr = session_runner.api(f"/repos/{repo}/pulls/{number}")
         live_head = (initial_pr.get("head") or {}).get("sha") if isinstance(initial_pr, dict) else None
         require(isinstance(live_head, str) and SHA_RE.fullmatch(live_head), "live PR HEAD is unavailable")
         head = live_head
+        stage = "begin_check"
         check_id = begin_check(repo, head, number, run_id)
 
+        stage = "resolve_pr_identity"
         identity, _ = current_target(repo, number, expected_issue, pr=initial_pr)
         require_unique_open_pr_head(repo, number, identity["head_sha"])
         receipt.update({
@@ -104,33 +129,47 @@ def evaluate_target(repo: str, number: int, expected_issue: int | None,
             "merge_preview_sha": identity["merge_preview_sha"],
             "issue_body_sha256": identity["issue_body_sha256"],
         })
+        stage = "load_trusted_config"
         config0 = load_config(repo)
+        stage = "verify_trusted_source"
         source0 = verify_execution_source(repo, identity["base_sha"], workflow_sha)
+        stage = "select_signed_report"
         selected0, report0, raw0 = report_comment(repo, number, config0)
         require(report0.get("issue") == identity["issue"], "signed report issue differs from live PR reference")
         require(report0.get("pull_request") == number, "signed report PR differs from live PR")
+        stage = "validate_signed_report"
         report_sha = validate_signed_report(repo, identity, config0, selected0, raw0)
+        stage = "collect_required_evidence"
         evidence_ids = required_evidence(repo, identity)
         receipt.update({"report_sha256": report_sha,
                         "configuration_fingerprint": config0.fingerprint,
                         "required_check_ids": evidence_ids})
 
+        stage = "final_revalidation"
         final_revalidation(repo, number, identity, config0, selected0, source0, evidence_ids)
+
+        def revalidate_before_success() -> None:
+            nonlocal stage
+            stage = "final_revalidation"
+            final_revalidation(repo, number, identity, config0, selected0, source0, evidence_ids)
+            stage = "publish_success_check"
+
+        stage = "publish_success_check"
         publish_check(
             repo, head, number, check_id, run_id, "success", receipt, identity=identity,
-            before_patch=lambda: final_revalidation(
-                repo, number, identity, config0, selected0, source0, evidence_ids
-            ),
+            before_patch=revalidate_before_success,
         )
         print(ACCEPTED_TEXT)
         return 0
     except Exception as exc:
-        receipt["blocker"] = type(exc).__name__
+        code = safe_blocker_code(stage)
+        receipt.update({"blocker": type(exc).__name__, "blocker_stage": stage, "blocker_code": code})
         if head and SHA_RE.fullmatch(head):
             # Do not mask the original failure or print response bodies/tokens.
             with suppress(Exception):
                 publish_check(repo, head, number, check_id, run_id, "failure", receipt, identity=identity)
-        print(f"BLOCK: solo audit attestation validation failed ({type(exc).__name__})", file=sys.stderr)
+        print(f"BLOCK: solo audit attestation validation failed ({type(exc).__name__}; code={code})",
+              file=sys.stderr)
         return 2
 
 
@@ -155,21 +194,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--workflow-sha", required=True)
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)
+    stage = "validate_runtime_context"
     try:
         event_name = os.environ.get("GITHUB_EVENT_NAME", "")
         verify_runtime_context(args.repo, args.workflow_sha, args.run_id, event_name)
+        stage = "read_event_payload"
         event_raw = args.event.read_bytes()
         require(len(event_raw) <= 5 * 1024 * 1024, "GitHub event payload exceeds the input bound")
         event = json.loads(event_raw)
+        stage = "resolve_event_targets"
         targets = resolve_targets(args.repo, event, event_name)
         if not targets:
             print("No eligible open PR targets for this trusted event.")
             return 0
+        stage = "evaluate_targets"
         codes = [evaluate_target(args.repo, number, issue, args.workflow_sha, args.run_id)
                  for number, issue in targets]
         return 0 if all(code == 0 for code in codes) else 2
     except Exception as exc:
-        print(f"BLOCK: trusted solo gate could not validate event ({type(exc).__name__})", file=sys.stderr)
+        code = safe_blocker_code(stage)
+        print(f"BLOCK: trusted solo gate could not validate event ({type(exc).__name__}; code={code})",
+              file=sys.stderr)
         return 2
 
 

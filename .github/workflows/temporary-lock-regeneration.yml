@@ -1,0 +1,44 @@
+name: TEMP regenerate dependency locks for PR 208
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+    paths:
+      - .github/workflows/temporary-lock-regeneration.yml
+
+permissions:
+  contents: read
+
+jobs:
+  regenerate:
+    if: github.event.pull_request.number == 208
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout candidate merge preview
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Regenerate locks from their manifests
+        run: |
+          python scripts/lock_dependencies.py --root . --manifest requirements.txt
+          python scripts/lock_dependencies.py --root . --manifest auditar-issue/requirements-dev.txt
+          python scripts/lock_dependencies.py --root . --manifest entregar-issue/requirements-dev.txt
+
+      - name: Upload only generated lockfiles
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pr208-dependency-locks-${{ github.event.pull_request.head.sha }}
+          path: |
+            requirements.lock.txt
+            auditar-issue/requirements-dev.lock.txt
+            entregar-issue/requirements-dev.lock.txt
+          if-no-files-found: error
+          retention-days: 1
