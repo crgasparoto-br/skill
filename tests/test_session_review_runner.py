@@ -27,6 +27,32 @@ def archive(entries):
     return out.getvalue()
 
 
+class EventBackend:
+    """Minimal authenticated Checks/PR boundary for preflight regressions."""
+
+    def __init__(self, sha, pr):
+        self.sha = sha
+        self.pr = pr
+        self.check = None
+        self.writes = []
+
+    def api(self, path, *, method="GET", data=None):
+        self.writes.append((path, method, copy.deepcopy(data)))
+        if method == "POST" and path == "/repos/owner/repo/check-runs":
+            self.check = {"id": 42, "name": runner.CHECK_NAME, "head_sha": self.sha,
+                          "status": "in_progress", "conclusion": None,
+                          "app": {"id": 15368}, **copy.deepcopy(data)}
+            return copy.deepcopy(self.check)
+        if path == "/repos/owner/repo/pulls/10" and method == "GET":
+            return copy.deepcopy(self.pr)
+        if path == "/repos/owner/repo/check-runs/42" and method == "GET":
+            return copy.deepcopy(self.check)
+        if path == "/repos/owner/repo/check-runs/42" and method == "PATCH":
+            self.check.update(copy.deepcopy(data))
+            return copy.deepcopy(self.check)
+        raise AssertionError((method, path))
+
+
 def test_archive_rejects_traversal_duplicates_symlink(tmp_path):
     for entries in [ [("../escape", "x")], [("/escape", "x")], [("file", "x"), ("file", "y")] ]:
         with pytest.raises(ValueError):
@@ -116,21 +142,41 @@ def test_background_push_only_evaluates_ready_prs(monkeypatch):
 
 def test_background_workflow_run_skips_only_draft_prs(monkeypatch):
     pr = {"number": 10, "state": "open", "draft": True,
-          "base": {"ref": "develop"}, "body": "Refs #9"}
+          "base": {"ref": "develop"}, "body": "Refs #9",
+          "head": {"sha": "b" * 40, "repo": {"full_name": "owner/repo"}}}
     monkeypatch.setattr(runner, "api", lambda *_: pr)
-    monkeypatch.setattr(runner, "pages", lambda *_: pytest.fail("unexpected PR lookup"))
+    monkeypatch.setattr(runner, "pages", lambda *_: [pr])
     event = {"repository": {"full_name": "owner/repo"},
-             "workflow_run": {"event": "pull_request", "pull_requests": [{"number": 10}]}}
+             "workflow_run": {"event": "pull_request", "head_sha": "b" * 40,
+                              "head_repository": {"full_name": "owner/repo"},
+                              "pull_requests": [{"number": 10}]}}
     assert runner.resolve_targets("owner/repo", event) == []
+
+
+def test_workflow_run_unions_live_associations_when_event_list_is_empty(monkeypatch):
+    head = "b" * 40
+    pr = {"number": 10, "state": "open", "draft": False, "base": {"ref": "develop"},
+          "body": "Refs #9", "head": {"sha": head, "repo": {"full_name": "owner/repo"}}}
+    monkeypatch.setattr(runner, "api", lambda *_args, **_kwargs: pr)
+    monkeypatch.setattr(runner, "pages", lambda *_args, **_kwargs: [pr])
+    event = {"repository": {"full_name": "owner/repo"}, "workflow_run": {
+        "event": "pull_request", "head_sha": head, "head_repository": {"full_name": "owner/repo"},
+        "pull_requests": [],
+    }}
+
+    assert runner.resolve_targets("owner/repo", event) == [(10, 9)]
 
 
 def test_explicit_pr_and_issue_events_preserve_draft_revocation(monkeypatch):
     pr = {"number": 10, "state": "open", "draft": True,
-          "base": {"ref": "develop"}, "body": "Refs #9"}
+          "base": {"ref": "develop"}, "body": "Refs #9",
+          "head": {"sha": "e" * 40, "repo": {"full_name": "owner/repo"}}}
     monkeypatch.setattr(runner, "api", lambda *_: pr)
     monkeypatch.setattr(runner, "pages", lambda *_: [pr])
     base = {"repository": {"full_name": "owner/repo"}}
-    assert runner.resolve_targets("owner/repo", {**base, "pull_request": {"number": 10}}) == [(10, 9)]
+    assert runner.resolve_targets("owner/repo", {**base, "pull_request": {
+        "number": 10, "head": {"sha": "e" * 40, "repo": {"full_name": "owner/repo"}}
+    }}) == [(10, 9)]
     assert runner.resolve_targets(
         "owner/repo", {**base, "issue": {"number": 9}, "action": "edited"}
     ) == [(10, 9)]
@@ -147,6 +193,292 @@ def test_no_recursive_workflow_trigger(tmp_path):
     assert "self-hosted" not in workflow
     assert "github.event.pull_request.head.sha" not in workflow
     assert "persist-credentials: false" in workflow
+
+
+def test_pull_request_event_starts_pending_check_before_live_target_lookup(monkeypatch, tmp_path):
+    head = "a" * 40
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "pull_request": {"number": 10, "head": {"sha": head, "repo": {"full_name": "owner/repo"}}},
+    }))
+    writes = []
+    check = {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
+             "status": "in_progress", "conclusion": None, "app": {"id": 15368}}
+
+    def api(path, *, method="GET", data=None):
+        writes.append((path, method, copy.deepcopy(data)))
+        if method == "POST":
+            return copy.deepcopy(check)
+        if method == "GET" and "/commits/" in path:
+            return {"total_count": 0, "check_runs": []}
+        if method == "GET":
+            return copy.deepcopy(check)
+        assert method == "PATCH" and data["conclusion"] == "failure"
+        check.update(status="completed", conclusion="failure")
+        return copy.deepcopy(check)
+
+    def unavailable(repo, event):
+        assert repo == "owner/repo"
+        assert any(method == "POST" for _, method, _ in writes)
+        raise OSError("live PR lookup unavailable")
+
+    monkeypatch.setattr(runner, "api", api)
+    monkeypatch.setattr(runner, "resolve_targets", unavailable)
+    monkeypatch.setenv("GITHUB_RUN_ID", "12345")
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+    assert runner.main() == 2
+
+    assert [write[1] for write in writes] == ["GET", "POST", "GET", "PATCH"]
+    assert writes[1][2]["head_sha"] == head
+    assert writes[1][2]["status"] == "in_progress"
+    assert writes[-1][2]["conclusion"] == "failure"
+    assert check["status"] == "completed" and check["conclusion"] == "failure"
+
+
+def test_workflow_run_replaces_old_success_before_live_pr_lookup(monkeypatch, tmp_path):
+    head = "b" * 40
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": head,
+            "head_repository": {"full_name": "owner/repo"},
+            "pull_requests": [],
+        },
+    }))
+    old_success = {"id": 11, "name": runner.CHECK_NAME, "head_sha": head,
+                   "status": "completed", "conclusion": "success", "app": {"id": 15368}}
+    checks = [old_success]
+    writes = []
+
+    def api(path, *, method="GET", data=None):
+        writes.append((path, method, copy.deepcopy(data)))
+        if method == "POST":
+            assert path == "/repos/owner/repo/check-runs"
+            pending = {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
+                       "status": "in_progress", "conclusion": None, "app": {"id": 15368}}
+            checks.append(pending)
+            return copy.deepcopy(pending)
+        if method == "PATCH" and path == "/repos/owner/repo/check-runs/11":
+            return copy.deepcopy(old_success)  # GitHub retained the terminal status.
+        if method == "GET":
+            assert path == "/repos/owner/repo/check-runs/12"
+            return copy.deepcopy(checks[-1])
+        assert method == "PATCH" and data["conclusion"] == "failure"
+        checks[-1].update(status="completed", conclusion="failure")
+        return copy.deepcopy(checks[-1])
+
+    def unavailable(*_args, **_kwargs):
+        assert any(method == "POST" for _, method, _ in writes)
+        assert checks[-1]["status"] == "in_progress"
+        raise OSError("live PR lookup unavailable")
+
+    def pages(_repo, _endpoint, *, field=None):
+        if field == "check_runs":
+            return copy.deepcopy(checks)
+        return unavailable()
+
+    monkeypatch.setattr(runner, "api", api)
+    monkeypatch.setattr(runner, "pages", pages)
+    monkeypatch.setenv("GITHUB_RUN_ID", "12345")
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+    assert runner.main() == 2
+
+    assert [write[1] for write in writes] == ["PATCH", "POST", "GET", "PATCH"]
+    assert checks[0] == old_success
+    assert checks[-1]["head_sha"] == head
+    assert checks[-1]["status"] == "completed"
+    assert checks[-1]["conclusion"] == "failure"
+    assert writes[0][0] == "/repos/owner/repo/check-runs/11"
+    assert writes[0][2]["status"] == "in_progress"
+    assert writes[1][2]["head_sha"] == head
+    assert writes[1][2]["status"] == "in_progress"
+    assert writes[-1][2]["conclusion"] == "failure"
+
+
+@pytest.mark.parametrize(("base_ref", "draft"), [("release", False), ("develop", True)])
+def test_workflow_run_completes_nonapplicable_target_without_orphaned_pending_check(
+    monkeypatch, tmp_path, base_ref, draft
+):
+    head = "d" * 40
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": head,
+            "head_repository": {"full_name": "owner/repo"},
+            "pull_requests": [{"number": 10}],
+        },
+    }))
+    old_success = {"id": 11, "name": runner.CHECK_NAME, "head_sha": head,
+                   "status": "completed", "conclusion": "success"}
+    checks = [old_success]
+    writes = []
+    pr = {"number": 10, "state": "open", "draft": draft,
+          "base": {"ref": base_ref}, "body": "Refs #9",
+          "head": {"sha": head, "repo": {"full_name": "owner/repo"}}}
+
+    def api(path, *, method="GET", data=None):
+        writes.append((path, method, copy.deepcopy(data)))
+        if method == "POST":
+            pending = {"id": 12, "name": runner.CHECK_NAME, "head_sha": head,
+                       "status": "in_progress", "conclusion": None, "app": {"id": 15368}}
+            checks.append(pending)
+            return copy.deepcopy(pending)
+        if path == "/repos/owner/repo/pulls/10":
+            assert method == "GET"
+            return copy.deepcopy(pr)
+        if method == "GET":
+            assert path == "/repos/owner/repo/check-runs/12"
+            return copy.deepcopy(checks[-1])
+        assert method == "PATCH" and data["conclusion"] == "failure"
+        checks[-1].update(status="completed", conclusion="failure")
+        return copy.deepcopy(checks[-1])
+
+    def pages(_repo, endpoint, *, field=None):
+        if field == "check_runs":
+            return []
+        return [pr] if endpoint.endswith("/pulls") else []
+
+    monkeypatch.setattr(runner, "api", api)
+    monkeypatch.setattr(runner, "pages", pages)
+    monkeypatch.setenv("GITHUB_RUN_ID", "12345")
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+
+    assert runner.main() == 0
+
+    assert checks[0] == old_success
+    assert checks[-1]["status"] == "completed"
+    assert checks[-1]["conclusion"] == "failure"
+    assert writes[0][0] == "/repos/owner/repo/check-runs"
+    assert writes[1][0] == "/repos/owner/repo/pulls/10"
+    assert writes[-1][2]["conclusion"] == "failure"
+
+
+def test_workflow_run_preflight_rejects_foreign_head_repository(monkeypatch):
+    monkeypatch.setattr(
+        runner, "begin_check",
+        lambda *_args, **_kwargs: pytest.fail("foreign workflow_run must not start a check"),
+    )
+    event = {
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": "c" * 40,
+            "head_repository": {"full_name": "fork/repo"},
+        },
+    }
+
+    with pytest.raises(ValueError, match="head repository mismatch"):
+        runner.preflight_pull_request_check("owner/repo", event)
+
+
+def test_pull_request_preflight_rejects_foreign_head_before_check_creation(monkeypatch):
+    monkeypatch.setattr(
+        runner, "begin_check",
+        lambda *_args, **_kwargs: pytest.fail("foreign pull_request must not start a check"),
+    )
+    event = {
+        "repository": {"full_name": "owner/repo"},
+        "pull_request": {
+            "number": 10,
+            "head": {"sha": "a" * 40, "repo": {"full_name": "fork/repo"}},
+        },
+    }
+
+    with pytest.raises(ValueError, match="head repository mismatch"):
+        runner.preflight_pull_request_check("owner/repo", event)
+
+
+def test_workflow_run_with_moved_head_fails_the_obsolete_preflight(monkeypatch, tmp_path):
+    old_head, live_head = "a" * 40, "b" * 40
+    pr = {"number": 10, "state": "open", "draft": False, "base": {"ref": "develop"},
+          "body": "Refs #9", "head": {"sha": live_head, "repo": {"full_name": "owner/repo"}}}
+    backend = EventBackend(old_head, pr)
+
+    def pages(_repo, endpoint, *, field=None):
+        if field == "check_runs":
+            return []
+        return [pr] if endpoint.endswith("/pulls") else []
+
+    monkeypatch.setattr(runner, "api", backend.api)
+    monkeypatch.setattr(runner, "pages", pages)
+    monkeypatch.setenv("GITHUB_RUN_ID", "12345")
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {"event": "pull_request", "head_sha": old_head,
+                         "head_repository": {"full_name": "owner/repo"},
+                         "pull_requests": [{"number": 10}]},
+    }))
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+
+    assert runner.main() == 0
+
+    assert backend.check["head_sha"] == old_head
+    assert backend.check["status"] == "completed"
+    assert backend.check["conclusion"] == "failure"
+    assert [write[1] for write in backend.writes] == ["POST", "GET", "GET", "PATCH"]
+    assert not any(write[2] and write[2].get("conclusion") == "success" for write in backend.writes)
+
+
+def test_evaluate_closes_preflight_when_initial_pr_lookup_fails(monkeypatch):
+    head = "c" * 40
+    pr = {"number": 10}
+    backend = EventBackend(head, pr)
+    backend.check = {"id": 42, "name": runner.CHECK_NAME, "head_sha": head,
+                     "status": "in_progress", "conclusion": None, "app": {"id": 15368}}
+
+    def api(path, *, method="GET", data=None):
+        if path == "/repos/owner/repo/pulls/10":
+            raise ValueError("initial PR query unavailable")
+        return backend.api(path, method=method, data=data)
+
+    monkeypatch.setattr(runner, "api", api)
+    monkeypatch.setenv("GITHUB_RUN_ID", "12345")
+
+    assert runner.evaluate("owner/repo", 10, 9, preflight=(head, 42)) == 2
+
+    assert backend.check["status"] == "completed"
+    assert backend.check["conclusion"] == "failure"
+    assert "initial PR query unavailable" in backend.check["output"]["summary"]
+
+
+def test_main_closes_preflight_when_evaluation_raises_unexpectedly(monkeypatch, tmp_path):
+    head = "d" * 40
+    pr = {"number": 10, "state": "open", "draft": False, "base": {"ref": "develop"},
+          "body": "Refs #9", "head": {"sha": head, "repo": {"full_name": "owner/repo"}}}
+    backend = EventBackend(head, pr)
+    monkeypatch.setattr(runner, "api", backend.api)
+    monkeypatch.setattr(runner, "pages", lambda *_args, **_kwargs: [pr])
+    monkeypatch.setattr(runner, "evaluate", lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setenv("GITHUB_RUN_ID", "12345")
+    event_path = tmp_path / "event.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "pull_request": {"number": 10, "head": {"sha": head, "repo": {"full_name": "owner/repo"}}},
+    }))
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+
+    assert runner.main() == 2
+
+    assert backend.check["head_sha"] == head
+    assert backend.check["status"] == "completed"
+    assert backend.check["conclusion"] == "failure"
+    assert [write[1] for write in backend.writes] == ["POST", "GET", "GET", "PATCH"]
 
 
 def test_revocation_watermark_survives_missing_report(monkeypatch):
@@ -211,6 +543,103 @@ def test_failure_leaves_no_previous_green_as_latest_check(review_backend, monkey
     assert "certificate missing" in backend.checks[-1]["output"]["summary"]
 
 
+def test_pending_prerequisites_defer_without_authorizing_and_resume(review_backend):
+    backend = review_backend
+    backend.seed(1)  # Same-SHA success must be invalidated before deferring.
+    pending = True
+
+    def readiness():
+        if pending:
+            raise runner.RequiredChecksNotReadyError("required exact-HEAD check pending: Structure and tests")
+
+    backend.on_prepare = readiness
+    assert backend.run() == 0
+    assert len(backend.checks) == 1
+    assert backend.checks[-1]["status"] == "in_progress"
+    assert backend.checks[-1].get("conclusion") is None
+    assert not any(data.get("conclusion") in {"success", "failure"} for _, data in backend.writes)
+
+    pending = False
+    assert backend.run() == 0
+    assert backend.checks[-1]["status"] == "completed"
+    assert backend.checks[-1]["conclusion"] == "success"
+
+
+def test_workflow_run_reuses_one_pending_check_across_retries(review_backend, monkeypatch, tmp_path):
+    backend = review_backend
+    event_path = tmp_path / "workflow-run.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": backend.pr["head"]["sha"],
+            "head_repository": {"full_name": "owner/repo"},
+            "pull_requests": [{"number": 10}],
+        },
+    }))
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+
+    def readiness():
+        raise runner.RequiredChecksNotReadyError(
+            "required exact-HEAD check pending: Structure and tests"
+        )
+
+    backend.on_prepare = readiness
+    for attempt in range(2):
+        assert runner.main() == 0
+        assert len(backend.checks) == 1
+        assert backend.checks[0]["status"] == "in_progress"
+        assert backend.checks[0].get("conclusion") is None
+        if attempt == 0:
+            backend.checks[0]["output"]["text"] = json.dumps({"minimum_comment_id": 23})
+
+    assert [method for method, _ in backend.writes] == ["POST", "PATCH"]
+    assert json.loads(backend.checks[0]["output"]["text"])["minimum_comment_id"] == 23
+    active = [
+        check for check in backend.checks
+        if check.get("status") in {"queued", "in_progress"} and check.get("conclusion") is None
+    ]
+    assert len(active) == 1
+
+
+def test_preflight_journal_failure_publishes_terminal_failure(review_backend, monkeypatch, tmp_path):
+    backend = review_backend
+    backend.seed(1)
+    event_path = tmp_path / "workflow-run.json"
+    event_path.write_text(json.dumps({
+        "repository": {"full_name": "owner/repo"},
+        "workflow_run": {
+            "event": "pull_request",
+            "head_sha": backend.pr["head"]["sha"],
+            "head_repository": {"full_name": "owner/repo"},
+            "pull_requests": [{"number": 10}],
+        },
+    }))
+    monkeypatch.setattr(
+        runner, "review_journal",
+        lambda *_args: (_ for _ in ()).throw(OSError("journal unavailable")),
+    )
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+    monkeypatch.setattr(runner.sys, "argv", [
+        "verify_session_review.py", "--repo", "owner/repo", "--event", str(event_path)
+    ])
+
+    assert runner.main() == 2
+
+    assert backend.checks[0]["status"] == "completed"
+    assert backend.checks[0]["conclusion"] == "success"
+    assert backend.checks[-1]["status"] == "completed"
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert (
+        "Prior exact-SHA review journal unavailable"
+        in backend.checks[-1]["output"]["summary"]
+    )
+    assert [method for method, _ in backend.writes] == ["POST", "PATCH"]
+
+
 @pytest.mark.parametrize("path", ["a//b", "a/./b", ".", "./", "a\x00b"])
 def test_archive_rejects_path_aliases(path, tmp_path):
     # Pure-path aliases must not overwrite previously validated members.
@@ -228,9 +657,14 @@ def test_edit_removing_marker_still_revokes(monkeypatch, tmp_path):
 
 
 def test_ambiguous_pr_reference_is_retained_for_revocation(monkeypatch):
-    pr = {"number": 10, "state": "open", "base": {"ref": "develop"}, "body": "Refs #9\nRefs #8"}
+    head = "f" * 40
+    pr = {"number": 10, "state": "open", "base": {"ref": "develop"}, "body": "Refs #9\nRefs #8",
+          "head": {"sha": head, "repo": {"full_name": "owner/repo"}}}
     monkeypatch.setattr(runner, "api", lambda *_: pr)
-    event = {"repository": {"full_name": "owner/repo"}, "pull_request": {"number": 10}}
+    monkeypatch.setattr(runner, "pages", lambda *_: [pr])
+    event = {"repository": {"full_name": "owner/repo"}, "pull_request": {
+        "number": 10, "head": {"sha": head, "repo": {"full_name": "owner/repo"}}
+    }}
     assert runner.resolve_targets("owner/repo", event) == [(10, 0)]
 
 
@@ -325,6 +759,8 @@ class ReviewBackend:
             if data.get("status") == "in_progress":
                 check["conclusion"] = None
             return copy.deepcopy(check)
+        if "/commits/" in path and path.endswith("/pulls"):
+            return [copy.deepcopy(self.pr)]
         if "/commits/" in path:
             self.journal_reads.append(page)
             checks = sorted(self.checks, key=lambda c: c["id"], reverse=True)
@@ -351,6 +787,50 @@ class ReviewBackend:
 @pytest.fixture
 def review_backend(monkeypatch, tmp_path):
     return ReviewBackend(monkeypatch, tmp_path)
+
+
+def test_evaluate_reuses_preflight_check_instead_of_creating_a_second_run(review_backend):
+    backend = review_backend
+    head = backend.pr["head"]["sha"]
+    check_id = runner.begin_check("owner/repo", head, {"third_party_identity_proven": False}, [])
+
+    assert runner.evaluate("owner/repo", 10, 9, preflight=(head, check_id)) == 0
+
+    assert len(backend.checks) == 1
+    assert backend.checks[0]["id"] == check_id
+    assert backend.checks[0]["status"] == "completed"
+    assert backend.checks[0]["conclusion"] == "success"
+    assert [method for method, _ in backend.writes] == ["POST", "PATCH"]
+
+
+@pytest.mark.parametrize("collision_at", ["initial", "terminal"])
+def test_evaluate_blocks_shared_head_with_open_pr_outside_target_scope(review_backend, monkeypatch, collision_at):
+    backend = review_backend
+    head = backend.pr["head"]["sha"]
+    other = {"number": 11, "state": "open", "draft": True,
+             "head": {"sha": head, "repo": {"full_name": "owner/repo"}},
+             "base": {"ref": "release"}}
+    real_pages = runner.pages
+    unique_reads = 0
+
+    def pages(repo, endpoint, *, field=None):
+        nonlocal unique_reads
+        if endpoint.startswith(f"commits/{head}/pulls"):
+            unique_reads += 1
+            if collision_at == "initial" or unique_reads == 2:
+                return [backend.pr, other]
+            return [backend.pr]
+        return real_pages(repo, endpoint, field=field)
+
+    monkeypatch.setattr(runner, "pages", pages)
+
+    assert backend.run() == 2
+
+    assert unique_reads == (1 if collision_at == "initial" else 2)
+    assert backend.checks[-1]["status"] == "completed"
+    assert backend.checks[-1]["conclusion"] == "failure"
+    assert "multiple open pull requests share this HEAD" in backend.checks[-1]["output"]["summary"]
+    assert not any(data.get("conclusion") == "success" for _, data in backend.writes)
 
 
 @pytest.mark.parametrize("field", ["head_sha", "base_sha", "base_ref", "merge_preview_sha", "issue_sha256", "policy_sha256"])

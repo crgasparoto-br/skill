@@ -41,6 +41,15 @@ def test_candidate_selected_refs_cannot_start_review_workflows(name):
     assert config["permissions"]["checks"] == ("write" if name == "session-review.yml" else "read")
 
 
+def test_pr_head_changes_start_immediately_and_workflow_run_resumes_readiness():
+    triggers = workflow("session-review.yml")["on"]
+    pull_request_types = set(triggers["pull_request_target"]["types"])
+    assert {"opened", "synchronize", "reopened", "ready_for_review", "edited"} <= pull_request_types
+    assert set(triggers["workflow_run"]["workflows"]) == {
+        "Validate skills", "Validate GitHub Audit MCP", "Collect and certify exact-SHA handoff"
+    }
+
+
 @pytest.mark.parametrize("name", WORKFLOWS)
 def test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_reader(name):
     config = workflow(name)
@@ -115,16 +124,17 @@ def test_packet_shell_routes_live_targets_and_propagates_rejection(tmp_path, tar
     observed = [json.loads((packets / f"pr-{number}" / "review-packet.json").read_text()) for number, _ in targets]
     assert observed == [{"repository": "owner/repo", "pull_request": number, "issue": issue} for number, issue in targets]
 
-def test_completed_check_that_cannot_reopen_creates_new_pending_check(monkeypatch):
+@pytest.mark.parametrize("conclusion", ["failure", "success"])
+def test_completed_check_that_cannot_reopen_creates_new_pending_check(monkeypatch, conclusion):
     sha = "a" * 40
     previous = [{"id": 88, "head_sha": sha, "name": runner.CHECK_NAME,
-                 "status": "completed", "conclusion": "failure"}]
+                 "status": "completed", "conclusion": conclusion}]
     writes = []
 
     def api(path, *, method="GET", data=None):
         writes.append((method, path, data))
         if method == "PATCH":
-            return dict(previous[0])  # GitHub preserved the terminal failure state.
+            return dict(previous[0])  # GitHub preserved the terminal state.
         if method == "POST":
             return {"id": 89, "head_sha": sha, "name": runner.CHECK_NAME,
                     "status": "in_progress"}

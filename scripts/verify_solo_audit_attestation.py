@@ -12,7 +12,6 @@ import json
 import os
 import re
 import sys
-from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -126,11 +125,19 @@ def evaluate_target(repo: str, number: int, expected_issue: int | None,
         return 0
     except Exception as exc:
         receipt["blocker"] = type(exc).__name__
+        message = f"BLOCK: solo audit attestation validation failed ({type(exc).__name__})"
         if head and SHA_RE.fullmatch(head):
-            # Do not mask the original failure or print response bodies/tokens.
-            with suppress(Exception):
-                publish_check(repo, head, number, check_id, run_id, "failure", receipt, identity=identity)
-        print(f"BLOCK: solo audit attestation validation failed ({type(exc).__name__})", file=sys.stderr)
+            try:
+                # Failure publication must not depend on identity fields that the
+                # failed validation may have found malformed or stale.
+                publish_check(repo, head, number, check_id, run_id, "failure", receipt, identity=None)
+            except Exception as publish_exc:
+                check_ref = str(check_id) if check_id is not None else "unavailable"
+                message += (
+                    f"; could not finalize failure check {check_ref} "
+                    f"({type(publish_exc).__name__})"
+                )
+        print(message, file=sys.stderr)
         return 2
 
 

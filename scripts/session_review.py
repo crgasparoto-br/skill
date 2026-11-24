@@ -32,7 +32,7 @@ def canonical(value: object) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
 
 
-def strict_json(raw: str) -> dict:
+def strict_json(raw: str, *, limit: int = MAX_BODY) -> dict:
     def unique(pairs):
         result = {}
         for key, value in pairs:
@@ -40,8 +40,11 @@ def strict_json(raw: str) -> dict:
                 raise ValueError(f"duplicate JSON key: {key}")
             result[key] = value
         return result
-    if len(raw.encode()) > MAX_BODY:
-        raise ValueError("review payload exceeds bounded size")
+    if type(limit) is not int or limit <= 0:
+        raise ValueError("JSON byte limit must be a positive integer")
+    if len(raw.encode("utf-8")) > limit:
+        message = "review payload exceeds bounded size" if limit == MAX_BODY else "JSON payload exceeds bounded size"
+        raise ValueError(message)
     value = json.loads(raw, object_pairs_hook=unique)
     if not isinstance(value, dict):
         raise ValueError("JSON object required")
