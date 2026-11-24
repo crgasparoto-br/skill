@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "system": "skill-compatibility",
-  "release_version": "0.3.3",
-  "release_date": "2026-10-09",
-  "catalog_version": "2026-11-08.1",
-  "system_version": "2026-10-08.2",
+  "release_version": "0.3.4",
+  "release_date": "2026-11-23",
+  "catalog_version": "2026-11-23.1",
+  "system_version": "2026-11-23.1",
   "contract_policy": {
     "scheme": "semver",
     "public_contract_version": "1.0.0",

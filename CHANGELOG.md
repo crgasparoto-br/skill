@@ -2,6 +2,14 @@
 
 Todas as mudanças relevantes deste catálogo são registradas neste arquivo. A versão pública do conjunto é mantida em [`VERSION`](./VERSION). O formato segue SemVer para releases do catálogo; a versão interna de contratos permanece identificada no manifesto de compatibilidade durante a migração.
 
+## [0.3.4] - 2026-11-23
+### Fixed
+- Corrigida a retomada de verificações exact-SHA quando pré-requisitos chegam atrasados, sem tratar check ausente ou pendente como aprovação.
+- Limitada a leitura de índices JUnit gerados e ajustada a resolução do alvo no fluxo `pull_request_target`.
+### Changed
+- Atualizado PyYAML para 6.0.4 no lock do ferramental.
+- Documentados o seletor de transporte GitHub-native, o rollout e os limites das evidências, sem afirmar que a ativação operacional já ocorreu.
+
 ## [0.3.3] - 2026-10-09
 ### Fixed
 - Alinhamento da versao de release com os commits incorporados a main apos a tag v0.3.2, preservando o contrato de CI fail-closed.
