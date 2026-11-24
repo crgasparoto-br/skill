@@ -380,6 +380,7 @@ def verify_check_origin(
     repository: str,
     name: str,
     workflow_path: str,
+    head_sha: str,
 ) -> None:
     if (detail.get("app") or {}).get("id") != 15368:
         raise ValueError(f"audit check was not produced by GitHub Actions: {name}")
@@ -397,8 +398,12 @@ def verify_check_origin(
     ):
         raise ValueError(f"audit check has an invalid workflow run URL: {name}")
     run = run_gh(f"/repos/{repository}/actions/runs/{match.group(1)}")
+    check_suite_id = (detail.get("check_suite") or {}).get("id")
     if (
         not isinstance(run, dict)
+        or detail.get("head_sha") != head_sha
+        or type(check_suite_id) is not int
+        or run.get("check_suite_id") != check_suite_id
         or (run.get("repository") or {}).get("full_name") != repository
         or run.get("path") != workflow_path
         or run.get("status") != "completed"
@@ -494,7 +499,9 @@ def verify_required_audit_checks(
         detail = run_gh(f"/repos/{repository}/check-runs/{latest['id']}")
         if not isinstance(detail, dict):
             raise ValueError(f"audit check details are unavailable: {name}")
-        verify_check_origin(detail, repository, name, workflow_path)
+        verify_check_origin(
+            detail, repository, name, workflow_path, head_sha
+        )
         verify_check_attestation(
             detail,
             name=name,
@@ -706,6 +713,14 @@ def main() -> int:
                     f"/repos/{args.repository}/issues/{args.issue}/comments?per_page=100",
                     paginate=True,
                 )
+            )
+            validate_report_against_sources(
+                report,
+                repository=args.repository,
+                issue_number=args.issue,
+                head_sha=args.head_sha,
+                issue=final_issue,
+                comments=final_comments,
             )
             final_matches = logical_matches(final_comments, marker)
             if (

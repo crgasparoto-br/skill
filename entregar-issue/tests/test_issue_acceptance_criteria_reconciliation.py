@@ -357,6 +357,7 @@ def test_required_audit_check_must_bind_the_exact_report(monkeypatch):
             return {"total_count": 1, "check_runs": [audit_run]}
         if "/actions/runs/" in endpoint:
             return {
+                "check_suite_id": 55,
                 "repository": {"full_name": "owner/repo"},
                 "path": ".github/workflows/session-review.yml",
                 "status": "completed",
@@ -365,6 +366,8 @@ def test_required_audit_check_must_bind_the_exact_report(monkeypatch):
             }
         return {
             "app": {"id": 15368},
+            "head_sha": "1" * 40,
+            "check_suite": {"id": 55},
             "details_url": (
                 "https://github.com/owner/repo/actions/runs/8"
             ),
