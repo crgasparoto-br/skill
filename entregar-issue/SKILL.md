@@ -99,7 +99,9 @@ Ler somente quando aplicavel:
 - finding independente contra candidato antes aprovado internamente: `references/audit-escape-closure.md`;
 - calculo, relatorio, projecao ou destino de mutacao dependente de periodo/data/futuro: `references/temporal-consistency-gate.md`;
 - registry/ativacao de gates: `contracts/gate-registry.json` e `references/gate-registry.md`;
-- resposta final: `references/controller-result-template.md`.
+- resposta final: `references/controller-result-template.md`;
+- retorno independente com atualizacao do checklist da issue: `references/issue-checklist-reconciliation.md`;
+- registro seguro de evidencias na issue quando CAS indisponivel: `references/issue-checklist-evidence-ledger.md` e `scripts/record_issue_acceptance.py`.
 
 Nao carregar referencias condicionais por antecipacao.
 
@@ -310,6 +312,8 @@ Usar `ci_mode=delivery-snapshot` somente para a primeira observacao do material 
 - finding novo nos mesmos arquivos: novo `work_item_fingerprint`; igualdade de paths nao autoriza reuso.
 
 ## Fechamento obrigatorio
+
+Apos parecer independente autenticado ou atestacao solo formalmente aceita no SHA exato, executar `references/issue-checklist-reconciliation.md` e `references/issue-checklist-evidence-ledger.md`. O executor autorizado registra as decisoes verificadas por comentario append-only da issue e confirma a leitura autenticada; `scripts/record_issue_acceptance.py` renderiza e compara, mas nao concede aprovacao. Escrever no corpo exige CAS atomico confiavel; sem isso, manter checkboxes intocados. `auditar-issue` nunca escreve. Registro e checkbox nao aprovam merge, auditoria nem fechamento.
 
 `handoff-not-produced|handoff-stale` **nao seleciona fast path sozinho**; aplicar sempre o classificador e respeitar o piso de recuperacao da auditoria.
 

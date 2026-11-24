@@ -43,6 +43,10 @@ Ler em auditoria `independent` ampla, como roteiro de cobertura; item não aplic
 ## Requisitos e escopo
 
 - todos os critérios de aceite foram atomizados;
+- cada item de aceite, marcado ou não, foi confrontado com prova observável no SHA auditado;
+- o parecer distingue situação observada do checkbox, decisão do auditor e ação de reconciliação proposta;
+- itens parciais, inconclusivos ou já marcados sem prova não foram declarados atendidos;
+- CI, testes, segurança, arquitetura, documentação e regressões aplicáveis foram verificados com evidências e não aplicabilidades justificadas;
 - comentários e decisões posteriores foram considerados;
 - subissues e dependências foram incluídas;
 - itens explicitamente excluídos não foram cobrados;
