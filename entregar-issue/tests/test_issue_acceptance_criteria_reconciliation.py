@@ -104,6 +104,24 @@ def test_accepts_exact_issue_criteria_inventory():
     validate(report())
 
 
+def test_rejects_a_pull_request_base_drift(monkeypatch):
+    value = canonical_report()
+    monkeypatch.setattr(MODULE, "run_gh", lambda *_args, **_kwargs: {
+        "state": "open",
+        "head": {"sha": value["identity"]["head_sha"]},
+        "base": {"sha": "f" * 40},
+        "merge_commit_sha": value["identity"]["merge_preview_sha"],
+    })
+    try:
+        MODULE.verify_live_head(
+            value, value["identity"]["head_sha"], value["identity"]["repository"]
+        )
+    except ValueError as exc:
+        assert "HEAD changed" in str(exc)
+    else:
+        raise AssertionError("a pull request base drift must block publication")
+
+
 def test_rejects_changed_issue_body_after_audit():
     changed = report()
     changed_issue = issue()
@@ -287,7 +305,19 @@ def test_required_audit_check_must_be_green_at_the_exact_head(monkeypatch):
             "1" * 40,
             196,
             HASH,
-            ["Verify session review (exact SHA)"],
+            {
+                "repository": "owner/repo",
+                "issue": 196,
+                "pull_request": 99,
+                "base_sha": "2" * 40,
+                "head_sha": "1" * 40,
+                "merge_preview_sha": "3" * 40,
+                "issue_snapshot_sha256": "d" * 64,
+            },
+            [(
+                "Verify session review (exact SHA)",
+                ".github/workflows/session-review.yml",
+            )],
         )
     except ValueError as exc:
         assert "not green" in str(exc)
@@ -303,13 +333,44 @@ def test_required_audit_check_must_bind_the_exact_report(monkeypatch):
         "status": "completed",
         "conclusion": "success",
     }
+    identity = {
+        "repository": "owner/repo",
+        "issue": 196,
+        "pull_request": 99,
+        "base_sha": "2" * 40,
+        "head_sha": "1" * 40,
+        "merge_preview_sha": "3" * 40,
+        "issue_snapshot_sha256": "d" * 64,
+    }
+    receipt_identity = {
+        "repository": "owner/repo",
+        "issue": 196,
+        "pull_request": 99,
+        "base_sha": "2" * 40,
+        "head_sha": "1" * 40,
+        "merge_preview_sha": "3" * 40,
+        "issue_sha256": "d" * 64,
+    }
 
     def fake_api(endpoint, **_kwargs):
         if "/commits/" in endpoint:
             return {"total_count": 1, "check_runs": [audit_run]}
+        if "/actions/runs/" in endpoint:
+            return {
+                "repository": {"full_name": "owner/repo"},
+                "path": ".github/workflows/session-review.yml",
+                "status": "completed",
+                "conclusion": "success",
+                "event": "workflow_run",
+            }
         return {
+            "app": {"id": 15368},
+            "details_url": (
+                "https://github.com/owner/repo/actions/runs/8"
+            ),
             "output": {
                 "text": json.dumps({
+                    "identity": receipt_identity,
                     "publication_attestation": {
                         "schema": "issue-audit-publication-attestation-v1",
                         "repository": "owner/repo",
@@ -328,7 +389,9 @@ def test_required_audit_check_must_bind_the_exact_report(monkeypatch):
         "1" * 40,
         196,
         HASH,
-        ["Verify session review (exact SHA)"],
+        identity,
+        [("Verify session review (exact SHA)",
+          ".github/workflows/session-review.yml")],
     )
     assert selected[0]["id"] == 7
     try:
@@ -337,7 +400,9 @@ def test_required_audit_check_must_bind_the_exact_report(monkeypatch):
             "1" * 40,
             196,
             "b" * 64,
-            ["Verify session review (exact SHA)"],
+            identity,
+            [("Verify session review (exact SHA)",
+              ".github/workflows/session-review.yml")],
         )
     except ValueError as exc:
         assert "exact report" in str(exc)

@@ -17,14 +17,18 @@ python <skill>/scripts/reconcile_issue_acceptance_criteria.py \
   --head-sha <sha> \
   --audit-report-url <https-url> \
   --required-audit-check "Verify session review (exact SHA)" \
+  --required-audit-workflow ".github/workflows/session-review.yml" \
   --apply
 ```
 
 O script valida o schema canônico completo, a identidade, o estado aberto da
 issue/PR, o SHA remoto, o digest do corpo, o texto e a linha de cada origem. O
 nome passado em `--required-audit-check` precisa corresponder a um check verde,
-terminal e único no SHA exato; um nome histórico ou uma CI verde genérica não
-substitui a atestação do parecer. O review atestado declara
+terminal e único no SHA exato e emparelhado por ordem a
+`--required-audit-workflow`; um nome histórico ou uma CI verde genérica não
+substitui a atestação do parecer. O check deve pertencer ao app GitHub Actions,
+ao run autenticado desse workflow e ao recibo oficial da revisão. O review
+atestado declara
 `audit_report_sha256`; o `output.text` autenticado do check publica no recibo
 um `publication_attestation` com schema, repositório, issue, HEAD, esse digest
 canônico e `accepted=true`. A divergência entre check e parecer bloqueia.

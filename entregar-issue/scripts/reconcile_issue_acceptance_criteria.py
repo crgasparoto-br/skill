@@ -9,6 +9,7 @@ import re
 import subprocess
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import jsonschema
 
@@ -352,7 +353,15 @@ def verify_live_head(report: dict[str, Any], head_sha: str,
     identity = report["identity"]
     if identity["pull_request"] is not None:
         pr = run_gh(f"/repos/{repository}/pulls/{identity['pull_request']}")
-        if not isinstance(pr, dict) or (pr.get("head") or {}).get("sha") != head_sha:
+        if (
+            not isinstance(pr, dict)
+            or (pr.get("head") or {}).get("sha") != head_sha
+            or (pr.get("base") or {}).get("sha") != identity["base_sha"]
+            or (
+                identity["merge_preview_sha"] is not None
+                and pr.get("merge_commit_sha") != identity["merge_preview_sha"]
+            )
+        ):
             raise ValueError("pull request HEAD changed since the audit")
         if (pr.get("state") or "") != "open":
             raise ValueError("pull request is no longer open")
@@ -366,12 +375,94 @@ def verify_live_head(report: dict[str, Any], head_sha: str,
             raise ValueError("branch HEAD changed since the audit")
 
 
+def verify_check_origin(
+    detail: dict[str, Any],
+    repository: str,
+    name: str,
+    workflow_path: str,
+) -> None:
+    if (detail.get("app") or {}).get("id") != 15368:
+        raise ValueError(f"audit check was not produced by GitHub Actions: {name}")
+    details_url = urlsplit(str(detail.get("details_url") or ""))
+    match = re.fullmatch(
+        rf"/{re.escape(repository)}/actions/runs/([1-9][0-9]*)",
+        details_url.path,
+    )
+    if (
+        details_url.scheme != "https"
+        or details_url.netloc != "github.com"
+        or match is None
+        or details_url.query
+        or details_url.fragment
+    ):
+        raise ValueError(f"audit check has an invalid workflow run URL: {name}")
+    run = run_gh(f"/repos/{repository}/actions/runs/{match.group(1)}")
+    if (
+        not isinstance(run, dict)
+        or (run.get("repository") or {}).get("full_name") != repository
+        or run.get("path") != workflow_path
+        or run.get("status") != "completed"
+        or run.get("conclusion") != "success"
+        or run.get("event") not in {"issue_comment", "workflow_run"}
+    ):
+        raise ValueError(f"audit check is not from the trusted workflow run: {name}")
+
+
+def verify_check_attestation(
+    detail: dict[str, Any],
+    *,
+    name: str,
+    repository: str,
+    head_sha: str,
+    issue_number: int,
+    audit_report_sha256: str,
+    audit_identity: dict[str, Any],
+) -> None:
+    text = str((detail.get("output") or {}).get("text") or "")
+    try:
+        receipt = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"required audit check has an invalid receipt: {name}") from exc
+    if not isinstance(receipt, dict):
+        raise ValueError(
+            f"required audit check lacks one bound publication attestation: {name}"
+        )
+    expected = {
+        "schema": "issue-audit-publication-attestation-v1",
+        "repository": repository,
+        "issue": issue_number,
+        "head_sha": head_sha,
+        "audit_report_sha256": audit_report_sha256,
+        "accepted": True,
+    }
+    expected_identity = {
+        "repository": audit_identity["repository"],
+        "issue": audit_identity["issue"],
+        "pull_request": audit_identity["pull_request"],
+        "base_sha": audit_identity["base_sha"],
+        "head_sha": audit_identity["head_sha"],
+        "merge_preview_sha": audit_identity["merge_preview_sha"],
+        "issue_sha256": audit_identity["issue_snapshot_sha256"],
+    }
+    receipt_identity = receipt.get("identity")
+    if (
+        receipt.get("publication_attestation") != expected
+        or not isinstance(receipt_identity, dict)
+        or any(receipt_identity.get(key) != value
+               for key, value in expected_identity.items())
+    ):
+        raise ValueError(
+            f"required audit check is not bound to the exact report: {name}"
+        )
+
+
 def verify_required_audit_checks(
     repository: str,
     head_sha: str,
     issue_number: int,
     audit_report_sha256: str,
-    required_names: list[str],
+    audit_identity: dict[str, Any],
+    required_checks: list[tuple[str, str]],
 ) -> list[dict[str, Any]]:
     response = run_gh(
         f"/repos/{repository}/commits/{head_sha}/check-runs?per_page=100"
@@ -384,7 +475,7 @@ def verify_required_audit_checks(
     if response.get("total_count", len(runs)) > len(runs):
         raise ValueError("check-run inventory is incomplete")
     selected: list[dict[str, Any]] = []
-    for name in required_names:
+    for name, workflow_path in required_checks:
         matches = [
             item
             for item in runs
@@ -403,30 +494,16 @@ def verify_required_audit_checks(
         detail = run_gh(f"/repos/{repository}/check-runs/{latest['id']}")
         if not isinstance(detail, dict):
             raise ValueError(f"audit check details are unavailable: {name}")
-        text = str((detail.get("output") or {}).get("text") or "")
-        try:
-            receipt = json.loads(text)
-        except json.JSONDecodeError as exc:
-            raise ValueError(
-                f"required audit check has an invalid receipt: {name}"
-            ) from exc
-        if not isinstance(receipt, dict):
-            raise ValueError(
-                f"required audit check lacks one bound publication attestation: {name}"
-            )
-        attestation = receipt.get("publication_attestation")
-        expected = {
-            "schema": "issue-audit-publication-attestation-v1",
-            "repository": repository,
-            "issue": issue_number,
-            "head_sha": head_sha,
-            "audit_report_sha256": audit_report_sha256,
-            "accepted": True,
-        }
-        if attestation != expected:
-            raise ValueError(
-                f"required audit check is not bound to the exact report: {name}"
-            )
+        verify_check_origin(detail, repository, name, workflow_path)
+        verify_check_attestation(
+            detail,
+            name=name,
+            repository=repository,
+            head_sha=head_sha,
+            issue_number=issue_number,
+            audit_report_sha256=audit_report_sha256,
+            audit_identity=audit_identity,
+        )
         selected.append(latest)
     return selected
 
@@ -471,6 +548,12 @@ def main() -> int:
         required=True,
         help="Exact-head GitHub check required to authenticate the audit attestation.",
     )
+    parser.add_argument(
+        "--required-audit-workflow",
+        action="append",
+        required=True,
+        help="Trusted Actions workflow path paired with each required audit check.",
+    )
     parser.add_argument("--apply", action="store_true")
     parser.add_argument(
         "--update-checkboxes",
@@ -486,6 +569,23 @@ def main() -> int:
             )
         if not re.fullmatch(r"[a-f0-9]{40}", args.head_sha):
             raise ValueError("head SHA must be a lowercase 40-character SHA")
+        if len(args.required_audit_check) != len(args.required_audit_workflow):
+            raise ValueError(
+                "each required audit check must have one trusted workflow path"
+            )
+        required_checks = list(zip(
+            args.required_audit_check,
+            args.required_audit_workflow,
+            strict=True,
+        ))
+        if any(
+            not re.fullmatch(
+                r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml",
+                workflow,
+            )
+            for _, workflow in required_checks
+        ):
+            raise ValueError("required audit workflow path is invalid")
         if not args.audit_report_url.startswith("https://"):
             raise ValueError("audit report URL must be an HTTPS URL")
         report = load_report(args.audit_report)
@@ -499,7 +599,8 @@ def main() -> int:
             args.head_sha,
             args.issue,
             audit_report_sha256,
-            args.required_audit_check,
+            report["identity"],
+            required_checks,
         )
         validate_report_against_sources(
             report,
@@ -545,7 +646,8 @@ def main() -> int:
                 args.head_sha,
                 args.issue,
                 audit_report_sha256,
-                args.required_audit_check,
+                report["identity"],
+                required_checks,
             )
             validate_report_against_sources(
                 report,
@@ -587,7 +689,8 @@ def main() -> int:
                 args.head_sha,
                 args.issue,
                 audit_report_sha256,
-                args.required_audit_check,
+                report["identity"],
+                required_checks,
             )
             final_issue = run_gh(
                 f"/repos/{args.repository}/issues/{args.issue}"
