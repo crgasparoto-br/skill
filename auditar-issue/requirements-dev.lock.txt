@@ -1,5 +1,5 @@
 # lockfile gerado de auditar-issue/requirements-dev.txt
-# contexto: python 3.12.3 em linux x86_64
+# contexto: python 3.12.16 em linux x86_64
 # regenerar: python scripts/lock_dependencies.py --manifest auditar-issue/requirements-dev.txt
 # nao editar a mao: alterar o manifest e regenerar
 
@@ -26,9 +26,9 @@ jsonschema==4.26.0 \
 jsonschema-specifications==2025.9.1 \
     --hash=sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe
 # via pytest
-# arquivo: packaging-26.3-py3-none-any.whl
-packaging==26.3 \
-    --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+# arquivo: packaging-26.4-py3-none-any.whl
+packaging==26.4 \
+    --hash=sha256:81383611a09c1bc0b08b76e0fd5829d7c6824c65b27a6aee339da133f4233ea2
 # via pytest
 # arquivo: pluggy-1.7.0-py3-none-any.whl
 pluggy==1.7.0 \

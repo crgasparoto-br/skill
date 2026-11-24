@@ -46,6 +46,16 @@ def _versioning_fixture(tmp_path: Path) -> Path:
     return tmp_path
 
 
+def _release_context(root: Path) -> tuple[str, str]:
+    version = (root / "VERSION").read_text(encoding="utf-8").strip()
+    compatibility = json.loads((root / "config/compatibility.json").read_text(encoding="utf-8"))
+    return version, compatibility["release_date"]
+
+
+def _other_version(version: str) -> str:
+    return "0.0.1" if version != "0.0.1" else "0.0.2"
+
+
 def _write_compatibility(root: Path, document: dict) -> None:
     (root / "config/compatibility.json").write_text(
         json.dumps(document, ensure_ascii=False, indent=2) + "\n",
@@ -422,9 +432,12 @@ def test_versioning_rejects_extra_line_in_version(tmp_path: Path) -> None:
 def test_versioning_requires_dated_release_heading(tmp_path: Path) -> None:
     """O changelog precisa do titulo de release com data, nao de mencao textual."""
     root = _versioning_fixture(tmp_path)
+    release_version, release_date = _release_context(root)
     changelog = root / "CHANGELOG.md"
     changelog.write_text(
-        changelog.read_text(encoding="utf-8").replace("## [0.3.3] - 2026-10-09", "## [0.3.3]"),
+        changelog.read_text(encoding="utf-8").replace(
+            f"## [{release_version}] - {release_date}", f"## [{release_version}]"
+        ),
         encoding="utf-8",
     )
     erros = validate_versioning(root)
@@ -488,14 +501,20 @@ def test_versioning_requires_the_changelog(tmp_path: Path) -> None:
 def test_versioning_rejects_stale_public_surfaces(tmp_path: Path) -> None:
     """README e roadmap declaram a release corrente e nao podem divergir de VERSION."""
     root = _versioning_fixture(tmp_path)
+    release_version, _ = _release_context(root)
+    stale_version = _other_version(release_version)
     readme = root / "README.md"
     readme.write_text(
-        readme.read_text(encoding="utf-8").replace("`0.3.3`](./VERSION)", "`0.3.1`](./VERSION)"),
+        readme.read_text(encoding="utf-8").replace(
+            f"`{release_version}`](./VERSION)", f"`{stale_version}`](./VERSION)"
+        ),
         encoding="utf-8",
     )
     roadmap = root / "docs/ROADMAP.md"
     roadmap.write_text(
-        roadmap.read_text(encoding="utf-8").replace("> **Release atual:** `v0.3.3`", "> **Release atual:** `v0.3.1`"),
+        roadmap.read_text(encoding="utf-8").replace(
+            f"> **Release atual:** `v{release_version}`", f"> **Release atual:** `v{stale_version}`"
+        ),
         encoding="utf-8",
     )
     erros = validate_versioning(root)
@@ -525,10 +544,14 @@ def test_release_alignment_rejects_tag_with_surrounding_space(tmp_path: Path) ->
 def test_versioning_rejects_release_date_diverging_from_the_heading(tmp_path: Path) -> None:
     """O titulo do changelog e release_date sao a mesma data canonica."""
     root = _versioning_fixture(tmp_path)
+    release_version, release_date = _release_context(root)
+    different_day = "02" if release_date.endswith("-01") else "01"
+    different_date = f"{release_date[:-2]}{different_day}"
     changelog = root / "CHANGELOG.md"
     changelog.write_text(
         changelog.read_text(encoding="utf-8").replace(
-            "## [0.3.3] - 2026-10-09", "## [0.3.3] - 2026-10-08"
+            f"## [{release_version}] - {release_date}",
+            f"## [{release_version}] - {different_date}",
         ),
         encoding="utf-8",
     )
@@ -538,6 +561,7 @@ def test_versioning_rejects_release_date_diverging_from_the_heading(tmp_path: Pa
 def test_versioning_rejects_duplicated_release_declarations(tmp_path: Path) -> None:
     """Declaracao contraditoria nao pode passar por existir uma ocorrencia correta."""
     root = _versioning_fixture(tmp_path)
+    release_version, release_date = _release_context(root)
     readme = root / "README.md"
     readme.write_text(
         readme.read_text(encoding="utf-8") + "\n**Release do catálogo:** [`0.3.1`](./VERSION)\n",
@@ -545,12 +569,12 @@ def test_versioning_rejects_duplicated_release_declarations(tmp_path: Path) -> N
     )
     changelog = root / "CHANGELOG.md"
     changelog.write_text(
-        changelog.read_text(encoding="utf-8") + "\n## [0.3.3] - 2026-10-09\n",
+        changelog.read_text(encoding="utf-8") + f"\n## [{release_version}] - {release_date}\n",
         encoding="utf-8",
     )
     erros = validate_versioning(root)
     assert any("README.md declares the release more than once" in erro for erro in erros)
-    assert any("declares the release [0.3.3] more than once" in erro for erro in erros)
+    assert any(f"declares the release [{release_version}] more than once" in erro for erro in erros)
 
 
 def test_versioning_accepts_roadmap_without_backticks(tmp_path: Path) -> None:
@@ -631,10 +655,12 @@ def test_versioning_rejects_duplicated_roadmap_declaration(tmp_path: Path) -> No
 def test_versioning_rejects_roadmap_release_with_suffix(tmp_path: Path) -> None:
     """Sufixo contraditorio no roadmap nao pode casar como a versao publicada."""
     root = _versioning_fixture(tmp_path)
+    release_version, _ = _release_context(root)
     roadmap = root / "docs/ROADMAP.md"
     roadmap.write_text(
         roadmap.read_text(encoding="utf-8").replace(
-            "> **Release atual:** `v0.3.3`", "> **Release atual:** v0.3.3-beta"
+            f"> **Release atual:** `v{release_version}`",
+            f"> **Release atual:** v{release_version}-beta",
         ),
         encoding="utf-8",
     )
@@ -701,10 +727,12 @@ def test_versioning_rejects_readme_declaration_with_markup(tmp_path: Path) -> No
 def test_versioning_rejects_readme_declaration_with_wrong_target(tmp_path: Path) -> None:
     """O link precisa apontar para o VERSION canonico."""
     root = _versioning_fixture(tmp_path)
+    release_version, _ = _release_context(root)
     readme = root / "README.md"
     readme.write_text(
         readme.read_text(encoding="utf-8").replace(
-            "[`0.3.3`](./VERSION)", "[`0.3.3`](https://wrong.invalid/VERSION)"
+            f"[`{release_version}`](./VERSION)",
+            f"[`{release_version}`](https://wrong.invalid/VERSION)",
         ),
         encoding="utf-8",
     )
@@ -843,11 +871,13 @@ def test_versioning_rejects_unquoted_duplicate_row(tmp_path: Path) -> None:
 def test_versioning_rejects_conflicting_version_on_the_label_line(tmp_path: Path) -> None:
     """O rotulo canonico nao pode conviver com outra versao na mesma linha."""
     root = _versioning_fixture(tmp_path)
+    release_version, _ = _release_context(root)
+    conflicting_version = _other_version(release_version)
     readme = root / "README.md"
     readme.write_text(
         readme.read_text(encoding="utf-8").replace(
-            "[`0.3.3`](./VERSION)",
-            "[`0.3.3`](./VERSION) — release publicada e v0.3.1",
+            f"[`{release_version}`](./VERSION)",
+            f"[`{release_version}`](./VERSION) — release publicada e v{conflicting_version}",
         ),
         encoding="utf-8",
     )

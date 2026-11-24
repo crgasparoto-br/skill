@@ -1,11 +1,11 @@
 # lockfile gerado de requirements.txt
-# contexto: python 3.12.3 em linux x86_64
+# contexto: python 3.12.16 em linux x86_64
 # regenerar: python scripts/lock_dependencies.py --manifest requirements.txt
 # nao editar a mao: alterar o manifest e regenerar
 
-# arquivo: packaging-26.3-py3-none-any.whl
-packaging==26.3 \
-    --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+# arquivo: packaging-26.4-py3-none-any.whl
+packaging==26.4 \
+    --hash=sha256:81383611a09c1bc0b08b76e0fd5829d7c6824c65b27a6aee339da133f4233ea2
 # arquivo: pyyaml-6.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
 pyyaml==6.0.4 \
     --hash=sha256:93bfb2459195406a518e2f487a9bbf01df240175f31e06f5a252ac6734c7bbf0
