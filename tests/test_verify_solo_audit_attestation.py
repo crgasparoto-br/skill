@@ -1032,6 +1032,29 @@ def test_publication_without_current_run_check_id_never_creates_replacement(monk
     assert calls == []
 
 
+def test_failure_publication_uses_provisional_run_identity(monkeypatch):
+    provisional = checks.provisional_external_id(PR, HEAD, "12345")
+    current = {"id": 71, "name": contract.CHECK_NAME, "head_sha": HEAD,
+               "external_id": provisional,
+               "details_url": f"https://github.com/{REPO}/actions/runs/12345",
+               "status": "in_progress", "conclusion": None,
+               "app": {"id": native.APP_ID}}
+    patch_data = {}
+
+    def api(path, *, method="GET", data=None):
+        if method == "GET":
+            return dict(current)
+        patch_data.update(data)
+        current.update(data)
+        return dict(current)
+
+    monkeypatch.setattr(checks.session_runner, "api", api)
+    checks.publish_check(REPO, HEAD, PR, 71, "12345", "failure",
+                         {"blocker": "ValueError"})
+    assert patch_data["external_id"] == provisional
+    assert patch_data["status"] == "completed" and patch_data["conclusion"] == "failure"
+
+
 def test_required_evidence_vetoes_outstanding_request_changes(monkeypatch):
     check_rows = [
         {"id": 1, "name": "Structure and tests", "head_sha": HEAD, "app": {"id": native.APP_ID}},
@@ -1167,6 +1190,29 @@ def test_configuration_drift_between_initial_and_final_reads_publishes_failure(m
     args, _ = publications[-1]
     assert args[5] == "failure" and args[6]["blocker"] == "ValueError"
     assert "BLOCK:" in capsys.readouterr().err
+
+
+def test_failure_publication_error_is_reported_and_does_not_use_unverified_identity(
+    monkeypatch, capsys
+):
+    publications, _, _, _ = _success_fixture(monkeypatch)
+
+    def reject_report(*args):
+        raise ValueError("signed report missing")
+
+    def reject_publication(*args, **kwargs):
+        publications.append((args, kwargs))
+        raise RuntimeError("check API unavailable")
+
+    monkeypatch.setattr(gate, "report_comment", reject_report)
+    monkeypatch.setattr(gate, "publish_check", reject_publication)
+
+    assert gate.evaluate_target(REPO, PR, ISSUE, "e" * 40, "12345") == 2
+    args, kwargs = publications[-1]
+    assert args[5] == "failure" and kwargs["identity"] is None
+    error = capsys.readouterr().err
+    assert "validation failed (ValueError)" in error
+    assert "could not finalize failure check 80 (RuntimeError)" in error
 
 
 def test_execution_source_requires_exact_local_workflow_sha_and_base_files(monkeypatch):
