@@ -60,6 +60,22 @@ def test_single_account_can_submit_only_explicitly_limited_review():
     assert receipt == verify()  # Stable input, stable fingerprint; no recursive audit.
 
 
+def test_review_can_attest_an_exact_audit_report_for_later_publication():
+    report_sha = "1" * 64
+    receipt = verify(
+        lambda _packet, report, _comment, _files, _tests:
+        report.__setitem__("audit_report_sha256", report_sha)
+    )
+    assert receipt["publication_attestation"] == {
+        "schema": "issue-audit-publication-attestation-v1",
+        "repository": "owner/repo",
+        "issue": 9,
+        "head_sha": "a" * 40,
+        "audit_report_sha256": report_sha,
+        "accepted": True,
+    }
+
+
 @pytest.mark.parametrize("field,value", [
     ("mode", "disabled"), ("acknowledgement", "independent"), ("assurance", "third-party"),
     ("operators", []), ("schema_version", True), ("schema_version", 2),

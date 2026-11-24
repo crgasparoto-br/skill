@@ -214,3 +214,146 @@ def test_reconciliation_schema_rejects_non_independent_report(tmp_path: Path):
     except Exception:
         return
     raise AssertionError("only an independent report may be published")
+
+
+def canonical_report() -> dict:
+    value = report()
+    identity = value["identity"]
+    identity.update({
+        "base_sha": "2" * 40,
+        "merge_preview_sha": "3" * 40,
+        "diff_sha256": HASH,
+        "skills_sha256": HASH,
+        "captured_at": "2026-11-24T22:00:00Z",
+    })
+    value.update({
+        "schema_version": 3,
+        "approval_scope": "independent-release-gate",
+        "release_gate_satisfied": True,
+        "started_at": "2026-11-24T22:00:01Z",
+        "finished_at": "2026-11-24T22:00:02Z",
+        "requirements_rederived": True,
+        "modifications_detected": False,
+        "source_manifest_sha256": HASH,
+        "requirements_rederivation_sha256": HASH,
+        "coverage_matrix_sha256": HASH,
+        "neutral_packet_sha256": HASH,
+        "neutral_packet": {
+            "implementation_conclusions_included": False,
+            "implementation_narrative_included": False,
+            "allowed_contents": ["canonical-sources", "identity", "raw-evidence"],
+        },
+        "prior_internal_approval": None,
+        "audit_escapes": [],
+    })
+    for index, requirement in enumerate(value["requirements"], start=1):
+        requirement.update({
+            "origin": "SRC-ISSUE",
+            "statement": f"Criterion {index} is implemented.",
+            "evidence": ["implementation:1"],
+            "negative_controls": [],
+            "negative_control_evidence": [],
+            "regression_evidence": ["test"],
+        })
+    value["gates"] = [{
+        "name": "audit-gate",
+        "status": "passed",
+        "attestation_sha256": HASH,
+    }]
+    return value
+
+
+def test_accepts_report_satisfying_the_canonical_audit_schema(tmp_path: Path):
+    path = tmp_path / "controller-report.json"
+    path.write_text(json.dumps(canonical_report()), encoding="utf-8")
+    assert load_report(path)["mode"] == "independent"
+
+
+def test_required_audit_check_must_be_green_at_the_exact_head(monkeypatch):
+    response = {
+        "total_count": 1,
+        "check_runs": [{
+            "id": 7,
+            "name": "Verify session review (exact SHA)",
+            "head_sha": "1" * 40,
+            "status": "completed",
+            "conclusion": "failure",
+        }],
+    }
+    monkeypatch.setattr(MODULE, "run_gh", lambda *_args, **_kwargs: response)
+    try:
+        MODULE.verify_required_audit_checks(
+            "owner/repo",
+            "1" * 40,
+            196,
+            HASH,
+            ["Verify session review (exact SHA)"],
+        )
+    except ValueError as exc:
+        assert "not green" in str(exc)
+    else:
+        raise AssertionError("a failed exact-head audit check must block publication")
+
+
+def test_required_audit_check_must_bind_the_exact_report(monkeypatch):
+    audit_run = {
+        "id": 7,
+        "name": "Verify session review (exact SHA)",
+        "head_sha": "1" * 40,
+        "status": "completed",
+        "conclusion": "success",
+    }
+
+    def fake_api(endpoint, **_kwargs):
+        if "/commits/" in endpoint:
+            return {"total_count": 1, "check_runs": [audit_run]}
+        return {
+            "output": {
+                "text": json.dumps({
+                    "publication_attestation": {
+                        "schema": "issue-audit-publication-attestation-v1",
+                        "repository": "owner/repo",
+                        "issue": 196,
+                        "head_sha": "1" * 40,
+                        "audit_report_sha256": HASH,
+                        "accepted": True,
+                    }
+                })
+            }
+        }
+
+    monkeypatch.setattr(MODULE, "run_gh", fake_api)
+    selected = MODULE.verify_required_audit_checks(
+        "owner/repo",
+        "1" * 40,
+        196,
+        HASH,
+        ["Verify session review (exact SHA)"],
+    )
+    assert selected[0]["id"] == 7
+    try:
+        MODULE.verify_required_audit_checks(
+            "owner/repo",
+            "1" * 40,
+            196,
+            "b" * 64,
+            ["Verify session review (exact SHA)"],
+        )
+    except ValueError as exc:
+        assert "exact report" in str(exc)
+    else:
+        raise AssertionError("the attestation must bind the exact report digest")
+
+
+def test_rejects_duplicate_logical_comments(monkeypatch):
+    comments = [
+        {"id": 1, "body": f"<!-- audit-acceptance-criteria-fingerprint:{'a' * 64} -->"},
+        {"id": 2, "body": f"<!-- audit-acceptance-criteria-fingerprint:{'a' * 64} -->"},
+    ]
+    monkeypatch.setattr(MODULE, "run_gh", lambda *_args, **_kwargs: {})
+    try:
+        MODULE.exact_existing_comment(comments, "a" * 64, "expected", "owner/repo")
+    except ValueError as exc:
+        assert "duplicate" in str(exc)
+    else:
+        raise AssertionError("logical duplicate comments must block publication")

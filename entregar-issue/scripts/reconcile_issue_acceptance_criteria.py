@@ -79,15 +79,18 @@ def acceptance_lines(source: str) -> list[int]:
 
 def load_report(path: Path) -> dict[str, Any]:
     report = json.loads(path.read_text(encoding="utf-8"))
-    schema_path = (
+    schema_root = Path(__file__).resolve().parents[1] / "schemas"
+    canonical_path = schema_root / "controller-audit-result.schema.json"
+    reconciliation_path = (
         Path(__file__).resolve().parents[1]
         / "schemas"
         / "issue-acceptance-reconciliation.schema.json"
     )
-    schema = json.loads(schema_path.read_text(encoding="utf-8"))
-    jsonschema.Draft202012Validator(
-        schema, format_checker=jsonschema.FormatChecker()
-    ).validate(report)
+    for schema_path in (canonical_path, reconciliation_path):
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(
+            schema, format_checker=jsonschema.FormatChecker()
+        ).validate(report)
     return report
 
 
@@ -363,6 +366,98 @@ def verify_live_head(report: dict[str, Any], head_sha: str,
             raise ValueError("branch HEAD changed since the audit")
 
 
+def verify_required_audit_checks(
+    repository: str,
+    head_sha: str,
+    issue_number: int,
+    audit_report_sha256: str,
+    required_names: list[str],
+) -> list[dict[str, Any]]:
+    response = run_gh(
+        f"/repos/{repository}/commits/{head_sha}/check-runs?per_page=100"
+    )
+    if not isinstance(response, dict):
+        raise ValueError("authenticated check-run inventory is malformed")
+    runs = response.get("check_runs")
+    if not isinstance(runs, list):
+        raise ValueError("authenticated check-run inventory is missing")
+    if response.get("total_count", len(runs)) > len(runs):
+        raise ValueError("check-run inventory is incomplete")
+    selected: list[dict[str, Any]] = []
+    for name in required_names:
+        matches = [
+            item
+            for item in runs
+            if isinstance(item, dict)
+            and item.get("name") == name
+            and item.get("head_sha") == head_sha
+        ]
+        if not matches:
+            raise ValueError(f"required audit check is missing: {name}")
+        latest = max(matches, key=lambda item: int(item.get("id") or 0))
+        if (
+            latest.get("status") != "completed"
+            or latest.get("conclusion") != "success"
+        ):
+            raise ValueError(f"required audit check is not green: {name}")
+        detail = run_gh(f"/repos/{repository}/check-runs/{latest['id']}")
+        if not isinstance(detail, dict):
+            raise ValueError(f"audit check details are unavailable: {name}")
+        text = str((detail.get("output") or {}).get("text") or "")
+        try:
+            receipt = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"required audit check has an invalid receipt: {name}"
+            ) from exc
+        if not isinstance(receipt, dict):
+            raise ValueError(
+                f"required audit check lacks one bound publication attestation: {name}"
+            )
+        attestation = receipt.get("publication_attestation")
+        expected = {
+            "schema": "issue-audit-publication-attestation-v1",
+            "repository": repository,
+            "issue": issue_number,
+            "head_sha": head_sha,
+            "audit_report_sha256": audit_report_sha256,
+            "accepted": True,
+        }
+        if attestation != expected:
+            raise ValueError(
+                f"required audit check is not bound to the exact report: {name}"
+            )
+        selected.append(latest)
+    return selected
+
+
+def logical_matches(
+    comments: list[dict[str, Any]], marker: str
+) -> list[dict[str, Any]]:
+    return [
+        item
+        for item in comments
+        if marker in FINGERPRINT_RE.findall(str(item.get("body") or ""))
+    ]
+
+
+def exact_existing_comment(
+    comments: list[dict[str, Any]], marker: str, expected_body: str,
+    repository: str,
+) -> dict[str, Any] | None:
+    matches = logical_matches(comments, marker)
+    if len(matches) > 1:
+        raise ValueError("logical duplicate reconciliation comments exist")
+    if not matches:
+        return None
+    persisted = run_gh(
+        f"/repos/{repository}/issues/comments/{matches[0]['id']}"
+    )
+    if not isinstance(persisted, dict) or persisted.get("body") != expected_body:
+        raise ValueError("existing reconciliation marker does not match the exact audit")
+    return persisted
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--audit-report", required=True, type=Path)
@@ -370,6 +465,12 @@ def main() -> int:
     parser.add_argument("--issue", required=True, type=int)
     parser.add_argument("--head-sha", required=True)
     parser.add_argument("--audit-report-url", required=True)
+    parser.add_argument(
+        "--required-audit-check",
+        action="append",
+        required=True,
+        help="Exact-head GitHub check required to authenticate the audit attestation.",
+    )
     parser.add_argument("--apply", action="store_true")
     parser.add_argument(
         "--update-checkboxes",
@@ -387,12 +488,19 @@ def main() -> int:
             raise ValueError("head SHA must be a lowercase 40-character SHA")
         if not args.audit_report_url.startswith("https://"):
             raise ValueError("audit report URL must be an HTTPS URL")
-        raw_report = args.audit_report.read_bytes()
         report = load_report(args.audit_report)
+        audit_report_sha256 = digest(canonical(report))
         actor, comments, issue = read_authenticated_source(
             args.repository, args.issue
         )
         verify_live_head(report, args.head_sha, args.repository)
+        selected_checks = verify_required_audit_checks(
+            args.repository,
+            args.head_sha,
+            args.issue,
+            audit_report_sha256,
+            args.required_audit_check,
+        )
         validate_report_against_sources(
             report,
             repository=args.repository,
@@ -402,16 +510,13 @@ def main() -> int:
             comments=comments,
         )
         payload = reconcile_payload(
-            report, digest(raw_report), args.audit_report_url
+            report, audit_report_sha256, args.audit_report_url
         )
         comment = render_comment(payload)
         marker = payload["fingerprint"]
-        existing = []
-        for item in comments:
-            body = str(item.get("body") or "")
-            matches = FINGERPRINT_RE.findall(body)
-            if marker in matches:
-                existing.append(item)
+        persisted = exact_existing_comment(
+            comments, marker, comment, args.repository
+        )
         result: dict[str, Any] = {
             "schema": "issue-acceptance-criteria-reconciliation-receipt-v1",
             "status": "planned",
@@ -419,17 +524,9 @@ def main() -> int:
             "fingerprint": marker,
             "audit_report_sha256": payload["audit_report_sha256"],
             "body_write": "not-attempted-no-proven-cas",
+            "audit_check_run_ids": [item["id"] for item in selected_checks],
         }
-        if existing:
-            if len(existing) != 1:
-                raise ValueError("logical duplicate reconciliation comments exist")
-            persisted = run_gh(
-                f"/repos/{args.repository}/issues/comments/{existing[0]['id']}"
-            )
-            if not isinstance(persisted, dict) or persisted.get("body") != comment:
-                raise ValueError(
-                    "existing reconciliation marker does not match the exact audit"
-                )
+        if persisted is not None:
             result.update({
                 "status": "already-published",
                 "comment_id": persisted.get("id"),
@@ -443,6 +540,13 @@ def main() -> int:
                 args.repository, args.issue
             )
             verify_live_head(report, args.head_sha, args.repository)
+            verify_required_audit_checks(
+                args.repository,
+                args.head_sha,
+                args.issue,
+                audit_report_sha256,
+                args.required_audit_check,
+            )
             validate_report_against_sources(
                 report,
                 repository=args.repository,
@@ -453,20 +557,38 @@ def main() -> int:
             )
             if actor2["login"] != actor["login"]:
                 raise ValueError("authenticated publisher identity changed")
-            created = run_gh(
-                f"/repos/{args.repository}/issues/{args.issue}/comments",
-                method="POST",
-                payload={"body": comment},
+            persisted = exact_existing_comment(
+                latest_comments, marker, comment, args.repository
             )
-            if not isinstance(created, dict) or not isinstance(
-                created.get("id"), int
-            ):
-                raise ValueError("GitHub did not return the created comment identity")
-            persisted = run_gh(
-                f"/repos/{args.repository}/issues/comments/{created['id']}"
-            )
+            if persisted is None:
+                created_now = True
+                created = run_gh(
+                    f"/repos/{args.repository}/issues/{args.issue}/comments",
+                    method="POST",
+                    payload={"body": comment},
+                )
+                if not isinstance(created, dict) or not isinstance(
+                    created.get("id"), int
+                ):
+                    raise ValueError(
+                        "GitHub did not return the created comment identity"
+                    )
+                persisted = run_gh(
+                    f"/repos/{args.repository}/issues/comments/{created['id']}"
+                )
+            else:
+                created_now = False
+                created = persisted
             if not isinstance(persisted, dict) or persisted.get("body") != comment:
                 raise ValueError("authenticated readback did not match publication")
+            verify_live_head(report, args.head_sha, args.repository)
+            verify_required_audit_checks(
+                args.repository,
+                args.head_sha,
+                args.issue,
+                audit_report_sha256,
+                args.required_audit_check,
+            )
             final_issue = run_gh(
                 f"/repos/{args.repository}/issues/{args.issue}"
             )
@@ -482,17 +604,16 @@ def main() -> int:
                     paginate=True,
                 )
             )
-            logical_matches = [
-                item
-                for item in final_comments
-                if marker in FINGERPRINT_RE.findall(str(item.get("body") or ""))
-            ]
-            if len(logical_matches) != 1 or logical_matches[0].get("id") != created["id"]:
+            final_matches = logical_matches(final_comments, marker)
+            if (
+                len(final_matches) != 1
+                or final_matches[0].get("id") != created["id"]
+            ):
                 raise ValueError(
                     "authenticated final readback found missing or duplicate publication"
                 )
             result.update({
-                "status": "published",
+                "status": "published" if created_now else "already-published",
                 "comment_id": created["id"],
                 "comment_url": persisted.get("html_url"),
                 "readback_sha256": digest(comment.encode("utf-8")),

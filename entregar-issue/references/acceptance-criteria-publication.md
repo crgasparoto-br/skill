@@ -16,12 +16,20 @@ python <skill>/scripts/reconcile_issue_acceptance_criteria.py \
   --issue <n> \
   --head-sha <sha> \
   --audit-report-url <https-url> \
+  --required-audit-check "Verify session review (exact SHA)" \
   --apply
 ```
 
-O script valida o schema, a identidade, o estado aberto da issue/PR, o SHA
-remoto, o digest do corpo, o texto e a linha de cada origem. Sem `--apply`,
-somente produz o plano depois das leituras autenticadas.
+O script valida o schema canônico completo, a identidade, o estado aberto da
+issue/PR, o SHA remoto, o digest do corpo, o texto e a linha de cada origem. O
+nome passado em `--required-audit-check` precisa corresponder a um check verde,
+terminal e único no SHA exato; um nome histórico ou uma CI verde genérica não
+substitui a atestação do parecer. O review atestado declara
+`audit_report_sha256`; o `output.text` autenticado do check publica no recibo
+um `publication_attestation` com schema, repositório, issue, HEAD, esse digest
+canônico e `accepted=true`. A divergência entre check e parecer bloqueia.
+Repetir a opção para gates adicionais. Sem `--apply`, somente produz o plano
+depois das leituras autenticadas.
 
 ## Registro append-only
 
@@ -33,10 +41,16 @@ O comentário:
 - contém fingerprint lógico versionado;
 - não apaga nem edita comentários anteriores;
 - rejeita duplicata lógica já existente e confirma o comentário por nova leitura
-  autenticada depois da publicação.
+  autenticada depois da publicação;
+- repete a checagem de comentário entre a última leitura e o POST, reduzindo a
+  janela concorrente, e reprova duplicatas detectadas no read-back final.
 
 Se a mesma decisão já estiver publicada com fingerprint idêntico, o resultado
-é `already-published`; isso é idempotência lógica, não nova aprovação.
+é `already-published`; isso é idempotência lógica, não nova aprovação. A API
+GitHub não oferece CAS para POST de comentário: executar a publicação sob um
+único owner/concorrência operacional confiável. O script não remove duplicatas:
+se dois publishers ultrapassarem a última checagem, o read-back falha fechado,
+preservando append-only e impedindo um recibo de sucesso ambíguo.
 
 ## Corpo da issue e concorrência
 
