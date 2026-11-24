@@ -21,8 +21,8 @@ except ImportError:  # pragma: no cover - direct script execution
 
 CHECKED_DIRS = ("references", "scripts", "schemas")
 ENTRYPOINTS = ("SKILL.md", "agents/openai.yaml")
-TEXT_SUFFIXES = {".md", ".py", ".json", ".yaml", ".yml", ".sh"}
-NAME_RE = re.compile(r"[A-Za-z0-9_./-]+\.(?:md|py|json|ya?ml|sh)\b")
+TEXT_SUFFIXES = {".md", ".py", ".json", ".yaml", ".yml", ".sh", ".mjs"}
+NAME_RE = re.compile(r"[A-Za-z0-9_./-]+\.(?:md|py|json|ya?ml|sh|mjs)\b")
 IMPORT_RE = re.compile(r"^\s*(?:from\s+(\.?[\w.]+)\s+import|import\s+([\w.]+))", re.MULTILINE)
 
 

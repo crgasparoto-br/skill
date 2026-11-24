@@ -30,6 +30,14 @@ def test_links_and_imports_make_files_reachable(tmp_path: Path) -> None:
     assert unreachable_files(make_skill(tmp_path)) == []
 
 
+def test_linked_node_reporter_is_reachable(tmp_path: Path) -> None:
+    skill = make_skill(tmp_path)
+    (skill / "scripts" / "reporter.mjs").write_text("export default () => {};\n", encoding="utf-8")
+    guide = skill / "references" / "guide.md"
+    guide.write_text("See [reporter](../scripts/reporter.mjs).\n", encoding="utf-8")
+    assert {path.name for path in unreachable_files(skill)} == {"extra.md"}
+
+
 def test_orphan_reference_and_script_are_reported(tmp_path: Path) -> None:
     skill = make_skill(tmp_path)
     (skill / "references" / "stale.md").write_text("regra antiga\n", encoding="utf-8")

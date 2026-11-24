@@ -130,3 +130,36 @@ O certificado prova que o relatorio existe e pertence ao SHA; executar o validad
 
 
 O modulo `scripts/test_path_discovery.py` centraliza a deteccao de arquivos e runners usada no planejamento e no grounding; a interface legada e preservada. Para `CODE-GROWTH-001`, `--comparison-base-sha` compara o delta contra a base atual da PR, mas a politica permanece ancorada no inicio da issue. Exigir ancestralidade comprovada e justificativas por arquivo acima do limite brando, sem flexibilizar o limite rigido.
+
+#### Captura experimental Node 24 e Vitest 2.1.9 (não habilita o vínculo)
+
+O [reporter auxiliar Node 24](../scripts/node_test_execution_reporter.mjs)
+registra JSONL dos resultados emitidos pelo runner nativo. Use-o como
+segundo reporter no mesmo processo `node --test` que escreve o JUnit
+nativo. Cada registro inclui status, classe, nome, arquivo da origem
+e arquivo de entrada. Casos ignorados e TODO permanecem `skipped`.
+
+O [comparador Node](../scripts/node_grounding_execution.py) exige que
+os dois relatórios tenham o mesmo inventário de arquivo, classe, nome
+e status. Nomes iguais em arquivos distintos continuam distinguíveis;
+se o mesmo arquivo repetir classe e nome, a captura não é conclusiva.
+
+Para Vitest, o [comparador JSON/JUnit](../scripts/vitest_execution_reports.py)
+confere o arquivo, a ordem e o resultado de cada caso por shard. Emitir
+ambos pelo runner nativo na mesma invocação, mantendo os originais:
+
+```sh
+vitest run --reporter=default --reporter=junit --reporter=json \
+  --outputFile.junit="$XML" --outputFile.json="$RUNNER_JSON"
+```
+
+A raiz do checkout é fornecida pelo controlador, não inferida das
+saídas. Nomes repetidos no mesmo arquivo são preservados, mas não
+servem como prova individual sem identidade inequívoca.
+
+Esta captura é insumo técnico. Não substitui o JUnit original, o log
+autenticado do processo, o código de saída nem a vinculação ao SHA do
+material. O binder atual continua aceitando apenas pytest. Node e
+Vitest só poderão produzir prova quando a coleta confiável, o binder
+e o publicador validarem o mesmo recibo e os digests dos originais,
+ligados ao run, shard, material e versão do runner.
