@@ -12,7 +12,6 @@ import json
 import os
 import re
 import sys
-from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +50,7 @@ SAFE_BLOCKER_CODES = {
     "collect_required_evidence": "required_exact_sha_evidence_not_green",
     "final_revalidation": "final_authority_revalidation_failed",
     "publish_success_check": "exact_sha_check_publication_failed",
+    "publish_failure_check": "exact_sha_failure_check_publication_failed",
     "validate_runtime_context": "trusted_runtime_context_invalid",
     "read_event_payload": "trusted_event_payload_invalid",
     "resolve_event_targets": "trusted_event_target_resolution_failed",
@@ -164,10 +164,16 @@ def evaluate_target(repo: str, number: int, expected_issue: int | None,
     except Exception as exc:
         code = safe_blocker_code(stage)
         receipt.update({"blocker": type(exc).__name__, "blocker_stage": stage, "blocker_code": code})
-        if head and SHA_RE.fullmatch(head):
-            # Do not mask the original failure or print response bodies/tokens.
-            with suppress(Exception):
+        if (head and SHA_RE.fullmatch(head) and type(check_id) is int and check_id > 0):
+            try:
                 publish_check(repo, head, number, check_id, run_id, "failure", receipt, identity=identity)
+            except Exception:
+                publication_code = safe_blocker_code("publish_failure_check")
+                print(
+                    "BLOCK: trusted audit failure check could not be finalized "
+                    f"(code={publication_code})",
+                    file=sys.stderr,
+                )
         print(f"BLOCK: solo audit attestation validation failed ({type(exc).__name__}; code={code})",
               file=sys.stderr)
         return 2

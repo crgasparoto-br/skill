@@ -1204,6 +1204,24 @@ def test_controller_diagnostic_never_echoes_exception_message(monkeypatch, capsy
     assert gate.safe_blocker_code("unrecognized") == "controller_validation_failed"
 
 
+def test_failure_check_publication_error_is_safe_and_stays_blocked(monkeypatch, capsys):
+    _success_fixture(monkeypatch)
+    canary = "SENSITIVE-PUBLISH-EXCEPTION-CANARY"
+    monkeypatch.setattr(gate, "report_comment", lambda *args: contract.select_report_comment([]))
+
+    def fail_publication(*args, **kwargs):
+        raise ValueError(canary)
+
+    monkeypatch.setattr(gate, "publish_check", fail_publication)
+    assert gate.evaluate_target(REPO, PR, ISSUE, "e" * 40, "12345") == 2
+
+    captured = capsys.readouterr()
+    assert canary not in captured.err and canary not in captured.out
+    assert "code=signed_report_comment_missing_or_invalid" in captured.err
+    assert "code=exact_sha_failure_check_publication_failed" in captured.err
+    assert gate.safe_blocker_code("publish_failure_check") == "exact_sha_failure_check_publication_failed"
+
+
 def test_execution_source_requires_exact_local_workflow_sha_and_base_files(monkeypatch):
     workflow_sha = "e" * 40
     monkeypatch.setenv("GITHUB_WORKFLOW_SHA", workflow_sha)
