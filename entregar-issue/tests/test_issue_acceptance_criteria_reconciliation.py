@@ -624,7 +624,7 @@ def test_duplicate_text_criteria_require_distinct_source_lines():
     value = report()
     digest = MODULE.digest(body.encode())
     value["identity"]["issue_snapshot_sha256"] = digest
-    for i, (item, req) in enumerate(zip(value["acceptance_criteria"], value["requirements"]), 2):
+    for i, (item, req) in enumerate(zip(value["acceptance_criteria"], value["requirements"], strict=True), 2):
         item.update(text="Identical criterion.", source_line=i, source_sha256=digest,
                     initial_checkbox_state="unchecked")
         req.update(statement=item["text"], source_line=i, source_sha256=digest)

@@ -200,10 +200,7 @@ def analyze_body(body: str) -> dict[int, tuple[str, str]]:
             fence_marker, fence_width, in_comment, html_block = "", 0, False, ""
             inert_depth = 0
         if skip_inert(line, stripped, relative_indent):
-            if fence_marker or in_comment or html_block:
-                inert_depth = len(list_content_indents)
-            else:
-                inert_depth = 0
+            inert_depth = len(list_content_indents) if fence_marker or in_comment or html_block else 0
             continue
 
         heading = _top_level_heading(line, list_content_indents)
