@@ -986,7 +986,10 @@ def test_publish_rejects_receipt_for_another_sha_before_writing(review_backend):
     assert backend.writes == []
 
 
-@pytest.mark.parametrize("field,value", [("head_sha", "b" * 40), ("name", "unrelated"), ("app", {"id": 999})])
+@pytest.mark.parametrize("field,value", [
+    ("head_sha", "b" * 40), ("name", "unrelated"), ("app", {"id": 999}),
+    ("app", {"id": 15368.0}), ("id", 1.0),
+])
 def test_publish_rejects_a_check_for_another_target_or_publisher(review_backend, field, value):
     backend = review_backend
     backend.seed(1)
@@ -1247,3 +1250,52 @@ def test_native_audit_transport_is_read_only_from_authenticated_base(
             runner.trusted_audit_transport(identity)
     assert len(seen) == 1
     assert seen[0][2] == identity["base_sha"]
+
+
+@pytest.mark.parametrize("changed_readback", [None, "fingerprint", "receipt-number", "check-number", "app-number"])
+def test_terminal_check_readback_controls_origin_record(tmp_path, monkeypatch, changed_readback):
+    head = "a" * 40
+    backend = EventBackend(head, {})
+    trace = tmp_path / "trace"
+    output = tmp_path / "outputs"
+    monkeypatch.setenv("SESSION_REVIEW_ORIGIN_DIR", str(trace))
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    monkeypatch.setenv("GITHUB_RUN_ID", "4321")
+    monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+
+    observed_text = ""
+
+    def api(path, *, method="GET", data=None):
+        nonlocal observed_text
+        response = backend.api(path, method=method, data=data)
+        if method == "GET":
+            response["details_url"] = "https://github.com/owner/repo/runs/42"
+            response["check_suite"] = {"id": 19}
+            observed_receipt = json.loads(response["output"]["text"])
+            if changed_readback == "fingerprint":
+                response["external_id"] = "f" * 64
+            elif changed_readback == "receipt-number":
+                observed_receipt["schema_version"] = 1.0
+            elif changed_readback == "check-number":
+                response["id"] = 42.0
+            elif changed_readback == "app-number":
+                response["app"]["id"] = 15368.0
+            observed_text = response["output"]["text"] = json.dumps(observed_receipt, indent=2)
+        return response
+
+    monkeypatch.setattr(runner, "api", api)
+    receipt = {"schema_version": 1, "identity": {"head_sha": head}, "review_comment_id": 8}
+    if changed_readback:
+        with pytest.raises(ValueError, match="terminal review check could not be authenticated"):
+            runner.publish_review_success("owner/repo", head, "done", receipt, None)
+        assert not trace.exists()
+        assert not output.exists()
+        return
+    runner.publish_review_success("owner/repo", head, "done", receipt, None)
+    expected = {"schema_version": 2, "run_id": 4321, "run_attempt": 2, "check_id": 42,
+                "check_suite_id": 19, "receipt_sha256": runner.digest(runner.canonical(json.loads(observed_text)))}
+    assert json.loads((trace / "42.json").read_bytes()) == expected
+    assert output.read_text(encoding="utf-8") == "review_origin_present=true\n"
+    assert backend.check["external_id"] == receipt["fingerprint"]
+    assert backend.check["head_sha"] == head
+    assert backend.check["details_url"].endswith("/actions/runs/4321")
