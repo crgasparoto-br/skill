@@ -292,12 +292,13 @@ def test_accepts_report_satisfying_the_canonical_audit_schema(tmp_path: Path):
     assert load_report(path)["mode"] == "independent"
 
 
-def remote(report_value):
+def remote(report_value, *, regenerated_preview=None):
     provenance = MODULE.provenance
     repo = "owner/repo"
     root = f"/repos/{repo}"
     actor = {"id": 41, "login": "owner", "type": "User"}
     original = report_value["identity"]
+    current_preview = regenerated_preview or original["merge_preview_sha"]
     source = "6" * 40
     policy = MODULE.canonical({"schema_version": 1, "mode": "enabled",
         "assurance": provenance.ASSURANCE, "acknowledgement": provenance.ACKNOWLEDGEMENT,
@@ -336,7 +337,7 @@ def remote(report_value):
         f"{root}/pulls/99": {"number": 99, "state": "open", "draft": False, "body": "Refs #196",
             "head": {"sha": original["head_sha"], "repo": {"full_name": repo}},
             "base": {"sha": original["base_sha"], "ref": "develop", "repo": {"full_name": repo}},
-            "merge_commit_sha": original["merge_preview_sha"]},
+            "merge_commit_sha": current_preview},
         f"{root}/branches/develop": {"protected": True, "commit": {"sha": original["base_sha"]}},
         f"{root}/branches/main": {"protected": True, "commit": {"sha": source}},
         f"{root}/issues/196": issue(),
@@ -355,6 +356,11 @@ def remote(report_value):
         f"{root}/contents/{provenance.POLICY}?ref={original['base_sha']}": {
             "type": "file", "encoding": "base64", "sha": blob, "content": base64.b64encode(policy).decode()},
     }
+    for preview in (original["merge_preview_sha"], current_preview):
+        responses[f"{root}/git/commits/{preview}"] = {
+            "sha": preview, "tree": {"sha": "9" * 40},
+            "parents": [{"sha": original["base_sha"]}, {"sha": original["head_sha"]}],
+        }
     calls = []
 
     def api(path, *, method="GET", payload=None, **_):
@@ -457,19 +463,71 @@ def apply_arguments(monkeypatch, path, extra=()):
         "--repository", "owner/repo", "--issue", "196", "--head-sha", "1"*40, "--apply", *extra])
 
 
-def test_cli_appends_and_reuses_authorized_immutable_readback(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("regenerated_preview", [None, "4" * 40])
+def test_cli_appends_and_reuses_authorized_immutable_readback(tmp_path, monkeypatch, capsys, regenerated_preview):
     value = full_report(tmp_path)
     path = tmp_path / "report.json"
     path.write_text(json.dumps(value))
-    api, _, _, _, calls = remote(value)
+    api, _, _, _, calls = remote(value, regenerated_preview=regenerated_preview)
     monkeypatch.setattr(MODULE, "run_gh", api)
     apply_arguments(monkeypatch, path)
     assert MODULE.main() == 0
     receipt = json.loads(capsys.readouterr().out)
     assert receipt["status"] == "published" and receipt["audit_review_comment_id"] == 9
+    assert receipt["audit_report_sha256"] == MODULE.digest(MODULE.canonical(value))
+    assert json.loads(path.read_bytes())["identity"]["merge_preview_sha"] == "3" * 40
+    assert ("GET", f"/repos/owner/repo/git/commits/{'3' * 40}") in calls
+    if regenerated_preview:
+        assert ("GET", f"/repos/owner/repo/git/commits/{regenerated_preview}") in calls
     assert MODULE.main() == 0
     assert json.loads(capsys.readouterr().out)["status"] == "already-published"
     assert [m for m, _ in calls if m != "GET"] == ["POST"]
+
+
+@pytest.mark.parametrize(("drift", "error"), [
+    ("null-current", "invalid certified or live merge preview"),
+    ("reversed-parents", "incorrect authenticated ordered parents"),
+    ("extra-parent", "incorrect authenticated ordered parents"),
+    ("tree-change", "different authenticated Git trees"),
+    ("missing-tree", "missing authenticated Git tree"),
+    ("wrong-object", "commit missing or mismatched"),
+    ("missing-commit", "commit missing or mismatched"),
+    ("invalid-certification-despite-same-sha", "incorrect authenticated ordered parents"),
+])
+def test_cli_fails_before_publication_for_unproven_merge_preview(tmp_path, monkeypatch, capsys, drift, error):
+    value = full_report(tmp_path)
+    path = tmp_path / "report.json"
+    path.write_text(json.dumps(value))
+    certified, regenerated = "3" * 40, "4" * 40
+    if drift == "invalid-certification-despite-same-sha":
+        regenerated = certified
+    api, _, _, _, calls = remote(value, regenerated_preview=regenerated)
+    preview_route = f"/repos/owner/repo/git/commits/{regenerated}"
+
+    def with_drift(route, **kwargs):
+        obj = api(route, **kwargs)
+        if drift == "null-current" and route == "/repos/owner/repo/pulls/99":
+            obj["merge_commit_sha"] = None
+        if route == preview_route:
+            if drift in {"reversed-parents", "invalid-certification-despite-same-sha"}:
+                obj["parents"].reverse()
+            elif drift == "extra-parent":
+                obj["parents"].append({"sha": "5" * 40})
+            elif drift == "tree-change":
+                obj["tree"]["sha"] = "5" * 40
+            elif drift == "missing-tree":
+                del obj["tree"]
+            elif drift == "wrong-object":
+                obj["sha"] = certified
+            elif drift == "missing-commit":
+                return {}
+        return obj
+
+    monkeypatch.setattr(MODULE, "run_gh", with_drift)
+    apply_arguments(monkeypatch, path)
+    assert MODULE.main() == 2
+    assert error in capsys.readouterr().err
+    assert all(method == "GET" for method, _ in calls)
 
 
 def test_cli_uses_semantic_validator_and_fails_before_write(tmp_path, monkeypatch, capsys):

@@ -336,7 +336,6 @@ def verify_live_head(report: dict[str, Any], head_sha: str, repository: str) -> 
         r"(?im)^\s*(?:closes|fixes|refs)\s+#([1-9][0-9]*)\s*$", pr.get("body") or "")}
     if (pr.get("number") != number or pr.get("state") != "open" or pr.get("draft") is not False
             or head.get("sha") != head_sha or base.get("sha") != identity["base_sha"]
-            or pr.get("merge_commit_sha") != identity["merge_preview_sha"]
             or (head.get("repo") or {}).get("full_name") != repository
             or (base.get("repo") or {}).get("full_name") != repository
             or base.get("ref") not in {"develop", "main"} or canonical_ref != {identity["issue"]}):
@@ -344,6 +343,9 @@ def verify_live_head(report: dict[str, Any], head_sha: str, repository: str) -> 
     branch = run_gh(f"/repos/{repository}/branches/{base['ref']}")
     if branch.get("protected") is not True or (branch.get("commit") or {}).get("sha") != base["sha"]:
         raise ValueError("protected target branch changed or could not be authenticated")
+    provenance.require_preview_equivalence(
+        run_gh, repository, base["sha"], head_sha, identity["merge_preview_sha"], pr.get("merge_commit_sha"),
+    )
     return base["ref"]
 
 

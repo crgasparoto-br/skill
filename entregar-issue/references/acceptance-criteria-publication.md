@@ -20,7 +20,11 @@ python <skill>/scripts/reconcile_issue_acceptance_criteria.py \
 
 O script valida o schema e executa o validador semântico canônico do auditor,
 incluindo suas evidências locais. Exige issue aberta, PR não-draft do mesmo
-repositório contra `develop` ou `main` protegida, HEAD/base/preview exatos,
+repositório contra `develop` ou `main` protegida e HEAD/base exatos.
+O relatório e a revisão mantêm o SHA do preview certificado. Se o GitHub
+regenerar o preview, o CLI exige que ambos os objetos Git autenticados tenham
+os mesmos pais ordenados `[base, HEAD]` e a mesma árvore; ausência ou divergência bloqueia.
+O CLI também confere o
 snapshot da issue e a seção normativa `## Critérios de aceite` (ou
 `## Acceptance criteria`) em cada origem usada. Uma linha de item é localizada
 junto com o texto de suas continuações, sem contar listas em código/HTML

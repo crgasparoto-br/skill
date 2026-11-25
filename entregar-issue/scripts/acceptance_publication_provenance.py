@@ -135,6 +135,27 @@ def verify_origin(api, detail, repo, head, base):
             "review executable workflow source differs from trusted base")
 
 
+def require_preview_equivalence(api, repo, base, head, certified, current):
+    """Read authenticated GitHub commits without substituting the certified identity."""
+    require(all(sha(value) for value in (base, head, certified, current)),
+            "invalid certified or live merge preview identity")
+    trees = set()
+    for preview in dict.fromkeys((certified, current)):
+        obj = api(f"/repos/{repo}/git/commits/{preview}")
+        require(isinstance(obj, dict) and obj.get("sha") == preview,
+                "authenticated merge preview commit missing or mismatched")
+        parents = obj.get("parents")
+        require(isinstance(parents, list) and len(parents) == 2
+                and all(isinstance(parent, dict) for parent in parents)
+                and [parent.get("sha") for parent in parents] == [base, head],
+                "merge preview has incorrect authenticated ordered parents")
+        tree = obj.get("tree")
+        require(isinstance(tree, dict) and sha(tree.get("sha")),
+                "merge preview has missing authenticated Git tree")
+        trees.add(tree["sha"])
+    require(len(trees) == 1, "merge previews have different authenticated Git trees")
+
+
 def receipt_identity(receipt, audit):
     expected = {"repository": audit["repository"], "issue": audit["issue"],
                 "pull_request": audit["pull_request"], "base_sha": audit["base_sha"],
