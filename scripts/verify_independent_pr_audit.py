@@ -27,6 +27,7 @@ APP_ID = 15368  # GitHub Actions
 TECHNICAL = ("Structure and tests", "Offline authorization tests")
 HANDOFF = "collect / Require certified semantic handoff (exact SHA)"
 NATIVE_EVIDENCE = "collect / Require native GitHub audit evidence (exact SHA)"
+MAIN_NATIVE_EVIDENCE = "Require main native audit evidence (exact SHA)"
 AUTHORIZED_PERMISSIONS = frozenset({"write", "maintain", "admin"})
 # Only these repository-owned workflow entrypoints may supply these check jobs.
 EXPECTED_WORKFLOWS = {
@@ -34,6 +35,7 @@ EXPECTED_WORKFLOWS = {
     TECHNICAL[1]: ".github/workflows/github-audit-mcp.yml",
     HANDOFF: ".github/workflows/handoff-evidence.yml",
     NATIVE_EVIDENCE: ".github/workflows/handoff-evidence.yml",
+    MAIN_NATIVE_EVIDENCE: ".github/workflows/main-native-evidence.yml",
 }
 
 
@@ -171,7 +173,7 @@ def _approved_pin_only_migration(
 
 
 def verify_trusted_workflow_source(
-        repo: str, workflow: str, base_sha: str, head: str, token: str) -> None:
+        repo: str, workflow: str, base_sha: str, head: str, token: str, *, allow_pin_migration: bool = True) -> None:
     """Reject a PR-altered workflow even when Actions reports the official path."""
     source = [
         github(f"/repos/{repo}/contents/{workflow}?ref={ref}", token)
@@ -196,6 +198,8 @@ def verify_trusted_workflow_source(
         if base_bytes != head_bytes:
             raise ValueError(f"required workflow differs from trusted base: {workflow}")
         return
+    if not allow_pin_migration:
+        raise ValueError(f"required workflow differs from trusted base: {workflow}")
     try:
         allowed = _approved_pin_only_migration(
             repo, workflow, base_sha, token, source[0], source[1])
@@ -266,7 +270,11 @@ def trusted_workflow_check(repo: str, number: int, name: str, check: dict,
         return False
 
     # A workflow reported by the Actions app can still have untrusted code.
-    verify_trusted_workflow_source(repo, EXPECTED_WORKFLOWS[name], base_sha, head, token)
+    if name == MAIN_NATIVE_EVIDENCE:
+        verify_trusted_workflow_source(
+            repo, EXPECTED_WORKFLOWS[name], base_sha, head, token, allow_pin_migration=False)
+    else:
+        verify_trusted_workflow_source(repo, EXPECTED_WORKFLOWS[name], base_sha, head, token)
     if name in {HANDOFF, NATIVE_EVIDENCE}:
         # GitHub reports the caller path even if its reusable workflow is
         # modified by the candidate. Authenticate both executable layers.
@@ -295,7 +303,12 @@ def required_checks_green(checks: dict, head: str, base: str,
     if checks.get("total_count", len(runs)) > len(runs):
         raise ValueError("check-run inventory truncated")
     required_evidence = NATIVE_EVIDENCE if audit_transport == "native-github-audit" else HANDOFF
-    names = (*TECHNICAL, *((required_evidence,) if base == "develop" else ()))
+    evidence = (
+        (required_evidence,) if base == "develop"
+        else (MAIN_NATIVE_EVIDENCE,) if base == "main" and audit_transport == "native-github-audit"
+        else ()
+    )
+    names = (*TECHNICAL, *evidence)
     for name in names:
         named = [c for c in runs if c.get("name") == name and c.get("head_sha") == head]
         if not named:

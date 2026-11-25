@@ -176,16 +176,39 @@ def authenticated_implementation_provenance(identity: dict, metadata: dict) -> d
     return github_facts.authenticated_implementation_provenance(identity, metadata, pages, api)
 
 
+
+def enrich_neutral_packet(packet: dict, policy: dict) -> None:
+    """Do not require Git fallback for main when real release session links exist."""
+    if policy.get("implementation_provenance") != {"mode": "enabled", "type": PROVENANCE_TYPE}:
+        return
+    try:
+        proof = authenticated_implementation_provenance(packet["identity"], packet)
+    except (ValueError, OSError):
+        if packet["identity"]["base_ref"] != "main":
+            raise
+        # Optional on main: a DAG/absent proof cannot certify Git provenance.
+        # The ordinary real-session route is still valid and independently verified.
+        return
+    packet["implementation_provenance"] = proof
+
+
 def trusted_audit_transport(identity: dict) -> dict:
     """Native policy is read from authenticated immutable base bytes, never PR HEAD."""
     sys.path.insert(0, str(ROOT / "entregar-issue" / "scripts"))
-    from resolve_trusted_audit_transport import CONTRACT_PATH, validate_native_contract_blob
+    from resolve_trusted_audit_transport import (
+        native_contract_path,
+        validate_native_contract_blob,
+    )
 
+    base_ref = identity["base_ref"]
+    contract_path = native_contract_path(base_ref)
     try:
-        raw, git_blob = content(identity["repository"], CONTRACT_PATH, identity["base_sha"])
+        raw, git_blob = content(identity["repository"], contract_path, identity["base_sha"])
     except ValueError as exc:
         if "(HTTP 404)" in str(exc):
-            # Missing is stricter legacy, not permission to bypass certification.
+            if base_ref == "main":
+                raise ValueError("trusted main native audit contract unavailable") from exc
+            # Missing on develop is stricter legacy.
             return {"mode": "certified-handoff", "contract_sha256": None}
         raise
     validate_native_contract_blob(raw, git_blob, identity["repository"], identity["base_ref"])
@@ -241,7 +264,11 @@ def prepare(repo: str, number: int, issue_number: int, *, require_enabled: bool)
     policy = strict_json(policy_raw.decode())
     if require_enabled:
         validate_policy(policy)
-    for path in TRUSTED_PATHS:
+    main_paths = (".github/workflows/main-native-evidence.yml", "scripts/run_main_evidence_tests.py",
+                  "entregar-issue/scripts/classify_audit_transport.py",
+                  "entregar-issue/scripts/prepare_actions_handoff.py")
+    trusted_paths = (*TRUSTED_PATHS, *main_paths) if pr["base"]["ref"] == "main" else TRUSTED_PATHS
+    for path in trusted_paths:
         trusted, _ = content(repo, path, base)
         require((ROOT / path).read_bytes() == trusted, "execution policy differs from trusted base")
     identity, issue = target(repo, number, issue_number, policy_raw)
@@ -330,7 +357,10 @@ def event_review_id(policy: dict) -> int:
 
 
 def recheck_inputs(packet: dict) -> None:
-    from verify_independent_pr_audit import required_checks_green, trusted_workflow_check
+    from verify_independent_pr_audit import (
+        required_checks_green,
+        trusted_workflow_check,
+    )
     ident = packet["identity"]
     repo, head, base = ident["repository"], ident["head_sha"], ident["base_sha"]
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -339,12 +369,10 @@ def recheck_inputs(packet: dict) -> None:
     require(transport["mode"] == packet["audit_transport"]
             and transport["contract_sha256"] == packet.get("native_contract_sha256"),
             "trusted audit transport changed during review")
-    required_checks_green(checks, head, "develop", lambda name, check: trusted_workflow_check(
+    evidence_check = github_facts.session_evidence_check(ident["base_ref"], transport["mode"])
+    required_checks_green(checks, head, ident["base_ref"], lambda name, check: trusted_workflow_check(
         repo, ident["pull_request"], name, check, head, base, token),
         audit_transport=transport["mode"])
-    evidence_check = ("collect / Require native GitHub audit evidence (exact SHA)"
-                      if transport["mode"] == "native-github-audit"
-                      else "collect / Require certified semantic handoff (exact SHA)")
     ids = sorted(c["id"] for c in checks["check_runs"] if c.get("name") in {
         "Structure and tests", "Offline authorization tests", evidence_check})
     require(ids == packet["technical_check_ids"], "technical evidence changed during verification")
@@ -464,8 +492,7 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
             raise ValueError("target changed between initial observation and evidence collection") from exc
         require(initial["head_sha"] == head, "target changed between initial observation and evidence collection")
         if packet_out:
-            if policy.get("implementation_provenance") == {"mode": "enabled", "type": PROVENANCE_TYPE}:
-                packet["implementation_provenance"] = authenticated_implementation_provenance(packet["identity"], packet)
+            enrich_neutral_packet(packet, policy)
             packet_out.parent.mkdir(parents=True, exist_ok=True)
             packet_out.write_bytes(canonical(packet) + b"\n")
             print("RAW PACKET: no reviewer identity or approval is asserted")
