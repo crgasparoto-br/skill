@@ -360,7 +360,7 @@ def recheck_inputs(packet: dict) -> None:
 
 
 def publish(repo: str, sha: str, conclusion: str, summary: str, receipt: dict, run_id: str,
-            check_id: int | None = None) -> None:
+            check_id: int | None = None) -> dict:
     require(run_id.isdecimal(), "authenticated Actions run required for publication")
     require(conclusion in {"success", "failure"}, "invalid check conclusion")
     require(conclusion != "success" or (receipt.get("identity") or {}).get("head_sha") == sha,
@@ -382,6 +382,46 @@ def publish(repo: str, sha: str, conclusion: str, summary: str, receipt: dict, r
         result = api(f"/repos/{repo}/check-runs/{check_id}", method="PATCH", data=body)
     require(result.get("head_sha") == sha and result.get("conclusion") == conclusion,
             "check publication was not confirmed")
+    return result
+
+
+def publish_review_success(repo: str, sha: str, summary: str, receipt: dict,
+                           check_id: int | None) -> None:
+    run_id = os.environ.get("GITHUB_RUN_ID", "")
+    artifact_dir = os.environ.get("SESSION_REVIEW_ORIGIN_DIR")
+    if not artifact_dir:
+        publish(repo, sha, "success", summary, receipt, run_id, check_id)
+        return
+
+    attempt = os.environ.get("GITHUB_RUN_ATTEMPT", "")
+    require(run_id.isascii() and run_id.isdecimal() and int(run_id) > 0
+            and attempt.isascii() and attempt.isdecimal() and int(attempt) > 0,
+            "authenticated Actions run and attempt required for publication proof")
+    origin = {"schema_version": 2, "run_id": int(run_id), "run_attempt": int(attempt)}
+    receipt["publication_origin"] = origin
+    receipt["fingerprint"] = digest(canonical({k: v for k, v in receipt.items() if k != "fingerprint"}))
+    result = publish(repo, sha, "success", summary, receipt, run_id, check_id)
+    returned_id = result.get("id")
+    require(type(returned_id) is int and returned_id > 0
+            and (check_id is None or check_id == returned_id), "published check id mismatch")
+    observed = api(f"/repos/{repo}/check-runs/{returned_id}")
+    require(observed.get("id") == returned_id and observed.get("name") == CHECK_NAME
+            and observed.get("head_sha") == sha and observed.get("status") == "completed"
+            and observed.get("conclusion") == "success"
+            and (observed.get("app") or {}).get("id") == 15368
+            and observed.get("external_id") == receipt["fingerprint"]
+            and strict_json((observed.get("output") or {}).get("text") or "{}") == receipt,
+            "terminal review check could not be authenticated")
+    suite = (observed.get("check_suite") or {}).get("id")
+    require(type(suite) is int and suite > 0, "published check suite missing")
+    proof = {**origin, "check_id": returned_id, "check_suite_id": suite,
+             "receipt_sha256": digest(canonical(receipt))}
+    destination = Path(artifact_dir)
+    destination.mkdir(parents=True, exist_ok=True)
+    with (destination / f"{returned_id}.json").open("xb") as record:
+        record.write(canonical(proof))
+    with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+        output.write("review_origin_present=true\n")
 
 
 def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None = None,
@@ -476,7 +516,7 @@ def evaluate(repo: str, number: int, issue_number: int, packet_out: Path | None 
             receipt["fingerprint"] = digest(canonical({k: v for k, v in receipt.items() if k != "fingerprint"}))
         require_unique_open_head(repo, number, head)
         summary = "Verified evidence-bound session review. Session separation is operator-attested, NOT third-party identity."
-        publish(repo, head, "success", summary, receipt, os.environ.get("GITHUB_RUN_ID", ""), check_id)
+        publish_review_success(repo, head, summary, receipt, check_id)
         print(summary)
         return 0
     except RequiredChecksNotReadyError as exc:

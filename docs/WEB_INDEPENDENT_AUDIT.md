@@ -189,6 +189,25 @@ pendente. Campo `draft` ausente nao equivale a PR pronta. Eventos explicitamente
 vinculados a PR ou issue continuam incluindo PR draft para permitir bloqueio e
 revogacao; um draft jamais recebe aprovacao positiva por esta excecao.
 
+## Prova da publicação do check (V2)
+
+A URL `/runs/<check-id>` do GitHub não identifica a execução do workflow.
+O emissor protegido continua solicitando o URL canônico
+`/actions/runs/<run-id>` e mantém a revisão de sessão em seu escopo original.
+Depois de criar ou atualizar um check verde, o emissor relê o check exato:
+app, ID, SHA, conclusão, fingerprint e recibo integral devem coincidir.
+
+O recibo inclui o localizador de execução e tentativa, protegido pelo seu
+fingerprint. Ele não é prova por si só. A execução protegida publica
+`session-review-origin-v2-attempt-<n>`, um artefato imutável da tentativa.
+Cada arquivo `<check-id>.json` relaciona o ID, o suite e o SHA-256 do recibo
+completo ao run/tentativa, sem duplicar o comentário nem seus dados.
+
+Esta etapa independente não ativa um reconciliador, não altera a política
+de atestação nem recria artefatos para checks antigos. Um consumidor só
+pode aceitar essa rota após autenticar a execução protegida, a origem e
+integridade do artefato, o check exato e o comentário/recibo vigentes.
+
 ## Marcos de entrega e responsabilidades
 
 | Marco | Evidencia de conclusao | Responsavel e limite |
