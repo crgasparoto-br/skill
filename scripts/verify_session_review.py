@@ -359,6 +359,14 @@ def recheck_inputs(packet: dict) -> None:
                 "GitHub implementation history changed during review")
 
 
+def exact_actions_check(row: dict, check_id: int) -> bool:
+    observed_id = row.get("id")
+    app_id = (row.get("app") or {}).get("id")
+    return (type(check_id) is int and check_id > 0
+            and type(observed_id) is int and observed_id == check_id
+            and type(app_id) is int and app_id == 15368)
+
+
 def publish(repo: str, sha: str, conclusion: str, summary: str, receipt: dict, run_id: str,
             check_id: int | None = None) -> dict:
     require(run_id.isdecimal(), "authenticated Actions run required for publication")
@@ -374,9 +382,10 @@ def publish(repo: str, sha: str, conclusion: str, summary: str, receipt: dict, r
     if check_id is None:
         result = api(f"/repos/{repo}/check-runs", method="POST", data=body)
     else:
+        require(type(check_id) is int and check_id > 0, "existing check id is not an integer")
         current = api(f"/repos/{repo}/check-runs/{check_id}")
-        require(current.get("head_sha") == sha and current.get("name") == CHECK_NAME
-                and (current.get("app") or {}).get("id") == 15368,
+        require(exact_actions_check(current, check_id)
+                and current.get("head_sha") == sha and current.get("name") == CHECK_NAME,
                 "existing check belongs to another target or publisher")
         body.pop("head_sha")
         result = api(f"/repos/{repo}/check-runs/{check_id}", method="PATCH", data=body)
@@ -405,17 +414,17 @@ def publish_review_success(repo: str, sha: str, summary: str, receipt: dict,
     require(type(returned_id) is int and returned_id > 0
             and (check_id is None or check_id == returned_id), "published check id mismatch")
     observed = api(f"/repos/{repo}/check-runs/{returned_id}")
-    require(observed.get("id") == returned_id and observed.get("name") == CHECK_NAME
+    require(exact_actions_check(observed, returned_id) and observed.get("name") == CHECK_NAME
             and observed.get("head_sha") == sha and observed.get("status") == "completed"
             and observed.get("conclusion") == "success"
-            and (observed.get("app") or {}).get("id") == 15368
-            and observed.get("external_id") == receipt["fingerprint"]
-            and strict_json((observed.get("output") or {}).get("text") or "{}") == receipt,
+            and observed.get("external_id") == receipt["fingerprint"],
             "terminal review check could not be authenticated")
+    observed_receipt = canonical(strict_json((observed.get("output") or {}).get("text") or "{}"))
+    require(observed_receipt == canonical(receipt), "terminal review check could not be authenticated")
     suite = (observed.get("check_suite") or {}).get("id")
     require(type(suite) is int and suite > 0, "published check suite missing")
     proof = {**origin, "check_id": returned_id, "check_suite_id": suite,
-             "receipt_sha256": digest(canonical(receipt))}
+             "receipt_sha256": digest(observed_receipt)}
     destination = Path(artifact_dir)
     destination.mkdir(parents=True, exist_ok=True)
     with (destination / f"{returned_id}.json").open("xb") as record:
