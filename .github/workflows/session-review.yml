@@ -51,8 +51,18 @@ jobs:
         with:
           python-version: "3.12"
       - name: Validate or revoke the exact-SHA session review
+        id: verify
         env:
+          SESSION_REVIEW_ORIGIN_DIR: ${{ runner.temp }}/session-review-origin-v2
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
         run: python scripts/verify_session_review.py --repo "$REPOSITORY" --event "$GITHUB_EVENT_PATH"
+      - name: Preserve authenticated session review publication origin
+        if: ${{ success() && steps.verify.outputs.review_origin_present == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: session-review-origin-v2-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/session-review-origin-v2/*.json
+          if-no-files-found: error
+          retention-days: 7
