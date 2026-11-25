@@ -9,6 +9,10 @@
       ]
     },
     {
+      "canonical": "auditar-issue/scripts/validate_controller_audit_result.py",
+      "copies": ["entregar-issue/scripts/validate_controller_audit_result.py"]
+    },
+    {
       "canonical": "entregar-issue/contracts/subskill-result.schema.json",
       "copies": [
         "auditar-issue/schemas/subskill-result.schema.json",

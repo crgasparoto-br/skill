@@ -21,6 +21,197 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def validate_audit_metadata(report):
+    started = datetime.fromisoformat(report["started_at"])
+    finished = datetime.fromisoformat(report["finished_at"])
+    if finished < started:
+        raise ValueError("finished_at precedes started_at")
+
+    expected_scope = "independent-release-gate" if report["mode"] == "independent" else "internal-only"
+    if report["approval_scope"] != expected_scope:
+        raise ValueError("approval_scope is inconsistent with audit mode")
+    packet = report["neutral_packet"]
+    if packet["implementation_conclusions_included"] or packet["implementation_narrative_included"]:
+        raise ValueError("neutral packet contains implementation conclusions or narrative")
+
+
+def validate_criteria(report):
+    requirement_ids = [item["id"] for item in report["requirements"]]
+    if len(requirement_ids) != len(set(requirement_ids)):
+        raise ValueError("requirement ids must be unique")
+    requirements_by_id = {item["id"]: item for item in report["requirements"]}
+    criterion_ids = [item["id"] for item in report["acceptance_criteria"]]
+    if len(criterion_ids) != len(set(criterion_ids)):
+        raise ValueError("acceptance criterion ids must be unique")
+    criterion_sources = []
+    for criterion in report["acceptance_criteria"]:
+        source = (
+            criterion["source_id"],
+            criterion["source_locator"],
+            criterion["source_line"],
+            criterion["text"],
+        )
+        criterion_sources.append(source)
+        requirement = requirements_by_id.get(criterion["requirement_id"])
+        if requirement is None:
+            raise ValueError(
+                f"{criterion['id']} references unknown requirement "
+                f"{criterion['requirement_id']}"
+            )
+        source_hash_matches_issue = (
+            criterion["source_sha256"]
+            == report["identity"]["issue_snapshot_sha256"]
+        )
+        if criterion["origin"] == "issue-body" and (
+            criterion["source_locator"] != "issue-body" or not source_hash_matches_issue
+        ):
+            raise ValueError(
+                f"{criterion['id']} issue-body source identity is inconsistent"
+            )
+        if criterion["decision"] == "verified":
+            if not criterion["evidence"]:
+                raise ValueError(f"{criterion['id']} verified criterion lacks evidence")
+            if requirement["status"] != "Implementado":
+                raise ValueError(
+                    f"{criterion['id']} is verified but its requirement is not implemented"
+                )
+            if criterion["proposed_checkbox_state"] != "checked":
+                raise ValueError(
+                    f"{criterion['id']} verified criterion must propose checked"
+                )
+        else:
+            expected_checkbox_state = (
+                "unchanged"
+                if criterion["initial_checkbox_state"] == "not-present"
+                else "unchecked"
+            )
+            if criterion["proposed_checkbox_state"] != expected_checkbox_state:
+                raise ValueError(
+                    f"{criterion['id']} unverified criterion must remain open"
+                )
+    if len(criterion_sources) != len(set(criterion_sources)):
+        raise ValueError("acceptance criterion source locations must be unique")
+
+
+def verify_requirements_verdict(report):
+    finding_ids = [item["id"] for item in report["findings"]]
+    for item in report["findings"]:
+        if item.get("status") == "open" and item.get("remediation_mode") not in {"targeted-remediation", "systemic-remediation"}:
+            raise ValueError("open finding requires remediation_mode")
+    if len(finding_ids) != len(set(finding_ids)):
+        raise ValueError("finding ids must be unique")
+
+    open_blocking = [
+        item for item in report["findings"]
+        if item["status"] == "open" and item["disposition"] == "blocking"
+    ]
+    unresolved = [
+        item for item in report["requirements"]
+        if item["status"] not in {"Implementado", "Fora do escopo"}
+        or (item["status"] == "Fora do escopo" and not item.get("scope_basis"))
+    ]
+    material_limits = [item for item in report["limitations"] if item["material"]]
+    failed_gates = [item for item in report["gates"] if item["status"] != "passed"]
+    if report["verdict"] == "Aprovado" and (open_blocking or unresolved or material_limits or failed_gates):
+        raise ValueError("Aprovado is inconsistent with findings, requirements, limitations or gates")
+    if report["mode"] == "independent" and report["verdict"] == "Reprovado":
+        rejection_id = str(report.get("rejection_id") or "").strip()
+        if not rejection_id.startswith("audit-rejection:") or len(rejection_id) < 24:
+            raise ValueError("independent Reprovado requires stable rejection_id")
+    return open_blocking
+
+
+def collect_negative_controls(report, report_path):
+    input_parser_controls = []
+    for requirement in report["requirements"]:
+        if requirement["status"] == "Implementado":
+            if not requirement["evidence"] or not requirement["negative_controls"] or not requirement["regression_evidence"]:
+                raise ValueError(f"{requirement['id']} lacks positive, negative or regression evidence")
+            evidence_by_id = {item["id"]: item for item in requirement["negative_control_evidence"]}
+            if set(evidence_by_id) != set(requirement["negative_controls"]):
+                raise ValueError(f"{requirement['id']} negative control ids and evidence do not match exactly")
+            for control_id in requirement["negative_controls"]:
+                control = evidence_by_id[control_id]
+                if control["status"] != "passed":
+                    raise ValueError(f"{requirement['id']}/{control_id} negative control did not pass")
+                if control["head_sha"] != report["identity"]["head_sha"]:
+                    raise ValueError(f"{requirement['id']}/{control_id} targets a different head SHA")
+                evidence_path = Path(control["evidence_path"])
+                if not evidence_path.is_absolute():
+                    evidence_path = report_path.parent / evidence_path
+                if not evidence_path.is_file():
+                    raise ValueError(f"{requirement['id']}/{control_id} evidence file does not exist")
+                if file_sha256(evidence_path) != control["evidence_sha256"]:
+                    raise ValueError(f"{requirement['id']}/{control_id} evidence hash mismatch")
+                if control.get("risk_family") == "input-parser":
+                    input_parser_controls.append(control)
+    return input_parser_controls
+
+
+def validate_parser_control_matrix(input_parser_controls):
+    if input_parser_controls:
+        required_control_ids = {
+            "IP-RAW-001",
+            "IP-MODE-001",
+            "IP-SCOPE-001",
+            "IP-INACTIVE-001",
+            "IP-EFFECT-001",
+        }
+        required_dimensions = {
+            "raw-boundary-preservation",
+            "validation-order-error-precedence",
+            "syntax-mode-invariant-matrix",
+        }
+        control_ids = {item.get("id") for item in input_parser_controls}
+        dimensions = {item.get("dimension") for item in input_parser_controls}
+        parser_errors = []
+        missing_ids = sorted(required_control_ids - control_ids)
+        if missing_ids:
+            parser_errors.append(f"stable control ids: {missing_ids}")
+        missing_dimensions = sorted(required_dimensions - dimensions)
+        if missing_dimensions:
+            parser_errors.append(f"mandatory dimensions: {missing_dimensions}")
+        if parser_errors:
+            raise ValueError("input-parser controls miss " + "; ".join(parser_errors))
+        for control in input_parser_controls:
+            siblings = {
+                item.strip() for item in control.get("sibling_cases", [])
+                if isinstance(item, str) and item.strip()
+            }
+            if len(siblings) < 2:
+                raise ValueError(
+                    f"{control.get('id')} input-parser control requires at least two sibling cases"
+                )
+
+
+def validate_escapes(report, open_blocking):
+    prior = report["prior_internal_approval"]
+    escapes = report["audit_escapes"]
+    if report["mode"] != "independent" and escapes:
+        raise ValueError("audit escapes can only be declared by an independent audit")
+    if report["mode"] == "independent" and prior and prior["head_sha"] == report["identity"]["head_sha"] and open_blocking:
+        by_finding = {item["finding_id"]: item for item in escapes}
+        for finding in open_blocking:
+            escape = by_finding.get(finding["id"])
+            if escape is None:
+                raise ValueError(f"{finding['id']} must be recorded as an audit escape")
+            if escape["fingerprint"] != finding["fingerprint"]:
+                raise ValueError(f"{finding['id']} audit escape fingerprint mismatch")
+            if escape["affected_head_sha"] != report["identity"]["head_sha"]:
+                raise ValueError(f"{finding['id']} audit escape SHA mismatch")
+            if escape["prior_internal_report_sha256"] != prior["report_sha256"]:
+                raise ValueError(f"{finding['id']} audit escape prior report mismatch")
+
+
+def validate_report_data(report: dict, report_path: Path) -> None:
+    validate_audit_metadata(report)
+    validate_criteria(report)
+    open_blocking = verify_requirements_verdict(report)
+    controls = collect_negative_controls(report, report_path)
+    validate_parser_control_matrix(controls)
+    validate_escapes(report, open_blocking)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("report", type=Path)
@@ -30,172 +221,7 @@ def main() -> int:
         report = json.loads(args.report.read_text(encoding="utf-8"))
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker()).validate(report)
-        started = datetime.fromisoformat(report["started_at"])
-        finished = datetime.fromisoformat(report["finished_at"])
-        if finished < started:
-            raise ValueError("finished_at precedes started_at")
-
-        expected_scope = "independent-release-gate" if report["mode"] == "independent" else "internal-only"
-        if report["approval_scope"] != expected_scope:
-            raise ValueError("approval_scope is inconsistent with audit mode")
-        packet = report["neutral_packet"]
-        if packet["implementation_conclusions_included"] or packet["implementation_narrative_included"]:
-            raise ValueError("neutral packet contains implementation conclusions or narrative")
-
-        requirement_ids = [item["id"] for item in report["requirements"]]
-        if len(requirement_ids) != len(set(requirement_ids)):
-            raise ValueError("requirement ids must be unique")
-        requirements_by_id = {item["id"]: item for item in report["requirements"]}
-        criterion_ids = [item["id"] for item in report["acceptance_criteria"]]
-        if len(criterion_ids) != len(set(criterion_ids)):
-            raise ValueError("acceptance criterion ids must be unique")
-        criterion_sources = []
-        for criterion in report["acceptance_criteria"]:
-            source = (
-                criterion["source_id"],
-                criterion["source_locator"],
-                criterion["source_line"],
-                criterion["text"],
-            )
-            criterion_sources.append(source)
-            requirement = requirements_by_id.get(criterion["requirement_id"])
-            if requirement is None:
-                raise ValueError(
-                    f"{criterion['id']} references unknown requirement "
-                    f"{criterion['requirement_id']}"
-                )
-            source_hash_matches_issue = (
-                criterion["source_sha256"]
-                == report["identity"]["issue_snapshot_sha256"]
-            )
-            if criterion["origin"] == "issue-body" and (
-                criterion["source_locator"] != "issue-body" or not source_hash_matches_issue
-            ):
-                raise ValueError(
-                    f"{criterion['id']} issue-body source identity is inconsistent"
-                )
-            if criterion["decision"] == "verified":
-                if not criterion["evidence"]:
-                    raise ValueError(f"{criterion['id']} verified criterion lacks evidence")
-                if requirement["status"] != "Implementado":
-                    raise ValueError(
-                        f"{criterion['id']} is verified but its requirement is not implemented"
-                    )
-                if criterion["proposed_checkbox_state"] != "checked":
-                    raise ValueError(
-                        f"{criterion['id']} verified criterion must propose checked"
-                    )
-            else:
-                expected_checkbox_state = (
-                    "unchanged"
-                    if criterion["initial_checkbox_state"] == "not-present"
-                    else "unchecked"
-                )
-                if criterion["proposed_checkbox_state"] != expected_checkbox_state:
-                    raise ValueError(
-                        f"{criterion['id']} unverified criterion must remain open"
-                    )
-        if len(criterion_sources) != len(set(criterion_sources)):
-            raise ValueError("acceptance criterion source locations must be unique")
-        finding_ids = [item["id"] for item in report["findings"]]
-        for item in report["findings"]:
-            if item.get("status") == "open" and item.get("remediation_mode") not in {"targeted-remediation", "systemic-remediation"}:
-                raise ValueError("open finding requires remediation_mode")
-        if len(finding_ids) != len(set(finding_ids)):
-            raise ValueError("finding ids must be unique")
-
-        open_blocking = [
-            item for item in report["findings"]
-            if item["status"] == "open" and item["disposition"] == "blocking"
-        ]
-        unresolved = [
-            item for item in report["requirements"]
-            if item["status"] not in {"Implementado", "Fora do escopo"}
-            or (item["status"] == "Fora do escopo" and not item.get("scope_basis"))
-        ]
-        material_limits = [item for item in report["limitations"] if item["material"]]
-        failed_gates = [item for item in report["gates"] if item["status"] != "passed"]
-        if report["verdict"] == "Aprovado" and (open_blocking or unresolved or material_limits or failed_gates):
-            raise ValueError("Aprovado is inconsistent with findings, requirements, limitations or gates")
-        if report["mode"] == "independent" and report["verdict"] == "Reprovado":
-            rejection_id = str(report.get("rejection_id") or "").strip()
-            if not rejection_id.startswith("audit-rejection:") or len(rejection_id) < 24:
-                raise ValueError("independent Reprovado requires stable rejection_id")
-
-        input_parser_controls = []
-        for requirement in report["requirements"]:
-            if requirement["status"] == "Implementado":
-                if not requirement["evidence"] or not requirement["negative_controls"] or not requirement["regression_evidence"]:
-                    raise ValueError(f"{requirement['id']} lacks positive, negative or regression evidence")
-                evidence_by_id = {item["id"]: item for item in requirement["negative_control_evidence"]}
-                if set(evidence_by_id) != set(requirement["negative_controls"]):
-                    raise ValueError(f"{requirement['id']} negative control ids and evidence do not match exactly")
-                for control_id in requirement["negative_controls"]:
-                    control = evidence_by_id[control_id]
-                    if control["status"] != "passed":
-                        raise ValueError(f"{requirement['id']}/{control_id} negative control did not pass")
-                    if control["head_sha"] != report["identity"]["head_sha"]:
-                        raise ValueError(f"{requirement['id']}/{control_id} targets a different head SHA")
-                    evidence_path = Path(control["evidence_path"])
-                    if not evidence_path.is_absolute():
-                        evidence_path = args.report.parent / evidence_path
-                    if not evidence_path.is_file():
-                        raise ValueError(f"{requirement['id']}/{control_id} evidence file does not exist")
-                    if file_sha256(evidence_path) != control["evidence_sha256"]:
-                        raise ValueError(f"{requirement['id']}/{control_id} evidence hash mismatch")
-                    if control.get("risk_family") == "input-parser":
-                        input_parser_controls.append(control)
-
-        if input_parser_controls:
-            required_control_ids = {
-                "IP-RAW-001",
-                "IP-MODE-001",
-                "IP-SCOPE-001",
-                "IP-INACTIVE-001",
-                "IP-EFFECT-001",
-            }
-            required_dimensions = {
-                "raw-boundary-preservation",
-                "validation-order-error-precedence",
-                "syntax-mode-invariant-matrix",
-            }
-            control_ids = {item.get("id") for item in input_parser_controls}
-            dimensions = {item.get("dimension") for item in input_parser_controls}
-            parser_errors = []
-            missing_ids = sorted(required_control_ids - control_ids)
-            if missing_ids:
-                parser_errors.append(f"stable control ids: {missing_ids}")
-            missing_dimensions = sorted(required_dimensions - dimensions)
-            if missing_dimensions:
-                parser_errors.append(f"mandatory dimensions: {missing_dimensions}")
-            if parser_errors:
-                raise ValueError("input-parser controls miss " + "; ".join(parser_errors))
-            for control in input_parser_controls:
-                siblings = {
-                    item.strip() for item in control.get("sibling_cases", [])
-                    if isinstance(item, str) and item.strip()
-                }
-                if len(siblings) < 2:
-                    raise ValueError(
-                        f"{control.get('id')} input-parser control requires at least two sibling cases"
-                    )
-
-        prior = report["prior_internal_approval"]
-        escapes = report["audit_escapes"]
-        if report["mode"] != "independent" and escapes:
-            raise ValueError("audit escapes can only be declared by an independent audit")
-        if report["mode"] == "independent" and prior and prior["head_sha"] == report["identity"]["head_sha"] and open_blocking:
-            by_finding = {item["finding_id"]: item for item in escapes}
-            for finding in open_blocking:
-                escape = by_finding.get(finding["id"])
-                if escape is None:
-                    raise ValueError(f"{finding['id']} must be recorded as an audit escape")
-                if escape["fingerprint"] != finding["fingerprint"]:
-                    raise ValueError(f"{finding['id']} audit escape fingerprint mismatch")
-                if escape["affected_head_sha"] != report["identity"]["head_sha"]:
-                    raise ValueError(f"{finding['id']} audit escape SHA mismatch")
-                if escape["prior_internal_report_sha256"] != prior["report_sha256"]:
-                    raise ValueError(f"{finding['id']} audit escape prior report mismatch")
+        validate_report_data(report, args.report)
     except Exception as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1

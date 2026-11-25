@@ -236,11 +236,8 @@ def verify_review(comment: dict, packet: dict, policy: dict, files: dict[str, st
     body = comment.get("body")
     require(isinstance(body, str) and body.startswith(PREFIX), "review marker missing")
     report = strict_json(body[len(PREFIX):])
-    base_fields = {
-        "schema_version", "identity", "assurance", "acknowledgement", "sessions",
-        "conclusion", "blocking_findings", "limitations", "requirements",
-    }
-    require(set(report) in (base_fields, base_fields | {"audit_report_sha256"}),
+    require(set(report) == {"schema_version", "identity", "assurance", "acknowledgement", "sessions",
+                           "conclusion", "blocking_findings", "limitations", "requirements"},
             "unexpected or missing review fields")
     require(type(report["schema_version"]) is int and report["schema_version"] == 1, "unsupported review version")
     validate_identity(packet["identity"])
@@ -285,19 +282,6 @@ def verify_review(comment: dict, packet: dict, policy: dict, files: dict[str, st
                "review_comment_id": comment["id"], "review_body_sha256": digest(body.encode()),
                "artifact_digest": packet["artifact_digest"], "technical_check_ids": packet["technical_check_ids"],
                "third_party_identity_proven": False, "session_separation": "operator-declared"}
-    audit_report_sha256 = report.get("audit_report_sha256")
-    if audit_report_sha256 is not None:
-        require(isinstance(audit_report_sha256, str)
-                and DIGEST.fullmatch(audit_report_sha256),
-                "audit report digest is invalid")
-        receipt["publication_attestation"] = {
-            "schema": "issue-audit-publication-attestation-v1",
-            "repository": packet["identity"]["repository"],
-            "issue": packet["identity"]["issue"],
-            "head_sha": packet["identity"]["head_sha"],
-            "audit_report_sha256": audit_report_sha256,
-            "accepted": True,
-        }
     if isinstance(implementation, dict):
         receipt["implementation_provenance_type"] = PROVENANCE_TYPE
         receipt["implementation_provenance_sha256"] = digest(canonical(implementation))

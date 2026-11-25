@@ -15,25 +15,51 @@ python <skill>/scripts/reconcile_issue_acceptance_criteria.py \
   --repository <owner/repo> \
   --issue <n> \
   --head-sha <sha> \
-  --audit-report-url <https-url> \
-  --required-audit-check "Verify session review (exact SHA)" \
-  --required-audit-workflow ".github/workflows/session-review.yml" \
   --apply
 ```
 
-O script valida o schema canônico completo, a identidade, o estado aberto da
-issue/PR, o SHA remoto, o digest do corpo, o texto e a linha de cada origem. O
-nome passado em `--required-audit-check` precisa corresponder a um check verde,
-terminal e único no SHA exato e emparelhado por ordem a
-`--required-audit-workflow`; um nome histórico ou uma CI verde genérica não
-substitui a atestação do parecer. O check deve pertencer ao app GitHub Actions,
-ao run autenticado desse workflow e ao recibo oficial da revisão. O review
-atestado declara
-`audit_report_sha256`; o `output.text` autenticado do check publica no recibo
-um `publication_attestation` com schema, repositório, issue, HEAD, esse digest
-canônico e `accepted=true`. A divergência entre check e parecer bloqueia.
-Repetir a opção para gates adicionais. Sem `--apply`, somente produz o plano
-depois das leituras autenticadas.
+O script valida o schema e executa o validador semântico canônico do auditor,
+incluindo suas evidências locais. Exige issue aberta, PR não-draft do mesmo
+repositório contra `develop` ou `main` protegida, HEAD/base/preview exatos,
+snapshot da issue e a seção normativa `## Critérios de aceite` (ou
+`## Acceptance criteria`) em cada origem usada. Uma linha de item é localizada
+junto com o texto de suas continuações, sem contar listas em código/HTML
+inerte como critérios. Identifique itens filhos separadamente.
+
+A autoridade não é selecionável: o CLI exige o check canônico
+`Verify session review (exact SHA)`, do app GitHub Actions, e o workflow canônico
+`.github/workflows/session-review.yml` autenticado. Confere separadamente o
+check suite do HEAD material e o suite do workflow que roda na branch
+confiada; esses suites não precisam ser iguais. Confere o conteúdo da cadeia
+executável no SHA do run contra o da base. A associação usa o URL explícito do
+run no check, se preservado pelo GitHub. Se só houver `/runs/<check-id>`,
+não tenta adivinhar o run nem reduz a autoridade para qualquer check verde.
+Sem uma execução GitHub bem-sucedida com readback desse vínculo, os testes
+locais demonstram compatibilidade, não publicação operacional nem prova
+independente de qual workflow do mesmo app escreveu o check.
+
+Antes de registrar a revisão, o operador autorizado coloca **uma** linha
+`AUDIT_REPORT_SHA256=<64 hex minúsculos>` no campo `analysis` de uma
+das linhas existentes em `requirements`, sem substituir o seu parecer
+textual. O hash é SHA-256 da serialização JSON canônica (UTF-8, chaves
+ordenadas, sem espaços de separador, Unicode não escapado) do relatório
+completo. Nenhum campo novo é exigido pelo gate confiado. O publisher lê o
+recibo canônico do check e o comentário original autenticado, verificando
+política da base protegida, identidade SHA/issue/PR/base/preview, autor
+permitido, timestamps iguais, revisão vigente e hash dos bytes exatos do
+comentário atestado pelo recibo. A referência no comentário publicado é
+o URL estável desse comentário autenticado; se `--audit-report-url` for
+informado, deve ser exatamente essa referência. Revisão por sessão continua
+declarada pelo operador, não identidade independente criptográfica.
+
+`Parcial`, `Reprovado`, inconclusões que impeçam aprovação ou check sem
+readback confiável não podem passar por essa via. Preserve a classificação
+local e não transforme o relatório negativo num recibo de aprovação. Sem
+`--apply`, só produz plano após as mesmas leituras. O próprio gate e o
+emissor já protegidos não precisam mudar para verificar essa revisão no
+bootstrap. Se o GitHub não expuser o vínculo legítimo no readback, falta
+uma evidência independente do emissor, a ser implantada separadamente
+sob a governança normal; não há fallback permissivo.
 
 ## Registro append-only
 

@@ -7,18 +7,15 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
 
+import acceptance_publication_provenance as provenance
 import jsonschema
+from acceptance_markdown import analyze_body
+from validate_controller_audit_result import validate_report_data
 
-ACCEPTANCE_HEADING_RE = re.compile(
-    r"^#{1,6}\s+.*(?:crit[eé]rios?(?:\s+de)?\s+aceite|acceptance\s+criteria)\b",
-    re.IGNORECASE,
-)
-HEADING_RE = re.compile(r"^#{1,6}\s+")
-LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]\s+|\d+[.)]\s+)(.+?)\s*$")
 CHECKBOX_RE = re.compile(r"^\s*\[\s*([xX ])\s*\]\s*(.*?)\s*$")
 COMMENT_LOCATOR_RE = re.compile(r"^issue-comment:(\d+)$")
 FINGERPRINT_RE = re.compile(
@@ -42,44 +39,22 @@ def normalize(text: str) -> str:
     checkbox = CHECKBOX_RE.match(value)
     if checkbox:
         value = checkbox.group(2)
-    return re.sub(r"\s+", " ", value).strip("| ")
+    return re.sub(r"\s+", " ", value).strip()
 
 
 def source_item(source: str, line: int) -> tuple[str, str]:
-    lines = source.splitlines()
-    if line < 1 or line > len(lines):
-        raise ValueError(f"source line {line} is out of range")
-    listed = LIST_ITEM_RE.match(lines[line - 1])
-    if not listed:
+    item = analyze_body(source).get(line)
+    if item is None:
         raise ValueError(f"source line {line} is not a normative list item")
-    value = listed.group(1).strip()
-    checkbox = CHECKBOX_RE.match(value)
-    if checkbox:
-        state = "checked" if checkbox.group(1).lower() == "x" else "unchecked"
-        text = checkbox.group(2)
-    else:
-        state = "not-present"
-        text = value
-    return state, normalize(text)
+    return item[0], normalize(item[1])
 
 
 def acceptance_lines(source: str) -> list[int]:
-    active = False
-    found: list[int] = []
-    for line_no, raw in enumerate(source.splitlines(), start=1):
-        if ACCEPTANCE_HEADING_RE.match(raw.strip()):
-            active = True
-            continue
-        if HEADING_RE.match(raw.strip()):
-            active = False
-            continue
-        if active and LIST_ITEM_RE.match(raw):
-            found.append(line_no)
-    return found
+    return list(analyze_body(source))
 
 
 def load_report(path: Path) -> dict[str, Any]:
-    report = json.loads(path.read_text(encoding="utf-8"))
+    report = provenance.strict_json(path.read_text(encoding="utf-8"), limit=2 * 1024 * 1024)
     schema_root = Path(__file__).resolve().parents[1] / "schemas"
     canonical_path = schema_root / "controller-audit-result.schema.json"
     reconciliation_path = (
@@ -97,7 +72,7 @@ def load_report(path: Path) -> dict[str, Any]:
 
 def run_gh(endpoint: str, *, method: str = "GET", payload: object | None = None,
           paginate: bool = False) -> Any:
-    command = ["gh", "api", endpoint, "--method", method]
+    command = ["gh", "api", "--hostname", "github.com", endpoint, "--method", method]
     if paginate:
         command.extend(["--paginate", "--slurp"])
     if payload is not None:
@@ -348,129 +323,38 @@ def read_authenticated_source(repository: str, issue_number: int) -> tuple[
     return actor, comments, issue
 
 
-def verify_live_head(report: dict[str, Any], head_sha: str,
-                     repository: str) -> None:
+def verify_live_head(report: dict[str, Any], head_sha: str, repository: str) -> str:
     identity = report["identity"]
-    if identity["pull_request"] is not None:
-        pr = run_gh(f"/repos/{repository}/pulls/{identity['pull_request']}")
-        if (
-            not isinstance(pr, dict)
-            or (pr.get("head") or {}).get("sha") != head_sha
-            or (pr.get("base") or {}).get("sha") != identity["base_sha"]
-            or (
-                identity["merge_preview_sha"] is not None
-                and pr.get("merge_commit_sha") != identity["merge_preview_sha"]
-            )
-        ):
-            raise ValueError("pull request HEAD changed since the audit")
-        if (pr.get("state") or "") != "open":
-            raise ValueError("pull request is no longer open")
-    else:
-        branch = run_gh(
-            f"/repos/{repository}/git/ref/heads/{identity['branch']}"
-        )
-        if not isinstance(branch, dict) or (branch.get("object") or {}).get(
-            "sha"
-        ) != head_sha:
-            raise ValueError("branch HEAD changed since the audit")
-
-
-def verify_check_origin(
-    detail: dict[str, Any],
-    repository: str,
-    name: str,
-    workflow_path: str,
-    head_sha: str,
-) -> None:
-    if (detail.get("app") or {}).get("id") != 15368:
-        raise ValueError(f"audit check was not produced by GitHub Actions: {name}")
-    details_url = urlsplit(str(detail.get("details_url") or ""))
-    match = re.fullmatch(
-        rf"/{re.escape(repository)}/actions/runs/([1-9][0-9]*)",
-        details_url.path,
-    )
-    if (
-        details_url.scheme != "https"
-        or details_url.netloc != "github.com"
-        or match is None
-        or details_url.query
-        or details_url.fragment
-    ):
-        raise ValueError(f"audit check has an invalid workflow run URL: {name}")
-    run = run_gh(f"/repos/{repository}/actions/runs/{match.group(1)}")
-    check_suite_id = (detail.get("check_suite") or {}).get("id")
-    if (
-        not isinstance(run, dict)
-        or detail.get("head_sha") != head_sha
-        or type(check_suite_id) is not int
-        or run.get("check_suite_id") != check_suite_id
-        or (run.get("repository") or {}).get("full_name") != repository
-        or run.get("path") != workflow_path
-        or run.get("status") != "completed"
-        or run.get("conclusion") != "success"
-        or run.get("event") not in {"issue_comment", "workflow_run"}
-    ):
-        raise ValueError(f"audit check is not from the trusted workflow run: {name}")
-
-
-def verify_check_attestation(
-    detail: dict[str, Any],
-    *,
-    name: str,
-    repository: str,
-    head_sha: str,
-    issue_number: int,
-    audit_report_sha256: str,
-    audit_identity: dict[str, Any],
-) -> None:
-    text = str((detail.get("output") or {}).get("text") or "")
-    try:
-        receipt = json.loads(text)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"required audit check has an invalid receipt: {name}") from exc
-    if not isinstance(receipt, dict):
-        raise ValueError(
-            f"required audit check lacks one bound publication attestation: {name}"
-        )
-    expected = {
-        "schema": "issue-audit-publication-attestation-v1",
-        "repository": repository,
-        "issue": issue_number,
-        "head_sha": head_sha,
-        "audit_report_sha256": audit_report_sha256,
-        "accepted": True,
-    }
-    expected_identity = {
-        "repository": audit_identity["repository"],
-        "issue": audit_identity["issue"],
-        "pull_request": audit_identity["pull_request"],
-        "base_sha": audit_identity["base_sha"],
-        "head_sha": audit_identity["head_sha"],
-        "merge_preview_sha": audit_identity["merge_preview_sha"],
-        "issue_sha256": audit_identity["issue_snapshot_sha256"],
-    }
-    receipt_identity = receipt.get("identity")
-    if (
-        receipt.get("publication_attestation") != expected
-        or not isinstance(receipt_identity, dict)
-        or any(receipt_identity.get(key) != value
-               for key, value in expected_identity.items())
-    ):
-        raise ValueError(
-            f"required audit check is not bound to the exact report: {name}"
-        )
+    number = identity["pull_request"]
+    if type(number) is not int or number <= 0 or not isinstance(identity["merge_preview_sha"], str):
+        raise ValueError("protected PR and exact merge preview are required")
+    pr = run_gh(f"/repos/{repository}/pulls/{number}")
+    if not isinstance(pr, dict):
+        raise ValueError("authenticated pull request is unavailable")
+    head, base = pr.get("head") or {}, pr.get("base") or {}
+    canonical_ref = {int(x) for x in re.findall(
+        r"(?im)^\s*(?:closes|fixes|refs)\s+#([1-9][0-9]*)\s*$", pr.get("body") or "")}
+    if (pr.get("number") != number or pr.get("state") != "open" or pr.get("draft") is not False
+            or head.get("sha") != head_sha or base.get("sha") != identity["base_sha"]
+            or pr.get("merge_commit_sha") != identity["merge_preview_sha"]
+            or (head.get("repo") or {}).get("full_name") != repository
+            or (base.get("repo") or {}).get("full_name") != repository
+            or base.get("ref") not in {"develop", "main"} or canonical_ref != {identity["issue"]}):
+        raise ValueError("pull request HEAD changed or is not the exact protected audit target")
+    branch = run_gh(f"/repos/{repository}/branches/{base['ref']}")
+    if branch.get("protected") is not True or (branch.get("commit") or {}).get("sha") != base["sha"]:
+        raise ValueError("protected target branch changed or could not be authenticated")
+    return base["ref"]
 
 
 def verify_required_audit_checks(
     repository: str,
     head_sha: str,
-    issue_number: int,
     audit_report_sha256: str,
     audit_identity: dict[str, Any],
-    required_checks: list[tuple[str, str]],
-) -> list[dict[str, Any]]:
+) -> tuple[int, dict[str, Any]]:
     response = run_gh(
-        f"/repos/{repository}/commits/{head_sha}/check-runs?per_page=100"
+        f"/repos/{repository}/commits/{head_sha}/check-runs?per_page=100&filter=all"
     )
     if not isinstance(response, dict):
         raise ValueError("authenticated check-run inventory is malformed")
@@ -479,40 +363,45 @@ def verify_required_audit_checks(
         raise ValueError("authenticated check-run inventory is missing")
     if response.get("total_count", len(runs)) > len(runs):
         raise ValueError("check-run inventory is incomplete")
-    selected: list[dict[str, Any]] = []
-    for name, workflow_path in required_checks:
-        matches = [
-            item
-            for item in runs
-            if isinstance(item, dict)
-            and item.get("name") == name
-            and item.get("head_sha") == head_sha
-        ]
-        if not matches:
-            raise ValueError(f"required audit check is missing: {name}")
-        latest = max(matches, key=lambda item: int(item.get("id") or 0))
-        if (
-            latest.get("status") != "completed"
-            or latest.get("conclusion") != "success"
-        ):
-            raise ValueError(f"required audit check is not green: {name}")
-        detail = run_gh(f"/repos/{repository}/check-runs/{latest['id']}")
-        if not isinstance(detail, dict):
-            raise ValueError(f"audit check details are unavailable: {name}")
-        verify_check_origin(
-            detail, repository, name, workflow_path, head_sha
-        )
-        verify_check_attestation(
-            detail,
-            name=name,
-            repository=repository,
-            head_sha=head_sha,
-            issue_number=issue_number,
-            audit_report_sha256=audit_report_sha256,
-            audit_identity=audit_identity,
-        )
-        selected.append(latest)
-    return selected
+    name = provenance.CHECK
+    matches = [item for item in runs if isinstance(item, dict)
+               and item.get("name") == name and item.get("head_sha") == head_sha]
+    if not matches or any(not provenance.positive(item.get("id")) for item in matches):
+        raise ValueError(f"required audit check is missing or malformed: {name}")
+    latest = max(matches, key=lambda item: item["id"])
+    if latest.get("status") != "completed" or latest.get("conclusion") != "success":
+        raise ValueError(f"required audit check is not green: {name}")
+    detail = run_gh(f"/repos/{repository}/check-runs/{latest['id']}")
+    if (not isinstance(detail, dict) or detail.get("id") != latest["id"]
+            or detail.get("status") != "completed" or detail.get("conclusion") != "success"):
+        raise ValueError(f"audit check details changed: {name}")
+    provenance.verify_origin(run_gh, detail, repository, head_sha, audit_identity["base_sha"])
+    binding = provenance.verify_review_binding(run_gh, flatten_pages, detail, repository,
+                                                audit_identity, audit_report_sha256)
+    return latest["id"], binding
+
+
+def validate_semantic_audit(report: dict[str, Any], path: Path) -> None:
+    try:
+        validate_report_data(report, path)
+    except (ValueError, OSError) as exc:
+        raise ValueError("canonical semantic report validation failed: " + str(exc)) from exc
+
+
+def authenticate_attempt(report, args, report_sha):
+    base_ref = verify_live_head(report, args.head_sha, args.repository)
+    return verify_required_audit_checks(args.repository, args.head_sha, report_sha,
+                                        {**report["identity"], "base_ref": base_ref})
+
+
+def verify_publisher_comment(comment, expected_body, repository, issue, operators, actor=None):
+    if (not isinstance(comment, dict) or comment.get("body") != expected_body
+            or comment.get("issue_url") != f"{provenance.API_ROOT}/repos/{repository}/issues/{issue}"
+            or not isinstance(comment.get("created_at"), str)
+            or comment["created_at"] != comment.get("updated_at")
+            or not provenance.allowed(comment, operators)
+            or (actor is not None and (comment.get("user") or {}).get("id") != actor["id"])):
+        raise ValueError("published issue comment is not the immutable authorized readback")
 
 
 def logical_matches(
@@ -548,18 +437,16 @@ def main() -> int:
     parser.add_argument("--repository", required=True)
     parser.add_argument("--issue", required=True, type=int)
     parser.add_argument("--head-sha", required=True)
-    parser.add_argument("--audit-report-url", required=True)
+    parser.add_argument("--audit-report-url", help="Optional exact authenticated review comment URL")
     parser.add_argument(
         "--required-audit-check",
         action="append",
-        required=True,
-        help="Exact-head GitHub check required to authenticate the audit attestation.",
+        help="Only the built-in canonical session-review check is accepted.",
     )
     parser.add_argument(
         "--required-audit-workflow",
         action="append",
-        required=True,
-        help="Trusted Actions workflow path paired with each required audit check.",
+        help="Only the built-in canonical session-review workflow is accepted.",
     )
     parser.add_argument("--apply", action="store_true")
     parser.add_argument(
@@ -574,41 +461,24 @@ def main() -> int:
             raise ValueError(
                 "issue body updates are prohibited without proven atomic CAS"
             )
+        if args.issue <= 0 or not re.fullmatch(r"[A-Za-z0-9-]+/[A-Za-z0-9_.-]+", args.repository):
+            raise ValueError("valid GitHub repository and issue are required")
         if not re.fullmatch(r"[a-f0-9]{40}", args.head_sha):
             raise ValueError("head SHA must be a lowercase 40-character SHA")
-        if len(args.required_audit_check) != len(args.required_audit_workflow):
-            raise ValueError(
-                "each required audit check must have one trusted workflow path"
-            )
-        required_checks = list(zip(
-            args.required_audit_check,
-            args.required_audit_workflow,
-            strict=True,
-        ))
-        if any(
-            not re.fullmatch(
-                r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml",
-                workflow,
-            )
-            for _, workflow in required_checks
-        ):
-            raise ValueError("required audit workflow path is invalid")
-        if not args.audit_report_url.startswith("https://"):
-            raise ValueError("audit report URL must be an HTTPS URL")
+        if args.required_audit_check not in (None, [provenance.CHECK]) or (
+                args.required_audit_workflow not in (None, [provenance.WORKFLOW])):
+            raise ValueError("only the canonical session-review authority is supported")
         report = load_report(args.audit_report)
+        if report["verdict"] != "Aprovado":
+            raise ValueError("negative or partial audit is local-only; no approved publication receipt")
         audit_report_sha256 = digest(canonical(report))
-        actor, comments, issue = read_authenticated_source(
-            args.repository, args.issue
-        )
-        verify_live_head(report, args.head_sha, args.repository)
-        selected_checks = verify_required_audit_checks(
-            args.repository,
-            args.head_sha,
-            args.issue,
-            audit_report_sha256,
-            report["identity"],
-            required_checks,
-        )
+        actor, comments, issue = read_authenticated_source(args.repository, args.issue)
+        check_id, binding = authenticate_attempt(report, args, audit_report_sha256)
+        if args.audit_report_url is not None and args.audit_report_url != binding["url"]:
+            raise ValueError("report URL must be the authenticated review comment")
+        if not provenance.allowed({"user": actor}, binding["operators"]):
+            raise ValueError("authenticated publisher is not an allowed operator")
+        validate_semantic_audit(report, args.audit_report)
         validate_report_against_sources(
             report,
             repository=args.repository,
@@ -618,7 +488,7 @@ def main() -> int:
             comments=comments,
         )
         payload = reconcile_payload(
-            report, audit_report_sha256, args.audit_report_url
+            report, audit_report_sha256, binding["url"]
         )
         comment = render_comment(payload)
         marker = payload["fingerprint"]
@@ -632,9 +502,12 @@ def main() -> int:
             "fingerprint": marker,
             "audit_report_sha256": payload["audit_report_sha256"],
             "body_write": "not-attempted-no-proven-cas",
-            "audit_check_run_ids": [item["id"] for item in selected_checks],
+            "audit_check_run_ids": [check_id],
+            "audit_review_comment_id": binding["comment_id"],
         }
         if persisted is not None:
+            verify_publisher_comment(persisted, comment, args.repository, args.issue,
+                                     binding["operators"])
             result.update({
                 "status": "already-published",
                 "comment_id": persisted.get("id"),
@@ -647,15 +520,8 @@ def main() -> int:
             actor2, latest_comments, latest_issue = read_authenticated_source(
                 args.repository, args.issue
             )
-            verify_live_head(report, args.head_sha, args.repository)
-            verify_required_audit_checks(
-                args.repository,
-                args.head_sha,
-                args.issue,
-                audit_report_sha256,
-                report["identity"],
-                required_checks,
-            )
+            if authenticate_attempt(report, args, audit_report_sha256) != (check_id, binding):
+                raise ValueError("review authority changed before publication")
             validate_report_against_sources(
                 report,
                 repository=args.repository,
@@ -664,7 +530,7 @@ def main() -> int:
                 issue=latest_issue,
                 comments=latest_comments,
             )
-            if actor2["login"] != actor["login"]:
+            if actor2["login"] != actor["login"] or actor2.get("id") != actor["id"]:
                 raise ValueError("authenticated publisher identity changed")
             persisted = exact_existing_comment(
                 latest_comments, marker, comment, args.repository
@@ -688,17 +554,10 @@ def main() -> int:
             else:
                 created_now = False
                 created = persisted
-            if not isinstance(persisted, dict) or persisted.get("body") != comment:
-                raise ValueError("authenticated readback did not match publication")
-            verify_live_head(report, args.head_sha, args.repository)
-            verify_required_audit_checks(
-                args.repository,
-                args.head_sha,
-                args.issue,
-                audit_report_sha256,
-                report["identity"],
-                required_checks,
-            )
+            verify_publisher_comment(persisted, comment, args.repository, args.issue,
+                                     binding["operators"], actor if created_now else None)
+            if authenticate_attempt(report, args, audit_report_sha256) != (check_id, binding):
+                raise ValueError("review authority changed during publication")
             final_issue = run_gh(
                 f"/repos/{args.repository}/issues/{args.issue}"
             )
@@ -730,6 +589,8 @@ def main() -> int:
                 raise ValueError(
                     "authenticated final readback found missing or duplicate publication"
                 )
+            verify_publisher_comment(final_matches[0], comment, args.repository, args.issue,
+                                     binding["operators"], actor if created_now else None)
             result.update({
                 "status": "published" if created_now else "already-published",
                 "comment_id": created["id"],
@@ -739,7 +600,7 @@ def main() -> int:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
     except Exception as exc:
-        print(f"BLOCK: {exc}", file=__import__("sys").stderr)
+        print(f"BLOCK: {exc}", file=sys.stderr)
         return 2
 
 
