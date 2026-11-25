@@ -191,3 +191,27 @@ def test_duplicate_json_fields_are_not_accepted_as_native_evidence(proof):
     assert data != path.read_text(encoding="utf-8")
     with pytest.raises(ValueError, match="duplicate native evidence JSON"):
         native.verify(root, evidence, event, "develop")
+
+
+@pytest.mark.parametrize("passed", [True, False])
+def test_main_native_workflow_validator_cli(proof, monkeypatch, capsys, passed):
+    root, evidence, event, _ = proof
+    for path in (event, evidence / "certification-event.json"):
+        value = json.loads(path.read_text(encoding="utf-8"))
+        value["pull_request"]["base"]["ref"] = "main"
+        write(path, value)
+    preflight = evidence / "handoff-preflight.json"
+    value = json.loads(preflight.read_text(encoding="utf-8"))
+    value["base_ref"] = "main" if passed else "develop"
+    write(preflight, value)
+    monkeypatch.setattr(sys, "argv", ["validate_native_actions_evidence.py",
+                                      "--root", str(root), "--evidence-dir", str(evidence),
+                                      "--event", str(event), "--base-ref", "main"])
+    assert native.main() == (0 if passed else 2)
+    captured = capsys.readouterr()
+    if passed:
+        receipt = json.loads(captured.out)
+        assert receipt["test_count"] == 1
+        assert receipt["independent_review"] == receipt["semantic_certification"] == "NOT_ASSERTED"
+    else:
+        assert "technical preflight identity" in captured.err and not captured.out
