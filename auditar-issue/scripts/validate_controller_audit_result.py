@@ -130,9 +130,11 @@ def verify_requirements_verdict(report):
     failed_gates = [item for item in report["gates"] if item["status"] != "passed"]
     unresolved_criteria = any(item["decision"] not in {"verified", "not-applicable"}
                               for item in report["acceptance_criteria"])
-    if report["verdict"] == "Aprovado" and (open_blocking or unresolved or material_limits
-                                             or failed_gates or unresolved_criteria):
-        raise ValueError("Aprovado is inconsistent with findings, requirements, limitations or gates")
+    approval = report["verdict"] in {"Aprovado", "Aprovado com ressalvas"}
+    if approval and (open_blocking or unresolved or failed_gates or unresolved_criteria):
+        raise ValueError("Approval is inconsistent with findings, requirements, criteria or gates")
+    if report["verdict"] == "Aprovado" and material_limits:
+        raise ValueError("Aprovado is inconsistent with material limitations")
     if report["mode"] == "independent" and report["verdict"] == "Reprovado":
         rejection_id = str(report.get("rejection_id") or "").strip()
         if not rejection_id.startswith("audit-rejection:") or len(rejection_id) < 24:

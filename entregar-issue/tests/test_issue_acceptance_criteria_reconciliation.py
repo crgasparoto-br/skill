@@ -167,7 +167,7 @@ def test_rejects_checked_proposal_without_proof():
 
 def test_reopens_a_marked_criterion_without_proof():
     changed = report()
-    changed["verdict"] = "Parcial"
+    changed["verdict"] = "Reprovado"
     changed["requirements"][1]["status"] = "Parcial"
     changed["acceptance_criteria"][1]["decision"] = "partial"
     changed["acceptance_criteria"][1]["proposed_checkbox_state"] = "unchecked"
@@ -203,7 +203,7 @@ def test_accepts_a_criterion_without_an_explicit_checkbox():
     item["decision"] = "inconclusive"
     item["evidence"] = []
     item["proposed_checkbox_state"] = "unchanged"
-    changed["verdict"] = "Parcial"
+    changed["verdict"] = "Reprovado"
     changed["requirements"] = [requirement("REQ-1", 4, item["text"])]
     changed["requirements"][0].update(status="Nao verificavel", source_sha256=item["source_sha256"])
     validate_report_against_sources(

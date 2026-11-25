@@ -123,20 +123,22 @@ class ControllerAuditResultTests(unittest.TestCase):
         criterion["initial_checkbox_state"] = "checked"
         criterion["decision"] = "partial"
         criterion["proposed_checkbox_state"] = "unchecked"
-        report["verdict"] = "Parcial"
+        report["verdict"] = "Reprovado"
         report["requirements"][0]["status"] = "Parcial"
         self.assertEqual(self.run_report(report).returncode, 0)
         criterion["proposed_checkbox_state"] = "unchanged"
         self.assertNotEqual(self.run_report(report).returncode, 0)
 
     def test_rejects_approved_report_with_unresolved_criterion(self):
-        for decision, status in (("partial", "Parcial"), ("failed", "Incorreto"),
-                                 ("inconclusive", "Nao verificavel")):
-            with self.subTest(decision=decision):
-                report = self.valid_report()
-                report["acceptance_criteria"][0].update(decision=decision, evidence=[], proposed_checkbox_state="unchecked")
-                report["requirements"][0]["status"] = status
-                self.assertNotEqual(self.run_report(report).returncode, 0)
+        for verdict in ("Aprovado", "Aprovado com ressalvas"):
+            for decision, status in (("partial", "Parcial"), ("failed", "Incorreto"),
+                                     ("inconclusive", "Nao verificavel")):
+                with self.subTest(decision=decision, verdict=verdict):
+                    report = self.valid_report()
+                    report["verdict"] = verdict
+                    report["acceptance_criteria"][0].update(decision=decision, evidence=[], proposed_checkbox_state="unchecked")
+                    report["requirements"][0]["status"] = status
+                    self.assertNotEqual(self.run_report(report).returncode, 0)
 
     def test_rejects_unbound_criterion_evidence(self):
         report = self.valid_report()
