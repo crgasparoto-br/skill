@@ -163,13 +163,50 @@ def _native_contract_proof(directory: Path, identity: dict, transport: dict) -> 
             and isinstance(contract, dict)
             and contract.get("source_sha256") == transport.get("contract_sha256"),
             "native evidence differs from authenticated trusted-base policy")
+    if identity["base_ref"] == "main":
+        from resolve_trusted_audit_transport import MAIN_CONTRACT_PATH
+
+        require(source.get("base_ref") == "main" and source.get("legacy_handoff_required") is False
+                and contract.get("path") == MAIN_CONTRACT_PATH
+                and contract.get("observed_at_sha") == identity["base_sha"]
+                and contract.get("legacy_handoff_policy") == "forbidden",
+                "native main evidence does not bind its protected main policy")
+
+
+def session_evidence_check(base_ref: str, mode: str) -> str:
+    """Session transport never reuses another branch's producer."""
+    from verify_independent_pr_audit import (
+        HANDOFF,
+        MAIN_NATIVE_EVIDENCE,
+        NATIVE_EVIDENCE,
+    )
+
+    if base_ref == "main":
+        require(mode == "native-github-audit", "main requires authenticated native audit transport")
+        return MAIN_NATIVE_EVIDENCE
+    require(base_ref == "develop", "unsupported session evidence base")
+    require(mode in {"certified-handoff", "native-github-audit"}, "unknown audit transport")
+    return NATIVE_EVIDENCE if mode == "native-github-audit" else HANDOFF
+
+
+def check_session_transport(base_ref: str, transport: dict) -> str:
+    name = session_evidence_check(base_ref, transport["mode"])
+    if base_ref == "main":
+        contract_sha256 = transport.get("contract_sha256")
+        require(isinstance(contract_sha256, str) and re.fullmatch("[0-9a-f]{64}", contract_sha256),
+                "main requires authenticated native audit transport")
+    return name
 
 
 def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, unpack,
                        authenticated_certificate_event, authenticated_preview_reconciliation,
                        root: Path, audit_transport: dict | None = None) -> tuple[dict, set[str]]:
     """Technical workflow authentication is reused, not replaced by check-name matching."""
-    from verify_independent_pr_audit import HANDOFF, NATIVE_EVIDENCE, required_checks_green, trusted_workflow_check
+    from verify_independent_pr_audit import (
+        APP_ID,
+        required_checks_green,
+        trusted_workflow_check,
+    )
     repo, number = identity["repository"], identity["pull_request"]
     head, base = identity["head_sha"], identity["base_sha"]
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -178,13 +215,16 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
     audit_transport = audit_transport or {"mode": "certified-handoff", "contract_sha256": None}
     mode = audit_transport.get("mode")
     require(mode in {"certified-handoff", "native-github-audit"}, "unknown audit transport")
-    evidence_check = NATIVE_EVIDENCE if mode == "native-github-audit" else HANDOFF
+    base_ref = identity["base_ref"]
+    evidence_check = check_session_transport(base_ref, audit_transport)
     if mode == "certified-handoff":
-        required_checks_green(checks, head, "develop", trust)
+        required_checks_green(checks, head, base_ref, trust)
     else:
-        required_checks_green(checks, head, "develop", trust, audit_transport=mode)
+        required_checks_green(checks, head, base_ref, trust, audit_transport=mode)
     candidates = [c for c in checks["check_runs"] if c.get("name") == evidence_check
-                  and c.get("head_sha") == head and trust(evidence_check, c)]
+                  and c.get("head_sha") == head
+                  and (base_ref != "main" or (c.get("app") or {}).get("id") == APP_ID)
+                  and trust(evidence_check, c)]
     chosen = max(candidates, key=lambda c: c["id"])
     run_id = int(re.search(r"/actions/runs/(\d+)/", chosen["details_url"])[1])
     artifacts = api(f"/repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100")
@@ -198,6 +238,10 @@ def certified_evidence(identity: dict, checks: dict, directory: Path, *, api, un
     unpack(raw, directory)
     sys.path.insert(0, str(root / "entregar-issue/scripts"))
     from build_test_candidate_index import collect
+    if base_ref == "main":
+        from run_main_evidence_tests import require_receipt
+
+        require_receipt(directory, head)
     event = authenticated_certificate_event(identity)
     recorded_raw = (directory / "certification-event.json").read_bytes()
     recorded = strict_json(recorded_raw.decode())

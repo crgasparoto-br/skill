@@ -1,0 +1,136 @@
+name: Collect main exact-SHA native evidence
+
+# This is evidence for the existing session review check, not release approval.
+# The separate release-handoff and versioning validation remain required.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  collect:
+    name: Collect main technical tests
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      EVIDENCE_DIR: /tmp/solverit-main-evidence
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      MATERIAL_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout material HEAD for tests
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: material
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Checkout base tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted-main-tooling
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Bind evidence to the protected base policy and live PR/issue
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW: "1"
+        run: |
+          set -euo pipefail
+          test "$(git -C trusted-main-tooling rev-parse HEAD)" = "$BASE_SHA"
+          mkdir -p "$EVIDENCE_DIR"
+          scripts="$GITHUB_WORKSPACE/trusted-main-tooling/entregar-issue/scripts"
+          python -I "$scripts/resolve_trusted_audit_transport.py" \
+            --root material --repository "$GITHUB_REPOSITORY" --base-ref main \
+            --base-sha "$BASE_SHA" --head-sha "$MATERIAL_SHA" --output "$EVIDENCE_DIR/audit-transport.json"
+          python "$scripts/prepare_actions_handoff.py" --phase prepare \
+            --event "$GITHUB_EVENT_PATH" --root material --base-ref main --out "$EVIDENCE_DIR"
+      - name: Stage wheels only from protected base locks and pull pinned runtime
+        run: |
+          set -euo pipefail
+          trusted="$GITHUB_WORKSPACE/trusted-main-tooling"
+          test "$(git -C "$trusted" rev-parse HEAD)" = "$BASE_SHA"
+          locks="$RUNNER_TEMP/main-locks"
+          wheels="$RUNNER_TEMP/main-wheels"
+          mkdir -p "$locks/entregar-issue" "$locks/auditar-issue" "$wheels"
+          for file in requirements.lock.txt entregar-issue/requirements-dev.lock.txt auditar-issue/requirements-dev.lock.txt; do
+            cp -- "$trusted/$file" "$locks/$file"
+          done
+          python -m pip --isolated download --require-hashes --only-binary=:all: --dest "$wheels" \
+            -r "$locks/requirements.lock.txt" -r "$locks/entregar-issue/requirements-dev.lock.txt" \
+            -r "$locks/auditar-issue/requirements-dev.lock.txt"
+          image=$(python -I -c 'import runpy,sys; print(runpy.run_path(sys.argv[1])["IMAGE"])' "$trusted/scripts/run_main_evidence_tests.py")
+          /usr/bin/docker pull --platform linux/amd64 "$image"
+      - name: Run exact material tests in isolated no-network runtime
+        run: |
+          set -euo pipefail
+          test "$(git -C material rev-parse HEAD)" = "$MATERIAL_SHA"
+          python -I "$GITHUB_WORKSPACE/trusted-main-tooling/scripts/run_main_evidence_tests.py" \
+            --material material --locks "$RUNNER_TEMP/main-locks" --wheelhouse "$RUNNER_TEMP/main-wheels" \
+            --evidence "$EVIDENCE_DIR" --head "$MATERIAL_SHA"
+      - name: Record technical test facts and candidate controls
+        run: |
+          set -euo pipefail
+          scripts="$GITHUB_WORKSPACE/trusted-main-tooling/entregar-issue/scripts"
+          command=$(python -I -c 'import runpy,sys; print(runpy.run_path(sys.argv[1])["TEST_COMMAND"])' "$GITHUB_WORKSPACE/trusted-main-tooling/scripts/run_main_evidence_tests.py")
+          python "$scripts/prepare_actions_handoff.py" --phase record-tests --root material --out "$EVIDENCE_DIR" \
+            --test-command "$command" --exit-code 0
+          python "$scripts/build_test_candidate_index.py" --junit "$EVIDENCE_DIR/pytest-exact-head.xml" \
+            --head-sha "$MATERIAL_SHA" --out "$EVIDENCE_DIR/test-candidate-index.json"
+      - name: Upload exact opaque technical evidence
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: handoff-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: ${{ env.EVIDENCE_DIR }}/
+          if-no-files-found: error
+          retention-days: 14
+
+  verify:
+    name: Require main native audit evidence (exact SHA)
+    needs: collect
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout material Git objects, without execution
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: material
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Checkout trusted native validator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted-main-validator
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Download the technical ZIP for this run only
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: handoff-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/main-native-evidence
+      - name: Verify authenticated exact-main evidence, without approving
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MATERIAL_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_TOKEN: ${{ github.token }}
+          SOLVERIT_REQUIRE_LIVE_MERGE_PREVIEW: "1"
+        run: |
+          set -euo pipefail
+          test "$(git -C trusted-main-validator rev-parse HEAD)" = "$BASE_SHA"
+          python -I "$GITHUB_WORKSPACE/trusted-main-validator/scripts/run_main_evidence_tests.py" \
+            --verify --head "$MATERIAL_SHA" --evidence "$RUNNER_TEMP/main-native-evidence"
+          python "$GITHUB_WORKSPACE/trusted-main-validator/entregar-issue/scripts/validate_native_actions_evidence.py" \
+            --root material --event "$GITHUB_EVENT_PATH" --base-ref main --evidence-dir "$RUNNER_TEMP/main-native-evidence"
