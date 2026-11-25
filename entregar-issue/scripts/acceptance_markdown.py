@@ -122,6 +122,7 @@ def analyze_body(body: str) -> dict[int, tuple[str, str]]:
     fence_width = 0
     in_comment = False
     html_block = ""
+    inert_depth = 0
     paragraph_open = False
     list_content_indents: list[int] = []
     active_items: list[dict] = []
@@ -193,7 +194,16 @@ def analyze_body(body: str) -> dict[int, tuple[str, str]]:
         item_paragraph_open = False
         relative_indent = _relative_list_indent(line, list_content_indents) if line.strip() else 0
         del active_items[len(list_content_indents):]
+        # CommonMark implicitly closes fenced/raw blocks at the end of their
+        # owning list container; never carry inert state into a sibling.
+        if inert_depth > len(list_content_indents):
+            fence_marker, fence_width, in_comment, html_block = "", 0, False, ""
+            inert_depth = 0
         if skip_inert(line, stripped, relative_indent):
+            if fence_marker or in_comment or html_block:
+                inert_depth = len(list_content_indents)
+            else:
+                inert_depth = 0
             continue
 
         heading = _top_level_heading(line, list_content_indents)
@@ -222,7 +232,7 @@ def analyze_body(body: str) -> dict[int, tuple[str, str]]:
         active_items.append(item)
         item_paragraph_open = True
 
-    if fence_marker or in_comment or (html_block and html_block != "until-blank"):
+    if not inert_depth and (fence_marker or in_comment or (html_block and html_block != "until-blank")):
         raise ValueError("Unterminated inert Markdown block")
     if sections != 1:
         raise ValueError("Expected exactly one level-2 acceptance-criteria section")

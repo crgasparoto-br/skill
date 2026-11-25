@@ -20,6 +20,12 @@ quando o checkbox já estiver marcado. Para cada item registrar:
 - justificativa verificável;
 - estado de checkbox proposto.
 
+Cada critério deve apontar para um requisito atômico distinto. Na linha de
+`requirements`, usar `origin` igual a `source_id` do critério, `statement` igual
+a `text`, e repetir `source_locator`, `source_sha256` e `source_line` exatos.
+Evidências positivas de um critério verificado devem pertencer a `evidence`
+desse mesmo requisito; não aceitar evidência de outro item.
+
 Texto duplicado não identifica um critério: origem, locator e linha integram a
 identidade. Se a fonte tiver mudado desde a captura, bloquear a decisão para
 essa identidade em vez de associar o parecer a um contrato semelhante.
@@ -32,7 +38,10 @@ justificativa canônicas prévias. Um checkbox já marcado não é evidência.
 
 A matriz por critério e a ação proposta não são o veredito global. O veredito
 continua dependente de todos os gates aplicáveis: implementação, testes, CI,
-segurança, arquitetura, regressões, documentação e limitações do auditor. Uma
+segurança, arquitetura, regressões, documentação e limitações do auditor. Uma aprovação exige que cada critério obrigatório esteja `verified`;
+`not-applicable` só é admissível com requisito `Fora do escopo` e base
+canônica explícita. Decisões parciais, falhas e inconclusões devem corresponder
+aos estados do requisito e impedem aprovação global. Uma
 matriz inteiramente verde não libera merge, fechamento ou release.
 
 Registrar a cobertura das demais famílias com estado e justificativa de

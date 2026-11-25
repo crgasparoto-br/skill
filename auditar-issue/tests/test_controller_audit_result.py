@@ -56,8 +56,9 @@ class ControllerAuditResultTests(unittest.TestCase):
             "prior_internal_approval": None,
             "audit_escapes": [],
             "requirements": [{
-                "id": "REQ-1", "origin": "SRC-1", "statement": "Implement the requested behavior.",
-                "status": "Implementado", "evidence": ["positive"],
+                "id": "REQ-1", "origin": "SRC-ISSUE", "statement": "Implement the requested behavior.",
+                "source_locator": "issue-body", "source_sha256": HASH, "source_line": 10,
+                "status": "Implementado", "evidence": ["tests", "implementation:42"],
                 "negative_controls": ["negative"],
                 "negative_control_evidence": [{
                     "id": "negative",
@@ -122,8 +123,24 @@ class ControllerAuditResultTests(unittest.TestCase):
         criterion["initial_checkbox_state"] = "checked"
         criterion["decision"] = "partial"
         criterion["proposed_checkbox_state"] = "unchecked"
+        report["verdict"] = "Parcial"
+        report["requirements"][0]["status"] = "Parcial"
         self.assertEqual(self.run_report(report).returncode, 0)
         criterion["proposed_checkbox_state"] = "unchanged"
+        self.assertNotEqual(self.run_report(report).returncode, 0)
+
+    def test_rejects_approved_report_with_unresolved_criterion(self):
+        for decision, status in (("partial", "Parcial"), ("failed", "Incorreto"),
+                                 ("inconclusive", "Nao verificavel")):
+            with self.subTest(decision=decision):
+                report = self.valid_report()
+                report["acceptance_criteria"][0].update(decision=decision, evidence=[], proposed_checkbox_state="unchecked")
+                report["requirements"][0]["status"] = status
+                self.assertNotEqual(self.run_report(report).returncode, 0)
+
+    def test_rejects_unbound_criterion_evidence(self):
+        report = self.valid_report()
+        report["acceptance_criteria"][0]["evidence"] = ["unrelated:42"]
         self.assertNotEqual(self.run_report(report).returncode, 0)
 
     def test_rejects_verified_criterion_with_unimplemented_requirement(self):

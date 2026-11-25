@@ -28,7 +28,11 @@ O CLI também confere o
 snapshot da issue e a seção normativa `## Critérios de aceite` (ou
 `## Acceptance criteria`) em cada origem usada. Uma linha de item é localizada
 junto com o texto de suas continuações, sem contar listas em código/HTML
-inerte como critérios. Identifique itens filhos separadamente.
+inerte como critérios. Identifique itens filhos separadamente. Blocos inertes
+em listas terminam no limite do seu contêiner, inclusive sem cerca explícita.
+O validador compartilhado exige vínculo individual de origem, texto, digest,
+locator, linha e evidência com o requisito atômico correspondente, e rejeita
+aprovação global com critérios obrigatórios não verificados antes do POST.
 
 A autoridade não é selecionável: o CLI exige o check canônico
 `Verify session review (exact SHA)`, do app GitHub Actions, e o workflow canônico

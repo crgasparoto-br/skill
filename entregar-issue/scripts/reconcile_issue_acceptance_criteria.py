@@ -14,7 +14,7 @@ from typing import Any
 import acceptance_publication_provenance as provenance
 import jsonschema
 from acceptance_markdown import analyze_body
-from validate_controller_audit_result import validate_report_data
+from validate_controller_audit_result import validate_criteria, validate_report_data
 
 CHECKBOX_RE = re.compile(r"^\s*\[\s*([xX ])\s*\]\s*(.*?)\s*$")
 COMMENT_LOCATOR_RE = re.compile(r"^issue-comment:(\d+)$")
@@ -129,7 +129,6 @@ def criterion_source(
 
 def validate_acceptance_criterion(
     criterion: dict[str, Any],
-    requirement: dict[str, Any],
     source: str,
 ) -> tuple[str, int, str]:
     identifier = str(criterion["id"])
@@ -141,27 +140,6 @@ def validate_acceptance_criterion(
         str(criterion["text"])
     ):
         raise ValueError(f"{identifier} no longer matches its exact source item")
-    decision = criterion["decision"]
-    proposed = criterion["proposed_checkbox_state"]
-    if decision == "verified":
-        if not criterion["evidence"]:
-            raise ValueError(f"{identifier} verified decision lacks evidence")
-        if requirement["status"] != "Implementado":
-            raise ValueError(
-                f"{identifier} verified decision has no implemented requirement"
-            )
-        if proposed != "checked":
-            raise ValueError(
-                f"{identifier} verified decision must propose checked"
-            )
-    else:
-        expected = (
-            "unchanged"
-            if criterion["initial_checkbox_state"] == "not-present"
-            else "unchecked"
-        )
-        if proposed != expected:
-            raise ValueError(f"{identifier} unverified decision must remain open")
     return str(criterion["source_locator"]), line, text
 
 
@@ -194,27 +172,15 @@ def validate_report_against_sources(
         for item in comments
         if item.get("id") is not None
     }
-    requirements = {str(item["id"]): item for item in report["requirements"]}
-    criterion_ids: set[str] = set()
-    source_locations: set[tuple[str, int, str]] = set()
+    validate_criteria(report)
     body_lines: set[int] = set()
     for criterion in report["acceptance_criteria"]:
-        identifier = str(criterion["id"])
-        if identifier in criterion_ids:
-            raise ValueError(f"duplicate acceptance criterion id: {identifier}")
-        criterion_ids.add(identifier)
-        requirement = requirements.get(str(criterion["requirement_id"]))
-        if requirement is None:
-            raise ValueError(f"{identifier} references an unknown requirement")
         source = criterion_source(
             criterion, body=body, comments=comment_by_id
         )
         location = validate_acceptance_criterion(
-            criterion, requirement, source
+            criterion, source
         )
-        if location in source_locations:
-            raise ValueError(f"{identifier} duplicates another criterion source")
-        source_locations.add(location)
         if location[0] == "issue-body":
             body_lines.add(location[1])
     expected_body_lines = set(acceptance_lines(body))

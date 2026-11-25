@@ -35,6 +35,40 @@ def validate_audit_metadata(report):
         raise ValueError("neutral packet contains implementation conclusions or narrative")
 
 
+CRITERION_STATUS = {
+    "verified": {"Implementado"},
+    "partial": {"Parcial"},
+    "failed": {"Nao implementado", "Incorreto"},
+    "inconclusive": {"Nao verificavel"},
+    "not-applicable": {"Fora do escopo"},
+}
+
+
+def validate_criterion_binding(criterion, requirement):
+    """Bind a decision to its own atomic requirement and positive evidence."""
+    identifier = criterion["id"]
+    if (requirement.get("origin") != criterion["source_id"]
+            or requirement.get("statement") != criterion["text"]
+            or any(requirement.get(key) != criterion[key]
+                   for key in ("source_locator", "source_sha256", "source_line"))
+            or type(requirement.get("source_line")) is not int):
+        raise ValueError(f"{identifier} requirement source binding mismatch")
+    decision = criterion["decision"]
+    if decision == "verified":
+        if not criterion["evidence"] or not set(criterion["evidence"]).issubset(requirement.get("evidence", [])):
+            raise ValueError(f"{identifier} verified criterion lacks bound requirement evidence")
+        if criterion["proposed_checkbox_state"] != "checked":
+            raise ValueError(f"{identifier} verified criterion must propose checked")
+    else:
+        expected = "unchanged" if criterion["initial_checkbox_state"] == "not-present" else "unchecked"
+        if criterion["proposed_checkbox_state"] != expected:
+            raise ValueError(f"{identifier} unverified criterion must remain open")
+    if requirement["status"] not in CRITERION_STATUS[decision]:
+        raise ValueError(f"{identifier} criterion decision conflicts with requirement status")
+    if decision == "not-applicable" and not str(requirement.get("scope_basis") or "").strip():
+        raise ValueError(f"{identifier} not-applicable criterion lacks canonical scope basis")
+
+
 def validate_criteria(report):
     requirement_ids = [item["id"] for item in report["requirements"]]
     if len(requirement_ids) != len(set(requirement_ids)):
@@ -44,12 +78,11 @@ def validate_criteria(report):
     if len(criterion_ids) != len(set(criterion_ids)):
         raise ValueError("acceptance criterion ids must be unique")
     criterion_sources = []
+    linked_requirements = set()
     for criterion in report["acceptance_criteria"]:
         source = (
-            criterion["source_id"],
             criterion["source_locator"],
             criterion["source_line"],
-            criterion["text"],
         )
         criterion_sources.append(source)
         requirement = requirements_by_id.get(criterion["requirement_id"])
@@ -68,27 +101,10 @@ def validate_criteria(report):
             raise ValueError(
                 f"{criterion['id']} issue-body source identity is inconsistent"
             )
-        if criterion["decision"] == "verified":
-            if not criterion["evidence"]:
-                raise ValueError(f"{criterion['id']} verified criterion lacks evidence")
-            if requirement["status"] != "Implementado":
-                raise ValueError(
-                    f"{criterion['id']} is verified but its requirement is not implemented"
-                )
-            if criterion["proposed_checkbox_state"] != "checked":
-                raise ValueError(
-                    f"{criterion['id']} verified criterion must propose checked"
-                )
-        else:
-            expected_checkbox_state = (
-                "unchanged"
-                if criterion["initial_checkbox_state"] == "not-present"
-                else "unchecked"
-            )
-            if criterion["proposed_checkbox_state"] != expected_checkbox_state:
-                raise ValueError(
-                    f"{criterion['id']} unverified criterion must remain open"
-                )
+        if criterion["requirement_id"] in linked_requirements:
+            raise ValueError("acceptance criteria require distinct atomic requirements")
+        linked_requirements.add(criterion["requirement_id"])
+        validate_criterion_binding(criterion, requirement)
     if len(criterion_sources) != len(set(criterion_sources)):
         raise ValueError("acceptance criterion source locations must be unique")
 
@@ -112,7 +128,10 @@ def verify_requirements_verdict(report):
     ]
     material_limits = [item for item in report["limitations"] if item["material"]]
     failed_gates = [item for item in report["gates"] if item["status"] != "passed"]
-    if report["verdict"] == "Aprovado" and (open_blocking or unresolved or material_limits or failed_gates):
+    unresolved_criteria = any(item["decision"] not in {"verified", "not-applicable"}
+                              for item in report["acceptance_criteria"])
+    if report["verdict"] == "Aprovado" and (open_blocking or unresolved or material_limits
+                                             or failed_gates or unresolved_criteria):
         raise ValueError("Aprovado is inconsistent with findings, requirements, limitations or gates")
     if report["mode"] == "independent" and report["verdict"] == "Reprovado":
         rejection_id = str(report.get("rejection_id") or "").strip()

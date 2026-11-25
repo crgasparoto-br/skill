@@ -54,8 +54,8 @@ def report() -> dict:
             "issue_snapshot_sha256": hashlib.sha256(BODY.encode()).hexdigest(),
         },
         "requirements": [
-            {"id": "REQ-1", "status": "Implementado"},
-            {"id": "REQ-2", "status": "Implementado"},
+            requirement("REQ-1", 7, "O fluxo publica a decisão."),
+            requirement("REQ-2", 8, "O fluxo preserva o corpo."),
         ],
         "acceptance_criteria": [
             criterion(
@@ -69,6 +69,13 @@ def report() -> dict:
         "gates": [],
         "limitations": [],
     }
+
+
+def requirement(identifier: str, line: int, text: str) -> dict:
+    return {"id": identifier, "status": "Implementado", "origin": "SRC-ISSUE",
+            "statement": text, "source_locator": "issue-body", "source_line": line,
+            "source_sha256": hashlib.sha256(BODY.encode()).hexdigest(),
+            "evidence": [f"{ROOT}/evidence:{line}"]}
 
 
 def criterion(identifier: str, requirement: str, line: int, text: str,
@@ -160,6 +167,8 @@ def test_rejects_checked_proposal_without_proof():
 
 def test_reopens_a_marked_criterion_without_proof():
     changed = report()
+    changed["verdict"] = "Parcial"
+    changed["requirements"][1]["status"] = "Parcial"
     changed["acceptance_criteria"][1]["decision"] = "partial"
     changed["acceptance_criteria"][1]["proposed_checkbox_state"] = "unchecked"
     validate(changed)
@@ -194,6 +203,9 @@ def test_accepts_a_criterion_without_an_explicit_checkbox():
     item["decision"] = "inconclusive"
     item["evidence"] = []
     item["proposed_checkbox_state"] = "unchanged"
+    changed["verdict"] = "Parcial"
+    changed["requirements"] = [requirement("REQ-1", 4, item["text"])]
+    changed["requirements"][0].update(status="Nao verificavel", source_sha256=item["source_sha256"])
     validate_report_against_sources(
         changed,
         repository="owner/repo",
@@ -269,11 +281,8 @@ def canonical_report() -> dict:
         "prior_internal_approval": None,
         "audit_escapes": [],
     })
-    for index, requirement in enumerate(value["requirements"], start=1):
+    for requirement in value["requirements"]:
         requirement.update({
-            "origin": "SRC-ISSUE",
-            "statement": f"Criterion {index} is implemented.",
-            "evidence": ["implementation:1"],
             "negative_controls": [],
             "negative_control_evidence": [],
             "regression_evidence": ["test"],
@@ -560,3 +569,69 @@ def test_rejects_duplicate_logical_comments(monkeypatch):
         assert "duplicate" in str(exc)
     else:
         raise AssertionError("logical duplicate comments must block publication")
+
+
+@pytest.mark.parametrize("mutation", ["wrong-requirement", "wrong-evidence", "wrong-source",
+                                      "wrong-line", "wrong-digest", "wrong-text", "missing-binding",
+                                      "inconclusive", "partial", "failed", "unjustified-na"])
+def test_cli_rejects_inconsistent_criterion_before_post(tmp_path, monkeypatch, capsys, mutation):
+    value = full_report(tmp_path)
+    item, req = value["acceptance_criteria"][1], value["requirements"][1]
+    if mutation == "wrong-requirement":
+        item.update(requirement_id="REQ-1", evidence=value["requirements"][0]["evidence"])
+    elif mutation == "wrong-evidence":
+        item["evidence"] = value["requirements"][0]["evidence"]
+    elif mutation == "wrong-source":
+        req["origin"] = "SRC-OTHER"
+    elif mutation == "wrong-line":
+        req["source_line"] = 7
+    elif mutation == "wrong-digest":
+        req["source_sha256"] = HASH
+    elif mutation == "wrong-text":
+        req["statement"] = value["requirements"][0]["statement"]
+    elif mutation == "missing-binding":
+        del req["source_locator"]
+    elif mutation == "unjustified-na":
+        item.update(decision="not-applicable", evidence=[], proposed_checkbox_state="unchecked")
+        req["status"] = "Fora do escopo"
+    else:
+        item.update(decision=mutation, evidence=[], proposed_checkbox_state="unchecked")
+        req["status"] = {"inconclusive": "Nao verificavel", "partial": "Parcial", "failed": "Incorreto"}[mutation]
+    path = tmp_path / "report.json"
+    path.write_text(json.dumps(value))
+    api, _, _, _, calls = remote(value)
+    monkeypatch.setattr(MODULE, "run_gh", api)
+    apply_arguments(monkeypatch, path)
+    assert MODULE.main() == 2
+    assert "BLOCK:" in capsys.readouterr().err
+    assert all(method == "GET" for method, _ in calls)
+
+
+@pytest.mark.parametrize("opener,example", [("```", "- [ ] Example"), ("~~~", "- [ ] Example"),
+    ("<!--", "- [ ] Hidden"), ("<pre>", "- [ ] Raw"), ("<div>", "- [ ] Raw")])
+@pytest.mark.parametrize("indent", ["  ", "    "])
+def test_container_inert_block_does_not_swallow_sibling(opener, example, indent):
+    prefix = "- [ ] " if indent == "  " else "  - [ ] "
+    parent = "" if indent == "  " else "- [ ] Parent\n"
+    markdown = ("## Acceptance criteria\n" + parent + prefix + "First\n" + indent + opener +
+                "\n" + indent + example + "\n" + prefix + "Second\n")
+    expected = [2, 5] if not parent else [2, 3, 6]
+    assert MODULE.acceptance_lines(markdown) == expected
+
+
+def test_duplicate_text_criteria_require_distinct_source_lines():
+    body = "## Acceptance criteria\n- [ ] Identical criterion.\n- [ ] Identical criterion.\n"
+    value = report()
+    digest = MODULE.digest(body.encode())
+    value["identity"]["issue_snapshot_sha256"] = digest
+    for i, (item, req) in enumerate(zip(value["acceptance_criteria"], value["requirements"]), 2):
+        item.update(text="Identical criterion.", source_line=i, source_sha256=digest,
+                    initial_checkbox_state="unchecked")
+        req.update(statement=item["text"], source_line=i, source_sha256=digest)
+    def check():
+        validate_report_against_sources(value, repository="owner/repo", issue_number=196,
+                                        head_sha="1"*40, issue={"state": "open", "body": body}, comments=[])
+    check()
+    value["acceptance_criteria"][1]["requirement_id"] = "REQ-1"
+    with pytest.raises(ValueError, match="distinct atomic requirements"):
+        check()
