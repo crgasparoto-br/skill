@@ -44,6 +44,9 @@ Portao de release: <liberado somente para independent | pendente>
 - Pacote neutro sem conclusoes do implementador: <sim/nao>
 - CI material: <green|blocked>, subject_sha=<sha>
 - Terminal handoff: <READY|NAO>, subject=<repository kind #numero / PR>, material_head=<sha>, published_handoff_head=<sha>
+- Reconciliação de critérios: <not-applicable|planned|already-published|published>
+- Comentário/fingerprint/read-back: <URL>, <sha256>, <autenticado|pendente>
+- Corpo da issue: <preservado>; escrita de checkbox: <não tentada sem CAS atômico>
 
 ## Audit escapes
 - Escape:

@@ -20,6 +20,7 @@
     "coverage_matrix_sha256",
     "neutral_packet_sha256",
     "neutral_packet",
+    "acceptance_criteria",
     "prior_internal_approval",
     "audit_escapes",
     "requirements",
@@ -181,6 +182,95 @@
             "type": "string",
             "minLength": 1
           }
+        }
+      },
+      "additionalProperties": false
+    },
+    "acceptanceCriterion": {
+      "type": "object",
+      "required": [
+        "id",
+        "requirement_id",
+        "origin",
+        "source_id",
+        "source_locator",
+        "source_sha256",
+        "source_line",
+        "text",
+        "initial_checkbox_state",
+        "decision",
+        "evidence",
+        "rationale",
+        "proposed_checkbox_state"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requirement_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "enum": [
+            "issue-body",
+            "issue-comment"
+          ]
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 4
+        },
+        "initial_checkbox_state": {
+          "enum": [
+            "checked",
+            "unchecked",
+            "not-present"
+          ]
+        },
+        "decision": {
+          "enum": [
+            "verified",
+            "partial",
+            "failed",
+            "inconclusive",
+            "not-applicable"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 20
+        },
+        "proposed_checkbox_state": {
+          "enum": [
+            "checked",
+            "unchecked",
+            "unchanged"
+          ]
         }
       },
       "additionalProperties": false
@@ -494,6 +584,12 @@
         }
       },
       "additionalProperties": false
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/acceptanceCriterion"
+      }
     },
     "prior_internal_approval": {
       "oneOf": [
