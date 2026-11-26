@@ -16,6 +16,7 @@ import tempfile
 from pathlib import Path
 
 CONTRACT_PATH = "docs/audit/github-native-contract.json"
+MAIN_CONTRACT_PATH = "docs/audit/github-native-main-contract.json"
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
 EXPECTED_FIELDS = frozenset({
@@ -43,8 +44,17 @@ def _unique_json_pairs(pairs: list[tuple[str, object]]) -> dict:
     return result
 
 
+def native_contract_path(base_ref: str) -> str:
+    if base_ref == "develop":
+        return CONTRACT_PATH
+    if base_ref == "main":
+        return MAIN_CONTRACT_PATH
+    raise ValueError("unsupported trusted audit base")
+
+
 def validate_native_contract_blob(raw: bytes, object_sha: str,
                                   repository: str, base_ref: str) -> dict:
+    native_contract_path(base_ref)
     if len(raw) > 16384:
         raise ValueError("trusted native contract exceeds size budget")
     recomputed = hashlib.sha1(
@@ -64,6 +74,7 @@ def validate_native_contract_blob(raw: bytes, object_sha: str,
             or source["canonical"] is not True
             or source["audit_mode"] != "native-github"
             or source["legacy_handoff_policy"] not in ("not-required", "forbidden")
+            or (base_ref == "main" and source["legacy_handoff_policy"] != "forbidden")
             or any(source[key] is not True for key in (
                 "github_native_identity", "exact_sha_evidence",
                 "independent_review", "remote_ci_evidence"
@@ -73,15 +84,18 @@ def validate_native_contract_blob(raw: bytes, object_sha: str,
 
 
 def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict | None:
-    entries = git(root, "ls-tree", "--full-tree", base_sha, "--", CONTRACT_PATH)
+    path = native_contract_path(base_ref)
+    entries = git(root, "ls-tree", "--full-tree", base_sha, "--", path)
     if not entries:
+        if base_ref == "main":
+            raise ValueError("trusted main native audit contract unavailable")
         return None
     lines = entries.splitlines()
     if len(lines) != 1:
         raise ValueError("trusted contract path is ambiguous")
     metadata, separator, actual_path = lines[0].partition(b"\t")
     fields = metadata.split()
-    if (separator != b"\t" or actual_path != CONTRACT_PATH.encode("utf-8")
+    if (separator != b"\t" or actual_path != path.encode("utf-8")
             or len(fields) != 3 or fields[0] != b"100644"
             or fields[1] != b"blob" or SHA.fullmatch(fields[2].decode("ascii")) is None):
         raise ValueError("trusted contract must be a regular Git blob at the canonical path")
@@ -89,7 +103,7 @@ def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict
     raw = git(root, "cat-file", "blob", object_sha)
     source = validate_native_contract_blob(raw, object_sha, repository, base_ref)
     return {
-        "path": CONTRACT_PATH,
+        "path": path,
         "observed_at_sha": base_sha,
         "source_sha256": hashlib.sha256(raw).hexdigest(),
         "source_git_blob_sha": object_sha,
@@ -103,9 +117,10 @@ def _contract(root: Path, base_sha: str, repository: str, base_ref: str) -> dict
 
 def resolve(root: Path, repository: str, base_ref: str,
             base_sha: str, head_sha: str) -> dict:
-    if (REPOSITORY.fullmatch(repository) is None or base_ref != "develop"
+    native_contract_path(base_ref)
+    if (REPOSITORY.fullmatch(repository) is None
             or SHA.fullmatch(base_sha) is None or SHA.fullmatch(head_sha) is None):
-        raise ValueError("repository, develop base or Git SHA is invalid")
+        raise ValueError("repository or Git SHA is invalid")
     git(root, "cat-file", "-e", base_sha + "^{commit}")
     git(root, "cat-file", "-e", head_sha + "^{commit}")
     if git(root, "rev-parse", "HEAD").decode("ascii").strip() != head_sha:
