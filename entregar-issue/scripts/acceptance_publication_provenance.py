@@ -204,8 +204,8 @@ def verify_origin(api, detail, repo, head, base, base_ref):
             and all(positive(origin[k]) for k in ("run_id", "run_attempt")),
             "official V2 review publication origin is required")
     require(detail.get("details_url") in {
-        f"https://{GITHUB_HOST}/{repo}/runs/{check_id}",
-        f"https://{GITHUB_HOST}/{repo}/actions/runs/{origin['run_id']}",
+        urlunsplit(("https", GITHUB_HOST, f"/{repo}/runs/{check_id}", "", "")),
+        urlunsplit(("https", GITHUB_HOST, f"/{repo}/actions/runs/{origin['run_id']}", "", "")),
     }, "invalid review workflow run URL")
     root = f"/repos/{repo}"
     suite = (detail.get("check_suite") or {}).get("id")
