@@ -4,11 +4,12 @@ import base64
 import hashlib
 import importlib.util
 import json
+import stat
 import sys
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
-from zipfile import ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import pytest
 
@@ -358,10 +359,13 @@ def remote(report_value, *, regenerated_preview=None, edit_origin=None, source_c
     if edit_origin:
         edit_origin(inv)
     output = BytesIO()
-    with ZipFile(output, "w") as zipped:
-        zipped.writestr(inv.get("member", "7.json"), MODULE.canonical(record))
+    with ZipFile(output, "w", compression=ZIP_DEFLATED) as zipped:
+        if not inv.get("omit_target"):
+            zipped.writestr(inv.get("member", "7.json"), MODULE.canonical(record))
         if inv.get("extra"):
             zipped.writestr("extra.json", "{}")
+        for name, raw in inv.get("siblings", []):
+            zipped.writestr(name, raw)
     archive = output.getvalue()
     artifact.setdefault("digest", "sha256:" + MODULE.digest(archive))
     artifact.setdefault("size_in_bytes", len(archive))
@@ -514,7 +518,7 @@ def test_direct_workflow_url_still_requires_exact_v2_origin(monkeypatch):
     (lambda x: x["artifact"].update(expires_at="2000-01-01T00:00:00Z"), "is expired"),
     (lambda x: x["artifact"]["workflow_run"].update(head_repository_id=19), "artifact identity"),
     (lambda x: x["artifact"].update(digest="sha256:" + "b" * 64), "authenticated digest"),
-    (lambda x: x.update(member="8.json"), "artifact member"),
+    (lambda x: x.update(member="8.json"), "sibling record or workflow attempt"),
     (lambda x: x.update(extra=True), "artifact member"),
     (lambda x: x["record"].update(schema_version=2.0), "exact receipt"),
     (lambda x: x["record"].update(check_suite_id=56), "exact receipt"),
@@ -527,6 +531,95 @@ def test_v2_requires_current_authentic_origin(monkeypatch, modify, error):
     with pytest.raises(ValueError, match=error):
         trusted_check(value)
     assert not any(path.endswith("/issues/comments/9") for _, path in calls)
+
+
+def official_sibling(inv, name="8.json", **overrides):
+    record = {**inv["record"], "check_id": 8, "check_suite_id": 57,
+              "receipt_sha256": "d" * 64, **overrides}
+    inv["siblings"] = [(name, MODULE.canonical(record))]
+
+
+@pytest.mark.parametrize(("edit", "message"), [
+    (lambda x: (official_sibling(x), x.update(omit_target=True)), "exact check is missing"),
+    (lambda x: official_sibling(x, run_attempt=2), "sibling record or workflow attempt"),
+    (lambda x: official_sibling(x, run_id=9), "sibling record or workflow attempt"),
+    (lambda x: official_sibling(x, schema_version=2.0), "sibling record or workflow attempt"),
+    (lambda x: official_sibling(x, check_suite_id=0), "sibling record or workflow attempt"),
+    (lambda x: official_sibling(x, receipt_sha256="no-digest"), "sibling record or workflow attempt"),
+    (lambda x: official_sibling(x, check_id=7), "sibling record or workflow attempt"),
+    (lambda x: official_sibling(x, name="08.json"), "artifact member"),
+    (lambda x: official_sibling(x, name="nested/8.json"), "artifact member"),
+    (lambda x: official_sibling(x, optional="not in protected schema"), "sibling record or workflow attempt"),
+    (lambda x: x.update(siblings=[("8.json", b" " * 4097)]), "artifact member"),
+])
+def test_v2_rejects_missing_target_or_invalid_sibling(monkeypatch, edit, message):
+    value = canonical_report()
+    api, _, _, _, calls = remote(value, edit_origin=edit)
+    monkeypatch.setattr(MODULE, "run_gh", api)
+    with pytest.raises(ValueError, match=message):
+        trusted_check(value)
+    assert not any(path.endswith("/issues/comments/9") for _, path in calls)
+
+
+@pytest.mark.parametrize("duplicate", ["target", "sibling"])
+def test_v2_rejects_duplicate_member_names_before_comment_readback(monkeypatch, duplicate):
+    value = canonical_report()
+
+    def edit(inv):
+        official_sibling(inv)
+        if duplicate == "target":
+            inv["siblings"].append(("7.json", MODULE.canonical(inv["record"])))
+        else:
+            inv["siblings"].append(inv["siblings"][0])
+
+    with pytest.warns(UserWarning, match="Duplicate name"):
+        api, _, _, _, calls = remote(value, edit_origin=edit)
+    monkeypatch.setattr(MODULE, "run_gh", api)
+    with pytest.raises(ValueError, match="duplicate bounded review origin"):
+        trusted_check(value)
+    assert not any(path.endswith("/issues/comments/9") for _, path in calls)
+
+
+@pytest.mark.parametrize("mode", [stat.S_IFLNK, stat.S_IFDIR, stat.S_IFIFO])
+def test_v2_rejects_nonregular_origin_metadata(monkeypatch, mode):
+    value = canonical_report()
+
+    def edit(inv):
+        member = ZipInfo("8.json")
+        member.create_system = 3
+        member.external_attr = (mode | 0o644) << 16
+        official_sibling(inv, name=member)
+
+    api, _, _, _, _ = remote(value, edit_origin=edit)
+    monkeypatch.setattr(MODULE, "run_gh", api)
+    with pytest.raises(ValueError, match="artifact member"):
+        trusted_check(value)
+
+
+def test_origin_member_metadata_requires_unencrypted_record():
+    member = ZipInfo("8.json")
+    member.file_size = 1
+    member.flag_bits = 1
+    with pytest.raises(ValueError, match="artifact member"):
+        MODULE.provenance.validate_origin_member(member, set())
+
+
+@pytest.mark.parametrize(("limits", "members", "message"), [
+    ({"MAX_ORIGIN_ENTRIES": 1}, [("7.json", b"{}"), ("8.json", b"{}")],
+     "member count or decoded byte bound"),
+    ({"MAX_ORIGIN_BYTES": 512}, [("7.json", b" " * 300), ("8.json", b" " * 300)],
+     "member count or decoded byte bound"),
+    ({"MAX_ORIGIN_BYTES": 64}, [("7.json", b"{}")], "exceeds its byte bound"),
+])
+def test_v2_enforces_closed_archive_limits(monkeypatch, limits, members, message):
+    for key, value in limits.items():
+        monkeypatch.setattr(MODULE.provenance, key, value)
+    output = BytesIO()
+    with ZipFile(output, "w", compression=ZIP_DEFLATED) as zipped:
+        for name, raw in members:
+            zipped.writestr(name, raw)
+    with pytest.raises(ValueError, match=message):
+        MODULE.provenance.require_origin_record(output.getvalue(), 7, {})
 
 
 def test_edited_review_is_not_accepted(monkeypatch):
@@ -583,11 +676,14 @@ def apply_arguments(monkeypatch, path, extra=()):
 
 
 @pytest.mark.parametrize("regenerated_preview", [None, "4" * 40])
-def test_cli_appends_and_reuses_authorized_immutable_readback(tmp_path, monkeypatch, capsys, regenerated_preview):
+@pytest.mark.parametrize("multiple", [False, True])
+def test_cli_appends_and_reuses_authorized_immutable_readback(tmp_path, monkeypatch, capsys,
+                                                              regenerated_preview, multiple):
     value = full_report(tmp_path)
     path = tmp_path / "report.json"
     path.write_text(json.dumps(value))
-    api, _, _, _, calls = remote(value, regenerated_preview=regenerated_preview)
+    api, _, _, _, calls = remote(value, regenerated_preview=regenerated_preview,
+                                  edit_origin=official_sibling if multiple else None)
     monkeypatch.setattr(MODULE, "run_gh", api)
     apply_arguments(monkeypatch, path)
     assert MODULE.main() == 0

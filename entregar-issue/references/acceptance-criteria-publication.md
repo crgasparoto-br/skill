@@ -51,7 +51,12 @@ executável no SHA protegido do run contra o da base, validando as duas
 suites nas suas respectivas âncoras Git. O recibo oficial V2 identifica
 a execução e sua tentativa. O artefato único `session-review-origin-v2-attempt-N`
 da tentativa corrente concluída, não expirado e com digest autenticado,
-deve registrar o ID do check, sua suite e SHA-256 do recibo exato. Tanto o URL
+pode conter vários registros, um por check publicado na mesma tentativa.
+O ZIP tem limites de tamanho e cardinalidade. Cada membro deve ser regular,
+com nome canônico único e registro da mesma tentativa. O membro do check alvo
+deve registrar o seu ID, sua suite e SHA-256 do recibo exato; os registros
+irmãos não substituem essa prova nem atestam outros alvos neste consumo.
+Tanto o URL
 direto `/actions/runs/<run-id>` como `/runs/<check-id>` são conferidos contra
 essas identidades; o ID do check nunca é usado para adivinhar o run. Sem
 recibo V2 ou artefato registrado pelo emissor protegido, não publica.

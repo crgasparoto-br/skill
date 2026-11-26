@@ -9,7 +9,7 @@ import re
 import stat
 from datetime import UTC, datetime
 from urllib.parse import urlunsplit
-from zipfile import ZipFile
+from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile
 
 GITHUB_HOST = "github.com"
 API_ROOT = urlunsplit(("https", "api." + GITHUB_HOST, "", "", ""))
@@ -23,7 +23,11 @@ SHA = re.compile(r"[a-f0-9]{40}\Z")
 DIGEST = re.compile(r"[a-f0-9]{64}\Z")
 ACTIONS_APP = 15368
 MAX_ORIGIN_BYTES = 65536
+MAX_ORIGIN_ENTRIES = 256
+MAX_ORIGIN_RECORD_BYTES = 4096
+ORIGIN_FILENAME = re.compile(r"([1-9][0-9]*)[.]json")
 ORIGIN_KEYS = {"schema_version", "run_id", "run_attempt"}
+ORIGIN_RECORD_KEYS = ORIGIN_KEYS | {"check_id", "check_suite_id", "receipt_sha256"}
 MARKER = re.compile(r"AUDIT_REPORT_SHA256=([a-f0-9]{64})\Z")
 TRUSTED = (WORKFLOW, POLICY, ".github/workflows/reusable-handoff.yml",
            "entregar-issue/scripts/resolve_trusted_audit_transport.py",
@@ -218,15 +222,47 @@ def verify_origin(api, detail, repo, head, base, base_ref):
     return {**expected, "artifact_id": artifact_id, "artifact_digest": digest}
 
 
+def validate_origin_member(member, seen):
+    require(member.filename == member.orig_filename and ORIGIN_FILENAME.fullmatch(member.filename)
+            and member.filename not in seen and not member.external_attr & 0x10
+            and stat.S_IFMT(member.external_attr >> 16) in {0, stat.S_IFREG}
+            and 0 < member.file_size <= MAX_ORIGIN_RECORD_BYTES and not member.flag_bits & 1
+            and member.compress_type in {ZIP_STORED, ZIP_DEFLATED},
+            "invalid or duplicate bounded review origin artifact member")
+    seen.add(member.filename)
+
+
+def require_sibling_origin(raw, filename, expected):
+    """Validate sibling format, not authority over that sibling's review."""
+    record = strict_json(raw.decode("utf-8"), limit=MAX_ORIGIN_RECORD_BYTES)
+    require(set(record) == ORIGIN_RECORD_KEYS
+            and all(positive(record[k]) for k in ORIGIN_RECORD_KEYS - {"receipt_sha256"})
+            and all(record[k] == expected[k] for k in ORIGIN_KEYS)
+            and f"{record['check_id']}.json" == filename and sha(record["receipt_sha256"], DIGEST)
+            and raw == canonical(record),
+            "invalid review origin sibling record or workflow attempt")
+
+
 def require_origin_record(archive, check_id, expected):
+    """Gather the exact target from one protected attempt's bounded set of receipts."""
+    require(0 < len(archive) <= MAX_ORIGIN_BYTES, "review origin archive exceeds its byte bound")
+    target = f"{check_id}.json"
+    seen = set()
     with ZipFile(io.BytesIO(archive)) as zipped:
         files = zipped.infolist()
-        require(len(files) == 1 and files[0].filename == f"{check_id}.json"
-                and stat.S_IFMT(files[0].external_attr >> 16) in {0, stat.S_IFREG}
-                and 0 < files[0].file_size <= 4096 and not files[0].flag_bits & 1,
-                "invalid bounded review origin artifact member")
-        with zipped.open(files[0]) as stream:
-            require(stream.read(4097) == canonical(expected), "review origin does not bind the exact receipt")
+        require(0 < len(files) <= MAX_ORIGIN_ENTRIES
+                and sum(item.file_size for item in files) <= MAX_ORIGIN_BYTES,
+                "review origin archive exceeds its member count or decoded byte bound")
+        for item in files:
+            validate_origin_member(item, seen)
+            with zipped.open(item) as stream:
+                raw = stream.read(MAX_ORIGIN_RECORD_BYTES + 1)
+            require(len(raw) == item.file_size, "review origin artifact member size mismatch")
+            if item.filename == target:
+                require(raw == canonical(expected), "review origin does not bind the exact receipt")
+            else:
+                require_sibling_origin(raw, item.filename, expected)
+    require(target in seen, "review origin artifact member for the exact check is missing")
 
 
 def require_preview_equivalence(api, repo, base, head, certified, current):
