@@ -317,7 +317,112 @@ Um rollback que mantem PRs bloqueadas por falta de revisor ou evidencia e um ret
 
 ## develop, main e provas reais
 
-O coletor de handoff suporta as duas bases. O modo de sessao exige certificado e testes no HEAD de cada PR, inclusive em main; nao aceita certificado de outro PR/issue nem de um commit anterior. A via humana legada conserva sua politica propria.
+O modo de sessao exige evidencia tecnica autenticada e testes no HEAD de cada
+PR, sem aceitar outro PR, issue, base ou SHA. Na `develop`, a selecao e o
+workflow de entrega permanecem inalterados: contrato GitHub-native, ou
+certificado legado se a base confiavel ainda o exigir. Na `main`, a rota
+exige o [contrato nativo proprio](audit/github-native-main-contract.json) na
+base protegida; ausencia, outro alvo ou politica antiga bloqueiam sem fallback.
+
+A `main` usa [seu coletor dedicado](../.github/workflows/main-native-evidence.yml)
+somente em PRs originadas no mesmo repositorio. O primeiro job coleta
+evidencias e testa o HEAD exato em runtime isolado. Somente wheels dos
+lockfiles protegidos entram no container sem rede, sem credenciais ou
+socket Docker, com usuario sem privilegio, montagens de entrada somente
+leitura e ambiente sem comandos do runner. O host registra exit code,
+log limitado e XML delimitado. A unica montagem gravavel fora do
+container e um tmpfs de resultado do host, com limites de bytes/inodes,
+nosuid/nodev/noexec e limpeza ao fim. O segundo job, em runner fresco, nao
+executa codigo candidato e valida o ZIP da mesma execucao junto ao
+recibo de isolamento. XML e log continuam resultados do candidato,
+nao prova independente da verdade dos testes. O atestador autentica GitHub App, run, job, PR, base, HEAD e
+fonte exata do workflow, mais digest e unicidade do artefato, preview (pais
+ordenados e arvore para equivalencia), issue atual e JUnit sem skips. Nem
+este check tecnico nem o pacote neutro declaram aprovacao.
+
+A lista fechada de testes isolados em
+[`run_main_evidence_tests.py`](../scripts/run_main_evidence_tests.py)
+cobre o recorte de manutencao do fluxo de auditoria/atestacao e os controles
+de versionamento. Nao e a suite completa. Os jobs existentes `Structure and
+tests` (com a suite completa) e `Offline authorization tests` continuam
+obrigatorios no SHA. Cada requisito ainda precisa de tres controles
+distintos efetivamente aprovados no ZIP isolado. Se um criterio depender
+de Docker ou de outra capacidade nao oferecida no isolamento, ele fica
+bloqueado, sem substituir testes por skips ou invocar Docker privilegiado.
+Uma nova lane exige revisao da politica protegida, prova de isolamento e
+controles executados antes de integrar novos alvos; a PR nao amplia sua
+propria lista.
+
+A mesma conta GitHub autorizada pode operar as duas conversas, mas a revisao
+deve acontecer em um contexto real e distinto. A referencia real da
+implementacao continua sendo a via normal. Se a politica protegida habilitar
+a recuperacao da referencia perdida, a alternativa depende de cadeia Git
+material, linear, autenticada deste mesmo base/HEAD e do mesmo artefato.
+Em `main`, a ausencia dessa prova opcional nao impede o pacote neutro;
+a atestacao que a escolher, contudo, continua bloqueada sem a prova. Uma
+promocao com historico nao linear deve usar as referencias reais, sem
+inventar links. A declaracao nao alega segundo humano nem prova
+criptografica de independencia.
+Somente o atestador protegido continua publicando
+`Verify session review (exact SHA)`. O contrato de release, os gates de
+versao, a autoridade de merge e a promocao `develop` → `main` permanecem
+separados e inalterados. Uma declaracao de sessao nao arrasta certificacao de
+outra PR nem substitui os requisitos proprios de release.
+
+**Instalacao inicial:** a base antiga nao possui o novo produtor e nao pode
+atestar a propria PR de instalacao por meio de codigo candidato. Registre
+issue e verifique fora do candidato o diff, HEAD, base, preview e suite
+tecnica. Se nenhuma instalacao ordinaria puder cumprir o check antigo, a
+decisao administrativa precisa ser previamente autorizada, restrita a um
+unico alvo exato e auditada; nao desligar rulesets globais nem usar excecao
+de outro PR. Nao tratar instalacao como prova de funcionamento pelo GitHub.
+
+Reconciliar as fontes compartilhadas nas duas bases protegidas e na
+default com os mesmos bytes auditados; conferir seus hashes e regras
+efetivas antes e depois. A ponte temporaria da #198 so pode usar a
+`main` protegida ainda no merge corretivo imediato da #223: PR merged
+unica associada ao commit, `Refs #223`, branch local de instalacao
+`fix/223-protected-parity-enrollment`, pais ordenados `a9e0ffe4…` (#221) e
+HEAD autenticado do instalador; a arvore do merge deve ser a do HEAD.
+Antes de qualquer uso da ponte, o proprietario registra diretamente na
+issue #198, apos essa instalacao, um unico comentario nao editado. A
+primeira linha e `SOLVERIT_PARITY_ENROLLMENT_V1`; as linhas seguintes
+contem um objeto JSON estrito com estes campos:
+
+- `schema_version`: inteiro `1`;
+- `repository`: `crgasparoto-br/skill`; `issue`: inteiro `198`;
+- `pull_request`: numero da PR aberta de paridade;
+- `base_sha`, `head_sha`, `merge_preview_sha`, `tree_sha` e
+  `installed_main_sha`: SHAs completos lidos no GitHub para aquele alvo.
+
+O dispatcher le o inventario paginado da issue fixa, rele o comentario por
+ID, confere o proprietario numerico e o mesmo corpo no no GraphQL, que deve
+confirmar ausencia de edicao. Sinal ausente, comentario editado, removido
+ou mais de um registro bloqueiam a ponte. O inventario autenticado de PRs
+deve mostrar uma unica PR aberta para a branch local
+`chore/198-sync-corrected-main-session-parity`; o evento apenas desperta esta PR ja
+registrada. O HEAD tem pai unico igual a `develop` protegida fixada. O
+preview tem pais ordenados base/HEAD; preview e HEAD tem a mesma arvore
+da instalacao. Outra identidade ou regeneracao de preview impede reutilizar
+o registro, ainda que a arvore seja igual. A copia pristina do verificador
+fixado roda em processo separado, nunca carrega codigo candidato e rele
+estado e hash do registro antes de executar e antes de cada escrita de
+check. Isto e autorizacao de roteamento, nao parecer ou aprovacao.
+
+GitHub nao torna leitura do comentario, publicacao de check e merge uma
+transacao. Se retirar a autorizacao, nao mesclar; confirme nova avaliacao
+do check protegido no alvo e releia registro/identidade imediatamente
+antes do merge. Um check anteriormente verde nao substitui essa leitura.
+A transicao nao pede suspensao de regras de `develop`. Depois da
+paridade, a ponte deixa de qualificar, deve ser retirada por revisao
+protegida, e a igualdade volta a ser a unica via de rotina. Nao usar
+checks da janela como prova final. Com ambos os lados instalados,
+exigir uma PR ordinaria para `main` com os checks de release aplicaveis
+e o recibo exato emitido pelo App, mais controles de falta/edicao do
+parecer, drift, ausencia de policy e workflow/artifact estrangeiro.
+Confirmar tambem a rota `develop` por um alvo distinto. Alteracao futura
+do proprio workflow produtor nao estabelece sua propria autoridade pelo
+mesmo run; requer instalacao protegida antes do uso da versao nova.
 
 Antes de ativar o required check, comprovar em execucao real o caso positivo e os negativos de adulteracao, exclusao de parecer, mudanca de issue, base/HEAD e permissao. Os testes automatizados exercitam a implementacao, mas **nao sao evidencia de que um auditor real revisou esta PR**.
 

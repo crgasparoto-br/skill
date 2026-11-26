@@ -11,7 +11,7 @@ on:
   issues:
     types: [edited]
   workflow_run:
-    workflows: ["Validate skills", "Validate GitHub Audit MCP", "Collect and certify exact-SHA handoff"]
+    workflows: ["Validate skills", "Validate GitHub Audit MCP", "Collect and certify exact-SHA handoff", "Collect main exact-SHA native evidence"]
     types: [completed]
   push:
     branches: [develop, main]
@@ -46,6 +46,17 @@ jobs:
         with:
           ref: ${{ github.workflow_sha }}
           persist-credentials: false
+      - name: Checkout the temporary protected develop parity tooling
+        # Unavailable pin blocks only the fenced transition; normal branch checks continue.
+        continue-on-error: true
+        if: >-
+          github.repository == 'crgasparoto-br/skill' && github.ref == 'refs/heads/main' &&
+          (github.event_name == 'workflow_run' || github.event_name == 'issue_comment')
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 2b93611605dd1b9e905f9eda949333ed22e79cf9
+          path: .trusted-develop-parity
+          persist-credentials: false
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -57,7 +68,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
-        run: python scripts/verify_session_review.py --repo "$REPOSITORY" --event "$GITHUB_EVENT_PATH"
+        run: >-
+          python -IB scripts/dispatch_session_review.py --repo "$REPOSITORY"
+          --event "$GITHUB_EVENT_PATH" --pinned "$GITHUB_WORKSPACE/.trusted-develop-parity"
       - name: Preserve authenticated session review publication origin
         if: ${{ success() && steps.verify.outputs.review_origin_present == 'true' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
