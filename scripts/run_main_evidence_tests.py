@@ -26,6 +26,17 @@ TEST_TARGETS = (
     "tests/test_session_review_workflows.py", "tests/test_versioning.py",
     "entregar-issue/tests/test_validate_native_actions_evidence.py",
     "tests/test_main_evidence_isolation.py", "tests/test_session_review_parity_dispatch.py",
+    "auditar-issue/tests/test_controller_audit_result.py",
+    "tests/test_catalog_governance.py::test_catalog_is_valid_and_matches_skill_metadata",
+    "tests/test_catalog_governance.py::test_documentation_references_are_current",
+    "tests/test_catalog_governance.py::test_shared_files_are_byte_identical_to_canonical",
+    "tests/test_catalog_governance.py::test_shared_file_drift_is_detected",
+    "tests/test_context_budget.py::test_shipped_context_budget_is_valid",
+    "tests/test_context_budget.py::test_shipped_allowance_blocks_growth",
+    # Reconciliation is introduced by a later PR. Discover only the two fixed
+    # names at this directory level; keep the existing native target explicit.
+    "-o", "'python_files=test_validate_native_actions_evidence.py test_issue_acceptance_criteria_reconciliation.py'",
+    "-o", "'norecursedirs=*'", "entregar-issue/tests",
 )
 TEST_COMMAND = ("python -m pytest -vv --basetemp=/work/pytest --junitxml=/result/pytest-exact-head.xml "
                 + " ".join(TEST_TARGETS))
