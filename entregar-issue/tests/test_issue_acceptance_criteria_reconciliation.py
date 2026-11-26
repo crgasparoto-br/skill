@@ -637,7 +637,7 @@ def test_edited_review_is_not_accepted(monkeypatch):
     ("body", "changed bytes"),
     ("created_at", "2026-11-24T22:09:00Z"),
     ("updated_at", "2026-11-24T22:11:00Z"),
-    ("issue_url", "https://api.github.com/repos/owner/repo/issues/98"),
+    ("issue_url", f"{MODULE.provenance.API_ROOT}/repos/owner/repo/issues/98"),
     ("user", {"id": 42, "login": "owner", "type": "User"}),
     ("user", {"id": 41, "login": "other-owner", "type": "User"}),
     ("user", {"id": 41, "login": "Owner", "type": "User"}),
