@@ -79,7 +79,7 @@
     "complexity": {
       "state": "reported",
       "max_complexity": 30,
-      "baseline": 50,
+      "baseline": 49,
       "limits": "Não mede complexidade cognitiva, tamanho de arquivo nem acoplamento entre módulos. Mede só o corpo da própria função: função aninhada é medida por si, ramo de default de parâmetro e de decorator não entra, with não conta como ramo e lambda não é medida.",
       "baseline_history": [
         {
@@ -113,6 +113,10 @@
         {
           "value": 50,
           "reason": "A decomposição das funções de auditoria Ed25519, roteamento de eventos e binding web reduziu a complexidade aberta medida de 51 para 50; limiar e escopo permanecem inalterados."
+        },
+        {
+          "value": 49,
+          "reason": "A separação do scanner lexical e a decomposição do validador semântico compartilhado reduziram a contagem aberta medida de 50 para 49, sem mudar limiar, regras de validação ou escopo."
         }
       ]
     }

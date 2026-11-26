@@ -3,6 +3,16 @@
   "description": "Arquivos operacionais compartilhados entre skills fora de contracts/. Cada skill e empacotada isoladamente, entao a copia e necessaria; a fonte canonica e a unica editavel. Regenerar com scripts/sync_contracts.py --write.",
   "groups": [
     {
+      "canonical": "auditar-issue/schemas/controller-audit-result.schema.json",
+      "copies": [
+        "entregar-issue/schemas/controller-audit-result.schema.json"
+      ]
+    },
+    {
+      "canonical": "auditar-issue/scripts/validate_controller_audit_result.py",
+      "copies": ["entregar-issue/scripts/validate_controller_audit_result.py"]
+    },
+    {
       "canonical": "entregar-issue/contracts/subskill-result.schema.json",
       "copies": [
         "auditar-issue/schemas/subskill-result.schema.json",

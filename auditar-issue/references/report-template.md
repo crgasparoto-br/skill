@@ -22,6 +22,7 @@ Ler quando for produzir o parecer, para usar a forma canônica do relatório e a
 - [Resumo executivo](#resumo-executivo)
 - [Escopo auditado](#escopo-auditado)
 - [Estado dos gates e alcance de testes](#estado-dos-gates-e-alcance-de-testes)
+- [Critérios de aceite](#critérios-de-aceite)
 - [Matriz de requisitos](#matriz-de-requisitos)
 - [Achados bloqueantes](#achados-bloqueantes)
 - [Riscos inferidos nao confirmados](#riscos-inferidos-nao-confirmados)
@@ -133,6 +134,20 @@ dois findings nem inflar a contagem por variacoes da mesma causa raiz.
 - evidencias verdes reutilizadas: `[run/job + escopo comprovado]`
 
 Nao marcar teste posterior ao primeiro abort como executado. Nao extrapolar job verde alem do harness/cenario que ele realmente exercitou.
+
+## Critérios de aceite
+
+Rederivar esta tabela das fontes congeladas, sem usar o estado do checkbox como
+prova. Origem, locador e linha distinguem itens duplicados.
+
+| ID | Origem e locador | Texto integral | Estado inicial | Evidência exata no SHA | Decisão | Ação proposta no checkbox |
+|---|---|---|---|---|---|---|
+| `AC-001` | `SRC-ISSUE`, `issue-body:linha` | ... | `checked/unchecked/not-present` | `arquivo:linha`, teste ou URL | `verified/partial/failed/inconclusive/not-applicable` | `checked/unchecked/unchanged` |
+
+Adicionar uma linha para cada critério e justificar a decisão, inclusive para
+item inicialmente marcado. Somente decisão `verified` pode propor `checked`;
+demais estados permanecem abertos. Manter a tabela separada do veredito global
+e da cobertura de gates.
 
 ## Matriz de requisitos
 

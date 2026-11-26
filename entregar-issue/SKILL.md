@@ -100,6 +100,9 @@ Ler somente quando aplicavel:
 - calculo, relatorio, projecao ou destino de mutacao dependente de periodo/data/futuro: `references/temporal-consistency-gate.md`;
 - registry/ativacao de gates: `contracts/gate-registry.json` e `references/gate-registry.md`;
 - resposta final: `references/controller-result-template.md`.
+- reconciliação autorizada dos critérios de aceite:
+  `references/acceptance-criteria-publication.md` e
+  `scripts/reconcile_issue_acceptance_criteria.py`.
 
 Nao carregar referencias condicionais por antecipacao.
 
@@ -131,6 +134,12 @@ Para qualquer pedido de 'implementar pendências', 'implementar todas as pendên
 14. Antes de adicionar novo invariant global, tentar representa-lo em risk family/gate existente conforme `references/gate-registry.md`.
 15. Antes de reutilizar qualquer `.audit/entregar-issue`, provar o vinculo semantico com o alvo atual. Quando houver `base_sha`, comparar os artefatos de identidade do head contra os mesmos paths no commit base exato; igualdade byte-a-byte + subject estrangeiro deve produzir `inherited-base-artifact`. Em connector-only, materializar os mesmos paths do base SHA e comparar bytes. `inherited-base-artifact`, `foreign-target`, `partial-current-target` ou `unbound-or-invalid` implicam `reuse_allowed=false`, reconstrucao dos artefatos correntes e novo handoff; certificado herdado de outro alvo nunca ativa `handoff-only`. Artefato estrangeiro alterado no head continua `foreign-target`. Reclassificar `artifact_reuse` sempre que `base_ref`, branch ou PR forem atualizados e novamente depois de reconstruir/publicar o pacote, para que a decisao final nunca dependa de uma classificacao feita antes da identidade terminal existir.
 16. Nao fazer merge, fechar issue, alterar producao, dados, segredos ou credenciais sem autorizacao explicita.
+16.1. Depois de parecer independente validado e autenticado, registrar as
+decisões por critério em comentário append-only da issue, idempotente por
+fingerprint, vinculado ao parecer, ao SHA e ao digest do contrato. Confirmar a
+publicação por nova leitura autenticada. Preservar o corpo; checkbox só pode ser
+espelhado quando houver CAS atômico comprovado. Nenhum comentário ou marcação
+concede aprovação, merge, fechamento ou release.
 17. Tratar criacao de nova tela, pagina, rota navegavel, dashboard ou composicao visual operada pelo usuario como impacto visual material por definicao. Para esse recorte, `design-interface` nao e opcional: executar `guidance` antes da primeira edicao visual e `internal-verification` depois da implementacao, antes do gate final. Ausencia de requisito estetico explicito nao torna design `not-applicable`.
 
 ## Estado e contratos
