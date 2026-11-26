@@ -379,18 +379,41 @@ de outro PR. Nao tratar instalacao como prova de funcionamento pelo GitHub.
 
 Reconciliar as fontes compartilhadas nas duas bases protegidas e na
 default com os mesmos bytes auditados; conferir seus hashes e regras
-efetivas antes e depois. A ponte temporaria so pode atender uma PR
-ordinaria de paridade com issue canonica #198, branch de origem local
-`chore/198-sync-main-session-parity` e apenas uma PR aberta correspondente
-no inventario paginado. Sua arvore deve ser exatamente a da `main`
-protegida, ainda no merge autorizado de #221, com pais ordenados
-`fb71aed…` e o HEAD autenticado desse instalador, sem modificar a arvore.
-Tambem exige base no commit e arvore fixados da `develop` protegida,
-e repositorio, HEAD e fontes de evento autenticados. Usa apenas a copia pristina
-desse verificador anterior, em processo separado; nunca o codigo
-candidato. Qualquer divergencia impede a ponte, nao autoriza outra
-instalacao e preserva a revogacao normal pelo verificador atual. A
-transicao nao pede suspensao de regras de `develop`. Depois da
+efetivas antes e depois. A ponte temporaria da #198 so pode usar a
+`main` protegida ainda no merge corretivo imediato da #223: PR merged
+unica associada ao commit, `Refs #223`, branch local de instalacao
+`fix/223-protected-parity-enrollment`, pais ordenados `a9e0ffe4…` (#221) e
+HEAD autenticado do instalador; a arvore do merge deve ser a do HEAD.
+Antes de qualquer uso da ponte, o proprietario registra diretamente na
+issue #198, apos essa instalacao, um unico comentario nao editado. A
+primeira linha e `SOLVERIT_PARITY_ENROLLMENT_V1`; as linhas seguintes
+contem um objeto JSON estrito com estes campos:
+
+- `schema_version`: inteiro `1`;
+- `repository`: `crgasparoto-br/skill`; `issue`: inteiro `198`;
+- `pull_request`: numero da PR aberta de paridade;
+- `base_sha`, `head_sha`, `merge_preview_sha`, `tree_sha` e
+  `installed_main_sha`: SHAs completos lidos no GitHub para aquele alvo.
+
+O dispatcher le o inventario paginado da issue fixa, rele o comentario por
+ID, confere o proprietario numerico e o mesmo corpo no no GraphQL, que deve
+confirmar ausencia de edicao. Sinal ausente, comentario editado, removido
+ou mais de um registro bloqueiam a ponte. O inventario autenticado de PRs
+deve mostrar uma unica PR aberta para a branch local
+`chore/198-sync-corrected-main-session-parity`; o evento apenas desperta esta PR ja
+registrada. O HEAD tem pai unico igual a `develop` protegida fixada. O
+preview tem pais ordenados base/HEAD; preview e HEAD tem a mesma arvore
+da instalacao. Outra identidade ou regeneracao de preview impede reutilizar
+o registro, ainda que a arvore seja igual. A copia pristina do verificador
+fixado roda em processo separado, nunca carrega codigo candidato e rele
+estado e hash do registro antes de executar e antes de cada escrita de
+check. Isto e autorizacao de roteamento, nao parecer ou aprovacao.
+
+GitHub nao torna leitura do comentario, publicacao de check e merge uma
+transacao. Se retirar a autorizacao, nao mesclar; confirme nova avaliacao
+do check protegido no alvo e releia registro/identidade imediatamente
+antes do merge. Um check anteriormente verde nao substitui essa leitura.
+A transicao nao pede suspensao de regras de `develop`. Depois da
 paridade, a ponte deixa de qualificar, deve ser retirada por revisao
 protegida, e a igualdade volta a ser a unica via de rotina. Nao usar
 checks da janela como prova final. Com ambos os lados instalados,
