@@ -360,10 +360,15 @@ def verify_review_binding(api, pages, detail, repo, audit, report_sha):
     selected = max(comments, key=lambda c: c["id"])
     require(selected["id"] == receipt["review_comment_id"], "review was superseded or deleted")
     live = api(f"/repos/{repo}/issues/comments/{selected['id']}")
-    fields = ("id", "body", "user", "created_at", "updated_at", "issue_url")
+    fields = ("id", "body", "created_at", "updated_at", "issue_url")
+    author_fields = ("id", "login", "type")
     pr_issue_url = f"{API_ROOT}/repos/{repo}/issues/{audit['pull_request']}"
-    require(live.get("issue_url") == pr_issue_url and all(live.get(k) == selected.get(k) for k in fields)
-            and allowed(live, policy_users), "live review readback changed")
+    # GitHub may render non-authority metadata (e.g. avatar_url) differently across endpoints.
+    require(isinstance(live, dict) and allowed(live, policy_users)
+            and live.get("issue_url") == pr_issue_url
+            and all(live.get(k) == selected.get(k) for k in fields)
+            and all(live["user"][k] == selected["user"][k] for k in author_fields),
+            "live review readback changed")
     created, updated = live.get("created_at"), live.get("updated_at")
     require(isinstance(created, str) and created == updated
             and datetime.fromisoformat(created).tzinfo is not None, "review is edited or undated")

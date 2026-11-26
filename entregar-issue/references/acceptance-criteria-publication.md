@@ -70,7 +70,10 @@ completo. Nenhum campo novo é exigido pelo gate confiado. O publisher lê o
 recibo canônico do check e o comentário original autenticado, verificando
 política da base protegida, identidade SHA/issue/PR/base/preview, autor
 permitido, timestamps iguais, revisão vigente e hash dos bytes exatos do
-comentário atestado pelo recibo. A referência no comentário publicado é
+comentário atestado pelo recibo. A listagem e a consulta direta devem
+coincidir no ID, login e tipo do autor, além da identidade, do conteúdo e dos
+timestamps do comentário. Metadados de exibição, como URL do avatar, não
+identificam a conta. A referência no comentário publicado é
 o URL estável desse comentário autenticado; se `--audit-report-url` for
 informado, deve ser exatamente essa referência. Revisão por sessão continua
 declarada pelo operador, não identidade independente criptográfica.

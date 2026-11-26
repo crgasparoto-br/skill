@@ -631,6 +631,42 @@ def test_edited_review_is_not_accepted(monkeypatch):
         trusted_check(value)
 
 
+@pytest.mark.parametrize(("field", "replacement"), [
+    (None, None),
+    ("id", 10),
+    ("body", "changed bytes"),
+    ("created_at", "2026-11-24T22:09:00Z"),
+    ("updated_at", "2026-11-24T22:11:00Z"),
+    ("issue_url", "https://api.github.com/repos/owner/repo/issues/98"),
+    ("user", {"id": 42, "login": "owner", "type": "User"}),
+    ("user", {"id": 41, "login": "other-owner", "type": "User"}),
+    ("user", {"id": 41, "login": "Owner", "type": "User"}),
+    ("user", {"id": 41, "login": "owner", "type": "Bot"}),
+])
+def test_review_readback_compares_stable_author_fields(monkeypatch, field, replacement):
+    value = canonical_report()
+    api, _, _, _, calls = remote(value)
+
+    def facts(route, **kwargs):
+        result = api(route, **kwargs)
+        if route.endswith("/issues/99/comments?per_page=100"):
+            result[0]["user"]["avatar_url"] = "https://example.invalid/list-avatar"
+        elif route.endswith("/issues/comments/9"):
+            result["user"]["avatar_url"] = "https://example.invalid/detail-avatar"
+            if field is not None:
+                result[field] = replacement
+        return result
+
+    monkeypatch.setattr(MODULE, "run_gh", facts)
+    if field is None:
+        _, binding = trusted_check(value)
+        assert binding["comment_id"] == 9
+    else:
+        with pytest.raises(ValueError, match="live review readback changed"):
+            trusted_check(value)
+    assert all(method == "GET" for method, _ in calls)
+
+
 def test_report_digest_marker_cannot_duplicate_or_replace_analysis():
     good = "AUDIT_REPORT_SHA256=" + HASH
     with pytest.raises(ValueError, match="one canonical"):
