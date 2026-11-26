@@ -39,8 +39,8 @@ def state(monkeypatch):
         "merge_preview_sha": PREVIEW, "tree_sha": TREE, "installed_main_sha": MAIN,
     })
     enrollment = {"id": ENROLL_COMMENT, "node_id": "IC_fixture83", "body": body,
-                  "url": f"https://api.github.com{COMMENT_PATH}",
-                  "issue_url": f"https://api.github.com{PREFIX}/issues/{route.PARITY_ISSUE}",
+                  "url": "https://example.org" + COMMENT_PATH,
+                  "issue_url": "https://example.org" + f"{PREFIX}/issues/{route.PARITY_ISSUE}",
                   "user": {"id": route.OWNER_ID, "type": "User", "login": "fixture-owner"},
                   "author_association": "OWNER", "performed_via_github_app": None,
                   "created_at": "2026-01-01T12:00:01Z", "updated_at": "2026-01-01T12:00:01Z"}
@@ -165,7 +165,7 @@ def test_enrollment_authority_is_mandatory_before_event_target_resolution(kind, 
         elif kind == "via-app":
             raw["performed_via_github_app"] = {"id": 12}
         elif kind == "wrong-issue":
-            raw["issue_url"] = f"https://api.github.com{PREFIX}/issues/197"
+            raw["issue_url"] = "https://example.org" + f"{PREFIX}/issues/197"
         elif kind == "before-install":
             raw["created_at"] = raw["updated_at"] = data[f"{PREFIX}/pulls/{INSTALL_PR}"]["merged_at"]
         elif kind == "list-readback-drift":
@@ -287,7 +287,7 @@ def test_scoped_verifier_rereads_pins_before_any_check_write(kind, state):
     if kind == "replaced-enrollment":
         # Same valid routing body but a different original issue comment.
         alternate = {**data[COMMENT_PATH], "id": ENROLL_COMMENT + 1,
-                     "url": f"https://api.github.com{PREFIX}/issues/comments/{ENROLL_COMMENT + 1}"}
+                     "url": "https://example.org" + f"{PREFIX}/issues/comments/{ENROLL_COMMENT + 1}"}
         data[f"{PREFIX}/issues/comments/{ENROLL_COMMENT + 1}"] = alternate
         inventories[f"issues/{route.PARITY_ISSUE}/comments"] = [alternate]
     if kind == "drift-preview":
