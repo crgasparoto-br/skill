@@ -35,7 +35,11 @@ def test_candidate_selected_refs_cannot_start_review_workflows(name):
     assert "(github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') &&" in job["if"]
     assert "github.event.workflow_run.head_repository.full_name == github.repository" in job["if"]
     checkouts = [step for step in job["steps"] if step.get("uses", "").startswith("actions/checkout@")]
-    assert len(checkouts) == 1
+    assert len(checkouts) == 2
+    bridge = checkouts[1]
+    assert bridge["with"] == {"ref": "2b93611605dd1b9e905f9eda949333ed22e79cf9",
+                              "path": ".trusted-develop-parity", "persist-credentials": "false"}
+    assert "'refs/heads/main'" in bridge["if"] and "'crgasparoto-br/skill'" in bridge["if"]
     assert checkouts[0]["with"] == {"ref": "${{ github.workflow_sha }}", "persist-credentials": "false"}
     assert job["steps"].index(checkouts[0]) < next(i for i, step in enumerate(job["steps"]) if "run" in step)
     assert config["permissions"]["checks"] == ("write" if name == "session-review.yml" else "read")
@@ -46,7 +50,8 @@ def test_pr_head_changes_start_immediately_and_workflow_run_resumes_readiness():
     pull_request_types = set(triggers["pull_request_target"]["types"])
     assert {"opened", "synchronize", "reopened", "ready_for_review", "edited"} <= pull_request_types
     assert set(triggers["workflow_run"]["workflows"]) == {
-        "Validate skills", "Validate GitHub Audit MCP", "Collect and certify exact-SHA handoff"
+        "Validate skills", "Validate GitHub Audit MCP", "Collect and certify exact-SHA handoff",
+        "Collect main exact-SHA native evidence",
     }
 
 
@@ -68,7 +73,8 @@ def test_trusted_review_jobs_supply_same_authenticated_token_to_partial_handoff_
 def test_packet_request_requires_certified_same_repo_run_or_explicit_pr_comment():
     config = workflow("prepare-neutral-audit-packet.yml")
     assert config["on"]["workflow_run"] == {
-        "workflows": ["Collect and certify exact-SHA handoff"], "types": ["completed"]}
+        "workflows": ["Collect and certify exact-SHA handoff", "Collect main exact-SHA native evidence"],
+        "types": ["completed"]}
     assert config["on"]["issue_comment"] == {"types": ["created"]}
     condition = config["jobs"]["packet"]["if"]
     for required in (
@@ -95,9 +101,14 @@ def test_packet_shell_routes_live_targets_and_propagates_rejection(tmp_path, tar
     trusted = tmp_path / "trusted"
     scripts = trusted / "scripts"
     scripts.mkdir(parents=True)
+    (scripts / "dispatch_session_review.py").write_bytes(
+        (ROOT / "scripts" / "dispatch_session_review.py").read_bytes())
     (scripts / "verify_session_review.py").write_text(
         "import json, os\n"
         "from pathlib import Path\n"
+        "def api(*args, **kwargs):\n"
+        "    raise AssertionError('unrelated packet may not contact the parity proof')\n"
+        "pages = linked_issue = None\n"
         "def resolve_targets(repo, event):\n"
         "    assert repo == event['repository']['full_name']\n"
         "    return event['test_targets']\n"
@@ -115,7 +126,7 @@ def test_packet_shell_routes_live_targets_and_propagates_rejection(tmp_path, tar
     }))
     packets = tmp_path / "packets"
     environment = os.environ.copy()
-    environment.update(REPOSITORY="owner/repo", GITHUB_EVENT_PATH=str(event_path),
+    environment.update(REPOSITORY="owner/repo", GITHUB_EVENT_PATH=str(event_path), GITHUB_WORKSPACE=str(trusted),
                        PACKET_ROOT=str(packets), TEST_CODES=json.dumps(dict(zip((str(x[0]) for x in targets), codes, strict=True))))
     completed = subprocess.run(["bash", "-e", "-c", step["run"]], cwd=trusted, env=environment,
                                capture_output=True, text=True, check=False, timeout=15)
