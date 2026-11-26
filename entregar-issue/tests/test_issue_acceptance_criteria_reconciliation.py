@@ -303,7 +303,7 @@ def test_accepts_report_satisfying_the_canonical_audit_schema(tmp_path: Path):
     assert load_report(path)["mode"] == "independent"
 
 
-def remote(report_value, *, regenerated_preview=None, edit_origin=None):
+def remote(report_value, *, regenerated_preview=None, edit_origin=None, source_comments=()):
     provenance = MODULE.provenance
     repo = "owner/repo"
     root = f"/repos/{repo}"
@@ -365,7 +365,7 @@ def remote(report_value, *, regenerated_preview=None, edit_origin=None):
     archive = output.getvalue()
     artifact.setdefault("digest", "sha256:" + MODULE.digest(archive))
     artifact.setdefault("size_in_bytes", len(archive))
-    posted = []
+    posted = list(source_comments)
     responses = {
         "/user": actor,
         f"{root}/pulls/99": {"number": 99, "state": "open", "draft": False, "body": "Refs #196",
@@ -601,6 +601,150 @@ def test_cli_appends_and_reuses_authorized_immutable_readback(tmp_path, monkeypa
     assert MODULE.main() == 0
     assert json.loads(capsys.readouterr().out)["status"] == "already-published"
     assert [m for m, _ in calls if m != "GET"] == ["POST"]
+
+
+def issue_comment(number, body):
+    return {"id": number, "body": body,
+            "issue_url": f"{MODULE.provenance.API_ROOT}/repos/owner/repo/issues/196"}
+
+
+def add_comment_requirement(value, comment, line, text, *, include_decision=True):
+    suffix = f"{comment['id']}-{line}"
+    req_id = f"REQ-C-{suffix}"
+    source_id, locator = f"SRC-C-{comment['id']}", f"issue-comment:{comment['id']}"
+    digest = MODULE.digest(comment["body"].encode())
+    req = deepcopy(value["requirements"][0])
+    req.update(id=req_id, origin=source_id, source_locator=locator,
+               source_sha256=digest, source_line=line, statement=text)
+    value["requirements"].append(req)
+    if include_decision:
+        row = criterion(f"AC-C-{suffix}", req_id, line, text, "unchecked")
+        row.update(origin="issue-comment", source_id=source_id, source_locator=locator,
+                   source_sha256=digest, evidence=req["evidence"])
+        value["acceptance_criteria"].append(row)
+
+
+def comment_inventory(value, *, first_row=True, second_rows=True):
+    statement = "Preservar a quantidade explícita."
+    first = issue_comment(31,
+        f"## Critérios de aceite\n- [ ] {statement}\n- [ ] {statement}\n")
+    add_comment_requirement(value, first, 2, statement, include_decision=first_row)
+    add_comment_requirement(value, first, 3, statement)
+    second = issue_comment(32,
+        "## Acceptance criteria\n- [ ] Manter o campo original.\n- [ ] Registrar o resultado.\n")
+    add_comment_requirement(value, second, 2, "Manter o campo original.", include_decision=second_rows)
+    add_comment_requirement(value, second, 3, "Registrar o resultado.", include_decision=second_rows)
+    explanatory = issue_comment(33, "## Escopo\n- Preservar o histórico.\n")
+    add_comment_requirement(value, explanatory, 2, "Preservar o histórico.", include_decision=False)
+    unrelated = issue_comment(34, "## Critérios de aceite\n- [ ] Exemplo não selecionado.\n")
+    return [first, second, explanatory, unrelated]
+
+
+@pytest.mark.parametrize(("missing", "expected"), [
+    ("none", None),
+    ("one-of-identical", "issue-comment:31 (missing=[2])"),
+    ("whole-selected-comment", "issue-comment:32 (missing=[2, 3])"),
+])
+def test_cli_requires_complete_line_inventory_for_each_selected_comment(tmp_path, monkeypatch, capsys,
+                                                                  missing, expected):
+    value = full_report(tmp_path)
+    comments = comment_inventory(value, first_row=missing != "one-of-identical",
+                                 second_rows=missing != "whole-selected-comment")
+    path = tmp_path / "report.json"
+    path.write_text(json.dumps(value))
+    api, _, _, _, calls = remote(value, source_comments=comments)
+    monkeypatch.setattr(MODULE, "run_gh", api)
+    apply_arguments(monkeypatch, path)
+    assert MODULE.main() == (0 if expected is None else 2)
+    captured = capsys.readouterr()
+    if expected is None:
+        assert json.loads(captured.out)["status"] == "published"
+        assert [m for m, _ in calls if m != "GET"] == ["POST"]
+    else:
+        assert expected in captured.err
+        assert all(method == "GET" for method, _ in calls)
+
+
+@pytest.mark.parametrize(("change", "message"), [
+    ("missing", "unavailable normative issue comments"),
+    ("edited", "source changed since the audit"),
+    ("expanded", "source changed since the audit"),
+    ("duplicate", "ambiguous or unauthenticated normative issue comment"),
+    ("other-issue", "ambiguous or unauthenticated normative issue comment"),
+])
+def test_cli_rechecks_normative_comment_readback_before_post(tmp_path, monkeypatch, capsys, change, message):
+    value = full_report(tmp_path)
+    comments = comment_inventory(value)
+    path = tmp_path / "report.json"
+    path.write_text(json.dumps(value))
+    api, _, _, _, calls = remote(value, source_comments=comments)
+    reads = 0
+
+    def facts(route, **kwargs):
+        nonlocal reads
+        result = api(route, **kwargs)
+        if not route.endswith("/issues/196/comments?per_page=100"):
+            return result
+        reads += 1
+        if reads != 2:
+            return result
+        selected = next(c for c in result if c["id"] == 32)
+        if change == "missing":
+            result.remove(selected)
+        elif change == "edited":
+            selected["body"] = selected["body"].replace("original", "revisado")
+        elif change == "expanded":
+            selected["body"] += "- [ ] Critério novo.\n"
+        elif change == "duplicate":
+            result.append(deepcopy(selected))
+        elif change == "other-issue":
+            selected["issue_url"] = selected["issue_url"].replace("/196", "/197")
+        return result
+
+    monkeypatch.setattr(MODULE, "run_gh", facts)
+    apply_arguments(monkeypatch, path)
+    assert MODULE.main() == 2
+    assert message in capsys.readouterr().err
+    assert reads == 2 and all(method == "GET" for method, _ in calls)
+
+
+@pytest.mark.parametrize(("body", "reason"), [
+    ("## Critérios de aceite\nTexto sem lista.\n", "has no list items"),
+    ("## Critérios de aceite\n- [ ] Primeiro.\n"
+     "## Acceptance criteria\n- [ ] Segundo.\n", "Expected exactly one"),
+])
+def test_selected_comment_requires_well_formed_acceptance_section_when_present(body, reason):
+    value = report()
+    selected = issue_comment(32, body)
+    add_comment_requirement(value, selected, 2, "Declarar o critério.", include_decision=False)
+    with pytest.raises(ValueError, match=reason):
+        validate_report_against_sources(value, repository="owner/repo", issue_number=196,
+                                        head_sha="1"*40, issue=issue(), comments=[selected])
+
+
+def test_issue_body_still_requires_actual_acceptance_section():
+    value = report()
+    body = "## Escopo\n- Preservar o histórico.\n"
+    value["identity"]["issue_snapshot_sha256"] = MODULE.digest(body.encode())
+    value["acceptance_criteria"] = []
+    with pytest.raises(ValueError, match="Expected exactly one"):
+        validate_report_against_sources(value, repository="owner/repo", issue_number=196,
+                                        head_sha="1"*40, issue={**issue(), "body": body}, comments=[])
+
+
+def test_rejects_same_comment_line_with_two_separate_decisions():
+    value = report()
+    comments = comment_inventory(value)
+    duplicate = deepcopy(value["acceptance_criteria"][-1])
+    duplicate["id"] = "AC-DUPLICATE"
+    req = deepcopy(value["requirements"][-2])
+    req["id"] = "REQ-DUPLICATE"
+    duplicate["requirement_id"] = req["id"]
+    value["requirements"].append(req)
+    value["acceptance_criteria"].append(duplicate)
+    with pytest.raises(ValueError, match="criterion source locations must be unique"):
+        validate_report_against_sources(value, repository="owner/repo", issue_number=196,
+                                        head_sha="1"*40, issue=issue(), comments=comments)
 
 
 @pytest.mark.parametrize(("drift", "error"), [

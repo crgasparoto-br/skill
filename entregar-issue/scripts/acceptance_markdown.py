@@ -112,7 +112,7 @@ def _lazy_continuation(line: str) -> bool:
                 and not stripped.startswith((chr(96) * 3, "~~~", "<", ">")))
 
 
-def analyze_body(body: str) -> dict[int, tuple[str, str]]:
+def analyze_body(body: str, *, allow_missing_section: bool = False) -> dict[int, tuple[str, str]]:
     """Index real criteria by original line, including their own continuation text."""
     lines = body.splitlines(keepends=True)
     items: list[dict] = []
@@ -231,6 +231,8 @@ def analyze_body(body: str) -> dict[int, tuple[str, str]]:
 
     if not inert_depth and (fence_marker or in_comment or (html_block and html_block != "until-blank")):
         raise ValueError("Unterminated inert Markdown block")
+    if sections == 0 and allow_missing_section:
+        return {}
     if sections != 1:
         raise ValueError("Expected exactly one level-2 acceptance-criteria section")
     if not items:

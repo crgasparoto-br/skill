@@ -20,7 +20,7 @@ from acceptance_markdown import analyze_body
 from validate_controller_audit_result import validate_criteria, validate_report_data
 
 CHECKBOX_RE = re.compile(r"^\s*\[\s*([xX ])\s*\]\s*(.*?)\s*$")
-COMMENT_LOCATOR_RE = re.compile(r"^issue-comment:(\d+)$")
+COMMENT_LOCATOR_RE = re.compile(r"issue-comment:([1-9][0-9]*)")
 FINGERPRINT_RE = re.compile(
     r"<!-- audit-acceptance-criteria-fingerprint:([a-f0-9]{64}) -->"
 )
@@ -140,39 +140,65 @@ def flatten_pages(value: object) -> list[dict[str, Any]]:
     raise ValueError("paginated GitHub response has an unexpected shape")
 
 
-def criterion_source(
-    criterion: dict[str, Any],
-    *,
-    body: str,
-    comments: dict[str, str],
-) -> str:
-    locator = str(criterion["source_locator"])
-    if criterion["origin"] == "issue-body":
-        if locator != "issue-body":
-            raise ValueError(f"{criterion['id']} has an invalid issue-body locator")
-        return body
-    match = COMMENT_LOCATOR_RE.fullmatch(locator)
-    if not match or match.group(1) not in comments:
-        raise ValueError(
-            f"{criterion['id']} references an unavailable issue comment"
-        )
-    return comments[match.group(1)]
+def select_normative_comment_digests(requirements: list[dict[str, Any]]) -> dict[str, str]:
+    """Select comments from the attested requirement inventory, not from live prose."""
+    expected: dict[str, str] = {}
+    for requirement in requirements:
+        locator = requirement.get("source_locator")
+        if not isinstance(locator, str) or not locator.startswith("issue-comment:"):
+            continue
+        source_hash = requirement.get("source_sha256")
+        if not COMMENT_LOCATOR_RE.fullmatch(locator) or not provenance.sha(source_hash, provenance.DIGEST):
+            raise ValueError(f"invalid normative issue comment source: {locator}")
+        if expected.setdefault(locator, source_hash) != source_hash:
+            raise ValueError(f"conflicting normative issue comment digests: {locator}")
+    return expected
 
 
-def validate_acceptance_criterion(
-    criterion: dict[str, Any],
-    source: str,
-) -> tuple[str, int, str]:
-    identifier = str(criterion["id"])
-    if digest(source.encode("utf-8")) != criterion["source_sha256"]:
-        raise ValueError(f"{identifier} source changed since the audit")
-    line = int(criterion["source_line"])
-    state, text = source_item(source, line)
-    if state != criterion["initial_checkbox_state"] or text != normalize(
-        str(criterion["text"])
-    ):
-        raise ValueError(f"{identifier} no longer matches its exact source item")
-    return str(criterion["source_locator"]), line, text
+def read_normative_comments(
+    requirements: list[dict[str, Any]], comments: list[dict[str, Any]], issue_url: str,
+) -> dict[str, str]:
+    expected = select_normative_comment_digests(requirements)
+    verified: dict[str, str] = {}
+    for comment in comments:
+        number = comment.get("id")
+        if not provenance.positive(number):
+            continue
+        locator = f"issue-comment:{number}"
+        if locator not in expected:
+            continue
+        body = comment.get("body")
+        if locator in verified or comment.get("issue_url") != issue_url or not isinstance(body, str):
+            raise ValueError(f"ambiguous or unauthenticated normative issue comment: {locator}")
+        if digest(body.encode("utf-8")) != expected[locator]:
+            raise ValueError(f"{locator} source changed since the audit")
+        verified[locator] = body
+    missing = sorted(expected.keys() - verified.keys())
+    if missing:
+        raise ValueError(f"unavailable normative issue comments: {missing}")
+    return verified
+
+
+def validate_acceptance_inventory(report: dict[str, Any], sources: dict[str, str]) -> None:
+    expected = {locator: analyze_body(source, allow_missing_section=locator != "issue-body")
+                for locator, source in sources.items()}
+    actual: dict[str, set[int]] = {locator: set() for locator in expected}
+    for criterion in report["acceptance_criteria"]:
+        identifier = criterion["id"]
+        locator = criterion["source_locator"]
+        is_body = locator == "issue-body"
+        if locator not in expected or is_body != (criterion["origin"] == "issue-body"):
+            raise ValueError(f"{identifier} references an unavailable normative source")
+        line = criterion["source_line"]
+        item = expected[locator].get(line) if type(line) is int else None
+        state, text = (item[0], normalize(item[1])) if item else (None, None)
+        if state != criterion["initial_checkbox_state"] or text != normalize(criterion["text"]):
+            raise ValueError(f"{identifier} no longer matches its exact source item")
+        actual[locator].add(line)
+    for locator, lines in expected.items():
+        missing = sorted(lines.keys() - actual[locator])
+        if missing:
+            raise ValueError(f"acceptance criteria inventory differs for {locator} (missing={missing})")
 
 
 def validate_report_against_sources(
@@ -199,30 +225,10 @@ def validate_report_against_sources(
     if digest(body.encode("utf-8")) != identity["issue_snapshot_sha256"]:
         raise ValueError("issue body changed since the audit snapshot")
 
-    comment_by_id = {
-        str(item.get("id")): str(item.get("body") or "")
-        for item in comments
-        if item.get("id") is not None
-    }
     validate_criteria(report)
-    body_lines: set[int] = set()
-    for criterion in report["acceptance_criteria"]:
-        source = criterion_source(
-            criterion, body=body, comments=comment_by_id
-        )
-        location = validate_acceptance_criterion(
-            criterion, source
-        )
-        if location[0] == "issue-body":
-            body_lines.add(location[1])
-    expected_body_lines = set(acceptance_lines(body))
-    if body_lines != expected_body_lines:
-        missing = sorted(expected_body_lines - body_lines)
-        extra = sorted(body_lines - expected_body_lines)
-        raise ValueError(
-            "acceptance criteria inventory differs from the issue body "
-            f"(missing={missing}, extra={extra})"
-        )
+    issue_url = f"{provenance.API_ROOT}/repos/{repository}/issues/{issue_number}"
+    selected = read_normative_comments(report["requirements"], comments, issue_url)
+    validate_acceptance_inventory(report, {"issue-body": body, **selected})
 
 
 def reconcile_payload(

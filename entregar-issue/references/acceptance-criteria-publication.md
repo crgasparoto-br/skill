@@ -33,6 +33,14 @@ em listas terminam no limite do seu contêiner, inclusive sem cerca explícita.
 O validador compartilhado exige vínculo individual de origem, texto, digest,
 locator, linha e evidência com o requisito atômico correspondente, e rejeita
 aprovação global com critérios obrigatórios não verificados antes do POST.
+O inventário de linhas deve coincidir para cada fonte: o corpo da issue e
+os comentários selecionados pelo inventário de requisitos atestado no
+parecer, com locator explícito `issue-comment:<id>`, digest exato e confirmação
+de que o comentário pertence à issue. Um comentário selecionado com critérios
+não pode ter todas as decisões omitidas. Comentários não selecionados não
+adquirem força normativa por conterem um cabeçalho de aceite. Sem seleção
+autenticada, o CLI não infere fontes que estejam ausentes tanto do inventário
+de requisitos quanto dos critérios.
 
 A autoridade não é selecionável: o CLI exige o check canônico
 `Verify session review (exact SHA)`, do app GitHub Actions, e o workflow canônico
