@@ -34,6 +34,8 @@ Aplicar nesta ordem, somente onde a fonte tratar o componente ou estado em quest
 3. **Telas correlatas da mesma solucao**: padroes existentes e observaveis quando nao houver regra mais especifica.
 4. **Defaults genericos desta skill**: aplicar apenas ao que permanecer sem padrao local identificavel.
 
+A precedencia opera por propriedade, componente e estado, nao como licenca global para trocar a identidade visual. Somente depois de identificar uma lacuna visual relevante consultar [direcao visual contextual](visual-direction.md): escolher opcionalmente uma familia, uma composicao propria ou nenhum tema para **completar a lacuna**. Tema externo nao cria requisitos, nao determina a estrutura da pagina, nao substitui tokens aprovados nem altera regras de negocio. Sem rede ou sem tema, manter defaults locais/genericos coerentes e acessiveis; acesso externo e sempre opcional.
+
 - Requisitos e criterios da issue delimitam a mudanca, mas nao substituem silenciosamente fontes canonicas. Em conflito entre documentacao aprovada, implementacao real ou requisito, identificar as fontes e a divergencia antes de decidir; nao presumir que uma mudanca acidental de CSS revogou o padrao.
 - Quando nao houver documento formal, mas houver componentes locais, reutilizar seu comportamento e registrar que a referencia e **implementada**, nao oficialmente aprovada.
 - Na ausencia de fonte local verificavel, declarar **sem padrao local identificado** e usar os defaults pertinentes desta skill; nao criar design system ficticio nem copiar referencias de outra aplicacao.
