@@ -272,11 +272,9 @@ nao dependencia de pytest. O indice `test-candidate-index.json` contem
 nomes, status e hash do JUnit, mas `requirement_mapping=UNKNOWN` ate
 que controles discriminantes comprovem a cobertura de cada requisito.
 
-`base-ref` e parametrizavel, com `develop` padrao na SolverIT. Nao
-conceder tokens de escrita ao job do PR. O publicador atual e especifico
-do repositorio `skill`: outro consumidor precisa configurar um processo
-separado, de fonte confiavel, com seus checks obrigatorios e autorizacao
-de release; nunca copiar uma credencial privilegiada para o workflow de PR.
+`base-ref` e parametrizavel, com `develop` padrao na SolverIT.
+Cada consumidor configura o caller confiavel descrito abaixo, sem
+token de escrita no job de PR e com autorizacao de release.
 
 O caller pode informar `evidence-command`: um comando do projeto consumidor,
 executado apenas apos testes aprovados, sem `GITHUB_TOKEN`, para produzir
@@ -325,6 +323,12 @@ a partir de codigo oficial vinculado ao SHA do workflow reutilizavel, checa
 direto de resultados e faz push fast-forward sem merge. A leitura remota
 depois do push e obrigatoria. Nao executar este fluxo a partir de PR nem
 habilita-lo antes de revisao e promocao autorizada ao default branch.
+
+Politica de sessao: comparar blobs Git da default confiavel e da base
+protegida do consumidor com a API autenticada, nunca a politica do tooling.
+Ausencia bilateral provada + HTTP 404: legado. Politicas iguais e validas:
+enabled preserva o HEAD, disabled permite o filho. Divergencia, erro Git/API
+ou blob inseguro bloqueiam antes de stage/commit/push.
 
 O pacote `certification-inputs.json`, `requirement-closure.json` e controles
 adversariais continua sendo obrigatorio: indexar testes nao gera aprovacao
