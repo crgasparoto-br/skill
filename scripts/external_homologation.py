@@ -64,7 +64,8 @@ def match(pattern, value):
 
 def valid_identity(identity):
     object_fields(identity, IDENTITY_FIELDS)
-    require(match(re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+"), identity["repository"]), "repository")
+    require(match(re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+"), identity["repository"])
+            and all(part not in {".", ".."} for part in identity["repository"].split("/")), "repository")
     require(all(positive(identity[k]) for k in ("pull_request", "issue")), "PR/issue identity")
     require(isinstance(identity["base_ref"], str) and bool(identity["base_ref"]), "base ref")
     require(all(match(SHA, identity[k]) for k in ("base_sha", "head_sha", "merge_preview_sha")), "exact SHA")
@@ -104,7 +105,9 @@ def policy_for(default_raw, base_raw, identity, scenario):
         principal(policy[key])
     same = policy["owner"]["id"] == policy["reviewer"]["id"]
     require((policy["assurance"] == SOLO and same and policy["owner"] == policy["reviewer"])
-            or (policy["assurance"] == THIRD_PARTY and not same), "assurance/principal mismatch")
+            or (policy["assurance"] == THIRD_PARTY and not same
+                and policy["owner"]["login"].casefold() != policy["reviewer"]["login"].casefold()),
+            "assurance/principal mismatch")
     require(isinstance(policy["scenarios"], dict) and scenario in policy["scenarios"], "scenario not authorized")
     selected = policy["scenarios"][scenario]
     object_fields(selected, {"origin", "controls", "technical_checks"})
@@ -175,7 +178,7 @@ def selected_statement(comments, prefix, actor, identity, watermark, api_origin)
             continue
         body = comment.get("body")
         if isinstance(body, str) and body.startswith(prefix):
-            require(positive(comment.get("id")) and user.get("type") == "User"
+            require(positive(comment.get("id")) and positive(user.get("id")) and user.get("type") == "User"
                     and user.get("login") == actor["login"], "unauthorized author")
             candidates.append(comment)
     require(bool(candidates), "authorized statement absent")

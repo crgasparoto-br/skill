@@ -209,3 +209,37 @@ def test_same_comment_path_on_wrong_api_origin_fails():
             comment[key] = comment[key].replace("api.example", "foreign.example")
     with pytest.raises(ValueError, match="statement not linked to PR"):
         gate.validate_external_homologation(**case)
+
+
+def test_float_author_id_cannot_equal_integer_principal():
+    case = make_case()
+    case["comments"][0]["user"]["id"] = 11.0
+    with pytest.raises(ValueError, match="unauthorized author"):
+        gate.validate_external_homologation(**case)
+
+
+def test_boolean_author_id_cannot_equal_integer_principal():
+    case = make_case()
+    policy = gate.parse(case["default_policy"])
+    policy["owner"]["id"] = policy["reviewer"]["id"] = 1
+    for comment in case["comments"]:
+        comment["user"]["id"] = True
+    reseal(case, policy=policy)
+    with pytest.raises(ValueError, match="unauthorized author"):
+        gate.validate_external_homologation(**case)
+
+
+def test_distinct_ids_with_same_login_do_not_prove_third_party():
+    case = make_case(gate.THIRD_PARTY)
+    policy = gate.parse(case["default_policy"])
+    policy["reviewer"]["login"] = policy["owner"]["login"].upper()
+    reseal(case, policy=policy)
+    with pytest.raises(ValueError, match="assurance/principal mismatch"):
+        gate.validate_external_homologation(**case)
+
+
+def test_dot_segment_repository_is_not_a_literal_identity():
+    case = make_case()
+    case["identity"]["repository"] = "org/.."
+    with pytest.raises(ValueError, match="repository"):
+        gate.validate_external_homologation(**case)
