@@ -718,3 +718,67 @@ def test_publisher_policy_api_failure_prevents_any_stage_or_push(certified_publi
         publisher.publish(harness.event)
     assert not harness.staged and harness.pushed is None
     assert not harness.terminal_proofs
+
+
+def test_legacy_publication_with_enabled_tooling_and_bilateral_policy_absence(certified_publisher, monkeypatch, tmp_path):
+    harness = certified_publisher
+    policy = ".github/session-review-policy.json"
+    source_tooling = publisher.SCRIPT_ROOT.parents[1]
+    tooling = tmp_path / "tooling-only"
+    (tooling / ".github").mkdir(parents=True)
+    (tooling / policy).write_bytes(session_policy_bytes("enabled"))
+    assert json.loads((tooling / policy).read_bytes())["mode"] == "enabled"
+    (tooling / "entregar-issue").symlink_to(source_tooling / "entregar-issue", target_is_directory=True)
+    monkeypatch.setattr(publisher, "SCRIPT_ROOT", tooling / "entregar-issue/scripts")
+    git = harness.real_command
+    assert git("git", "rev-parse", "HEAD", cwd=harness.repo) == harness.base
+    (harness.repo / "default-marker.txt").write_text("distinct trusted default tree\n", encoding="utf-8")
+    git("git", "add", "default-marker.txt", cwd=harness.repo)
+    git("git", "-c", "user.name=synthetic", "-c", "user.email=fixture@example.invalid",
+        "commit", "-m", "distinct trusted default fixture", cwd=harness.repo)
+    default = git("git", "rev-parse", "HEAD", cwd=harness.repo)
+    assert default != harness.base
+    assert git("git", "rev-parse", default + "^{tree}", cwd=harness.repo) != git(
+        "git", "rev-parse", harness.base + "^{tree}", cwd=harness.repo)
+    for sha in (default, harness.base):
+        assert not git("git", "ls-tree", sha, "--", policy, cwd=harness.repo)
+    assert not (harness.repo / policy).exists()
+    trace = []
+
+    def api(repository, endpoint):
+        if endpoint.startswith("contents/"):
+            assert endpoint == f"contents/{policy}?ref={harness.base}"
+            assert not harness.staged and harness.pushed is None
+            try:
+                return harness.api_get(repository, endpoint)
+            except HTTPError as exc:
+                assert exc.code == 404
+                trace.append("protected-policy-404")
+                raise
+        result = harness.api_get(repository, endpoint)
+        if harness.pushed and endpoint == "pulls/99":
+            assert result["head"]["sha"] == harness.pushed and result["base"]["sha"] == harness.base
+            trace.append("readback-pr-exact")
+        if harness.pushed and endpoint == f"commits/{harness.pushed}":
+            assert result["parents"] == [{"sha": harness.head}]
+            assert result["files"]
+            trace.append("readback-child-exact")
+        return result
+
+    def command(*args, cwd=None):
+        if args[:2] == ("git", "push"):
+            # Existing harness intercepts push; this is an assertion on simulated transport.
+            trace.append("push-simulated")
+        result = harness.command(*args, cwd=cwd)
+        if args[0] == "python" and Path(args[1]).name == "validate_terminal_handoff.py":
+            trace.append("terminal-post" if harness.pushed else "terminal-pre")
+        return result
+
+    monkeypatch.setattr(publisher, "api_get", api)
+    monkeypatch.setattr(publisher, "command", command)
+    result = publisher.publish(harness.event)
+    assert result == harness.pushed and result != harness.head and harness.staged
+    assert len(harness.terminal_proofs) == 2
+    assert all(p["material_head_sha"] == harness.head for p in harness.terminal_proofs)
+    assert trace == ["protected-policy-404", "terminal-pre", "push-simulated",
+                     "readback-pr-exact", "readback-child-exact", "terminal-post"]
