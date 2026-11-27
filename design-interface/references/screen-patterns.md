@@ -12,6 +12,7 @@ Consultar apenas a superfície e o padrão ligados à tarefa atual, antes de mud
 - [Tela analítica ou dashboard](#tela-analítica-ou-dashboard)
 - [Representação dos dados](#representação-dos-dados)
 - [Casos verificáveis](#casos-verificáveis)
+- [Exemplo de gráfico com dados fornecidos](#exemplo-de-gráfico-com-dados-fornecidos)
 - [Tela de lista, inbox ou registros](#tela-de-lista-inbox-ou-registros)
 - [Formulário de criação ou edição](#formulário-de-criação-ou-edição)
 - [Tela de escrita, editor ou conteúdo](#tela-de-escrita-editor-ou-conteúdo)
@@ -82,9 +83,9 @@ Fixture sintética, apenas para teste. Pergunta: quantos pedidos foram concluíd
 
 | Caso | Valores da fonte | Valores mostrados | Eixo das barras | Decisão |
 | --- | --- | --- | --- | --- |
-| FIEL | 40, 60 | 40, 60 | 0–80 | representar |
+| FIEL | 40, 60 | 40, 60 | 0-80 | representar |
 | AUSENTE | — | — | — | informar-ausencia |
-| DISTORCIDO | 40, 60 | 40, 60 | 35–80 | rejeitar |
+| DISTORCIDO | 40, 60 | 40, 60 | 35-80 | rejeitar |
 
 No eixo fiel, as alturas são proporcionais a 40 e 60. Com início em 35, viram 5 e 25: a segunda barra aparenta ser cinco vezes maior, embora a contagem seja apenas uma vez e meia a primeira.
 

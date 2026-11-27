@@ -277,7 +277,7 @@ def _assert_chart_fixture(patterns: str) -> None:
     for case, expected_min, expected_decision in (("FIEL", 0, "representar"), ("DISTORCIDO", 35, "rejeitar")):
         source, display, axis, decision = rows[case]
         original, displayed = [int(x) for x in source.split(", ")], [int(x) for x in display.split(", ")]
-        start, end = [int(x) for x in axis.split("–")]
+        start, end = [int(x) for x in axis.split("-")]
         assert original == displayed == [40, 60], "chart fixture fidelity"
         assert start == expected_min and start <= min(displayed) and max(displayed) <= end, "chart fixture domain"
         first, second = displayed[0] - start, displayed[1] - start
@@ -292,10 +292,10 @@ def test_chart_fixture_distinguishes_fidelity_absence_and_distortion() -> None:
 @pytest.mark.parametrize(
     ("old", "new", "error"),
     [
-        ("40, 60 | 40, 60 | 0–80", "40, 60 | 40, 80 | 0–80", "fidelity"),
-        ("— | — | — | informar-ausencia", "— | 0, 0 | 0–80 | representar", "absence"),
-        ("35–80 | rejeitar", "35–80 | representar", "decision"),
-        ("0–80 | representar", "35–80 | representar", "domain"),
+        ("40, 60 | 40, 60 | 0-80", "40, 60 | 40, 80 | 0-80", "fidelity"),
+        ("— | — | — | informar-ausencia", "— | 0, 0 | 0-80 | representar", "absence"),
+        ("35-80 | rejeitar", "35-80 | representar", "decision"),
+        ("0-80 | representar", "35-80 | representar", "domain"),
         ("pedidos/semana", "unidade indefinida", "context"),
     ],
 )
@@ -312,7 +312,7 @@ _SURFACE_POLICY = {
     "screen-patterns.md": (
         "## Antes de uma mudança material",
         "## Tela de lista, inbox ou registros",
-        "ce7c673722b13c824a25852232a1c2919fc44adfe737d226809005d7213442cd",
+        "44920c289f4c48e348ca21f39a0aaaead0275bf869ad1a7226d7be233b0a5aaa",
     ),
     "interface-standards.md": (
         "## Estados por papel e risco",
