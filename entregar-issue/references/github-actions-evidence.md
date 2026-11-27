@@ -326,6 +326,15 @@ direto de resultados e faz push fast-forward sem merge. A leitura remota
 depois do push e obrigatoria. Nao executar este fluxo a partir de PR nem
 habilita-lo antes de revisao e promocao autorizada ao default branch.
 
+A politica de sessao e lida exclusivamente dos blobs Git da default branch
+confiavel e da base protegida do consumidor, confrontados com a resposta
+autenticada da API. O checkout separado do tooling fornece somente codigo e
+validadores; sua politica local nao seleciona a rota do consumidor. Ausencia
+nas duas arvores comprovada por Git e HTTP 404 preserva o fluxo legado;
+politicas identicas e validas selecionam enabled (sem filho result-only) ou
+disabled (fluxo legado). Divergencia, ausencia unilateral, Git ou API
+indisponivel e blobs inseguros bloqueiam antes de stage/commit/push.
+
 O pacote `certification-inputs.json`, `requirement-closure.json` e controles
 adversariais continua sendo obrigatorio: indexar testes nao gera aprovacao
 semantica. Ausencia de evidencia impede o workflow de producao e, portanto,

@@ -1,6 +1,7 @@
 """Trusted post-certification publisher: only exact, allowlisted GitHub evidence."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import importlib
 import importlib.util
@@ -9,6 +10,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pytest
 
@@ -227,6 +229,8 @@ class PublicationHarness:
                 "sha": self.pushed or self.head, "ref": self.branch,
                 "repo": {"full_name": repository}},
                 "base": {"sha": self.base, "ref": "develop"}}
+        if endpoint == f"contents/.github/session-review-policy.json?ref={self.base}":
+            raise HTTPError(endpoint, 404, "absent", None, None)
         if endpoint.startswith("actions/runs/7/artifacts"):
             return {"artifacts": [{"name": f"handoff-evidence-99-{self.head}", "expired": False}]}
         if endpoint.startswith("actions/runs?head_sha="):
@@ -351,10 +355,10 @@ def certified_publisher(tmp_path, monkeypatch, request):
         "path": ".github/workflows/handoff-evidence.yml", "head_sha": candidate["head"],
         "pull_requests": [{"number": 99}]}}), encoding="utf-8")
     harness = PublicationHarness(candidate, bundle, event)
+    grounding.git(candidate["repo"], "checkout", "--detach", candidate["base"])
     monkeypatch.chdir(candidate["repo"])
     monkeypatch.setattr(publisher, "command", harness.command)
     monkeypatch.setattr(publisher, "api_get", harness.api_get)
-    monkeypatch.setattr(publisher, "session_mode_active", lambda repo, base: False)
     return harness
 
 
@@ -365,6 +369,7 @@ def test_publisher_materializes_certified_execution_before_grounding(certified_p
     assert harness.proof_absent_at_checkout
     assert harness.grounding_bytes == expected
     assert harness.pushed == published
+    assert len(harness.terminal_proofs) == 2
     assert harness.validators == ["validate_handoff_certificate.py", "validate_codebase_grounding.py",
                                   "check_code_growth.py", "validate_terminal_handoff.py", "validate_terminal_handoff.py"]
     git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
@@ -592,8 +597,124 @@ def test_trusted_historical_audit_files_are_immutable(tmp_path, change):
 
 def test_enabled_session_mode_preserves_material_sha_without_result_child(certified_publisher, monkeypatch):
     harness = certified_publisher
-    monkeypatch.setattr(publisher, "session_mode_active", lambda repo, base: True)
+    monkeypatch.setattr(publisher, "session_mode_active", lambda repo, base, trusted: True)
     assert publisher.publish(harness.event) is None
     assert harness.pushed is None
     assert harness.validators == ["validate_handoff_certificate.py", "validate_codebase_grounding.py",
                                   "check_code_growth.py"]
+
+
+def session_policy_bytes(mode):
+    from scripts.session_review import ACKNOWLEDGEMENT, ASSURANCE
+
+    return json.dumps({
+        "schema_version": 1, "mode": mode, "assurance": ASSURANCE,
+        "acknowledgement": ACKNOWLEDGEMENT,
+        "operators": [{"id": 123, "login": "synthetic-operator"}] if mode == "enabled" else [],
+    }).encode("utf-8")
+
+
+def policy_checkout(tmp_path, base_raw, default_raw):
+    repo = tmp_path / "consumer"
+    repo.mkdir()
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    git(repo, "init", "-q")
+    path = repo / ".github/session-review-policy.json"
+    path.parent.mkdir()
+    for index, raw in enumerate((base_raw, default_raw)):
+        if path.exists() or path.is_symlink():
+            path.unlink()
+        if raw == b"symlink":
+            path.symlink_to("../README.md")
+        elif raw is not None:
+            path.write_bytes(raw)
+        git(repo, "add", "-A")
+        git(repo, "commit", "--allow-empty", "-q", "-m", "trusted policy snapshot")
+        if index == 0:
+            base = git(repo, "rev-parse", "HEAD")
+    return repo, base
+
+
+def policy_response(raw):
+    return {"type": "file", "encoding": "base64", "content": base64.b64encode(raw).decode("ascii")}
+
+
+def test_consumer_legacy_ignores_enabled_tooling_and_untracked_policy(tmp_path, monkeypatch):
+    repo, base = policy_checkout(tmp_path, None, None)
+    tooling = tmp_path / "tooling"
+    (tooling / ".github").mkdir(parents=True)
+    (tooling / ".github/session-review-policy.json").write_bytes(session_policy_bytes("enabled"))
+    monkeypatch.setattr(publisher, "SCRIPT_ROOT", tooling / "entregar-issue/scripts")
+    # An uncommitted file is not trusted default-branch policy either.
+    (repo / ".github/session-review-policy.json").write_bytes(session_policy_bytes("enabled"))
+
+    def absent(repository, endpoint):
+        assert repository == "owner/repo"
+        assert endpoint == f"contents/.github/session-review-policy.json?ref={base}"
+        raise HTTPError(endpoint, 404, "absent", None, None)
+
+    monkeypatch.setattr(publisher, "api_get", absent)
+    assert publisher.session_mode_active("owner/repo", base, repo) is False
+
+
+@pytest.mark.parametrize("mode,expected", [("enabled", True), ("disabled", False)])
+def test_consumer_policy_not_tooling_selects_session_mode(tmp_path, monkeypatch, mode, expected):
+    raw = session_policy_bytes(mode)
+    repo, base = policy_checkout(tmp_path, raw, raw)
+    monkeypatch.setattr(publisher, "api_get", lambda *_: policy_response(raw))
+    assert publisher.session_mode_active("owner/repo", base, repo) is expected
+
+
+@pytest.mark.parametrize("case", [
+    "base-only", "default-only", "different-bytes", "different-api-bytes",
+    "contradictory-404", "403", "500", "unproved-base", "invalid-schema",
+    "duplicate-json", "symlink", "api-only", "malformed-api",
+])
+def test_consumer_session_policy_fails_closed(tmp_path, monkeypatch, case):
+    enabled = session_policy_bytes("enabled")
+    disabled = session_policy_bytes("disabled")
+    invalid = b'{"schema_version":true,"mode":"disabled"}'
+    duplicate = b'{"mode":"enabled","mode":"disabled"}'
+    base_raw, default_raw = {
+        "base-only": (enabled, None),
+        "default-only": (None, enabled),
+        "different-bytes": (enabled, disabled),
+        "invalid-schema": (invalid, invalid),
+        "duplicate-json": (duplicate, duplicate),
+        "symlink": (b"symlink", b"symlink"),
+        "api-only": (None, None),
+    }.get(case, (enabled, enabled))
+    if case in {"403", "500", "unproved-base"}:
+        base_raw = default_raw = None
+    repo, base = policy_checkout(tmp_path, base_raw, default_raw)
+    if case == "unproved-base":
+        base = "f" * 40
+
+    def api(repository, endpoint):
+        if case in {"403", "500"}:
+            raise HTTPError(endpoint, int(case), "unavailable", None, None)
+        if case in {"default-only", "contradictory-404"}:
+            raise HTTPError(endpoint, 404, "absent", None, None)
+        if case == "malformed-api":
+            return {"type": "symlink", "encoding": "base64", "content": ""}
+        return policy_response(disabled if case == "different-api-bytes" else base_raw or enabled)
+
+    monkeypatch.setattr(publisher, "api_get", api)
+    with pytest.raises((ValueError, subprocess.CalledProcessError)):
+        publisher.session_mode_active("owner/repo", base, repo)
+
+
+def test_publisher_policy_api_failure_prevents_any_stage_or_push(certified_publisher, monkeypatch):
+    harness = certified_publisher
+    original = publisher.api_get
+
+    def api(repository, endpoint):
+        if endpoint.startswith("contents/.github/session-review-policy.json?"):
+            raise HTTPError(endpoint, 403, "unavailable", None, None)
+        return original(repository, endpoint)
+
+    monkeypatch.setattr(publisher, "api_get", api)
+    with pytest.raises(ValueError, match="protected-base session policy unavailable"):
+        publisher.publish(harness.event)
+    assert not harness.staged and harness.pushed is None
+    assert not harness.terminal_proofs
