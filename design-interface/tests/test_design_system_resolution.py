@@ -93,8 +93,10 @@ _EXPECTED_DIRECTION_CASES = {
 }
 
 
-def _scenario_rows(source: str, header: tuple[str, ...]) -> dict[str, tuple[str, ...]]:
-    section = source.split("## Casos verificáveis", 1)[1].split("\n## ", 1)[0]
+def _scenario_rows(
+    source: str, header: tuple[str, ...], section_title: str = "Casos verificáveis"
+) -> dict[str, tuple[str, ...]]:
+    section = source.split(f"## {section_title}\n", 1)[1].split("\n## ", 1)[0]
     rows = [row for row in section.splitlines() if row.startswith("| ")]
     assert tuple(cell.strip() for cell in rows[0].strip("|").split("|")) == header
     assert rows[1].startswith("| ---")
@@ -261,13 +263,56 @@ def test_surface_cases_reject_reversed_decisions(case: str) -> None:
         _assert_surface_cases(patterns.replace(old, f"| {reject} | {accept} |", 1))
 
 
+def _assert_chart_fixture(patterns: str) -> None:
+    heading = "Exemplo de gráfico com dados fornecidos"
+    section = patterns.split(f"## {heading}\n", 1)[1].split("\n## ", 1)[0]
+    assert all(field in section for field in (
+        "Fixture sintética, apenas para teste", "semana 1 = 40", "semana 2 = 60", "pedidos/semana",
+    )), "chart fixture context"
+    rows = _scenario_rows(
+        patterns, ("Caso", "Valores da fonte", "Valores mostrados", "Eixo das barras", "Decisão"), heading
+    )
+    assert set(rows) == {"FIEL", "AUSENTE", "DISTORCIDO"}, "chart fixture cases"
+    assert rows["AUSENTE"] == ("—", "—", "—", "informar-ausencia"), "chart fixture absence"
+    for case, expected_min, expected_decision in (("FIEL", 0, "representar"), ("DISTORCIDO", 35, "rejeitar")):
+        source, display, axis, decision = rows[case]
+        original, displayed = [int(x) for x in source.split(", ")], [int(x) for x in display.split(", ")]
+        start, end = [int(x) for x in axis.split("–")]
+        assert original == displayed == [40, 60], "chart fixture fidelity"
+        assert start == expected_min and start <= min(displayed) and max(displayed) <= end, "chart fixture domain"
+        first, second = displayed[0] - start, displayed[1] - start
+        keeps_proportion = second * original[0] == first * original[1]
+        assert decision == expected_decision and keeps_proportion == (decision == "representar"), "chart fixture decision"
+
+
+def test_chart_fixture_distinguishes_fidelity_absence_and_distortion() -> None:
+    _assert_chart_fixture((ROOT / "references/screen-patterns.md").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "error"),
+    [
+        ("40, 60 | 40, 60 | 0–80", "40, 60 | 40, 80 | 0–80", "fidelity"),
+        ("— | — | — | informar-ausencia", "— | 0, 0 | 0–80 | representar", "absence"),
+        ("35–80 | rejeitar", "35–80 | representar", "decision"),
+        ("0–80 | representar", "35–80 | representar", "domain"),
+        ("pedidos/semana", "unidade indefinida", "context"),
+    ],
+)
+def test_chart_fixture_rejects_material_misrepresentations(old: str, new: str, error: str) -> None:
+    patterns = (ROOT / "references/screen-patterns.md").read_text(encoding="utf-8")
+    assert patterns.count(old) == 1
+    with pytest.raises(AssertionError, match=f"chart fixture {error}"):
+        _assert_chart_fixture(patterns.replace(old, new, 1))
+
+
 # Pin the reviewed sections, not unrelated parts of the reference. A policy
 # change needs rederivation and independent review even if examples stay green.
 _SURFACE_POLICY = {
     "screen-patterns.md": (
         "## Antes de uma mudança material",
         "## Tela de lista, inbox ou registros",
-        "4ac258b20ad765d1a05fc9c68514134bad323c7fd983d74bcd5136e21fc46489",
+        "ce7c673722b13c824a25852232a1c2919fc44adfe737d226809005d7213442cd",
     ),
     "interface-standards.md": (
         "## Estados por papel e risco",

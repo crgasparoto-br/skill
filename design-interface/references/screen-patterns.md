@@ -76,6 +76,18 @@ Os casos abaixo documentam decisões de contrato; não substituem a verificaçã
 | ESCALA | Barras comparáveis | preservar-proporcao-a-partir-de-zero | cortar-eixo-e-exagerar-diferenca |
 | INTERACAO | Teclado em carregamento e movimento reduzido | preservar-foco-contraste-espaco-e-acao | perder-foco-ou-deslocar-controle |
 
+## Exemplo de gráfico com dados fornecidos
+
+Fixture sintética, apenas para teste. Pergunta: quantos pedidos foram concluídos em cada semana? Fonte da fixture: semana 1 = 40 e semana 2 = 60, em pedidos/semana. O gráfico e sua alternativa acessível devem apresentar os mesmos valores e períodos; se a fonte estiver indisponível, não há valores para representar.
+
+| Caso | Valores da fonte | Valores mostrados | Eixo das barras | Decisão |
+| --- | --- | --- | --- | --- |
+| FIEL | 40, 60 | 40, 60 | 0–80 | representar |
+| AUSENTE | — | — | — | informar-ausencia |
+| DISTORCIDO | 40, 60 | 40, 60 | 35–80 | rejeitar |
+
+No eixo fiel, as alturas são proporcionais a 40 e 60. Com início em 35, viram 5 e 25: a segunda barra aparenta ser cinco vezes maior, embora a contagem seja apenas uma vez e meia a primeira.
+
 ## Tela de lista, inbox ou registros
 
 Ordenar normalmente:
