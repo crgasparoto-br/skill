@@ -28,3 +28,11 @@ Alterar workflow somente quando a issue tratar explicitamente de CI/GitHub Actio
 ## Controle reutilizavel
 
 Executar `OUTBOUND-COUNT-001` para provar que helpers transitivos nao multiplicam chamadas dentro de uma tentativa e `SMOKE-NO-PR-SECRETS-001` para provar que codigo de PR nao recebe credenciais reais e que nenhuma aprovacao manual foi introduzida.
+
+## Homologacao externa com bloqueio comprovado
+
+Aplicar o [contrato M1](../../docs/EXTERNAL_HOMOLOGATION.md) para preparar
+evidencia funcional humana atestada, separada de teste automatizado e de
+auditoria. Validar identidade, bytes, controles, autoria e revisao sem atribuir
+autoridade ao manifesto. O M1 nao substitui o gate atual: a integracao e
+migracao protegida M2 exigem prova operacional separada.

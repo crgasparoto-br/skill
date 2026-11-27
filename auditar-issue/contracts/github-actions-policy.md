@@ -79,3 +79,13 @@ parent e diff, e repetir `validate_terminal_handoff.py`; falha impede
 O workflow privilegiado so fica ativo quando seu codigo estiver no default
 branch; uma PR isolada nao o ativa. Nao ampliar permissao do workflow
 `pull_request` nem tratar o artifact do PR como executavel confiavel.
+
+## Homologacao externa atestada (M1)
+
+Quando houver bloqueio externo comprovado de uma automacao obrigatoria,
+aplicar o [contrato de homologacao externa](../../docs/EXTERNAL_HOMOLOGATION.md).
+O M1 valida consistencia de provas sem autoridade operacional; nao substitui
+checks vigentes. O M2 requer instalacao confiavel, autorizacao especifica e
+prova de enforcement conjunto dos gates tecnicos e externos antes de migrar.
+Enquanto nao demonstrado, manter blocked-external e o gate original, sem
+dispensa de testes, aprovacao manual de workflow ou nova tentativa artificial.

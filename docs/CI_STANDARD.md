@@ -148,3 +148,10 @@ As especificações detalhadas e o estado real de cada migração pertencem às 
 ## 8. Evidência e revisão do padrão
 
 Antes de declarar um projeto conforme, apresentar: matriz preenchida, comparação de decisões de risco, run real de PR com status no SHA esperado, evidências positivas e negativas dos gates, verificação do ruleset e plano de rollback. O padrão documentado **não prova**, por si só, conformidade de um repositório. Mudanças nos perfis, nos checks ou nas garantias de segurança requerem revisão documental e testes correspondentes.
+
+## Homologacao de dependencias externas
+
+O [contrato M1 de homologacao externa atestada](EXTERNAL_HOMOLOGATION.md)
+prepara uma via de evidencia distinta de testes automatizados. Nao altera
+o gate agregador vigente. Uma futura adocao M2 exige bootstrap protegido e
+migracao em paralelo, sem reduzir cobertura ou liberar falha externa como PASS.

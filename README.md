@@ -177,3 +177,9 @@ nome-da-skill/
 Mantenha o `SKILL.md` focado no fluxo central, preserve a divulgação progressiva das referências e adicione testes para cada nova invariante. Evite colocar credenciais, dados pessoais, tokens ou artefatos de auditoria reais no repositório.
 
 Este repositório ainda não declara uma licença de redistribuição. Para autorizar formalmente cópia, adaptação e redistribuição por terceiros, adicione uma licença explícita em uma alteração futura.
+
+### Homologacao externa atestada
+
+O [contrato M1](./docs/EXTERNAL_HOMOLOGATION.md) prepara a validacao
+deterministica de evidencia humana de comportamento externo, vinculada
+ao SHA exato. Nao confere autoridade operacional nem substitui gates vigentes.
