@@ -31,3 +31,14 @@ Executar `SMOKE-NO-PR-SECRETS-001` e verificar:
 Se a propria issue for de CI/GitHub Actions, verificar autorizacao explicita para mudar `.github/workflows/*`. Mesmo nesse caso, reprovar introducao de aprovacao manual do usuario ou exposicao de credenciais reais a codigo de PR.
 
 A existencia de smoke verde comprova comportamento funcional, nao autoriza multiplicar runs nem alterar a custodia de segredos. Auditar comportamento, contagem outbound e ausencia de segredos no codigo de PR separadamente.
+
+## Refutacao de homologacao externa atestada
+
+Ler o [contrato M1](../../docs/EXTERNAL_HOMOLOGATION.md) quando a entrega
+alegar bloqueio externo ou aceite humano de uma funcao de provider.
+Conferir prova bruta, identidade, ambiente HTTPS, integridade, controles
+e autoria; exigir recusas de evidencia ausente, simulada, stale, revogada
+ou de origem nao autenticada. O retorno M1 nao prova autenticacao,
+operacao real, CI verde ou enforcement. M2 exige instalacao protegida,
+revalidacao de origem e escopo e gates tecnicos e externos conjuntos.
+Manter o gate vigente enquanto o M2 nao estiver comprovado.
