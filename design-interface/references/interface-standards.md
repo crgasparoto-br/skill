@@ -20,6 +20,7 @@ Consultar quando o recorte de UI exigir decidir a fonte visual, a precedencia, o
 - [Golden Screens e controles de escolha](#golden-screens-e-controles-de-escolha)
 - [Botões e ícones](#botões-e-ícones)
 - [Cores e estados semânticos](#cores-e-estados-semânticos)
+- [Estados por papel e risco](#estados-por-papel-e-risco)
 - [Responsividade](#responsividade)
 - [Acessibilidade](#acessibilidade)
 
@@ -141,6 +142,16 @@ Não colocar cada campo, métrica ou parágrafo em um card. Preferir seções, l
 - Usar semântica consistente para sucesso, alerta, erro e informação.
 - Não usar apenas vermelho/verde para transmitir estado.
 - Evitar fundos coloridos extensos quando badge, ícone e texto resolvem.
+
+## Estados por papel e risco
+
+Escolher estados conforme papel, uso e risco. Para interação direta, considerar normal, hover onde houver ponteiro, foco pelo teclado, pressionado durante o acionamento e desabilitado quando a ação puder ficar indisponível. Distinguir foco, acionamento momentâneo e seleção persistente. Cor, hover e movimento não são a única forma de comunicar uma mudança.
+
+Para ações assíncronas, prever carregamento, erro recuperável quando possível e sucesso somente após confirmar o resultado exigido. Durante o envio, preservar rótulo, dimensões e foco; impedir reenvio se necessário sem esconder a ação nem impedir a recuperação. Um controle síncrono simples não herda estados de rede. No plano existente, registrar estados materiais e justificar os que não se aplicam quando a diferença importar.
+
+Em região de dados, diferenciar carregando, vazio confirmado, erro de consulta e conteúdo preenchido. Preservar a área e o contexto de leitura; oferecer nova tentativa ou próxima ação quando pertinente. Carregamento e erro não representam dado ausente ou resultado vazio. Usar as orientações de [representação dos dados](screen-patterns.md#representação-dos-dados) para escolher como mostrar a informação.
+
+Respeitar a preferência de movimento reduzido: eliminar deslocamentos e transições não essenciais, mantendo foco, contraste e feedback de operação perceptíveis sem animação. Conferir teclado, leitura dos estados e estabilidade do layout nas larguras afetadas quando aplicáveis.
 
 ## Responsividade
 

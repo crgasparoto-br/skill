@@ -93,22 +93,24 @@ _EXPECTED_DIRECTION_CASES = {
 }
 
 
-def _direction_cases(source: str) -> dict[str, tuple[str, str, str, str]]:
+def _scenario_rows(source: str, header: tuple[str, ...]) -> dict[str, tuple[str, ...]]:
     section = source.split("## Casos verificáveis", 1)[1].split("\n## ", 1)[0]
     rows = [row for row in section.splitlines() if row.startswith("| ")]
-    assert [cell.strip() for cell in rows[0].strip("|").split("|")] == [
-        "ID", "Contexto local", "Referência", "Aceitar", "Rejeitar"
-    ]
+    assert tuple(cell.strip() for cell in rows[0].strip("|").split("|")) == header
     assert rows[1].startswith("| ---")
     parsed = {}
     for row in rows[2:]:
         cells = tuple(cell.strip() for cell in row.strip("|").split("|"))
-        assert len(cells) == 5 and cells[0] not in parsed
+        assert len(cells) == len(header) and cells[0] not in parsed
         parsed[cells[0]] = cells[1:]
     return parsed
 
 
-def _cases_match_contract(cases: dict[str, tuple[str, str, str, str]]) -> bool:
+def _direction_cases(source: str) -> dict[str, tuple[str, ...]]:
+    return _scenario_rows(source, ("ID", "Contexto local", "Referência", "Aceitar", "Rejeitar"))
+
+
+def _cases_match_contract(cases: dict[str, tuple[str, ...]]) -> bool:
     return cases == _EXPECTED_DIRECTION_CASES
 
 
@@ -221,3 +223,83 @@ def test_visual_direction_rejects_missing_offline_case_in_source() -> None:
     mutant = "\n".join(line for line in source.split("\n") if not line.startswith("| SEM-REDE |"))
     with pytest.raises(AssertionError, match="direction scenario contract changed"):
         _assert_direction_contract(mutant)
+
+
+# Separate author expectations for the existing scenario-table check. These are
+# policy contracts, not measurements of an agent or rendering in a consumer.
+_SURFACE_CASES = {
+    "PUBLICA": ("explicar-proposta-e-proxima-acao", "impor-secoes-ou-hero"),
+    "OPERACIONAL": ("priorizar-dados-filtros-e-acoes", "importar-hero-de-marketing"),
+    "COMPONENTE": ("manter-contexto-e-variantes-locais", "redesenhar-estrutura-da-pagina"),
+    "CONTROLE": ("documentar-estados-assincronos-inaplicaveis", "exigir-todos-os-oito-estados"),
+    "ENVIO": ("cobrir-progresso-erro-e-resultado-confirmado", "omitir-erro-ou-celebrar-sem-confirmacao"),
+    "DADOS": ("distinguir-carregamento-vazio-erro-e-preenchido", "apresentar-erro-como-vazio"),
+    "GRAFICO": ("representar-valores-unidades-e-periodo-fieis", "fabricar-valores-ou-tendencia"),
+    "SEM-DADOS": ("explicitar-ausencia", "converter-ausencia-em-zero"),
+    "ESCALA": ("preservar-proporcao-a-partir-de-zero", "cortar-eixo-e-exagerar-diferenca"),
+    "INTERACAO": ("preservar-foco-contraste-espaco-e-acao", "perder-foco-ou-deslocar-controle"),
+}
+
+
+def _assert_surface_cases(patterns: str) -> None:
+    rows = _scenario_rows(patterns, ("ID", "Contexto", "Aceitar", "Rejeitar"))
+    assert {case: row[1:] for case, row in rows.items()} == _SURFACE_CASES, "surface scenario contract changed"
+
+
+def test_surface_cases_distinguish_composition_states_and_data() -> None:
+    _assert_surface_cases((ROOT / "references/screen-patterns.md").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("case", _SURFACE_CASES)
+def test_surface_cases_reject_reversed_decisions(case: str) -> None:
+    patterns = (ROOT / "references/screen-patterns.md").read_text(encoding="utf-8")
+    _assert_surface_cases(patterns)
+    accept, reject = _SURFACE_CASES[case]
+    old = f"| {accept} | {reject} |"
+    assert patterns.count(old) == 1
+    with pytest.raises(AssertionError, match="surface scenario contract changed"):
+        _assert_surface_cases(patterns.replace(old, f"| {reject} | {accept} |", 1))
+
+
+# Pin the reviewed sections, not unrelated parts of the reference. A policy
+# change needs rederivation and independent review even if examples stay green.
+_SURFACE_POLICY = {
+    "screen-patterns.md": (
+        "## Antes de uma mudança material",
+        "## Tela de lista, inbox ou registros",
+        "4ac258b20ad765d1a05fc9c68514134bad323c7fd983d74bcd5136e21fc46489",
+    ),
+    "interface-standards.md": (
+        "## Estados por papel e risco",
+        "## Responsividade",
+        "e5ddc5df43a1becb987e88dec805922fff888c4d2356350da55cff4275521ed5",
+    ),
+}
+
+
+def _assert_surface_policy(filename: str, content: str) -> None:
+    start, end, expected = _SURFACE_POLICY[filename]
+    section = content[content.index(start + "\n"):content.index(end + "\n")]
+    assert sha256(section.encode("utf-8")).hexdigest() == expected, "reviewed surface policy changed"
+
+
+@pytest.mark.parametrize(
+    ("filename", "anchor", "contradiction"),
+    [
+        ("screen-patterns.md", "## Antes de uma mudança material", "Exigir um hero em todo dashboard."),
+        ("screen-patterns.md", "### Representação dos dados", "Mostrar zero se a fonte estiver indisponível."),
+        ("interface-standards.md", "## Estados por papel e risco", "Confirmar sucesso assim que a ação começar."),
+        ("interface-standards.md", "## Estados por papel e risco", "Ocultar foco e animar o controle em envio."),
+    ],
+)
+def test_surface_policy_rejects_contradictions_outside_examples(
+    filename: str, anchor: str, contradiction: str
+) -> None:
+    content = (ROOT / "references" / filename).read_text(encoding="utf-8")
+    _assert_surface_policy(filename, content)
+    assert content.count(anchor + "\n") == 1
+    mutant = content.replace(anchor + "\n", f"{anchor}\n\n{contradiction}\n", 1)
+    if filename == "screen-patterns.md":
+        _assert_surface_cases(mutant)
+    with pytest.raises(AssertionError, match="reviewed surface policy changed"):
+        _assert_surface_policy(filename, mutant)

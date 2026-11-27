@@ -39,7 +39,7 @@ Aplicar somente para efeito percebido ou operado pelo usuario: texto, icone, ord
    - Quando restarem lacunas por elemento ou estado, usar `references/visual-direction.md` para decidir entre familias visuais opcionais, composicao propria ou ausencia de tema. Preservar tokens e componentes locais validos; referencia externa nao prevalece nem exige rede.
    - Na entrega existente, registrar fonte consultada, lacuna especifica, direcao ou decisao sem tema, justificativa breve, elementos locais preservados e condicao de aprovacao dos componentes observados. Nunca inferir aprovacao a partir da ausencia de documentacao.
    - Conferir estados de repouso, hover, foco, ativo e desabilitado nas superficies afetadas, inclusive modais e menus, conforme os componentes e tokens da propria solucao.
-2. Definir hierarquia, ordem, acao primaria, estados e estrategia responsiva.
+2. Antes de escrita material, registrar no plano existente a superficie, hierarquia, acao primaria, densidade e estrategia responsiva conforme `references/screen-patterns.md`. Selecionar estados conforme papel e risco em `references/interface-standards.md`.
 3. Reutilizar componentes existentes e alterar o menor conjunto coeso.
 4. Tratar loading, vazio, erro, sucesso, indisponibilidade, permissao, teclado, foco, contraste e overflow quando aplicaveis.
 5. Atualizar Storybook, ajuda e documentacao afetados.
