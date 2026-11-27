@@ -33,9 +33,9 @@ TEST_TARGETS = (
     "tests/test_catalog_governance.py::test_shared_file_drift_is_detected",
     "tests/test_context_budget.py::test_shipped_context_budget_is_valid",
     "tests/test_context_budget.py::test_shipped_allowance_blocks_growth",
-    # Reconciliation is introduced by a later PR. Discover only the two fixed
-    # names at this directory level; keep the existing native target explicit.
-    "-o", "'python_files=test_validate_native_actions_evidence.py test_issue_acceptance_criteria_reconciliation.py'",
+    # Discover only these fixed names at this directory level.
+    # Keep the existing native target explicit.
+    "-o", "'python_files=test_validate_native_actions_evidence.py test_issue_acceptance_criteria_reconciliation.py test_publish_actions_handoff.py'",
     "-o", "'norecursedirs=*'", "entregar-issue/tests",
 )
 TEST_COMMAND = ("python -m pytest -vv --basetemp=/work/pytest --junitxml=/result/pytest-exact-head.xml "
