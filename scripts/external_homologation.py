@@ -82,7 +82,7 @@ def https_origin(value):
     url = urlsplit(value)
     require(url.scheme == "https" and url.hostname and not url.username and not url.password
             and url.path == "" and not url.query and not url.fragment
-            and value == f"https://{url.netloc}" and not any(c.isspace() for c in value), "HTTPS origin required")
+            and value == url.scheme + "://" + url.netloc and not any(c.isspace() for c in value), "HTTPS origin required")
     require(url.port is None or 0 < url.port <= 65535, "invalid port")
     host = url.hostname
     require(match(re.compile(r"[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?"), host)
@@ -95,10 +95,11 @@ def policy_for(default_raw, base_raw, identity, scenario):
     require(isinstance(default_raw, bytes) and isinstance(base_raw, bytes)
             and default_raw == base_raw, "trusted policies absent or divergent")
     policy = parse(default_raw)
-    object_fields(policy, {"schema_version", "mode", "repository", "assurance", "owner", "reviewer", "scenarios"})
+    object_fields(policy, {"schema_version", "mode", "repository", "api_origin", "assurance", "owner", "reviewer", "scenarios"})
     require(type(policy["schema_version"]) is int and policy["schema_version"] == 1
             and policy["mode"] == "enabled", "policy disabled")
     require(policy["repository"] == identity["repository"] and digest(default_raw) == identity["policy_sha256"], "policy scope")
+    https_origin(policy["api_origin"])
     for key in ("owner", "reviewer"):
         principal(policy[key])
     same = policy["owner"]["id"] == policy["reviewer"]["id"]
@@ -117,8 +118,9 @@ def policy_for(default_raw, base_raw, identity, scenario):
     return policy, selected
 
 
-def verify_facts(facts, identity, scenario_policy):
-    object_fields(facts, {"environment", "external_attempt", "technical_checks"})
+def verify_facts(facts, identity, scenario_policy, api_origin):
+    object_fields(facts, {"api_origin", "environment", "external_attempt", "technical_checks"})
+    require(facts["api_origin"] == api_origin, "API origin mismatch")
     env = facts["environment"]
     object_fields(env, {"origin", "head_sha", "deployment_id", "tls_verified"})
     require(env["origin"] == scenario_policy["origin"] and env["head_sha"] == identity["head_sha"]
@@ -163,7 +165,7 @@ def verify_files(manifest, files, controls):
     require(used == set(names), "unreferenced evidence")
 
 
-def selected_statement(comments, prefix, actor, identity, watermark):
+def selected_statement(comments, prefix, actor, identity, watermark, api_origin):
     require(isinstance(comments, list) and type(watermark) is int and watermark >= 0, "journal required")
     candidates = []
     for comment in comments:
@@ -182,7 +184,7 @@ def selected_statement(comments, prefix, actor, identity, watermark):
     require(selected["id"] >= watermark and isinstance(selected.get("created_at"), str)
             and bool(selected["created_at"]) and selected["created_at"] == selected.get("updated_at"),
             "statement edited, deleted or superseded")
-    base = f"https://api.github.com/repos/{identity['repository']}/issues"
+    base = f"{api_origin}/repos/{identity['repository']}/issues"
     require(selected.get("issue_url") == f"{base}/{identity['pull_request']}"
             and selected.get("url") == f"{base}/comments/{selected['id']}", "statement not linked to PR")
     require(match(re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z"), selected["created_at"]), "invalid statement timestamp")
@@ -202,12 +204,12 @@ def validate_external_homologation(*, default_policy, base_policy, identity, fac
             and canonical(manifest["identity"]) == canonical(identity) and manifest["kind"] == "human-observed-external"
             and manifest["simulated"] is False and isinstance(manifest["scenario"], str), "wrong evidence identity or kind")
     policy, scenario = policy_for(default_policy, base_policy, identity, manifest["scenario"])
-    verify_facts(facts, identity, scenario)
+    verify_facts(facts, identity, scenario, policy["api_origin"])
     require(manifest["facts_sha256"] == digest(canonical(facts)), "stale collector facts")
     verify_files(manifest, files, scenario["controls"])
     object_fields(watermarks, {"owner", "reviewer"})
-    owner_id, owner_hash, owner_time, owner = selected_statement(comments, OWNER_PREFIX, policy["owner"], identity, watermarks["owner"])
-    review_id, _, review_time, review = selected_statement(comments, REVIEW_PREFIX, policy["reviewer"], identity, watermarks["reviewer"])
+    owner_id, owner_hash, owner_time, owner = selected_statement(comments, OWNER_PREFIX, policy["owner"], identity, watermarks["owner"], policy["api_origin"])
+    review_id, _, review_time, review = selected_statement(comments, REVIEW_PREFIX, policy["reviewer"], identity, watermarks["reviewer"], policy["api_origin"])
     expected = {"identity": identity, "manifest_sha256": digest(manifest_raw), "decision": "observed-pass"}
     require(canonical(owner) == canonical(expected), "owner statement mismatch")
     expected.update(decision="approved", owner_comment_id=owner_id, owner_comment_sha256=owner_hash,

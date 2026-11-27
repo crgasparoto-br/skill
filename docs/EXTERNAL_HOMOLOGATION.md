@@ -37,7 +37,8 @@ Entradas:
 
 1. `default_policy` e `base_policy`: bytes JSON iguais, de origens confiaveis
    distintas; ausencia, divergencia e modo disabled recusam. Campos exatos:
-   schema_version=1, mode=enabled, repository literal, assurance, owner, reviewer,
+   schema_version=1, mode=enabled, repository literal, api_origin HTTPS canonica,
+   assurance, owner, reviewer,
    scenarios. Owner e reviewer contem id numerico GitHub e login. Assurance
    `owner-attested-separated-context` exige o mesmo principal; a modalidade
    `owner-attested-third-party-review` exige IDs distintos. Esta forma nao prova
@@ -46,7 +47,7 @@ Entradas:
 2. `identity`: repository, pull_request, issue, base_ref, base_sha, head_sha,
    merge_preview_sha, issue_sha256 e policy_sha256. Valores coletados da fonte
    autenticada atual, nunca derivados do manifesto de evidencia.
-3. `facts`: environment (origin, head_sha, deployment_id, tls_verified),
+3. `facts`: api_origin identica a da politica, environment (origin, head_sha, deployment_id, tls_verified),
    external_attempt (head_sha, run_id, run_attempt, result=blocked-external,
    diagnostic_sha256), technical_checks (por nome: id, app_id, head_sha, run_id,
    run_attempt, conclusion=success). O coletor deve resolver a origem e resultado
@@ -97,7 +98,8 @@ define precondicoes; nao declara que existe hoje um publicador autorizado.
 3. Coletar identidade atual do PR, issue e especificacao, merge preview, run
    attempt, check IDs, app, evento, workflow confiavel e artefatos. Consultar
    lista paginada e detalhe de cada registro e comprovar concordancia dos campos
-   de seguranca. Verificar que o run pertence ao SHA/projeto, a cobertura dos
+   de seguranca e vincular a origem canonica da API do coletor a policy.
+   Verificar que o run pertence ao SHA/projeto, a cobertura dos
    gates tecnicos e o diagnostico externo bruto. Rejeitar resposta incompleta,
    check homonimo de origem distinta, replay e duas PRs abertas no mesmo HEAD.
 4. Homologar em deployment HTTPS isolado e representativo, vinculado ao SHA

@@ -15,14 +15,14 @@ gate = importlib.import_module("external_homologation")
 def make_case(assurance=gate.SOLO):
     owner = {"id": 11, "login": "owner"}
     reviewer = owner if assurance == gate.SOLO else {"id": 12, "login": "reviewer"}
-    policy = gate.canonical({"schema_version": 1, "mode": "enabled", "repository": "org/repo",
+    policy = gate.canonical({"schema_version": 1, "mode": "enabled", "repository": "org/repo", "api_origin": "https://api.example",
                              "assurance": assurance, "owner": owner, "reviewer": reviewer,
                              "scenarios": {"play": {"origin": "https://preview.example", "controls": ["start", "progress"],
                                                     "technical_checks": {"Technical validation": 123}}}})
     identity = {"repository": "org/repo", "pull_request": 2, "issue": 1, "base_ref": "develop",
                 "base_sha": "b" * 40, "head_sha": "a" * 40, "merge_preview_sha": "c" * 40,
                 "issue_sha256": "d" * 64, "policy_sha256": gate.digest(policy)}
-    facts = {"environment": {"origin": "https://preview.example", "head_sha": "a" * 40,
+    facts = {"api_origin": "https://api.example", "environment": {"origin": "https://preview.example", "head_sha": "a" * 40,
                              "deployment_id": "deploy-42", "tls_verified": True},
              "external_attempt": {"head_sha": "a" * 40, "run_id": 3, "run_attempt": 1,
                                   "result": "blocked-external", "diagnostic_sha256": "e" * 64},
@@ -40,8 +40,8 @@ def make_case(assurance=gate.SOLO):
     def comment(number, actor, prefix, payload):
         return {"id": number, "user": {**actor, "type": "User"}, "body": prefix + gate.canonical(payload).decode(),
                 "created_at": "2026-11-27T11:00:00Z", "updated_at": "2026-11-27T11:00:00Z",
-                "issue_url": "https://api.github.com/repos/org/repo/issues/2",
-                "url": f"https://api.github.com/repos/org/repo/issues/comments/{number}"}
+                "issue_url": "https://api.example/repos/org/repo/issues/2",
+                "url": f"https://api.example/repos/org/repo/issues/comments/{number}"}
 
     first = comment(21, owner, gate.OWNER_PREFIX, statement)
     review = {**statement, "decision": "approved", "owner_comment_id": 21,
@@ -91,7 +91,7 @@ def edit_json(case, key, change):
     lambda x: x["files"].update({"extra.png": b"unlisted"}),
     lambda x: x["comments"][0]["user"].update(id=99),
     lambda x: x["comments"][0]["user"].update(type="Bot"),
-    lambda x: x["comments"][1].update(issue_url="https://api.github.com/repos/org/repo/issues/3"),
+    lambda x: x["comments"][1].update(issue_url="https://api.example/repos/org/repo/issues/3"),
     lambda x: x["comments"][1].update(updated_at="2026-11-27T12:00:00Z"),
     lambda x: x["comments"].pop(),
     lambda x: x["watermarks"].update(reviewer=23),
@@ -106,7 +106,7 @@ def test_refuses_incomplete_or_divergent_contract(change):
 def test_new_rejection_does_not_fall_back_to_old_approval():
     case = make_case()
     latest = copy.deepcopy(case["comments"][1])
-    latest.update(id=23, url="https://api.github.com/repos/org/repo/issues/comments/23")
+    latest.update(id=23, url="https://api.example/repos/org/repo/issues/comments/23")
     latest["body"] = latest["body"].replace('"decision":"approved"', '"decision":"rejected"')
     case["comments"].append(latest)
     with pytest.raises(ValueError, match="review statement mismatch"):
@@ -135,6 +135,7 @@ def reseal(case, *, policy=None, manifest_change=None):
 
 
 @pytest.mark.parametrize(("change", "reason"), [
+    (lambda x: x["facts"].update(api_origin="https://foreign.example"), "API origin mismatch"),
     (lambda x: x["facts"]["environment"].update(tls_verified=False), "unverified HTTPS"),
     (lambda x: x["facts"]["environment"].update(origin="http://preview.example"), "unverified HTTPS"),
     (lambda x: x["facts"]["environment"].update(head_sha="f" * 40), "unverified HTTPS"),
@@ -169,6 +170,7 @@ def test_resealed_manifest_cannot_claim_false_execution(change, reason):
 @pytest.mark.parametrize(("change", "reason"), [
     (lambda p: p.update(mode="disabled"), "policy disabled"),
     (lambda p: p.update(repository="other/repo"), "policy scope"),
+    (lambda p: p.update(api_origin="http://api.example"), "HTTPS origin required"),
     (lambda p: p.update(assurance=gate.THIRD_PARTY), "assurance/principal mismatch"),
     (lambda p: p["scenarios"]["play"].update(origin="http://preview.example"), "HTTPS origin required"),
     (lambda p: p["scenarios"]["play"].update(origin="https://preview.example/path"), "HTTPS origin required"),
@@ -193,8 +195,17 @@ def test_review_cannot_precede_owner_statement():
 def test_edited_prefix_cannot_revive_earlier_review():
     case = make_case()
     prior = copy.deepcopy(case["comments"][1])
-    prior.update(id=20, url="https://api.github.com/repos/org/repo/issues/comments/20")
+    prior.update(id=20, url="https://api.example/repos/org/repo/issues/comments/20")
     case["comments"].append(prior)
     case["comments"][1]["body"] = "revoked"
     with pytest.raises(ValueError, match="edited, deleted or superseded"):
+        gate.validate_external_homologation(**case)
+
+
+def test_same_comment_path_on_wrong_api_origin_fails():
+    case = make_case()
+    for comment in case["comments"]:
+        for key in ("url", "issue_url"):
+            comment[key] = comment[key].replace("api.example", "foreign.example")
+    with pytest.raises(ValueError, match="statement not linked to PR"):
         gate.validate_external_homologation(**case)
