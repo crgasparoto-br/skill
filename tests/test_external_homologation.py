@@ -25,7 +25,7 @@ def make_case(assurance=gate.SOLO):
     facts = {"api_origin": "https://api.example", "environment": {"origin": "https://preview.example", "head_sha": "a" * 40,
                              "deployment_id": "deploy-42", "tls_verified": True},
              "external_attempt": {"head_sha": "a" * 40, "run_id": 3, "run_attempt": 1,
-                                  "result": "blocked-external", "diagnostic_sha256": "e" * 64},
+                                  "result": "blocked-external", "diagnostic_sha256": gate.digest(b"synthetic external challenge diagnostic")},
              "technical_checks": {"Technical validation": {"id": 4, "app_id": 123, "head_sha": "a" * 40,
                                                            "run_id": 5, "run_attempt": 1, "conclusion": "success"}}}
     files = {"before.png": b"fixture before", "after.png": b"fixture after"}
@@ -49,7 +49,8 @@ def make_case(assurance=gate.SOLO):
               "separate_context_attested": True}
     return {"default_policy": policy, "base_policy": policy, "identity": identity, "facts": facts,
             "manifest_raw": manifest, "files": files, "comments": [first, comment(22, reviewer, gate.REVIEW_PREFIX, review)],
-            "watermarks": {"owner": 21, "reviewer": 22}}
+            "watermarks": {"owner": 21, "reviewer": 22},
+            "diagnostic_raw": b"synthetic external challenge diagnostic"}
 
 
 @pytest.mark.parametrize("assurance", [gate.SOLO, gate.THIRD_PARTY])
@@ -242,4 +243,20 @@ def test_dot_segment_repository_is_not_a_literal_identity():
     case = make_case()
     case["identity"]["repository"] = "org/.."
     with pytest.raises(ValueError, match="repository"):
+        gate.validate_external_homologation(**case)
+
+
+@pytest.mark.parametrize("raw", [None, b"", b"divergent diagnostic", "not bytes"])
+def test_external_diagnostic_requires_matching_raw_bytes(raw):
+    case = make_case()
+    case["diagnostic_raw"] = raw
+    with pytest.raises(ValueError, match="external diagnostic bytes missing or divergent"):
+        gate.validate_external_homologation(**case)
+
+
+def test_resealed_diagnostic_digest_without_matching_bytes_is_refused():
+    case = make_case()
+    case["facts"]["external_attempt"]["diagnostic_sha256"] = gate.digest(b"unprovided diagnostic")
+    reseal(case)
+    with pytest.raises(ValueError, match="external diagnostic bytes missing or divergent"):
         gate.validate_external_homologation(**case)

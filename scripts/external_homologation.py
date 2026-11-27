@@ -197,7 +197,7 @@ def selected_statement(comments, prefix, actor, identity, watermark, api_origin)
 
 
 def validate_external_homologation(*, default_policy, base_policy, identity, facts, manifest_raw,
-                                   files, comments, watermarks):
+                                   files, comments, watermarks, diagnostic_raw=None):
     """Check consistency of collector-supplied bytes; never confer operational authority."""
     valid_identity(identity)
     manifest = parse(manifest_raw)
@@ -208,6 +208,9 @@ def validate_external_homologation(*, default_policy, base_policy, identity, fac
             and manifest["simulated"] is False and isinstance(manifest["scenario"], str), "wrong evidence identity or kind")
     policy, scenario = policy_for(default_policy, base_policy, identity, manifest["scenario"])
     verify_facts(facts, identity, scenario, policy["api_origin"])
+    require(isinstance(diagnostic_raw, bytes) and 0 < len(diagnostic_raw) <= 16 * 1024 * 1024
+            and digest(diagnostic_raw) == facts["external_attempt"]["diagnostic_sha256"],
+            "external diagnostic bytes missing or divergent")
     require(manifest["facts_sha256"] == digest(canonical(facts)), "stale collector facts")
     verify_files(manifest, files, scenario["controls"])
     object_fields(watermarks, {"owner", "reviewer"})

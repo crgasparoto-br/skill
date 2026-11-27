@@ -51,7 +51,10 @@ Entradas:
    external_attempt (head_sha, run_id, run_attempt, result=blocked-external,
    diagnostic_sha256), technical_checks (por nome: id, app_id, head_sha, run_id,
    run_attempt, conclusion=success). O coletor deve resolver a origem e resultado
-   reais; a mera presenca destes campos nao autentica nada.
+   reais; a mera presenca destes campos nao autentica nada. `diagnostic_raw`
+   exige os bytes brutos do diagnostico, nao vazios, ate 16 MiB, com SHA-256
+   igual a diagnostic_sha256. O M1 verifica integridade, nao autenticidade
+   ou significado do diagnostico.
 4. `manifest_raw`: bytes JSON com schema_version=1, identity exata, scenario,
    kind=human-observed-external, simulated=false, facts_sha256 (SHA-256 da
    serializacao canonica de facts), files (basename -> SHA-256), observations
