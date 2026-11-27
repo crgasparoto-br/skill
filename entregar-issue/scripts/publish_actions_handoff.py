@@ -424,7 +424,7 @@ def publish(event_path: Path, *, base_ref: str | None = None,
 
         # Exact-SHA session review uses this certified material HEAD directly;
         # publishing a child here would race the neutral packet and revoke it.
-        if session_mode_active(repo, base):
+        if session_mode_active(repo, base, trusted):
             return None
         material_parent = material_parent_snapshots(source, temp, head)
         ensure_historical_audit_unchanged(source, base, head, paths)
@@ -460,32 +460,36 @@ def publish(event_path: Path, *, base_ref: str | None = None,
 
 
 
-def session_mode_active(repo: str, base: str) -> bool:
-    """Route only a trusted-base opt-in; never let a candidate skip handoff."""
+def session_mode_active(repo: str, base: str, trusted: Path) -> bool:
+    """Compare consumer Git trees; the tooling checkout supplies code, not policy."""
     import base64
     import sys
     import urllib.error
 
     if not HEX_SHA.fullmatch(base):
         block("invalid protected-base SHA for session routing")
-    root = SCRIPT_ROOT.parents[1]
-    local = root / ".github/session-review-policy.json"
+    from git_tree_snapshot import material_parent_blob
+
+    policy_path = ".github/session-review-policy.json"
+    default_head = command("git", "rev-parse", "HEAD", cwd=trusted)
+    local = material_parent_blob(trusted, default_head, policy_path)
+    protected = material_parent_blob(trusted, base, policy_path)
     try:
-        response = api_get(repo, f"contents/.github/session-review-policy.json?ref={base}")
+        response = api_get(repo, f"contents/{policy_path}?ref={base}")
     except urllib.error.HTTPError as exc:
-        if exc.code == 404 and not local.exists():
-            return False  # Legacy repository without this optional policy.
+        if exc.code == 404 and local is None and protected is None:
+            return False  # Both consumer Git trees prove legacy policy absence.
         block("protected-base session policy unavailable")
-    if (not local.is_file() or response.get("type") != "file" or response.get("encoding") != "base64"
-            or not isinstance(response.get("content"), str)):
+    if (local is None or protected is None or response.get("type") != "file"
+            or response.get("encoding") != "base64" or not isinstance(response.get("content"), str)):
         block("trusted session policy is missing or malformed")
     try:
         raw = base64.b64decode("".join(response["content"].split()), validate=True)
     except ValueError:
         block("protected-base session policy is not valid base64")
-    if raw != local.read_bytes():
+    if raw != local or raw != protected:
         block("session policy differs between trusted default and protected base")
-    sys.path.insert(0, str(root))
+    sys.path.insert(0, str(SCRIPT_ROOT.parents[1]))
     from scripts.session_review import (
         ACKNOWLEDGEMENT,
         ASSURANCE,
