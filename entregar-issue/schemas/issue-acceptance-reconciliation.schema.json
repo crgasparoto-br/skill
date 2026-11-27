@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "issue-acceptance-reconciliation.schema.json",
+  "type": "object",
+  "required": [
+    "mode",
+    "verdict",
+    "read_only",
+    "identity",
+    "requirements",
+    "acceptance_criteria",
+    "findings",
+    "gates",
+    "limitations"
+  ],
+  "properties": {
+    "mode": {
+      "const": "independent"
+    },
+    "verdict": {
+      "enum": [
+        "Aprovado",
+        "Aprovado com ressalvas",
+        "Reprovado"
+      ]
+    },
+    "read_only": {
+      "const": true
+    },
+    "identity": {
+      "type": "object",
+      "required": [
+        "repository",
+        "issue",
+        "pull_request",
+        "branch",
+        "head_sha",
+        "issue_snapshot_sha256"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 3
+        },
+        "issue": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pull_request": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "head_sha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "issue_snapshot_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "additionalProperties": true
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/criterion"
+      }
+    },
+    "findings": {
+      "type": "array"
+    },
+    "gates": {
+      "type": "array"
+    },
+    "limitations": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "criterion": {
+      "type": "object",
+      "required": [
+        "id",
+        "requirement_id",
+        "origin",
+        "source_id",
+        "source_locator",
+        "source_sha256",
+        "source_line",
+        "text",
+        "initial_checkbox_state",
+        "decision",
+        "evidence",
+        "rationale",
+        "proposed_checkbox_state"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requirement_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "enum": [
+            "issue-body",
+            "issue-comment"
+          ]
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 4
+        },
+        "initial_checkbox_state": {
+          "enum": [
+            "checked",
+            "unchecked",
+            "not-present"
+          ]
+        },
+        "decision": {
+          "enum": [
+            "verified",
+            "partial",
+            "failed",
+            "inconclusive",
+            "not-applicable"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 20
+        },
+        "proposed_checkbox_state": {
+          "enum": [
+            "checked",
+            "unchecked",
+            "unchanged"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
