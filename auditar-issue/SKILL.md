@@ -94,6 +94,8 @@ Ler somente quando aplicavel:
 - provider, retry/fallback, ferramenta externa ou workflow com credenciais: `references/provider-call-and-secret-audit.md`;
 - `input-parser`: `references/input-parser-audit.md`;
 - auditoria externa assinada: `references/external-audit-contract.md`;
+- critérios de aceite e proposta de reconciliação:
+  `references/acceptance-criteria-reconciliation.md`;
 - entrega: `references/report-template.md`.
 
 ## Fechamento de achados anteriores
@@ -106,6 +108,9 @@ Aplicar `references/finding-disposition-contract.md` a todos os findings e recom
 2. Nao corrigir findings durante auditoria.
 3. Fixar identidade no inicio e revalidar no fim. Resolver primeiro `audit_transport` conforme `references/native-github-audit-contract.md`. Somente quando `audit_transport=certified-handoff`, antes de consumir qualquer pacote `.audit/entregar-issue`, provar o vinculo semantico com o alvo resolvido: em schema v2, `subject.repository/work_item_kind/work_item_number/pull_request/base_ref/head_ref` deve corresponder ao target; em todo schema, `specification-snapshot.repository/issue` deve confirmar o trabalho corrente. Antes de atribuir uma divergencia de target ao candidato, comparar `handoff-ready.json` do head com o mesmo caminho no SHA imutavel da base. Se o objeto for identico e o subject pertencer a outra entrega, classificar como `inherited-base-artifact`: o handoff corrente nao foi produzido (`reason=handoff-not-produced`, `recovery_scope=handoff-only` quando nao houver drift material). Somente divergencia de target que tenha origem na entrega corrente usa `fresh-handoff-required`. Para certificado schema v2, distinguir `material_head_sha` do `published_handoff_head_sha` result-only; para schema v1, ambos coincidem.
 4. Nao aceitar CI verde, checklist ou teste novo como prova unica.
+4.1.1. Rederivar individualmente cada critério de aceite, com origem, texto,
+estado inicial, evidência exata, decisão e ação proposta. Checkbox não
+constitui prova; critério sem prova não pode propor marcação.
 4.1. Para artefato transport-sharded, reconstruir bytes logicos somente por `scripts/audit_artifact_io.py` e exigir hashes de manifesto/partes + `logical_sha256`; parte ausente ou divergente bloqueia o consumo. O suporte a shards e estritamente somente leitura.
 5. Nao reutilizar conclusao do implementador como evidencia.
 6. Nao produzir aprovacao importavel sem contexto separado e chave previamente confiada.
@@ -128,6 +133,10 @@ Aplicar `references/finding-disposition-contract.md` a todos os findings e recom
 21. Quando a Skill estiver exposta apenas por resource URI, materializar seus recursos internos necessarios em diretorio efemero antes de executar; quando o repositorio estiver apenas em connector remoto, materializar somente os artefatos de entrada necessarios preservando os bytes exatos. Nunca alterar o repositorio para viabilizar a auditoria.
 21.1. Para `validate_audit_completeness.py`, se nao houver checkout confiavel por DNS/egress, consultar o run CI exact-SHA autenticado via GitHub, baixar artefato `manifest.json` + `repository.bundle` ja existente e executar `scripts/restore_ci_git_bundle.py` com base/head/ref/run coletados **fora** do ZIP. Reconciliar diff Git restaurado, fonte remota e inventario independente. Ausencia de bundle ou falha de transporte do auditor nao altera modo, nao dispensa gate e nao reprova candidato.
 22. Se o runtime/connector impedir a materializacao exata ou a execucao de recurso interno da Skill apos tentativas razoaveis, classificar `audit-runtime-limitation`: resultado humano `INCONCLUSIVA`, `Libera merge/release: NAO`, `findings=[]` para essa causa, `requires_refreeze=false` salvo mudanca real de identidade. Nao usar `delivery-not-ready`, `red-candidate-caused`, `missing` ou `not-reached` para uma incapacidade exclusiva do ambiente do auditor. Nao propor commit, issue corretiva, workflow ou mudanca no produto para corrigir infraestrutura da auditoria.
+23. Em nenhuma fase escrever na issue, no corpo, em comentários, na PR ou em
+seus checkboxes. Entregar somente `acceptance_criteria` e a proposta de
+reconciliação; publicação posterior é exclusiva da fase autorizada de
+`entregar-issue`.
 
 ## Fluxo
 

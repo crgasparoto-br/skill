@@ -20,6 +20,7 @@ CONFIG_RELATIVE = "config/context-budget.json"
 ALLOWED_FILES = (
     "entregar-issue/SKILL.md",
     "auditar-issue/SKILL.md",
+    "auditar-issue/references/report-template.md",
     "corrigir-ci/SKILL.md",
     "entregar-issue/references/terminal-handoff.md",
     "entregar-issue/references/handoff-certificate.md",
