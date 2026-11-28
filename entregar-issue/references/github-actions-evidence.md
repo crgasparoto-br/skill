@@ -93,17 +93,8 @@ de ataques, saturacao e controles herdados. Mudancas de codigo/testes exigem
 `codebase-grounding.json` e, para codigo, `code-growth.json` de `CODE-GROWTH-001`.
 Quando houver rejeicao independente, anexar `audit-remediation.json`,
 `audit-source-result.json`, `learning-closure.json`, `audit-escape-closure.json`
-e snapshot historico imutavel quando existir ledger anterior do mesmo alvo.
-Na primeira rejeicao, o produtor so dispensa esse snapshot depois de verificar
-`audit-source-result.json` (hash e blob do HEAD material) e executar a prova Git
-canonica de [audit-escape-closure.md](audit-escape-closure.md). Snapshot presente
-mas nao declarado, alterado, inventado ou sem origem Git autentica bloqueia.
-Os bytes de `audit-source-result.json` e snapshots historicos sao preservados,
-sem reserializacao ou substituicao de SHA. A observacao `previous_escape_source`
-no status do produtor e diagnostica; builder, certificado e guard recalculam
-a prova de primeira rejeicao. O inventario de dossie incompleto permanece
-conservador ate a origem ser verificada. Remediacao sistemica exige tambem a
-historia de controles herdados, nos termos de `handoff-certificate.md`.
+e snapshot anterior se existir, conforme [audit-escape-closure.md](audit-escape-closure.md).
+O produtor preserva bytes e exige prova Git canonica, nunca ausencia declarada.
 
 O gate executa `build_handoff_certificate.py` e
 `validate_handoff_certificate.py` SOMENTE apos confirmar

@@ -50,7 +50,7 @@ def verified_git_ledger(repository: Path, source_sha: str, raw: bytes,
                 or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", subject["repository"])
                 or type(issue) is not int or issue <= 0
                 or "pull_request_number" not in subject
-                or pr is not None and (type(pr) is not int or pr <= 0)
+                or (pr is not None and (type(pr) is not int or pr <= 0))
                 or not isinstance(subject.get("material_head_sha"), str)
                 or not re.fullmatch(r"[0-9a-f]{40}", subject["material_head_sha"])):
             raise ValueError("previous ledger subject identity is malformed")

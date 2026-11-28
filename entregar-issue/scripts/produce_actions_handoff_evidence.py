@@ -13,14 +13,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from reviewed_phase_decision import (
-    MissingReviewedEvidenceError,
-    _verify_deferred_phase,
-    digest,
-    with_deferred_completion,
+from reviewed_audit_history import (
+    IMMUTABLE_REPORTS,
+    PREVIOUS_ESCAPE,
+    committed_report_bytes,
+    resolve_reviewed_escape_history,
+    verified_source,
 )
-from reviewed_audit_history import (IMMUTABLE_REPORTS, PREVIOUS_ESCAPE, committed_report_bytes,
-                                    resolve_reviewed_escape_history, verified_source)
+from reviewed_phase_decision import MissingReviewedEvidenceError, _verify_deferred_phase, digest, with_deferred_completion
 from validate_handoff_certificate import scope_touches_code, scope_touches_tests
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")

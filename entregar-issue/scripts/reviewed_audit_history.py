@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from git_tree_snapshot import git_run, material_parent_blob
 from reviewed_phase_decision import digest
@@ -15,6 +15,9 @@ from verify_first_audit_escape import (
     verified_git_ledger,
     verify_rejection_anchor,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 PREVIOUS_ESCAPE = "previous-audit-escape-closure.json"
 AUDIT_SOURCE = "audit-source-result.json"
