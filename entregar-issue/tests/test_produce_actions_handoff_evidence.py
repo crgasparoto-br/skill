@@ -600,3 +600,130 @@ def test_required_reviewed_reports_reuses_canonical_test_scope_classifier(
     reports, code = producer.required_reviewed_reports(manifest, changed)
     assert ("codebase-grounding.json" in reports) is requires_grounding
     assert code is touches_code
+
+
+def reviewed_rejection_case(tmp_path, variant):
+    """Real synthetic Git objects; the producer stages but does not certify."""
+    from audit_artifact_io import pack_json_artifact
+    from build_test_candidate_index import collect
+
+    root, out, event, source, audited = fixture(tmp_path)
+    target = {"repository": "team/skill", "issue_number": 112, "pull_request_number": 113}
+    ledger_path = root / ".audit/entregar-issue/audit-escape-closure.json"
+    prior = {"subject": {**target, "material_head_sha": audited},
+             "escapes": [{"escape_id": "EARLIER", "status": "passed"}]}
+    raw = json.dumps(prior, separators=(",", ":")).encode()
+    if variant in {"present", "omitted", "modified", "deleted", "sharded", "older", "foreign"}:
+        ledger_path.parent.mkdir(parents=True)
+        if variant == "foreign":
+            prior["subject"]["issue_number"] = 777
+        ledger_path.write_bytes(json.dumps(prior, separators=(",", ":")).encode())
+        if variant == "sharded":
+            pack_json_artifact(ledger_path, force=True)
+        git(root, "add", ".")
+        git(root, "commit", "-qm", "historical ledger")
+        audited = git(root, "rev-parse", "HEAD")
+        if variant in {"deleted", "older"}:
+            if variant == "older":
+                prior["escapes"].append({"escape_id": "LATER", "status": "passed"})
+                ledger_path.write_text(json.dumps(prior))
+            else:
+                ledger_path.unlink()
+            git(root, "add", ".")
+            git(root, "commit", "-qm", "historical transition before rejection")
+            audited = git(root, "rev-parse", "HEAD")
+    report = {"status": "rejected", "head_sha": audited,
+              "identity": {**target, "head_sha": audited},
+              "rejection_id": "audit-rejection:synthetic-history", "mode": "independent"}
+    if variant == "unknown-sha":
+        report["head_sha"] = report["identity"]["head_sha"] = "f" * 40
+    if variant == "wrong-target":
+        report["identity"]["issue_number"] = 999
+    original = json.dumps(report, ensure_ascii=False, separators=(",", ":")).encode()
+    manifest = json.loads((source / "manifest.json").read_bytes())
+    manifest.update(evidence_profile="critical", audit_history="previous-rejection",
+                    remediation_mode="targeted-remediation")
+    for name in ("audit-remediation.json", "learning-closure.json", "audit-escape-closure.json",
+                 "requirement-attack-matrix.json", "risk-saturation.json", "inherited-controls.json"):
+        # This fixture tests staging only; full semantic validation is covered by the certificate tests.
+        put(source / name, {"head_sha": "__MATERIAL_HEAD_SHA__"})
+    if variant != "missing-source":
+        (source / "audit-source-result.json").write_bytes(original)
+    if variant in {"present", "modified", "sharded", "older", "fake", "forged-after-audit", "undeclared"}:
+        previous = source / "previous-audit-escape-closure.json"
+        previous.write_bytes(raw if variant != "modified" else raw + b"\n")
+    if variant == "forged-after-audit":
+        ledger_path.parent.mkdir(parents=True, exist_ok=True)
+        ledger_path.write_bytes(raw)
+    if variant == "systemic-no-controls":
+        manifest["remediation_mode"] = "systemic-remediation"
+    hashes = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+              for path in source.glob("*.json") if path.name != "manifest.json"}
+    if variant == "undeclared":
+        hashes.pop("previous-audit-escape-closure.json")
+    if variant == "bad-digest":
+        hashes["audit-source-result.json"] = "0" * 64
+    manifest["artifact_sha256"] = hashes
+    put(source / "manifest.json", manifest)
+    git(root, "add", ".")
+    git(root, "commit", "-qm", "reviewed remediation dossier")
+    head = git(root, "rev-parse", "HEAD")
+    if variant == "shallow":
+        (root / ".git/shallow").write_text(manifest["work_item_start_sha"] + "\n")
+    if variant == "stale-stage":
+        (out / ".audit/entregar-issue/previous-audit-escape-closure.json").write_bytes(raw)
+    payload = json.loads(event.read_bytes())
+    payload["pull_request"]["head"]["sha"] = head
+    put(event, payload)
+    preflight = json.loads((out / "handoff-preflight.json").read_bytes())
+    preflight["identity"]["material_head_sha"] = head
+    put(out / "handoff-preflight.json", preflight)
+    facts = json.loads((out / "test-execution-facts.json").read_bytes())
+    facts["subject_sha"] = head
+    put(out / "test-execution-facts.json", facts)
+    put(out / "test-candidate-index.json", collect(out / "pytest-exact-head.xml", head))
+    return root, out, event, source, head, original
+
+
+@pytest.mark.parametrize("variant,status", [("first", "absent-proved-on-target"),
+    ("foreign", "absent-proved-on-target"), ("present", "previous-ledger-present"),
+    ("sharded", "previous-ledger-present")])
+def test_reviewed_rejection_stages_only_git_proven_history(tmp_path, variant, status):
+    root, out, event, source, head, original = reviewed_rejection_case(tmp_path, variant)
+    producer.produce(root, out, event, "develop")
+    audit = out / ".audit/entregar-issue"
+    receipt = json.loads((out / "handoff-producer-status.json").read_bytes())
+    assert receipt["previous_escape_source"]["status"] == status
+    assert (audit / "audit-source-result.json").read_bytes() == original
+    previous = audit / "previous-audit-escape-closure.json"
+    if status == "previous-ledger-present":
+        assert previous.read_bytes() == (source / previous.name).read_bytes()
+    else:
+        assert not previous.exists()
+    assert json.loads((out / "certification-inputs.json").read_bytes())["subject_sha"] == head
+    assert not (audit / "handoff-ready.json").exists()
+
+
+@pytest.mark.parametrize("variant,reason", [
+    ("omitted", "snapshot required"), ("modified", "no exact authenticated Git source"),
+    ("deleted", "snapshot required"), ("older", "omits historical escape IDs"),
+    ("fake", "no exact authenticated Git source"),
+    ("forged-after-audit", "no exact authenticated Git source"),
+    ("undeclared", "present but not declared"), ("missing-source", "missing SHA-256"),
+    ("bad-digest", "digest mismatch"), ("wrong-target", "subject mismatch"),
+    ("shallow", "complete Git history"), ("stale-stage", "stale staged"),
+    ("systemic-no-controls", "previous-inherited-controls.json"),
+])
+def test_reviewed_rejection_rejects_unproven_or_erased_history(tmp_path, variant, reason):
+    root, out, event, _, _, _ = reviewed_rejection_case(tmp_path, variant)
+    with pytest.raises(ValueError, match=reason):
+        producer.produce(root, out, event, "develop")
+    assert not (out / "certification-inputs.json").exists()
+    assert not (out / ".audit/entregar-issue/handoff-ready.json").exists()
+
+
+def test_reviewed_rejection_unknown_commit_is_not_absence(tmp_path):
+    root, out, event, _, _, _ = reviewed_rejection_case(tmp_path, "unknown-sha")
+    with pytest.raises(subprocess.CalledProcessError):
+        producer.produce(root, out, event, "develop")
+    assert not (out / "certification-inputs.json").exists()

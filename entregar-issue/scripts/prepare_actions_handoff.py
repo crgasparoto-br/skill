@@ -279,8 +279,9 @@ def _resolve_certification_requirements(out: Path, args: argparse.Namespace,
                          "learning_closure": "learning-closure.json",
                          "audit_escape_closure": "audit-escape-closure.json",
                          })
-        if _audit_path(out, "previous-audit-escape-closure.json").is_file():
-            required["previous_audit_escape_closure"] = "previous-audit-escape-closure.json"
+        previous = out / ".audit" / "entregar-issue" / "previous-audit-escape-closure.json"
+        if previous.exists() or previous.is_symlink():
+            required["previous_audit_escape_closure"] = previous.name
     touched_code = any(path.endswith((".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".sh")) for path in changed)
     touched_tests = any("test" in path.lower() or path.endswith((".cy.ts", ".spec.ts")) for path in changed)
     if touched_code or touched_tests:

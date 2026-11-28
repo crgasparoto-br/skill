@@ -17,6 +17,7 @@ from pathlib import Path
 from audit_artifact_io import load_json_artifact
 from handoff_origin import connector_origin_is_same_base_blob, subject_matches_target
 from handoff_postcondition import require_final_phase, verify_finalization
+from verify_first_audit_escape import prove_first_audit_escape
 
 SHA40 = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 REQUIRED_ARTIFACTS = {"specification_snapshot", "requirement_closure"}
@@ -376,6 +377,9 @@ def main() -> int:
     # Match the canonical certificate validator: a prior independent rejection
     # makes the finalization proof mandatory even if the descriptor was removed
     # from the candidate. Semantic connector booleans never replace those bytes.
+    bootstrap = cert.get("first_escape_bootstrap")
+    if bootstrap is not None and (not cert.get("previous_independent_rejection") or not isinstance(bootstrap, dict)):
+        errors.append("first-escape proof without independent rejection")
     proof_required = bool(cert.get("previous_independent_rejection") or "postcondition_proof" in cert)
     if proof_required and not errors and not limitations:
         if "postcondition_proof" not in cert:
@@ -386,6 +390,17 @@ def main() -> int:
             try:
                 verify_finalization(cert, args.artifacts_dir, args.source_repository_root,
                                     expected_base=base_sha, require_repository=True)
+                if bootstrap is not None:
+                    subject = cert["subject"]
+                    audit_source = args.artifacts_dir / artifacts["audit_source_result"]["name"]
+                    actual = prove_first_audit_escape(
+                        args.source_repository_root, audited_sha=bootstrap.get("reference_sha"),
+                        material_sha=material_head, repository_name=subject["repository"],
+                        issue_number=subject["issue_number"], pull_request_number=subject["pull_request_number"],
+                        audit_result=audit_source,
+                    )
+                    if bootstrap != actual:
+                        raise ValueError("first-escape proof differs from exact audited Git facts")
             except Exception as exc:
                 errors.append(f"certificate postcondition proof failed: {exc}")
 

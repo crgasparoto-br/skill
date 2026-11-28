@@ -31,7 +31,8 @@ def write(path: Path, value: dict) -> None:
 
 
 @pytest.fixture
-def critical_case(tmp_path):
+def critical_case(tmp_path, request):
+    first_escape = getattr(request, "param", None) == "first-escape"
     case = literal.make_replay_case(tmp_path)
     out = tmp_path / "official-evidence"
     audit = out / publisher.PREFIX
@@ -39,6 +40,9 @@ def critical_case(tmp_path):
     files = delivery.build_valid_delivery(audit)
     rejection_args = publication.critical_reaudit_arguments(files, case)
     source = json.loads(case["audit"].read_bytes())
+    if first_escape:
+        source["status"] = "rejected"
+        source["identity"].update(issue_number=42, pull_request_number=99)
     event = {"repository": {"full_name": "owner/repo"}, "pull_request": {
         "number": 99, "title": "Issue #42: public contract", "body": "",
         "merge_commit_sha": "c" * 40,
@@ -77,7 +81,16 @@ def critical_case(tmp_path):
     previous = copy.deepcopy(closure)
     previous["subject"]["material_head_sha"] = case["base"]
     previous["escapes"][0]["revalidated_head_sha"] = case["base"]
-    write(audit / "previous-audit-escape-closure.json", previous)
+    previous_path = audit / "previous-audit-escape-closure.json"
+    if first_escape:
+        previous_path.unlink()
+        previous_option = rejection_args.index("--previous-audit-escape-closure")
+        del rejection_args[previous_option:previous_option + 2]
+        previous_allowlist = rejection_args.index(publisher.PREFIX + previous_path.name)
+        del rejection_args[previous_allowlist - 1:previous_allowlist + 1]
+        rejection_args.extend(["--first-escape-audited-sha", case["base"]])
+    else:
+        write(previous_path, previous)
     learning_path = audit / "learning-closure.json"
     learning = json.loads(learning_path.read_bytes())
     learning["source_event"].update({"audit_report_sha256": digest(source_path.read_bytes()),
@@ -123,6 +136,7 @@ def validation_args(case: dict) -> list[str]:
             "--source-repository-root", str(case["repo"]), "--contract-version", "2026-08-20.3"]
 
 
+@pytest.mark.parametrize("critical_case", ["previous-snapshot", "first-escape"], indirect=True)
 def test_official_critical_postcondition_replays_historical_gate_before_final_handoff(critical_case):
     case = critical_case
     blocked = delivery.run("build_handoff_certificate.py", *case["builder"])
@@ -150,6 +164,34 @@ def test_official_critical_postcondition_replays_historical_gate_before_final_ha
     checked = subprocess.run([sys.executable, str(aggregator), *validation_args(case)],
                              capture_output=True, text=True, check=False)
     assert checked.returncode == 0, checked.stdout + checked.stderr
+    if cert.get("first_escape_bootstrap"):
+        assert cert["first_escape_bootstrap"]["status"] == "absent-proved-on-target"
+        assert not (case["audit_root"] / "previous-audit-escape-closure.json").exists()
+        git = literal.grounding_fixture.git
+        paths = cert["certificate_commit_policy"]["allowed_paths"]
+        for relative in paths:
+            destination = case["repo"] / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes((case["out"] / relative).read_bytes())
+        git(case["repo"], "add", "--", *paths)
+        git(case["repo"], "commit", "-qm", "synthetic certified result-only child")
+        child = git(case["repo"], "rev-parse", "HEAD")
+        assert git(case["repo"], "rev-parse", child + "^") == case["head"]
+        changed = git(case["repo"], "diff", "--name-only", case["head"], child).splitlines()
+        assert sorted(changed) == sorted(paths)
+        terminal = ["--certificate", str(case["repo"] / publisher.CERTIFICATE),
+                    "--artifacts-dir", str(case["repo"] / publisher.PREFIX),
+                    "--repository", "owner/repo", "--issue-number", "42", "--work-item-kind", "pr",
+                    "--work-item-number", "99", "--pull-request-number", "99", "--base-ref", "develop",
+                    "--head-ref", "feature/contract", "--base-sha", case["base"],
+                    "--material-head-sha", case["head"], "--published-head-sha", child,
+                    "--published-parent-sha", case["head"], "--current-head-sha", child,
+                    "--current-parent-sha", case["head"], "--material-parent-repository", str(case["repo"]),
+                    "--contract-version", "2026-08-20.3"]
+        for relative in changed:
+            terminal.extend(["--published-changed-path", relative, "--current-changed-path", relative])
+        result = delivery.run("validate_terminal_handoff.py", *terminal)
+        assert result.returncode == 0, result.stdout
 
 
 @pytest.fixture
