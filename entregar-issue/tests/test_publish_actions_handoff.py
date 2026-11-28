@@ -1,6 +1,7 @@
 """Trusted post-certification publisher: only exact, allowlisted GitHub evidence."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import importlib
 import importlib.util
@@ -9,6 +10,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pytest
 
@@ -227,6 +229,8 @@ class PublicationHarness:
                 "sha": self.pushed or self.head, "ref": self.branch,
                 "repo": {"full_name": repository}},
                 "base": {"sha": self.base, "ref": "develop"}}
+        if endpoint == f"contents/.github/session-review-policy.json?ref={self.base}":
+            raise HTTPError(endpoint, 404, "absent", None, None)
         if endpoint.startswith("actions/runs/7/artifacts"):
             return {"artifacts": [{"name": f"handoff-evidence-99-{self.head}", "expired": False}]}
         if endpoint.startswith("actions/runs?head_sha="):
@@ -351,10 +355,10 @@ def certified_publisher(tmp_path, monkeypatch, request):
         "path": ".github/workflows/handoff-evidence.yml", "head_sha": candidate["head"],
         "pull_requests": [{"number": 99}]}}), encoding="utf-8")
     harness = PublicationHarness(candidate, bundle, event)
+    grounding.git(candidate["repo"], "checkout", "--detach", candidate["base"])
     monkeypatch.chdir(candidate["repo"])
     monkeypatch.setattr(publisher, "command", harness.command)
     monkeypatch.setattr(publisher, "api_get", harness.api_get)
-    monkeypatch.setattr(publisher, "session_mode_active", lambda repo, base: False)
     return harness
 
 
@@ -365,6 +369,7 @@ def test_publisher_materializes_certified_execution_before_grounding(certified_p
     assert harness.proof_absent_at_checkout
     assert harness.grounding_bytes == expected
     assert harness.pushed == published
+    assert len(harness.terminal_proofs) == 2
     assert harness.validators == ["validate_handoff_certificate.py", "validate_codebase_grounding.py",
                                   "check_code_growth.py", "validate_terminal_handoff.py", "validate_terminal_handoff.py"]
     git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
@@ -592,8 +597,356 @@ def test_trusted_historical_audit_files_are_immutable(tmp_path, change):
 
 def test_enabled_session_mode_preserves_material_sha_without_result_child(certified_publisher, monkeypatch):
     harness = certified_publisher
-    monkeypatch.setattr(publisher, "session_mode_active", lambda repo, base: True)
+    monkeypatch.setattr(publisher, "session_mode_active", lambda repo, base, trusted: True)
     assert publisher.publish(harness.event) is None
     assert harness.pushed is None
     assert harness.validators == ["validate_handoff_certificate.py", "validate_codebase_grounding.py",
                                   "check_code_growth.py"]
+
+
+def session_policy_bytes(mode):
+    from scripts.session_review import ACKNOWLEDGEMENT, ASSURANCE
+
+    return json.dumps({
+        "schema_version": 1, "mode": mode, "assurance": ASSURANCE,
+        "acknowledgement": ACKNOWLEDGEMENT,
+        "operators": [{"id": 123, "login": "synthetic-operator"}] if mode == "enabled" else [],
+    }).encode("utf-8")
+
+
+def policy_checkout(tmp_path, base_raw, default_raw):
+    repo = tmp_path / "consumer"
+    repo.mkdir()
+    git = importlib.import_module("entregar-issue.tests.test_codebase_grounding").git
+    git(repo, "init", "-q")
+    path = repo / ".github/session-review-policy.json"
+    path.parent.mkdir()
+    for index, raw in enumerate((base_raw, default_raw)):
+        if path.exists() or path.is_symlink():
+            path.unlink()
+        if raw == b"symlink":
+            path.symlink_to("../README.md")
+        elif raw is not None:
+            path.write_bytes(raw)
+        git(repo, "add", "-A")
+        git(repo, "commit", "--allow-empty", "-q", "-m", "trusted policy snapshot")
+        if index == 0:
+            base = git(repo, "rev-parse", "HEAD")
+    return repo, base
+
+
+def policy_response(raw):
+    return {"type": "file", "encoding": "base64", "content": base64.b64encode(raw).decode("ascii")}
+
+
+def install_policy_helpers(tooling):
+    source = publisher.SCRIPT_ROOT.parents[1]
+    for relative in ("entregar-issue/scripts/git_tree_snapshot.py", "scripts/session_review.py"):
+        target = tooling / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source / relative, target)
+
+
+def test_consumer_legacy_ignores_enabled_tooling_and_untracked_policy(tmp_path, monkeypatch):
+    repo, base = policy_checkout(tmp_path, None, None)
+    tooling = tmp_path / "tooling"
+    (tooling / ".github").mkdir(parents=True)
+    (tooling / ".github/session-review-policy.json").write_bytes(session_policy_bytes("enabled"))
+    install_policy_helpers(tooling)
+    monkeypatch.setattr(publisher, "SCRIPT_ROOT", tooling / "entregar-issue/scripts")
+    # An uncommitted file is not trusted default-branch policy either.
+    (repo / ".github/session-review-policy.json").write_bytes(session_policy_bytes("enabled"))
+
+    def absent(repository, endpoint):
+        assert repository == "owner/repo"
+        assert endpoint == f"contents/.github/session-review-policy.json?ref={base}"
+        raise HTTPError(endpoint, 404, "absent", None, None)
+
+    monkeypatch.setattr(publisher, "api_get", absent)
+    assert publisher.session_mode_active("owner/repo", base, repo) is False
+
+
+@pytest.mark.parametrize("mode,expected", [("enabled", True), ("disabled", False)])
+def test_consumer_policy_not_tooling_selects_session_mode(tmp_path, monkeypatch, mode, expected):
+    raw = session_policy_bytes(mode)
+    repo, base = policy_checkout(tmp_path, raw, raw)
+    monkeypatch.setattr(publisher, "api_get", lambda *_: policy_response(raw))
+    assert publisher.session_mode_active("owner/repo", base, repo) is expected
+
+
+_POLICY_FAILURE_CASES = [
+    "base-only", "default-only", "different-bytes", "different-api-bytes",
+    "contradictory-404", "403", "500", "unproved-base", "invalid-schema",
+    "duplicate-json", "symlink", "api-only", "malformed-api",
+]
+
+
+def declined_policy_fixture(tmp_path, case):
+    enabled = session_policy_bytes("enabled")
+    disabled = session_policy_bytes("disabled")
+    invalid = b'{"schema_version":true,"mode":"disabled"}'
+    duplicate = b'{"mode":"enabled","mode":"disabled"}'
+    base_raw, default_raw = {
+        "base-only": (enabled, None),
+        "default-only": (None, enabled),
+        "different-bytes": (enabled, disabled),
+        "invalid-schema": (invalid, invalid),
+        "duplicate-json": (duplicate, duplicate),
+        "symlink": (b"symlink", b"symlink"),
+        "api-only": (None, None),
+    }.get(case, (enabled, enabled))
+    if case in {"403", "500", "unproved-base"}:
+        base_raw = default_raw = None
+    repo, base = policy_checkout(tmp_path, base_raw, default_raw)
+    if case == "unproved-base":
+        base = "f" * 40
+
+    def api(repository, endpoint):
+        if case in {"403", "500"}:
+            raise HTTPError(endpoint, int(case), "unavailable", None, None)
+        if case in {"default-only", "contradictory-404"}:
+            raise HTTPError(endpoint, 404, "absent", None, None)
+        if case == "malformed-api":
+            return {"type": "symlink", "encoding": "base64", "content": ""}
+        return policy_response(disabled if case == "different-api-bytes" else base_raw or enabled)
+
+    return repo, base, api
+
+
+@pytest.mark.parametrize("case", _POLICY_FAILURE_CASES)
+def test_consumer_session_policy_fails_closed(tmp_path, monkeypatch, case):
+    repo, base, api = declined_policy_fixture(tmp_path, case)
+    monkeypatch.setattr(publisher, "api_get", api)
+    with pytest.raises((ValueError, subprocess.CalledProcessError)):
+        publisher.session_mode_active("owner/repo", base, repo)
+
+
+@pytest.mark.parametrize("case", _POLICY_FAILURE_CASES)
+def test_publisher_policy_matrix_stops_before_stage_commit_push(
+    certified_publisher, monkeypatch, tmp_path, case,
+):
+    """Real publisher and resolver; policy Git snapshots and HTTP remain synthetic."""
+    harness = certified_publisher
+    repo, base, policy_response_fixture = declined_policy_fixture(tmp_path, case)
+    resolve = publisher.session_mode_active
+    state = []
+
+    def command(*args, cwd=None):
+        if args[0] == "git" and (args[1] in {"add", "push"} or "commit" in args[1:]):
+            state.append(args)
+        return harness.command(*args, cwd=cwd)
+
+    def api(repository, endpoint):
+        if endpoint.startswith("contents/.github/session-review-policy.json?"):
+            assert endpoint == f"contents/.github/session-review-policy.json?ref={base}"
+            return policy_response_fixture(repository, endpoint)
+        return harness.api_get(repository, endpoint)
+
+    def resolve_fixture(repository, live_base, live_default):
+        assert (repository, live_base, live_default) == ("owner/repo", harness.base, harness.repo)
+        state.append("policy-resolver-reached")
+        return resolve(repository, base, repo)
+
+    monkeypatch.setattr(publisher, "command", command)
+    monkeypatch.setattr(publisher, "api_get", api)
+    monkeypatch.setattr(publisher, "session_mode_active", resolve_fixture)
+    reason = {
+        "base-only": "missing or malformed", "default-only": "policy unavailable",
+        "different-bytes": "policy differs", "different-api-bytes": "policy differs",
+        "contradictory-404": "policy unavailable", "403": "policy unavailable",
+        "500": "policy unavailable", "unproved-base": "cat-file",
+        "invalid-schema": "unexpected policy fields", "duplicate-json": "duplicate JSON key",
+        "symlink": "unsafe Git type or symlink", "api-only": "missing or malformed",
+        "malformed-api": "missing or malformed",
+    }[case]
+    with pytest.raises((ValueError, subprocess.CalledProcessError), match=reason):
+        publisher.publish(harness.event)
+    assert state == ["policy-resolver-reached"]
+    assert not harness.staged and harness.pushed is None and not harness.terminal_proofs
+
+
+def test_publisher_policy_api_failure_prevents_any_stage_or_push(certified_publisher, monkeypatch):
+    harness = certified_publisher
+    original = publisher.api_get
+
+    def api(repository, endpoint):
+        if endpoint.startswith("contents/.github/session-review-policy.json?"):
+            raise HTTPError(endpoint, 403, "unavailable", None, None)
+        return original(repository, endpoint)
+
+    monkeypatch.setattr(publisher, "api_get", api)
+    with pytest.raises(ValueError, match="protected-base session policy unavailable"):
+        publisher.publish(harness.event)
+    assert not harness.staged and harness.pushed is None
+    assert not harness.terminal_proofs
+
+
+def test_legacy_publication_with_enabled_tooling_and_bilateral_policy_absence(certified_publisher, monkeypatch, tmp_path):
+    harness = certified_publisher
+    policy = ".github/session-review-policy.json"
+    tooling = tmp_path / "tooling-only"
+    (tooling / ".github").mkdir(parents=True)
+    (tooling / policy).write_bytes(session_policy_bytes("enabled"))
+    assert json.loads((tooling / policy).read_bytes())["mode"] == "enabled"
+    shutil.copytree(publisher.SCRIPT_ROOT.parent, tooling / "entregar-issue",
+                    ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache"))
+    install_policy_helpers(tooling)
+    monkeypatch.setattr(publisher, "SCRIPT_ROOT", tooling / "entregar-issue/scripts")
+    git = harness.real_command
+    assert git("git", "rev-parse", "HEAD", cwd=harness.repo) == harness.base
+    (harness.repo / "default-marker.txt").write_text("distinct trusted default tree\n", encoding="utf-8")
+    git("git", "add", "default-marker.txt", cwd=harness.repo)
+    git("git", "-c", "user.name=synthetic", "-c", "user.email=fixture@example.invalid",
+        "commit", "-m", "distinct trusted default fixture", cwd=harness.repo)
+    default = git("git", "rev-parse", "HEAD", cwd=harness.repo)
+    assert default != harness.base
+    assert git("git", "rev-parse", default + "^{tree}", cwd=harness.repo) != git(
+        "git", "rev-parse", harness.base + "^{tree}", cwd=harness.repo)
+    for sha in (default, harness.base):
+        assert not git("git", "ls-tree", sha, "--", policy, cwd=harness.repo)
+    assert not (harness.repo / policy).exists()
+    trace = []
+
+    def api(repository, endpoint):
+        if endpoint.startswith("contents/"):
+            assert endpoint == f"contents/{policy}?ref={harness.base}"
+            assert not harness.staged and harness.pushed is None
+            try:
+                return harness.api_get(repository, endpoint)
+            except HTTPError as exc:
+                assert exc.code == 404
+                trace.append("protected-policy-404")
+                raise
+        result = harness.api_get(repository, endpoint)
+        if harness.pushed and endpoint == "pulls/99":
+            assert result["head"]["sha"] == harness.pushed and result["base"]["sha"] == harness.base
+            trace.append("readback-pr-exact")
+        if harness.pushed and endpoint == f"commits/{harness.pushed}":
+            assert result["parents"] == [{"sha": harness.head}]
+            assert result["files"]
+            trace.append("readback-child-exact")
+        return result
+
+    def command(*args, cwd=None):
+        if args[:2] == ("git", "push"):
+            # Existing harness intercepts push; this is an assertion on simulated transport.
+            trace.append("push-simulated")
+        result = harness.command(*args, cwd=cwd)
+        if args[0] == "python" and Path(args[1]).name == "validate_terminal_handoff.py":
+            trace.append("terminal-post" if harness.pushed else "terminal-pre")
+        return result
+
+    monkeypatch.setattr(publisher, "api_get", api)
+    monkeypatch.setattr(publisher, "command", command)
+    result = publisher.publish(harness.event)
+    assert result == harness.pushed and result != harness.head and harness.staged
+    assert len(harness.terminal_proofs) == 2
+    assert all(p["material_head_sha"] == harness.head for p in harness.terminal_proofs)
+    assert trace == ["protected-policy-404", "terminal-pre", "push-simulated",
+                     "readback-pr-exact", "readback-child-exact", "terminal-post"]
+
+
+@pytest.mark.parametrize("mode", ["enabled", "disabled", "absent", "invalid"])
+def test_policy_import_origins_are_pinned_to_official_tooling(tmp_path, monkeypatch, mode):
+    """Observe actual imports, not just the path of validator subprocesses."""
+    root = publisher.SCRIPT_ROOT.parents[1].resolve()
+    raw = (None if mode == "absent" else b'{"schema_version":true,"mode":"disabled"}'
+           if mode == "invalid" else session_policy_bytes(mode))
+    consumer, base = policy_checkout(tmp_path, raw, raw)
+    candidate = tmp_path / "candidate-data"
+    candidate.mkdir()
+    (candidate / "notes.txt").write_text("untrusted checkout used as data", encoding="utf-8")
+    monkeypatch.chdir(candidate)
+    load = publisher.load_policy_helper
+    search_path = tuple(sys.path)
+    origins = {}
+
+    def record(name):
+        module = load(name)
+        origins[name] = Path(module.__file__).resolve()
+        return module
+
+    def api(repository, endpoint):
+        assert repository == "owner/repo" and endpoint.endswith(f"?ref={base}")
+        if raw is None:
+            raise HTTPError(endpoint, 404, "absent", None, None)
+        return policy_response(raw)
+
+    monkeypatch.setattr(publisher, "load_policy_helper", record)
+    monkeypatch.setattr(publisher, "api_get", api)
+    if mode == "invalid":
+        with pytest.raises(ValueError):
+            publisher.session_mode_active("owner/repo", base, consumer)
+    else:
+        assert publisher.session_mode_active("owner/repo", base, consumer) is (mode == "enabled")
+    expected = {"git_tree_snapshot": (publisher.SCRIPT_ROOT / "git_tree_snapshot.py").resolve()}
+    if mode != "absent":
+        expected["session_review"] = root / "scripts/session_review.py"
+    assert origins == expected
+    assert tuple(sys.path) == search_path
+    assert all(not origin.is_relative_to(consumer) and not origin.is_relative_to(candidate)
+               for origin in origins.values())
+
+
+@pytest.mark.parametrize("relative", [
+    "entregar-issue/scripts/git_tree_snapshot.py", "scripts/session_review.py",
+])
+def test_missing_pinned_policy_source_blocks_routing(tmp_path, monkeypatch, relative):
+    raw = session_policy_bytes("enabled")
+    consumer, base = policy_checkout(tmp_path, raw, raw)
+    tooling = tmp_path / "tooling"
+    install_policy_helpers(tooling)
+    (tooling / relative).unlink()
+    monkeypatch.setattr(publisher, "SCRIPT_ROOT", tooling / "entregar-issue/scripts")
+    monkeypatch.setattr(publisher, "api_get", lambda *_: policy_response(raw))
+    with pytest.raises(ValueError, match="trusted policy helper source is unavailable"):
+        publisher.session_mode_active("owner/repo", base, consumer)
+
+
+def public_handoff_fixture_literal_classes(text):
+    """Bounded regression for literal sources, not a general secret scanner."""
+    import re
+
+    return {
+        "hosts": set(re.findall(r"https?://([A-Za-z0-9.-]+)", text)),
+        "emails": set(re.findall(r"[A-Za-z0-9_.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", text)),
+        "credential_literals": set(re.findall(
+            r"""(?im)^\s*(?:[A-Za-z0-9_]+_TOKEN|[A-Za-z0-9_]+_PASSWORD|[A-Za-z0-9_]+_SECRET)\s*=\s*["']([^"']+)["']""",
+            text,
+        )),
+        "repo_literals": set(re.findall(
+            r'(?i)repos(?:itory)?[\s=:"]+([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)', text
+        )),
+    }
+
+
+@pytest.mark.parametrize("kind,allowed", [
+    ("hosts", {"example.invalid", "avatars.example", "example.org", "github.com", "other.example"}),
+    ("emails", {"fixture@example.invalid"}),
+    ("repo_literals", {"owner/repo", "owner/repository"}),
+    ("credential_literals", set()),
+])
+def test_handoff_changed_sources_use_only_generic_fixture_literals(kind, allowed):
+    root = Path(__file__).resolve().parents[2]
+    paths = (
+        "entregar-issue/references/github-actions-evidence.md",
+        "entregar-issue/scripts/publish_actions_handoff.py",
+        "entregar-issue/tests/test_publish_actions_handoff.py",
+        "tests/test_session_review_runner.py",
+        "tests/test_session_review_workflows.py",
+    )
+    observed = set()
+    for path in paths:
+        observed.update(public_handoff_fixture_literal_classes((root / path).read_text(encoding="utf-8"))[kind])
+    assert observed == allowed
+
+
+@pytest.mark.parametrize("kind,synthetic_parts", [
+    ("hosts", ("https:", "//outside.", "invalid/")),
+    ("emails", ("not-a-person", "@", "outside.invalid")),
+    ("repo_literals", ('repo', 'sitory="outside/fixture"')),
+    ("credential_literals", ('PROBE_', 'SECRET="synthetic-marker-not-a-credential"')),
+])
+def test_generic_fixture_literal_evidence_detects_out_of_scope_markers(kind, synthetic_parts):
+    # Strings are inert and use the reserved .invalid namespace.
+    assert public_handoff_fixture_literal_classes("".join(synthetic_parts))[kind]
