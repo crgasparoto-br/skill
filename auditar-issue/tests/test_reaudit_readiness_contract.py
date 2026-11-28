@@ -267,3 +267,58 @@ def test_reaudit_accepts_control_already_retired_in_previous_snapshot() -> None:
         write_json(learning_path, learning("audit-rejection:A-002", "A-002"))
         proc = run(current_closure, learning_path, inherited, head, previous_closure, previous_inherited)
         assert proc.returncode == 0, proc.stdout
+
+
+def test_systemic_first_rejection_requires_real_git_absence_not_an_empty_snapshot(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(repo), *args], text=True).strip()
+
+    git("init", "-q")
+    git("config", "user.name", "Synthetic test")
+    git("config", "user.email", "test@example.invalid")
+    (repo / "README.md").write_text("audited\n")
+    git("add", ".")
+    git("commit", "-qm", "audited")
+    audited = git("rev-parse", "HEAD")
+    (repo / "README.md").write_text("remediated\n")
+    git("add", ".")
+    git("commit", "-qm", "remediated")
+    head = git("rev-parse", "HEAD")
+    source = tmp_path / "audit-source-result.json"
+    write_json(source, {"status": "rejected", "head_sha": audited,
+        "identity": {"repository": "owner/repo", "issue_number": 42,
+                     "pull_request_number": 99, "head_sha": audited},
+        "rejection_id": "audit-rejection:A-001"})
+    current = closure(["A-001"])
+    current["escapes"][0]["revalidated_head_sha"] = head
+    paths = {name: tmp_path / (name + ".json") for name in ("current", "learning", "inherited", "previous-inherited")}
+    write_json(paths["current"], current)
+    write_json(paths["learning"], learning("audit-rejection:A-001", "A-001"))
+    write_json(paths["previous-inherited"], {"schema_version": 1, "head_sha": audited,
+        "source_audits": ["prior"], "controls": [control("KEEP-001", audited)], "unresolved_controls": []})
+    write_json(paths["inherited"], {"schema_version": 1, "head_sha": head,
+        "source_audits": ["prior"], "controls": [control("KEEP-001", head)], "unresolved_controls": []})
+    args = [sys.executable, str(ROOT / "scripts/check_reaudit_readiness.py"),
+            "--closure", str(paths["current"]), "--learning-closure", str(paths["learning"]),
+            "--inherited-controls", str(paths["inherited"]), "--head-sha", head,
+            "--previous-inherited-controls", str(paths["previous-inherited"])]
+    proof = ["--first-escape-audited-sha", audited, "--first-escape-repository", str(repo),
+             "--first-escape-audit-result", str(source), "--target-repository", "owner/repo",
+             "--target-issue-number", "42", "--target-pull-request-number", "99"]
+
+    def check(extra, expected, reason):
+        proc = subprocess.run([*args, *extra], capture_output=True, text=True, check=False)
+        assert proc.returncode == expected, proc.stdout + proc.stderr
+        assert reason in proc.stdout
+
+    check([], 2, "requires previous audit-escape-closure snapshot")
+    check(proof, 0, "READY:")
+    check([*proof, "--previous-closure", str(paths["current"])], 2, "mutually exclusive")
+    wrong = proof.copy()
+    wrong[wrong.index("--target-issue-number") + 1] = "43"
+    check(wrong, 2, "subject mismatch")
+    (repo / ".git/shallow").write_text(audited + "\n")
+    check(proof, 2, "complete Git history")

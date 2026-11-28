@@ -40,7 +40,9 @@ ledger. O modo `certified-handoff` admite `--first-escape-audited-sha` no builde
 repositorio/issue/PR e checkout ou bundle Git autenticado do consumidor em
 `--source-repository-root`. O validador `verify_first_audit_escape.py` compara
 o commit auditado com o material atual, exige ancestralidade e examina os
-caminhos canonicos do ledger tanto no commit anterior quanto no atual.
+caminhos canonicos do ledger tanto no commit anterior quanto no atual e percorre
+o historico alcancavel do material, incluindo alteracoes dos shards. A exclusao
+de um ledger antes ou depois da rejeicao nao constitui primeira ausencia.
 
 Um ledger global compartilhado de **outra** issue nao e o historico da issue
 atual: a Skill valida o subject exato e todos os shards fisicos antes de
@@ -48,8 +50,13 @@ classifica-lo como `foreign-target`. Um ledger da mesma issue (mesmo com outra
 PR), um ledger sem subject verificavel, a falta do Git/autenticidade, SHA
 invalido ou parentesco desconhecido **bloqueiam** o bootstrap. Com ledger
 anterior do mesmo alvo, manter `--previous-audit-escape-closure` e a regra
-monotonica anterior, nunca alternar para o bootstrap. Os modos sao mutuamente
-exclusivos; nenhuma ausencia pode ser inferida de JSON fornecido pelo produtor.
+monotonica anterior, nunca alternar para o bootstrap. No produtor de Actions,
+os bytes logicos do snapshot devem corresponder a um ledger Git historico
+ancestral da rejeicao (ou do filho result-only autenticado e declarado no
+parecer original). Todos os IDs observados na historia do mesmo alvo devem
+estar no snapshot; um ledger fabricado apos a rejeicao nao e fonte historica.
+Os modos sao mutuamente exclusivos; nenhuma ausencia pode ser inferida de JSON
+fornecido pelo produtor.
 
 O builder inclui `first_escape_bootstrap` no certificado, com SHA de referencia
 e caminhos examinados. O validador do certificado e o guard terminal refazem

@@ -235,6 +235,17 @@ def main() -> int:
             else:
                 reaudit_args=[sys.executable,str(ROOT / "scripts" / "check_reaudit_readiness.py"),"--closure",str(escape),"--learning-closure",str(learning),"--inherited-controls",str(inherited),"--head-sha",material_head_sha]
                 if args.previous_closure is not None: reaudit_args.extend(["--previous-closure",args.previous_closure])
+                bootstrap = cert.get("first_escape_bootstrap")
+                if bootstrap:
+                    subject = cert["subject"]
+                    reaudit_args.extend([
+                        "--first-escape-audited-sha", bootstrap["reference_sha"],
+                        "--first-escape-repository", args.source_repository_root,
+                        "--first-escape-audit-result", str(source),
+                        "--target-repository", subject["repository"],
+                        "--target-issue-number", str(subject["issue_number"]),
+                        "--target-pull-request-number", str(subject["pull_request_number"]),
+                    ])
                 if args.previous_inherited_controls is not None: reaudit_args.extend(["--previous-inherited-controls",args.previous_inherited_controls])
                 run(reaudit_args,errors)
                 run([sys.executable,str(ROOT / "scripts" / "validate_learning_closure.py"),"--learning-closure",str(learning)],errors)

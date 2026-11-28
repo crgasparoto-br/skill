@@ -19,6 +19,8 @@ from reviewed_phase_decision import (
     digest,
     with_deferred_completion,
 )
+from reviewed_audit_history import (IMMUTABLE_REPORTS, PREVIOUS_ESCAPE, committed_report_bytes,
+                                    resolve_reviewed_escape_history, verified_source)
 from validate_handoff_certificate import scope_touches_code, scope_touches_tests
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -62,18 +64,6 @@ def git(root: Path, *args: str) -> str:
     if result.returncode:
         raise ValueError(f"git {' '.join(args[:2])} failed: {result.stderr.strip()}")
     return result.stdout.strip()
-
-
-def verified_source(root: Path, source: Path, name: str, hashes: dict) -> dict:
-    if name not in hashes or not re.fullmatch(r"[0-9a-f]{64}", str(hashes[name])):
-        raise ValueError(f"missing SHA-256 declaration for {name}")
-    path = source / name
-    if path.is_symlink() or not path.is_file() or path.resolve().parent != source.resolve():
-        raise ValueError(f"unsafe reviewed evidence path: {name}")
-    raw = path.read_bytes()
-    if not raw or digest(raw) != hashes[name]:
-        raise ValueError(f"reviewed evidence digest mismatch: {name}")
-    return read_json(path)
 
 
 def bind_identity(value: object, head: str, start: str) -> object:
@@ -433,6 +423,12 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     if not isinstance(hashes, dict) or not set(hashes).issubset(ALLOWED_REPORTS | {"reviewed-closure.json"}):
         raise ValueError("reviewed artifact allowlist invalid")
     needed, touched_code = required_reviewed_reports(manifest, changed)
+    history = (resolve_reviewed_escape_history(root, source, hashes, target)
+               if manifest["audit_history"] == "previous-rejection" else None)
+    if history and history["status"] == "absent-proved-on-target":
+        if (audit / PREVIOUS_ESCAPE).exists() or (audit / PREVIOUS_ESCAPE).is_symlink():
+            raise ValueError("stale staged previous escape snapshot conflicts with Git absence")
+        needed.remove(PREVIOUS_ESCAPE)
     if not needed.issubset(hashes):
         raise ValueError(f"missing required reviewed reports: {sorted(needed - set(hashes))}")
     closure = merge_closure(starter, verified_source(root, source, "reviewed-closure.json", hashes))
@@ -442,7 +438,9 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
         parent_issue_open=parent_open)
     validate_test_bindings(manifest.get("test_bindings"), closure, tests)
     staged = {name: bind_identity(verified_source(root, source, name, hashes), head, start)
-              for name in sorted(set(hashes) - {"reviewed-closure.json"})}
+              for name in sorted(set(hashes) - {"reviewed-closure.json"} - IMMUTABLE_REPORTS)}
+    immutable = {name: committed_report_bytes(root, source, name, hashes, head)
+                 for name in sorted(set(hashes) & IMMUTABLE_REPORTS)}
     if "codebase-grounding.json" in staged:
         from bind_grounding_execution import bind_grounding_execution
         staged["codebase-grounding.json"] = bind_grounding_execution(
@@ -451,6 +449,8 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
     write_json(audit / "requirement-closure.json", closure)
     for name, report in staged.items():
         write_json(audit / name, report)
+    for name, raw in immutable.items():
+        (audit / name).write_bytes(raw)
     if touched_code:
         command = code_growth_command(root, start, head, base, audit / "code-growth.json", source)
         subprocess.run(command, check=True)
@@ -463,7 +463,8 @@ def produce(root: Path, out: Path, event: Path, base_ref: str) -> None:
                with_deferred_completion(inputs, deferred_ids, issue))
     write_json(out / "handoff-producer-status.json", {
         "status": "staged-for-independent-validation", "subject_sha": head,
-        "source": f".github/handoff-evidence/issue-{issue}", "reports": sorted(staged),
+        "source": f".github/handoff-evidence/issue-{issue}", "reports": sorted(set(staged) | set(immutable)),
+        "previous_escape_source": history,
         "reviewed_test_bindings": len(manifest["test_bindings"]),
         "warning": "JUnit and producer cannot prove semantic equivalence; official validation and independent audit are mandatory.",
     })

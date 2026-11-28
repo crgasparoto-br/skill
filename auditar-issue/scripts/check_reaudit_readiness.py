@@ -9,6 +9,7 @@ from pathlib import Path
 
 from audit_artifact_io import load_json_artifact
 from preflight_semantic_guards import conflicting_current_sha_claims
+from verify_first_audit_escape import prove_first_audit_escape
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 RETIREMENT_DISPOSITIONS = {"superseded", "not-applicable"}
@@ -168,6 +169,12 @@ def main() -> int:
     parser.add_argument("--inherited-controls")
     parser.add_argument("--head-sha")
     parser.add_argument("--previous-closure")
+    parser.add_argument("--first-escape-audited-sha")
+    parser.add_argument("--first-escape-repository", type=Path)
+    parser.add_argument("--first-escape-audit-result", type=Path)
+    parser.add_argument("--target-repository")
+    parser.add_argument("--target-issue-number", type=int)
+    parser.add_argument("--target-pull-request-number", type=int)
     parser.add_argument("--previous-inherited-controls")
     args = parser.parse_args()
 
@@ -199,8 +206,20 @@ def main() -> int:
                 errors.append(f"escape {eid} is duplicated")
             current_escape_ids.add(eid)
 
-    if not args.previous_closure:
-        errors.append("re-audit requires previous audit-escape-closure snapshot for monotonic validation")
+    if args.previous_closure and args.first_escape_audited_sha:
+        errors.append("previous snapshot and first-escape proof are mutually exclusive")
+    elif args.first_escape_audited_sha:
+        try:
+            prove_first_audit_escape(
+                args.first_escape_repository, audited_sha=args.first_escape_audited_sha,
+                material_sha=args.head_sha, repository_name=args.target_repository,
+                issue_number=args.target_issue_number, pull_request_number=args.target_pull_request_number,
+                audit_result=args.first_escape_audit_result,
+            )
+        except Exception as exc:
+            errors.append(f"first-escape Git absence proof failed: {exc}")
+    elif not args.previous_closure:
+        errors.append("re-audit requires previous audit-escape-closure snapshot or authenticated first-escape proof for monotonic validation")
     else:
         try:
             previous_closure = load(Path(args.previous_closure))

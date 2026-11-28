@@ -30,7 +30,7 @@ Antes da descoberta ampla:
 2. para `targeted-remediation`, nao exigir learning/audit-escape closure; para `systemic-remediation`, exigir `learning-closure.json` e `audit-escape-closure.json`, vinculados ao mesmo `rejection_id`;
 3. para `targeted-remediation`, reexecutar apenas o caso literal e superficies diretamente impactadas; quando a origem for gate deterministico, aplicar o exact failed gate replay antes de qualquer prova ampla;
 4. somente para `systemic-remediation`, verificar `escape_class`, implementacao errada plausivel, caso literal, no minimo dois casos irmaos, `prevention_change`, `detection_change` e `status=passed`;
-5. somente para `systemic-remediation`, obter snapshots imutaveis anteriores de `audit-escape-closure.json` e `inherited-controls.json`, preservar lineage cumulativa e exigir controles ativos executados no novo SHA;
+5. somente para `systemic-remediation`, obter snapshots imutaveis anteriores de `audit-escape-closure.json` e `inherited-controls.json`, preservar lineage cumulativa e exigir controles ativos executados no novo SHA. Para a primeira rejeicao, a unica alternativa ao snapshot de escape e `first_escape_bootstrap` com prova Git refeita pelo validador (ver `handoff-certificate-preflight.md`); o snapshot de controles herdados continua obrigatorio;
 6. se qualquer prova obrigatoria da classe corrente estiver ausente, incompleta, `failed` ou `not-run`, interromper a auditoria ampla e devolver `remediation-incomplete`, listando exatamente os campos faltantes.
 
 Esse preflight nao substitui a auditoria independente quando a remediacao estiver pronta. Ele impede que a auditoria seja usada como primeira execucao do ataque que a entrega ja deveria ter exercitado e impede regressao silenciosa de findings mais antigos.

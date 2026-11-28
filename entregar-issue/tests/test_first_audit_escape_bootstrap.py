@@ -182,3 +182,27 @@ def test_parent_git_symlink_fails_closed(tmp_path):
     case["material"] = commit(case["repo"], "symlink")
     with pytest.raises(ValueError, match="unsafe Git type"):
         proof(case)
+
+
+def test_same_target_ledger_deleted_before_audited_commit_is_not_first_escape(tmp_path):
+    case = fixture_repo(tmp_path, issue_ledger=True)
+    ledger = case["repo"] / ".audit/entregar-issue/issue-42/audit-escape-closure.json"
+    ledger.unlink()
+    case["audited"] = commit(case["repo"], "ledger-erased-before-rejection")
+    case["material"] = commit(case["repo"], "later-material")
+    source = json.loads(case["source"].read_text())
+    source["head_sha"] = source["identity"]["head_sha"] = case["audited"]
+    case["source"].write_text(json.dumps(source))
+    with pytest.raises(ValueError, match="snapshot required"):
+        proof(case)
+
+
+@pytest.mark.parametrize("field,value", [("issue_number", "40"), ("issue_number", False),
+    ("pull_request_number", "80"), ("material_head_sha", "develop")])
+def test_malformed_foreign_subject_is_unknown_not_absent(tmp_path, field, value):
+    subject = {"repository": REPO, "issue_number": 40, "pull_request_number": 80,
+               "material_head_sha": "a" * 40}
+    subject[field] = value
+    case = fixture_repo(tmp_path, old_root={"subject": subject, "escapes": [{"escape_id": "FOREIGN"}]})
+    with pytest.raises(ValueError, match="subject identity is malformed"):
+        proof(case)
