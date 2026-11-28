@@ -15,6 +15,7 @@ import tempfile
 import time
 import urllib.request
 from pathlib import Path, PurePosixPath
+from types import ModuleType
 
 HEX_SHA = re.compile(r"[0-9a-f]{40}\Z")
 REF = re.compile(r"(?:feat|fix|chore|docs)/[A-Za-z0-9_.-]+\Z")
@@ -460,15 +461,34 @@ def publish(event_path: Path, *, base_ref: str | None = None,
 
 
 
+def load_policy_helper(name: str) -> ModuleType:
+    """Load only the two policy helpers from the pinned tooling source tree."""
+    paths = {
+        "git_tree_snapshot": SCRIPT_ROOT / "git_tree_snapshot.py",
+        "session_review": SCRIPT_ROOT.parents[1] / "scripts/session_review.py",
+    }
+    path = paths[name]
+    try:
+        if path.resolve(strict=True) != path or not path.is_file():
+            block("trusted policy helper is not a regular source at its expected path")
+        source = path.read_bytes()
+    except (OSError, RuntimeError) as exc:
+        raise ValueError("trusted policy helper source is unavailable") from exc
+    # Source only: do not resolve by module name or consult ambient module/bytecode caches.
+    module = ModuleType(name)
+    module.__file__ = str(path)
+    exec(compile(source, str(path), "exec", dont_inherit=True), vars(module))
+    return module
+
+
 def session_mode_active(repo: str, base: str, trusted: Path) -> bool:
     """Compare consumer Git trees; the tooling checkout supplies code, not policy."""
     import base64
-    import sys
     import urllib.error
 
     if not HEX_SHA.fullmatch(base):
         block("invalid protected-base SHA for session routing")
-    from git_tree_snapshot import material_parent_blob
+    material_parent_blob = load_policy_helper("git_tree_snapshot").material_parent_blob
 
     policy_path = ".github/session-review-policy.json"
     default_head = command("git", "rev-parse", "HEAD", cwd=trusted)
@@ -489,22 +509,15 @@ def session_mode_active(repo: str, base: str, trusted: Path) -> bool:
         block("protected-base session policy is not valid base64")
     if raw != local or raw != protected:
         block("session policy differs between trusted default and protected base")
-    sys.path.insert(0, str(SCRIPT_ROOT.parents[1]))
-    from scripts.session_review import (
-        ACKNOWLEDGEMENT,
-        ASSURANCE,
-        strict_json,
-        validate_policy,
-        validate_provenance_policy_option,
-    )
-    policy = strict_json(raw.decode("utf-8"))
-    validate_provenance_policy_option(policy)
+    review = load_policy_helper("session_review")
+    policy = review.strict_json(raw.decode("utf-8"))
+    review.validate_provenance_policy_option(policy)
     if policy.get("mode") == "enabled":
-        validate_policy(policy)
+        review.validate_policy(policy)
         return True
     if (policy.get("mode") != "disabled" or type(policy["schema_version"]) is not int
-            or policy["schema_version"] != 1 or policy["assurance"] != ASSURANCE
-            or policy["acknowledgement"] != ACKNOWLEDGEMENT or policy["operators"] != []):
+            or policy["schema_version"] != 1 or policy["assurance"] != review.ASSURANCE
+            or policy["acknowledgement"] != review.ACKNOWLEDGEMENT or policy["operators"] != []):
         block("unsupported disabled session policy")
     return False
 

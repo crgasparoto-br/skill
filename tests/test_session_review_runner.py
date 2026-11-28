@@ -1299,3 +1299,28 @@ def test_terminal_check_readback_controls_origin_record(tmp_path, monkeypatch, c
     assert backend.check["external_id"] == receipt["fingerprint"]
     assert backend.check["head_sha"] == head
     assert backend.check["details_url"].endswith("/actions/runs/4321")
+
+
+@pytest.mark.parametrize("case", ["reviewed", "missing-independent-review", "review-for-other-head"])
+def test_main_candidate_technical_evidence_does_not_grant_review_authority(review_backend, case):
+    """Observe the actual protected verifier, not a real repository promotion."""
+    backend = review_backend
+    backend.change_identity("base_ref")
+    if case == "missing-independent-review":
+        backend.comments.clear()
+    elif case == "review-for-other-head":
+        foreign = copy.deepcopy(backend.report)
+        foreign["identity"]["head_sha"] = "f" * 40
+        backend.comments[0]["body"] = runner.PREFIX + json.dumps(foreign)
+    expected = "success" if case == "reviewed" else "failure"
+    assert backend.run() == (0 if case == "reviewed" else 2)
+    terminal = backend.checks[-1]
+    assert (terminal["head_sha"], terminal["status"], terminal["conclusion"]) == (
+        backend.pr["head"]["sha"], "completed", expected,
+    )
+    successes = [data for _, data in backend.writes if data.get("conclusion") == "success"]
+    if case == "reviewed":
+        assert len(successes) == 1
+        assert json.loads(terminal["output"]["text"])["review_comment_id"] == backend.comments[0]["id"]
+    else:
+        assert not successes
